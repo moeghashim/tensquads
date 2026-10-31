@@ -1,4 +1,4 @@
-import type { AppDatabase } from "./db.ts";
+import type { AppDatabase } from "./postgres.ts";
 import {
 	accounts,
 	agentImages,

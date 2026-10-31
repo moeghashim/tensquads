@@ -36,7 +36,7 @@ import {
 } from "@tensquads/domain";
 import { asc, eq } from "drizzle-orm";
 
-import type { AppDatabase } from "./db.ts";
+import type { AppDatabase } from "./postgres.ts";
 import {
 	accounts,
 	agentImages,

@@ -1,5 +1,5 @@
 export { createMemoryBus, type MemoryBus, type ScriptedBusEvent } from "./memory-bus.ts";
-export { type AppDatabase, openPglite, openPostgres } from "./neon/db.ts";
+export { type AppDatabase, openPostgres } from "./neon/postgres.ts";
 export { createRepositories } from "./neon/repositories.ts";
 export { saveWorkspace } from "./neon/save.ts";
 export { schema } from "./neon/schema.ts";

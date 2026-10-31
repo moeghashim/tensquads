@@ -10,11 +10,11 @@ import {
 	createPlaceholderServices,
 	createRepositories,
 	createTestMachine,
-	openPglite,
 	saveWorkspace,
 	traceFor,
 	type WorkspaceSnapshot,
 } from "../src/index.ts";
+import { openPglite } from "./pglite.ts";
 
 const platform = { accountId: "platform", mode: "platform" } as const;
 const demo = { accountId: "demo", mode: "account" } as const;

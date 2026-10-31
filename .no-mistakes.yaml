@@ -6,12 +6,14 @@ commands:
   lint: "npm ci && npm run check && npm run fallow:audit"
   format: "npx biome format --write ."
 
-# protected_paths is read only from the default branch. This copy does nothing
-# until it is on origin/main. Until then, run the pipeline with
-# `--skip document` and never authorize `--action fix`. The document step's
-# first pass still edits files when it runs; auto_fix: 0 only stops the
-# follow-up loop. no-mistakes 1.29.1 has neither key. 1.84.0 has both, and
-# commit.trailers is read from this pushed branch.
+# no-mistakes 1.84.0 (4822244) has no sign-off trailer setting. A correction
+# commit is `git commit --no-verify -m` and adds no sign-off. The GitHub DCO
+# check is the gate for sign-off. Commits on this branch use `git commit -s`.
+# protected_paths guards automatic staging only. no-mistakes reads that list
+# from the default branch. It does not stop a filesystem edit.
+# Keep `--skip document` for this repository. The document step edits files
+# before its gate. Every auto_fix count below is 0, so the pipeline makes no
+# commits on its own.
 protected_paths:
   - "docs/PLAN.md"
   - "docs/BRIEF.md"
@@ -20,10 +22,6 @@ protected_paths:
   - "AGENTS.md"
   - "CLAUDE.md"
   - "design/**"
-
-commit:
-  trailers:
-    - "Signed-off-by: Moe Ghashim <mohanadgh@gmail.com>"
 
 auto_fix:
   rebase: 0

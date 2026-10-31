@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createMemoryBus, createRepositories, openPglite, saveWorkspace, squadId, traceFor } from "@tensquads/adapters";
+import { createMemoryBus, createRepositories, saveWorkspace, squadId, traceFor } from "@tensquads/adapters";
 import { type AgentImage, type BusEvent, EMPTY_INBOX } from "@tensquads/domain";
 import { sql } from "drizzle-orm";
-
 import { extractDesign } from "../../../scripts/extract-design.mjs";
+import { openPglite } from "../../adapters/test/pglite.ts";
 import { design, homepageAgents, signupAgents, workspaceFromDesign } from "../src/index.ts";
 
 const platform = { accountId: "platform", mode: "platform" } as const;
