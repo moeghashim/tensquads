@@ -1,0 +1,516 @@
+# Progress Log
+
+Append-only learning log for commits and deploys. Add new entries only at the end of this file. Do not edit or delete previous entries.
+
+## Entry Template
+
+## <ISO timestamp>
+- Trigger: <commit|deploy>
+- Learning: <required learning>
+- Context: <commit message or release bump/version>
+- Branch: <branch>
+- Actor: <git user.name <git user.email>>
+- Changed Paths:
+  - <path> (commit entries only)
+
+## 2026-03-04T20:49:52.441Z
+- Trigger: commit
+- Learning: Established a durable task-memory loop by logging commit/deploy learnings in an append-only progress file and requiring startup review of recent entries.
+- Context: feat(agent): add append-only progress learning workflow
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - .codex/prompts/pickup.md
+  - .husky/pre-commit
+  - AGENTS.md
+  - CONTRIBUTING.md
+  - README.md
+  - docs/agent-workflow.md
+  - package.json
+  - scripts/agent-check.mjs
+  - scripts/release.mjs
+  - progress.md
+  - scripts/commit-with-progress.mjs
+  - scripts/progress-append-only-check.mjs
+  - scripts/progress-log.mjs
+## 2026-03-04T20:50:00.427Z
+- Trigger: deploy
+- Learning: Release automation now captures deploy learnings in progress.md and keeps startup context aligned with recent execution history.
+- Context: bump=patch; version=0.0.2
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+## 2026-03-04T22:52:22.880Z
+- Trigger: commit
+- Learning: Closing the release cycle with an explicit Unreleased bucket keeps the next change set structured and prevents changelog drift.
+- Context: chore(release): add [Unreleased] section for next cycle
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - packages/core/CHANGELOG.md
+## 2026-03-04T22:52:26.690Z
+- Trigger: commit
+- Learning: Starter releases should not require registry credentials by default; publish must be explicit to avoid blocked deploy flows.
+- Context: feat(release): make npm publish opt-in for starter
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - scripts/release.mjs
+  - README.md
+  - CONTRIBUTING.md
+## 2026-03-22T13:11:46.547Z
+- Trigger: commit
+- Learning: The starter now defaults to a Vercel-ready app, keeps solo progress logging, and hardens setup against architecture drift and accidental useEffect usage.
+- Context: feat(starter): add solo Vercel app workflow
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - .codex/prompts
+  - .github/workflows/ci.yml
+  - .gitignore
+  - AGENTS.md
+  - CONTRIBUTING.md
+  - README.md
+  - biome.json
+  - docs
+  - package-lock.json
+  - package.json
+  - scripts
+  - .nvmrc
+  - apps
+## 2026-04-04T00:13:11.982Z
+- Trigger: commit
+- Learning: Fast-fail native dependency checks and pinned vendored skills keep the starter reliable across darwin-x64, darwin-arm64, and Linux while preserving updateable upstream guidance.
+- Context: feat(agent): vendor Vercel skills and add multi-arch preflight
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - .codex/prompts/build-feature.md
+  - .codex/prompts/fix.md
+  - .codex/prompts/pickup.md
+  - .codex/prompts/ship.md
+  - AGENTS.md
+  - CONTRIBUTING.md
+  - README.md
+  - agent/manifest.json
+  - agent/skills-manifest.json
+  - agent/skills
+  - docs/README.md
+  - docs/agent-skills.md
+  - docs/agent-workflow.md
+  - docs/deploying-to-vercel.md
+  - package.json
+  - scripts/agent-check.mjs
+  - scripts/agent-sync.mjs
+  - scripts/doctor.mjs
+  - scripts/docs-list.mjs
+  - scripts/native-deps.mjs
+  - scripts/preflight-native-deps.mjs
+## 2026-04-04T21:35:21.580Z
+- Trigger: commit
+- Learning: A second pinned skill pack can extend the starter's process rigor without replacing the existing Codex-first workflow when manifests, prompts, docs, and validation are kept source-specific.
+- Context: feat(agent): add curated Addy process skill pack
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - agent/skills-manifest.addyosmani.json
+  - agent/skills/addyosmani
+  - package.json
+  - scripts/agent-check.mjs
+  - AGENTS.md
+  - docs/agent-skills.md
+  - docs/agent-workflow.md
+  - docs/README.md
+  - docs/architecture-decisions.md
+  - .codex/prompts/pickup.md
+  - .codex/prompts/build-feature.md
+  - .codex/prompts/fix.md
+  - .codex/prompts/ship.md
+  - README.md
+## 2026-04-04T21:44:59.731Z
+- Trigger: commit
+- Learning: Keeping inspiration links inline in the README preserves provenance without expanding the top-level overview.
+- Context: docs(readme): add inline upstream links
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - README.md
+## 2026-04-08T02:04:33.332Z
+- Trigger: commit
+- Learning: Husky should install only in local Git workspaces; gating prepare on CI, Vercel, HUSKY=0, and missing .git keeps deploy installs clean without weakening local pre-commit checks.
+- Context: chore(husky): skip hook install in deploys
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - package.json
+  - scripts/prepare.mjs
+## 2026-04-08T02:04:53.989Z
+- Trigger: commit
+- Learning: Husky should install only in local Git workspaces; gating prepare on CI, Vercel, HUSKY=0, and missing .git keeps deploy installs clean without weakening local pre-commit checks.
+- Context: chore(husky): skip hook install in deploys
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - package.json
+  - scripts/prepare.mjs
+## 2026-04-08T02:13:10.618Z
+- Trigger: commit
+- Learning: The deployable Next workspace must declare its own TypeScript and Node type dependencies so production installs and Vercel builds succeed when the app is built from its workspace root.
+- Context: fix(web): add local TypeScript build deps
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - apps/web/package.json
+  - package-lock.json
+## 2026-04-17T22:18:55.735Z
+- Trigger: commit
+- Learning: GitHub Actions should own the required quality gate while Vercel Git integration remains a packaging-only deploy step, with Next type validation skipped only on Vercel builds.
+- Context: chore(ci): gate Vercel deploys with GitHub checks
+- Branch: codex/github-ci-vercel-gates
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - .github/workflows/ci.yml
+  - apps/web/next.config.ts
+  - docs/deploying-to-vercel.md
+## 2026-04-26T17:34:26.651Z
+- Trigger: commit
+- Learning: Forked starters need to preserve progress.md as append-only project memory so humans and agents keep durable context after the fork boundary.
+- Context: docs(agent): clarify fork progress contract
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - AGENTS.md
+  - CONTRIBUTING.md
+  - README.md
+## 2026-04-26T17:35:17.316Z
+- Trigger: commit
+- Learning: Agent sync manifests should resolve managed paths within the repository root so a bad manifest cannot write or verify files outside the starter.
+- Context: fix(agent): constrain sync paths to repo root
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - scripts/agent-sync.mjs
+## 2026-04-26T17:35:31.466Z
+- Trigger: commit
+- Learning: The web workspace can move to the latest Next patch when the lockfile is regenerated under the repo's Node 22 runtime and the full check suite passes.
+- Context: chore(web): update next patch release
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - apps/web/package.json
+  - package-lock.json
+## 2026-04-26T17:37:07.349Z
+- Trigger: commit
+- Learning: A pinned Matt Pocock architecture pack can add module-depth and domain-vocabulary review guidance while PI Starter keeps its own ADR location and Codex-first workflow as local overrides.
+- Context: feat(agent): add Matt architecture skill pack
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - AGENTS.md
+  - README.md
+  - docs/README.md
+  - docs/agent-skills.md
+  - docs/agent-workflow.md
+  - package.json
+  - scripts/agent-check.mjs
+  - agent/skills-manifest.mattpocock.json
+  - agent/skills/mattpocock
+## 2026-05-11T21:43:16.160Z
+- Trigger: commit
+- Learning: Shipping guidance should treat database deploys as a separate release surface whenever schema, migration, ORM, seed, client, or database environment changes are present.
+- Context: docs(agent): require database deploy checks
+- Branch: codex/database-deploy-guidance
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - AGENTS.md
+  - docs/deploying-to-vercel.md
+  - .codex/prompts/ship.md
+## 2026-05-18T11:45:17.612Z
+- Trigger: commit
+- Learning: Release scripts should validate bumped release trees before committing or tagging, and remote pushes should require explicit intent.
+- Context: fix(release): gate release pushes
+- Branch: main
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - .codex/prompts/ship.md
+  - .github/workflows/ci.yml
+  - README.md
+  - docs/agent-workflow.md
+  - scripts/release.mjs
+## 2026-06-07T15:50:04.165Z
+- Trigger: commit
+- Learning: A tracked CLAUDE.md symlink can support Claude-style tooling while AGENTS.md remains the canonical instruction source and agent:check enforces the alias.
+- Context: chore(agent): add Claude compatibility symlink
+- Branch: codex/claude-agent-symlink
+- Actor: Ja3ood <moeghashim@users.noreply.github.com>
+- Changed Paths:
+  - AGENTS.md
+  - README.md
+  - docs/agent-workflow.md
+  - scripts/agent-check.mjs
+  - CLAUDE.md
+## 2026-07-05T11:33:37.909Z
+- Trigger: commit
+- Learning: Push-time gates and memory debugging skills need pinned repo-local manifests, configs, and agent:check wiring so forks inherit deterministic validation.
+- Context: feat(agent): add gated integration tooling
+- Branch: codex/no-mistakes-memory-leak-integrations
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - .codex/prompts/ship.md
+  - AGENTS.md
+  - README.md
+  - docs/README.md
+  - docs/agent-skills.md
+  - docs/agent-workflow.md
+  - docs/commands.md
+  - docs/adrs/2026-07-05-push-time-validation-via-no-mistakes-gate.md
+  - package.json
+  - scripts/agent-check.mjs
+  - scripts/agent-sync.mjs
+  - .mcp.json
+  - .no-mistakes.yaml
+  - agent/skills-manifest.chromedevtools.json
+  - agent/skills/chromedevtools
+
+## 2026-07-05T12:00:00.000Z
+- Trigger: commit
+- Learning: agent-sync directory verification calls api.github.com, which rate-limits unauthenticated CI runners to 60/hour and returns HTTP 403; sending GITHUB_TOKEN via githubHeaders and wiring it into the agent guardrails step keeps skills:verify-sync deterministic in CI.
+- Context: fix(agent): authenticate agent-sync GitHub requests in CI
+- Branch: codex/no-mistakes-memory-leak-integrations
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - scripts/agent-sync.mjs
+  - .github/workflows/ci.yml
+  - progress.md
+## 2026-07-24T04:28:00.676Z
+- Trigger: commit
+- Learning: A pinned Fallow audit can gate only newly introduced code-health findings when PI Starter declares intentional indirect entry points and supplies origin/main explicitly outside pull-request CI.
+- Context: feat(tooling): add Fallow audit gate
+- Branch: codex/fallow-audit
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - .fallowrc.json
+  - .github/workflows/ci.yml
+  - .no-mistakes.yaml
+  - AGENTS.md
+  - README.md
+  - docs/agent-workflow.md
+  - docs/deploying-to-vercel.md
+  - package.json
+  - package-lock.json
+  - scripts/agent-check.mjs
+## 2026-09-07T09:08:14.905Z
+- Trigger: commit
+- Learning: Provider packaging needs its own CI check; validation must preserve staging, and releases must retain lockfile resolutions and validate the bumped tree before creating artifacts.
+- Context: feat(starter): add Cloudflare hosting and safer workflows Repro-Prompt: Rebuild the Cloudflare Workers hosting option from the preserved WIP on current main, then implement read-only checks, staging-safe hooks, lockfile-preserving releases, release branch and validation safeguards, Cloudflare CI packaging, and regression tests. Signed-off-by: Moe Ghashim <mohanadgh@gmail.com>
+- Branch: codex/cloudflare-workers-hosting-refresh
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - .codex/prompts/ship.md
+  - .github/workflows/ci.yml
+  - .gitignore
+  - .husky/pre-commit
+  - AGENTS.md
+  - CONTRIBUTING.md
+  - README.md
+  - apps/web/app/layout.tsx
+  - apps/web/app/page.tsx
+  - apps/web/next.config.ts
+  - apps/web/package.json
+  - apps/web/tsconfig.json
+  - apps/web/cloudflare-env.d.ts
+  - apps/web/open-next.config.ts
+  - apps/web/wrangler.jsonc
+  - biome.json
+  - docs/README.md
+  - docs/agent-workflow.md
+  - docs/deploying-to-vercel.md
+  - docs/deploying-to-cloudflare.md
+  - docs/adrs/2026-07-27-cloudflare-workers-hosting-option.md
+  - package-lock.json
+  - package.json
+  - scripts/agent-check.mjs
+  - scripts/check-file-length.mjs
+  - scripts/release.mjs
+  - scripts/test/workflow.test.mjs
+## 2026-09-08T09:56:38.000Z
+- Trigger: review-fix
+- Learning: Root overrides must be re-locked after editing; `npm install --package-lock-only` treats a stale nested entry as satisfied, so verify with `npm ls <pkg>`. Pinned sharp 0.35 is required by advisory GHSA-f88m-g3jw-g9cj and Next image optimization was verified on it. Wrangler typegen without runtime types needs `@cloudflare/workers-types` in tsconfig `types`, otherwise skipLibCheck hides unresolved binding types.
+- Context: Address review findings on Cloudflare hosting refresh: lockfile glob override resolution, Cloudflare runtime types, release guard output, shipping checklist, and documented dependency overrides.
+- Branch: codex/cloudflare-workers-hosting-refresh
+- Actor: Moe Ghashim <moe@bannaa.co>
+- Changed Paths:
+  - CONTRIBUTING.md
+  - apps/web/package.json
+  - apps/web/tsconfig.json
+  - docs/deploying-to-cloudflare.md
+  - docs/deploying-to-vercel.md
+  - package-lock.json
+  - progress.md
+  - scripts/release.mjs
+## 2026-09-08T10:07:13.933Z
+- Trigger: review-fix
+- Learning: Keep `compatibility_date` at or below the `workerd` release bundled with the pinned Wrangler; wrangler dev only rejects dates in the future relative to today, so a date newer than the local runtime silently previews on an older baseline instead of failing. The generated `cloudflare-env.d.ts` hash is content-based and does not change with the date, and `wrangler types` must run without `.open-next` present or it injects a `GlobalProps` import of the build output.
+- Context: Align Cloudflare compatibility_date with pinned workerd 2026-07-22 and verify local preview serves.
+- Branch: codex/cloudflare-workers-hosting-refresh
+- Actor: Moe Ghashim <moe@bannaa.co>
+- Changed Paths:
+  - apps/web/wrangler.jsonc
+  - docs/deploying-to-cloudflare.md
+  - progress.md
+## 2026-09-08T10:21:35.503Z
+- Trigger: review-fix
+- Learning: `wrangler types` has no flag to suppress the `GlobalProps` entrypoint import; it appears whenever config `main` resolves on disk, so generation through `experimental_generateTypes` from a same-directory temp config without `main` is the deterministic path. Generate with the wrapper and keep the regression test comparing both build states against the committed file.
+- Context: Make Cloudflare binding type generation deterministic regardless of OpenNext build output and align README, Vercel, and Cloudflare CI descriptions on the `Cloudflare build` job.
+- Branch: codex/cloudflare-workers-hosting-refresh
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - .gitignore
+  - README.md
+  - apps/web/cloudflare-env.d.ts
+  - apps/web/package.json
+  - apps/web/scripts/cloudflare-typegen.mjs
+  - docs/adrs/2026-07-27-cloudflare-workers-hosting-option.md
+  - docs/deploying-to-cloudflare.md
+  - docs/deploying-to-vercel.md
+  - progress.md
+  - scripts/test/cloudflare-typegen.test.mjs
+## 2026-09-08T10:30:22.000Z
+- Trigger: review-fix
+- Learning: Wrangler type generation infers secrets through `getVarsForDev`, which reads `.dev.vars` and, by default, `.env` files beside the config plus `process.env` when `CLOUDFLARE_INCLUDE_PROCESS_ENV` is set, so a typegen config placed beside `wrangler.jsonc` silently types local secret names into the committed declaration file. Generate from a temporary config in an isolated `tmpdir` directory with `CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV` and `CLOUDFLARE_INCLUDE_PROCESS_ENV` forced to `false`, and keep regression tests with synthetic secret fixtures plus fixture bindings and `vars` so isolation does not drop declared config.
+- Context: Make tracked Cloudflare binding types independent of local .dev.vars, .env, and process environment secrets while preserving config-declared bindings and vars.
+- Branch: codex/cloudflare-workers-hosting-refresh
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - .gitignore
+  - apps/web/scripts/cloudflare-typegen.mjs
+  - docs/adrs/2026-07-27-cloudflare-workers-hosting-option.md
+  - docs/deploying-to-cloudflare.md
+  - progress.md
+  - scripts/test/cloudflare-typegen.test.mjs
+## 2026-09-08T10:41:06.955Z
+- Trigger: review-fix
+- Learning: Test cleanup assertions must not scan the shared OS tmpdir, because concurrent gate worktrees or a developer running `npm run typegen:cloudflare` create and remove `pi-cloudflare-typegen-config-*` entries between snapshots. Node's `os.tmpdir()` honors `TMPDIR`, so pass a per-fixture `tmp` directory through the child environment and assert only that directory is empty afterward; disabling the wrapper's `rmSync` still fails the test, which proves the child honors the override.
+- Context: Make the Cloudflare typegen leak check hermetic by scoping temporary config directories to a per-test TMPDIR.
+- Branch: codex/cloudflare-workers-hosting-refresh
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - progress.md
+  - scripts/test/cloudflare-typegen.test.mjs
+## 2026-09-08T11:11:34.661Z
+- Trigger: commit
+- Learning: The DCO GitHub check rejects any commit lacking a Signed-off-by trailer that matches the author, and the gate's no-mistakes(...) fix commits were created unsigned. scripts/committer is vendored verbatim from upstream, so adding --signoff there fails agent:verify-sync; enforce sign-off through a Husky prepare-commit-msg hook that uses git interpret-trailers, and repair existing history with git rebase --signoff from the base commit.
+- Context: fix(git): add DCO sign-off hook and document the trailer rule
+- Branch: HEAD
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - .husky/prepare-commit-msg
+  - AGENTS.md
+  - scripts/test/workflow.test.mjs
+## 2026-10-15T15:35:05.698Z
+- Trigger: commit
+- Learning: Branch protection needs a stable non-matrix aggregate status. Next 16.4.1 removes the need for older Sharp and PostCSS overrides; gate commands should use the configured Node 22 PATH without assuming a version manager. Regression tests, checks, builds, audit, and local Cloudflare preview passed.
+- Context: fix(ci): restore required checks and refresh hosting dependencies Repro-Prompt: Address PR 7 review findings: provide the exact required CI status, eliminate audited dependency vulnerabilities, and remove the gate dependency on nvm while retaining Node 22 validation.
+- Branch: codex/cloudflare-workers-hosting-refresh
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - .github/workflows/ci.yml
+  - .no-mistakes.yaml
+  - CONTRIBUTING.md
+  - README.md
+  - apps/web/cloudflare-env.d.ts
+  - apps/web/next-env.d.ts
+  - apps/web/package.json
+  - docs/deploying-to-cloudflare.md
+  - docs/deploying-to-vercel.md
+  - package-lock.json
+  - package.json
+  - scripts/test/gate-config.test.mjs
+## 2026-10-15T15:48:12.489Z
+- Trigger: commit
+- Learning: Gate worktrees set a per-worktree core.hooksPath to the bare repository's sample hooks directory, so the Husky prepare-commit-msg hook never runs and gate-created fix commits land without the Signed-off-by trailer the DCO check requires. Point the worktree config at .husky before committing and sign with git commit -s. The @node-minify/core glob override is scoped on purpose: @node-minify/core@9.0.2 pins the deprecated glob@10.3.3 inside the GHSA-5j98-mcp5-4vw2 range, while @opennextjs/cloudflare needs root glob@13.0.6, so npm ls glob is expected to report both 13.0.6 and 12.0.0.
+- Context: no-mistakes(review): document scoped glob override and expected two-version tree
+- Branch: HEAD
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - CONTRIBUTING.md
+  - progress.md
+## 2026-10-15T18:17:07.724Z
+- Trigger: commit
+- Learning: Fallow CI needs Next.js typegen before auditing next-env.d.ts. A cached unresolved-import result can persist after generation, so disable the CI audit cache. Verified failure before typegen and success after typegen with no cache in a clean clone; workflow regression tests, checks, full tests, Fallow audit, and agent guardrails passed.
+- Context: fix(ci): generate Next.js types before Fallow audit Repro-Prompt: Fix PR 7 Fallow CI failure on missing generated Next.js types, verify a clean checkout, then commit and push.
+- Branch: codex/cloudflare-workers-hosting-refresh
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - .github/workflows/ci.yml
+  - scripts/test/gate-config.test.mjs
+## 2026-10-16T09:42:43.893Z
+- Trigger: commit
+- Learning: Vendored skill integrity can be checked offline by hashing local files against manifest sha256 values, while upstream provenance stays a separate networked check run once in CI so local agent:check never depends on GitHub availability.
+- Context: feat(agent): verify vendored skills offline in agent:check agent:check now hashes vendored files against manifest sha256 values with no network access. Upstream provenance moves to agent:verify-upstream, which CI runs once per push on Ubuntu. Adds regression tests for the progress append-only check, sync-versions, docs-list front matter, committer, and the offline verifier. Removes the unused scripts/docs-list.ts duplicate. Repro-Prompt: Implement offline skill integrity checks, regression tests for repository automation, and remove the duplicate docs-list.ts. Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+- Branch: codex/offline-skill-verify
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - .github/workflows/ci.yml
+  - AGENTS.md
+  - README.md
+  - agent/manifest.json
+  - docs/agent-skills.md
+  - docs/agent-workflow.md
+  - package.json
+  - scripts/agent-check.mjs
+  - scripts/agent-sync.mjs
+  - scripts/docs-list.ts
+  - scripts/test/automation.test.mjs
+## 2026-10-04T20:24:13.424Z
+- Trigger: commit
+- Learning: Harnesses only discover skills at .agents/skills/<name>/SKILL.md or .claude/skills, so vendor-nested agent/skills paths and repo-local .codex/prompts never loaded on their own. Keep one flat skill directory with .claude/skills as a symlink, record pack membership only in the manifests, and vendor upstream skills together with the skills they call by name (improve-codebase-architecture needs codebase-design, domain-modeling, and grilling).
+- Context: feat(agent): move skills to native .agents/skills layout and re-pin Matt pack
+- Branch: feat/native-skill-layout
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - .agents
+  - .claude
+  - agent
+  - .codex
+  - .fallowrc.json
+  - AGENTS.md
+  - README.md
+  - CONTRIBUTING.md
+  - docs
+  - scripts/agent-check.mjs
+## 2026-10-18T09:42:35.660Z
+- Trigger: commit
+- Learning: Agent harnesses only load skills from .agents/skills or .claude/skills, so vendored skills belong in one flat directory with pack membership recorded in manifests. Upstream skill packs move fast and delete files, so re-pin all manifests together and drop rewrites that no longer match. Releases that push main directly bypass required checks; preparing a release branch and tagging only after merge keeps every main commit gated.
+- Context: feat(setup): native skills, Node 24, TypeScript 7, and PR-based releases Move skills to .agents/skills with a .claude/skills link so Codex and Claude Code load them, convert the workflow prompts into skills, and sync every vendored pack to its maker's latest commit. Vendor the five Addy skills the core pack references. Collapse twelve per-pack scripts into skills:sync, skills:verify, and agent:verify-upstream. Move to Node 24 LTS and the TypeScript 7 compiler, keeping apps/web on TypeScript 5 for Next.js. Tighten tsconfig and Biome, quote the core test glob, pin the MCP server, add Dependabot, pin CI actions by SHA, add job timeouts, and run the full Next.js build once per PR. Release through pull requests: release:<bump> prepares a signed commit on a release branch, and release:tag tags main after the merge. Repro-Prompt: Review the whole setup without assuming anything is good, optimize for efficiency and best practices, sync upstream skill updates, vendor referenced Addy skills, and release through pull requests. Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+- Branch: codex/setup-hardening
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - .agents
+  - .claude/skills
+  - .codex
+  - .fallowrc.json
+  - .github
+  - .mcp.json
+  - .nvmrc
+  - AGENTS.md
+  - CONTRIBUTING.md
+  - README.md
+  - agent
+  - apps/web/app/page.tsx
+  - apps/web/package.json
+  - biome.json
+  - docs
+  - package-lock.json
+  - package.json
+  - packages/core/package.json
+  - progress.md
+  - scripts
+  - tsconfig.base.json
+## 2026-10-19T07:00:06.836Z
+- Trigger: commit
+- Learning: Agent instruction files earn their keep with a repo map, everyday commands, and toolchain traps; a CLAUDE.md audit found the file current but missing a layout and the test, dev, and release commands.
+- Context: docs(agent): add layout, commands, and toolchain notes to AGENTS.md Add a layout map, the missing dev, test, Worker build, and release commands, and toolchain notes for the .nvmrc Node check and the TypeScript 7 root versus TypeScript 5.9 web split. Tighten the inline-imports, database, and gate rules without changing them. Repro-Prompt: Audit the repository CLAUDE.md files with claude-md-improver and apply the layout, commands, toolchain, and wording updates. Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+- Branch: docs/agents-md-audit
+- Actor: Moe Ghashim <mohanadgh@gmail.com>
+- Changed Paths:
+  - AGENTS.md

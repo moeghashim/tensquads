@@ -1,0 +1,7 @@
+# Keep push-time gate commands deterministic instead of relying on agent auto-detection.
+# Put the Node version from .nvmrc on the gate daemon's PATH using any manager.
+# npm run check enforces that version; the gate must not assume nvm is installed.
+commands:
+  test: "npm ci && npm test"
+  lint: "npm ci && npm run check && npm run fallow:audit"
+  format: "npx biome format --write ."

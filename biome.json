@@ -1,0 +1,61 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.3.5/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"style": {
+				"noNonNullAssertion": "off",
+				"useConst": "error",
+				"useNodejsImportProtocol": "off"
+			}
+		}
+	},
+	"formatter": {
+		"enabled": true,
+		"formatWithErrors": false,
+		"indentStyle": "tab",
+		"indentWidth": 3,
+		"lineWidth": 120
+	},
+	"files": {
+		"includes": [
+			"apps/**/*.ts",
+			"apps/**/*.tsx",
+			"apps/**/*.js",
+			"apps/**/*.mjs",
+			"packages/*/src/**/*.ts",
+			"packages/*/test/**/*.ts",
+			"scripts/**/*.ts",
+			"scripts/**/*.js",
+			"scripts/**/*.mjs"
+		]
+	},
+	"overrides": [
+		{
+			"includes": ["apps/web/**/*.ts", "apps/web/**/*.tsx"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"paths": {
+									"react": {
+										"importNames": ["useEffect"],
+										"message": "Do not import useEffect directly in app code. Derive during render, use event handlers, use framework data loading, or use useMountEffect for mount-only external sync."
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	]
+}

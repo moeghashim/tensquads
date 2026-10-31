@@ -19,7 +19,9 @@ for (const [file, expected] of Object.entries(manifest.files)) {
 
 console.log(`canvas ${manifest.canvas} version ${manifest.version}, pulled ${manifest.pulled}`);
 if (bad > 0) {
-	console.error(`${bad} file(s) differ from the canvas version in MANIFEST.json. Do not edit design/ by hand. Ask Moe to pull the canvas again.`);
+	console.error(
+		`${bad} file(s) differ from the canvas version in MANIFEST.json. Do not edit design/ by hand. Ask Moe to pull the canvas again.`,
+	);
 	process.exit(1);
 }
 console.log("design/ matches the canvas.");
