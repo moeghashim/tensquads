@@ -13,7 +13,7 @@ This repository is the handoff package for the build. Start with `AGENTS.md`.
 | `design/inventory/` | What each design file contains, listed by a script: texts, styles, colours, handlers, strings |
 | `scripts/design-check.mjs` | Proves `design/` matches the canvas |
 | `scripts/design-inventory.mjs` | Makes `design/inventory/` |
-| `tasks/` | One task file per unit of work. `00-foundation.md` is first |
+| `tasks/` | One task file per unit of work. `00-foundation.md` is first; `05-proof-of-concept.md` is the three-squad proof of concept |
 
 The design canvas: https://claude.ai/artifact/B7seDz5psECQTerDG6rfy4
 The plan: https://claude.ai/artifact/21JpQUuhEFqLZL8dPrj8NN
