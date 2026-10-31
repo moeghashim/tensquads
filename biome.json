@@ -29,6 +29,8 @@
 			"apps/**/*.tsx",
 			"apps/**/*.js",
 			"apps/**/*.mjs",
+			"!apps/**/worker-configuration.d.ts",
+			"!apps/**/routeTree.gen.ts",
 			"packages/*/src/**/*.ts",
 			"packages/*/test/**/*.ts",
 			"scripts/**/*.ts",

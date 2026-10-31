@@ -7,6 +7,7 @@ const ROOT = process.cwd();
 const INCLUDE_DIRS = ["apps", "packages"];
 const INCLUDE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".mjs"]);
 const EXCLUDE_DIR_NAMES = new Set(["node_modules", "dist", "build", ".git", ".next", ".open-next", ".wrangler"]);
+const EXCLUDE_FILE_NAMES = new Set(["worker-configuration.d.ts", "routeTree.gen.ts"]);
 
 function walk(dir, out = []) {
 	for (const name of readdirSync(dir)) {
@@ -19,6 +20,10 @@ function walk(dir, out = []) {
 
 		if (stat.isDirectory()) {
 			walk(path, out);
+			continue;
+		}
+
+		if (EXCLUDE_FILE_NAMES.has(name)) {
 			continue;
 		}
 

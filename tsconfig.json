@@ -6,6 +6,6 @@
 			"@tensquads/*": ["./packages/*/src/index.ts"]
 		}
 	},
-	"include": ["packages/*/src/**/*", "packages/*/test/**/*", "apps/*/src/**/*"],
+	"include": ["packages/*/src/**/*", "packages/*/test/**/*"],
 	"exclude": ["**/dist/**", "**/node_modules/**"]
 }

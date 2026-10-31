@@ -4,7 +4,8 @@ import { spawnSync } from "node:child_process";
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-const ROOTS = ["packages", "apps"];
+// Root tsc covers packages only. Each app runs its own check.
+const ROOTS = ["packages"];
 const EXTENSIONS = new Set([".ts", ".tsx"]);
 
 function hasTypeScript(dir) {
