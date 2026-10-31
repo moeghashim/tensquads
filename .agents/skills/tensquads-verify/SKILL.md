@@ -48,10 +48,10 @@ The chart hides Idle. Idle changes nothing. It exists so a finished inbox is not
 
 | Check | Covers | Sync commit |
 | --- | --- | --- |
-| `decide.test.ts` | `decideApproval`, `decideMission`, `askRevise`, `inboxCount`, `inboxIsEmpty`, `EMPTY_INBOX` | `634f35ebce301a02f807a1c999dc3fe6150c479e` |
-| `/statechart` on `Approval.tla` | The same actions, one approval and one proposal | `634f35ebce301a02f807a1c999dc3fe6150c479e` |
+| `decide.test.ts` | `decideApproval`, `decideMission`, `askRevise`, `inboxCount`, `inboxIsEmpty`, `EMPTY_INBOX` | `18fd6378854b33f70323e869c50757ce7c04ecd8` |
+| `/statechart` on `Approval.tla` | The same actions, one approval and one proposal | `18fd6378854b33f70323e869c50757ce7c04ecd8` |
 
-The sync commits above do not yet include `askRevise`. Move them forward only after both checks pass on the commit that adds it.
+Both checks passed on `18fd6378854b33f70323e869c50757ce7c04ecd8`, the commit that adds `askRevise`. `decide.test.ts` exited 0. TLC exited 0, reached 12 states and 23 steps, and named no broken rule.
 
 Move a sync commit forward only after both checks pass and you confirm that the model and the tests still describe the code at the new commit. An intended change updates `decide.ts`, `decide.test.ts`, and `Approval.tla` together.
 
