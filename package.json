@@ -23,10 +23,13 @@
 		"prepare": "node scripts/prepare.mjs",
 		"design:check": "node scripts/design-check.mjs",
 		"design:inventory": "node scripts/design-inventory.mjs",
-		"seed": "node --experimental-strip-types packages/seed/src/cli.ts"
+		"seed": "node --experimental-strip-types packages/seed/src/cli.ts",
+		"e2e": "playwright test"
 	},
 	"devDependencies": {
+		"@axe-core/playwright": "^4.14.0",
 		"@biomejs/biome": "2.3.5",
+		"@playwright/test": "^1.64.1",
 		"@types/node": "^24.19.2",
 		"esbuild": "^0.28.2",
 		"fallow": "3.9.1",

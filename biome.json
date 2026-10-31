@@ -35,7 +35,9 @@
 			"packages/*/test/**/*.ts",
 			"scripts/**/*.ts",
 			"scripts/**/*.js",
-			"scripts/**/*.mjs"
+			"scripts/**/*.mjs",
+			"e2e/**/*.ts",
+			"playwright.config.ts"
 		]
 	},
 	"overrides": [
