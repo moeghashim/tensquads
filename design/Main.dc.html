@@ -1,0 +1,1464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>tensquads workspace</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f3f3f3}
+a{color:#0169cc}a:hover{color:#004f99}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #0169cc;outline-offset:2px}
+.nav-btn:hover{background:rgba(13,13,13,.08)}
+.row-btn:hover{background:rgba(13,13,13,.05)}
+.soft-btn:hover{background:rgba(13,13,13,.12)}
+.acct-row:hover{background:rgba(13,13,13,.04)}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; background: #f3f3f3; color: #282828; font-family: Inter, system-ui, sans-serif; font-size: 14px; line-height: 20px; letter-spacing: -0.01em; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; padding: 8px">
+
+<!-- Admin sidebar (platform level) -->
+<sc-if value="{{isAdminArea}}" hint-placeholder-val="{{false}}">
+<nav aria-label="Platform admin" style="flex: 1 1 220px; max-width: 260px; min-width: 200px; display: flex; flex-direction: column; gap: 4px; padding: 12px 8px">
+  <div style="display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px">
+    <div style="width: 32px; height: 32px; border-radius: 8px; background: #181818; color: #fff; display: flex; align-items: center; justify-content: center">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 13.5v-8l5.5-3 5.5 3v8"></path><path d="M2.5 13.5h11M6.5 13.5v-4h3v4"></path></svg>
+    </div>
+    <div style="display: flex; flex-direction: column">
+      <span style="font-weight: 600; color: #0d0d0d">Platform admin</span>
+      <span style="font-size: 12px; color: #5d5d5d">Your company account</span>
+    </div>
+  </div>
+  <button class="nav-btn" onClick="{{goAdmin}}" style="{{nav.admin}}">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="2"></rect><path d="M2 7h12M6 7v6"></path></svg>
+    Companies
+  </button>
+  <button class="nav-btn" onClick="{{goCatalog}}" style="{{nav.catalog}}">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8 13.5 5v6L8 14.2 2.5 11V5z"></path><path d="M2.5 5 8 8l5.5-3M8 8v6.2"></path></svg>
+    <span style="flex: 1">Squad images</span>
+    <sc-if value="{{cat.hasAttention}}" hint-placeholder-val="{{true}}"><span style="min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: #fa423e14; color: #911e1b; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{cat.attention}}</span></sc-if>
+  </button>
+  <div style="margin-top: 20px; padding: 0 10px; font-size: 12px; font-weight: 500; color: #5d5d5d">Coming next</div>
+  <div style="padding: 6px 10px; font-size: 13px; color: #8f8f8f; display: flex; flex-direction: column; gap: 8px">
+    <span>Usage and billing</span>
+    <span>Platform health</span>
+    <span>Admin users</span>
+  </div>
+  <div style="margin-top: 20px; display: flex; align-items: center; gap: 10px; padding: 8px 10px">
+    <div style="width: 28px; height: 28px; border-radius: 999px; background: #dfdfdf; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">MG</div>
+    <div style="display: flex; flex-direction: column">
+      <span style="font-size: 14px">Moe Ghashim</span>
+      <span style="font-size: 12px; color: #5d5d5d">Super admin</span>
+    </div>
+  </div>
+</nav>
+</sc-if>
+
+<!-- Sidebar (one account's workspace) -->
+<sc-if value="{{notAdmin}}" hint-placeholder-val="{{true}}">
+<nav aria-label="Workspace" style="flex: 1 1 220px; max-width: 260px; min-width: 200px; display: flex; flex-direction: column; gap: 4px; padding: 12px 8px">
+  <button class="nav-btn" onClick="{{goAdmin}}" style="display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 10px; margin-bottom: 4px; border: 0; border-radius: 8px; background: transparent; color: #5d5d5d; font-size: 12px; font-weight: 500; text-align: left">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5"></path></svg>
+    All companies
+  </button>
+  <div style="display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px">
+    <div style="width: 32px; height: 32px; border-radius: 999px; background: #181818; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px">{{masterInitial}}</div>
+    <div style="display: flex; flex-direction: column">
+      <span style="font-weight: 600; color: #0d0d0d">{{masterName}}</span>
+      <span style="font-size: 12px; color: #5d5d5d">Runs 5 squads · Demo store</span>
+    </div>
+  </div>
+  <button class="nav-btn" onClick="{{goOverview}}" style="{{nav.overview}}">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1"></rect><rect x="9" y="2" width="5" height="5" rx="1"></rect><rect x="2" y="9" width="5" height="5" rx="1"></rect><rect x="9" y="9" width="5" height="5" rx="1"></rect></svg>
+    Overview
+  </button>
+  <button class="nav-btn" onClick="{{goChat}}" style="{{nav.chat}}">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H7l-3 2.5v-2.5h0a2 2 0 0 1-1.5-2z"></path></svg>
+    Chat with the master
+  </button>
+  <button class="nav-btn" onClick="{{goAgents}}" style="{{nav.agents}}">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="5.5" cy="5.5" r="2.5"></circle><circle cx="11" cy="6.5" r="2"></circle><path d="M1.5 13.5c.5-2.2 2-3.5 4-3.5s3.5 1.3 4 3.5M10 10.2c1.8 0 3.2 1.2 3.6 3.3"></path></svg>
+    Squads
+  </button>
+  <button class="nav-btn" onClick="{{goFlow}}" style="{{nav.flow}}">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="3.5" r="1.8"></circle><circle cx="3" cy="12.5" r="1.8"></circle><circle cx="13" cy="12.5" r="1.8"></circle><path d="M7 5 4 11M9 5l3 6M4.8 12.5h6.4"></path></svg>
+    Squad traffic
+  </button>
+  <button class="nav-btn" onClick="{{goRules}}" style="{{nav.rules}}">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h7M12.5 4h1M2.5 8h2M7.5 8h6M2.5 12h5M10.5 12h3"></path><circle cx="11" cy="4" r="1.5"></circle><circle cx="6" cy="8" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle></svg>
+    Rules and limits
+  </button>
+
+  <div style="margin-top: 20px; padding: 0 10px; font-size: 12px; font-weight: 500; color: #5d5d5d">Squads</div>
+  <sc-for list="{{agents}}" as="a" hint-placeholder-count="5">
+    <button class="nav-btn" onClick="{{a.open}}" style="display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: #282828; font-size: 14px; text-align: left">
+      <span style="width: 22px; height: 22px; border-radius: 6px; background: {{a.tint}}; flex: none"></span>
+      <span style="flex: 1">{{a.name}}</span>
+      <span style="width: 8px; height: 8px; border-radius: 999px; background: {{a.dot}}" aria-label="{{a.statusLabel}}"></span>
+    </button>
+  </sc-for>
+
+  <div style="margin-top: 20px; display: flex; align-items: center; gap: 10px; padding: 8px 10px">
+    <div style="width: 28px; height: 28px; border-radius: 999px; background: #dfdfdf; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">MG</div>
+    <span style="font-size: 14px">Moe Ghashim</span>
+  </div>
+</nav>
+</sc-if>
+
+<!-- Main -->
+<main style="flex: 999 1 560px; min-width: 0; background: #fcfcfc; border: 0.5px solid #ededed; border-radius: 16px; box-sizing: border-box; padding: 28px 32px 40px; display: flex; flex-direction: column; gap: 24px; min-height: calc(100vh - 16px)">
+
+<!-- ============ ADMIN: ALL ACCOUNTS ============ -->
+<sc-if value="{{isAdmin}}" hint-placeholder-val="{{false}}">
+  <div style="display: flex; flex-direction: column; gap: 24px">
+    <header style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between">
+      <div>
+        <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">Companies</h1>
+        <p style="margin: 4px 0 0; color: #5d5d5d">Every company on the platform, with its mission and the squads it runs. Figures are demo data.</p>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(13,13,13,.08); font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; color: #5d5d5d">Demo data</span>
+        <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: #04b84c14; color: #008635; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center">{{adm.agentsOnline}} squads online now</span>
+      </div>
+    </header>
+
+    <section aria-label="Platform totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px">
+      <sc-for list="{{adm.kpis}}" as="k" hint-placeholder-count="6">
+        <div style="background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 16px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 12px; color: #5d5d5d">{{k.label}}</span>
+          <span style="font-size: 24px; line-height: 30px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">{{k.value}}</span>
+          <span style="font-size: 12px; color: {{k.deltaColor}}">{{k.delta}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch">
+      <section aria-label="New accounts" style="flex: 3 1 420px; min-width: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #0d0d0d">Companies created, last 8 weeks</h2>
+          <span style="font-size: 12px; color: #5d5d5d">Hover a bar for the week's count</span>
+        </div>
+        <div style="height: 160px; display: flex; align-items: flex-end; gap: 10px; border-bottom: 1px solid rgba(13,13,13,.08)">
+          <sc-for list="{{adm.bars}}" as="b" hint-placeholder-count="8">
+            <div title="{{b.title}}" style="flex: 1; height: {{b.h}}%; background: {{b.fill}}; border-radius: 4px 4px 0 0"></div>
+          </sc-for>
+        </div>
+        <div style="display: flex; gap: 10px">
+          <sc-for list="{{adm.bars}}" as="b" hint-placeholder-count="8">
+            <span style="flex: 1; text-align: center; font-size: 11px; color: #5d5d5d">{{b.label}}</span>
+          </sc-for>
+        </div>
+      </section>
+
+      <section aria-label="Plan mix" style="flex: 2 1 300px; min-width: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #0d0d0d">Companies by plan</h2>
+        <sc-for list="{{adm.plans}}" as="p" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div style="display: flex; justify-content: space-between; font-size: 13px">
+              <span style="color: #282828">{{p.label}}</span>
+              <span style="color: #5d5d5d">{{p.count}} companies · {{p.agents}} squads</span>
+            </div>
+            <div style="height: 8px; border-radius: 999px; background: rgba(13,13,13,.06); overflow: hidden">
+              <div style="height: 100%; width: {{p.pct}}%; background: {{p.fill}}; border-radius: 999px"></div>
+            </div>
+          </div>
+        </sc-for>
+        <div style="margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(13,13,13,.06); font-size: 12px; color: #5d5d5d">Average of {{adm.avgAgents}} squads per company</div>
+      </section>
+    </div>
+
+    <section aria-label="All accounts" style="background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); display: flex; flex-direction: column">
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid rgba(13,13,13,.06)">
+        <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #0d0d0d">All companies <span style="font-weight: 400; color: #5d5d5d">({{adm.shown}})</span></h2>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+          <label for="acct-search" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search companies</label>
+          <input id="acct-search" type="search" placeholder="Search companies" value="{{adm.query}}" onChange="{{adm.onQuery}}" style="height: 32px; width: 220px; max-width: 100%; box-sizing: border-box; padding: 0 12px; border: 0; border-radius: 999px; background: rgba(13,13,13,.06); font-family: inherit; font-size: 13px; color: #0d0d0d">
+          <sc-for list="{{adm.filters}}" as="f" hint-placeholder-count="4">
+            <button onClick="{{f.pick}}" aria-pressed="{{f.onStr}}" style="{{f.style}}">{{f.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="overflow-x: auto">
+        <div style="min-width: 1360px; display: flex; flex-direction: column">
+          <div style="display: grid; grid-template-columns: minmax(260px, 2.4fr) minmax(150px, 1.4fr) 90px 120px 110px 100px 70px 70px 80px 110px 90px; gap: 12px; align-items: center; padding: 10px 20px; font-size: 12px; font-weight: 500; color: #5d5d5d; border-bottom: 1px solid rgba(13,13,13,.06)">
+            <span>Company and mission</span><span>Owner</span><span>Plan</span><span>Subscription</span><span>Started</span><span style="text-align: right">All-time value</span><span style="text-align: right">Squads</span><span style="text-align: right">Online</span><span style="text-align: right">Tasks, 7d</span><span>Last active</span><span>Status</span>
+          </div>
+          <sc-for list="{{adm.rows}}" as="r" hint-placeholder-count="8">
+            <button class="acct-row" onClick="{{r.open}}" style="display: grid; grid-template-columns: minmax(260px, 2.4fr) minmax(150px, 1.4fr) 90px 120px 110px 100px 70px 70px 80px 110px 90px; gap: 12px; align-items: center; width: 100%; min-height: 56px; padding: 8px 20px; border: 0; border-bottom: 1px solid rgba(13,13,13,.06); background: transparent; text-align: left; color: #282828; font-size: 14px">
+              <span style="display: flex; align-items: center; gap: 10px; min-width: 0">
+                <span style="width: 28px; height: 28px; border-radius: 8px; background: {{r.tint}}; color: #0d0d0d; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex: none">{{r.initials}}</span>
+                <span style="display: flex; flex-direction: column; min-width: 0">
+                  <span style="font-weight: 600; color: #0d0d0d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.name}}</span>
+                  <span style="font-size: 12px; color: #5d5d5d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.mission}}</span>
+                </span>
+              </span>
+              <span style="display: flex; flex-direction: column; min-width: 0">
+                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.owner}}</span>
+                <span style="font-size: 12px; color: #5d5d5d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.email}}</span>
+              </span>
+              <span><span style="{{r.planStyle}}">{{r.plan}}</span></span>
+              <span style="display: flex; flex-direction: column; min-width: 0">
+                <span style="font-weight: 500; color: #0d0d0d; white-space: nowrap">{{r.subscription}}</span>
+                <span style="font-size: 12px; color: #5d5d5d; white-space: nowrap">{{r.subscriptionNote}}</span>
+              </span>
+              <span style="font-size: 13px; color: #282828; white-space: nowrap">{{r.started}}</span>
+              <span style="text-align: right; font-weight: 600; color: #0d0d0d; font-variant-numeric: tabular-nums">{{r.ltvDisplay}}</span>
+              <span style="text-align: right; font-weight: 600; color: #0d0d0d">{{r.agents}}</span>
+              <span style="text-align: right; color: {{r.onlineColor}}">{{r.online}}</span>
+              <span style="text-align: right">{{r.tasks}}</span>
+              <span style="font-size: 13px; color: #5d5d5d">{{r.lastActive}}</span>
+              <span><span style="{{r.statusStyle}}">{{r.status}}</span></span>
+            </button>
+          </sc-for>
+          <sc-if value="{{adm.empty}}" hint-placeholder-val="{{false}}">
+            <div style="padding: 32px 20px; text-align: center; color: #5d5d5d">No companies match that search.</div>
+          </sc-if>
+        </div>
+      </div>
+      <div style="padding: 12px 20px; font-size: 12px; color: #5d5d5d">Click a company to open its workspace. In this demo every company opens the same workspace.</div>
+    </section>
+  </div>
+</sc-if>
+
+<!-- ============ ADMIN: AGENT IMAGES ============ -->
+<sc-if value="{{isCatalog}}" hint-placeholder-val="{{false}}">
+  <div style="display: flex; flex-direction: column; gap: 24px">
+    <header style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between">
+      <div>
+        <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">Squad images</h1>
+        <p style="margin: 4px 0 0; color: #5d5d5d">The squad templates companies can deploy. One image is one agent with its tools. Each image carries its version, open bugs and requested features. Figures are demo data.</p>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(13,13,13,.08); font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; color: #5d5d5d">Demo data</span>
+        <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: #fa423e14; color: #911e1b; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center">{{cat.attention}} images need attention</span>
+      </div>
+    </header>
+
+    <section aria-label="Image totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px">
+      <sc-for list="{{cat.kpis}}" as="k" hint-placeholder-count="5">
+        <div style="background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 16px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 12px; color: #5d5d5d">{{k.label}}</span>
+          <span style="font-size: 24px; line-height: 30px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">{{k.value}}</span>
+          <span style="font-size: 12px; color: {{k.deltaColor}}">{{k.delta}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <!-- Image list -->
+      <section aria-label="Images" style="flex: 3 1 420px; min-width: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); display: flex; flex-direction: column">
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid rgba(13,13,13,.06)">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #0d0d0d">All images <span style="font-weight: 400; color: #5d5d5d">({{cat.count}})</span></h2>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <sc-for list="{{cat.filters}}" as="f" hint-placeholder-count="4">
+              <button onClick="{{f.pick}}" aria-pressed="{{f.onStr}}" style="{{f.style}}">{{f.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="overflow-x: auto">
+          <div style="min-width: 720px; display: flex; flex-direction: column">
+            <div style="display: grid; grid-template-columns: minmax(200px, 2fr) 90px 120px 90px 70px 80px 110px; gap: 12px; align-items: center; padding: 10px 20px; font-size: 12px; font-weight: 500; color: #5d5d5d; border-bottom: 1px solid rgba(13,13,13,.06)">
+              <span>Image</span><span>Version</span><span>Last updated</span><span style="text-align: right">Deployed</span><span style="text-align: right">Bugs</span><span style="text-align: right">Features</span><span>Status</span>
+            </div>
+            <sc-for list="{{cat.rows}}" as="r" hint-placeholder-count="7">
+              <button class="acct-row" onClick="{{r.pick}}" aria-pressed="{{r.onStr}}" style="{{r.rowStyle}}">
+                <span style="display: flex; align-items: center; gap: 10px; min-width: 0">
+                  <span style="width: 28px; height: 28px; border-radius: 8px; background: {{r.tint}}; display: inline-flex; align-items: center; justify-content: center; flex: none">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"></rect><path d="M8 2.5V5M6 9h0M10 9h0"></path></svg>
+                  </span>
+                  <span style="display: flex; flex-direction: column; min-width: 0">
+                    <span style="font-weight: 600; color: #0d0d0d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.name}}</span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5d5d5d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.tag}}</span>
+                  </span>
+                </span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #0d0d0d">{{r.version}}</span>
+                <span style="font-size: 13px; color: #5d5d5d">{{r.updated}}</span>
+                <span style="text-align: right">{{r.deployed}}</span>
+                <span style="text-align: right; font-weight: 600; color: {{r.bugColor}}">{{r.bugCount}}</span>
+                <span style="text-align: right; color: #282828">{{r.featureCount}}</span>
+                <span><span style="{{r.statusStyle}}">{{r.status}}</span></span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </section>
+
+      <!-- Selected image -->
+      <aside aria-label="Image details" style="flex: 2 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <section style="background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; gap: 12px; align-items: center">
+            <span style="width: 40px; height: 40px; border-radius: 10px; background: {{img.tint}}; display: inline-flex; align-items: center; justify-content: center; flex: none">
+              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"></rect><path d="M8 2.5V5M6 9h0M10 9h0"></path></svg>
+            </span>
+            <div style="display: flex; flex-direction: column; min-width: 0; flex: 1">
+              <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #0d0d0d">{{img.name}}</h2>
+              <span style="font-size: 13px; color: #5d5d5d">{{img.role}}</span>
+            </div>
+            <span style="{{img.statusStyle}}">{{img.status}}</span>
+          </div>
+          <dl style="margin: 0; display: grid; grid-template-columns: 110px 1fr; gap: 8px 12px; font-size: 13px">
+            <dt style="color: #5d5d5d">Image</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #0d0d0d; word-break: break-all">{{img.tag}}</dd>
+            <dt style="color: #5d5d5d">Version</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #0d0d0d">{{img.version}}</dd>
+            <dt style="color: #5d5d5d">Last updated</dt><dd style="margin: 0; color: #0d0d0d">{{img.updatedFull}}</dd>
+            <dt style="color: #5d5d5d">Deployed to</dt><dd style="margin: 0; color: #0d0d0d">{{img.deployedFull}}</dd>
+            <dt style="color: #5d5d5d">On latest</dt><dd style="margin: 0; color: #0d0d0d">{{img.onLatest}}</dd>
+          </dl>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <button style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: #181818; color: #fff; font-size: 13px; font-weight: 500">Roll out {{img.nextVersion}}</button>
+            <button class="soft-btn" style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: rgba(13,13,13,.08); color: #282828; font-size: 13px; font-weight: 500">View changelog</button>
+          </div>
+        </section>
+
+        <section style="background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <h3 style="margin: 0; font-size: 15px; font-weight: 600; color: #0d0d0d">Open bugs</h3>
+            <span style="min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 999px; background: {{img.bugBadgeBg}}; color: {{img.bugBadgeFg}}; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{img.bugCount}}</span>
+          </div>
+          <sc-for list="{{img.bugs}}" as="b" hint-placeholder-count="2">
+            <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: #f9f9f9">
+              <span style="{{b.sevStyle}}">{{b.sev}}</span>
+              <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1">
+                <span style="font-weight: 500; color: #0d0d0d">{{b.title}}</span>
+                <span style="font-size: 12px; color: #5d5d5d">{{b.meta}}</span>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{img.noBugs}}" hint-placeholder-val="{{false}}">
+            <div style="padding: 16px 8px; text-align: center; color: #5d5d5d; font-size: 13px">No open bugs on this version.</div>
+          </sc-if>
+        </section>
+
+        <section style="background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <h3 style="margin: 0; font-size: 15px; font-weight: 600; color: #0d0d0d">Features to add</h3>
+            <span style="min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 999px; background: #0285ff14; color: #004f99; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{img.featureCount}}</span>
+          </div>
+          <sc-for list="{{img.features}}" as="f" hint-placeholder-count="3">
+            <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: #f9f9f9">
+              <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1">
+                <span style="font-weight: 500; color: #0d0d0d">{{f.title}}</span>
+                <span style="font-size: 12px; color: #5d5d5d">{{f.meta}}</span>
+              </div>
+              <span style="{{f.stageStyle}}">{{f.stage}}</span>
+            </div>
+          </sc-for>
+          <sc-if value="{{img.noFeatures}}" hint-placeholder-val="{{false}}">
+            <div style="padding: 16px 8px; text-align: center; color: #5d5d5d; font-size: 13px">Nothing requested yet.</div>
+          </sc-if>
+        </section>
+      </aside>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ============ OVERVIEW ============ -->
+<sc-if value="{{isOverview}}" hint-placeholder-val="{{true}}">
+  <div style="display: flex; flex-direction: column; gap: 24px">
+    <header style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between">
+      <div>
+        <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">Good morning, Moe</h1>
+        <p style="margin: 4px 0 0; color: #5d5d5d">Last 7 days across the store and your squads. Figures are demo data.</p>
+        <p style="margin: 12px 0 0; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; background: #fff; box-shadow: 0 0 0 1px rgba(13,13,13,.08); font-size: 13px; color: #0d0d0d"><span style="height: 20px; padding: 0 8px; border-radius: 999px; background: #181818; color: #fff; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center">Mission</span>{{companyMission}}</p>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(13,13,13,.08); font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; color: #5d5d5d">Demo data</span>
+        <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: #04b84c14; color: #008635; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center">{{onlineCount}} of 5 squads online</span>
+      </div>
+    </header>
+
+    <section aria-label="Key numbers" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+        <div style="background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 16px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 12px; color: #5d5d5d">{{k.label}}</span>
+          <span style="font-size: 24px; line-height: 30px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">{{k.value}}</span>
+          <span style="font-size: 12px; color: {{k.deltaColor}}">{{k.delta}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch">
+      <section aria-label="Revenue" style="flex: 3 1 420px; min-width: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #0d0d0d">Revenue, last 14 days</h2>
+          <span style="font-size: 12px; color: #5d5d5d">Hover a bar for the day's total</span>
+        </div>
+        <div style="height: 200px; display: flex; align-items: flex-end; gap: 6px; border-bottom: 1px solid rgba(13,13,13,.08)">
+          <sc-for list="{{bars}}" as="b" hint-placeholder-count="14">
+            <div title="{{b.title}}" style="flex: 1; height: {{b.h}}%; background: {{b.fill}}; border-radius: 4px 4px 0 0"></div>
+          </sc-for>
+        </div>
+        <div style="display: flex; gap: 6px">
+          <sc-for list="{{bars}}" as="b" hint-placeholder-count="14">
+            <span style="flex: 1; text-align: center; font-size: 11px; color: #5d5d5d">{{b.label}}</span>
+          </sc-for>
+        </div>
+        <div style="display: flex; gap: 16px; font-size: 12px; color: #5d5d5d">
+          <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 2px; background: #c9c9c9"></span>Previous week</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 2px; background: #181818"></span>This week</span>
+        </div>
+      </section>
+
+      <section aria-label="Needs you" style="flex: 2 1 300px; min-width: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #0d0d0d">Needs your approval</h2>
+          <span style="min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 999px; background: #fb6a2212; color: #923b0f; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{approvalCount}}</span>
+        </div>
+        <sc-for list="{{missionProposals}}" as="mp" hint-placeholder-count="1">
+          <div style="border-radius: 12px; background: #f9f9f9; box-shadow: inset 0 0 0 1px rgba(13,13,13,.06); padding: 12px; display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; gap: 8px; align-items: center">
+              <span style="width: 18px; height: 18px; border-radius: 5px; background: {{mp.tint}}"></span>
+              <span style="font-size: 12px; color: #5d5d5d">{{mp.agentName}} squad</span>
+              <span style="margin-left: auto; height: 20px; padding: 0 8px; border-radius: 999px; background: #181818; color: #fff; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center">Mission</span>
+            </div>
+            <div style="font-weight: 500; color: #0d0d0d">{{mp.title}}</div>
+            <div style="font-size: 13px; color: #282828">{{mp.mission}}</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px">
+              <sc-for list="{{mp.targetChips}}" as="t" hint-placeholder-count="3">
+                <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: #fff; box-shadow: 0 0 0 1px rgba(13,13,13,.1); font-size: 11px; display: inline-flex; align-items: center; color: #414141">{{t}}</span>
+              </sc-for>
+            </div>
+            <sc-if value="{{mp.isProposed}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; gap: 8px">
+                <button onClick="{{mp.approve}}" style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: #181818; color: #fff; font-size: 13px; font-weight: 500">Approve mission</button>
+                <button class="soft-btn" onClick="{{mp.decline}}" style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: rgba(13,13,13,.08); color: #282828; font-size: 13px; font-weight: 500">Ask for another</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{mp.isRevising}}" hint-placeholder-val="{{false}}">
+              <div style="font-size: 12px; color: #5d5d5d; display: inline-flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #fb6a22"></span>{{masterName}} is writing a new proposal. The squad stays on "Mission pending".</div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <sc-for list="{{approvals}}" as="ap" hint-placeholder-count="3">
+          <div style="border-radius: 12px; background: #f9f9f9; padding: 12px; display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; gap: 8px; align-items: center">
+              <span style="width: 18px; height: 18px; border-radius: 5px; background: {{ap.tint}}"></span>
+              <span style="font-size: 12px; color: #5d5d5d">{{ap.agentName}} squad</span>
+              <span style="margin-left: auto; font-weight: 600; color: #0d0d0d">{{ap.amount}}</span>
+            </div>
+            <div style="font-weight: 500; color: #0d0d0d">{{ap.title}}</div>
+            <div style="font-size: 13px; color: #5d5d5d">{{ap.detail}}</div>
+            <div style="display: flex; gap: 8px">
+              <button onClick="{{ap.approve}}" style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: #181818; color: #fff; font-size: 13px; font-weight: 500">Approve</button>
+              <button class="soft-btn" onClick="{{ap.decline}}" style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: rgba(13,13,13,.08); color: #282828; font-size: 13px; font-weight: 500">Decline</button>
+            </div>
+          </div>
+        </sc-for>
+        <sc-if value="{{noApprovals}}" hint-placeholder-val="{{false}}">
+          <div style="padding: 24px 8px; text-align: center; color: #5d5d5d">Nothing waiting. Your squads are working inside their limits.</div>
+        </sc-if>
+      </section>
+    </div>
+
+    <section aria-label="Agents at a glance" style="display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #0d0d0d">Squads and their missions</h2>
+        <button class="row-btn" onClick="{{goFlow}}" style="height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; color: #0169cc; font-size: 13px; font-weight: 500">See squad traffic</button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px">
+        <sc-for list="{{agents}}" as="a" hint-placeholder-count="5">
+          <button onClick="{{a.open}}" style="text-align: left; border: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 16px; display: flex; flex-direction: column; gap: 10px; color: #282828">
+            <div style="display: flex; gap: 10px; align-items: center; width: 100%">
+              <span style="width: 28px; height: 28px; border-radius: 8px; background: {{a.tint}}; display: flex; align-items: center; justify-content: center">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"></rect><path d="M8 2.5V5M6 9h0M10 9h0"></path></svg>
+              </span>
+              <div style="display: flex; flex-direction: column; flex: 1">
+                <span style="font-weight: 600; color: #0d0d0d">{{a.name}}</span>
+                <span style="font-size: 12px; color: #5d5d5d">{{a.role}}</span>
+              </div>
+            </div>
+            <div style="font-size: 13px; color: #5d5d5d">{{a.last}}</div>
+            <div style="display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 4px; border-top: 1px solid rgba(13,13,13,.06)">
+              <span style="font-size: 12px; color: {{a.missionColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{a.missionLine}}</span>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <div style="flex: 1; height: 6px; border-radius: 999px; background: rgba(13,13,13,.06); overflow: hidden"><div style="height: 100%; width: {{a.contribution}}%; background: {{a.barColor}}; border-radius: 999px"></div></div>
+                <span style="font-size: 12px; font-weight: 600; color: #0d0d0d; width: 64px; text-align: right">{{a.contributionLabel}}</span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 14px; font-size: 12px; color: #5d5d5d">
+              <span><strong style="color: #0d0d0d">{{a.tasks}}</strong> tasks</span>
+              <span><strong style="color: #0d0d0d">{{a.success}}</strong> success</span>
+              <span><strong style="color: #0d0d0d">{{a.saved}}</strong> saved</span>
+            </div>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+</sc-if>
+
+<!-- ============ CHAT ============ -->
+<sc-if value="{{isChat}}" hint-placeholder-val="{{false}}">
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <div style="flex: 3 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+      <header>
+        <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">{{masterName}}</h1>
+        <p style="margin: 4px 0 0; color: #5d5d5d">Ask for anything. {{masterName}} hands the work to the right squad and reports back here.</p>
+      </header>
+      <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 0">
+        <sc-for list="{{chat}}" as="m" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column; align-items: {{m.align}}; gap: 4px">
+            <sc-if value="{{m.hasTag}}" hint-placeholder-val="{{false}}">
+              <span style="font-size: 12px; color: #5d5d5d; display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: {{m.tint}}"></span>{{m.tag}}</span>
+            </sc-if>
+            <div style="{{m.bubble}}">{{m.text}}</div>
+          </div>
+        </sc-for>
+        <sc-if value="{{thinking}}" hint-placeholder-val="{{false}}">
+          <div style="align-self: flex-start; padding: 10px 14px; border-radius: 16px; background: #ededed; color: #5d5d5d; font-size: 13px">{{thinkingLabel}}</div>
+        </sc-if>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <sc-for list="{{suggestions}}" as="s" hint-placeholder-count="4">
+          <button class="soft-btn" onClick="{{s.pick}}" style="height: 28px; padding: 0 12px; border: 0; border-radius: 999px; background: rgba(13,13,13,.08); color: #282828; font-size: 13px">{{s.text}}</button>
+        </sc-for>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center; background: #fff; border-radius: 999px; box-shadow: 0 0 0 1px rgba(13,13,13,.12); padding: 6px 6px 6px 18px">
+        <label for="chat-input" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Message {{masterName}}</label>
+        <input id="chat-input" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onKey}}" placeholder="Message {{masterName}}" style="flex: 1; min-width: 0; border: 0; outline-offset: 6px; background: transparent; font: inherit; font-size: 15px; color: #0d0d0d; height: 32px">
+        <button onClick="{{send}}" aria-label="Send" style="width: 36px; height: 36px; border: 0; border-radius: 999px; background: #181818; color: #fff; display: flex; align-items: center; justify-content: center">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <aside aria-label="Hand-offs from this chat" style="flex: 1 1 260px; min-width: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 14px; font-weight: 600; color: #0d0d0d">Hand-offs from this chat</h2>
+      <p style="margin: 0; font-size: 12px; color: #5d5d5d">Each message here was sent between {{masterName}} and a squad. Open one to see its payload.</p>
+      <sc-for list="{{chatBus}}" as="e" hint-placeholder-count="4">
+        <button class="row-btn" onClick="{{e.inspect}}" style="text-align: left; border: 0; background: transparent; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 4px; color: #282828">
+          <span style="display: flex; gap: 6px; align-items: center; font-size: 12px; color: #5d5d5d"><span style="{{e.kindStyle}}">{{e.kind}}</span>{{e.route}} · {{e.time}}</span>
+          <span style="font-size: 13px">{{e.text}}</span>
+        </button>
+      </sc-for>
+    </aside>
+  </div>
+</sc-if>
+
+<!-- ============ AGENTS LIST ============ -->
+<sc-if value="{{isAgentList}}" hint-placeholder-val="{{false}}">
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <header>
+      <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">Squads</h1>
+      <p style="margin: 4px 0 0; color: #5d5d5d">Each squad is one agent with its own tools. It runs alone in its own sandbox server, with only its own skills, keys and network access. Squads work together only through {{masterName}}, and each one has a mission it is scored on.</p>
+    </header>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px">
+      <sc-for list="{{agents}}" as="a" hint-placeholder-count="5">
+        <button onClick="{{a.open}}" style="text-align: left; border: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 18px; display: flex; flex-direction: column; gap: 12px; color: #282828">
+          <div style="display: flex; gap: 10px; align-items: center; width: 100%">
+            <span style="width: 32px; height: 32px; border-radius: 8px; background: {{a.tint}}"></span>
+            <div style="display: flex; flex-direction: column; flex: 1">
+              <span style="font-weight: 600; font-size: 15px; color: #0d0d0d">{{a.name}}</span>
+              <span style="font-size: 12px; color: #5d5d5d">{{a.role}}</span>
+            </div>
+            <span style="{{a.statusStyle}}">{{a.statusLabel}}</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; width: 100%">
+            <span style="font-size: 12px; color: {{a.missionColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{a.missionLine}}</span>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <div style="flex: 1; height: 6px; border-radius: 999px; background: rgba(13,13,13,.06); overflow: hidden"><div style="height: 100%; width: {{a.contribution}}%; background: {{a.barColor}}; border-radius: 999px"></div></div>
+              <span style="font-size: 12px; font-weight: 600; color: #0d0d0d; width: 64px; text-align: right">{{a.contributionLabel}}</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5d5d5d">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="12" height="4" rx="1"></rect><rect x="2" y="9" width="12" height="4" rx="1"></rect><path d="M5 5h0M5 11h0"></path></svg>
+            {{a.host}} · {{a.region}}
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{a.skillChips}}" as="sk" hint-placeholder-count="3">
+              <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(13,13,13,.06); font-family: 'JetBrains Mono', monospace; font-size: 11px; display: inline-flex; align-items: center; color: #414141">{{sk}}</span>
+            </sc-for>
+          </div>
+          <div style="display: flex; gap: 14px; font-size: 12px; color: #5d5d5d">
+            <span><strong style="color: #0d0d0d">{{a.tasks}}</strong> tasks</span>
+            <span><strong style="color: #0d0d0d">{{a.success}}</strong> success</span>
+            <span><strong style="color: #0d0d0d">{{a.autonomy}}</strong></span>
+          </div>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ============ AGENT DETAIL ============ -->
+<sc-if value="{{isAgentDetail}}" hint-placeholder-val="{{false}}">
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div>
+      <button class="row-btn" onClick="{{goAgents}}" style="height: 28px; padding: 0 10px 0 6px; border: 0; border-radius: 999px; background: transparent; color: #5d5d5d; font-size: 13px; display: inline-flex; align-items: center; gap: 4px">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"></path></svg>
+        All squads
+      </button>
+    </div>
+    <header style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+      <span style="width: 48px; height: 48px; border-radius: 12px; background: {{sel.tint}}; display: flex; align-items: center; justify-content: center">
+        <svg width="24" height="24" viewBox="0 0 16 16" fill="none" stroke="#0d0d0d" stroke-width="1.2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"></rect><path d="M8 2.5V5M6 9h0M10 9h0"></path></svg>
+      </span>
+      <div style="flex: 1; min-width: 200px">
+        <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">{{sel.name}} squad</h1>
+        <p style="margin: 2px 0 0; color: #5d5d5d">{{sel.role}}</p>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span style="font-size: 13px; color: #5d5d5d">{{sel.statusLabel}}</span>
+        <button onClick="{{sel.toggle}}" aria-pressed="{{sel.onStr}}" aria-label="Squad running" style="width: 40px; height: 24px; border: 0; border-radius: 999px; background: {{sel.switchBg}}; padding: 2px; display: flex; justify-content: {{sel.switchJustify}}">
+          <span style="width: 20px; height: 20px; border-radius: 999px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2)"></span>
+        </button>
+      </div>
+    </header>
+
+    <section aria-label="Mission" style="background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <div style="flex: 2 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span style="height: 20px; padding: 0 8px; border-radius: 999px; background: #181818; color: #fff; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center">Mission</span>
+          <span style="{{sel.missionStatusStyle}}">{{sel.missionStatus}}</span>
+        </div>
+        <p style="margin: 0; font-size: 17px; line-height: 25px; font-weight: 500; letter-spacing: -0.01em; color: #0d0d0d">{{sel.missionText}}</p>
+        <p style="margin: 0; font-size: 12px; color: #5d5d5d">Rolls up to the company mission: {{companyMission}}</p>
+        <div style="display: flex; align-items: center; gap: 10px; padding-top: 4px">
+          <span style="font-size: 12px; color: #5d5d5d; width: 90px">Contribution</span>
+          <div style="flex: 1; height: 8px; border-radius: 999px; background: rgba(13,13,13,.06); overflow: hidden"><div style="height: 100%; width: {{sel.contribution}}%; background: {{sel.barColor}}; border-radius: 999px"></div></div>
+          <span style="font-size: 14px; font-weight: 600; color: #0d0d0d; width: 48px; text-align: right">{{sel.contributionLabel}}</span>
+        </div>
+        <div>
+          <button class="soft-btn" onClick="{{sel.askRevise}}" style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: rgba(13,13,13,.08); color: #282828; font-size: 13px; font-weight: 500">Ask {{masterName}} to revise</button>
+        </div>
+      </div>
+      <div style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 12px; font-weight: 500; color: #5d5d5d">Targets</span>
+        <sc-for list="{{sel.targets}}" as="t" hint-placeholder-count="3">
+          <div style="display: flex; gap: 10px; align-items: baseline; padding: 8px 0; border-top: 1px solid rgba(13,13,13,.06); font-size: 13px">
+            <span style="flex: 1; color: #282828">{{t.label}}</span>
+            <span style="font-weight: 600; color: #0d0d0d">{{t.now}}</span>
+            <span style="font-size: 12px; color: #5d5d5d">goal {{t.goal}}</span>
+          </div>
+        </sc-for>
+        <sc-if value="{{sel.noTargets}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #5d5d5d; padding: 8px 0">No targets until the mission is approved.</span></sc-if>
+      </div>
+    </section>
+
+    <section aria-label="Squad numbers" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px">
+      <sc-for list="{{sel.kpis}}" as="k" hint-placeholder-count="4">
+        <div style="background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 12px; color: #5d5d5d">{{k.label}}</span>
+          <span style="font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">{{k.value}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <section aria-label="Skills" style="flex: 3 1 380px; min-width: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 4px">
+        <h2 style="margin: 0 0 4px; font-size: 16px; font-weight: 600; color: #0d0d0d">Skills</h2>
+        <p style="margin: 0 0 8px; font-size: 13px; color: #5d5d5d">What this squad can do. {{masterName}} can only ask it for a skill that is turned on.</p>
+        <sc-for list="{{sel.skills}}" as="sk" hint-placeholder-count="4">
+          <div style="display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid rgba(13,13,13,.06)">
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #0d0d0d">{{sk.id}}</span>
+              <span style="font-size: 13px; color: #5d5d5d">{{sk.desc}}</span>
+            </div>
+            <span style="{{sk.gateStyle}}">{{sk.gate}}</span>
+            <span style="font-size: 12px; color: #5d5d5d; width: 56px; text-align: right">{{sk.runs}} runs</span>
+            <button onClick="{{sk.toggle}}" aria-pressed="{{sk.onStr}}" aria-label="Skill enabled" style="width: 34px; height: 20px; border: 0; border-radius: 999px; background: {{sk.switchBg}}; padding: 2px; display: flex; justify-content: {{sk.switchJustify}}; flex: none">
+              <span style="width: 16px; height: 16px; border-radius: 999px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2)"></span>
+            </button>
+          </div>
+        </sc-for>
+        <h2 style="margin: 16px 0 4px; font-size: 16px; font-weight: 600; color: #0d0d0d">How much it can do alone</h2>
+        <div role="group" aria-label="Autonomy" style="display: inline-flex; align-self: flex-start; flex-wrap: wrap; background: #ededed; border-radius: 999px; padding: 2px; gap: 2px">
+          <sc-for list="{{sel.autonomyOpts}}" as="o" hint-placeholder-count="3">
+            <button onClick="{{o.pick}}" aria-pressed="{{o.onStr}}" style="{{o.style}}">{{o.label}}</button>
+          </sc-for>
+        </div>
+      </section>
+
+      <section aria-label="Sandbox" style="flex: 2 1 280px; min-width: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #0d0d0d">Sandbox</h2>
+          <span style="{{sel.statusStyle}}">{{sel.vmState}}</span>
+        </div>
+        <dl style="margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 13px">
+          <dt style="color: #5d5d5d">Server</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #0d0d0d">{{sel.host}}</dd>
+          <dt style="color: #5d5d5d">Region</dt><dd style="margin: 0; color: #0d0d0d">{{sel.region}}</dd>
+          <dt style="color: #5d5d5d">Size</dt><dd style="margin: 0; color: #0d0d0d">{{sel.size}}</dd>
+          <dt style="color: #5d5d5d">CPU now</dt><dd style="margin: 0; color: #0d0d0d">{{sel.cpu}}</dd>
+          <dt style="color: #5d5d5d">Uptime</dt><dd style="margin: 0; color: #0d0d0d">{{sel.uptime}}</dd>
+        </dl>
+        <div style="font-size: 12px; font-weight: 500; color: #5d5d5d; margin-top: 4px">Can reach</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{sel.egress}}" as="h" hint-placeholder-count="3">
+            <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: #0285ff0a; box-shadow: inset 0 0 0 1px #0169cc33; color: #004f99; font-family: 'JetBrains Mono', monospace; font-size: 11px; display: inline-flex; align-items: center">{{h}}</span>
+          </sc-for>
+        </div>
+        <div style="font-size: 12px; font-weight: 500; color: #5d5d5d">Its own keys</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{sel.secrets}}" as="s" hint-placeholder-count="2">
+            <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(13,13,13,.06); font-family: 'JetBrains Mono', monospace; font-size: 11px; display: inline-flex; align-items: center; color: #414141">{{s}}</span>
+          </sc-for>
+        </div>
+        <p style="margin: 0; font-size: 12px; color: #5d5d5d; background: #f9f9f9; border-radius: 8px; padding: 10px">No direct link to other squads. It sends and receives only through {{masterName}}, and only the state keys listed in each message. Every run also gets the company mission, the squad mission and its targets.</p>
+      </section>
+    </div>
+
+    <section aria-label="Messages" style="background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 4px">
+      <h2 style="margin: 0 0 8px; font-size: 16px; font-weight: 600; color: #0d0d0d">Messages with {{masterName}}</h2>
+      <sc-for list="{{sel.bus}}" as="e" hint-placeholder-count="4">
+        <button class="row-btn" onClick="{{e.inspect}}" style="text-align: left; border: 0; background: transparent; border-radius: 8px; padding: 8px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: #282828">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5d5d5d; width: 44px">{{e.time}}</span>
+          <span style="{{e.kindStyle}}">{{e.kind}}</span>
+          <span style="font-size: 12px; color: #5d5d5d; width: 150px">{{e.route}}</span>
+          <span style="flex: 1; min-width: 200px; font-size: 13px">{{e.text}}</span>
+        </button>
+      </sc-for>
+    </section>
+  </div>
+</sc-if>
+
+<!-- ============ TRAFFIC ============ -->
+<sc-if value="{{isFlow}}" hint-placeholder-val="{{false}}">
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <header style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between">
+      <div>
+        <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">Squad traffic</h1>
+        <p style="margin: 4px 0 0; color: #5d5d5d">Every task, result and relay between {{masterName}} and the squads, with the payload, the state it changed and the mission target it moved.</p>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <button onClick="{{toggleLive}}" aria-pressed="{{liveStr}}" style="{{liveStyle}}">
+          <span style="width: 8px; height: 8px; border-radius: 999px; background: {{liveDot}}"></span>{{liveLabel}}
+        </button>
+        <button class="soft-btn" onClick="{{simulate}}" style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: rgba(13,13,13,.08); color: #282828; font-size: 13px; font-weight: 500">Send next event</button>
+      </div>
+    </header>
+
+    <!-- How messaging works -->
+    <section aria-label="How messaging works" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px">
+      <sc-for list="{{messagingRules}}" as="m" hint-placeholder-count="4">
+        <div style="background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px">
+          <span style="{{m.style}}">{{m.tag}}</span>
+          <span style="font-weight: 600; color: #0d0d0d; font-size: 14px">{{m.title}}</span>
+          <span style="font-size: 12px; line-height: 18px; color: #5d5d5d">{{m.body}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <!-- Hub -->
+    <section aria-label="Squad map" style="background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 24px 20px; display: flex; flex-direction: column; align-items: center">
+      <div style="background: #181818; color: #fff; border-radius: 16px; padding: 12px 18px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 220px">
+        <span style="font-weight: 600">{{masterName}} squad</span>
+        <span style="font-size: 12px; color: #cdcdcd">Routes every message · holds shared state · scores missions · checks rules</span>
+      </div>
+      <div style="width: 1px; height: 20px; background: rgba(13,13,13,.2)"></div>
+      <div style="width: 80%; height: 1px; background: rgba(13,13,13,.2)"></div>
+      <div style="width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px">
+        <sc-for list="{{hub}}" as="h" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column; align-items: center">
+            <div style="width: 1px; height: 20px; background: {{h.line}}"></div>
+            <button onClick="{{h.pick}}" aria-pressed="{{h.onStr}}" style="{{h.style}}">
+              <span style="display: flex; gap: 8px; align-items: center"><span style="width: 14px; height: 14px; border-radius: 4px; background: {{h.tint}}"></span><strong style="color: #0d0d0d">{{h.name}}</strong></span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5d5d5d">{{h.host}}</span>
+              <span style="font-size: 12px; color: #5d5d5d">{{h.inCount}} in · {{h.outCount}} out</span>
+            </button>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <section aria-label="Message log" style="flex: 3 1 440px; min-width: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 16px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 6px">
+          <sc-for list="{{filters}}" as="f" hint-placeholder-count="6">
+            <button onClick="{{f.pick}}" aria-pressed="{{f.onStr}}" style="{{f.style}}">{{f.label}}</button>
+          </sc-for>
+        </div>
+        <div style="overflow-x: auto">
+          <div style="min-width: 520px; display: flex; flex-direction: column; gap: 2px">
+            <sc-for list="{{busView}}" as="e" hint-placeholder-count="8">
+              <button class="row-btn" onClick="{{e.inspect}}" style="{{e.rowStyle}}">
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5d5d5d; width: 44px; flex: none">{{e.time}}</span>
+                <span style="{{e.kindStyle}}">{{e.kind}}</span>
+                <span style="font-size: 12px; color: #414141; width: 150px; flex: none">{{e.route}}</span>
+                <span style="flex: 1; font-size: 13px">{{e.text}}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </section>
+
+      <aside aria-label="Message details" style="flex: 2 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <section style="background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 16px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; gap: 8px; align-items: center">
+            <h2 style="margin: 0; font-size: 14px; font-weight: 600; color: #0d0d0d; flex: 1">Message</h2>
+            <span style="{{ins.kindStyle}}">{{ins.kind}}</span>
+          </div>
+          <div style="font-size: 13px; color: #0d0d0d">{{ins.text}}</div>
+          <dl style="margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 12px">
+            <dt style="color: #5d5d5d">Route</dt><dd style="margin: 0">{{ins.route}}</dd>
+            <dt style="color: #5d5d5d">Skill</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace">{{ins.skill}}</dd>
+            <dt style="color: #5d5d5d">Trace</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace">{{ins.trace}}</dd>
+            <dt style="color: #5d5d5d">Time</dt><dd style="margin: 0">{{ins.time}}</dd>
+            <dt style="color: #5d5d5d">Mission delta</dt><dd style="margin: 0; color: {{ins.deltaColor}}">{{ins.missionDelta}}</dd>
+          </dl>
+          <div style="font-size: 12px; font-weight: 500; color: #5d5d5d">Payload</div>
+          <pre style="margin: 0; background: #181818; color: #ededed; border-radius: 8px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 18px; white-space: pre-wrap; word-break: break-word; max-height: 280px; overflow: auto">{{ins.payload}}</pre>
+          <div style="font-size: 12px; font-weight: 500; color: #5d5d5d">State it wrote</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{ins.writes}}" as="w" hint-placeholder-count="2">
+              <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: #924ff70f; color: #532d8d; font-family: 'JetBrains Mono', monospace; font-size: 11px; display: inline-flex; align-items: center">{{w}}</span>
+            </sc-for>
+            <sc-if value="{{ins.noWrites}}" hint-placeholder-val="{{false}}"><span style="font-size: 12px; color: #5d5d5d">None</span></sc-if>
+          </div>
+        </section>
+
+        <section style="background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 16px; display: flex; flex-direction: column; gap: 8px">
+          <h2 style="margin: 0; font-size: 14px; font-weight: 600; color: #0d0d0d">Shared state held by {{masterName}}</h2>
+          <p style="margin: 0; font-size: 12px; color: #5d5d5d">Squads read this store, but never write it directly. Every write travels on the bus, so {{masterName}} sees each change and passes a task only the keys it needs.</p>
+          <sc-for list="{{stateRows}}" as="r" hint-placeholder-count="6">
+            <div style="display: flex; gap: 10px; align-items: baseline; padding: 6px 0; border-top: 1px solid rgba(13,13,13,.06); font-family: 'JetBrains Mono', monospace; font-size: 12px">
+              <span style="color: #532d8d; flex: 1; min-width: 0; word-break: break-all">{{r.key}}</span>
+              <span style="color: #0d0d0d; text-align: right; max-width: 55%; word-break: break-word">{{r.value}}</span>
+            </div>
+          </sc-for>
+        </section>
+      </aside>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ============ RULES ============ -->
+<sc-if value="{{isRules}}" hint-placeholder-val="{{false}}">
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <header>
+      <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">Rules and limits</h1>
+      <p style="margin: 4px 0 0; color: #5d5d5d">Tell {{masterName}} what to do when something happens, which squad does it, and when it must ask you first.</p>
+    </header>
+
+    <section aria-label="Rules" style="background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 8px 16px">
+      <sc-for list="{{rules}}" as="r" hint-placeholder-count="5">
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(13,13,13,.06)">
+          <div style="flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 14px; color: #0d0d0d"><span style="color: #5d5d5d">When</span> {{r.when}}</span>
+            <span style="font-size: 13px; color: #414141"><span style="color: #5d5d5d">then</span> {{r.action}}</span>
+          </div>
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #414141"><span style="width: 12px; height: 12px; border-radius: 3px; background: {{r.tint}}"></span>{{r.agentName}}</span>
+          <span style="{{r.gateStyle}}">{{r.approval}}</span>
+          <button onClick="{{r.toggle}}" aria-pressed="{{r.onStr}}" aria-label="Rule enabled" style="width: 34px; height: 20px; border: 0; border-radius: 999px; background: {{r.switchBg}}; padding: 2px; display: flex; justify-content: {{r.switchJustify}}; flex: none">
+            <span style="width: 16px; height: 16px; border-radius: 999px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2)"></span>
+          </button>
+        </div>
+      </sc-for>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <section aria-label="New rule" style="flex: 3 1 400px; min-width: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #0d0d0d">New rule</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 500; color: #5d5d5d">When
+            <select value="{{form.when}}" onChange="{{onWhen}}" style="height: 32px; border: 0; border-radius: 8px; background: rgba(13,13,13,.08); padding: 0 8px; font: inherit; font-size: 13px; color: #0d0d0d">
+              <sc-for list="{{triggerOpts}}" as="o" hint-placeholder-count="5"><option value="{{o}}">{{o}}</option></sc-for>
+            </select>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 500; color: #5d5d5d">Agent
+            <select value="{{form.agent}}" onChange="{{onAgent}}" style="height: 32px; border: 0; border-radius: 8px; background: rgba(13,13,13,.08); padding: 0 8px; font: inherit; font-size: 13px; color: #0d0d0d">
+              <sc-for list="{{agentOpts}}" as="o" hint-placeholder-count="5"><option value="{{o.id}}">{{o.name}}</option></sc-for>
+            </select>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 500; color: #5d5d5d">Then
+            <input value="{{form.action}}" onChange="{{onAction}}" placeholder="What the agent should do" style="height: 32px; border: 0; border-radius: 8px; background: rgba(13,13,13,.08); padding: 0 10px; font: inherit; font-size: 13px; color: #0d0d0d">
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 500; color: #5d5d5d">Approval
+            <select value="{{form.approval}}" onChange="{{onApproval}}" style="height: 32px; border: 0; border-radius: 8px; background: rgba(13,13,13,.08); padding: 0 8px; font: inherit; font-size: 13px; color: #0d0d0d">
+              <sc-for list="{{approvalOpts}}" as="o" hint-placeholder-count="3"><option value="{{o}}">{{o}}</option></sc-for>
+            </select>
+          </label>
+        </div>
+        <div>
+          <button onClick="{{addRule}}" style="height: 32px; padding: 0 16px; border: 0; border-radius: 999px; background: #181818; color: #fff; font-size: 13px; font-weight: 500">Add rule</button>
+        </div>
+      </section>
+
+      <section aria-label="Limits" style="flex: 2 1 280px; min-width: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #0d0d0d">Limits for every agent</h2>
+        <sc-for list="{{limits}}" as="l" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div style="display: flex; justify-content: space-between; font-size: 13px"><label for="{{l.id}}">{{l.label}}</label><strong style="color: #0d0d0d">{{l.display}}</strong></div>
+            <input id="{{l.id}}" type="range" min="{{l.min}}" max="{{l.max}}" step="{{l.step}}" value="{{l.value}}" onChange="{{l.change}}" style="width: 100%; accent-color: #181818">
+          </div>
+        </sc-for>
+        <p style="margin: 0; font-size: 12px; color: #5d5d5d">Changing a limit updates the shared state, so every agent gets the new value with its next task.</p>
+      </section>
+    </div>
+  </div>
+</sc-if>
+
+</main>
+
+<!-- ============ CHAT DOCK (every workspace page) ============ -->
+<sc-if value="{{showDock}}" hint-placeholder-val="{{true}}">
+  <div style="position: fixed; right: 20px; bottom: 20px; z-index: 5; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; max-width: calc(100vw - 40px)">
+    <sc-if value="{{dockOpen}}" hint-placeholder-val="{{false}}">
+      <section aria-label="Chat with the master" style="width: 380px; max-width: 100%; max-height: min(560px, calc(100vh - 100px)); background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.1), 0 16px 48px rgba(13,13,13,.16); display: flex; flex-direction: column; overflow: hidden">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 16px; border-bottom: 1px solid rgba(13,13,13,.06)">
+          <span style="width: 28px; height: 28px; border-radius: 999px; background: #181818; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px">{{masterInitial}}</span>
+          <div style="display: flex; flex-direction: column; flex: 1; min-width: 0">
+            <span style="font-weight: 600; color: #0d0d0d; font-size: 14px">{{masterName}}</span>
+            <span style="font-size: 12px; color: #00692a; display: inline-flex; align-items: center; gap: 5px"><span style="width: 6px; height: 6px; border-radius: 999px; background: #00a240"></span>{{onlineCount}} squads online</span>
+          </div>
+          <button class="row-btn" onClick="{{goChat}}" style="height: 30px; padding: 0 10px; border: 0; border-radius: 999px; background: transparent; color: #0169cc; font-size: 12px; font-weight: 500">Open full chat</button>
+          <button class="soft-btn" onClick="{{toggleDock}}" aria-label="Close chat" style="width: 30px; height: 30px; border: 0; border-radius: 999px; background: rgba(13,13,13,.06); color: #282828; display: inline-flex; align-items: center; justify-content: center">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"></path></svg>
+          </button>
+        </div>
+        <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+          <sc-for list="{{dockChat}}" as="m" hint-placeholder-count="4">
+            <div style="display: flex; flex-direction: column; align-items: {{m.align}}; gap: 4px">
+              <sc-if value="{{m.hasTag}}" hint-placeholder-val="{{false}}">
+                <span style="font-size: 11px; color: #5d5d5d; display: inline-flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 2px; background: {{m.tint}}"></span>{{m.tag}}</span>
+              </sc-if>
+              <div style="{{m.dockBubble}}">{{m.text}}</div>
+            </div>
+          </sc-for>
+          <sc-if value="{{thinking}}" hint-placeholder-val="{{false}}">
+            <div style="align-self: flex-start; padding: 8px 12px; border-radius: 14px; background: #ededed; color: #5d5d5d; font-size: 12px">{{thinkingLabel}}</div>
+          </sc-if>
+        </div>
+        <div style="padding: 10px 12px 12px; border-top: 1px solid rgba(13,13,13,.06); display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px">
+            <sc-for list="{{dockSuggestions}}" as="s" hint-placeholder-count="3">
+              <button class="soft-btn" onClick="{{s.pick}}" style="height: 26px; padding: 0 10px; border: 0; border-radius: 999px; background: rgba(13,13,13,.06); color: #282828; font-size: 12px; white-space: nowrap; flex: none">{{s.text}}</button>
+            </sc-for>
+          </div>
+          <div style="display: flex; gap: 6px; align-items: center; background: #f3f3f3; border-radius: 999px; padding: 4px 4px 4px 14px">
+            <label for="dock-input" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Message {{masterName}}</label>
+            <input id="dock-input" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onKey}}" placeholder="Ask {{masterName}} anything" style="flex: 1; min-width: 0; border: 0; outline-offset: 4px; background: transparent; font: inherit; font-size: 14px; color: #0d0d0d; height: 30px">
+            <button onClick="{{send}}" aria-label="Send" style="width: 32px; height: 32px; border: 0; border-radius: 999px; background: #181818; color: #fff; display: flex; align-items: center; justify-content: center; flex: none">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"></path></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+    </sc-if>
+    <button onClick="{{toggleDock}}" aria-expanded="{{dockOpenStr}}" style="height: 48px; padding: 0 18px 0 6px; border: 0; border-radius: 999px; background: #181818; color: #fff; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 8px 24px rgba(13,13,13,.24)">
+      <span style="width: 36px; height: 36px; border-radius: 999px; background: #fff; color: #0d0d0d; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px">{{masterInitial}}</span>
+      <span>{{dockLabel}}</span>
+      <sc-if value="{{dockUnread}}" hint-placeholder-val="{{false}}"><span style="min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: #fb6a22; color: #fff; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{approvalCount}}</span></sc-if>
+    </button>
+  </div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"masterName":{"editor":"text","default":"Master"},"startView":{"editor":"enum","options":["admin","catalog","overview","chat","agents","flow","rules"],"default":"overview"},"startAgent":{"editor":"enum","options":["","orders","support","marketing","finance","inventory"],"default":""},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = this.seed();
+    this.state.view = props.startView || 'overview';
+    this.state.agentId = props.startAgent || null;
+    this.eventIdx = 0;
+    this.seq = 100;
+  }
+
+  seed() {
+    const sk = (id, desc, gate, runs) => ({ id, desc, gate, runs, on: true });
+    const agents = [
+      { id: 'orders', name: 'Orders', role: 'Fulfilment and tracking', tint: '#e7efff', on: true, autonomy: 'Full auto', mission: 'Ship every order within 24 hours and keep the customer informed.', targets: [['Fulfilment time', '2.1 days', '1 day'], ['Tracking synced', '100%', '100%'], ['Waiting on maker', '3', '0']], contribution: 72, tasks: 142, success: '98%', saved: '11.5h', last: 'Added tracking LI400083615LT to #A-1007',
+        host: 'vps-orders-01', region: 'Frankfurt', size: '2 vCPU · 4 GB', cpu: '14%', uptime: '18 days',
+        egress: ['shopify.com', 'api.printify.com'], secrets: ['SHOPIFY_ORDERS_TOKEN', 'PRINTIFY_KEY'],
+        kpis: [['Orders handled', '142'], ['Avg ship time', '2.1 days'], ['Tracking synced', '100%'], ['Waiting on maker', '3']],
+        skills: [sk('shopify.fulfill_order', 'Mark items as shipped in Shopify', 'Auto', 88), sk('printify.get_shipment', 'Read shipping status from Printify', 'Auto', 131), sk('shopify.add_tracking', 'Attach a tracking number to the order', 'Auto', 96), sk('notify.customer', 'Email the customer a shipping update', 'Ask first', 12)] },
+      { id: 'support', name: 'Support', role: 'Customer inbox and refunds', tint: '#def5ee', on: true, autonomy: 'Auto under limit', mission: 'Answer every customer within an hour and keep satisfaction above 4.5.', targets: [['First reply', '4 min', '60 min'], ['Satisfaction', '4.7 / 5', '4.5 / 5'], ['Open tickets', '5', 'under 10']], contribution: 81, tasks: 96, success: '94%', saved: '9h', last: 'Asked for tracking on #A-1007 for a customer',
+        host: 'vps-support-01', region: 'Frankfurt', size: '2 vCPU · 4 GB', cpu: '22%', uptime: '18 days',
+        egress: ['gmail.googleapis.com', 'shopify.com'], secrets: ['GMAIL_OAUTH', 'SHOPIFY_REFUNDS_TOKEN'],
+        kpis: [['Tickets closed', '96'], ['First reply', '4 min'], ['Satisfaction', '4.7 / 5'], ['Open now', '5']],
+        skills: [sk('inbox.read', 'Read new customer emails', 'Auto', 240), sk('inbox.draft_reply', 'Write a reply in your voice', 'Auto', 101), sk('shopify.refund', 'Refund an order up to the limit', 'Under limit', 14), sk('orders.lookup', 'Ask Orders for status through the master', 'Auto', 37)] },
+      { id: 'marketing', name: 'Marketing', role: 'Ads, social and email', tint: '#ece3ff', on: true, autonomy: 'Ask first', mission: 'Bring in repeat customers at a return above 3× on every dollar spent.', targets: [['ROAS', '3.4', '3.0'], ['Email open rate', '41%', '40%'], ['Repeat buyers', '18%', '30%']], contribution: 64, tasks: 38, success: '91%', saved: '6h', last: 'Asked to raise the prints ad set to $60 a day',
+        host: 'vps-marketing-01', region: 'Amsterdam', size: '2 vCPU · 8 GB', cpu: '9%', uptime: '6 days',
+        egress: ['graph.facebook.com', 'a.klaviyo.com', 'api.canva.com'], secrets: ['META_ADS_TOKEN', 'KLAVIYO_KEY'],
+        kpis: [['Ad spend (7d)', '$262'], ['ROAS', '3.4'], ['Posts scheduled', '12'], ['Email open rate', '41%']],
+        skills: [sk('meta_ads.report', 'Pull spend and return per ad set', 'Auto', 44), sk('meta_ads.set_budget', 'Change a daily budget', 'Ask first', 6), sk('klaviyo.send_campaign', 'Send an email campaign', 'Ask first', 3), sk('canva.create_post', 'Design a social post', 'Auto', 18)] },
+      { id: 'finance', name: 'Finance', role: 'Payouts, costs and profit', tint: '#ffefa4', on: true, autonomy: 'Full auto', mission: 'Keep profit margin above 30% and every bill matched within a week.', targets: [['Margin', '31%', '30%'], ['Unmatched bills', '0', '0'], ['Unpaid invoices', '0', '0']], contribution: 90, tasks: 24, success: '100%', saved: '4h', last: 'Sent the weekly profit summary',
+        host: 'vps-finance-01', region: 'Frankfurt', size: '1 vCPU · 2 GB', cpu: '3%', uptime: '31 days',
+        egress: ['api.stripe.com', 'quickbooks.api.intuit.com'], secrets: ['STRIPE_READ_KEY', 'QBO_OAUTH'],
+        kpis: [['Revenue (7d)', '$8,420'], ['Profit (7d)', '$2,610'], ['Margin', '31%'], ['Unpaid invoices', '0']],
+        skills: [sk('stripe.payouts', 'Read payouts and fees', 'Auto', 30), sk('quickbooks.pnl', 'Build the profit and loss report', 'Auto', 8), sk('costs.reconcile', 'Match Printify bills to orders', 'Auto', 21)] },
+      { id: 'inventory', name: 'Inventory', role: 'Stock and suppliers', tint: '#fee7c2', on: false, autonomy: 'Ask first', mission: '', targets: [], contribution: 0, tasks: 31, success: '97%', saved: '3.5h', last: 'Drafted a reorder of 50 blank hoodies',
+        host: 'vps-inventory-01', region: 'Frankfurt', size: '1 vCPU · 2 GB', cpu: '0%', uptime: 'Paused',
+        egress: ['shopify.com', 'api.printify.com'], secrets: ['SHOPIFY_STOCK_TOKEN'],
+        kpis: [['Products tracked', '64'], ['Low stock', '2'], ['Reorders drafted', '5'], ['Days of stock', '23']],
+        skills: [sk('shopify.stock_levels', 'Read stock for every product', 'Auto', 66), sk('printify.catalog', 'Check maker prices and stock', 'Auto', 19), sk('purchase.draft_reorder', 'Draft a reorder for approval', 'Ask first', 5)] }
+    ];
+    const ev = (time, from, to, kind, skill, text, payload, writes) => ({ id: 'e' + time.replace(':', '') + from + to, time, from, to, kind, skill, text, payload, writes: writes || [], trace: 'tr_' + Math.random().toString(36).slice(2, 8) });
+    const bus = [
+      ev('10:41', 'master', 'orders', 'Task', 'printify.get_shipment', 'Check shipping for #A-1007', { intent: 'sync_tracking', order: 'A-1007', items: ['Sweatshirt · L', 'Tafakkar print · A3'], state_in: { 'order.A-1007.status': 'paid' } }),
+      ev('10:42', 'orders', 'master', 'Result', 'shopify.add_tracking', 'Sweatshirt shipped, tracking added. Print still in production.', { order: 'A-1007', shipped: ['Sweatshirt · L'], tracking: 'LI400083615LT', pending: ['Tafakkar print · A3'], customer_notified: true }, ['order.A-1007.tracking', 'order.A-1007.print_status']),
+      ev('10:43', 'support', 'master', 'Request', 'orders.lookup', 'Customer on #A-1007 asks where the print is', { ticket: 'T-2291', order: 'A-1007', need: 'shipping_status', from_customer: 'Where is my print?' }),
+      ev('10:43', 'master', 'orders', 'Relay', 'printify.get_shipment', 'Support needs the print status for #A-1007', { relay_for: 'support', order: 'A-1007', fields: ['print_status', 'eta'] }),
+      ev('10:44', 'orders', 'master', 'Result', 'printify.get_shipment', 'Print ships in 2 days, ETA 3 Nov', { order: 'A-1007', print_status: 'in_production', eta: '2026-11-03' }, ['order.A-1007.eta']),
+      ev('10:44', 'master', 'support', 'Relay', 'inbox.draft_reply', 'Here is the print status for T-2291', { ticket: 'T-2291', state_in: { 'order.A-1007.tracking': 'LI400083615LT', 'order.A-1007.eta': '2026-11-03' } }),
+      ev('10:50', 'marketing', 'master', 'Escalation', 'meta_ads.set_budget', 'Wants to raise the prints ad set to $60 a day', { ad_set: 'Prints · lookalike', budget_now: 40, budget_new: 60, roas_7d: 3.4, reason: 'Return above 3 for 7 days' }, ['marketing.roas_7d']),
+      ev('10:55', 'support', 'master', 'Escalation', 'shopify.refund', 'Refund $42 on #A-1012 is under the limit but the customer is flagged', { order: 'A-1012', amount: 42, reason: 'Print arrived creased', photo: true, flag: 'second_refund_this_month' }),
+      ev('10:56', 'finance', 'master', 'Result', 'quickbooks.pnl', 'Last 7 days: $8,420 revenue, $2,610 profit', { revenue: 8420, cogs: 4120, ad_spend: 262, fees: 1428, profit: 2610, margin: 0.31 }, ['finance.revenue_7d', 'finance.profit_7d'])
+    ];
+    // createdWeek: 0–7 = which of the last 8 weeks the account was created in; -1 = older than that
+    const acct = (id, name, owner, email, plan, tint, squads, agents, online, tasks, lastActive, status, createdWeek, started, mrr, ltv) => ({ id, name, owner, email, plan, tint, squads, agents, online, tasks, lastActive, status, createdWeek, started, mrr, ltv });
+    const accounts = [
+      acct('demo', 'Demo store', 'Moe Ghashim', 'moe@demostore.co', 'Growth', '#e7efff', ['Store ops'], 5, 4, 331, '2 min ago', 'Active', -1, '3 Mar 2026', 149, 1192),
+      acct('leen', 'Leen Dates', 'Sara Haddad', 'sara@leendates.com', 'Growth', '#fee7c2', ['Wholesale', 'Retail'], 9, 8, 540, '14 min ago', 'Active', -1, '12 Jan 2026', 149, 1490),
+      acct('northwind', 'Northwind Apparel', 'Tom Becker', 'tom@northwind.io', 'Scale', '#ece3ff', ['US store', 'EU store', 'Ads'], 14, 12, 1204, '1 min ago', 'Active', -1, '4 Nov 2025', 399, 4788),
+      acct('harbor', 'Harbor Coffee Roasters', 'Nadia Khoury', 'nadia@harborroast.com', 'Starter', '#def5ee', ['Cafe'], 3, 3, 96, '3 h ago', 'Active', 3, '29 Sep 2026', 49, 74),
+      acct('bloom', 'Bloom Skincare', 'Elena Rossi', 'elena@bloomskin.co', 'Growth', '#ffefa4', ['DTC', 'Support'], 7, 5, 412, '28 min ago', 'Active', -1, '2 Jun 2026', 149, 745),
+      acct('pixelforge', 'PixelForge Studio', 'Dan Oyelaran', 'dan@pixelforge.dev', 'Starter', '#e7efff', ['Client work'], 2, 0, 18, '9 days ago', 'Trial', 5, '15 Oct 2026', 0, 0),
+      acct('atlas', 'Atlas Outdoor', 'Priya Nair', 'priya@atlasoutdoor.com', 'Scale', '#def5ee', ['Shop', 'Warehouse', 'Marketing', 'Finance'], 18, 15, 1876, 'Just now', 'Active', -1, '18 Aug 2025', 399, 5985),
+      acct('maple', 'Maple & Co Books', 'Jon Whitfield', 'jon@mapleandco.shop', 'Starter', '#fee7c2', ['Bookshop'], 2, 0, 0, '32 days ago', 'Paused', -1, '7 Apr 2026', 0, 294),
+      acct('sunbeam', 'Sunbeam Toys', 'Aisha Rahman', 'aisha@sunbeamtoys.com', 'Growth', '#ece3ff', ['Online', 'Wholesale'], 6, 6, 288, '5 min ago', 'Trial', 7, '27 Oct 2026', 0, 0)
+    ];
+    const bug = (id, sev, title, age, reports) => ({ id, sev, title, age, reports });
+    const feat = (id, title, votes, stage) => ({ id, title, votes, stage });
+    const image = (id, name, role, tint, version, nextVersion, updated, updatedFull, deployed, onLatest, status, bugs, features) => ({ id, name, role, tint, tag: 'registry.agents.co/' + id + ':' + version, version, nextVersion, updated, updatedFull, deployed, onLatest, status, bugs, features });
+    const images = [
+      image('orders', 'Orders', 'Fulfilment and tracking', '#e7efff', '1.8.2', '1.8.3', '2 days ago', '28 Oct 2026, 14:10', 31, 29, 'Stable',
+        [bug('B-412', 'Low', 'Tracking sync skips orders with two parcels', '4 days', 2)],
+        [feat('F-88', 'Support for DHL Express tracking', 14, 'Planned'), feat('F-91', 'Split shipments per maker', 9, 'In review')]),
+      image('support', 'Support', 'Customer inbox and refunds', '#def5ee', '2.1.0', '2.1.1', '6 h ago', '30 Oct 2026, 12:40', 34, 22, 'Needs attention',
+        [bug('B-430', 'High', 'Refund over limit sent without asking when currency is EUR', '1 day', 5), bug('B-427', 'Medium', 'Reply drafts lose the customer name on forwarded threads', '3 days', 3), bug('B-419', 'Low', 'Satisfaction score rounds up', '8 days', 1)],
+        [feat('F-93', 'WhatsApp inbox alongside email', 27, 'Planned'), feat('F-84', 'Tone presets per brand', 11, 'Backlog'), feat('F-95', 'Auto-tag tickets by order', 6, 'Backlog')]),
+      image('marketing', 'Marketing', 'Ads, social and email', '#ece3ff', '1.4.0', '1.5.0', '9 days ago', '21 Oct 2026, 09:05', 22, 22, 'Stable',
+        [],
+        [feat('F-72', 'TikTok Ads connector', 31, 'In progress'), feat('F-79', 'Creative A/B tests with Canva', 12, 'Planned'), feat('F-90', 'Weekly ad digest in chat', 8, 'Backlog'), feat('F-96', 'Budget pacing by ROAS', 5, 'Backlog')]),
+      image('finance', 'Finance', 'Payouts, costs and profit', '#ffefa4', '1.2.5', '1.3.0', '16 days ago', '14 Oct 2026, 17:30', 19, 17, 'Stable',
+        [bug('B-401', 'Medium', 'Printify bills in GBP are matched at the wrong rate', '12 days', 2)],
+        [feat('F-70', 'Xero connector', 18, 'In progress'), feat('F-86', 'VAT summary per country', 7, 'Planned')]),
+      image('inventory', 'Inventory', 'Stock and suppliers', '#fee7c2', '1.1.3', '1.1.4', '21 days ago', '9 Oct 2026, 11:00', 15, 15, 'Needs attention',
+        [bug('B-433', 'High', 'Reorder draft duplicates when a product has variants', '12 h', 4), bug('B-425', 'Low', 'Days-of-stock ignores pre-orders', '5 days', 1)],
+        [feat('F-82', 'Supplier lead times per product', 10, 'Planned')]),
+      image('analytics', 'Analytics', 'Reports and weekly digests', '#e7efff', '0.9.1', '1.0.0', '1 day ago', '29 Oct 2026, 16:20', 6, 6, 'Beta',
+        [bug('B-431', 'Medium', 'Digest email renders blank in Outlook', '2 days', 2)],
+        [feat('F-94', 'Compare two date ranges', 9, 'In progress'), feat('F-97', 'Export to Google Sheets', 4, 'Backlog')]),
+      image('hr', 'People', 'Hiring and onboarding', '#def5ee', '0.3.0', '0.4.0', '5 days ago', '25 Oct 2026, 10:15', 0, 0, 'Draft',
+        [],
+        [feat('F-98', 'Post jobs to LinkedIn', 3, 'Backlog')])
+    ];
+    return {
+      view: 'overview', agentId: null, agents, bus, selEvent: bus[1].id,
+      accounts, acctQuery: '', acctFilter: 'all',
+      images, imgSel: 'support', imgFilter: 'all',
+      dockOpen: false,
+      companyMission: 'Reach $1M in annual sales with repeat customers by the end of 2027.',
+      missionProposals: [
+        { id: 'mp-inventory', agent: 'inventory', mission: 'Never run out of a top-20 product and keep stock under 30 days of cover.', targets: [['Stock-outs', '0'], ['Days of stock', 'under 30'], ['Reorders approved in time', '100%']], status: 'Proposed' }
+      ],
+      busFilter: 'all', live: false, thinking: false, thinkingAgent: '', draft: '', clock: 11 * 60 + 2,
+      approvals: [
+        { id: 'ap1', agent: 'support', title: 'Refund $42 on #A-1012', detail: 'Print arrived creased; photo attached. Second refund for this customer this month.', amount: '$42' },
+        { id: 'ap2', agent: 'marketing', title: 'Raise prints ad set to $60 a day', detail: 'Return on ad spend has been 3.4 for 7 days. Adds about $140 a week.', amount: '+$20/day' },
+        { id: 'ap3', agent: 'inventory', title: 'Reorder 50 blank hoodies', detail: 'Black hoodie M is down to 6. Usual supplier, 5-day delivery.', amount: '$610' }
+      ],
+      chat: [
+        { id: 'c1', from: 'user', text: 'Did the tracking for #A-1007 go through?' },
+        { id: 'c2', from: 'master', text: 'I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.' },
+        { id: 'c3', from: 'agent', agent: 'orders', text: 'Print ETA is 3 November. I will add its tracking automatically.' },
+        { id: 'c4', from: 'user', text: 'Good job. What needs me today?' },
+        { id: 'c5', from: 'master', text: 'Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.' }
+      ],
+      store: {
+        'order.A-1007.tracking': 'LI400083615LT', 'order.A-1007.print_status': 'in_production', 'order.A-1007.eta': '2026-11-03',
+        'policy.refund_auto_limit': 50, 'policy.daily_ad_cap': 200, 'policy.reorder_limit': 500,
+        'marketing.roas_7d': 3.4, 'finance.revenue_7d': 8420, 'finance.profit_7d': 2610, 'inventory.low_stock': '["Black hoodie M","A3 frame"]'
+      },
+      rules: [
+        { id: 'r1', when: 'a refund request comes in', agent: 'support', action: 'refund it if it is under the refund limit, otherwise ask me', approval: 'Auto under limit', on: true },
+        { id: 'r2', when: 'Printify ships an item', agent: 'orders', action: 'add the tracking number in Shopify and email the customer', approval: 'Auto', on: true },
+        { id: 'r3', when: 'return on ad spend is under 2 for 3 days', agent: 'marketing', action: 'pause that ad set', approval: 'Ask first', on: true },
+        { id: 'r4', when: 'a product drops under 10 in stock', agent: 'inventory', action: 'draft a reorder from the usual supplier', approval: 'Ask first', on: true },
+        { id: 'r5', when: 'it is Monday at 8:00', agent: 'finance', action: 'send me last week\'s profit summary', approval: 'Auto', on: false }
+      ],
+      form: { when: 'A new order arrives', agent: 'orders', action: '', approval: 'Ask first' }
+    };
+  }
+
+  componentDidMount() {
+    this.timer = setInterval(() => { if (this.state.live) this.nextEvent(); }, 3500);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+
+  now() {
+    const c = this.state.clock + 1;
+    const t = String(Math.floor(c / 60)).padStart(2, '0') + ':' + String(c % 60).padStart(2, '0');
+    return { c, t };
+  }
+
+  push(events, extra) {
+    const { c, t } = this.now();
+    const stamped = events.map((e) => ({ trace: 'tr_' + Math.random().toString(36).slice(2, 8), writes: [], ...e, id: 'e' + (this.seq++), time: t }));
+    const store = { ...this.state.store };
+    stamped.forEach((e) => { if (e.set) Object.assign(store, e.set); });
+    this.setState({ bus: this.state.bus.concat(stamped), clock: c, store, selEvent: stamped[stamped.length - 1].id, ...(extra || {}) });
+  }
+
+  nextEvent() {
+    const script = [
+      { from: 'master', to: 'inventory', kind: 'Task', skill: 'shopify.stock_levels', text: 'Daily stock check', payload: { intent: 'stock_check', threshold: 10 } },
+      { from: 'inventory', to: 'master', kind: 'Result', skill: 'shopify.stock_levels', text: '2 products under 10: Black hoodie M (6), A3 frame (8)', payload: { low: [{ sku: 'HD-BLK-M', qty: 6 }, { sku: 'FR-A3', qty: 8 }] }, writes: ['inventory.low_stock'], set: { 'inventory.low_stock': '["Black hoodie M","A3 frame"]' } },
+      { from: 'support', to: 'master', kind: 'Request', skill: 'orders.lookup', text: 'Customer asks if #A-1019 has shipped', payload: { ticket: 'T-2304', order: 'A-1019', need: 'shipping_status' } },
+      { from: 'master', to: 'orders', kind: 'Relay', skill: 'printify.get_shipment', text: 'Support needs status for #A-1019', payload: { relay_for: 'support', order: 'A-1019' } },
+      { from: 'orders', to: 'master', kind: 'Result', skill: 'printify.get_shipment', text: '#A-1019 shipped today, tracking LI400091277LT', payload: { order: 'A-1019', tracking: 'LI400091277LT' }, writes: ['order.A-1019.tracking'], set: { 'order.A-1019.tracking': 'LI400091277LT' } },
+      { from: 'master', to: 'support', kind: 'Relay', skill: 'inbox.draft_reply', text: 'Tracking for T-2304 is ready', payload: { ticket: 'T-2304', state_in: { 'order.A-1019.tracking': 'LI400091277LT' } } },
+      { from: 'master', to: 'marketing', kind: 'Task', skill: 'meta_ads.report', text: 'Midday ad check', payload: { intent: 'ads_report', window: 'today' } },
+      { from: 'marketing', to: 'master', kind: 'Result', skill: 'meta_ads.report', text: 'Spend $31 so far today, return 3.6', payload: { spend_today: 31, roas_today: 3.6, cap: 200 }, writes: ['marketing.roas_7d'], set: { 'marketing.roas_7d': 3.5 } }
+    ];
+    const e = script[this.eventIdx % script.length];
+    this.eventIdx++;
+    this.push([e]);
+  }
+
+  route(text) {
+    const t = text.toLowerCase();
+    const table = [
+      ['support', /refund|return|complain|customer|ticket|email/],
+      ['orders', /order|tracking|ship|deliver|printify/],
+      ['marketing', /\bads?\b|campaign|instagram|post|promo|discount|marketing/],
+      ['finance', /profit|revenue|cost|payout|money|margin|sales/],
+      ['inventory', /stock|inventory|reorder|supplier|hoodie/]
+    ];
+    const hit = table.find(([, re]) => re.test(t));
+    return hit ? hit[0] : null;
+  }
+
+  send(textArg) {
+    const text = (typeof textArg === 'string' ? textArg : this.state.draft).trim();
+    if (!text || this.state.thinking) return;
+    const agentId = this.route(text);
+    const agent = this.state.agents.find((a) => a.id === agentId);
+    const chat = this.state.chat.concat({ id: 'c' + (this.seq++), from: 'user', text });
+    const master = this.props.masterName ?? 'Master';
+    if (!agent) {
+      this.setState({ draft: '', chat: chat.concat({ id: 'c' + (this.seq++), from: 'master', text: 'That one I can answer myself, no agent needed. Ask me about orders, refunds, ads, profit or stock and I will hand it to the right agent.' }) });
+      return;
+    }
+    if (!agent.on) {
+      this.setState({ draft: '', chat: chat.concat({ id: 'c' + (this.seq++), from: 'master', text: 'That is a job for the ' + agent.name + ' agent, but it is paused. Turn it on in Agents and ask me again.' }) });
+      return;
+    }
+    const results = {
+      orders: ['3 orders were waiting on tracking. All three now have tracking in Shopify and the customers have their links.', { synced: ['A-1015', 'A-1016', 'A-1019'] }, ['order.A-1019.tracking']],
+      support: ['2 refund requests are open. One was under the limit and is done; the other is in your approvals.', { refunded: [{ order: 'A-1014', amount: 18 }], escalated: ['A-1012'] }, []],
+      marketing: ['Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.', { spend_7d: 262, roas_7d: 3.4, best: 'Prints · lookalike' }, ['marketing.roas_7d']],
+      finance: ['Last 7 days: $8,420 revenue and $2,610 profit, a 31% margin. Printify costs are up 4%.', { revenue: 8420, profit: 2610, margin: 0.31 }, ['finance.profit_7d']],
+      inventory: ['2 products are under 10: Black hoodie M and A3 frame. A reorder draft is in your approvals.', { low: ['HD-BLK-M', 'FR-A3'] }, ['inventory.low_stock']]
+    };
+    const skill = agent.skills.find((s) => s.on) || agent.skills[0];
+    this.push([{ from: 'master', to: agent.id, kind: 'Task', skill: skill.id, text: text, payload: { intent: 'user_request', user_text: text, from: 'chat', limits: { refund_auto_limit: this.state.store['policy.refund_auto_limit'], daily_ad_cap: this.state.store['policy.daily_ad_cap'] } } }], {
+      draft: '', thinking: true, thinkingAgent: agent.name,
+      chat: chat.concat({ id: 'c' + (this.seq++), from: 'master', text: 'Passing this to the ' + agent.name + ' agent. I will report back here.' })
+    });
+    setTimeout(() => {
+      const r = results[agent.id];
+      this.push([{ from: agent.id, to: 'master', kind: 'Result', skill: skill.id, text: r[0], payload: r[1], writes: r[2] }], {
+        thinking: false,
+        chat: this.state.chat.concat({ id: 'c' + (this.seq++), from: 'agent', agent: agent.id, text: r[0] }),
+        agents: this.state.agents.map((a) => a.id === agent.id ? { ...a, tasks: a.tasks + 1, last: r[0] } : a)
+      });
+    }, 1400);
+  }
+
+  decide(ap, ok) {
+    const agent = this.state.agents.find((a) => a.id === ap.agent);
+    this.push([{ from: 'master', to: ap.agent, kind: ok ? 'Approval' : 'Declined', skill: '-', text: (ok ? 'Approved: ' : 'Declined: ') + ap.title, payload: { approval_id: ap.id, approved: ok, by: 'Moe' }, writes: ['approvals.' + ap.id], set: { ['approvals.' + ap.id]: ok ? 'approved' : 'declined' } }], {
+      approvals: this.state.approvals.filter((x) => x.id !== ap.id),
+      agents: this.state.agents.map((a) => a.id === ap.agent && ok ? { ...a, tasks: a.tasks + 1, last: ap.title + ' (approved)' } : a)
+    });
+  }
+
+  updAgent(id, fn) { this.setState({ agents: this.state.agents.map((a) => a.id === id ? fn(a) : a) }); }
+
+  decideMission(mp, ok) {
+    if (ok) {
+      this.setState({
+        missionProposals: this.state.missionProposals.filter((x) => x.id !== mp.id),
+        agents: this.state.agents.map((a) => a.id === mp.agent ? { ...a, mission: mp.mission, targets: mp.targets.map(([label, goal]) => [label, '—', goal]), contribution: 0 } : a)
+      });
+    } else {
+      this.setState({ missionProposals: this.state.missionProposals.map((x) => x.id === mp.id ? { ...x, status: 'Revising' } : x) });
+    }
+  }
+
+  askRevise(agentId) {
+    if (this.state.missionProposals.some((x) => x.agent === agentId)) { this.setState({ view: 'overview' }); return; }
+    const a = this.state.agents.find((x) => x.id === agentId);
+    this.setState({ view: 'overview', missionProposals: this.state.missionProposals.concat({ id: 'mp-' + agentId + '-' + Date.now(), agent: agentId, mission: a.mission, targets: a.targets.map(([label, now, goal]) => [label, goal]), status: 'Revising' }) });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const masterName = this.props.masterName ?? 'Master';
+    const byId = {};
+    s.agents.forEach((a) => { byId[a.id] = a; });
+    const nameOf = (id) => id === 'master' ? masterName : (byId[id] ? byId[id].name : id);
+    const pill = (bg, fg) => 'height: 22px; padding: 0 8px; border-radius: 999px; background: ' + bg + '; color: ' + fg + '; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; flex: none; white-space: nowrap';
+    const kindColors = { Task: ['#0285ff14', '#004f99'], Result: ['#04b84c14', '#00692a'], Request: ['#0285ff14', '#004f99'], Relay: ['#924ff714', '#532d8d'], Escalation: ['#fb6a2214', '#923b0f'], Approval: ['#04b84c14', '#00692a'], Declined: ['#fa423e14', '#911e1b'] };
+    const kindStyle = (k) => pill((kindColors[k] || kindColors.Task)[0], (kindColors[k] || kindColors.Task)[1]) + '; width: 84px; justify-content: center';
+    const go = (view, agentId) => () => this.setState({ view, agentId: agentId === undefined ? null : agentId });
+    const navStyle = (on) => 'display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border: 0; border-radius: 8px; font-size: 14px; text-align: left; color: ' + (on ? '#0d0d0d' : '#414141') + '; font-weight: ' + (on ? '600' : '400') + '; background: ' + (on ? 'rgba(13,13,13,.08)' : 'transparent');
+    const sw = (on) => ({ switchBg: on ? '#181818' : '#cdcdcd', switchJustify: on ? 'flex-end' : 'flex-start', onStr: on ? 'true' : 'false' });
+    const gateStyle = (g) => g === 'Auto' ? pill('#04b84c14', '#00692a') : g === 'Ask first' ? pill('#fb6a2214', '#923b0f') : pill('#0285ff14', '#004f99');
+
+    const decorate = (e) => ({ ...e, kindStyle: kindStyle(e.kind), route: nameOf(e.from) + ' → ' + nameOf(e.to), inspect: () => this.setState({ selEvent: e.id, view: 'flow' }),
+      rowStyle: 'text-align: left; border: 0; border-radius: 8px; padding: 8px; display: flex; gap: 10px; align-items: center; color: #282828; background: ' + (e.id === s.selEvent ? 'rgba(1,105,204,.08)' : 'transparent') });
+
+    const missionBits = (a) => ({
+      missionLine: a.mission ? a.mission : 'Mission pending. ' + masterName + ' has proposed one; approve it in the inbox.',
+      missionColor: a.mission ? '#282828' : '#923b0f',
+      contribution: a.mission ? a.contribution : 0,
+      contributionLabel: a.mission ? a.contribution + '% done' : 'Pending',
+      barColor: !a.mission ? '#cdcdcd' : a.contribution >= 75 ? '#00a240' : a.contribution >= 50 ? '#181818' : '#fb6a22'
+    });
+    const agents = s.agents.map((a) => ({ ...a, ...missionBits(a),
+      open: go('agents', a.id),
+      dot: a.on ? '#00a240' : '#cdcdcd',
+      statusLabel: a.on ? 'Running' : 'Paused',
+      statusStyle: a.on ? pill('#04b84c14', '#00692a') : pill('rgba(13,13,13,.06)', '#5d5d5d'),
+      skillChips: a.skills.filter((k) => k.on).slice(0, 3).map((k) => k.id)
+    }));
+
+    const thisWeek = [1010, 1120, 1090, 1250, 1180, 1330, 1440];
+    const lastWeek = [980, 1040, 1020, 1110, 1060, 1150, 1160];
+    const days = lastWeek.concat(thisWeek);
+    const bars = days.map((v, i) => ({ h: Math.round(v / 1500 * 100), fill: i < 7 ? '#c9c9c9' : '#181818', label: String(14 + i), title: 'Oct ' + (14 + i) + ': $' + v.toLocaleString('en-US') }));
+
+    const tasksTotal = s.agents.reduce((n, a) => n + a.tasks, 0);
+    const kpis = [
+      { label: 'Revenue', value: '$8,420', delta: '+12% vs last week', deltaColor: '#00692a' },
+      { label: 'Orders', value: '186', delta: '+8% vs last week', deltaColor: '#00692a' },
+      { label: 'Average order', value: '$45.27', delta: '+4% vs last week', deltaColor: '#00692a' },
+      { label: 'Profit margin', value: '31%', delta: '−1 pt vs last week', deltaColor: '#911e1b' },
+      { label: 'Tasks done by squads', value: String(tasksTotal), delta: 'This week', deltaColor: '#5d5d5d' },
+      { label: 'Hours saved', value: '34h', delta: 'This week', deltaColor: '#5d5d5d' }
+    ];
+
+    const approvals = s.approvals.map((ap) => ({ ...ap, agentName: nameOf(ap.agent), tint: byId[ap.agent].tint, approve: () => this.decide(ap, true), decline: () => this.decide(ap, false) }));
+    const missionProposals = s.missionProposals.map((mp) => ({ ...mp, agentName: nameOf(mp.agent), tint: byId[mp.agent].tint,
+      title: mp.status === 'Revising' ? 'Revised mission on its way' : 'Proposed mission',
+      isProposed: mp.status === 'Proposed', isRevising: mp.status === 'Revising',
+      targetChips: mp.targets.map(([label, goal]) => label + ': ' + goal),
+      approve: () => this.decideMission(mp, true), decline: () => this.decideMission(mp, false) }));
+
+    const chat = s.chat.map((m) => {
+      const isUser = m.from === 'user';
+      const isAgent = m.from === 'agent';
+      return { ...m, align: isUser ? 'flex-end' : 'flex-start', hasTag: !isUser, tint: isAgent ? byId[m.agent].tint : '#181818',
+        tag: isAgent ? byId[m.agent].name + ' squad, via ' + masterName : masterName,
+        bubble: 'max-width: 78%; padding: 10px 14px; border-radius: 16px; font-size: 15px; line-height: 22px; ' + (isUser ? 'background: #181818; color: #fff' : isAgent ? 'background: #fff; color: #0d0d0d; box-shadow: 0 0 0 1px rgba(13,13,13,.1)' : 'background: #ededed; color: #0d0d0d') };
+    });
+    const suggestions = ['Any refunds waiting?', 'How did ads do this week?', 'What is my profit?', 'Is anything low on stock?'].map((t) => ({ text: t, pick: () => this.send(t) }));
+
+    const sel = byId[s.agentId];
+    let selVals = { name: '', kpis: [], skills: [], autonomyOpts: [], egress: [], secrets: [], bus: [] };
+    if (sel) {
+      selVals = { ...sel, ...sw(sel.on), ...missionBits(sel),
+        missionText: sel.mission ? sel.mission : 'No mission yet. ' + masterName + ' has proposed one; approve it in the inbox on the Overview.',
+        missionStatus: sel.mission ? 'Approved by you' : 'Pending approval',
+        missionStatusStyle: sel.mission ? pill('#04b84c14', '#00692a') : pill('#fb6a2214', '#923b0f'),
+        targets: sel.targets.map(([label, now, goal]) => ({ label, now, goal })), noTargets: sel.targets.length === 0,
+        askRevise: () => this.askRevise(sel.id),
+        statusLabel: sel.on ? 'Running' : 'Paused',
+        statusStyle: sel.on ? pill('#04b84c14', '#00692a') : pill('rgba(13,13,13,.06)', '#5d5d5d'),
+        vmState: sel.on ? 'Isolated · running' : 'Isolated · stopped',
+        cpu: sel.on ? sel.cpu : '0%', uptime: sel.on ? (sel.uptime === 'Paused' ? 'Just started' : sel.uptime) : 'Paused',
+        toggle: () => this.updAgent(sel.id, (a) => ({ ...a, on: !a.on })),
+        kpis: sel.kpis.map(([label, value]) => ({ label, value })),
+        skills: sel.skills.map((k, i) => ({ ...k, ...sw(k.on), gateStyle: gateStyle(k.gate === 'Under limit' ? 'Under limit' : k.gate),
+          toggle: () => this.updAgent(sel.id, (a) => ({ ...a, skills: a.skills.map((x, j) => j === i ? { ...x, on: !x.on } : x) })) })),
+        autonomyOpts: ['Ask first', 'Auto under limit', 'Full auto'].map((label) => {
+          const on = sel.autonomy === label;
+          return { label, onStr: on ? 'true' : 'false', pick: () => this.updAgent(sel.id, (a) => ({ ...a, autonomy: label })),
+            style: 'height: 28px; padding: 0 12px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 500; color: ' + (on ? '#0d0d0d' : '#5d5d5d') + '; background: ' + (on ? '#fff' : 'transparent') + '; box-shadow: ' + (on ? '0 1px 2px rgba(0,0,0,.12)' : 'none') };
+        }),
+        bus: s.bus.filter((e) => e.from === sel.id || e.to === sel.id).slice().reverse().map(decorate)
+      };
+    }
+
+    const filters = [{ id: 'all', label: 'All agents' }].concat(s.agents.map((a) => ({ id: a.id, label: a.name }))).map((f) => {
+      const on = s.busFilter === f.id;
+      return { ...f, onStr: on ? 'true' : 'false', pick: () => this.setState({ busFilter: f.id }),
+        style: 'height: 28px; padding: 0 12px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 500; background: ' + (on ? '#181818' : 'rgba(13,13,13,.06)') + '; color: ' + (on ? '#fff' : '#282828') };
+    });
+    const busView = s.bus.filter((e) => s.busFilter === 'all' || e.from === s.busFilter || e.to === s.busFilter).slice().reverse().map(decorate);
+    const hub = s.agents.map((a) => {
+      const on = s.busFilter === a.id;
+      return { ...a, onStr: on ? 'true' : 'false',
+        inCount: s.bus.filter((e) => e.to === a.id).length, outCount: s.bus.filter((e) => e.from === a.id).length,
+        line: on ? '#0169cc' : 'rgba(13,13,13,.2)',
+        pick: () => this.setState({ busFilter: on ? 'all' : a.id }),
+        style: 'width: 100%; border: 0; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; background: ' + (a.on ? '#fff' : '#f3f3f3') + '; box-shadow: 0 0 0 ' + (on ? '2px #0169cc' : '1px rgba(13,13,13,.1)') + '; color: #282828; opacity: ' + (a.on ? '1' : '.6') };
+    });
+    const ev = s.bus.find((e) => e.id === s.selEvent) || s.bus[s.bus.length - 1];
+    const deltaBySkill = { 'shopify.add_tracking': 'Fulfilment time −0.3 days (Orders)', 'printify.get_shipment': 'No target moved; ETA recorded', 'quickbooks.pnl': 'Margin 31%, target 30% met (Finance)', 'inbox.draft_reply': 'First reply 4 min (Support)' };
+    const messagingRules = [
+      { tag: 'Hub and spoke', style: pill('#0285ff14', '#004f99'), title: 'Squads talk only to ' + masterName, body: 'A squad sends Task, Result, Request and Escalation events to ' + masterName + ' only. ' + masterName + ' decides, then emits Relay or Task events to the target squad. Squads never address each other.' },
+      { tag: 'Mission delta', style: pill('#04b84c14', '#00692a'), title: 'Every Result moves a target', body: 'Each Result carries which mission target it moved and by how much. ' + masterName + ' adds these up to score every squad. No separate reports.' },
+      { tag: 'Shared state', style: pill('#924ff714', '#532d8d'), title: 'Facts live in one store', body: 'Squads read the shared state freely. Writes travel on the bus, so ' + masterName + ' sees each change and the traffic log shows it.' },
+      { tag: 'Review', style: pill('#fb6a2214', '#923b0f'), title: masterName + ' reviews daily and on every escalation', body: 'It re-scores each squad from the deltas and does one of three things: nothing, re-route work, or propose a mission change. Only a mission change comes to your inbox.' }
+    ];
+    const ins = { ...ev, kindStyle: kindStyle(ev.kind), route: nameOf(ev.from) + ' → ' + nameOf(ev.to),
+      missionDelta: ev.kind === 'Result' ? (deltaBySkill[ev.skill] || 'No target moved') : 'None. Only Result events carry a delta.',
+      deltaColor: ev.kind === 'Result' && deltaBySkill[ev.skill] ? '#00692a' : '#5d5d5d',
+      payload: JSON.stringify({ trace_id: ev.trace, from: ev.from, to: ev.to, kind: ev.kind.toLowerCase(), skill: ev.skill, body: ev.payload }, null, 2), noWrites: !ev.writes.length };
+    const stateRows = Object.keys(s.store).map((k) => ({ key: k, value: String(s.store[k]) }));
+
+    const rules = s.rules.map((r) => ({ ...r, ...sw(r.on), agentName: nameOf(r.agent), tint: byId[r.agent].tint, gateStyle: gateStyle(r.approval),
+      toggle: () => this.setState({ rules: s.rules.map((x) => x.id === r.id ? { ...x, on: !x.on } : x) }) }));
+    const setForm = (k) => (e) => this.setState({ form: { ...s.form, [k]: e.target.value } });
+    const limitDefs = [
+      { id: 'lim-refund', key: 'policy.refund_auto_limit', label: 'Refund without asking, up to', min: 0, max: 200, step: 5, fmt: (v) => '$' + v },
+      { id: 'lim-ads', key: 'policy.daily_ad_cap', label: 'Total ad spend per day', min: 0, max: 1000, step: 10, fmt: (v) => '$' + v },
+      { id: 'lim-reorder', key: 'policy.reorder_limit', label: 'Reorder without asking, up to', min: 0, max: 2000, step: 50, fmt: (v) => '$' + v }
+    ];
+    const limits = limitDefs.map((l) => ({ ...l, value: s.store[l.key], display: l.fmt(s.store[l.key]),
+      change: (e) => this.setState({ store: { ...s.store, [l.key]: Number(e.target.value) } }) }));
+
+    // Platform admin: all accounts
+    const q = s.acctQuery.trim().toLowerCase();
+    const acctAll = s.accounts;
+    const acctShown = acctAll.filter((a) => (s.acctFilter === 'all' || a.status === s.acctFilter) && (!q || (a.name + ' ' + a.owner + ' ' + a.email).toLowerCase().includes(q)));
+    const planFill = { Starter: '#c9c9c9', Growth: '#0169cc', Scale: '#181818' };
+    const companyMissions = { demo: s.companyMission, leen: 'Make Leen the first name in premium dates across the Gulf and the UK.', northwind: 'Grow to $5M a year across the US and EU without adding staff.', harbor: 'Sell out every roast and open a second cafe by 2028.', bloom: 'Reach 10,000 subscribers on the monthly skincare box.', pixelforge: 'Take on five retained clients and keep every project on time.', atlas: 'Become the go-to outdoor brand for families in the UK.', maple: 'Keep the shop open and profitable on online sales alone.', sunbeam: 'Double wholesale revenue while keeping the online store growing.' };
+    const planStyle = (p) => p === 'Scale' ? pill('#0d0d0d', '#fff') : p === 'Growth' ? pill('#0285ff14', '#004f99') : pill('rgba(13,13,13,.06)', '#414141');
+    const statusStyle = (st) => st === 'Active' ? pill('#04b84c14', '#00692a') : st === 'Trial' ? pill('#fb6a2214', '#923b0f') : pill('rgba(13,13,13,.06)', '#5d5d5d');
+    const sum = (list, k) => list.reduce((n, a) => n + a[k], 0);
+    const totalAgents = sum(acctAll, 'agents');
+    const totalSquads = acctAll.reduce((n, a) => n + a.squads.length, 0);
+    const weekCounts = [0, 0, 0, 0, 0, 0, 0, 0];
+    acctAll.forEach((a) => { if (a.createdWeek >= 0) weekCounts[a.createdWeek] += 1; });
+    const planPrice = { Starter: 49, Growth: 149, Scale: 399 };
+    const money = (n) => '$' + n.toLocaleString('en-US');
+    const mrrTotal = sum(acctAll, 'mrr');
+    const ltvTotal = sum(acctAll, 'ltv');
+    const weekMax = Math.max.apply(null, weekCounts) || 1;
+    const weekLabels = ['Sep 7', 'Sep 14', 'Sep 21', 'Sep 28', 'Oct 5', 'Oct 12', 'Oct 19', 'Oct 26'];
+    const adm = {
+      agentsOnline: sum(acctAll, 'online'),
+      kpis: [
+        { label: 'Companies', value: String(acctAll.length), delta: '+' + (weekCounts[7] + weekCounts[6]) + ' in the last 2 weeks', deltaColor: '#00692a' },
+        { label: 'Active companies', value: String(acctAll.filter((a) => a.status === 'Active').length), delta: acctAll.filter((a) => a.status === 'Trial').length + ' on trial · ' + acctAll.filter((a) => a.status === 'Paused').length + ' paused', deltaColor: '#5d5d5d' },
+        { label: 'Squads', value: String(totalAgents), delta: sum(acctAll, 'online') + ' online right now', deltaColor: '#00692a' },
+        { label: 'Tasks done, 7d', value: sum(acctAll, 'tasks').toLocaleString('en-US'), delta: '+9% vs last week', deltaColor: '#00692a' },
+        { label: 'Monthly recurring', value: money(mrrTotal), delta: acctAll.filter((a) => a.mrr > 0).length + ' paying companies', deltaColor: '#00692a' },
+        { label: 'All-time company value', value: money(ltvTotal), delta: 'Avg ' + money(Math.round(ltvTotal / Math.max(1, acctAll.filter((a) => a.ltv > 0).length))) + ' per paying company', deltaColor: '#5d5d5d' }
+      ],
+      bars: weekCounts.map((v, i) => ({ h: Math.max(4, Math.round(v / weekMax * 100)), fill: i === 7 ? '#181818' : '#c9c9c9', label: weekLabels[i], title: 'Week of ' + weekLabels[i] + ': ' + v + (v === 1 ? ' company' : ' companies') })),
+      plans: ['Starter', 'Growth', 'Scale'].map((p) => { const list = acctAll.filter((a) => a.plan === p); return { label: p, count: list.length, agents: sum(list, 'agents'), pct: Math.round(list.length / acctAll.length * 100), fill: planFill[p] }; }),
+      avgAgents: (totalAgents / acctAll.length).toFixed(1),
+      query: s.acctQuery,
+      onQuery: (e) => this.setState({ acctQuery: e.target.value }),
+      filters: [['all', 'All'], ['Active', 'Active'], ['Trial', 'Trial'], ['Paused', 'Paused']].map(([id, label]) => {
+        const on = s.acctFilter === id;
+        return { id, label, onStr: on ? 'true' : 'false', pick: () => this.setState({ acctFilter: id }),
+          style: 'height: 32px; padding: 0 12px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 500; background: ' + (on ? '#181818' : 'rgba(13,13,13,.06)') + '; color: ' + (on ? '#fff' : '#282828') };
+      }),
+      shown: acctShown.length + ' of ' + acctAll.length,
+      empty: acctShown.length === 0,
+      rows: acctShown.map((a) => ({ ...a,
+        initials: a.name.split(' ').filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join(''),
+        mission: companyMissions[a.id] || '[MISSION NOT SET]',
+        onlineColor: a.online > 0 ? '#00692a' : '#8f8f8f',
+        online: a.online + ' / ' + a.agents,
+        tasks: a.tasks.toLocaleString('en-US'),
+        planStyle: planStyle(a.plan), statusStyle: statusStyle(a.status),
+        subscription: a.status === 'Trial' ? 'Trial' : a.status === 'Paused' ? 'Paused' : money(a.mrr) + ' / mo',
+        subscriptionNote: a.status === 'Trial' ? money(planPrice[a.plan]) + ' / mo after' : a.status === 'Paused' ? 'was ' + money(planPrice[a.plan]) + ' / mo' : 'billed monthly',
+        ltvDisplay: a.ltv > 0 ? money(a.ltv) : '—',
+        open: go('overview')
+      }))
+    };
+
+    // Platform admin: agent images
+    const imgStatusStyle = (st) => st === 'Stable' ? pill('#04b84c14', '#00692a') : st === 'Needs attention' ? pill('#fa423e14', '#911e1b') : st === 'Beta' ? pill('#0285ff14', '#004f99') : pill('rgba(13,13,13,.06)', '#5d5d5d');
+    const sevStyle = (sv) => (sv === 'High' ? pill('#fa423e14', '#911e1b') : sv === 'Medium' ? pill('#fb6a2214', '#923b0f') : pill('rgba(13,13,13,.06)', '#5d5d5d')) + '; width: 64px; justify-content: center';
+    const stageStyle = (st) => st === 'In progress' ? pill('#924ff714', '#532d8d') : st === 'In review' ? pill('#0285ff14', '#004f99') : st === 'Planned' ? pill('#04b84c14', '#00692a') : pill('rgba(13,13,13,.06)', '#5d5d5d');
+    const imgAll = s.images;
+    const imgShown = imgAll.filter((m) => s.imgFilter === 'all' || (s.imgFilter === 'bugs' ? m.bugs.length > 0 : s.imgFilter === 'features' ? m.features.length > 0 : m.status === s.imgFilter));
+    const bugsTotal = imgAll.reduce((n, m) => n + m.bugs.length, 0);
+    const highBugs = imgAll.reduce((n, m) => n + m.bugs.filter((b) => b.sev === 'High').length, 0);
+    const featTotal = imgAll.reduce((n, m) => n + m.features.length, 0);
+    const attention = imgAll.filter((m) => m.status === 'Needs attention').length;
+    const cat = {
+      count: imgShown.length + ' of ' + imgAll.length,
+      attention, hasAttention: attention > 0,
+      kpis: [
+        { label: 'Images', value: String(imgAll.length), delta: imgAll.filter((m) => m.status === 'Stable').length + ' stable · ' + imgAll.filter((m) => m.status === 'Beta' || m.status === 'Draft').length + ' beta or draft', deltaColor: '#5d5d5d' },
+        { label: 'Deployments', value: String(imgAll.reduce((n, m) => n + m.deployed, 0)), delta: imgAll.reduce((n, m) => n + (m.deployed - m.onLatest), 0) + ' behind the latest version', deltaColor: '#923b0f' },
+        { label: 'Open bugs', value: String(bugsTotal), delta: highBugs + ' high severity', deltaColor: highBugs > 0 ? '#911e1b' : '#5d5d5d' },
+        { label: 'Features requested', value: String(featTotal), delta: imgAll.reduce((n, m) => n + m.features.filter((f) => f.stage === 'In progress').length, 0) + ' in progress', deltaColor: '#532d8d' },
+        { label: 'Updated this week', value: String(imgAll.filter((m) => /h ago/.test(m.updated) || (/day/.test(m.updated) && parseInt(m.updated, 10) <= 7)).length), delta: 'of ' + imgAll.length + ' images', deltaColor: '#5d5d5d' }
+      ],
+      filters: [['all', 'All'], ['Needs attention', 'Needs attention'], ['bugs', 'With bugs'], ['features', 'With requests']].map(([id, label]) => {
+        const on = s.imgFilter === id;
+        return { id, label, onStr: on ? 'true' : 'false', pick: () => this.setState({ imgFilter: id }),
+          style: 'height: 32px; padding: 0 12px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 500; background: ' + (on ? '#181818' : 'rgba(13,13,13,.06)') + '; color: ' + (on ? '#fff' : '#282828') };
+      }),
+      rows: imgShown.map((m) => {
+        const on = s.imgSel === m.id;
+        return { ...m, onStr: on ? 'true' : 'false', pick: () => this.setState({ imgSel: m.id }),
+          bugCount: m.bugs.length, featureCount: m.features.length,
+          bugColor: m.bugs.some((b) => b.sev === 'High') ? '#911e1b' : m.bugs.length ? '#923b0f' : '#8f8f8f',
+          statusStyle: imgStatusStyle(m.status),
+          rowStyle: 'display: grid; grid-template-columns: minmax(200px, 2fr) 90px 120px 90px 70px 80px 110px; gap: 12px; align-items: center; width: 100%; min-height: 56px; padding: 8px 20px; border: 0; border-bottom: 1px solid rgba(13,13,13,.06); text-align: left; color: #282828; font-size: 14px; background: ' + (on ? 'rgba(1,105,204,.08)' : 'transparent') };
+      })
+    };
+    const imgSel = imgAll.find((m) => m.id === s.imgSel) || imgAll[0];
+    const img = { ...imgSel,
+      statusStyle: imgStatusStyle(imgSel.status),
+      deployedFull: imgSel.deployed + (imgSel.deployed === 1 ? ' account' : ' accounts'),
+      onLatest: imgSel.deployed ? imgSel.onLatest + ' of ' + imgSel.deployed + ' (' + Math.round(imgSel.onLatest / imgSel.deployed * 100) + '%)' : 'Not deployed yet',
+      bugCount: imgSel.bugs.length, featureCount: imgSel.features.length,
+      noBugs: imgSel.bugs.length === 0, noFeatures: imgSel.features.length === 0,
+      bugBadgeBg: imgSel.bugs.length ? '#fa423e14' : 'rgba(13,13,13,.06)', bugBadgeFg: imgSel.bugs.length ? '#911e1b' : '#5d5d5d',
+      bugs: imgSel.bugs.map((b) => ({ ...b, sevStyle: sevStyle(b.sev), meta: b.id + ' · open ' + b.age + ' · reported by ' + b.reports + (b.reports === 1 ? ' account' : ' accounts') })),
+      features: imgSel.features.map((f) => ({ ...f, stageStyle: stageStyle(f.stage), meta: f.id + ' · requested by ' + f.votes + (f.votes === 1 ? ' account' : ' accounts') }))
+    };
+
+    return {
+      masterName, masterInitial: masterName.charAt(0).toUpperCase(),
+      nav: { admin: navStyle(s.view === 'admin'), catalog: navStyle(s.view === 'catalog'), overview: navStyle(s.view === 'overview'), chat: navStyle(s.view === 'chat'), agents: navStyle(s.view === 'agents'), flow: navStyle(s.view === 'flow'), rules: navStyle(s.view === 'rules') },
+      goAdmin: go('admin'), goCatalog: go('catalog'), goOverview: go('overview'), goChat: go('chat'), goAgents: go('agents'), goFlow: go('flow'), goRules: go('rules'),
+      isAdmin: s.view === 'admin', isCatalog: s.view === 'catalog', isAdminArea: s.view === 'admin' || s.view === 'catalog', notAdmin: s.view !== 'admin' && s.view !== 'catalog', adm, cat, img,
+      isOverview: s.view === 'overview', isChat: s.view === 'chat', isAgentList: s.view === 'agents' && !sel, isAgentDetail: s.view === 'agents' && !!sel, isFlow: s.view === 'flow', isRules: s.view === 'rules',
+      onlineCount: s.agents.filter((a) => a.on).length,
+      kpis, bars, approvals, missionProposals, companyMission: s.companyMission, messagingRules,
+      approvalCount: s.approvals.length + s.missionProposals.filter((x) => x.status === 'Proposed').length, noApprovals: s.approvals.length === 0 && s.missionProposals.length === 0,
+      agents,
+      chat, suggestions, draft: s.draft, thinking: s.thinking, thinkingLabel: s.thinkingAgent + ' agent is working on it…',
+      showDock: s.view !== 'chat' && s.view !== 'admin' && s.view !== 'catalog',
+      dockOpen: s.dockOpen, dockOpenStr: s.dockOpen ? 'true' : 'false', toggleDock: () => this.setState({ dockOpen: !s.dockOpen }),
+      dockLabel: s.dockOpen ? 'Hide chat' : 'Ask ' + masterName,
+      dockUnread: !s.dockOpen && (s.approvals.length + s.missionProposals.filter((x) => x.status === 'Proposed').length) > 0,
+      dockChat: chat.slice(-6).map((m) => ({ ...m, dockBubble: m.bubble.replace('max-width: 78%', 'max-width: 86%').replace('font-size: 15px; line-height: 22px', 'font-size: 13px; line-height: 19px').replace('padding: 10px 14px', 'padding: 8px 12px') })),
+      dockSuggestions: suggestions.slice(0, 3),
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      onKey: (e) => { if (e.key === 'Enter') this.send(); },
+      send: () => this.send(),
+      chatBus: s.bus.slice(-6).reverse().map(decorate),
+      sel: selVals,
+      filters, busView, hub, ins, stateRows,
+      live: s.live, liveStr: s.live ? 'true' : 'false', liveLabel: s.live ? 'Live' : 'Paused', liveDot: s.live ? '#00a240' : '#8f8f8f',
+      liveStyle: 'height: 32px; padding: 0 14px; border: 0; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; background: ' + (s.live ? '#04b84c14' : 'rgba(13,13,13,.08)') + '; color: ' + (s.live ? '#00692a' : '#282828'),
+      toggleLive: () => this.setState({ live: !s.live }),
+      simulate: () => this.nextEvent(),
+      rules, form: s.form,
+      triggerOpts: ['A new order arrives', 'A refund request comes in', 'Printify ships an item', 'A product drops under 10 in stock', 'A customer leaves a bad review', 'It is Monday at 8:00'],
+      agentOpts: s.agents.map((a) => ({ id: a.id, name: a.name })),
+      approvalOpts: ['Auto', 'Auto under limit', 'Ask first'],
+      onWhen: setForm('when'), onAgent: setForm('agent'), onAction: setForm('action'), onApproval: setForm('approval'),
+      addRule: () => {
+        const f = s.form;
+        if (!f.action.trim()) return;
+        this.setState({ rules: s.rules.concat({ id: 'r' + (this.seq++), when: f.when.charAt(0).toLowerCase() + f.when.slice(1), agent: f.agent, action: f.action.trim(), approval: f.approval, on: true }), form: { ...f, action: '' } });
+      },
+      limits
+    };
+  }
+}
+</script>
+</body>
+</html>

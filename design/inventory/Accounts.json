@@ -1,0 +1,30 @@
+{
+  "file": "Accounts.dc.html",
+  "counts": {
+    "texts": 0,
+    "styles": 0,
+    "colors": 0,
+    "handlers": 0,
+    "loops": 0,
+    "strings": 0
+  },
+  "imports": [
+    "name=\"Main\" start-view=\"admin\" hint-size=\"100%,1240px\""
+  ],
+  "props": {
+    "$preview": {
+      "width": 1440,
+      "height": 1240
+    }
+  },
+  "texts": [],
+  "attrTexts": [],
+  "templates": [],
+  "loops": [],
+  "handlers": [],
+  "links": [],
+  "styles": {},
+  "colors": [],
+  "strings": {},
+  "keys": []
+}

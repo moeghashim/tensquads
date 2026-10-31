@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Create your business</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f3f3f3}
+a{color:#0169cc}a:hover{color:#004f99}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid #0169cc;outline-offset:2px}
+.opt:hover{box-shadow:0 0 0 2px #181818 !important}
+.soft-btn:hover{background:rgba(13,13,13,.12)}
+.chip:hover{box-shadow:0 0 0 1px #181818}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; background: #f3f3f3; color: #282828; font-family: Inter, system-ui, sans-serif; font-size: 14px; line-height: 20px; letter-spacing: -0.01em; display: flex; flex-direction: column">
+
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 32px; flex-wrap: wrap">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <span style="width: 28px; height: 28px; border-radius: 8px; background: #181818; color: #fff; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"></rect><path d="M8 2.5V5M6 9h0M10 9h0"></path></svg>
+      </span>
+      <span style="font-weight: 600; color: #0d0d0d">tensquads</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5d5d5d">
+      <span>Already have an account?</span>
+      <a href="SignIn.dc.html" style="font-weight: 500; text-decoration: none">Sign in</a>
+    </div>
+  </header>
+
+  <main style="flex: 1; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; justify-content: center; padding: 16px 32px 48px; box-sizing: border-box; max-width: 1180px; width: 100%; margin: 0 auto">
+
+    <!-- Left: pitch -->
+    <section aria-label="What you get" style="flex: 1 1 320px; max-width: 420px; display: flex; flex-direction: column; gap: 24px; padding-top: 24px">
+      <div>
+        <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(13,13,13,.08); font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; color: #5d5d5d">Free for 14 days</span>
+        <h1 style="margin: 12px 0 0; font-size: 36px; line-height: 42px; font-weight: 600; letter-spacing: -0.03em; color: #0d0d0d">Run your business with a team of squads</h1>
+        <p style="margin: 12px 0 0; font-size: 16px; line-height: 24px; color: #5d5d5d">Each part of your business gets its own squad: one agent with its tools. A master squad coordinates them, and every squad works toward your mission.</p>
+      </div>
+      <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px">
+        <li style="display: flex; gap: 12px; align-items: flex-start">
+          <span style="width: 28px; height: 28px; border-radius: 8px; background: #e7efff; display: inline-flex; align-items: center; justify-content: center; flex: none"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 8.5 6 12l7.5-8"></path></svg></span>
+          <div><div style="font-weight: 500; color: #0d0d0d">Orders, support, marketing, finance, stock</div><div style="font-size: 13px; color: #5d5d5d">Start with the squads you need. Add more later.</div></div>
+        </li>
+        <li style="display: flex; gap: 12px; align-items: flex-start">
+          <span style="width: 28px; height: 28px; border-radius: 8px; background: #def5ee; display: inline-flex; align-items: center; justify-content: center; flex: none"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4h7M12.5 4h1M2.5 8h2M7.5 8h6M2.5 12h5M10.5 12h3"></path><circle cx="11" cy="4" r="1.5"></circle><circle cx="6" cy="8" r="1.5"></circle><circle cx="9" cy="12" r="1.5"></circle></svg></span>
+          <div><div style="font-weight: 500; color: #0d0d0d">You set the limits</div><div style="font-size: 13px; color: #5d5d5d">Refunds, ad spend, reorders: squads stay inside them or ask first.</div></div>
+        </li>
+        <li style="display: flex; gap: 12px; align-items: flex-start">
+          <span style="width: 28px; height: 28px; border-radius: 8px; background: #ece3ff; display: inline-flex; align-items: center; justify-content: center; flex: none"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H7l-3 2.5v-2.5h0a2 2 0 0 1-1.5-2z"></path></svg></span>
+          <div><div style="font-weight: 500; color: #0d0d0d">One chat for everything</div><div style="font-size: 13px; color: #5d5d5d">Ask the master what's going on; it routes the question to the right squad.</div></div>
+        </li>
+      </ul>
+      <div style="padding: 16px; border-radius: 12px; background: #fff; box-shadow: 0 0 0 1px rgba(13,13,13,.08); display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 13px; line-height: 20px; color: #282828">[CUSTOMER QUOTE]</div>
+        <div style="font-size: 12px; color: #5d5d5d">[CUSTOMER NAME], [BUSINESS]</div>
+      </div>
+    </section>
+
+    <!-- Right: the flow -->
+    <section aria-label="Create your business" style="flex: 1 1 460px; max-width: 620px; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 28px 32px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+
+      <!-- Steps -->
+      <ol style="margin: 0; padding: 0; list-style: none; display: flex; gap: 8px; align-items: center; font-size: 12px; font-weight: 500">
+        <sc-for list="{{steps}}" as="st" hint-placeholder-count="3">
+          <li style="display: flex; align-items: center; gap: 8px">
+            <span style="{{st.dot}}">{{st.n}}</span>
+            <span style="color: {{st.color}}">{{st.label}}</span>
+            <sc-if value="{{st.hasLine}}" hint-placeholder-val="{{true}}"><span style="width: 24px; height: 1px; background: rgba(13,13,13,.15); margin: 0 4px"></span></sc-if>
+          </li>
+        </sc-for>
+      </ol>
+
+      <!-- Step 1: new or existing -->
+      <sc-if value="{{isChoose}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-direction: column; gap: 20px">
+          <div>
+            <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">Where are you starting from?</h2>
+            <p style="margin: 6px 0 0; color: #5d5d5d">This decides which squads we set up first and what we ask you to connect.</p>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px">
+            <button class="opt" onClick="{{pickNew}}" aria-pressed="{{newOn}}" style="{{newStyle}}">
+              <span style="width: 40px; height: 40px; border-radius: 10px; background: #ffefa4; display: inline-flex; align-items: center; justify-content: center">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5v11M2.5 8h11"></path></svg>
+              </span>
+              <span style="font-size: 16px; font-weight: 600; color: #0d0d0d">A new business</span>
+              <span style="font-size: 13px; line-height: 19px; color: #5d5d5d">I have an idea or a product and nothing is set up yet. Squads help me launch: store, first products, first campaign.</span>
+            </button>
+            <button class="opt" onClick="{{pickExisting}}" aria-pressed="{{existingOn}}" style="{{existingStyle}}">
+              <span style="width: 40px; height: 40px; border-radius: 10px; background: #def5ee; display: inline-flex; align-items: center; justify-content: center">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.5 8 2.5l5.5 4v7h-11z"></path><path d="M6.5 13.5v-4h3v4"></path></svg>
+              </span>
+              <span style="font-size: 16px; font-weight: 600; color: #0d0d0d">An existing business</span>
+              <span style="font-size: 13px; line-height: 19px; color: #5d5d5d">I already sell. Connect my store and inbox and let the squads take over the daily work.</span>
+            </button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Step 2: details -->
+      <sc-if value="{{isDetails}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-direction: column; gap: 20px">
+          <div>
+            <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">{{detailsTitle}}</h2>
+            <p style="margin: 6px 0 0; color: #5d5d5d">{{detailsSub}}</p>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <label for="biz-name" style="font-size: 13px; font-weight: 500; color: #0d0d0d">Business name</label>
+            <input id="biz-name" type="text" placeholder="e.g. Harbor Coffee Roasters" value="{{name}}" onChange="{{onName}}" style="height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; border-radius: 10px; background: rgba(13,13,13,.06); font-family: inherit; font-size: 14px; color: #0d0d0d">
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <label for="biz-mission" style="font-size: 13px; font-weight: 500; color: #0d0d0d">Company mission <span style="font-weight: 400; color: #5d5d5d">(required)</span></label>
+            <textarea id="biz-mission" rows="2" placeholder="{{missionPlaceholder}}" value="{{mission}}" onChange="{{onMission}}" style="box-sizing: border-box; padding: 10px 12px; border: 0; border-radius: 10px; background: rgba(13,13,13,.06); font-family: inherit; font-size: 14px; line-height: 20px; color: #0d0d0d; resize: vertical"></textarea>
+            <span style="font-size: 12px; color: #5d5d5d">One or two sentences. Every squad works toward this.</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px">
+              <sc-for list="{{missionExamples}}" as="m" hint-placeholder-count="3">
+                <button class="chip" onClick="{{m.pick}}" style="height: 28px; padding: 0 10px; border: 0; border-radius: 999px; background: rgba(13,13,13,.06); color: #414141; font-size: 12px; font-weight: 500">{{m.label}}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <sc-if value="{{isNew}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <label for="biz-idea" style="font-size: 13px; font-weight: 500; color: #0d0d0d">What will you sell, and to whom?</label>
+              <textarea id="biz-idea" rows="3" placeholder="e.g. Naturally caffeine-free date-seed coffee for people who love the ritual but not the jitters" value="{{idea}}" onChange="{{onIdea}}" style="box-sizing: border-box; padding: 10px 12px; border: 0; border-radius: 10px; background: rgba(13,13,13,.06); font-family: inherit; font-size: 14px; line-height: 20px; color: #0d0d0d; resize: vertical"></textarea>
+              <span style="font-size: 12px; color: #5d5d5d">The master uses this to brief every squad. You can change it later.</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <span style="font-size: 13px; font-weight: 500; color: #0d0d0d">Where do you plan to sell?</span>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                <sc-for list="{{channels}}" as="c" hint-placeholder-count="5">
+                  <button class="chip" onClick="{{c.toggle}}" aria-pressed="{{c.onStr}}" style="{{c.style}}">{{c.label}}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{isExisting}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <span style="font-size: 13px; font-weight: 500; color: #0d0d0d">Where do you sell today?</span>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px">
+                <sc-for list="{{platforms}}" as="p" hint-placeholder-count="4">
+                  <button class="chip" onClick="{{p.toggle}}" aria-pressed="{{p.onStr}}" style="{{p.style}}">
+                    <span style="width: 8px; height: 8px; border-radius: 999px; background: {{p.dot}}; flex: none"></span>
+                    {{p.label}}
+                  </button>
+                </sc-for>
+              </div>
+              <span style="font-size: 12px; color: #5d5d5d">We'll ask you to connect these on the next step. Nothing is changed in your store without your say-so.</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <label for="biz-url" style="font-size: 13px; font-weight: 500; color: #0d0d0d">Website <span style="font-weight: 400; color: #5d5d5d">(optional)</span></label>
+              <input id="biz-url" type="url" placeholder="https://" value="{{url}}" onChange="{{onUrl}}" style="height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; border-radius: 10px; background: rgba(13,13,13,.06); font-family: inherit; font-size: 14px; color: #0d0d0d">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <span style="font-size: 13px; font-weight: 500; color: #0d0d0d">Roughly how many orders a month?</span>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                <sc-for list="{{volumes}}" as="v" hint-placeholder-count="4">
+                  <button class="chip" onClick="{{v.pick}}" aria-pressed="{{v.onStr}}" style="{{v.style}}">{{v.label}}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="display: flex; gap: 8px; justify-content: space-between; align-items: center; flex-wrap: wrap; padding-top: 4px">
+            <button class="soft-btn" onClick="{{back}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: rgba(13,13,13,.08); color: #282828; font-size: 14px; font-weight: 500">Back</button>
+            <button onClick="{{next}}" style="height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: #181818; color: #fff; font-size: 14px; font-weight: 500">Choose my squads</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Step 3: agents -->
+      <sc-if value="{{isAgents}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; flex-direction: column; gap: 20px">
+          <div>
+            <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">Your first squads for {{nameOrFallback}}</h2>
+            <p style="margin: 6px 0 0; color: #5d5d5d">{{agentsSub}}</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <sc-for list="{{agents}}" as="a" hint-placeholder-count="7">
+              <button onClick="{{a.toggle}}" aria-pressed="{{a.onStr}}" style="{{a.style}}">
+                <span style="width: 32px; height: 32px; border-radius: 8px; background: {{a.tint}}; display: inline-flex; align-items: center; justify-content: center; flex: none">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"></rect><path d="M8 2.5V5M6 9h0M10 9h0"></path></svg>
+                </span>
+                <span style="display: flex; flex-direction: column; flex: 1; min-width: 0; text-align: left">
+                  <span style="font-weight: 600; color: #0d0d0d">{{a.name}} <span style="font-weight: 400; color: #5d5d5d">· {{a.role}}</span></span>
+                  <span style="font-size: 12px; color: #5d5d5d">{{a.why}}</span>
+                </span>
+                <span style="{{a.check}}">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg>
+                </span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="padding: 12px 14px; border-radius: 12px; background: #f9f9f9; display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: #5d5d5d">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#5d5d5d" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6"></circle><path d="M8 7v4M8 5h0"></path></svg>
+            <span>{{summary}} Every squad starts in <strong style="color: #0d0d0d">ask-first</strong> mode; you loosen the limits once you trust it. The master will propose a mission for each squad; you approve them in your inbox.</span>
+          </div>
+          <div style="display: flex; gap: 8px; justify-content: space-between; align-items: center; flex-wrap: wrap; padding-top: 4px">
+            <button class="soft-btn" onClick="{{back}}" style="height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: rgba(13,13,13,.08); color: #282828; font-size: 14px; font-weight: 500">Back</button>
+            <a href="Main.dc.html" style="height: 40px; padding: 0 18px; border-radius: 999px; background: #181818; color: #fff; font-size: 14px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 8px">
+              Create my workspace
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+            </a>
+          </div>
+        </div>
+      </sc-if>
+
+      <p style="margin: 0; font-size: 12px; color: #8f8f8f; text-align: center">By continuing you agree to the [TERMS] and [PRIVACY POLICY].</p>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startStep":{"editor":"enum","options":["choose","details","agents"],"default":"choose"},"startKind":{"editor":"enum","options":["","new","existing"],"default":""},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const kind = props.startKind || null;
+    this.state = { step: props.startStep || 'choose', kind, name: '', mission: '', idea: '', url: '', channels: ['Online store'], platforms: ['Shopify'], volume: '100 to 500',
+      picked: kind ? this.defaultAgents(kind) : [] };
+  }
+  defaultAgents(kind) { return kind === 'new' ? ['marketing', 'orders', 'support'] : ['orders', 'support', 'finance', 'inventory']; }
+  renderVals() {
+    const s = this.state;
+    const pill = (on) => 'height: 36px; padding: 0 14px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: ' + (on ? '#181818' : 'rgba(13,13,13,.06)') + '; color: ' + (on ? '#fff' : '#282828');
+    const optStyle = (on) => 'text-align: left; border: 0; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px; background: ' + (on ? '#fff' : '#f9f9f9') + '; box-shadow: 0 0 0 ' + (on ? '2px #181818' : '1px rgba(13,13,13,.1)') + '; color: #282828';
+    const stepIds = ['choose', 'details', 'agents'];
+    const cur = stepIds.indexOf(s.step);
+    const steps = [['Business type'], ['Details'], ['Squads']].map(([label], i) => {
+      const done = i < cur, on = i === cur;
+      return { n: done ? '✓' : String(i + 1), label, hasLine: i < 2, color: on ? '#0d0d0d' : done ? '#282828' : '#8f8f8f',
+        dot: 'width: 22px; height: 22px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; background: ' + (on || done ? '#181818' : 'rgba(13,13,13,.08)') + '; color: ' + (on || done ? '#fff' : '#5d5d5d') };
+    });
+    const toggleIn = (key, v) => () => this.setState({ [key]: s[key].includes(v) ? s[key].filter((x) => x !== v) : s[key].concat(v) });
+    const pick = (kind) => () => this.setState({ kind, step: 'details', picked: this.defaultAgents(kind) });
+    const agentDefs = [
+      { id: 'orders', name: 'Orders', role: 'Fulfilment and tracking', tint: '#e7efff', why: s.kind === 'new' ? 'Ready for your first order' : 'Syncs tracking and chases the maker' },
+      { id: 'support', name: 'Support', role: 'Customer inbox and refunds', tint: '#def5ee', why: 'Replies in your voice, refunds under a limit you set' },
+      { id: 'marketing', name: 'Marketing', role: 'Ads, social and email', tint: '#ece3ff', why: s.kind === 'new' ? 'Drafts your launch campaign and first posts' : 'Watches ad spend and return' },
+      { id: 'finance', name: 'Finance', role: 'Payouts, costs and profit', tint: '#ffefa4', why: 'Weekly profit summary, bills matched to orders' },
+      { id: 'inventory', name: 'Inventory', role: 'Stock and suppliers', tint: '#fee7c2', why: s.kind === 'new' ? 'Add once you hold stock' : 'Flags low stock and drafts reorders' },
+      { id: 'market', name: 'Market researcher', role: 'Competitors and positioning', tint: '#fde2f3', why: s.kind === 'new' ? 'Finds your competitors before you launch' : 'Watches how your competitors price and sell' },
+      { id: 'website', name: 'Website builder', role: 'Landing pages and site updates', tint: '#e5e9f0', why: s.kind === 'new' ? 'Builds your first landing page from the market report' : 'Updates your site from the market report' }
+    ];
+    const agents = agentDefs.map((a) => { const on = s.picked.includes(a.id); return { ...a, onStr: on ? 'true' : 'false', toggle: toggleIn('picked', a.id),
+      style: 'width: 100%; border: 0; border-radius: 12px; padding: 12px 14px; display: flex; gap: 12px; align-items: center; background: ' + (on ? '#fff' : '#f9f9f9') + '; box-shadow: 0 0 0 ' + (on ? '2px #181818' : '1px rgba(13,13,13,.1)') + '; color: #282828',
+      check: 'width: 22px; height: 22px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; flex: none; background: ' + (on ? '#181818' : 'rgba(13,13,13,.06)') + '; color: ' + (on ? '#fff' : 'transparent') }; });
+    const n = s.picked.length;
+    return {
+      steps,
+      isChoose: s.step === 'choose', isDetails: s.step === 'details', isAgents: s.step === 'agents',
+      isNew: s.kind === 'new', isExisting: s.kind === 'existing',
+      newOn: s.kind === 'new' ? 'true' : 'false', existingOn: s.kind === 'existing' ? 'true' : 'false',
+      newStyle: optStyle(s.kind === 'new'), existingStyle: optStyle(s.kind === 'existing'),
+      pickNew: pick('new'), pickExisting: pick('existing'),
+      detailsTitle: s.kind === 'new' ? 'Tell us about the business you want to start' : 'Tell us about your business',
+      detailsSub: s.kind === 'new' ? 'A sentence or two is enough. The agents fill in the rest with you.' : 'We use this to pick the right agents and what to connect.',
+      name: s.name, mission: s.mission, idea: s.idea, url: s.url,
+      missionPlaceholder: s.kind === 'new' ? 'e.g. Launch and reach 500 paying customers in the first year' : 'e.g. Reach $1M in annual sales with repeat customers by the end of 2027',
+      missionExamples: (s.kind === 'new'
+        ? ['Reach 500 paying customers in year one', 'Prove the product, then raise prices', 'Be profitable from month six']
+        : ['Reach $1M a year with repeat customers', 'Grow 30% without adding staff', 'Open a second channel by next year']).map((t) => ({ label: t, pick: () => this.setState({ mission: t }) })),
+      onMission: (e) => this.setState({ mission: e.target.value }),
+      onName: (e) => this.setState({ name: e.target.value }), onIdea: (e) => this.setState({ idea: e.target.value }), onUrl: (e) => this.setState({ url: e.target.value }),
+      channels: ['Online store', 'Marketplace', 'Social', 'In person', 'Wholesale'].map((label) => ({ label, onStr: s.channels.includes(label) ? 'true' : 'false', toggle: toggleIn('channels', label), style: pill(s.channels.includes(label)) })),
+      platforms: [['Shopify', '#95bf47'], ['WooCommerce', '#7f54b3'], ['Amazon', '#ff9900'], ['Etsy', '#f1641e'], ['TikTok Shop', '#0d0d0d'], ['Other', '#8f8f8f']].map(([label, dot]) => { const on = s.platforms.includes(label); return { label, dot: on ? dot : '#c9c9c9', onStr: on ? 'true' : 'false', toggle: toggleIn('platforms', label), style: pill(on) + '; justify-content: flex-start' }; }),
+      volumes: ['Under 100', '100 to 500', '500 to 2,000', 'More than 2,000'].map((label) => ({ label, onStr: s.volume === label ? 'true' : 'false', pick: () => this.setState({ volume: label }), style: pill(s.volume === label) })),
+      back: () => this.setState({ step: s.step === 'agents' ? 'details' : 'choose' }),
+      next: () => this.setState({ step: 'agents' }),
+      nameOrFallback: s.name.trim() || 'your business',
+      agentsSub: s.kind === 'new' ? 'We picked the squads that help a launch. Untick any you do not want yet.' : 'We picked the squads that take over day-to-day work. Untick any you do not want yet.',
+      agents,
+      summary: n === 0 ? 'Pick at least one squad to start.' : n + (n === 1 ? ' squad' : ' squads') + ' and one master squad will be created.'
+    };
+  }
+}
+</script>
+</body>
+</html>

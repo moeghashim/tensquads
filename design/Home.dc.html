@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>tensquads homepage</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fcfcfc}
+a{color:#0169cc}a:hover{color:#004f99}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid #0169cc;outline-offset:2px}
+.nav-link{color:#414141;text-decoration:none;font-size:14px;font-weight:500;padding:8px 12px;border-radius:8px}.nav-link:hover{background:rgba(13,13,13,.06);color:#0d0d0d}
+.btn-dark{background:#181818;color:#fff;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;font-weight:500;border:0}.btn-dark:hover{background:#000;color:#fff}
+.btn-soft{background:rgba(13,13,13,.06);color:#0d0d0d;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;font-weight:500;border:0}.btn-soft:hover{background:rgba(13,13,13,.12);color:#0d0d0d}
+.card:hover{box-shadow:0 0 0 1px rgba(13,13,13,.18),0 8px 24px rgba(13,13,13,.06)}
+.foot a{color:#5d5d5d;text-decoration:none;font-size:13px}.foot a:hover{color:#0d0d0d}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #fcfcfc; color: #282828; font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 22px; letter-spacing: -0.01em; display: flex; flex-direction: column">
+
+  <!-- Nav -->
+  <nav aria-label="Site" style="position: sticky; top: 0; z-index: 2; background: rgba(252,252,252,.9); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(13,13,13,.06)">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
+      <a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0d0d0d; margin-right: 8px">
+        <span style="width: 30px; height: 30px; border-radius: 8px; background: #181818; color: #fff; display: inline-flex; align-items: center; justify-content: center">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"></rect><path d="M8 2.5V5M6 9h0M10 9h0"></path></svg>
+        </span>
+        <span style="font-weight: 600; font-size: 15px">tensquads</span>
+      </a>
+      <div style="display: flex; gap: 2px; flex-wrap: wrap">
+        <a class="nav-link" href="#squad">Agents</a>
+        <a class="nav-link" href="#how">How it works</a>
+        <a class="nav-link" href="#control">Control</a>
+        <a class="nav-link" href="#pricing">Pricing</a>
+      </div>
+      <div style="margin-left: auto; display: flex; gap: 8px; align-items: center">
+        <a class="nav-link" href="SignIn.dc.html">Sign in</a>
+        <a class="btn-dark" href="Onboarding.dc.html" style="height: 38px; padding: 0 16px; font-size: 14px">Start free</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section aria-label="Hero" style="padding: 88px 24px 56px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 28px">
+    <span style="height: 28px; padding: 0 12px; border-radius: 999px; background: #04b84c14; color: #00692a; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px">
+      <span style="width: 8px; height: 8px; border-radius: 999px; background: #00a240"></span>
+      New: Analytics agent in beta
+    </span>
+    <h1 style="margin: 0; max-width: 860px; font-size: 64px; line-height: 68px; font-weight: 700; letter-spacing: -0.035em; color: #0d0d0d">Hire a squad of AI agents to run your business</h1>
+    <p style="margin: 0; max-width: 620px; font-size: 19px; line-height: 28px; color: #5d5d5d">Orders, support, marketing, finance and stock, each handled by its own agent. One master keeps them in sync and only interrupts you when it matters.</p>
+
+    <!-- Prompt box -->
+    <div style="width: 100%; max-width: 760px; background: #fff; border-radius: 20px; box-shadow: 0 0 0 1px rgba(13,13,13,.1), 0 16px 48px rgba(13,13,13,.08); padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; text-align: left">
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <sc-for list="{{kinds}}" as="k" hint-placeholder-count="2">
+          <button onClick="{{k.pick}}" aria-pressed="{{k.onStr}}" style="{{k.style}}">{{k.label}}</button>
+        </sc-for>
+      </div>
+      <label for="hero-prompt" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Describe your business</label>
+      <textarea id="hero-prompt" rows="3" placeholder="{{placeholder}}" value="{{draft}}" onChange="{{onDraft}}" style="width: 100%; box-sizing: border-box; border: 0; padding: 4px 4px 0; background: transparent; font-family: inherit; font-size: 17px; line-height: 26px; color: #0d0d0d; resize: none"></textarea>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid rgba(13,13,13,.06); padding-top: 12px">
+        <div style="display: flex; gap: 6px; flex-wrap: wrap">
+          <sc-for list="{{examples}}" as="ex" hint-placeholder-count="3">
+            <button onClick="{{ex.pick}}" style="height: 30px; padding: 0 12px; border: 0; border-radius: 999px; background: rgba(13,13,13,.06); color: #414141; font-size: 12px; font-weight: 500">{{ex.label}}</button>
+          </sc-for>
+        </div>
+        <a class="btn-dark" href="Onboarding.dc.html" style="height: 42px; padding: 0 18px; font-size: 15px">
+          Build my squad
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+        </a>
+      </div>
+    </div>
+    <p style="margin: 0; font-size: 13px; color: #8f8f8f">Free for 14 days · No credit card · Cancel from the dashboard</p>
+  </section>
+
+  <!-- Logos -->
+  <section aria-label="Customers" style="padding: 8px 24px 64px; display: flex; flex-direction: column; align-items: center; gap: 18px">
+    <span style="font-size: 12px; font-weight: 500; color: #8f8f8f; text-transform: uppercase; letter-spacing: .08em">Running the day-to-day at</span>
+    <div style="display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; align-items: center">
+      <sc-for list="{{logos}}" as="l" hint-placeholder-count="6">
+        <span style="font-size: 16px; font-weight: 600; color: #8f8f8f; letter-spacing: -0.02em">{{l}}</span>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- Product preview -->
+  <section aria-label="Product preview" style="padding: 0 24px 96px">
+    <div style="max-width: 1200px; margin: 0 auto; background: #181818; border-radius: 28px; padding: 24px 24px 0; box-sizing: border-box; overflow: hidden">
+      <div style="display: flex; align-items: center; gap: 6px; padding: 0 4px 16px">
+        <span style="width: 10px; height: 10px; border-radius: 999px; background: #3a3a3a"></span><span style="width: 10px; height: 10px; border-radius: 999px; background: #3a3a3a"></span><span style="width: 10px; height: 10px; border-radius: 999px; background: #3a3a3a"></span>
+        <span style="margin-left: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8f8f8f">app.tensquads.co / overview</span>
+      </div>
+      <div style="background: #f3f3f3; border-radius: 16px 16px 0 0; padding: 8px; display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap">
+        <div style="flex: 1 1 180px; max-width: 220px; display: flex; flex-direction: column; gap: 4px; padding: 10px 6px; font-size: 13px">
+          <div style="display: flex; align-items: center; gap: 8px; padding: 2px 8px 12px"><span style="width: 26px; height: 26px; border-radius: 999px; background: #181818; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600">M</span><span style="font-weight: 600; color: #0d0d0d">Master</span></div>
+          <div style="padding: 8px 10px; border-radius: 8px; background: rgba(13,13,13,.08); font-weight: 600; color: #0d0d0d">Overview</div>
+          <div style="padding: 8px 10px; color: #414141">Chat with the master</div>
+          <div style="padding: 8px 10px; color: #414141">Agents</div>
+          <div style="padding: 8px 10px; color: #414141">Agent traffic</div>
+          <div style="padding: 8px 10px; color: #414141">Rules and limits</div>
+        </div>
+        <div style="flex: 999 1 420px; min-width: 0; background: #fcfcfc; border-radius: 12px 12px 0 0; padding: 20px 22px 0; display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 8px">
+            <div><div style="font-size: 20px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">Good morning, Moe</div><div style="font-size: 12px; color: #5d5d5d">Last 7 days across the store and your agents</div></div>
+            <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: #04b84c14; color: #008635; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center">4 of 5 agents online</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px">
+            <sc-for list="{{previewKpis}}" as="k" hint-placeholder-count="4">
+              <div style="background: #fff; border-radius: 10px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 12px; display: flex; flex-direction: column; gap: 4px">
+                <span style="font-size: 11px; color: #5d5d5d">{{k.label}}</span>
+                <span style="font-size: 20px; line-height: 26px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">{{k.value}}</span>
+                <span style="font-size: 11px; color: #00692a">{{k.delta}}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px">
+            <sc-for list="{{agents}}" as="a" hint-placeholder-count="5">
+              <div style="background: #fff; border-radius: 12px 12px 0 0; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 12px; display: flex; flex-direction: column; gap: 6px">
+                <div style="display: flex; gap: 8px; align-items: center"><span style="width: 22px; height: 22px; border-radius: 6px; background: {{a.tint}}"></span><span style="font-weight: 600; font-size: 13px; color: #0d0d0d">{{a.name}}</span><span style="margin-left: auto; width: 8px; height: 8px; border-radius: 999px; background: {{a.dot}}"></span></div>
+                <span style="font-size: 12px; color: #5d5d5d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{a.last}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The squad -->
+  <section id="squad" aria-label="The agents" style="padding: 0 24px 96px">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px">
+      <div style="max-width: 640px">
+        <span style="font-size: 13px; font-weight: 600; color: #0169cc">Meet the squad</span>
+        <h2 style="margin: 8px 0 0; font-size: 40px; line-height: 46px; font-weight: 700; letter-spacing: -0.03em; color: #0d0d0d">One agent for every part of the business</h2>
+        <p style="margin: 12px 0 0; font-size: 17px; line-height: 26px; color: #5d5d5d">Each agent runs on its own isolated machine with only the connections it needs. Start with one, add the rest when you are ready.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+        <sc-for list="{{agents}}" as="a" hint-placeholder-count="7">
+          <div class="card" style="background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <span style="width: 40px; height: 40px; border-radius: 10px; background: {{a.tint}}; display: inline-flex; align-items: center; justify-content: center">
+              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"></rect><path d="M8 2.5V5M6 9h0M10 9h0"></path></svg>
+            </span>
+            <div><div style="font-size: 17px; font-weight: 600; color: #0d0d0d">{{a.name}}</div><div style="font-size: 13px; color: #5d5d5d">{{a.role}}</div></div>
+            <p style="margin: 0; font-size: 14px; line-height: 21px; color: #414141">{{a.pitch}}</p>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto">
+              <sc-for list="{{a.tools}}" as="t" hint-placeholder-count="2">
+                <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(13,13,13,.06); font-family: 'JetBrains Mono', monospace; font-size: 11px; display: inline-flex; align-items: center; color: #414141">{{t}}</span>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <div class="card" style="border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); border: 1px dashed rgba(13,13,13,.2); padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; text-align: center; box-sizing: border-box">
+          <span style="font-size: 17px; font-weight: 600; color: #0d0d0d">More on the way</span>
+          <span style="font-size: 13px; color: #5d5d5d">Analytics is in beta. People and Legal are next.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" aria-label="How it works" style="padding: 0 24px 96px">
+    <div style="max-width: 1200px; margin: 0 auto; background: #f3f3f3; border-radius: 28px; padding: 56px 48px; box-sizing: border-box; display: flex; flex-direction: column; gap: 40px">
+      <div style="max-width: 640px">
+        <span style="font-size: 13px; font-weight: 600; color: #0169cc">How it works</span>
+        <h2 style="margin: 8px 0 0; font-size: 40px; line-height: 46px; font-weight: 700; letter-spacing: -0.03em; color: #0d0d0d">Set up in an afternoon, not a quarter</h2>
+      </div>
+      <ol style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px">
+        <sc-for list="{{steps}}" as="st" hint-placeholder-count="3">
+          <li style="display: flex; flex-direction: column; gap: 12px">
+            <span style="width: 36px; height: 36px; border-radius: 999px; background: #181818; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px">{{st.n}}</span>
+            <span style="font-size: 20px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">{{st.title}}</span>
+            <span style="font-size: 15px; line-height: 23px; color: #5d5d5d">{{st.body}}</span>
+          </li>
+        </sc-for>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Control -->
+  <section id="control" aria-label="You stay in control" style="padding: 0 24px 96px">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 48px; align-items: center">
+      <div style="flex: 1 1 360px; display: flex; flex-direction: column; gap: 20px">
+        <span style="font-size: 13px; font-weight: 600; color: #0169cc">You stay in control</span>
+        <h2 style="margin: 0; font-size: 40px; line-height: 46px; font-weight: 700; letter-spacing: -0.03em; color: #0d0d0d">Agents work inside limits you set. Anything bigger, they ask.</h2>
+        <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px">
+          <sc-for list="{{controls}}" as="c" hint-placeholder-count="4">
+            <li style="display: flex; gap: 12px; align-items: flex-start">
+              <span style="width: 22px; height: 22px; border-radius: 999px; background: #04b84c14; color: #00692a; display: inline-flex; align-items: center; justify-content: center; flex: none; margin-top: 1px"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg></span>
+              <span style="font-size: 16px; line-height: 24px; color: #282828"><strong style="color: #0d0d0d">{{c.title}}</strong> {{c.body}}</span>
+            </li>
+          </sc-for>
+        </ul>
+      </div>
+      <div style="flex: 1 1 360px; display: flex; flex-direction: column; gap: 12px">
+        <div style="background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08), 0 16px 48px rgba(13,13,13,.06); padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <span style="font-weight: 600; color: #0d0d0d">Needs your approval</span>
+            <span style="min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 999px; background: #fb6a2212; color: #923b0f; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">2</span>
+          </div>
+          <div style="border-radius: 12px; background: #f9f9f9; padding: 12px; display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; gap: 8px; align-items: center; font-size: 12px; color: #5d5d5d"><span style="width: 18px; height: 18px; border-radius: 5px; background: #ece3ff"></span>Marketing agent<span style="margin-left: auto; font-weight: 600; color: #0d0d0d; font-size: 14px">$60 / day</span></div>
+            <div style="font-weight: 500; color: #0d0d0d">Raise the prints ad set from $40 to $60 a day</div>
+            <div style="font-size: 13px; color: #5d5d5d">Return has been above 3× for 7 days. Over your $50 daily cap.</div>
+            <div style="display: flex; gap: 8px"><span class="btn-dark" style="height: 30px; padding: 0 12px; font-size: 13px">Approve</span><span class="btn-soft" style="height: 30px; padding: 0 12px; font-size: 13px">Decline</span></div>
+          </div>
+          <div style="border-radius: 12px; background: #f9f9f9; padding: 12px; display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; gap: 8px; align-items: center; font-size: 12px; color: #5d5d5d"><span style="width: 18px; height: 18px; border-radius: 5px; background: #def5ee"></span>Support agent<span style="margin-left: auto; font-weight: 600; color: #0d0d0d; font-size: 14px">$42</span></div>
+            <div style="font-weight: 500; color: #0d0d0d">Refund #A-1012, print arrived creased</div>
+            <div style="font-size: 13px; color: #5d5d5d">Under your limit, but this customer's second refund this month.</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap">
+          <div style="flex: 1 1 140px; background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 12px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; color: #5d5d5d">Refund without asking, up to</span><span style="font-size: 18px; font-weight: 600; color: #0d0d0d">$50</span></div>
+          <div style="flex: 1 1 140px; background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 12px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; color: #5d5d5d">Ad spend per day</span><span style="font-size: 18px; font-weight: 600; color: #0d0d0d">$50</span></div>
+          <div style="flex: 1 1 140px; background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 12px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; color: #5d5d5d">Reorder without asking, up to</span><span style="font-size: 18px; font-weight: 600; color: #0d0d0d">$500</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" aria-label="Pricing" style="padding: 0 24px 96px">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; align-items: center; text-align: center">
+      <div style="max-width: 640px">
+        <span style="font-size: 13px; font-weight: 600; color: #0169cc">Pricing</span>
+        <h2 style="margin: 8px 0 0; font-size: 40px; line-height: 46px; font-weight: 700; letter-spacing: -0.03em; color: #0d0d0d">Pay for the squad, not per seat</h2>
+        <p style="margin: 12px 0 0; font-size: 17px; line-height: 26px; color: #5d5d5d">Every plan includes the master, the chat and the approval inbox. Plans differ in how many agents you can run and how much they can do without asking.</p>
+      </div>
+      <div style="width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; text-align: left">
+        <sc-for list="{{plans}}" as="p" hint-placeholder-count="3">
+          <div style="{{p.style}}">
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <span style="font-size: 17px; font-weight: 600">{{p.name}}</span>
+              <sc-if value="{{p.popular}}" hint-placeholder-val="{{false}}"><span style="height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(255,255,255,.14); font-size: 12px; font-weight: 500; display: inline-flex; align-items: center">Most popular</span></sc-if>
+            </div>
+            <div><span style="font-size: 40px; line-height: 44px; font-weight: 700; letter-spacing: -0.03em">{{p.price}}</span><span style="font-size: 14px; opacity: .7"> / month</span></div>
+            <p style="margin: 0; font-size: 14px; line-height: 21px; opacity: .75">{{p.who}}</p>
+            <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 14px">
+              <sc-for list="{{p.features}}" as="f" hint-placeholder-count="4">
+                <li style="display: flex; gap: 8px; align-items: flex-start"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 4px"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>{{f}}</span></li>
+              </sc-for>
+            </ul>
+            <a href="Onboarding.dc.html" class="{{p.btnClass}}" style="height: 42px; padding: 0 18px; font-size: 14px; margin-top: auto">{{p.cta}}</a>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 0; font-size: 13px; color: #8f8f8f">All plans start with 14 days free. Prices in USD, billed monthly. [VAT NOTE]</p>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section aria-label="Get started" style="padding: 0 24px 96px">
+    <div style="max-width: 1200px; margin: 0 auto; background: #181818; color: #fff; border-radius: 28px; padding: 64px 48px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px">
+      <h2 style="margin: 0; max-width: 700px; font-size: 44px; line-height: 50px; font-weight: 700; letter-spacing: -0.03em">Your first agent can be working by tonight</h2>
+      <p style="margin: 0; max-width: 540px; font-size: 17px; line-height: 26px; color: #c9c9c9">Tell us about your business, pick a squad, set the limits. The master takes it from there.</p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center">
+        <a href="Onboarding.dc.html" style="height: 46px; padding: 0 22px; border-radius: 999px; background: #fff; color: #0d0d0d; font-size: 15px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center">Start free</a>
+        <a href="Chat.dc.html" style="height: 46px; padding: 0 22px; border-radius: 999px; background: rgba(255,255,255,.12); color: #fff; font-size: 15px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center">See a live demo</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="foot" style="border-top: 1px solid rgba(13,13,13,.06); padding: 40px 24px 32px">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 32px; justify-content: space-between">
+      <div style="display: flex; flex-direction: column; gap: 10px; max-width: 260px">
+        <span style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #0d0d0d"><span style="width: 24px; height: 24px; border-radius: 6px; background: #181818; display: inline-block"></span>tensquads</span>
+        <span style="font-size: 13px; color: #5d5d5d">A squad of AI agents for small businesses that sell things.</span>
+      </div>
+      <div style="display: flex; gap: 48px; flex-wrap: wrap">
+        <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; font-weight: 600; color: #0d0d0d">Product</span><a href="#squad">Agents</a><a href="#how">How it works</a><a href="#pricing">Pricing</a><a href="Onboarding.dc.html">Start free</a></div>
+        <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; font-weight: 600; color: #0d0d0d">Company</span><a href="#">About</a><a href="#">Blog</a><a href="#">Careers</a><a href="#">Contact</a></div>
+        <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; font-weight: 600; color: #0d0d0d">Legal</span><a href="#">Terms</a><a href="#">Privacy</a><a href="#">Security</a></div>
+      </div>
+    </div>
+    <div style="max-width: 1200px; margin: 24px auto 0; font-size: 12px; color: #8f8f8f">© 2026 [COMPANY LEGAL NAME]. All rights reserved.</div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":4420}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { kind: 'existing', draft: '' };
+  }
+  renderVals() {
+    const s = this.state;
+    const chip = (on) => 'height: 32px; padding: 0 14px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 500; background: ' + (on ? '#181818' : 'rgba(13,13,13,.06)') + '; color: ' + (on ? '#fff' : '#282828');
+    const agents = [
+      { name: 'Orders', role: 'Fulfilment and tracking', tint: '#e7efff', dot: '#00a240', last: 'Added tracking to #A-1007', pitch: 'Marks items shipped, syncs tracking from your maker and tells the customer, without you opening a tab.', tools: ['shopify', 'printify'] },
+      { name: 'Support', role: 'Customer inbox and refunds', tint: '#def5ee', dot: '#00a240', last: 'Replied to T-2291 in 4 min', pitch: 'Answers in your voice, looks up the order itself and refunds under the limit you set.', tools: ['gmail', 'shopify'] },
+      { name: 'Marketing', role: 'Ads, social and email', tint: '#ece3ff', dot: '#00a240', last: 'Asked to raise the prints ad set', pitch: 'Reports spend and return every morning, drafts posts and campaigns, asks before spending more.', tools: ['meta ads', 'klaviyo', 'canva'] },
+      { name: 'Finance', role: 'Payouts, costs and profit', tint: '#ffefa4', dot: '#00a240', last: 'Sent the weekly profit summary', pitch: 'Matches bills to orders, tracks fees and payouts, and sends a profit summary you can read in a minute.', tools: ['stripe', 'quickbooks'] },
+      { name: 'Inventory', role: 'Stock and suppliers', tint: '#fee7c2', dot: '#cdcdcd', last: 'Drafted a reorder of 50 hoodies', pitch: 'Watches stock across products, flags what is running low and drafts the reorder for your approval.', tools: ['shopify', 'printify'] },
+      { name: 'Market researcher', role: 'Competitors and positioning', tint: '#fde2f3', dot: '#00a240', last: 'Found 4 competitors for [BUSINESS]', pitch: 'Finds who you compete with, reads their sites and prices, and tells the master how they are doing.', tools: ['web search', 'scrapling'] },
+      { name: 'Website builder', role: 'Landing pages and site updates', tint: '#e5e9f0', dot: '#00a240', last: 'Preview ready', pitch: 'Builds a landing page from the market report and the master\'s brief, and publishes only when you say so.', tools: ['cloudflare pages'] }
+    ];
+    const planStyle = (dark) => 'border-radius: 20px; padding: 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px; min-height: 100%; ' + (dark ? 'background: #181818; color: #fff' : 'background: #fff; color: #0d0d0d; box-shadow: 0 0 0 1px rgba(13,13,13,.08)');
+    return {
+      kinds: [['new', 'New business'], ['existing', 'Existing business']].map(([id, label]) => ({ id, label, onStr: s.kind === id ? 'true' : 'false', style: chip(s.kind === id), pick: () => this.setState({ kind: id }) })),
+      placeholder: s.kind === 'new' ? 'Describe what you want to sell and to whom…' : 'Paste your store URL or describe what you sell…',
+      draft: s.draft, onDraft: (e) => this.setState({ draft: e.target.value }),
+      examples: (s.kind === 'new'
+        ? ['Date-seed coffee, caffeine-free', 'Handmade ceramics on Etsy', 'A print-on-demand streetwear brand']
+        : ['A Shopify store doing 300 orders a month', 'A cafe with a wholesale side', 'Two Amazon listings and a website']).map((t) => ({ label: t, pick: () => this.setState({ draft: t }) })),
+      logos: ['Leen Dates', 'Northwind Apparel', 'Atlas Outdoor', 'Bloom Skincare', 'Harbor Coffee', 'Sunbeam Toys'],
+      previewKpis: [{ label: 'Revenue', value: '$8,420', delta: '+12% vs last week' }, { label: 'Orders', value: '186', delta: '+8%' }, { label: 'Tasks done by agents', value: '331', delta: 'This week' }, { label: 'Hours saved', value: '34h', delta: 'This week' }],
+      agents,
+      steps: [
+        { n: '1', title: 'Tell us about the business', body: 'New or existing, what you sell, where you sell it. A couple of sentences is enough to brief the squad.' },
+        { n: '2', title: 'Pick your agents and connect', body: 'Choose the agents you want and connect your store, inbox and ads. Each agent gets its own isolated machine and only the keys it needs.' },
+        { n: '3', title: 'Set the limits, then let go', body: 'Decide what agents can do alone and what needs a yes from you. Loosen the limits as you build trust.' }
+      ],
+      controls: [
+        { title: 'Spend and refund caps.', body: 'Per agent, per day. Anything over the cap lands in your approval inbox with the reasoning.' },
+        { title: 'Every action is logged.', body: 'See who asked what, which skill ran and what changed, message by message.' },
+        { title: 'Isolated by default.', body: 'Each agent runs on its own machine with its own secrets and an allowlist of sites it may reach.' },
+        { title: 'Pause anything, any time.', body: 'One switch per agent, one per skill. Paused agents keep their memory and pick up where they left off.' }
+      ],
+      plans: [
+        { name: 'Starter', price: '$49', who: 'One shop, a couple of agents, you still do most of the work.', features: ['Up to 3 agents', '1 squad', 'Ask-first mode on every action', 'Email support'], cta: 'Start free', style: planStyle(false), btnClass: 'btn-soft', popular: false },
+        { name: 'Growth', price: '$149', who: 'A running store that wants the daily work off its plate.', features: ['Up to 10 agents', '3 squads', 'Spend and refund limits', 'Agent traffic and audit log', 'Priority support'], cta: 'Start free', style: planStyle(true), btnClass: 'btn-dark', popular: true },
+        { name: 'Scale', price: '$399', who: 'Several stores or regions, each with its own squad.', features: ['Up to 25 agents', 'Unlimited squads', 'Custom rules and triggers', 'Dedicated region and SSO', 'Onboarding with a human'], cta: 'Talk to us', style: planStyle(false), btnClass: 'btn-soft', popular: false }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

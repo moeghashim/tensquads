@@ -1,0 +1,30 @@
+{
+  "file": "Rules.dc.html",
+  "counts": {
+    "texts": 0,
+    "styles": 0,
+    "colors": 0,
+    "handlers": 0,
+    "loops": 0,
+    "strings": 0
+  },
+  "imports": [
+    "name=\"Main\" start-view=\"rules\" hint-size=\"100%,1100px\""
+  ],
+  "props": {
+    "$preview": {
+      "width": 1440,
+      "height": 1100
+    }
+  },
+  "texts": [],
+  "attrTexts": [],
+  "templates": [],
+  "loops": [],
+  "handlers": [],
+  "links": [],
+  "styles": {},
+  "colors": [],
+  "strings": {},
+  "keys": []
+}

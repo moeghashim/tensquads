@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f3f3f3}
+a{color:#0169cc}a:hover{color:#004f99}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #0169cc;outline-offset:2px}
+.btn-dark:hover{background:#000}
+.btn-soft:hover{background:rgba(13,13,13,.12)}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; background: #f3f3f3; color: #282828; font-family: Inter, system-ui, sans-serif; font-size: 14px; line-height: 20px; letter-spacing: -0.01em; display: flex; flex-direction: column">
+
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 32px; flex-wrap: wrap">
+    <a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0d0d0d">
+      <span style="width: 28px; height: 28px; border-radius: 8px; background: #181818; color: #fff; display: inline-flex; align-items: center; justify-content: center">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"></rect><path d="M8 2.5V5M6 9h0M10 9h0"></path></svg>
+      </span>
+      <span style="font-weight: 600; color: #0d0d0d">tensquads</span>
+    </a>
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5d5d5d">
+      <span>New here?</span>
+      <a href="Onboarding.dc.html" style="font-weight: 500; text-decoration: none">Start free</a>
+    </div>
+  </header>
+
+  <main style="flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 48px 32px 64px; box-sizing: border-box">
+    <section aria-label="Sign in" style="width: 100%; max-width: 420px; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 28px 32px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+      <div>
+        <h1 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d">Sign in to tensquads</h1>
+        <p style="margin: 6px 0 0; color: #5d5d5d">Your squads kept working while you were away.</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="email" style="font-size: 13px; font-weight: 500; color: #0d0d0d">Email</label>
+        <input id="email" type="email" autocomplete="email" placeholder="you@company.com" value="{{email}}" onChange="{{onEmail}}" style="height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; border-radius: 10px; background: rgba(13,13,13,.06); font-family: inherit; font-size: 14px; color: #0d0d0d">
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <label for="password" style="font-size: 13px; font-weight: 500; color: #0d0d0d">Password</label>
+          <a href="#" style="font-size: 12px; font-weight: 500; text-decoration: none">Forgot password?</a>
+        </div>
+        <input id="password" type="password" autocomplete="current-password" placeholder="Your password" value="{{password}}" onChange="{{onPassword}}" style="height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; border-radius: 10px; background: rgba(13,13,13,.06); font-family: inherit; font-size: 14px; color: #0d0d0d">
+      </div>
+
+      <sc-if value="{{showError}}" hint-placeholder-val="{{false}}">
+        <div role="alert" style="padding: 10px 12px; border-radius: 10px; background: #fa423e14; color: #911e1b; font-size: 13px">Enter your email and password to sign in.</div>
+      </sc-if>
+
+      <a class="btn-dark" href="{{target}}" onClick="{{submit}}" style="height: 42px; border-radius: 999px; background: #181818; color: #fff; font-size: 14px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px">
+        Sign in
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+      </a>
+
+      <div style="display: flex; align-items: center; gap: 12px; color: #8f8f8f; font-size: 12px">
+        <span style="flex: 1; height: 1px; background: rgba(13,13,13,.08)"></span>or<span style="flex: 1; height: 1px; background: rgba(13,13,13,.08)"></span>
+      </div>
+
+      <a class="btn-soft" href="#" style="height: 40px; border-radius: 999px; background: rgba(13,13,13,.08); color: #282828; font-size: 14px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.5h11v8h-11z"></path><path d="M2.5 5l5.5 4 5.5-4"></path></svg>
+        Email me a sign-in link
+      </a>
+
+      <p style="margin: 0; font-size: 12px; color: #8f8f8f; text-align: center">By signing in you agree to the [TERMS] and [PRIVACY POLICY].</p>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":760}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { email: '', password: '', tried: false };
+  }
+  renderVals() {
+    const s = this.state;
+    const complete = s.email.trim().length > 0 && s.password.length > 0;
+    return {
+      email: s.email, password: s.password,
+      onEmail: (e) => this.setState({ email: e.target.value }),
+      onPassword: (e) => this.setState({ password: e.target.value }),
+      showError: s.tried && !complete,
+      target: complete ? 'Main.dc.html' : '#',
+      submit: () => this.setState({ tried: true })
+    };
+  }
+}
+</script>
+</body>
+</html>
