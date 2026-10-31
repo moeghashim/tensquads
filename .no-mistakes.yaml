@@ -8,7 +8,7 @@ commands:
 
 # no-mistakes 1.84.0 (4822244) has no sign-off trailer setting. A correction
 # commit is `git commit --no-verify -m` and adds no sign-off. The GitHub DCO
-# check is the gate for sign-off. Commits on this branch use `git commit -s`.
+# check is the gate for sign-off. Every commit needs a Signed-off-by trailer.
 # protected_paths guards automatic staging only. no-mistakes reads that list
 # from the default branch. It does not stop a filesystem edit.
 # Keep `--skip document` for this repository. The document step edits files
