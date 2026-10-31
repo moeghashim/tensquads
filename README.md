@@ -36,9 +36,11 @@ does not guarantee a sign-off. Check the active path with
 `git config --show-origin --get core.hooksPath`.
 
 DCO checks every commit in the pull request. A new signed-off commit does not
-repair an earlier unsigned commit. For PR #1, the four unsigned commits follow
+repair an earlier unsigned commit. For PR #1, the five unsigned commits follow
 `176eb2768b67efc7dcb8a33038ff96a0c12ed044`. To repair them, start from a clean
-worktree and run `npm run dco:fix -- 176eb2768b67efc7dcb8a33038ff96a0c12ed044`.
+checkout whose Git directory is inside the allowed workspace and run
+`npm run dco:fix -- 176eb2768b67efc7dcb8a33038ff96a0c12ed044`.
+The failing commits are `d23cdc4`, `c3c7434`, `5fefc48`, `3093f97`, and `58daf80`.
 Run this after all automated fixes. Use
 `git log --format=full 176eb2768b67efc7dcb8a33038ff96a0c12ed044..HEAD`
 to confirm that each repaired commit has the author's sign-off.
