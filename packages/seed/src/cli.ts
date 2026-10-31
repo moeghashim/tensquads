@@ -1,5 +1,4 @@
 import { createRepositories, openPostgres, saveWorkspace } from "@tensquads/adapters";
-import { sql } from "drizzle-orm";
 
 import { loadEnv } from "./env.ts";
 import { workspaceFromDesign } from "./workspace.ts";
@@ -13,12 +12,9 @@ if (!connection) {
 
 const opened = openPostgres(connection);
 try {
-	const existing = (await opened.db.execute(sql`SELECT to_regclass('public.accounts') AS name`)) as {
-		rows: { name: string | null }[];
-	};
-	if (!existing.rows[0]?.name) {
-		await opened.migrate();
-	}
+	// CREATE TABLE IF NOT EXISTS makes a second seed safe. postgres.js does not
+	// return the same `{ rows }` shape as PGlite, so do not branch on to_regclass.
+	await opened.migrate();
 	const snapshot = workspaceFromDesign();
 	await saveWorkspace(opened.db, snapshot);
 	const totals = await createRepositories(opened.db).platform.totals({
@@ -35,8 +31,9 @@ try {
 	console.log(`openBugs ${totals.openBugs}`);
 	console.log(`featuresRequested ${totals.featuresRequested}`);
 } catch (error) {
-	const code = error && typeof error === "object" && "code" in error ? String(error.code) : "Error";
-	console.error(`seed failed: ${code}`);
+	const name = error instanceof Error ? error.name : "Error";
+	const code = error && typeof error === "object" && "code" in error && error.code ? String(error.code) : "";
+	console.error(code ? `seed failed: ${name} ${code}` : `seed failed: ${name}`);
 	process.exitCode = 1;
 } finally {
 	await opened.close();
