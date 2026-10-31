@@ -1,0 +1,46 @@
+The files belonging to this database system will be owned by user "moeghashim".
+This user must also own the server process.
+
+The database cluster will be initialized with this locale configuration:
+  locale provider:   libc
+  LC_COLLATE:  C.UTF-8
+  LC_CTYPE:    C.UTF-8
+  LC_MESSAGES: en_US.UTF-8
+  LC_MONETARY: C.UTF-8
+  LC_NUMERIC:  C.UTF-8
+  LC_TIME:     C.UTF-8
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
+
+Data page checksums are enabled.
+
+creating directory /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6A09Q4RHMFMJ7RBH1GQA89C/.test-phase/pgdata-live ... ok
+creating subdirectories ... ok
+selecting dynamic shared memory implementation ... posix
+selecting default "max_connections" ... 100
+selecting default "shared_buffers" ... 128MB
+selecting default time zone ... America/Chicago
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+
+Success. You can now start the database server using:
+
+    '/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6A09Q4RHMFMJ7RBH1GQA89C/.test-phase/pg-runtime/node_modules/@embedded-postgres/darwin-arm64/native/bin/pg_ctl' -D /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6A09Q4RHMFMJ7RBH1GQA89C/.test-phase/pgdata-live -l logfile start
+
+2026-10-31 17:25:12.189 CDT [55338] LOG:  starting PostgreSQL 18.6 on aarch64-apple-darwin24.6.0, compiled by Apple clang version 17.0.0 (clang-1700.0.13.5), 64-bit
+2026-10-31 17:25:12.190 CDT [55338] LOG:  listening on IPv4 address "127.0.0.1", port 15432
+2026-10-31 17:25:12.193 CDT [55356] LOG:  database system was shut down at 2026-10-31 17:25:12 CDT
+2026-10-31 17:25:12.193 CDT [55338] LOG:  database system is ready to accept connections
+2026-10-31 17:25:13.491 CDT [55430] ERROR:  duplicate key value violates unique constraint "accounts_pkey"
+2026-10-31 17:25:13.491 CDT [55430] DETAIL:  Key (id)=(demo) already exists.
+2026-10-31 17:25:13.491 CDT [55430] STATEMENT:  insert into "accounts" ("id", "account_id", "name", "owner", "email", "tint", "agents", "online", "tasks", "last_active", "created_week", "mission", "sort_order") values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+2026-10-31 17:25:13.515 CDT [55338] LOG:  received fast shutdown request
+2026-10-31 17:25:13.516 CDT [55338] LOG:  aborting any active transactions
+2026-10-31 17:25:13.516 CDT [55430] FATAL:  terminating connection due to administrator command
+2026-10-31 17:25:13.517 CDT [55338] LOG:  background worker "logical replication launcher" (PID 55359) exited with exit code 1
+2026-10-31 17:25:13.518 CDT [55354] LOG:  shutting down
+2026-10-31 17:25:13.518 CDT [55354] LOG:  checkpoint starting: shutdown immediate
+2026-10-31 17:25:13.527 CDT [55354] LOG:  checkpoint complete: wrote 170 buffers (1.0%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.005 s, total=0.009 s; sync files=122, longest=0.001 s, average=0.001 s; distance=1052 kB, estimate=1052 kB; lsn=0/1890550, redo lsn=0/1890550
+2026-10-31 17:25:13.529 CDT [55338] LOG:  database system is shut down

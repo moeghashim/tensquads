@@ -1,0 +1,36 @@
+✔ trace is a hash of the event id (0.641875ms)
+✔ an off machine reports CPU 0% and uptime Paused (0.106125ms)
+✔ an on machine reports Just started when its stored uptime is Paused (0.346625ms)
+✔ the memory bus appends the next event and applies its set (0.111875ms)
+✔ the memory bus hashes each event id by default and preserves custom traces (0.15575ms)
+✔ every store value round-trips as its own type (1344.881541ms)
+✔ placeholder write returns the design value and does not change the store (0.375042ms)
+✔ tenant tables have account_id and catalog tables do not (581.697875ms)
+✔ repositories reject a missing scope and isolate accounts (474.675542ms)
+✔ a failed workspace replacement preserves every existing table (460.998459ms)
+✔ approve adds one task and sets last (0.422ms)
+✔ decline changes no agent (0.052792ms)
+✔ approving a mission adds no task (0.348833ms)
+✔ ask to revise adds one Revising proposal when that agent has none (0.110042ms)
+✔ declining a mission sets Revising (0.046ms)
+✔ the count is pending approvals plus Proposed proposals (0.45725ms)
+✔ spend approve ignores a second approve (0.043333ms)
+✔ mission approve ignores a second approve (0.042458ms)
+✔ spend approve ignores a second decline (0.043625ms)
+✔ mission approve ignores a second decline (0.067667ms)
+✔ spend decline ignores a second approve (0.039959ms)
+✔ mission decline ignores a second approve (0.027375ms)
+✔ spend decline ignores a second decline (0.027584ms)
+✔ mission decline ignores a second decline (0.01975ms)
+✔ the committed extract matches the design files (13.01075ms)
+✔ the seed computes the nine numbers (1346.917084ms)
+✔ the repository matches the design extract, field by field, in design order (606.861542ms)
+✔ the memory bus walks the scripted events (0.390417ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3167.299833

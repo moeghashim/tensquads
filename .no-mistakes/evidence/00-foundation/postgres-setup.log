@@ -1,0 +1,1 @@
+initdb: error: program "postgres" is needed by initdb but was not found in the same directory as "/opt/homebrew/Cellar/libpq/18.4/bin/initdb"

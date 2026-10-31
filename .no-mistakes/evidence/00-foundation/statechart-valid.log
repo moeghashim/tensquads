@@ -1,0 +1,10 @@
+# Approval
+
+TLC reached 12 states and 23 steps. The chart draws 8 states and 14 arrows.
+The view hides 6 steps, so the chart does not draw them.
+
+## Rules that hold
+TypeOK, SpendApproved, SpendDeclined, MissionKeepsTasks, MissionRevise, BadgeMatches, RevisingNotCounted, EmptyCopy, NoDeadlock
+
+Wrote /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6A09Q4RHMFMJ7RBH1GQA89C/.test-phase/tmp/tensquads-statechart-OJzL5z
+statechart:check passed 1 model(s).
