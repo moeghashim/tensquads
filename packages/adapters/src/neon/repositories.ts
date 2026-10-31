@@ -34,7 +34,7 @@ import {
 	type SkillGate,
 	type Thread,
 } from "@tensquads/domain";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 import type { AppDatabase } from "./db.ts";
 import {
@@ -178,10 +178,11 @@ async function listTiles(db: AppDatabase, scope: AccountScope): Promise<readonly
 
 async function listRevenue(db: AppDatabase, scope: AccountScope): Promise<readonly DailyRevenue[]> {
 	const checked = requireScope(scope);
-	const rows =
+	const query =
 		checked.mode === "platform"
-			? await db.select().from(dailyRevenue)
-			: await db.select().from(dailyRevenue).where(eq(dailyRevenue.accountId, checked.accountId));
+			? db.select().from(dailyRevenue)
+			: db.select().from(dailyRevenue).where(eq(dailyRevenue.accountId, checked.accountId));
+	const rows = await query.orderBy(asc(dailyRevenue.day));
 	return rows.map((row) => ({ day: row.day, amount: row.amount }));
 }
 

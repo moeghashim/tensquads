@@ -1,4 +1,4 @@
-CREATE TABLE accounts (
+CREATE TABLE IF NOT EXISTS accounts (
   id text PRIMARY KEY,
   account_id text NOT NULL UNIQUE,
   name text NOT NULL,
@@ -14,13 +14,13 @@ CREATE TABLE accounts (
   CHECK (account_id = id)
 );
 
-CREATE TABLE plans (
+CREATE TABLE IF NOT EXISTS plans (
   id text PRIMARY KEY,
   name text NOT NULL,
   monthly integer NOT NULL
 );
 
-CREATE TABLE subscriptions (
+CREATE TABLE IF NOT EXISTS subscriptions (
   account_id text PRIMARY KEY REFERENCES accounts (id),
   plan text NOT NULL,
   status text NOT NULL,
@@ -29,19 +29,19 @@ CREATE TABLE subscriptions (
   started text NOT NULL
 );
 
-CREATE TABLE squads (
+CREATE TABLE IF NOT EXISTS squads (
   account_id text NOT NULL REFERENCES accounts (id),
   id text NOT NULL,
   name text NOT NULL,
   PRIMARY KEY (account_id, id)
 );
 
-CREATE TABLE masters (
+CREATE TABLE IF NOT EXISTS masters (
   account_id text PRIMARY KEY REFERENCES accounts (id),
   name text NOT NULL
 );
 
-CREATE TABLE agents (
+CREATE TABLE IF NOT EXISTS agents (
   account_id text NOT NULL REFERENCES accounts (id),
   id text NOT NULL,
   name text NOT NULL,
@@ -60,7 +60,7 @@ CREATE TABLE agents (
   PRIMARY KEY (account_id, id)
 );
 
-CREATE TABLE machines (
+CREATE TABLE IF NOT EXISTS machines (
   account_id text NOT NULL,
   agent_id text NOT NULL,
   host text NOT NULL,
@@ -74,7 +74,7 @@ CREATE TABLE machines (
   FOREIGN KEY (account_id, agent_id) REFERENCES agents (account_id, id)
 );
 
-CREATE TABLE skills (
+CREATE TABLE IF NOT EXISTS skills (
   account_id text NOT NULL,
   agent_id text NOT NULL,
   id text NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE skills (
   FOREIGN KEY (account_id, agent_id) REFERENCES agents (account_id, id)
 );
 
-CREATE TABLE bus_events (
+CREATE TABLE IF NOT EXISTS bus_events (
   account_id text NOT NULL REFERENCES accounts (id),
   id text NOT NULL,
   time_text text NOT NULL,
@@ -101,14 +101,14 @@ CREATE TABLE bus_events (
   PRIMARY KEY (account_id, id)
 );
 
-CREATE TABLE state_entries (
+CREATE TABLE IF NOT EXISTS state_entries (
   account_id text NOT NULL REFERENCES accounts (id),
   key text NOT NULL,
   value jsonb NOT NULL,
   PRIMARY KEY (account_id, key)
 );
 
-CREATE TABLE rules (
+CREATE TABLE IF NOT EXISTS rules (
   account_id text NOT NULL REFERENCES accounts (id),
   id text NOT NULL,
   rule_when text NOT NULL,
@@ -119,7 +119,7 @@ CREATE TABLE rules (
   PRIMARY KEY (account_id, id)
 );
 
-CREATE TABLE approvals (
+CREATE TABLE IF NOT EXISTS approvals (
   account_id text NOT NULL REFERENCES accounts (id),
   id text NOT NULL,
   agent text NOT NULL,
@@ -130,7 +130,7 @@ CREATE TABLE approvals (
   PRIMARY KEY (account_id, id)
 );
 
-CREATE TABLE mission_proposals (
+CREATE TABLE IF NOT EXISTS mission_proposals (
   account_id text NOT NULL REFERENCES accounts (id),
   id text NOT NULL,
   agent text NOT NULL,
@@ -140,25 +140,25 @@ CREATE TABLE mission_proposals (
   PRIMARY KEY (account_id, id)
 );
 
-CREATE TABLE daily_revenue (
+CREATE TABLE IF NOT EXISTS daily_revenue (
   account_id text NOT NULL REFERENCES accounts (id),
   day text NOT NULL,
   amount integer NOT NULL,
   PRIMARY KEY (account_id, day)
 );
 
-CREATE TABLE overview_tiles (
+CREATE TABLE IF NOT EXISTS overview_tiles (
   account_id text PRIMARY KEY REFERENCES accounts (id),
   tiles jsonb NOT NULL
 );
 
-CREATE TABLE threads (
+CREATE TABLE IF NOT EXISTS threads (
   account_id text NOT NULL REFERENCES accounts (id),
   id text NOT NULL,
   PRIMARY KEY (account_id, id)
 );
 
-CREATE TABLE messages (
+CREATE TABLE IF NOT EXISTS messages (
   account_id text NOT NULL,
   thread_id text NOT NULL,
   id text NOT NULL,
@@ -169,7 +169,7 @@ CREATE TABLE messages (
   FOREIGN KEY (account_id, thread_id) REFERENCES threads (account_id, id)
 );
 
-CREATE TABLE agent_images (
+CREATE TABLE IF NOT EXISTS agent_images (
   id text PRIMARY KEY,
   name text NOT NULL,
   role text NOT NULL,
@@ -184,7 +184,7 @@ CREATE TABLE agent_images (
   status text NOT NULL
 );
 
-CREATE TABLE bugs (
+CREATE TABLE IF NOT EXISTS bugs (
   id text PRIMARY KEY,
   image_id text NOT NULL REFERENCES agent_images (id),
   sev text NOT NULL,
@@ -193,7 +193,7 @@ CREATE TABLE bugs (
   reports integer NOT NULL
 );
 
-CREATE TABLE feature_requests (
+CREATE TABLE IF NOT EXISTS feature_requests (
   id text PRIMARY KEY,
   image_id text NOT NULL REFERENCES agent_images (id),
   title text NOT NULL,
