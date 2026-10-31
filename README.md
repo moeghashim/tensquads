@@ -29,6 +29,19 @@ Open `http://localhost:3000`. The document title is tensquads. The body has no v
 
 Install Playwright Chromium with `npx playwright install chromium` before the first e2e run. Model checks need mise and network access on the first run, or existing Java and TLC paths. See [foundation setup and APIs](docs/foundation.md) for the toolchain, service configuration, seed, and verification limits. CI runs verification and builds; deployment is local.
 
+Every commit needs `Signed-off-by: Moe Ghashim <mohanadgh@gmail.com>`.
+Use `git commit --signoff`, including for automated fixes. The no-mistakes
+worktree can use a different hooks path, so `.husky/prepare-commit-msg` alone
+does not guarantee a sign-off. Check the active path with
+`git config --show-origin --get core.hooksPath`.
+
+DCO checks every commit in the pull request. A new signed-off commit does not
+repair an earlier unsigned commit. For PR #1, the three unsigned commits follow
+`176eb2768b67efc7dcb8a33038ff96a0c12ed044`. To repair them, start from a clean
+worktree and run `git rebase --signoff 176eb2768b67efc7dcb8a33038ff96a0c12ed044`.
+This rewrites Git history. Obtain permission first if the Git directory is
+outside the allowed workspace. Push through `git push no-mistakes`.
+
 | Path | What it is |
 | --- | --- |
 | `AGENTS.md` | The rules for every agent. Read it first, every session |
