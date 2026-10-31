@@ -20,6 +20,8 @@ export interface BusEventRecord {
 	readonly id: string;
 	readonly writes: readonly string[];
 	readonly set?: Readonly<Record<string, unknown>>;
+	readonly time?: string;
+	readonly trace?: string;
 }
 
 export interface EventBus {
@@ -33,7 +35,26 @@ export interface IntegrationGateway {
 }
 
 export interface Repositories {
-	listAccounts(scope: AccountScope): Promise<readonly unknown[]>;
+	readonly platform: {
+		listAccounts(scope: AccountScope): Promise<readonly unknown[]>;
+		totals(scope: AccountScope): Promise<unknown>;
+	};
+	readonly squads: {
+		listAgents(scope: AccountScope): Promise<readonly unknown[]>;
+		tasksDone(scope: AccountScope): Promise<number>;
+	};
+	readonly bus: {
+		listEvents(scope: AccountScope): Promise<readonly unknown[]>;
+	};
+	readonly policy: {
+		inbox(scope: AccountScope): Promise<unknown>;
+	};
+	readonly catalog: {
+		listImages(scope: AccountScope): Promise<readonly unknown[]>;
+	};
+	readonly conversation: {
+		thread(scope: AccountScope): Promise<unknown>;
+	};
 }
 
 export interface Decider {

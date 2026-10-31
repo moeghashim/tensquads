@@ -1,0 +1,202 @@
+CREATE TABLE accounts (
+  id text PRIMARY KEY,
+  account_id text NOT NULL UNIQUE,
+  name text NOT NULL,
+  owner text NOT NULL,
+  email text NOT NULL,
+  tint text NOT NULL,
+  agents integer NOT NULL,
+  online integer NOT NULL,
+  tasks integer NOT NULL,
+  last_active text NOT NULL,
+  created_week integer NOT NULL,
+  mission text NOT NULL,
+  CHECK (account_id = id)
+);
+
+CREATE TABLE plans (
+  id text PRIMARY KEY,
+  name text NOT NULL,
+  monthly integer NOT NULL
+);
+
+CREATE TABLE subscriptions (
+  account_id text PRIMARY KEY REFERENCES accounts (id),
+  plan text NOT NULL,
+  status text NOT NULL,
+  mrr integer NOT NULL,
+  ltv integer NOT NULL,
+  started text NOT NULL
+);
+
+CREATE TABLE squads (
+  account_id text NOT NULL REFERENCES accounts (id),
+  id text NOT NULL,
+  name text NOT NULL,
+  PRIMARY KEY (account_id, id)
+);
+
+CREATE TABLE masters (
+  account_id text PRIMARY KEY REFERENCES accounts (id),
+  name text NOT NULL
+);
+
+CREATE TABLE agents (
+  account_id text NOT NULL REFERENCES accounts (id),
+  id text NOT NULL,
+  name text NOT NULL,
+  role text NOT NULL,
+  tint text NOT NULL,
+  is_on boolean NOT NULL,
+  autonomy text NOT NULL,
+  mission text NOT NULL,
+  contribution integer NOT NULL,
+  tasks integer NOT NULL,
+  success text NOT NULL,
+  saved text NOT NULL,
+  last_text text NOT NULL,
+  targets jsonb NOT NULL,
+  kpis jsonb NOT NULL,
+  PRIMARY KEY (account_id, id)
+);
+
+CREATE TABLE machines (
+  account_id text NOT NULL,
+  agent_id text NOT NULL,
+  host text NOT NULL,
+  region text NOT NULL,
+  size text NOT NULL,
+  cpu text NOT NULL,
+  uptime text NOT NULL,
+  egress jsonb NOT NULL,
+  secrets jsonb NOT NULL,
+  PRIMARY KEY (account_id, agent_id),
+  FOREIGN KEY (account_id, agent_id) REFERENCES agents (account_id, id)
+);
+
+CREATE TABLE skills (
+  account_id text NOT NULL,
+  agent_id text NOT NULL,
+  id text NOT NULL,
+  description text NOT NULL,
+  gate text NOT NULL,
+  runs integer NOT NULL,
+  is_on boolean NOT NULL,
+  PRIMARY KEY (account_id, agent_id, id),
+  FOREIGN KEY (account_id, agent_id) REFERENCES agents (account_id, id)
+);
+
+CREATE TABLE bus_events (
+  account_id text NOT NULL REFERENCES accounts (id),
+  id text NOT NULL,
+  time_text text NOT NULL,
+  from_agent text NOT NULL,
+  to_agent text NOT NULL,
+  kind text NOT NULL,
+  skill text NOT NULL,
+  body text NOT NULL,
+  payload jsonb NOT NULL,
+  writes jsonb NOT NULL,
+  trace text NOT NULL,
+  PRIMARY KEY (account_id, id)
+);
+
+CREATE TABLE state_entries (
+  account_id text NOT NULL REFERENCES accounts (id),
+  key text NOT NULL,
+  value jsonb NOT NULL,
+  PRIMARY KEY (account_id, key)
+);
+
+CREATE TABLE rules (
+  account_id text NOT NULL REFERENCES accounts (id),
+  id text NOT NULL,
+  rule_when text NOT NULL,
+  agent text NOT NULL,
+  action text NOT NULL,
+  approval text NOT NULL,
+  is_on boolean NOT NULL,
+  PRIMARY KEY (account_id, id)
+);
+
+CREATE TABLE approvals (
+  account_id text NOT NULL REFERENCES accounts (id),
+  id text NOT NULL,
+  agent text NOT NULL,
+  title text NOT NULL,
+  detail text NOT NULL,
+  amount text NOT NULL,
+  status text NOT NULL,
+  PRIMARY KEY (account_id, id)
+);
+
+CREATE TABLE mission_proposals (
+  account_id text NOT NULL REFERENCES accounts (id),
+  id text NOT NULL,
+  agent text NOT NULL,
+  mission text NOT NULL,
+  targets jsonb NOT NULL,
+  status text NOT NULL,
+  PRIMARY KEY (account_id, id)
+);
+
+CREATE TABLE daily_revenue (
+  account_id text NOT NULL REFERENCES accounts (id),
+  day text NOT NULL,
+  amount integer NOT NULL,
+  PRIMARY KEY (account_id, day)
+);
+
+CREATE TABLE overview_tiles (
+  account_id text PRIMARY KEY REFERENCES accounts (id),
+  tiles jsonb NOT NULL
+);
+
+CREATE TABLE threads (
+  account_id text NOT NULL REFERENCES accounts (id),
+  id text NOT NULL,
+  PRIMARY KEY (account_id, id)
+);
+
+CREATE TABLE messages (
+  account_id text NOT NULL,
+  thread_id text NOT NULL,
+  id text NOT NULL,
+  from_role text NOT NULL,
+  agent text,
+  body text NOT NULL,
+  PRIMARY KEY (account_id, id),
+  FOREIGN KEY (account_id, thread_id) REFERENCES threads (account_id, id)
+);
+
+CREATE TABLE agent_images (
+  id text PRIMARY KEY,
+  name text NOT NULL,
+  role text NOT NULL,
+  tint text NOT NULL,
+  tag text NOT NULL,
+  version text NOT NULL,
+  next_version text NOT NULL,
+  updated text NOT NULL,
+  updated_full text NOT NULL,
+  deployed integer NOT NULL,
+  on_latest integer NOT NULL,
+  status text NOT NULL
+);
+
+CREATE TABLE bugs (
+  id text PRIMARY KEY,
+  image_id text NOT NULL REFERENCES agent_images (id),
+  sev text NOT NULL,
+  title text NOT NULL,
+  age text NOT NULL,
+  reports integer NOT NULL
+);
+
+CREATE TABLE feature_requests (
+  id text PRIMARY KEY,
+  image_id text NOT NULL REFERENCES agent_images (id),
+  title text NOT NULL,
+  votes integer NOT NULL,
+  stage text NOT NULL
+);
