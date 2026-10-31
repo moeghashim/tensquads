@@ -24,83 +24,85 @@ import {
 import { type AccountSnapshot, squadId, type WorkspaceSnapshot } from "./snapshot.ts";
 
 export async function saveWorkspace(db: AppDatabase, snapshot: WorkspaceSnapshot): Promise<void> {
-	await db.delete(messages);
-	await db.delete(threads);
-	await db.delete(skills);
-	await db.delete(machines);
-	await db.delete(agents);
-	await db.delete(squads);
-	await db.delete(masters);
-	await db.delete(rules);
-	await db.delete(approvals);
-	await db.delete(missionProposals);
-	await db.delete(busEvents);
-	await db.delete(stateEntries);
-	await db.delete(dailyRevenue);
-	await db.delete(overviewTiles);
-	await db.delete(subscriptions);
-	await db.delete(accounts);
-	await db.delete(bugs);
-	await db.delete(featureRequests);
-	await db.delete(agentImages);
-	await db.delete(plans);
+	await db.transaction(async (tx) => {
+		await tx.delete(messages);
+		await tx.delete(threads);
+		await tx.delete(skills);
+		await tx.delete(machines);
+		await tx.delete(agents);
+		await tx.delete(squads);
+		await tx.delete(masters);
+		await tx.delete(rules);
+		await tx.delete(approvals);
+		await tx.delete(missionProposals);
+		await tx.delete(busEvents);
+		await tx.delete(stateEntries);
+		await tx.delete(dailyRevenue);
+		await tx.delete(overviewTiles);
+		await tx.delete(subscriptions);
+		await tx.delete(accounts);
+		await tx.delete(bugs);
+		await tx.delete(featureRequests);
+		await tx.delete(agentImages);
+		await tx.delete(plans);
 
-	if (snapshot.plans.length > 0) {
-		await db.insert(plans).values(
-			snapshot.plans.map((plan) => ({
-				id: plan.id,
-				name: plan.name,
-				monthly: plan.monthly,
-			})),
-		);
-	}
-
-	for (const image of snapshot.images) {
-		await db.insert(agentImages).values({
-			id: image.id,
-			name: image.name,
-			role: image.role,
-			tint: image.tint,
-			tag: image.tag,
-			version: image.version,
-			nextVersion: image.nextVersion,
-			updated: image.updated,
-			updatedFull: image.updatedFull,
-			deployed: image.deployed,
-			onLatest: image.onLatest,
-			status: image.status,
-		});
-		if (image.bugs.length > 0) {
-			await db.insert(bugs).values(
-				image.bugs.map((bug) => ({
-					id: bug.id,
-					imageId: image.id,
-					sev: bug.sev,
-					title: bug.title,
-					age: bug.age,
-					reports: bug.reports,
+		if (snapshot.plans.length > 0) {
+			await tx.insert(plans).values(
+				snapshot.plans.map((plan) => ({
+					id: plan.id,
+					name: plan.name,
+					monthly: plan.monthly,
 				})),
 			);
 		}
-		if (image.features.length > 0) {
-			await db.insert(featureRequests).values(
-				image.features.map((feature) => ({
-					id: feature.id,
-					imageId: image.id,
-					title: feature.title,
-					votes: feature.votes,
-					stage: feature.stage,
-				})),
-			);
-		}
-	}
 
-	for (const entry of snapshot.accounts) {
-		await insertAccount(db, entry);
-	}
+		for (const image of snapshot.images) {
+			await tx.insert(agentImages).values({
+				id: image.id,
+				name: image.name,
+				role: image.role,
+				tint: image.tint,
+				tag: image.tag,
+				version: image.version,
+				nextVersion: image.nextVersion,
+				updated: image.updated,
+				updatedFull: image.updatedFull,
+				deployed: image.deployed,
+				onLatest: image.onLatest,
+				status: image.status,
+			});
+			if (image.bugs.length > 0) {
+				await tx.insert(bugs).values(
+					image.bugs.map((bug) => ({
+						id: bug.id,
+						imageId: image.id,
+						sev: bug.sev,
+						title: bug.title,
+						age: bug.age,
+						reports: bug.reports,
+					})),
+				);
+			}
+			if (image.features.length > 0) {
+				await tx.insert(featureRequests).values(
+					image.features.map((feature) => ({
+						id: feature.id,
+						imageId: image.id,
+						title: feature.title,
+						votes: feature.votes,
+						stage: feature.stage,
+					})),
+				);
+			}
+		}
+
+		for (const entry of snapshot.accounts) {
+			await insertAccount(tx, entry);
+		}
+	});
 }
 
-async function insertAccount(db: AppDatabase, entry: AccountSnapshot): Promise<void> {
+async function insertAccount(db: Pick<AppDatabase, "insert">, entry: AccountSnapshot): Promise<void> {
 	const account = entry.account;
 	await db.insert(accounts).values({
 		id: account.id,

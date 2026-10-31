@@ -27,6 +27,9 @@ export function decideApproval<A extends Pick<Agent, "tasks" | "last">>(
 	approval: Approval,
 	ok: boolean,
 ): { readonly agent: A; readonly approval: Approval } {
+	if (approval.status !== "Pending") {
+		return { agent, approval };
+	}
 	if (!ok) {
 		return { agent, approval: { ...approval, status: "Declined" } };
 	}
@@ -42,6 +45,9 @@ export function decideMission<A extends Pick<Agent, "mission" | "targets" | "con
 	proposal: MissionProposal,
 	ok: boolean,
 ): { readonly agent: A; readonly proposal: MissionProposal } {
+	if (proposal.status !== "Proposed") {
+		return { agent, proposal };
+	}
 	if (!ok) {
 		return { agent, proposal: { ...proposal, status: "Revising" } };
 	}

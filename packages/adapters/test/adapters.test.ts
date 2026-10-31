@@ -71,6 +71,33 @@ test("the memory bus appends the next event and applies its set", () => {
 	assert.equal(bus.events().length, 1);
 });
 
+test("the memory bus hashes each event id by default and preserves custom traces", () => {
+	const input = {
+		events: [],
+		store: {},
+		script: [
+			{
+				from: "master",
+				to: "orders",
+				kind: "Task" as const,
+				skill: "orders.lookup",
+				text: "Check order",
+				payload: {},
+				writes: [],
+			},
+		],
+	};
+	const bus = createMemoryBus(input);
+	for (let index = 0; index < 2; index += 1) {
+		const event = bus.nextEvent();
+		assert.ok(event);
+		assert.equal(event.trace, traceFor(event.id));
+		assert.match(event.trace, /^tr_[0-9a-f]{6}$/);
+	}
+	const custom = createMemoryBus({ ...input, trace: (id) => `custom_${id}` });
+	assert.equal(custom.nextEvent()?.trace, "custom_e100");
+});
+
 test("placeholder write returns the design value and does not change the store", () => {
 	const store = { "policy.refund_auto_limit": 50 };
 	const gateway = createPlaceholderServices(store);
@@ -144,6 +171,40 @@ test("repositories reject a missing scope and isolate accounts", async () => {
 		assert.equal(inbox.empty, false);
 		const rule = (await repos.policy.listRules(demo))[0];
 		assert.equal(rule?.when, "a refund request comes in");
+	} finally {
+		await opened.close();
+	}
+});
+
+test("a failed workspace replacement preserves every existing table", async () => {
+	const opened = await openPglite();
+	try {
+		await saveWorkspace(opened.db, fixture());
+		const tables = (await opened.db.execute(
+			sql`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name`,
+		)) as { rows: { table_name: string }[] };
+		const readTables = async () => {
+			const rows = [];
+			for (const { table_name } of tables.rows) {
+				const result = (await opened.db.execute(sql`SELECT * FROM ${sql.identifier(table_name)}`)) as {
+					rows: unknown[];
+				};
+				rows.push(result.rows);
+			}
+			return rows;
+		};
+		const before = await readTables();
+		const replacement = fixture();
+		await assert.rejects(() =>
+			saveWorkspace(opened.db, {
+				...replacement,
+				accounts: [...replacement.accounts, ...replacement.accounts].map((entry) => ({
+					...entry,
+					account: { ...entry.account, name: "Replacement" },
+				})),
+			}),
+		);
+		assert.deepEqual(await readTables(), before);
 	} finally {
 		await opened.close();
 	}

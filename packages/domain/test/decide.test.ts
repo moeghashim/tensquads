@@ -83,3 +83,21 @@ test("the count is pending approvals plus Proposed proposals", () => {
 	assert.equal(inboxIsEmpty([declined], [removed]), true);
 	assert.equal(EMPTY_INBOX, "Nothing waiting. Your squads are working inside their limits.");
 });
+
+for (const firstDecision of [true, false]) {
+	for (const secondDecision of [true, false]) {
+		test(`spend ${firstDecision ? "approve" : "decline"} ignores a second ${secondDecision ? "approve" : "decline"}`, () => {
+			const first = decideApproval(agent, approval, firstDecision);
+			const second = decideApproval(first.agent, first.approval, secondDecision);
+			assert.equal(second.agent, first.agent);
+			assert.equal(second.approval, first.approval);
+		});
+
+		test(`mission ${firstDecision ? "approve" : "decline"} ignores a second ${secondDecision ? "approve" : "decline"}`, () => {
+			const first = decideMission(agent, proposal, firstDecision);
+			const second = decideMission(first.agent, first.proposal, secondDecision);
+			assert.equal(second.agent, first.agent);
+			assert.equal(second.proposal, first.proposal);
+		});
+	}
+}

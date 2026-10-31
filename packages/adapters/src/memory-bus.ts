@@ -1,6 +1,8 @@
 import type { BusEvent, BusKind } from "@tensquads/domain";
 import type { EventBus } from "@tensquads/kernel";
 
+import { traceFor } from "./trace.ts";
+
 export interface ScriptedBusEvent {
 	readonly from: string;
 	readonly to: string;
@@ -31,7 +33,7 @@ export function createMemoryBus(input: {
 	let index = 0;
 	let seq = 100;
 	let clock = 11 * 60 + 2;
-	const trace = input.trace ?? (() => "");
+	const trace = input.trace ?? traceFor;
 
 	return {
 		events: () => events,
