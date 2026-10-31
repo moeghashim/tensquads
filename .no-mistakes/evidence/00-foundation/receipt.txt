@@ -1,0 +1,26 @@
+08bc149b95c08cf2c725f1f9fd1aed63200f903a39e9346c6ed622ae4dd16e38  AGENTS.md
+e572ba0ce506896949484f630d495c3377b5e958c47ddaee2bb0a03426cc694d  docs/PLAN.md
+d8372b747f787325e227f205c84e0f7d7339e72d318083f236f6772846a9b3c2  tasks/00-foundation.md
+26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
+376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89  design/Main.dc.html
+87e4d4dbdedc4bcfa5916bdc0d7d3e35f1f802ec1faa1e5f297a4af94546e256  design/ds/agent-ui/tokens.json
+deccce08d6932c707935dd44be6fd089e3a27d9c514e067d576129632117d5ec  design/inventory/Main.json
+4479ec88571ef079a54474c40babbaef48a4d1d81c6ace71692bbe79ca0ba882  design/inventory/Home.json
+0caa55a3bb3b9f7e0e3948abf4a7b1bf57f9bfe57d71cdeb1b0bf741f086a2be  design/inventory/Onboarding.json
+298c8236c406972307c86f656d2464b0fa9be56412c78855094cea837834dba1  design/inventory/SignIn.json
+1f6479ef2e42a81fbced9c491acfb0f7edae2be1c2c658fb7aaf48024ca0c2d6  progress.md
+OK   Accounts.dc.html
+OK   AgentDetail.dc.html
+OK   AgentImages.dc.html
+OK   Agents.dc.html
+OK   Chat.dc.html
+OK   Home.dc.html
+OK   Main.dc.html
+OK   Onboarding.dc.html
+OK   Rules.dc.html
+OK   SignIn.dc.html
+OK   Traffic.dc.html
+OK   canvas.json
+OK   ds/agent-ui/tokens.json
+canvas https://claude.ai/artifact/B7seDz5psECQTerDG6rfy4 version 1793448823-a766, pulled 2026-10-31
+design/ matches the canvas.

@@ -1,0 +1,28 @@
+[
+  {
+    "width": 1440,
+    "height": 900,
+    "status": 200,
+    "title": "tensquads",
+    "body": "",
+    "errors": [],
+    "dimensions": {
+      "scroll": 1440,
+      "viewport": 1440
+    },
+    "axeViolations": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "status": 200,
+    "title": "tensquads",
+    "body": "",
+    "errors": [],
+    "dimensions": {
+      "scroll": 390,
+      "viewport": 390
+    },
+    "axeViolations": []
+  }
+]

@@ -1,0 +1,30 @@
+{
+  "autoFix": {
+    "rebase": 0,
+    "review": 0,
+    "test": 0,
+    "document": 0,
+    "lint": 0,
+    "ci": 0
+  },
+  "commitSetting": null,
+  "protectedPaths": [
+    "docs/PLAN.md",
+    "docs/BRIEF.md",
+    "tasks/00-foundation.md",
+    "README.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "design/**"
+  ],
+  "cache": {
+    "path": "~/.local/share/mise\n~/.cache/mise\n",
+    "key": "mise-${{ runner.os }}-${{ hashFiles('mise.lock') }}"
+  },
+  "mise": {
+    "install": false,
+    "cache": false
+  },
+  "installCommand": "mise install",
+  "clerkPackages": []
+}

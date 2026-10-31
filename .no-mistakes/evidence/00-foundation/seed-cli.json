@@ -1,0 +1,18 @@
+{
+  "transport": "Real Neon Pool over local WebSocket-to-Postgres bridge, disposable PGlite SQL engine",
+  "first": {
+    "code": 0,
+    "stdout": "accounts 9\nagents 66\nsquads 17\nmrr 1294\nallTime 14568\ntasksDone 331\nimages 7\nopenBugs 8\nfeaturesRequested 15\n",
+    "stderr": ""
+  },
+  "second": {
+    "code": 0,
+    "stdout": "accounts 9\nagents 66\nsquads 17\nmrr 1294\nallTime 14568\ntasksDone 331\nimages 7\nopenBugs 8\nfeaturesRequested 15\n",
+    "stderr": ""
+  },
+  "counts": [
+    {
+      "accounts": 9
+    }
+  ]
+}

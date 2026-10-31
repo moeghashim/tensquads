@@ -1,0 +1,57 @@
+{
+  "initial": {
+    "accounts": 9,
+    "agents": 66,
+    "squads": 17,
+    "mrr": 1294,
+    "allTime": 14568,
+    "tasksDone": 331,
+    "images": 7,
+    "openBugs": 8,
+    "featuresRequested": 15
+  },
+  "repeated": {
+    "accounts": 9,
+    "agents": 66,
+    "squads": 17,
+    "mrr": 1294,
+    "allTime": 14568,
+    "tasksDone": 331,
+    "images": 7,
+    "openBugs": 8,
+    "featuresRequested": 15
+  },
+  "afterRejectedReplacement": {
+    "accounts": 9,
+    "agents": 66,
+    "squads": 17,
+    "mrr": 1294,
+    "allTime": 14568,
+    "tasksDone": 331,
+    "images": 7,
+    "openBugs": 8,
+    "featuresRequested": 15
+  },
+  "success": [
+    {
+      "id": "orders",
+      "success": "98%"
+    },
+    {
+      "id": "support",
+      "success": "94%"
+    },
+    {
+      "id": "marketing",
+      "success": "91%"
+    },
+    {
+      "id": "finance",
+      "success": "100%"
+    },
+    {
+      "id": "inventory",
+      "success": "97%"
+    }
+  ]
+}

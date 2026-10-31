@@ -1,0 +1,26 @@
+[
+  {
+    "name": "direct filesystem reintroduction",
+    "entry": "export {readFileSync} from \"node:fs\";",
+    "dependency": "",
+    "exit": 1,
+    "stdout": "✖ the worker bundle has no filesystem read and no PGlite (7.423417ms)\nℹ tests 1\nℹ suites 0\nℹ pass 0\nℹ fail 1\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 44.591166\n\n✖ failing tests:\n\ntest at .test-phase/guard/scripts/test/worker-bundle.test.mjs:14:1\n✖ the worker bundle has no filesystem read and no PGlite (7.423417ms)\n  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n  \n  true !== false\n  \n      at TestContext.<anonymous> (file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6A41GP1MDXJ1Q12SBYVHE25/.test-phase/guard/scripts/test/worker-bundle.test.mjs:43:10)\n      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n      at async Test.run (node:internal/test_runner/test:1409:7)\n      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {\n    generatedMessage: true,\n    code: 'ERR_ASSERTION',\n    actual: true,\n    expected: false,\n    operator: 'strictEqual',\n    diff: 'simple'\n  }\n",
+    "stderr": ""
+  },
+  {
+    "name": "transitive filesystem reintroduction",
+    "entry": "export {load} from \"forbidden-helper\";",
+    "dependency": "import {readFileSync} from \"node:fs\"; export const load=(path)=>readFileSync(path);",
+    "exit": 0,
+    "stdout": "✔ the worker bundle has no filesystem read and no PGlite (7.281583ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 45.0875\n",
+    "stderr": ""
+  },
+  {
+    "name": "transitive PGlite reintroduction",
+    "entry": "export {Database} from \"forbidden-helper\";",
+    "dependency": "export {PGlite as Database} from \"@electric-sql/pglite\";",
+    "exit": 0,
+    "stdout": "✔ the worker bundle has no filesystem read and no PGlite (6.98775ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 43.9305\n",
+    "stderr": ""
+  }
+]
