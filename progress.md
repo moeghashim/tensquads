@@ -514,3 +514,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - Actor: Moe Ghashim <mohanadgh@gmail.com>
 - Changed Paths:
   - AGENTS.md
+- 2026-10-31 00-foundation: The empty app, seed, tokens, and Approval model landed before any screen. A spend approve adds one task, a mission approve adds none, and TLC reported no broken rule.
