@@ -81,22 +81,26 @@ const BRIEF = [
 const COLOR_RE = /#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)/g;
 const SKIP_VALUES = new Set(["none", "transparent", "inherit", "initial", "currentcolor"]);
 
+function hexColorKey(input) {
+	let digits = input;
+	if ([3, 4].includes(digits.length)) {
+		digits = [...digits].map((part) => part + part).join("");
+	}
+	if (![6, 8].includes(digits.length)) {
+		return null;
+	}
+	const red = Number.parseInt(digits.slice(0, 2), 16);
+	const green = Number.parseInt(digits.slice(2, 4), 16);
+	const blue = Number.parseInt(digits.slice(4, 6), 16);
+	const alpha = digits.length === 8 ? Number.parseInt(digits.slice(6, 8), 16) / 255 : 1;
+	return `${red},${green},${blue},${Math.round(alpha * 10000) / 10000}`;
+}
+
 function colorKey(raw) {
 	const text = raw.trim().toLowerCase().replace(/\s+/g, "");
 	const hex = text.match(/^#([0-9a-f]{3,8})$/);
 	if (hex) {
-		let digits = hex[1];
-		if (digits.length === 3 || digits.length === 4) {
-			digits = [...digits].map((part) => part + part).join("");
-		}
-		if (digits.length !== 6 && digits.length !== 8) {
-			return null;
-		}
-		const red = Number.parseInt(digits.slice(0, 2), 16);
-		const green = Number.parseInt(digits.slice(2, 4), 16);
-		const blue = Number.parseInt(digits.slice(4, 6), 16);
-		const alpha = digits.length === 8 ? Number.parseInt(digits.slice(6, 8), 16) / 255 : 1;
-		return `${red},${green},${blue},${Math.round(alpha * 10000) / 10000}`;
+		return hexColorKey(hex[1]);
 	}
 	const channels = text.match(/^rgba?\((\d+),(\d+),(\d+)(?:,([0-9.]+))?\)$/);
 	if (!channels) {
@@ -145,19 +149,22 @@ function readDesignFiles() {
 		.map((name) => ({ name, text: readFileSync(join(root, "design", name), "utf8") }));
 }
 
+function addColor(byKey, raw, fileName) {
+	const key = colorKey(raw);
+	if (!key) {
+		return;
+	}
+	const entry = byKey.get(key) ?? { counts: new Map(), files: new Set() };
+	entry.counts.set(raw, (entry.counts.get(raw) ?? 0) + 1);
+	entry.files.add(fileName);
+	byKey.set(key, entry);
+}
+
 function collectColors(files) {
 	const byKey = new Map();
 	for (const file of files) {
 		for (const match of file.text.matchAll(COLOR_RE)) {
-			const raw = match[0];
-			const key = colorKey(raw);
-			if (!key) {
-				continue;
-			}
-			const entry = byKey.get(key) ?? { counts: new Map(), files: new Set() };
-			entry.counts.set(raw, (entry.counts.get(raw) ?? 0) + 1);
-			entry.files.add(file.name);
-			byKey.set(key, entry);
+			addColor(byKey, match[0], file.name);
 		}
 	}
 	return byKey;
@@ -172,43 +179,41 @@ function chooseSpelling(entry) {
 	return [...entry.counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0][0];
 }
 
+const declarationValidators = new Map([
+	["box-shadow", (value) => /^(inset\s+)?0\b/.test(value) && value.includes("px") && !/['"]/.test(value)],
+	["border-radius", (value) => /^(\d+px|0)( (\d+px|0)){0,3}$/.test(value)],
+	["font-size", (value) => /^\d+(\.\d+)?px$/.test(value)],
+	["line-height", (value) => /^\d+(\.\d+)?px$/.test(value)],
+	["letter-spacing", (value) => /^-?\d*\.?\d+em$/.test(value)],
+	["font-weight", (value) => /^[1-9]00$/.test(value)],
+	["font-family", (value) => !/['+]/.test(value) || value.includes("JetBrains")],
+]);
+
 function acceptDeclaration(property, raw) {
 	const important = /!important\s*$/i.test(raw.trim());
 	const value = flat(raw).replace(/\s*!important\s*$/i, "");
-	if (value.length === 0 || value.includes("{{") || value.includes("+") || value.includes("?")) {
+	if (value.length === 0 || /{{|[+?]/.test(value)) {
 		return null;
 	}
+	return validateDeclaration(property, value, important);
+}
+
+function validateDeclaration(property, value, important) {
 	if (SKIP_VALUES.has(value.toLowerCase())) {
 		return null;
 	}
-	if (property === "box-shadow") {
-		if (!/^(inset\s+)?0\b/.test(value) || !value.includes("px") || /['"]/.test(value)) {
-			return null;
-		}
-	} else if (property === "border-radius") {
-		if (!/^(\d+px|0)( (\d+px|0)){0,3}$/.test(value)) {
-			return null;
-		}
-	} else if (property === "font-size" || property === "line-height") {
-		if (!/^\d+(\.\d+)?px$/.test(value)) {
-			return null;
-		}
-	} else if (property === "letter-spacing") {
-		if (!/^-?\d*\.?\d+em$/.test(value)) {
-			return null;
-		}
-	} else if (property === "font-weight") {
-		if (!/^[1-9]00$/.test(value)) {
-			return null;
-		}
-	} else if (property === "font-family") {
-		if (/['+]/.test(value) && !value.includes("JetBrains")) {
-			return null;
-		}
-	} else {
-		return null;
+	const validate = declarationValidators.get(property) ?? (() => false);
+	return validate(value) ? { value, important } : null;
+}
+
+function addDeclaration(found, accepted, fileName) {
+	if (!accepted) {
+		return;
 	}
-	return { value, important };
+	const entry = found.get(accepted.value) ?? { files: new Set(), important: false };
+	entry.files.add(fileName);
+	entry.important = entry.important || accepted.important;
+	found.set(accepted.value, entry);
 }
 
 function collectDeclarations(files, property) {
@@ -220,13 +225,7 @@ function collectDeclarations(files, property) {
 	for (const file of files) {
 		for (const match of file.text.matchAll(pattern)) {
 			const accepted = acceptDeclaration(property, match[1]);
-			if (!accepted) {
-				continue;
-			}
-			const entry = found.get(accepted.value) ?? { files: new Set(), important: false };
-			entry.files.add(file.name);
-			entry.important = entry.important || accepted.important;
-			found.set(accepted.value, entry);
+			addDeclaration(found, accepted, file.name);
 		}
 	}
 	return found;
@@ -237,12 +236,9 @@ function quotedShadows(files) {
 	for (const file of files) {
 		for (const match of file.text.matchAll(/['"]((?:inset\s+)?0 [^'"]+)['"]/g)) {
 			const accepted = acceptDeclaration("box-shadow", match[1]);
-			if (!accepted) {
-				continue;
+			if (accepted) {
+				addDeclaration(found, { ...accepted, important: false }, file.name);
 			}
-			const entry = found.get(accepted.value) ?? { files: new Set(), important: false };
-			entry.files.add(file.name);
-			found.set(accepted.value, entry);
 		}
 	}
 	return found;
@@ -258,28 +254,23 @@ function rowsFrom(found, prefix) {
 		.sort((a, b) => a.value.localeCompare(b.value));
 }
 
-export function buildTokens() {
-	const tokens = JSON.parse(readFileSync(join(root, "design/ds/agent-ui/tokens.json"), "utf8"));
-	const files = readDesignFiles();
-	const known = new Set();
-	const colorNames = new Map();
-	const css = [
-		"/* Light theme from design/ds/agent-ui/tokens.json.",
-		"   The override block is every inline colour, radius, shadow, and type value the token file does not contain.",
-		"   docs/BRIEF.md: those inline values win. Dark values are not copied. */",
-		":root {",
-	];
+function registerColor(colorNames, value, name) {
+	const key = colorKey(value);
+	if (key && !colorNames.has(key)) {
+		colorNames.set(key, name);
+	}
+}
 
+function appendBaseColors(tokens, css, known, colorNames) {
 	for (const token of tokens.color.tokens) {
 		const value = lightValue(token.value);
 		declare(css, token.name, value);
 		addValue(known, value);
-		const key = colorKey(String(value));
-		if (key && !colorNames.has(key)) {
-			colorNames.set(key, token.name);
-		}
+		registerColor(colorNames, String(value), token.name);
 	}
+}
 
+function appendTypeTokens(tokens, css, known) {
 	declare(css, "font-sans", tokens.type.families.sans);
 	declare(css, "font-mono", tokens.type.families.mono);
 	addValue(known, tokens.type.families.sans);
@@ -297,25 +288,29 @@ export function buildTokens() {
 			addValue(known, style.letterSpacing);
 		}
 	}
+}
 
+function appendSimpleTokens(tokens, css, known) {
 	for (const group of [tokens.spacing, tokens.radius, tokens.easing, tokens.duration]) {
 		for (const token of group.tokens) {
 			declare(css, token.name, token.value);
 			addValue(known, token.value);
 		}
 	}
+}
+
+function appendShadowTokens(tokens, css, known, colorNames) {
 	for (const token of tokens.shadow.tokens) {
 		const value = lightValue(token.value);
 		declare(css, token.name, value);
 		addValue(known, value);
 		for (const match of String(value).matchAll(COLOR_RE)) {
-			const key = colorKey(match[0]);
-			if (key && !colorNames.has(key)) {
-				colorNames.set(key, token.name);
-			}
+			registerColor(colorNames, match[0], token.name);
 		}
 	}
+}
 
+function inlineColorRows(files, colorNames) {
 	const colors = collectColors(files);
 	const colorRows = [];
 	for (const [key, entry] of colors) {
@@ -327,9 +322,10 @@ export function buildTokens() {
 		colorRows.push({ value, name, files: [...entry.files].sort() });
 	}
 	colorRows.sort((a, b) => a.value.localeCompare(b.value));
+	return colorRows;
+}
 
-	const radii = rowsFrom(collectDeclarations(files, "border-radius"), "radius").filter((row) => !known.has(row.value));
-
+function inlineShadowRows(files, known) {
 	const shadows = collectDeclarations(files, "box-shadow");
 	for (const [value, used] of quotedShadows(files)) {
 		const entry = shadows.get(value) ?? { files: new Set(), important: false };
@@ -338,41 +334,58 @@ export function buildTokens() {
 		}
 		shadows.set(value, entry);
 	}
-	const shadowRows = rowsFrom(shadows, "shadow").filter((row) => !known.has(row.value));
+	return rowsFrom(shadows, "shadow").filter((row) => !known.has(row.value));
+}
 
+function inlineTypeRows(files, known) {
 	const typeRows = [];
 	for (const property of ["font-size", "line-height", "letter-spacing", "font-weight", "font-family"]) {
-		for (const row of rowsFrom(collectDeclarations(files, property), property)) {
-			if (known.has(row.value) || known.has(row.value.replaceAll('"', ""))) {
-				continue;
-			}
-			typeRows.push({ ...row, property });
-		}
+		const rows = rowsFrom(collectDeclarations(files, property), property).filter(
+			(row) => !known.has(row.value) && !known.has(row.value.replaceAll('"', "")),
+		);
+		typeRows.push(...rows.map((row) => ({ ...row, property })));
 	}
 	typeRows.sort((a, b) => a.property.localeCompare(b.property) || a.value.localeCompare(b.value));
+	return typeRows;
+}
 
-	const overrides = [...colorRows, ...radii, ...shadowRows, ...typeRows];
+function appendOverrides(css, overrides) {
 	const names = new Set();
-	for (const row of overrides) {
+	overrides.forEach((row) => {
 		if (names.has(row.name)) {
 			throw new Error(`Duplicate custom property --${row.name}`);
 		}
 		names.add(row.name);
-	}
+	});
 	if (overrides.length > 0) {
 		css.push("\t/* Inline values. See apps/web/src/design/OVERRIDES.md. */");
 		for (const row of overrides) {
 			declare(css, row.name, row.value);
 		}
 	}
-	css.push("}", "");
+}
 
-	const briefRows = BRIEF.map(([label, value]) => {
+function missingBriefRows(colorNames, known) {
+	return BRIEF.map(([label, value]) => {
 		const key = colorKey(value);
 		const token = key ? colorNames.get(key) : known.has(value) ? "value" : undefined;
 		return { label, value, token: token ?? null };
 	}).filter((row) => row.token === null);
+}
 
+function requiredColorResult(value, colorNames, colorRows) {
+	const key = colorKey(value);
+	const token = key ? colorNames.get(key) : undefined;
+	const added = colorRows.find((row) => row.value === value || colorKey(row.value) === key);
+	const result = token
+		? `already \`--${token}\``
+		: added
+			? `added \`--${added.name}\``
+			: "missing from the design files";
+	return result;
+}
+
+function renderOverrides({ colorRows, radii, shadowRows, typeRows, briefRows, colorNames }) {
 	const lines = [
 		"# Design token overrides",
 		"",
@@ -422,17 +435,48 @@ export function buildTokens() {
 		"| --- | --- |",
 	];
 	for (const value of REQUIRED) {
-		const key = colorKey(value);
-		const token = key ? colorNames.get(key) : undefined;
-		const added = colorRows.find((row) => row.value === value || colorKey(row.value) === key);
-		const result = token
-			? `already \`--${token}\``
-			: added
-				? `added \`--${added.name}\``
-				: "missing from the design files";
+		const result = requiredColorResult(value, colorNames, colorRows);
 		lines.push(`| \`${value}\` | ${result} |`);
 	}
 	lines.push("");
+
+	return lines;
+}
+
+export function buildTokens() {
+	const tokens = JSON.parse(readFileSync(join(root, "design/ds/agent-ui/tokens.json"), "utf8"));
+	const files = readDesignFiles();
+	const known = new Set();
+	const colorNames = new Map();
+	const css = [
+		"/* Light theme from design/ds/agent-ui/tokens.json.",
+		"   The override block is every inline colour, radius, shadow, and type value the token file does not contain.",
+		"   docs/BRIEF.md: those inline values win. Dark values are not copied. */",
+		":root {",
+	];
+
+	appendBaseColors(tokens, css, known, colorNames);
+
+	appendTypeTokens(tokens, css, known);
+
+	appendSimpleTokens(tokens, css, known);
+	appendShadowTokens(tokens, css, known, colorNames);
+
+	const colorRows = inlineColorRows(files, colorNames);
+
+	const radii = rowsFrom(collectDeclarations(files, "border-radius"), "radius").filter((row) => !known.has(row.value));
+
+	const shadowRows = inlineShadowRows(files, known);
+
+	const typeRows = inlineTypeRows(files, known);
+
+	const overrides = [...colorRows, ...radii, ...shadowRows, ...typeRows];
+	appendOverrides(css, overrides);
+	css.push("}", "");
+
+	const briefRows = missingBriefRows(colorNames, known);
+
+	const lines = renderOverrides({ colorRows, radii, shadowRows, typeRows, briefRows, colorNames });
 
 	return { css: css.join("\n"), overrides: lines.join("\n") };
 }

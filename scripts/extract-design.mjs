@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-export function traceFor(id) {
+function traceFor(id) {
 	return `tr_${createHash("sha256").update(id).digest("hex").slice(0, 6)}`;
 }
 

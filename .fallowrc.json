@@ -1,7 +1,13 @@
 {
 	"$schema": "./node_modules/fallow/schema.json",
-	"entry": ["scripts/progress-append-only-check.mjs", "scripts/progress-log.mjs", "scripts/design-check.mjs"],
-	"ignorePatterns": [".agents/skills/**", "design/**"],
+	"entry": [
+		"scripts/progress-append-only-check.mjs",
+		"scripts/progress-log.mjs",
+		"scripts/design-check.mjs",
+		"scripts/commit-with-progress.mjs",
+		"packages/statecharts/*/view.mjs"
+	],
+	"ignorePatterns": [".agents/skills/**", "design/**", "apps/web/worker-configuration.d.ts"],
 	"audit": {
 		"gate": "new-only"
 	}

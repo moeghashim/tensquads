@@ -22,18 +22,11 @@ export const state = (v) => {
 	return `${spend[v.approval]}, ${mission[v.proposal]}`;
 };
 
-export const step = (action) => {
-	if (action === "ApproveSpend") {
-		return "Approve";
-	}
-	if (action === "DeclineSpend") {
-		return "Decline";
-	}
-	if (action === "ApproveMission") {
-		return "Approve mission";
-	}
-	if (action === "DeclineMission") {
-		return "Decline mission";
-	}
-	return null;
-};
+const steps = new Map([
+	["ApproveSpend", "Approve"],
+	["DeclineSpend", "Decline"],
+	["ApproveMission", "Approve mission"],
+	["DeclineMission", "Decline mission"],
+]);
+
+export const step = (action) => steps.get(action) ?? null;

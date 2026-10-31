@@ -20,7 +20,36 @@ function run(command, args) {
 	}
 }
 
-function parseArgs(argv) {
+function readLearning(value) {
+	if (value === undefined) {
+		usage();
+		fail("missing value for --learning");
+	}
+	return value.trim();
+}
+
+function readOptions(argv) {
+	let learning = "";
+	const files = [];
+	let index = 1;
+	while (index < argv.length) {
+		const arg = argv[index];
+		if (arg === "--") {
+			files.push(...argv.slice(index + 1));
+			break;
+		}
+		if (arg !== "--learning") {
+			usage();
+			fail(`unknown argument: ${arg}`);
+		}
+		learning = readLearning(argv[index + 1]);
+		index += 2;
+	}
+
+	return { learning, files };
+}
+
+function readMessage(argv) {
 	if (argv.length === 0) {
 		usage();
 		fail("commit message is required");
@@ -32,40 +61,13 @@ function parseArgs(argv) {
 		fail("first argument must be the commit message");
 	}
 
-	let learning = "";
-	const files = [];
-	let index = 1;
-	let filesMode = false;
+	return message;
+}
 
-	while (index < argv.length) {
-		const arg = argv[index];
+function parseArgs(argv) {
+	const message = readMessage(argv);
 
-		if (filesMode) {
-			files.push(arg);
-			index += 1;
-			continue;
-		}
-
-		if (arg === "--") {
-			filesMode = true;
-			index += 1;
-			continue;
-		}
-
-		if (arg === "--learning") {
-			const value = argv[index + 1];
-			if (value === undefined) {
-				usage();
-				fail("missing value for --learning");
-			}
-			learning = value.trim();
-			index += 2;
-			continue;
-		}
-
-		usage();
-		fail(`unknown argument: ${arg}`);
-	}
+	const { learning, files } = readOptions(argv);
 
 	if (learning.length === 0) {
 		fail('learning must not be empty; pass --learning "..."');

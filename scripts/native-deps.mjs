@@ -65,6 +65,22 @@ function collectNativePackageIssue(label, expectedPackage) {
 	};
 }
 
+function collectInstalledPackageIssues(issues, warnings) {
+	for (const { label, packageName } of [
+		{ label: "Biome", packageName: (suffix) => `@biomejs/cli-${suffix}` },
+		{ label: "esbuild", packageName: (suffix) => `@esbuild/${suffix}` },
+		{ label: "TypeScript", packageName: (suffix) => `@typescript/typescript-${suffix}` },
+	]) {
+		const result = collectNativePackageIssue(label, packageName);
+		if (result.issue) {
+			issues.push(result.issue);
+		}
+		if (result.warning) {
+			warnings.push(result.warning);
+		}
+	}
+}
+
 export function getEnvironmentReport() {
 	const issues = [];
 	const warnings = [];
@@ -91,19 +107,7 @@ export function getEnvironmentReport() {
 		};
 	}
 
-	for (const { label, packageName } of [
-		{ label: "Biome", packageName: (suffix) => `@biomejs/cli-${suffix}` },
-		{ label: "esbuild", packageName: (suffix) => `@esbuild/${suffix}` },
-		{ label: "TypeScript", packageName: (suffix) => `@typescript/typescript-${suffix}` },
-	]) {
-		const result = collectNativePackageIssue(label, packageName);
-		if (result.issue) {
-			issues.push(result.issue);
-		}
-		if (result.warning) {
-			warnings.push(result.warning);
-		}
-	}
+	collectInstalledPackageIssues(issues, warnings);
 
 	return {
 		issues,
@@ -115,18 +119,22 @@ export function getEnvironmentReport() {
 	};
 }
 
-export function printEnvironmentReport({ issues, warnings, nodeVersion, npmVersion, platform, architecture }) {
-	console.log(`Node: ${nodeVersion}`);
-	console.log(`npm: ${npmVersion ?? "not found"}`);
-	console.log(`Platform: ${platform}`);
-	console.log(`Architecture: ${architecture}`);
-
+function printWarnings(warnings) {
 	if (warnings.length > 0) {
 		console.log("\nWarnings:");
 		for (const warning of warnings) {
 			console.log(`- ${warning}`);
 		}
 	}
+}
+
+export function printEnvironmentReport({ issues, warnings, nodeVersion, npmVersion, platform, architecture }) {
+	console.log(`Node: ${nodeVersion}`);
+	console.log(`npm: ${npmVersion ?? "not found"}`);
+	console.log(`Platform: ${platform}`);
+	console.log(`Architecture: ${architecture}`);
+
+	printWarnings(warnings);
 
 	if (issues.length > 0) {
 		console.error("\nIssues:");

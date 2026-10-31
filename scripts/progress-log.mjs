@@ -38,6 +38,49 @@ function parseFiles(value) {
 		.filter((item) => item.length > 0);
 }
 
+function validateOptions(options) {
+	if (!VALID_TRIGGERS.has(options.trigger)) {
+		fail('trigger must be one of: "commit", "deploy"');
+	}
+
+	if (normalizeSingleLine(options.learning).length === 0) {
+		fail("learning must not be empty");
+	}
+
+	if (!["", ...VALID_BUMPS].includes(options.bump)) {
+		fail('bump must be one of: "patch", "minor", "major"');
+	}
+}
+
+function requireOptionValue(arg, value) {
+	if (!arg.startsWith("--")) {
+		usage();
+		fail(`unexpected positional argument: ${arg}`);
+	}
+	if (value === undefined) {
+		usage();
+		fail(`missing value for ${arg}`);
+	}
+}
+
+function readOptions(argv, options) {
+	let index = 1;
+	while (index < argv.length) {
+		const arg = argv[index];
+		const value = argv[index + 1];
+		requireOptionValue(arg, value);
+
+		const key = arg.slice(2);
+		if (!Object.hasOwn(options, key)) {
+			usage();
+			fail(`unknown flag: ${arg}`);
+		}
+		options[key] = key === "files" ? parseFiles(value) : value;
+
+		index += 2;
+	}
+}
+
 function parseArgs(argv) {
 	if (argv[0] !== "append") {
 		usage();
@@ -53,57 +96,9 @@ function parseArgs(argv) {
 		files: [],
 	};
 
-	let index = 1;
-	while (index < argv.length) {
-		const arg = argv[index];
-		const value = argv[index + 1];
-		if (!arg.startsWith("--")) {
-			usage();
-			fail(`unexpected positional argument: ${arg}`);
-		}
-		if (value === undefined) {
-			usage();
-			fail(`missing value for ${arg}`);
-		}
+	readOptions(argv, options);
 
-		switch (arg) {
-			case "--trigger":
-				options.trigger = value;
-				break;
-			case "--learning":
-				options.learning = value;
-				break;
-			case "--message":
-				options.message = value;
-				break;
-			case "--bump":
-				options.bump = value;
-				break;
-			case "--version":
-				options.version = value;
-				break;
-			case "--files":
-				options.files = parseFiles(value);
-				break;
-			default:
-				usage();
-				fail(`unknown flag: ${arg}`);
-		}
-
-		index += 2;
-	}
-
-	if (!VALID_TRIGGERS.has(options.trigger)) {
-		fail('trigger must be one of: "commit", "deploy"');
-	}
-
-	if (normalizeSingleLine(options.learning).length === 0) {
-		fail("learning must not be empty");
-	}
-
-	if (options.bump.length > 0 && !VALID_BUMPS.has(options.bump)) {
-		fail('bump must be one of: "patch", "minor", "major"');
-	}
+	validateOptions(options);
 
 	return {
 		trigger: options.trigger,
@@ -120,14 +115,12 @@ function buildContext({ trigger, message, bump, version }) {
 		return message.length > 0 ? message : "n/a";
 	}
 
-	const contextParts = [];
-	if (bump.length > 0) {
-		contextParts.push(`bump=${bump}`);
-	}
-	if (version.length > 0) {
-		contextParts.push(`version=${version}`);
-	}
-	return contextParts.length > 0 ? contextParts.join("; ") : "n/a";
+	return (
+		Object.entries({ bump, version })
+			.filter(([, value]) => value.length > 0)
+			.map(([key, value]) => `${key}=${value}`)
+			.join("; ") || "n/a"
+	);
 }
 
 function buildEntry({ trigger, learning, context, branch, actor, files }) {

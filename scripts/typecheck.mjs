@@ -16,25 +16,15 @@ function hasTypeScript(dir) {
 		return false;
 	}
 
-	for (const name of entries) {
-		if (name === "node_modules" || name === "dist" || name === ".wrangler") {
-			continue;
-		}
-		const path = join(dir, name);
-		const stat = statSync(path);
-		if (stat.isDirectory()) {
-			if (hasTypeScript(path)) {
-				return true;
+	return entries
+		.filter((name) => !["node_modules", "dist", ".wrangler"].includes(name))
+		.some((name) => {
+			const path = join(dir, name);
+			if (statSync(path).isDirectory()) {
+				return hasTypeScript(path);
 			}
-			continue;
-		}
-		const extension = name.slice(name.lastIndexOf("."));
-		if (EXTENSIONS.has(extension)) {
-			return true;
-		}
-	}
-
-	return false;
+			return EXTENSIONS.has(name.slice(name.lastIndexOf(".")));
+		});
 }
 
 if (!ROOTS.some((root) => hasTypeScript(root))) {

@@ -11,17 +11,12 @@ if (!scriptName) {
 }
 
 function hasWorkspace() {
-	for (const top of ["apps", "packages"]) {
+	return ["apps", "packages"].some((top) => {
 		if (!existsSync(top)) {
-			continue;
+			return false;
 		}
-		for (const name of readdirSync(top)) {
-			if (existsSync(join(top, name, "package.json"))) {
-				return true;
-			}
-		}
-	}
-	return false;
+		return readdirSync(top).some((name) => existsSync(join(top, name, "package.json")));
+	});
 }
 
 if (!hasWorkspace()) {

@@ -142,6 +142,15 @@ async function insertAccount(db: Pick<AppDatabase, "insert">, entry: AccountSnap
 	}
 	await db.insert(masters).values({ accountId: account.id, name: entry.masterName });
 
+	await insertAgents(db, entry);
+	await insertActivity(db, entry);
+	await insertPolicy(db, entry);
+	await insertMetrics(db, entry);
+	await insertMessages(db, entry);
+}
+
+async function insertAgents(db: Pick<AppDatabase, "insert">, entry: AccountSnapshot): Promise<void> {
+	const account = entry.account;
 	for (const agent of entry.agents) {
 		await db.insert(agents).values({
 			accountId: account.id,
@@ -185,7 +194,10 @@ async function insertAccount(db: Pick<AppDatabase, "insert">, entry: AccountSnap
 			);
 		}
 	}
+}
 
+async function insertActivity(db: Pick<AppDatabase, "insert">, entry: AccountSnapshot): Promise<void> {
+	const account = entry.account;
 	if (entry.events.length > 0) {
 		await db.insert(busEvents).values(
 			entry.events.map((event) => ({
@@ -214,7 +226,10 @@ async function insertAccount(db: Pick<AppDatabase, "insert">, entry: AccountSnap
 			})),
 		);
 	}
+}
 
+async function insertPolicy(db: Pick<AppDatabase, "insert">, entry: AccountSnapshot): Promise<void> {
+	const account = entry.account;
 	if (entry.rules.length > 0) {
 		await db.insert(rules).values(
 			entry.rules.map((rule) => ({
@@ -255,7 +270,10 @@ async function insertAccount(db: Pick<AppDatabase, "insert">, entry: AccountSnap
 			})),
 		);
 	}
+}
 
+async function insertMetrics(db: Pick<AppDatabase, "insert">, entry: AccountSnapshot): Promise<void> {
+	const account = entry.account;
 	if (entry.revenue.length > 0) {
 		await db.insert(dailyRevenue).values(
 			entry.revenue.map((day) => ({
@@ -272,7 +290,10 @@ async function insertAccount(db: Pick<AppDatabase, "insert">, entry: AccountSnap
 			tiles: entry.tiles,
 		});
 	}
+}
 
+async function insertMessages(db: Pick<AppDatabase, "insert">, entry: AccountSnapshot): Promise<void> {
+	const account = entry.account;
 	if (entry.messages.length > 0) {
 		await db.insert(threads).values({ accountId: account.id, id: "dock" });
 		await db.insert(messages).values(

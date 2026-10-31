@@ -34,6 +34,11 @@ test("the committed tokens match the light theme and the inline overrides", () =
 		assert.ok(overrides.includes(value), value);
 		assert.ok(css.includes(value) || overrides.includes(`already \``), value);
 	}
+});
+
+test("required colours appear as tokens or shadow values", () => {
+	const css = readFileSync(new URL("../../apps/web/src/design/tokens.css", import.meta.url), "utf8");
+	const overrides = readFileSync(new URL("../../apps/web/src/design/OVERRIDES.md", import.meta.url), "utf8");
 	for (const value of required) {
 		if (value === "rgba(0,0,0,.2)") {
 			assert.match(overrides, /rgba\(0,0,0,\.2\).*shadow-switch-thumb/);

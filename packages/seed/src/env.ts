@@ -1,5 +1,31 @@
 import { readFileSync } from "node:fs";
 
+function isQuoted(value: string, quote: string): boolean {
+	return value.startsWith(quote) && value.endsWith(quote);
+}
+
+function unquote(value: string): string {
+	if (isQuoted(value, '"') || isQuoted(value, "'")) {
+		return value.slice(1, -1);
+	}
+	return value;
+}
+
+function loadLine(line: string): void {
+	const trimmed = line.trim();
+	if (/^(#|$)/.test(trimmed)) {
+		return;
+	}
+	const eq = trimmed.indexOf("=");
+	if (eq < 1) {
+		return;
+	}
+	const key = trimmed.slice(0, eq);
+	if (process.env[key] === undefined) {
+		process.env[key] = unquote(trimmed.slice(eq + 1));
+	}
+}
+
 // Loads a local env file without printing any value.
 export function loadEnv(path = ".env"): void {
 	let text: string;
@@ -9,21 +35,6 @@ export function loadEnv(path = ".env"): void {
 		return;
 	}
 	for (const line of text.split("\n")) {
-		const trimmed = line.trim();
-		if (trimmed.length === 0 || trimmed.startsWith("#")) {
-			continue;
-		}
-		const eq = trimmed.indexOf("=");
-		if (eq < 1) {
-			continue;
-		}
-		const key = trimmed.slice(0, eq);
-		let value = trimmed.slice(eq + 1);
-		if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-			value = value.slice(1, -1);
-		}
-		if (process.env[key] === undefined) {
-			process.env[key] = value;
-		}
+		loadLine(line);
 	}
 }

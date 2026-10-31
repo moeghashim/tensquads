@@ -9,12 +9,12 @@ const INCLUDE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".mjs"]);
 const EXCLUDE_DIR_NAMES = new Set(["node_modules", "dist", "build", ".git", ".next", ".open-next", ".wrangler"]);
 const EXCLUDE_FILE_NAMES = new Set(["worker-configuration.d.ts", "routeTree.gen.ts"]);
 
-function walk(dir, out = []) {
-	for (const name of readdirSync(dir)) {
-		if (EXCLUDE_DIR_NAMES.has(name)) {
-			continue;
-		}
+function includeFile(name) {
+	return !EXCLUDE_FILE_NAMES.has(name) && INCLUDE_EXTENSIONS.has(name.slice(name.lastIndexOf(".")));
+}
 
+function walk(dir, out = []) {
+	for (const name of readdirSync(dir).filter((name) => !EXCLUDE_DIR_NAMES.has(name))) {
 		const path = join(dir, name);
 		const stat = statSync(path);
 
@@ -23,12 +23,7 @@ function walk(dir, out = []) {
 			continue;
 		}
 
-		if (EXCLUDE_FILE_NAMES.has(name)) {
-			continue;
-		}
-
-		const extension = name.slice(name.lastIndexOf("."));
-		if (INCLUDE_EXTENSIONS.has(extension)) {
+		if (includeFile(name)) {
 			out.push(path);
 		}
 	}

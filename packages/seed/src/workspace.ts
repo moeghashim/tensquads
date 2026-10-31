@@ -23,17 +23,36 @@ export function workspaceFromDesign(): WorkspaceSnapshot {
 				mission: design.companyMissions[account.id] ?? "[MISSION NOT SET]",
 				plan: account.plan as PlanName,
 			},
-			agents: account.id === DEMO ? design.seed.agents : [],
-			events: account.id === DEMO ? design.seed.bus : [],
-			store: account.id === DEMO ? design.seed.store : {},
-			rules: account.id === DEMO ? design.seed.rules : [],
-			approvals:
-				account.id === DEMO ? design.seed.approvals.map((item) => ({ ...item, status: "Pending" as const })) : [],
-			proposals: account.id === DEMO ? design.seed.missionProposals : [],
-			revenue: account.id === DEMO ? design.revenue.map((day) => ({ day: day.day, amount: day.amount })) : [],
-			tiles: account.id === DEMO ? design.tiles : null,
-			messages: account.id === DEMO ? design.seed.chat : [],
+			...(account.id === DEMO ? demoData() : emptyData()),
 			masterName: "Master",
 		})),
+	};
+}
+
+function demoData() {
+	return {
+		agents: design.seed.agents,
+		events: design.seed.bus,
+		store: design.seed.store,
+		rules: design.seed.rules,
+		approvals: design.seed.approvals.map((item) => ({ ...item, status: "Pending" as const })),
+		proposals: design.seed.missionProposals,
+		revenue: design.revenue.map((day) => ({ day: day.day, amount: day.amount })),
+		tiles: design.tiles,
+		messages: design.seed.chat,
+	};
+}
+
+function emptyData() {
+	return {
+		agents: [],
+		events: [],
+		store: {},
+		rules: [],
+		approvals: [],
+		proposals: [],
+		revenue: [],
+		tiles: null,
+		messages: [],
 	};
 }

@@ -33,18 +33,13 @@ function modelsIn(dir) {
 	if (!existsSync(dir)) {
 		return [];
 	}
-	const found = [];
-	for (const name of readdirSync(dir)) {
+	return readdirSync(dir).flatMap((name) => {
 		const path = join(dir, name);
 		if (statSync(path).isDirectory()) {
-			found.push(...modelsIn(path));
-			continue;
+			return modelsIn(path);
 		}
-		if (name.endsWith(".tla")) {
-			found.push(path);
-		}
-	}
-	return found;
+		return name.endsWith(".tla") ? [path] : [];
+	});
 }
 
 function runModel(spec) {
