@@ -39,11 +39,18 @@ function watchedPaths() {
 function shouldRun() {
 	try {
 		const paths = watchedPaths();
-		const changed = gitText(["diff", "--name-only", "origin/main", "--", ...paths]);
+		let revisions = ["origin/main"];
+		if (process.env.GITHUB_EVENT_NAME === "push" && process.env.GITHUB_EVENT_PATH) {
+			const { before } = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, "utf8"));
+			if (typeof before === "string" && /^[a-f0-9]{40}$/i.test(before) && !/^0+$/.test(before)) {
+				revisions = [before, "HEAD"];
+			}
+		}
+		const changed = gitText(["diff", "--name-only", ...revisions, "--", ...paths]);
 		const untracked = gitText(["ls-files", "--others", "--exclude-standard", "--", ...paths]);
 		return `${changed}${untracked}`.trim().length > 0;
 	} catch {
-		console.log("statechart:check cannot read the diff from origin/main, so it runs.");
+		console.log("statechart:check cannot read the comparison, so it runs.");
 		return true;
 	}
 }
@@ -116,7 +123,7 @@ function runModel(spec) {
 const invoked = import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (invoked && !shouldRun()) {
-	console.log("statechart:check skipped. packages/statecharts and the named model files match origin/main.");
+	console.log("statechart:check skipped. packages/statecharts and the named model files have no changes.");
 	process.exit(0);
 }
 
