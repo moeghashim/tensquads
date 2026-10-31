@@ -11,7 +11,7 @@ const migrationSql = readFileSync(new URL("./migration.sql", import.meta.url), "
 
 export type AppDatabase = PgliteDatabase<typeof schema> | NeonDatabase<typeof schema>;
 
-export function migrationStatements(script: string): readonly string[] {
+function migrationStatements(script: string): readonly string[] {
 	return script
 		.split(/;\s*(?:\n|$)/)
 		.map((statement) => statement.trim())

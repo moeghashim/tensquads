@@ -33,7 +33,7 @@ function normalizeBody(body) {
 	return body.replace(/\s+/g, " ").replace(/> </g, "><").trim();
 }
 
-export function designBodies() {
+function designBodies() {
 	const files = readdirSync(join(root, "design"))
 		.filter((name) => name.endsWith(".dc.html"))
 		.sort();

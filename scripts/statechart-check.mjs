@@ -36,16 +36,22 @@ function watchedPaths() {
 	return paths;
 }
 
+function isBeforeSha(before) {
+	return typeof before === "string" && /^[a-f0-9]{40}$/i.test(before) && !/^0+$/.test(before);
+}
+
+function comparisonRevisions() {
+	if (process.env.GITHUB_EVENT_NAME !== "push" || !process.env.GITHUB_EVENT_PATH) {
+		return ["origin/main"];
+	}
+	const { before } = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, "utf8"));
+	return isBeforeSha(before) ? [before, "HEAD"] : ["origin/main"];
+}
+
 function shouldRun() {
 	try {
 		const paths = watchedPaths();
-		let revisions = ["origin/main"];
-		if (process.env.GITHUB_EVENT_NAME === "push" && process.env.GITHUB_EVENT_PATH) {
-			const { before } = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, "utf8"));
-			if (typeof before === "string" && /^[a-f0-9]{40}$/i.test(before) && !/^0+$/.test(before)) {
-				revisions = [before, "HEAD"];
-			}
-		}
+		const revisions = comparisonRevisions();
 		const changed = gitText(["diff", "--name-only", ...revisions, "--", ...paths]);
 		const untracked = gitText(["ls-files", "--others", "--exclude-standard", "--", ...paths]);
 		return `${changed}${untracked}`.trim().length > 0;
@@ -68,18 +74,44 @@ function modelsIn(dir) {
 	});
 }
 
+function validModelInputs(spec, config, view) {
+	if (!existsSync(config) || !existsSync(view)) {
+		console.error(`statechart:check ${spec} needs ${basename(spec, ".tla")}.cfg and view.mjs beside the spec.`);
+		return false;
+	}
+	return true;
+}
+
+function validChart(chart) {
+	if (!existsSync(chart) || !isStateDiagram(readFileSync(chart, "utf8"))) {
+		console.error(`statechart:check ${chart} is not a stateDiagram-v2 chart.`);
+		return false;
+	}
+	return true;
+}
+
+function compareGeneratedChart(out, chart, base) {
+	const generated = join(out, "chart.mmd");
+	if (!existsSync(generated)) {
+		console.error(`statechart:check ${base} generated no chart.mmd.`);
+		return 1;
+	}
+	const fresh = readFileSync(generated, "utf8");
+	const committed = readFileSync(chart, "utf8");
+	if (fresh !== committed) {
+		console.error(`statechart:check ${chart} does not match the generated chart.`);
+		return 1;
+	}
+	return 0;
+}
+
 function runModel(spec) {
 	const dir = dirname(spec);
 	const base = basename(spec, ".tla");
 	const config = join(dir, `${base}.cfg`);
 	const view = join(dir, "view.mjs");
-	if (!existsSync(config) || !existsSync(view)) {
-		console.error(`statechart:check ${spec} needs ${base}.cfg and view.mjs beside the spec.`);
-		return Promise.resolve(1);
-	}
 	const chart = join(dir, "chart.mmd");
-	if (!existsSync(chart) || !isStateDiagram(readFileSync(chart, "utf8"))) {
-		console.error(`statechart:check ${chart} is not a stateDiagram-v2 chart.`);
+	if (!validModelInputs(spec, config, view) || !validChart(chart)) {
 		return Promise.resolve(1);
 	}
 	const out = mkdtempSync(join(tmpdir(), "tensquads-statechart-"));
@@ -102,20 +134,7 @@ function runModel(spec) {
 				finish(status);
 				return;
 			}
-			const generated = join(out, "chart.mmd");
-			if (!existsSync(generated)) {
-				console.error(`statechart:check ${base} generated no chart.mmd.`);
-				finish(1);
-				return;
-			}
-			const fresh = readFileSync(generated, "utf8");
-			const committed = readFileSync(chart, "utf8");
-			if (fresh !== committed) {
-				console.error(`statechart:check ${chart} does not match the generated chart.`);
-				finish(1);
-				return;
-			}
-			finish(0);
+			finish(compareGeneratedChart(out, chart, base));
 		});
 	});
 }

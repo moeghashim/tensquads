@@ -7,6 +7,23 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
+function eventPayload(event, before) {
+	if (event === "malformed") {
+		return "{";
+	}
+	return JSON.stringify({ before: event === "before" ? before : event });
+}
+
+function writeEvent(dir, env, event, before) {
+	if (event === "absent") {
+		return;
+	}
+	env.GITHUB_EVENT_PATH = join(dir, "event.json");
+	if (event !== "missing") {
+		writeFileSync(env.GITHUB_EVENT_PATH, eventPayload(event, before));
+	}
+}
+
 function check(t, { changed, eventName = "push", event = "before", originAtBefore = false }) {
 	const dir = mkdtempSync(join(root, ".statechart-check-test-"));
 	t.after(() => rmSync(dir, { recursive: true, force: true }));
@@ -38,15 +55,7 @@ function check(t, { changed, eventName = "push", event = "before", originAtBefor
 	git("add", ".");
 	git("commit", "--quiet", "-m", "after");
 	git("update-ref", "refs/remotes/origin/main", originAtBefore ? before : "HEAD");
-	if (event !== "absent") {
-		env.GITHUB_EVENT_PATH = join(dir, "event.json");
-		if (event !== "missing") {
-			writeFileSync(
-				env.GITHUB_EVENT_PATH,
-				event === "malformed" ? "{" : JSON.stringify({ before: event === "before" ? before : event }),
-			);
-		}
-	}
+	writeEvent(dir, env, event, before);
 	return spawnSync(process.execPath, ["scripts/statechart-check.mjs"], { cwd: dir, env, encoding: "utf8" });
 }
 

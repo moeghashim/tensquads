@@ -305,6 +305,17 @@ function appendShadowTokens(tokens, css, colorNames) {
 	}
 }
 
+function addTypeValues(sets, groups) {
+	for (const group of groups) {
+		for (const style of group.styles) {
+			addValue(sets["font-size"], style.fontSize);
+			addValue(sets["line-height"], style.lineHeight);
+			addValue(sets["font-weight"], style.fontWeight);
+			addValue(sets["letter-spacing"], style.letterSpacing);
+		}
+	}
+}
+
 function tokenSets(tokens) {
 	const sets = {
 		radius: new Set(),
@@ -323,14 +334,7 @@ function tokenSets(tokens) {
 	}
 	addValue(sets["font-family"], tokens.type.families.sans);
 	addValue(sets["font-family"], tokens.type.families.mono);
-	for (const group of tokens.type.groups) {
-		for (const style of group.styles) {
-			addValue(sets["font-size"], style.fontSize);
-			addValue(sets["line-height"], style.lineHeight);
-			addValue(sets["font-weight"], style.fontWeight);
-			addValue(sets["letter-spacing"], style.letterSpacing);
-		}
-	}
+	addTypeValues(sets, tokens.type.groups);
 	return sets;
 }
 
@@ -349,14 +353,27 @@ function inlineColorRows(files, colorNames) {
 	return colorRows;
 }
 
+function mergeUsage(entry, used) {
+	for (const file of used.files) {
+		entry.files.add(file);
+	}
+	entry.important = entry.important || used.important;
+}
+
 function mergeFound(target, extra) {
 	for (const [value, used] of extra) {
 		const entry = target.get(value) ?? { files: new Set(), important: false };
-		for (const file of used.files) {
-			entry.files.add(file);
-		}
-		entry.important = entry.important || used.important;
+		mergeUsage(entry, used);
 		target.set(value, entry);
+	}
+}
+
+function addBuiltDeclaration(found, match, property, fileName) {
+	if (match[1] !== property) {
+		return;
+	}
+	for (const tail of [match[3], match[4]]) {
+		addDeclaration(found, acceptDeclaration(property, match[2] + tail), fileName);
 	}
 }
 
@@ -367,12 +384,7 @@ function builtDeclarations(files, property) {
 		/(box-shadow|border-radius|font-size|line-height):\s*([^'"+]*)['"]\s*\+\s*\((?:[^)]*)\?\s*['"]([^'"]+)['"]\s*:\s*['"]([^'"]+)['"]\)/g;
 	for (const file of files) {
 		for (const match of file.text.matchAll(pattern)) {
-			if (match[1] !== property) {
-				continue;
-			}
-			for (const tail of [match[3], match[4]]) {
-				addDeclaration(found, acceptDeclaration(property, match[2] + tail), file.name);
-			}
+			addBuiltDeclaration(found, match, property, file.name);
 		}
 	}
 	return found;
@@ -419,28 +431,30 @@ function appendOverrides(css, overrides) {
 }
 
 function briefCategory(label) {
-	if (label.endsWith("radius")) {
-		return "radius";
+	const categories = [
+		["radius", "radius"],
+		["tracking", "letter-spacing"],
+		["size", "font-size"],
+		["line", "line-height"],
+	];
+	return categories.find(([suffix]) => label.endsWith(suffix))?.[1] ?? null;
+}
+
+function briefToken(label, value, colorNames, sets) {
+	const key = colorKey(value);
+	if (key) {
+		return colorNames.get(key);
 	}
-	if (label.endsWith("tracking")) {
-		return "letter-spacing";
-	}
-	if (label.endsWith("size")) {
-		return "font-size";
-	}
-	if (label.endsWith("line")) {
-		return "line-height";
-	}
-	return null;
+	const category = briefCategory(label);
+	return category && sets[category].has(value) ? "value" : undefined;
 }
 
 function missingBriefRows(colorNames, sets) {
-	return BRIEF.map(([label, value]) => {
-		const key = colorKey(value);
-		const category = briefCategory(label);
-		const token = key ? colorNames.get(key) : category && sets[category].has(value) ? "value" : undefined;
-		return { label, value, token: token ?? null };
-	}).filter((row) => row.token === null);
+	return BRIEF.map(([label, value]) => ({
+		label,
+		value,
+		token: briefToken(label, value, colorNames, sets) ?? null,
+	})).filter((row) => row.token === null);
 }
 
 function requiredColorResult(value, colorNames, colorRows) {

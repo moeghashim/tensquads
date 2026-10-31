@@ -113,9 +113,13 @@ jobs:
       - name: Install mise
         uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
         with:
-          install: true
+          install: false
           cache: true
+          cache_save_post: true
           cache_key: mise-${{ hashFiles('mise.lock') }}
+
+      - name: Install mise tools
+        run: mise install
 
       - name: Install Playwright
         run: |
