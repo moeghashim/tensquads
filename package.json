@@ -24,7 +24,8 @@
 		"design:check": "node scripts/design-check.mjs",
 		"design:inventory": "node scripts/design-inventory.mjs",
 		"seed": "node --experimental-strip-types packages/seed/src/cli.ts",
-		"e2e": "playwright test"
+		"e2e": "playwright test",
+		"statechart:check": "node scripts/statechart-check.mjs"
 	},
 	"devDependencies": {
 		"@axe-core/playwright": "^4.14.0",
