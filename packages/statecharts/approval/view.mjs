@@ -27,6 +27,7 @@ const steps = new Map([
 	["DeclineSpend", "Decline"],
 	["ApproveMission", "Approve mission"],
 	["DeclineMission", "Decline mission"],
+	["AskRevise", "Ask to revise"],
 ]);
 
 export const step = (action) => steps.get(action) ?? null;

@@ -5,6 +5,7 @@ export {
 	type BusEventRecord,
 	DECIDER_MISSING,
 	type Decider,
+	type Decision,
 	type EventBus,
 	type IntegrationGateway,
 	type MachineProvider,

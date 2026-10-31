@@ -12,8 +12,8 @@ if (!connection) {
 
 const opened = openPostgres(connection);
 try {
-	// CREATE TABLE IF NOT EXISTS makes a second seed safe. postgres.js does not
-	// return the same `{ rows }` shape as PGlite, so do not branch on to_regclass.
+	// The migration creates missing tables and adds columns an older database lacks.
+	// Apply it on every seed. Do not branch on a driver-specific row shape.
 	await opened.migrate();
 	const snapshot = workspaceFromDesign();
 	await saveWorkspace(opened.db, snapshot);

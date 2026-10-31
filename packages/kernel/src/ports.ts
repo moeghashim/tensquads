@@ -6,6 +6,15 @@ export interface AccountScope {
 	readonly mode: "account" | "platform";
 }
 
+export interface MachineTemplate {
+	readonly id: string;
+}
+
+export interface StartedMachine {
+	readonly templateId: string;
+	readonly agentId: string;
+}
+
 export interface MachineProvider {
 	host(agentId: string): string;
 	region(agentId: string): string;
@@ -14,6 +23,8 @@ export interface MachineProvider {
 	uptime(agentId: string): string;
 	egress(agentId: string): readonly string[];
 	secrets(agentId: string): readonly string[];
+	makeTemplate(imageId: string): MachineTemplate;
+	startFromTemplate(templateId: string, agentId: string): StartedMachine;
 }
 
 export interface BusEventRecord {
@@ -57,8 +68,13 @@ export interface Repositories {
 	};
 }
 
+export interface Decision {
+	readonly answer: string;
+	readonly confidence: number;
+}
+
 export interface Decider {
-	decide(input: unknown): never;
+	decide(question: string, answers: readonly string[]): Decision;
 }
 
 export const DECIDER_MISSING = "Decider has no adapter in version 1.";

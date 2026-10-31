@@ -1,11 +1,11 @@
 ---
 name: tensquads-verify
-description: "Check the Approval inbox after a change to decideApproval, decideMission, inboxCount, inboxIsEmpty, or packages/statecharts/approval. Use when an approve, a decline, a mission, or the inbox count changes."
+description: "Check the Approval inbox after a change to decideApproval, decideMission, askRevise, inboxCount, inboxIsEmpty, or packages/statecharts/approval. Use when an approve, a decline, a mission, a revise, or the inbox count changes."
 ---
 
 # Approval inbox
 
-An approve of a spend adds one task and sets `last` to the title plus " (approved)". A decline of a spend changes no agent field. An approve of a mission sets the mission, sets contribution to 0, and adds no task. A decline of a mission sets the proposal to Revising and changes no agent field. The badge count is the number of Pending approvals plus the number of Proposed proposals. The inbox is empty only when no approval is Pending and every proposal is Approved. The empty inbox shows "Nothing waiting. Your squads are working inside their limits."
+An approve of a spend adds one task and sets `last` to the title plus " (approved)". A decline of a spend changes no agent field. An approve of a mission sets the mission, sets contribution to 0, and adds no task. A decline of a mission sets the proposal to Revising and changes no agent field. `askRevise` adds one Revising proposal when that agent has no Proposed or Revising proposal left. An Approved proposal does not block it. The caller supplies the id. The badge count is the number of Pending approvals plus the number of Proposed proposals. The model writes that sum in `BadgeMatches` and does not call `Count` from the invariant. The inbox is empty only when no approval is Pending and every proposal is Approved. The empty inbox shows "Nothing waiting. Your squads are working inside their limits."
 
 A break lets an agent spend or change its mission without the matching task, last line, or badge.
 
@@ -13,7 +13,7 @@ A break lets an agent spend or change its mission without the matching task, las
 
 Run this check when a change touches any of these:
 
-- `packages/domain/src/policy/decide.ts` (`decideApproval`, `decideMission`, `inboxCount`, `inboxIsEmpty`, `EMPTY_INBOX`)
+- `packages/domain/src/policy/decide.ts` (`decideApproval`, `decideMission`, `askRevise`, `inboxCount`, `inboxIsEmpty`, `EMPTY_INBOX`)
 - `packages/domain/test/decide.test.ts`
 - `packages/statecharts/approval/Approval.tla`
 - `packages/statecharts/approval/Approval.cfg`
@@ -40,7 +40,7 @@ TLC does not read `decide.ts`. A pass of the model does not prove the TypeScript
 
 ## What a failure means
 
-A model failure is a path of Approve, Decline, Approve mission, or Decline mission. Replay that path in `decideApproval` or `decideMission`. If the code can do the path, the code is wrong. If the code cannot do a step, the model is wrong. Say which.
+A model failure is a path of Approve, Decline, Approve mission, Decline mission, or Ask to revise. Replay that path in `decideApproval`, `decideMission`, or `askRevise`. If the code can do the path, the code is wrong. If the code cannot do a step, the model is wrong. Say which.
 
 The chart hides Idle. Idle changes nothing. It exists so a finished inbox is not a deadlock. The chart also draws one "Nothing waiting" state for an approved mission with either an approved spend or a declined spend. The model still keeps those two states apart. `SpendApproved` and `SpendDeclined` check the task count and `last`.
 
@@ -48,8 +48,10 @@ The chart hides Idle. Idle changes nothing. It exists so a finished inbox is not
 
 | Check | Covers | Sync commit |
 | --- | --- | --- |
-| `decide.test.ts` | `decideApproval`, `decideMission`, `inboxCount`, `inboxIsEmpty`, `EMPTY_INBOX` | `634f35ebce301a02f807a1c999dc3fe6150c479e` |
-| `/statechart` on `Approval.tla` | The same four actions, one approval and one proposal | `634f35ebce301a02f807a1c999dc3fe6150c479e` |
+| `decide.test.ts` | `decideApproval`, `decideMission`, `askRevise`, `inboxCount`, `inboxIsEmpty`, `EMPTY_INBOX` | `634f35ebce301a02f807a1c999dc3fe6150c479e` |
+| `/statechart` on `Approval.tla` | The same actions, one approval and one proposal | `634f35ebce301a02f807a1c999dc3fe6150c479e` |
+
+The sync commits above do not yet include `askRevise`. Move them forward only after both checks pass on the commit that adds it.
 
 Move a sync commit forward only after both checks pass and you confirm that the model and the tests still describe the code at the new commit. An intended change updates `decide.ts`, `decide.test.ts`, and `Approval.tla` together.
 

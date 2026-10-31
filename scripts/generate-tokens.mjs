@@ -114,6 +114,10 @@ function flat(value) {
 	return String(value).trim().replace(/\s+/g, " ");
 }
 
+function cssValue(value) {
+	return flat(value).replace(/\{([a-z0-9-]+)\}/g, "var(--$1)");
+}
+
 function slug(value) {
 	return flat(value)
 		.toLowerCase()
@@ -139,7 +143,7 @@ function addValue(set, value) {
 }
 
 function declare(lines, name, value) {
-	lines.push(`\t--${name}: ${flat(value)};`);
+	lines.push(`\t--${name}: ${cssValue(value)};`);
 }
 
 function readDesignFiles() {
@@ -261,20 +265,17 @@ function registerColor(colorNames, value, name) {
 	}
 }
 
-function appendBaseColors(tokens, css, known, colorNames) {
+function appendBaseColors(tokens, css, colorNames) {
 	for (const token of tokens.color.tokens) {
 		const value = lightValue(token.value);
 		declare(css, token.name, value);
-		addValue(known, value);
 		registerColor(colorNames, String(value), token.name);
 	}
 }
 
-function appendTypeTokens(tokens, css, known) {
+function appendTypeTokens(tokens, css) {
 	declare(css, "font-sans", tokens.type.families.sans);
 	declare(css, "font-mono", tokens.type.families.mono);
-	addValue(known, tokens.type.families.sans);
-	addValue(known, tokens.type.families.mono);
 
 	for (const group of tokens.type.groups) {
 		for (const style of group.styles) {
@@ -282,32 +283,55 @@ function appendTypeTokens(tokens, css, known) {
 			declare(css, `${style.name}-line`, style.lineHeight);
 			declare(css, `${style.name}-weight`, style.fontWeight);
 			declare(css, `${style.name}-tracking`, style.letterSpacing);
-			addValue(known, style.fontSize);
-			addValue(known, style.lineHeight);
-			addValue(known, style.fontWeight);
-			addValue(known, style.letterSpacing);
 		}
 	}
 }
 
-function appendSimpleTokens(tokens, css, known) {
+function appendSimpleTokens(tokens, css) {
 	for (const group of [tokens.spacing, tokens.radius, tokens.easing, tokens.duration]) {
 		for (const token of group.tokens) {
 			declare(css, token.name, token.value);
-			addValue(known, token.value);
 		}
 	}
 }
 
-function appendShadowTokens(tokens, css, known, colorNames) {
+function appendShadowTokens(tokens, css, colorNames) {
 	for (const token of tokens.shadow.tokens) {
 		const value = lightValue(token.value);
 		declare(css, token.name, value);
-		addValue(known, value);
 		for (const match of String(value).matchAll(COLOR_RE)) {
 			registerColor(colorNames, match[0], token.name);
 		}
 	}
+}
+
+function tokenSets(tokens) {
+	const sets = {
+		radius: new Set(),
+		shadow: new Set(),
+		"font-size": new Set(),
+		"line-height": new Set(),
+		"letter-spacing": new Set(),
+		"font-weight": new Set(),
+		"font-family": new Set(),
+	};
+	for (const token of tokens.radius.tokens) {
+		addValue(sets.radius, token.value);
+	}
+	for (const token of tokens.shadow.tokens) {
+		addValue(sets.shadow, lightValue(token.value));
+	}
+	addValue(sets["font-family"], tokens.type.families.sans);
+	addValue(sets["font-family"], tokens.type.families.mono);
+	for (const group of tokens.type.groups) {
+		for (const style of group.styles) {
+			addValue(sets["font-size"], style.fontSize);
+			addValue(sets["line-height"], style.lineHeight);
+			addValue(sets["font-weight"], style.fontWeight);
+			addValue(sets["letter-spacing"], style.letterSpacing);
+		}
+	}
+	return sets;
 }
 
 function inlineColorRows(files, colorNames) {
@@ -325,22 +349,51 @@ function inlineColorRows(files, colorNames) {
 	return colorRows;
 }
 
-function inlineShadowRows(files, known) {
-	const shadows = collectDeclarations(files, "box-shadow");
-	for (const [value, used] of quotedShadows(files)) {
-		const entry = shadows.get(value) ?? { files: new Set(), important: false };
+function mergeFound(target, extra) {
+	for (const [value, used] of extra) {
+		const entry = target.get(value) ?? { files: new Set(), important: false };
 		for (const file of used.files) {
 			entry.files.add(file);
 		}
-		shadows.set(value, entry);
+		entry.important = entry.important || used.important;
+		target.set(value, entry);
 	}
-	return rowsFrom(shadows, "shadow").filter((row) => !known.has(row.value));
 }
 
-function inlineTypeRows(files, known) {
+// A script joins a prefix to one of two quoted tails. The joined value is the token.
+function builtDeclarations(files, property) {
+	const found = new Map();
+	const pattern =
+		/(box-shadow|border-radius|font-size|line-height):\s*([^'"+]*)['"]\s*\+\s*\((?:[^)]*)\?\s*['"]([^'"]+)['"]\s*:\s*['"]([^'"]+)['"]\)/g;
+	for (const file of files) {
+		for (const match of file.text.matchAll(pattern)) {
+			if (match[1] !== property) {
+				continue;
+			}
+			for (const tail of [match[3], match[4]]) {
+				addDeclaration(found, acceptDeclaration(property, match[2] + tail), file.name);
+			}
+		}
+	}
+	return found;
+}
+
+function inlineShadowRows(files, shadowSet) {
+	const shadows = collectDeclarations(files, "box-shadow");
+	mergeFound(shadows, quotedShadows(files));
+	mergeFound(shadows, builtDeclarations(files, "box-shadow"));
+	return rowsFrom(shadows, "shadow").filter((row) => !shadowSet.has(row.value));
+}
+
+function inlineTypeRows(files, sets) {
 	const typeRows = [];
 	for (const property of ["font-size", "line-height", "letter-spacing", "font-weight", "font-family"]) {
-		const rows = rowsFrom(collectDeclarations(files, property), property).filter(
+		const found = collectDeclarations(files, property);
+		if (property === "font-size" || property === "line-height") {
+			mergeFound(found, builtDeclarations(files, property));
+		}
+		const known = sets[property];
+		const rows = rowsFrom(found, property).filter(
 			(row) => !known.has(row.value) && !known.has(row.value.replaceAll('"', "")),
 		);
 		typeRows.push(...rows.map((row) => ({ ...row, property })));
@@ -365,10 +418,27 @@ function appendOverrides(css, overrides) {
 	}
 }
 
-function missingBriefRows(colorNames, known) {
+function briefCategory(label) {
+	if (label.endsWith("radius")) {
+		return "radius";
+	}
+	if (label.endsWith("tracking")) {
+		return "letter-spacing";
+	}
+	if (label.endsWith("size")) {
+		return "font-size";
+	}
+	if (label.endsWith("line")) {
+		return "line-height";
+	}
+	return null;
+}
+
+function missingBriefRows(colorNames, sets) {
 	return BRIEF.map(([label, value]) => {
 		const key = colorKey(value);
-		const token = key ? colorNames.get(key) : known.has(value) ? "value" : undefined;
+		const category = briefCategory(label);
+		const token = key ? colorNames.get(key) : category && sets[category].has(value) ? "value" : undefined;
 		return { label, value, token: token ?? null };
 	}).filter((row) => row.token === null);
 }
@@ -390,7 +460,9 @@ function renderOverrides({ colorRows, radii, shadowRows, typeRows, briefRows, co
 		"# Design token overrides",
 		"",
 		"The base is the light theme in `design/ds/agent-ui/tokens.json`.",
-		"Each row is an inline value from `design/*.dc.html` that is not one of those light values.",
+		"Each row is an inline or script-built value from `design/*.dc.html` that is not a light token of the same category.",
+		"A spacing token does not hide a radius, a font size, or a line height that uses the same pixels.",
+		"A script that joins two strings is included. The joined value is the token, not each half.",
 		"`docs/BRIEF.md` says the inline value wins. `apps/web/src/design/tokens.css` adds one custom property for each row.",
 		"Dark theme values are not copied. `transparent` and `none` are CSS keywords and are not tokens.",
 		"",
@@ -446,35 +518,34 @@ function renderOverrides({ colorRows, radii, shadowRows, typeRows, briefRows, co
 export function buildTokens() {
 	const tokens = JSON.parse(readFileSync(join(root, "design/ds/agent-ui/tokens.json"), "utf8"));
 	const files = readDesignFiles();
-	const known = new Set();
+	const sets = tokenSets(tokens);
 	const colorNames = new Map();
 	const css = [
 		"/* Light theme from design/ds/agent-ui/tokens.json.",
-		"   The override block is every inline colour, radius, shadow, and type value the token file does not contain.",
+		"   A token alias is written as var(--name).",
+		"   The override block is every inline or script-built colour, radius, shadow, and type value",
+		"   that is not a light token of the same category. A spacing token does not hide another category.",
 		"   docs/BRIEF.md: those inline values win. Dark values are not copied. */",
 		":root {",
 	];
 
-	appendBaseColors(tokens, css, known, colorNames);
-
-	appendTypeTokens(tokens, css, known);
-
-	appendSimpleTokens(tokens, css, known);
-	appendShadowTokens(tokens, css, known, colorNames);
+	appendBaseColors(tokens, css, colorNames);
+	appendTypeTokens(tokens, css);
+	appendSimpleTokens(tokens, css);
+	appendShadowTokens(tokens, css, colorNames);
 
 	const colorRows = inlineColorRows(files, colorNames);
-
-	const radii = rowsFrom(collectDeclarations(files, "border-radius"), "radius").filter((row) => !known.has(row.value));
-
-	const shadowRows = inlineShadowRows(files, known);
-
-	const typeRows = inlineTypeRows(files, known);
+	const radiiFound = collectDeclarations(files, "border-radius");
+	mergeFound(radiiFound, builtDeclarations(files, "border-radius"));
+	const radii = rowsFrom(radiiFound, "radius").filter((row) => !sets.radius.has(row.value));
+	const shadowRows = inlineShadowRows(files, sets.shadow);
+	const typeRows = inlineTypeRows(files, sets);
 
 	const overrides = [...colorRows, ...radii, ...shadowRows, ...typeRows];
 	appendOverrides(css, overrides);
 	css.push("}", "");
 
-	const briefRows = missingBriefRows(colorNames, known);
+	const briefRows = missingBriefRows(colorNames, sets);
 
 	const lines = renderOverrides({ colorRows, radii, shadowRows, typeRows, briefRows, colorNames });
 

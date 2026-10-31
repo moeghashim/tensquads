@@ -4,15 +4,13 @@ Oct 31, 2026 · @Moe Ghashim
 
 This plan tells you how to build the tensquads system from the design. The plan does not include the AI agents. The system runs on Cloudflare. Stripe Projects sets up the services. Agent machines run on boat.dev.
 
-The phase 0 code and commands are documented in [the foundation guide](foundation.md). Later-phase architecture below is a build target. The blank app does not yet call the kernel, authenticate users, or bind a Durable Object or Queue consumer.
-
 ## Decisions
 
 The build brief had 11 open questions. Moe answered all of them on 31 October 2026. The table shows each answer. The plan uses only these answers.
 
 | # | Question | Answer |
 | --- | --- | --- |
-| 1 | Software stack | TanStack Start (React, Vite), pinned to `1.169.4` in phase 0 for the web app, on PI-Starter's tooling: strict TypeScript, Biome, `progress.md`, `no-mistakes`, skills. A cordis core in `packages/`. Drizzle for database access. Neon Postgres for the database. Cloudflare Workers for hosting, through the Cloudflare Vite plugin. Changed from Next.js on 31 October 2026 |
+| 1 | Software stack | TanStack Start 1.0 (React, Vite) for the web app, on PI-Starter's tooling: strict TypeScript, Biome, `progress.md`, `no-mistakes`, skills. A cordis core in `packages/`. Drizzle for database access. Neon Postgres for the database. Cloudflare Workers for hosting, through the Cloudflare Vite plugin. Changed from Next.js on 31 October 2026 |
 | 1b | Service setup | Stripe Projects sets up Cloudflare, Neon and Clerk. boat.dev is not in the Stripe Projects catalog, so we set it up by hand |
 | 1c | Agent machines | Each agent runs on one boat.dev machine. Version 1 uses a test adapter with the same interface |
 | 2 | Sign-in | Clerk, through Stripe Projects. A super admin is a Clerk organization role. There is no second sign-in |
@@ -27,7 +25,7 @@ The build brief had 11 open questions. Moe answered all of them on 31 October 20
 | 11 | Controls that do nothing | They stay as controls that do nothing. The final report lists them |
 | 12 | Name | The repository is `moeghashim/tensquads`. The product name is tensquads in all places: package scope `@tensquads`, app title, admin footer. The code does not use "10Squads" or "Business Agents". Design updated on 31 October 2026: canvas title, homepage, sign-up header, page titles and the preview address now say tensquads |
 | 13 | Sign-in screen | Clerk elements, styled with the design tokens. No Clerk hosted page. Design updated on 31 October 2026: new screen \`SignIn.dc.html\` (route \`/signin\`); "Sign in" on the homepage and the sign-up page opens it |
-| 14 | Cloudflare account | The Cloudflare account that Stripe Projects links when we run \`stripe projects add cloudflare/workers\` |
+| 14 | Cloudflare account | The Cloudflare account that Stripe Projects links when we run \`stripe projects add cloudflare/worker\` |
 | 15 | boat.dev account | Moe's boat.dev account, with a new environment \`tensquads-agents\` |
 | 16 | How agents send messages to each other | Cloudflare Queues carry the messages. One Durable Object per account orders them and applies the state writes. Neon holds the record. The Durable Object is the only writer to the bus tables. Version 1 uses an in-memory bus behind the same EventBus interface |
 | 17 | Where the master runs | The master core (events, state, inbox, routing, model calls) runs on Cloudflare as the account's Durable Object and a Worker. It never depends on a boat.dev machine. A boat.dev machine is used only for work that needs a full computer. Agent machines run always on, size small, as a systemd service with a heartbeat to the Durable Object |
@@ -43,7 +41,7 @@ The build brief had 11 open questions. Moe answered all of them on 31 October 20
 | 27 | Tints for the two new agents | Market researcher #fde2f3, Website builder #e5e9f0. Added to the token list |
 | 28 | Proof of concept: the business type | Restaurants or grocers. For a restaurant, the Website builder makes a menu page: top design and UX, with a cultural touch when the restaurant is cultural. For a grocer, it makes a one-page list of the items |
 
-No question is open. Moe answered items 13 to 15 on 31 October 2026. The web framework changed from Next.js to TanStack Start the same day. Phase 0 pins `@tanstack/react-start` to `1.169.4` and runs it through the Cloudflare Vite plugin. Clerk integration starts in phase 1.
+No question is open. Moe answered items 13 to 15 on 31 October 2026. The web framework changed from Next.js to TanStack Start the same day. TanStack Start reached version 1.0 on 13 October 2026. Its server build is a plain fetch handler, so it runs on a Worker with no adapter. Cloudflare is an official hosting partner. Clerk has an official SDK for it.&#32;
 
 ## Architecture
 
@@ -60,15 +58,14 @@ The blue box is what version 1 runs. We build the boat.dev adapter later. It use
 | Platform | Account, Plan, Subscription | accounts table, totals, plan mix, accounts-created chart, sign-up step 2 | 2, 9 |
 | Squads and Agents | Squad, Agent, Skill, Machine | agent list, agent dashboard, on/off switch, autonomy, skill gates, machine details | 3, 5, 6 |
 | Bus and Shared State | BusEvent, StateStore | traffic diagram, event list, inspector, state table, Live and Simulate (`nextEvent()`) | 4, 6, 7 |
-| Policy | Rule, Limit, Approval, MissionProposal | rules list, new-rule form, three sliders, approval inbox, chat dock badge | 3, 8 |
+| Policy | Rule, Limit, Approval | rules list, new-rule form, three sliders, approval inbox, chat dock badge | 3, 8 |
 | Catalog | AgentImage, Bug, FeatureRequest | images table, detail panel, attention badge | 10 |
 | Conversation | Thread, Message | chat page, chat dock, suggestion chips, test `send()` | 4 |
 
 Some rules cross domain areas. The core applies these rules, not the screens:
 
-- When you approve a pending spend approval, the agent's `tasks` count increases by one. The agent's `last` field changes to the approval title plus " (approved)".
-- When a scripted bus event has `set`, the memory adapter applies those key/value pairs to shared state. `writes` lists the keys for display.
-- When you approve a Proposed mission, the agent receives its mission and target goals. Target current values become "—" and contribution becomes 0. Tasks do not change. Decline sets the proposal to Revising and changes no agent.
+- When you approve an approval, the agent's `tasks` count increases by one. The agent's `last` field changes to the approval title plus " (approved)".
+- When a bus event has `writes`, the core writes them to the shared state.
 - A limit slider writes to the `policy.*` keys. The traffic state table reads the same keys.
 - When you switch an agent off, the core sets CPU to 0% and uptime to "Paused". It does this through the `MachineProvider` interface.
 
@@ -80,11 +77,11 @@ Some rules cross domain areas. The core applies these rules, not the screens:
 - `IntegrationGateway`. The Shopify, Gmail and Stripe data shapes stay outside.
 - `Repositories`. Database rows become domain objects here. No database type crosses this line.
 
-The design's mock data is a fourth foreign model. A committed extract feeds the seed module. It keeps the design values, except that event traces use `tr_` plus the first six hex characters of SHA-256 of the event id. See [the seed workflow](foundation.md#seed-workflow).
+The design's mock data is a fourth foreign model. One seed module converts it to domain objects, one time, with no changes.
 
-A fifth interface, `Decider`, is reserved for a question, possible answers, and a result with confidence. Phase 0 declares `decide(input: unknown): never` and always throws `Decider has no adapter in version 1.` Later, the master uses it to pick an agent, the Policy area uses it for the autonomy gate, and the guardrails use it to pass or block a message (decision 19).
+A fifth interface, `Decider`, takes a question and a list of possible answers. It returns one answer and a confidence. Version 1 has no adapter for it. Later, the master uses it to pick an agent, the Policy area uses it for the autonomy gate, and the guardrails use it to pass or block a message (decision 19).
 
-**Many accounts in one database.** Each tenant table has an `account_id` column. Plans, agent images, bugs, and feature requests are platform data and have no `account_id`. Each data access function receives an `AccountScope`. The function rejects a query that has no scope. When a super admin opens an account, the system makes a special session. The session carries the target `account_id`. The workspace screens do not see a difference. The design shows this: only a super admin sees the "All accounts" link.
+**Many accounts in one database.** Each account table has an `account_id` column. Each data access function receives an `AccountScope`. The function rejects a query that has no scope. When a super admin opens an account, the system makes a special session. The session carries the target `account_id`. The workspace screens do not see a difference. The design shows this: only a super admin sees the "All accounts" link.
 
 **How agents send messages (decision 16).** The `EventBus` interface has two adapters. Version 1 uses an in-memory bus. It replays the design's events with `nextEvent()`. Later, the Cloudflare bus replaces it:
 
@@ -132,7 +129,7 @@ Rules an update may never break. They become invariants in the Image release sta
 - A rollout stops itself when the health check fails twice.
 - Every account on Stable runs the same version.
 
-What phase 4 adds to the build: a Rollout object in the Catalog domain area; two methods on `MachineProvider`, make a template and start a machine from a template; "Roll out" and "View changelog" leave the "do nothing" list in phase 4. Phase 0 exposes only machine detail getters. It has no Rollout object or machine lifecycle methods.
+What this adds to the build: a Rollout object in the Catalog domain area; two methods on `MachineProvider`, make a template and start a machine from a template; "Roll out" and "View changelog" leave the "do nothing" list in phase 4. Version 1 ships none of it. The interfaces exist and the test adapter answers.
 
 **The agent loop and verified outcomes (decision 20).** Each agent runs one loop, forever, on its machine:
 
@@ -153,35 +150,37 @@ Every task carries a check that code can run, for example "order A-1007 has a tr
 | Fail | Sends the task back once with the evidence. On a second fail, makes an Escalation to the owner | An Escalation event, the approval inbox |
 | No check possible | The task needs a yes from the owner before it starts. It goes to the inbox as an Approval | The Approve and Decline buttons |
 
-The planned runtime computes `success` from passed checks. Phase 0 stores the design's formatted `success` string on each agent row; it has no check runner or metrics table yet.
+The `success` number on the agent dashboard is the ratio of passed checks. The system computes it; it does not store it.
 
 ## Repository and tools
 
-Copy PI-Starter to a new repository `moeghashim/tensquads`. Keep its checks and skills. Replace its Next.js app with a TanStack Start app. Add kernel, domain, adapters, and seed workspaces, plus the statecharts directory and the pstack skills. The git identity is Moe Ghashim, mohanadgh@gmail.com.
+Copy PI-Starter to a new repository `moeghashim/tensquads`. Keep its checks and skills. Replace its Next.js app with a TanStack Start app. Add three packages and the pstack skills. The git identity is Moe Ghashim, mohanadgh@gmail.com.
 
 ```
 tensquads/
   AGENTS.md                 the rules for AI agents (CLAUDE.md points to this file)
   progress.md               a log of lessons; you can only add lines
-  Makefile                  make verify = lint + types + unit + e2e + design hashes + model check
-  apps/web/                 the TanStack Start Worker; Durable Object and Queue consumer come in phase 4
-    src/routes/             blank / route and root document; other routes come later
-    src/design/             light tokens.css, OVERRIDES.md, and SVG icons
+  Makefile                  make verify = lint + types + unit tests + e2e tests + statechart check
+  apps/web/                 the TanStack Start app; one Worker holds the app, the Durable Object and the Queue consumer
+    src/routes/             /, /signup, /signin
+    src/routes/app/         overview, chat, agents, agents.$id, traffic, rules
+    src/routes/admin/       accounts, images
+    design/                 tokens.css made from tokens.json; SVG icons copied from the design
   packages/
     kernel/                 the cordis core, the Kernel module, the plug-in loader
     domain/                 six domain areas, one folder each
-    adapters/               test-machine, memory-bus, placeholder-services, neon/ (Drizzle)
+    adapters/               test-machine, boat-machine (trial), neon-drizzle, placeholder-services
     seed/                   the design's mock data as domain objects; the tests check the DoD numbers here
     statecharts/            TLA+ models, their settings, their view files, the charts they make
-  e2e/                      blank-page tests now; later one test per screen behaviour line
+  e2e/                      Playwright tests: one file per screen, one test per behaviour line
   .agents/skills/           the skills, in the agentskills.io format (also at .claude/skills)
   .projects/                Stripe Projects state (state.json is in git; the vault is not)
   docs/adrs/                one short record for each architecture decision above
 ```
 
-**Retained from PI-Starter and adapted for these workspaces:** strict TypeScript, Biome, the pre-commit hook, the `progress.md` add-only check, the `no-mistakes` push check (`git push no-mistakes`), the Fallow audit, the "Required checks" job in GitHub Actions, the Cloudflare build job, DCO sign-off, Dependabot.
+**From PI-Starter, with no change:** strict TypeScript, Biome, the pre-commit hook, the `progress.md` add-only check, the `no-mistakes` push check (`git push no-mistakes`), the Fallow audit, the "Required checks" job in GitHub Actions, the Cloudflare build job, DCO sign-off, Dependabot.
 
-**New in phase 0:** TanStack Start `1.169.4`, the Cloudflare Vite plugin, Drizzle with `postgres` `3.4.9`, PGlite for database tests, cordis `4.0.0-rc.12` ([pin record](adrs/0001-cordis-pin.md)), Playwright screenshots at 1440 px and 390 px, axe-core, and the Approval model. `mise.toml` pins Java `temurin-25`; the statechart skill pins TLC. Clerk is provisioned but its SDK and sign-in flow come in phase 1.
+**New:** TanStack Start 1.0 (pinned), the Cloudflare Vite plugin, Drizzle and the Neon driver, the Clerk SDK for TanStack Start, cordis (one pinned commit), Playwright with screenshot comparison at 1440 px, axe-core for keyboard and label checks, mise to install TLC and Java for the statechart skill.
 
 **Skills in `.agents/skills/`** (one `SKILL.md` per folder):
 
@@ -198,21 +197,20 @@ tensquads/
 
 **The verify check.** `make verify` runs these steps in order:
 
-1. `npm run check`: native dependency preflight, Biome, a 600-line source-file limit, and root and workspace TypeScript checks.
+1. `npm run check`: Biome and the TypeScript compiler.
 2. `npm test`: unit tests. These include the seed checks: Accounts 9, Agents 66, Squads 17, Monthly recurring $1,294, All-time value $14,568, Tasks done 331, Images 7, Bugs 8, Features 15.
-3. `npm run e2e`: Chromium checks the blank page at 1440 px and 390 px, compares committed blank screenshots, and runs axe. Screen comparisons come with later phases.
-4. `npm run design:check`: check every manifest hash without editing `design/`.
-5. `npm run statechart:check`: run the models when the statechart directory differs from `origin/main`, including untracked files. If the diff cannot be read, run them. Generated reports and charts use a temporary directory and are removed; this command does not compare or update the committed chart.
+3. `npm run e2e`: Playwright on all ten screens, screenshot comparison with the design, axe checks.
+4. `npm run statechart:check`: TLC checks each model again and makes the charts again. The charts must match the ones in git.
 
-Exit code 0 is the only proof that work is done. CI runs `make verify` on Linux and macOS. A separate job builds the Cloudflare Worker. The stable Required checks aggregate also requires the Fallow audit on pull requests. CI does not deploy; deployment runs locally with Cloudflare access.
+Exit code 0 is the only proof that work is done. CI runs the same command.
 
-**Keeping the model check fast.** TLC needs Java. Phase 0 uses these limits:
+**Keeping the model check fast.** TLC needs Java. Three measures keep it off the pull-request path when it is not needed:
 
-1. `scripts/statechart-check.mjs` watches only `packages/statecharts` against `origin/main`. It does not read model-to-code comments. A domain-only inbox change must run the local `tensquads-verify` skill, even when this gate skips.
-2. The statechart skill reuses a local mise install of Java and TLC. It installs missing tools on the first run. CI installs mise with install and cache disabled; no cross-run Java or TLC cache is configured. The TLC version and checksum are in the skill runner, not `mise.toml`.
-3. The runner starts the discovered models in parallel in one job. Phase 0 has only the bounded Approval model. The other seven models are future work.
+1. CI runs `statechart:check` only when a file under `packages/statecharts/` changes, or a code file that a model names in its `# model:` comment. Screen work never starts Java.
+2. mise installs TLC and Java once. GitHub Actions caches the install by its lock hash. A repeat install takes seconds.
+3. Each model sets small constants, for example 3 agents and 5 events. A model that needs more than 100,000 states gets a `CONSTRAINT`. The eight models check in parallel, one job each. The target is under one minute per model.
 
-The gate does not enforce a state-count or per-model time limit. A nightly fallback and a `model` label trigger are not configured. Read [verification limits](foundation.md#verification-limits) before extending the gate.
+Fallback, if a check still passes one minute: the model check moves to a nightly schedule and to pull requests with the label `model`. `make verify` on a laptop still runs it on demand. A model that breaks should block the merge that broke it, so the fallback is not the default.
 
 ## Service setup
 
@@ -222,7 +220,7 @@ Stripe Projects sets up all services except boat.dev. Run the commands from the 
 npm install -g @stripe/cli@latest && stripe plugin install projects
 npx skills add https://github.com/stripe/ai --skill stripe-projects -y -g
 stripe projects init tensquads
-stripe projects add cloudflare/workers      # hosting and domain; queues and storage later
+stripe projects add cloudflare/worker      # hosting and domain; queues and storage later
 stripe projects add neon/postgres          # database
 stripe projects add clerk/auth             # sign-in for owners and super admins
 stripe projects env --pull                 # writes .env; git ignores .projects/vault
@@ -264,7 +262,7 @@ The system has eight state machines. We write a TLA+ model for each one before w
 | Machine | States | Rules that TLC must prove | Screens |
 | --- | --- | --- | --- |
 | Agent on/off | Off, Starting, On, Stopping, Paused | Off means CPU 0% and uptime "Paused". A skill cannot run when its agent is Off. A change of autonomy does not change on/off | 5, 6 |
-| Approval inbox | Spend: Pending, Approved, Declined. Mission: Proposed, Revising, Approved | Spend approve adds one task and sets `last`; decline changes no agent. Mission approve sets the mission and resets contribution without adding a task; decline sets Revising. Badge = Pending spends + Proposed missions. Revising remains visible but is not counted. Empty copy is "Nothing waiting. Your squads are working inside their limits." | 3, dock |
+| Approval | Pending, Approved, Declined | Approve adds one task to one agent and sets its `last` field. Decline changes no agent. The inbox count equals the dock badge count. An empty inbox shows "Nothing waiting" | 3, dock |
 | Bus event and shared state | Queued, Delivered, Acknowledged, Dead letter; Live, Paused, Selected event | `nextEvent()` adds one event and applies all its writes in one step. Live and Simulate do the same step. A filter never hides the selected event. An id seen before changes nothing. A dead letter always makes one Escalation event | 7 |
 | Rules and limits | Rule on/off, three sliders | A slider and the traffic state table always show the same `policy.*` value. A rule switch changes only that rule | 7, 8 |
 | Sign-up | Type, Details, Squad, Created | New pre-selects Marketing, Orders, Support. Existing pre-selects Orders, Support, Finance, Inventory. Zero agents blocks Create. Back goes one step. Create makes one account, one squad, N agents, one master and default limits | 2 |
@@ -316,7 +314,7 @@ The work has six phases. Build the screens in the order of the build brief. Phas
 5. Write the seed module. It reads the mock data in `Main.dc.html`. Its tests check the nine done numbers.
 6. Make `tokens.css` from `tokens.json`. Note the places where the inline styles in the design win.
 7. Copy the 16 px SVG icons from the design.
-8. Set up Playwright, axe and blank-page screenshot comparison. Pin Java in mise; use the statechart skill's TLC pin.
+8. Set up Playwright, axe and screenshot comparison. Install TLC with mise.
 9. Write the Approval state model. Make the `tensquads-verify` skill.
 10. Make `make verify` pass on the empty app.
 
@@ -373,12 +371,12 @@ The menu or the item list comes from the user. In step 1 the user pastes the ite
 | Risk | Effect | What this plan does |
 | --- | --- | --- |
 | The cordis API is not stable. Its README says so | A change in cordis could stop all plug-ins | We pin one commit. Only the `Kernel` module imports cordis. A decision record keeps the pin and the rule for updates |
-| TanStack Start and its build tooling can change | A framework bug can appear that an older framework would not have | The version is pinned. Phase 0 deploys an empty app first. The Cloudflare Vite plugin runs the same runtime on the laptop and in production. The Cloudflare build job runs on each pull request |
-| Database access from a Worker adds time to each query | Overview needs several reads | Phase 0 uses Drizzle with postgres.js for the seed. Worker data wiring and query measurement come later |
-| Stripe Projects is in public preview | The CLI or the catalog can change | `.projects/state.json` is in git. Service setup is recorded here; local commands and credential use are in [the foundation guide](foundation.md) |
-| Clerk elements need to match the design | Default styles can differ | Phase 1 builds from `SignIn.dc.html` with design tokens (decision 13) |
-| TLC needs Java. CI gets slower | Slow pull requests | The gate watches the model directory and runs discovered models in parallel. Tool installs are reused locally. CI has no tool cache or nightly fallback |
-| `Main.dc.html` contains markup, inline styles, and mock logic | Exact screens depend on a full read each time | The extract, token generator, and asset tests read it. Later screen tests must compare the built screens with the design |
+| TanStack Start 1.0 is two weeks old | A framework bug can appear that an older framework would not have | The version is pinned. Phase 0 deploys an empty app first. The Cloudflare Vite plugin runs the same runtime on the laptop and in production. The Cloudflare build job runs on each pull request |
+| Neon over HTTP from a Worker adds time to each query | Overview runs several total queries | The data layer groups the queries per screen. One request per page. We measure in phase 2 |
+| Stripe Projects is in public preview | The CLI or the catalog can change | `.projects/state.json` is in git. The manual setup steps for Cloudflare, Neon and Clerk are in `docs/` |
+| The design has no sign-in screen. Clerk has one | A screen exists that the design did not draw | Decided: Clerk elements with the design tokens. Phase 1 builds the sign-in form from the design tokens only |
+| TLC needs Java. CI gets slower | Slow pull requests | Three measures in the verify section: the check runs only when a model or its code changes; the toolchain is cached; the models stay small and run in parallel. Fallback: a nightly schedule |
+| `Main.dc.html` is 117 KB of inline styles | Exact screens depend on a full read each time | Only the seed module and the token script read it. The screenshot comparison proves the match |
 | boat.dev costs about $26 per month for each always-on machine | Five agents per account, always on, is $130 per account per month | "Stop and resume" is the default. Always-on is for the Scale plan only, decided later |
 | boat.dev publishes no uptime promise and no second region | A machine can stop without warning | The master core runs on Cloudflare, not on a machine (decision 17). Tasks wait in Queues. Heartbeats restart a machine. Ask boat.dev about host failure and regions before phase 4 |
 

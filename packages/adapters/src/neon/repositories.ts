@@ -99,16 +99,24 @@ async function listAccounts(db: AppDatabase, scope: AccountScope): Promise<reado
 	const checked = requireScope(scope);
 	const accountRows =
 		checked.mode === "platform"
-			? await db.select().from(accounts)
-			: await db.select().from(accounts).where(eq(accounts.accountId, checked.accountId));
+			? await db.select().from(accounts).orderBy(asc(accounts.sortOrder))
+			: await db
+					.select()
+					.from(accounts)
+					.where(eq(accounts.accountId, checked.accountId))
+					.orderBy(asc(accounts.sortOrder));
 	const squadRows =
 		checked.mode === "platform"
-			? await db.select().from(squads)
-			: await db.select().from(squads).where(eq(squads.accountId, checked.accountId));
+			? await db.select().from(squads).orderBy(asc(squads.sortOrder))
+			: await db.select().from(squads).where(eq(squads.accountId, checked.accountId)).orderBy(asc(squads.sortOrder));
 	const subscriptionRows =
 		checked.mode === "platform"
-			? await db.select().from(subscriptions)
-			: await db.select().from(subscriptions).where(eq(subscriptions.accountId, checked.accountId));
+			? await db.select().from(subscriptions).orderBy(asc(subscriptions.sortOrder))
+			: await db
+					.select()
+					.from(subscriptions)
+					.where(eq(subscriptions.accountId, checked.accountId))
+					.orderBy(asc(subscriptions.sortOrder));
 	const names = new Map<string, string[]>();
 	for (const row of squadRows) {
 		const list = names.get(row.accountId) ?? [];
@@ -163,7 +171,7 @@ async function totals(db: AppDatabase, scope: AccountScope): Promise<PlatformTot
 
 async function listPlans(db: AppDatabase, scope: AccountScope): Promise<readonly Plan[]> {
 	requireScope(scope);
-	const rows = await db.select().from(plans);
+	const rows = await db.select().from(plans).orderBy(asc(plans.sortOrder));
 	return rows.map((row) => ({ id: asPlan(row.id), name: asPlan(row.name), monthly: row.monthly }));
 }
 
@@ -182,7 +190,7 @@ async function listRevenue(db: AppDatabase, scope: AccountScope): Promise<readon
 		checked.mode === "platform"
 			? db.select().from(dailyRevenue)
 			: db.select().from(dailyRevenue).where(eq(dailyRevenue.accountId, checked.accountId));
-	const rows = await query.orderBy(asc(dailyRevenue.day));
+	const rows = await query.orderBy(asc(dailyRevenue.sortOrder));
 	return rows.map((row) => ({ day: row.day, amount: row.amount }));
 }
 
@@ -190,8 +198,8 @@ async function listSquads(db: AppDatabase, scope: AccountScope) {
 	const checked = requireScope(scope);
 	const rows =
 		checked.mode === "platform"
-			? await db.select().from(squads)
-			: await db.select().from(squads).where(eq(squads.accountId, checked.accountId));
+			? await db.select().from(squads).orderBy(asc(squads.sortOrder))
+			: await db.select().from(squads).where(eq(squads.accountId, checked.accountId)).orderBy(asc(squads.sortOrder));
 	return rows.map((row) => ({ id: row.id, accountId: row.accountId, name: row.name }));
 }
 
@@ -200,12 +208,16 @@ async function listAgents(db: AppDatabase, scope: AccountScope): Promise<readonl
 	const agentRows = await agentTaskRows(db, checked);
 	const machineRows =
 		checked.mode === "platform"
-			? await db.select().from(machines)
-			: await db.select().from(machines).where(eq(machines.accountId, checked.accountId));
+			? await db.select().from(machines).orderBy(asc(machines.sortOrder))
+			: await db
+					.select()
+					.from(machines)
+					.where(eq(machines.accountId, checked.accountId))
+					.orderBy(asc(machines.sortOrder));
 	const skillRows =
 		checked.mode === "platform"
-			? await db.select().from(skills)
-			: await db.select().from(skills).where(eq(skills.accountId, checked.accountId));
+			? await db.select().from(skills).orderBy(asc(skills.sortOrder))
+			: await db.select().from(skills).where(eq(skills.accountId, checked.accountId)).orderBy(asc(skills.sortOrder));
 	const machineByAgent = new Map(machineRows.map((row) => [`${row.accountId}:${row.agentId}`, row]));
 	const skillsByAgent = new Map<string, Agent["skills"][number][]>();
 	for (const row of skillRows) {
@@ -255,9 +267,9 @@ async function listAgents(db: AppDatabase, scope: AccountScope): Promise<readonl
 async function agentTaskRows(db: AppDatabase, scope: AccountScope) {
 	const checked = requireScope(scope);
 	if (checked.mode === "platform") {
-		return db.select().from(agents);
+		return db.select().from(agents).orderBy(asc(agents.sortOrder));
 	}
-	return db.select().from(agents).where(eq(agents.accountId, checked.accountId));
+	return db.select().from(agents).where(eq(agents.accountId, checked.accountId)).orderBy(asc(agents.sortOrder));
 }
 
 async function tasksDone(db: AppDatabase, scope: AccountScope): Promise<number> {
@@ -270,7 +282,11 @@ async function readMaster(db: AppDatabase, scope: AccountScope) {
 	if (checked.mode !== "account") {
 		return null;
 	}
-	const rows = await db.select().from(masters).where(eq(masters.accountId, checked.accountId));
+	const rows = await db
+		.select()
+		.from(masters)
+		.where(eq(masters.accountId, checked.accountId))
+		.orderBy(asc(masters.sortOrder));
 	const row = rows[0];
 	return row ? { accountId: row.accountId, name: row.name } : null;
 }
@@ -279,8 +295,12 @@ async function listEvents(db: AppDatabase, scope: AccountScope): Promise<readonl
 	const checked = requireScope(scope);
 	const rows =
 		checked.mode === "platform"
-			? await db.select().from(busEvents)
-			: await db.select().from(busEvents).where(eq(busEvents.accountId, checked.accountId));
+			? await db.select().from(busEvents).orderBy(asc(busEvents.seq))
+			: await db
+					.select()
+					.from(busEvents)
+					.where(eq(busEvents.accountId, checked.accountId))
+					.orderBy(asc(busEvents.seq));
 	return rows.map((row) => ({
 		id: row.id,
 		time: row.timeText,
@@ -299,11 +319,15 @@ async function readStore(db: AppDatabase, scope: AccountScope): Promise<Readonly
 	const checked = requireScope(scope);
 	const rows =
 		checked.mode === "platform"
-			? await db.select().from(stateEntries)
-			: await db.select().from(stateEntries).where(eq(stateEntries.accountId, checked.accountId));
+			? await db.select().from(stateEntries).orderBy(asc(stateEntries.sortOrder))
+			: await db
+					.select()
+					.from(stateEntries)
+					.where(eq(stateEntries.accountId, checked.accountId))
+					.orderBy(asc(stateEntries.sortOrder));
 	const store: Record<string, unknown> = {};
 	for (const row of rows) {
-		store[row.key] = row.value;
+		store[row.key] = JSON.parse(row.value) as unknown;
 	}
 	return store;
 }
@@ -312,8 +336,8 @@ async function listRules(db: AppDatabase, scope: AccountScope): Promise<readonly
 	const checked = requireScope(scope);
 	const rows =
 		checked.mode === "platform"
-			? await db.select().from(rules)
-			: await db.select().from(rules).where(eq(rules.accountId, checked.accountId));
+			? await db.select().from(rules).orderBy(asc(rules.sortOrder))
+			: await db.select().from(rules).where(eq(rules.accountId, checked.accountId)).orderBy(asc(rules.sortOrder));
 	return rows.map((row) => ({
 		id: row.id,
 		when: row.ruleWhen,
@@ -328,8 +352,12 @@ async function listApprovals(db: AppDatabase, scope: AccountScope): Promise<read
 	const checked = requireScope(scope);
 	const rows =
 		checked.mode === "platform"
-			? await db.select().from(approvals)
-			: await db.select().from(approvals).where(eq(approvals.accountId, checked.accountId));
+			? await db.select().from(approvals).orderBy(asc(approvals.sortOrder))
+			: await db
+					.select()
+					.from(approvals)
+					.where(eq(approvals.accountId, checked.accountId))
+					.orderBy(asc(approvals.sortOrder));
 	return rows.map((row) => ({
 		id: row.id,
 		agent: row.agent,
@@ -344,8 +372,12 @@ async function listProposals(db: AppDatabase, scope: AccountScope): Promise<read
 	const checked = requireScope(scope);
 	const rows =
 		checked.mode === "platform"
-			? await db.select().from(missionProposals)
-			: await db.select().from(missionProposals).where(eq(missionProposals.accountId, checked.accountId));
+			? await db.select().from(missionProposals).orderBy(asc(missionProposals.sortOrder))
+			: await db
+					.select()
+					.from(missionProposals)
+					.where(eq(missionProposals.accountId, checked.accountId))
+					.orderBy(asc(missionProposals.sortOrder));
 	return rows.map((row) => ({
 		id: row.id,
 		agent: row.agent,
@@ -370,9 +402,9 @@ async function readInbox(db: AppDatabase, scope: AccountScope): Promise<Inbox> {
 
 async function listImages(db: AppDatabase, scope: AccountScope): Promise<readonly AgentImage[]> {
 	requireScope(scope);
-	const imageRows = await db.select().from(agentImages);
-	const bugRows = await db.select().from(bugs);
-	const featureRows = await db.select().from(featureRequests);
+	const imageRows = await db.select().from(agentImages).orderBy(asc(agentImages.sortOrder));
+	const bugRows = await db.select().from(bugs).orderBy(asc(bugs.sortOrder));
+	const featureRows = await db.select().from(featureRequests).orderBy(asc(featureRequests.sortOrder));
 	return imageRows.map((row) => ({
 		id: row.id,
 		name: row.name,
@@ -405,12 +437,20 @@ async function readThread(db: AppDatabase, scope: AccountScope): Promise<Thread 
 	if (checked.mode !== "account") {
 		return null;
 	}
-	const threadRows = await db.select().from(threads).where(eq(threads.accountId, checked.accountId));
+	const threadRows = await db
+		.select()
+		.from(threads)
+		.where(eq(threads.accountId, checked.accountId))
+		.orderBy(asc(threads.sortOrder));
 	const thread = threadRows[0];
 	if (!thread) {
 		return null;
 	}
-	const messageRows = await db.select().from(messages).where(eq(messages.accountId, checked.accountId));
+	const messageRows = await db
+		.select()
+		.from(messages)
+		.where(eq(messages.accountId, checked.accountId))
+		.orderBy(asc(messages.sortOrder));
 	const items: Message[] = messageRows.map((row) => ({
 		id: row.id,
 		from: asFrom(row.fromRole),

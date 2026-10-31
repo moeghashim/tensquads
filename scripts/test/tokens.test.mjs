@@ -29,7 +29,14 @@ test("the committed tokens match the light theme and the inline overrides", () =
 	assert.equal(css, built.css);
 	assert.equal(overrides, built.overrides);
 	assert.match(css, /--gray-0: #fff;/);
+	assert.match(css, /--canvas: var\(--gray-75\);/);
+	assert.match(css, /--text: var\(--gray-750\);/);
+	assert.match(css, /--ring: var\(--blue-500\);/);
+	assert.doesNotMatch(css, /\{[a-z0-9-]+\}/);
 	assert.doesNotMatch(css, /dark theme value/i);
+	for (const value of ["14px", "28px", "15px", "19px", "22px", "40px", "44px", "64px", "0 0 0 2px #0169cc"]) {
+		assert.ok(overrides.includes(`\`${value}\``), value);
+	}
 	for (const value of required) {
 		assert.ok(overrides.includes(value), value);
 		assert.ok(css.includes(value) || overrides.includes(`already \``), value);

@@ -4,6 +4,7 @@ import { emptyPlugins } from "./plugins.ts";
 import {
 	DECIDER_MISSING,
 	type Decider,
+	type Decision,
 	type EventBus,
 	type IntegrationGateway,
 	type MachineProvider,
@@ -24,7 +25,7 @@ export class Kernel {
 			this.context.plugin(plugin);
 		}
 		this.decider = {
-			decide(): never {
+			decide(_question: string, _answers: readonly string[]): Decision {
 				throw new Error(DECIDER_MISSING);
 			},
 		};

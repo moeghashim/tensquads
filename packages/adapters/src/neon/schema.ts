@@ -17,12 +17,14 @@ export const accounts = pgTable("accounts", {
 	lastActive: text("last_active").notNull(),
 	createdWeek: integer("created_week").notNull(),
 	mission: text("mission").notNull(),
+	sortOrder: integer("sort_order").notNull(),
 });
 
 export const plans = pgTable("plans", {
 	id: text("id").primaryKey(),
 	name: text("name").notNull(),
 	monthly: integer("monthly").notNull(),
+	sortOrder: integer("sort_order").notNull(),
 });
 
 export const subscriptions = pgTable("subscriptions", {
@@ -32,6 +34,7 @@ export const subscriptions = pgTable("subscriptions", {
 	mrr: integer("mrr").notNull(),
 	ltv: integer("ltv").notNull(),
 	started: text("started").notNull(),
+	sortOrder: integer("sort_order").notNull(),
 });
 
 export const squads = pgTable(
@@ -40,6 +43,7 @@ export const squads = pgTable(
 		accountId: text("account_id").notNull(),
 		id: text("id").notNull(),
 		name: text("name").notNull(),
+		sortOrder: integer("sort_order").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.accountId, table.id] })],
 );
@@ -47,6 +51,7 @@ export const squads = pgTable(
 export const masters = pgTable("masters", {
 	accountId: text("account_id").primaryKey(),
 	name: text("name").notNull(),
+	sortOrder: integer("sort_order").notNull(),
 });
 
 export const agents = pgTable(
@@ -67,6 +72,7 @@ export const agents = pgTable(
 		lastText: text("last_text").notNull(),
 		targets: jsonb("targets").$type<readonly (readonly [string, string, string])[]>().notNull(),
 		kpis: jsonb("kpis").$type<readonly (readonly [string, string])[]>().notNull(),
+		sortOrder: integer("sort_order").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.accountId, table.id] })],
 );
@@ -83,6 +89,7 @@ export const machines = pgTable(
 		uptime: text("uptime").notNull(),
 		egress: jsonb("egress").$type<readonly string[]>().notNull(),
 		secrets: jsonb("secrets").$type<readonly string[]>().notNull(),
+		sortOrder: integer("sort_order").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.accountId, table.agentId] })],
 );
@@ -97,6 +104,7 @@ export const skills = pgTable(
 		gate: text("gate").notNull(),
 		runs: integer("runs").notNull(),
 		isOn: boolean("is_on").notNull(),
+		sortOrder: integer("sort_order").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.accountId, table.agentId, table.id] })],
 );
@@ -115,6 +123,7 @@ export const busEvents = pgTable(
 		payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
 		writes: jsonb("writes").$type<readonly string[]>().notNull(),
 		trace: text("trace").notNull(),
+		seq: integer("seq").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.accountId, table.id] })],
 );
@@ -124,7 +133,8 @@ export const stateEntries = pgTable(
 	{
 		accountId: text("account_id").notNull(),
 		key: text("key").notNull(),
-		value: jsonb("value").$type<unknown>().notNull(),
+		value: text("value").notNull(),
+		sortOrder: integer("sort_order").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.accountId, table.key] })],
 );
@@ -139,6 +149,7 @@ export const rules = pgTable(
 		action: text("action").notNull(),
 		approval: text("approval").notNull(),
 		isOn: boolean("is_on").notNull(),
+		sortOrder: integer("sort_order").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.accountId, table.id] })],
 );
@@ -153,6 +164,7 @@ export const approvals = pgTable(
 		detail: text("detail").notNull(),
 		amount: text("amount").notNull(),
 		status: text("status").notNull(),
+		sortOrder: integer("sort_order").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.accountId, table.id] })],
 );
@@ -166,6 +178,7 @@ export const missionProposals = pgTable(
 		mission: text("mission").notNull(),
 		targets: jsonb("targets").$type<readonly (readonly [string, string])[]>().notNull(),
 		status: text("status").notNull(),
+		sortOrder: integer("sort_order").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.accountId, table.id] })],
 );
@@ -176,6 +189,7 @@ export const dailyRevenue = pgTable(
 		accountId: text("account_id").notNull(),
 		day: text("day").notNull(),
 		amount: integer("amount").notNull(),
+		sortOrder: integer("sort_order").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.accountId, table.day] })],
 );
@@ -192,6 +206,7 @@ export const threads = pgTable(
 	{
 		accountId: text("account_id").notNull(),
 		id: text("id").notNull(),
+		sortOrder: integer("sort_order").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.accountId, table.id] })],
 );
@@ -205,6 +220,7 @@ export const messages = pgTable(
 		fromRole: text("from_role").notNull(),
 		agent: text("agent"),
 		body: text("body").notNull(),
+		sortOrder: integer("sort_order").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.accountId, table.id] })],
 );
@@ -222,6 +238,7 @@ export const agentImages = pgTable("agent_images", {
 	deployed: integer("deployed").notNull(),
 	onLatest: integer("on_latest").notNull(),
 	status: text("status").notNull(),
+	sortOrder: integer("sort_order").notNull(),
 });
 
 export const bugs = pgTable("bugs", {
@@ -231,6 +248,7 @@ export const bugs = pgTable("bugs", {
 	title: text("title").notNull(),
 	age: text("age").notNull(),
 	reports: integer("reports").notNull(),
+	sortOrder: integer("sort_order").notNull(),
 });
 
 export const featureRequests = pgTable("feature_requests", {
@@ -239,6 +257,7 @@ export const featureRequests = pgTable("feature_requests", {
 	title: text("title").notNull(),
 	votes: integer("votes").notNull(),
 	stage: text("stage").notNull(),
+	sortOrder: integer("sort_order").notNull(),
 });
 
 export const schema = {

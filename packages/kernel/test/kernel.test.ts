@@ -18,7 +18,9 @@ test("the kernel loads the six empty plug-ins", () => {
 
 test("the decider has no adapter in version 1", () => {
 	const kernel = new Kernel();
-	assert.throws(() => kernel.decider.decide({}), { message: DECIDER_MISSING });
+	assert.throws(() => kernel.decider.decide("Which agent should take this task?", ["orders", "support"]), {
+		message: DECIDER_MISSING,
+	});
 });
 
 test("only kernel.ts imports cordis", () => {

@@ -16,9 +16,12 @@ stateDiagram-v2
   s0 --> s3: Decline mission
   s0 --> s4: Approve
   s1 --> s5: Decline or Approve
+  s1 --> s3: Ask to revise
   s2 --> s5: Approve mission
   s2 --> s6: Decline mission
   s3 --> s6: Decline
   s3 --> s7: Approve
   s4 --> s5: Approve mission
   s4 --> s7: Decline mission
+  s5 --> s6: Ask to revise
+  s5 --> s7: Ask to revise

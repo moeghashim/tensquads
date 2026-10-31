@@ -23,6 +23,12 @@ import {
 } from "./schema.ts";
 import { type AccountSnapshot, squadId, type WorkspaceSnapshot } from "./snapshot.ts";
 
+const RANK = 10_000;
+
+function rank(group: number, index: number): number {
+	return group * RANK + index;
+}
+
 /**
  * Replace all tenant and catalog rows with this snapshot in one transaction.
  * This is a full database seed, not an account-scoped update. A failure preserves existing rows.
@@ -53,15 +59,16 @@ export async function saveWorkspace(db: AppDatabase, snapshot: WorkspaceSnapshot
 
 		if (snapshot.plans.length > 0) {
 			await tx.insert(plans).values(
-				snapshot.plans.map((plan) => ({
+				snapshot.plans.map((plan, index) => ({
 					id: plan.id,
 					name: plan.name,
 					monthly: plan.monthly,
+					sortOrder: index,
 				})),
 			);
 		}
 
-		for (const image of snapshot.images) {
+		for (const [imageIndex, image] of snapshot.images.entries()) {
 			await tx.insert(agentImages).values({
 				id: image.id,
 				name: image.name,
@@ -75,39 +82,46 @@ export async function saveWorkspace(db: AppDatabase, snapshot: WorkspaceSnapshot
 				deployed: image.deployed,
 				onLatest: image.onLatest,
 				status: image.status,
+				sortOrder: imageIndex,
 			});
 			if (image.bugs.length > 0) {
 				await tx.insert(bugs).values(
-					image.bugs.map((bug) => ({
+					image.bugs.map((bug, index) => ({
 						id: bug.id,
 						imageId: image.id,
 						sev: bug.sev,
 						title: bug.title,
 						age: bug.age,
 						reports: bug.reports,
+						sortOrder: imageIndex * 1_000 + index,
 					})),
 				);
 			}
 			if (image.features.length > 0) {
 				await tx.insert(featureRequests).values(
-					image.features.map((feature) => ({
+					image.features.map((feature, index) => ({
 						id: feature.id,
 						imageId: image.id,
 						title: feature.title,
 						votes: feature.votes,
 						stage: feature.stage,
+						sortOrder: imageIndex * 1_000 + index,
 					})),
 				);
 			}
 		}
 
-		for (const entry of snapshot.accounts) {
-			await insertAccount(tx, entry);
+		for (const [accountIndex, entry] of snapshot.accounts.entries()) {
+			await insertAccount(tx, entry, accountIndex);
 		}
 	});
 }
 
-async function insertAccount(db: Pick<AppDatabase, "insert">, entry: AccountSnapshot): Promise<void> {
+async function insertAccount(
+	db: Pick<AppDatabase, "insert">,
+	entry: AccountSnapshot,
+	accountIndex: number,
+): Promise<void> {
 	const account = entry.account;
 	await db.insert(accounts).values({
 		id: account.id,
@@ -122,6 +136,7 @@ async function insertAccount(db: Pick<AppDatabase, "insert">, entry: AccountSnap
 		lastActive: account.lastActive,
 		createdWeek: account.createdWeek,
 		mission: account.mission,
+		sortOrder: accountIndex,
 	});
 	await db.insert(subscriptions).values({
 		accountId: account.id,
@@ -130,28 +145,35 @@ async function insertAccount(db: Pick<AppDatabase, "insert">, entry: AccountSnap
 		mrr: account.mrr,
 		ltv: account.ltv,
 		started: account.started,
+		sortOrder: accountIndex,
 	});
 	if (account.squads.length > 0) {
 		await db.insert(squads).values(
-			account.squads.map((name) => ({
+			account.squads.map((name, index) => ({
 				accountId: account.id,
 				id: squadId(name),
 				name,
+				sortOrder: rank(accountIndex, index),
 			})),
 		);
 	}
-	await db.insert(masters).values({ accountId: account.id, name: entry.masterName });
+	await db.insert(masters).values({ accountId: account.id, name: entry.masterName, sortOrder: accountIndex });
 
-	await insertAgents(db, entry);
-	await insertActivity(db, entry);
-	await insertPolicy(db, entry);
-	await insertMetrics(db, entry);
-	await insertMessages(db, entry);
+	await insertAgents(db, entry, accountIndex);
+	await insertActivity(db, entry, accountIndex);
+	await insertPolicy(db, entry, accountIndex);
+	await insertMetrics(db, entry, accountIndex);
+	await insertMessages(db, entry, accountIndex);
 }
 
-async function insertAgents(db: Pick<AppDatabase, "insert">, entry: AccountSnapshot): Promise<void> {
+async function insertAgents(
+	db: Pick<AppDatabase, "insert">,
+	entry: AccountSnapshot,
+	accountIndex: number,
+): Promise<void> {
 	const account = entry.account;
-	for (const agent of entry.agents) {
+	for (const [agentIndex, agent] of entry.agents.entries()) {
+		const sortOrder = rank(accountIndex, agentIndex);
 		await db.insert(agents).values({
 			accountId: account.id,
 			id: agent.id,
@@ -168,6 +190,7 @@ async function insertAgents(db: Pick<AppDatabase, "insert">, entry: AccountSnaps
 			lastText: agent.last,
 			targets: agent.targets,
 			kpis: agent.kpis,
+			sortOrder,
 		});
 		await db.insert(machines).values({
 			accountId: account.id,
@@ -179,10 +202,11 @@ async function insertAgents(db: Pick<AppDatabase, "insert">, entry: AccountSnaps
 			uptime: agent.uptime,
 			egress: agent.egress,
 			secrets: agent.secrets,
+			sortOrder,
 		});
 		if (agent.skills.length > 0) {
 			await db.insert(skills).values(
-				agent.skills.map((skill) => ({
+				agent.skills.map((skill, skillIndex) => ({
 					accountId: account.id,
 					agentId: agent.id,
 					id: skill.id,
@@ -190,17 +214,22 @@ async function insertAgents(db: Pick<AppDatabase, "insert">, entry: AccountSnaps
 					gate: skill.gate,
 					runs: skill.runs,
 					isOn: skill.on,
+					sortOrder: sortOrder * 100 + skillIndex,
 				})),
 			);
 		}
 	}
 }
 
-async function insertActivity(db: Pick<AppDatabase, "insert">, entry: AccountSnapshot): Promise<void> {
+async function insertActivity(
+	db: Pick<AppDatabase, "insert">,
+	entry: AccountSnapshot,
+	accountIndex: number,
+): Promise<void> {
 	const account = entry.account;
 	if (entry.events.length > 0) {
 		await db.insert(busEvents).values(
-			entry.events.map((event) => ({
+			entry.events.map((event, index) => ({
 				accountId: account.id,
 				id: event.id,
 				timeText: event.time,
@@ -212,6 +241,7 @@ async function insertActivity(db: Pick<AppDatabase, "insert">, entry: AccountSna
 				payload: { ...event.payload },
 				writes: event.writes,
 				trace: event.trace,
+				seq: rank(accountIndex, index),
 			})),
 		);
 	}
@@ -219,20 +249,25 @@ async function insertActivity(db: Pick<AppDatabase, "insert">, entry: AccountSna
 	const storeKeys = Object.keys(entry.store);
 	if (storeKeys.length > 0) {
 		await db.insert(stateEntries).values(
-			storeKeys.map((key) => ({
+			storeKeys.map((key, index) => ({
 				accountId: account.id,
 				key,
-				value: entry.store[key],
+				value: JSON.stringify(entry.store[key]),
+				sortOrder: rank(accountIndex, index),
 			})),
 		);
 	}
 }
 
-async function insertPolicy(db: Pick<AppDatabase, "insert">, entry: AccountSnapshot): Promise<void> {
+async function insertPolicy(
+	db: Pick<AppDatabase, "insert">,
+	entry: AccountSnapshot,
+	accountIndex: number,
+): Promise<void> {
 	const account = entry.account;
 	if (entry.rules.length > 0) {
 		await db.insert(rules).values(
-			entry.rules.map((rule) => ({
+			entry.rules.map((rule, index) => ({
 				accountId: account.id,
 				id: rule.id,
 				ruleWhen: rule.when,
@@ -240,13 +275,14 @@ async function insertPolicy(db: Pick<AppDatabase, "insert">, entry: AccountSnaps
 				action: rule.action,
 				approval: rule.approval,
 				isOn: rule.on,
+				sortOrder: rank(accountIndex, index),
 			})),
 		);
 	}
 
 	if (entry.approvals.length > 0) {
 		await db.insert(approvals).values(
-			entry.approvals.map((approval) => ({
+			entry.approvals.map((approval, index) => ({
 				accountId: account.id,
 				id: approval.id,
 				agent: approval.agent,
@@ -254,32 +290,39 @@ async function insertPolicy(db: Pick<AppDatabase, "insert">, entry: AccountSnaps
 				detail: approval.detail,
 				amount: approval.amount,
 				status: approval.status,
+				sortOrder: rank(accountIndex, index),
 			})),
 		);
 	}
 
 	if (entry.proposals.length > 0) {
 		await db.insert(missionProposals).values(
-			entry.proposals.map((proposal) => ({
+			entry.proposals.map((proposal, index) => ({
 				accountId: account.id,
 				id: proposal.id,
 				agent: proposal.agent,
 				mission: proposal.mission,
 				targets: proposal.targets,
 				status: proposal.status,
+				sortOrder: rank(accountIndex, index),
 			})),
 		);
 	}
 }
 
-async function insertMetrics(db: Pick<AppDatabase, "insert">, entry: AccountSnapshot): Promise<void> {
+async function insertMetrics(
+	db: Pick<AppDatabase, "insert">,
+	entry: AccountSnapshot,
+	accountIndex: number,
+): Promise<void> {
 	const account = entry.account;
 	if (entry.revenue.length > 0) {
 		await db.insert(dailyRevenue).values(
-			entry.revenue.map((day) => ({
+			entry.revenue.map((day, index) => ({
 				accountId: account.id,
 				day: day.day,
 				amount: day.amount,
+				sortOrder: rank(accountIndex, index),
 			})),
 		);
 	}
@@ -292,18 +335,23 @@ async function insertMetrics(db: Pick<AppDatabase, "insert">, entry: AccountSnap
 	}
 }
 
-async function insertMessages(db: Pick<AppDatabase, "insert">, entry: AccountSnapshot): Promise<void> {
+async function insertMessages(
+	db: Pick<AppDatabase, "insert">,
+	entry: AccountSnapshot,
+	accountIndex: number,
+): Promise<void> {
 	const account = entry.account;
 	if (entry.messages.length > 0) {
-		await db.insert(threads).values({ accountId: account.id, id: "dock" });
+		await db.insert(threads).values({ accountId: account.id, id: "dock", sortOrder: accountIndex });
 		await db.insert(messages).values(
-			entry.messages.map((message) => ({
+			entry.messages.map((message, index) => ({
 				accountId: account.id,
 				threadId: "dock",
 				id: message.id,
 				fromRole: message.from,
 				agent: message.agent ?? null,
 				body: message.text,
+				sortOrder: rank(accountIndex, index),
 			})),
 		);
 	}

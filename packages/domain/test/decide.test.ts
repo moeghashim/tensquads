@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
 	type Approval,
+	askRevise,
 	decideApproval,
 	decideMission,
 	EMPTY_INBOX,
@@ -17,7 +18,7 @@ const agent = {
 	last: "Asked for tracking",
 	mission: "",
 	targets: [] as const,
-	contribution: 0,
+	contribution: 10,
 };
 
 const approval: Approval = {
@@ -57,6 +58,7 @@ test("decline changes no agent", () => {
 test("approving a mission adds no task", () => {
 	const result = decideMission(agent, proposal, true);
 	assert.equal(result.agent.tasks, agent.tasks);
+	assert.notEqual(agent.contribution, 0);
 	assert.equal(result.agent.contribution, 0);
 	assert.equal(result.agent.mission, proposal.mission);
 	assert.deepEqual(result.agent.targets, [
@@ -64,6 +66,33 @@ test("approving a mission adds no task", () => {
 		["Days of stock", "—", "under 30"],
 	]);
 	assert.equal(result.proposal.status, "Approved");
+});
+
+test("ask to revise adds one Revising proposal when that agent has none", () => {
+	const current = {
+		...agent,
+		mission: "Ship every order.",
+		targets: [["Fulfilment time", "2.1 days", "1 day"]] as const,
+	};
+	const created = askRevise(current, [], "mp-support-1");
+	assert.deepEqual(created.proposals, [
+		{
+			id: "mp-support-1",
+			agent: "support",
+			mission: "Ship every order.",
+			targets: [["Fulfilment time", "1 day"]],
+			status: "Revising",
+		},
+	]);
+	assert.equal(askRevise(current, created.proposals, "mp-support-2").proposals, created.proposals);
+	const proposed = { ...proposal, agent: "support" };
+	const blocked = [proposed];
+	assert.equal(askRevise(current, blocked, "mp-support-3").proposals, blocked);
+	const approved = { ...proposed, status: "Approved" as const };
+	const again = askRevise(current, [approved], "mp-support-4");
+	assert.equal(again.proposals[1]?.id, "mp-support-4");
+	assert.equal(again.proposals[1]?.status, "Revising");
+	assert.equal(again.proposals[1]?.mission, current.mission);
 });
 
 test("declining a mission sets Revising", () => {

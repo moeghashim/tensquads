@@ -45,6 +45,42 @@ test("an off machine reports CPU 0% and uptime Paused", () => {
 	assert.equal(machine.host("inventory"), "vps-inventory-01");
 });
 
+test("an on machine reports Just started when its stored uptime is Paused", () => {
+	const machine = createTestMachine([
+		{
+			id: "orders",
+			on: true,
+			host: "vps-orders-01",
+			region: "Frankfurt",
+			size: "2 vCPU · 4 GB",
+			cpu: "14%",
+			uptime: "Paused",
+			egress: ["shopify.com"],
+			secrets: ["SHOPIFY_ORDERS_TOKEN"],
+		},
+		{
+			id: "inventory",
+			on: true,
+			host: "vps-inventory-01",
+			region: "Frankfurt",
+			size: "1 vCPU · 2 GB",
+			cpu: "9%",
+			uptime: "18 days",
+			egress: ["shopify.com"],
+			secrets: ["SHOPIFY_STOCK_TOKEN"],
+		},
+	]);
+	assert.equal(machine.uptime("orders"), "Just started");
+	assert.equal(machine.cpu("orders"), "14%");
+	assert.equal(machine.uptime("inventory"), "18 days");
+	assert.equal(machine.cpu("inventory"), "9%");
+	assert.deepEqual(machine.makeTemplate("orders"), { id: "template-orders" });
+	assert.deepEqual(machine.startFromTemplate("template-orders", "orders"), {
+		templateId: "template-orders",
+		agentId: "orders",
+	});
+});
+
 test("the memory bus appends the next event and applies its set", () => {
 	const bus = createMemoryBus({
 		events: [],
@@ -96,6 +132,34 @@ test("the memory bus hashes each event id by default and preserves custom traces
 	}
 	const custom = createMemoryBus({ ...input, trace: (id) => `custom_${id}` });
 	assert.equal(custom.nextEvent()?.trace, "custom_e100");
+});
+
+test("every store value round-trips as its own type", async () => {
+	const opened = await openPglite();
+	try {
+		const snapshot = fixture();
+		const store = {
+			"inventory.low_stock": '["Black hoodie M","A3 frame"]',
+			"policy.refund_auto_limit": 50,
+			"policy.enabled": true,
+			"policy.tags": ["hoodie", "frame"],
+			"policy.meta": { limit: 50, on: false },
+		};
+		await saveWorkspace(opened.db, {
+			...snapshot,
+			accounts: snapshot.accounts.map((entry, index) => (index === 0 ? { ...entry, store } : entry)),
+		});
+		const read = await createRepositories(opened.db).bus.readStore(demo);
+		assert.deepEqual(read, store);
+		assert.equal(typeof read["inventory.low_stock"], "string");
+		assert.equal(typeof read["policy.refund_auto_limit"], "number");
+		assert.equal(typeof read["policy.enabled"], "boolean");
+		assert.ok(Array.isArray(read["policy.tags"]));
+		assert.equal(typeof read["policy.meta"], "object");
+		assert.deepEqual(Object.keys(read), Object.keys(store));
+	} finally {
+		await opened.close();
+	}
 });
 
 test("placeholder write returns the design value and does not change the store", () => {

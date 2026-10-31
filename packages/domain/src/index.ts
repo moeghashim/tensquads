@@ -27,7 +27,7 @@ export type {
 	PlatformTotals,
 	Subscription,
 } from "./platform/types.ts";
-export { decideApproval, decideMission, EMPTY_INBOX, inboxCount, inboxIsEmpty } from "./policy/decide.ts";
+export { askRevise, decideApproval, decideMission, EMPTY_INBOX, inboxCount, inboxIsEmpty } from "./policy/decide.ts";
 export type { ApprovalDecided, MissionDecided, PolicyEvent } from "./policy/events.ts";
 export type { PolicyRepository } from "./policy/repository.ts";
 export type {

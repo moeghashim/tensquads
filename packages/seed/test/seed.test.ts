@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-
-import { createMemoryBus, createRepositories, openPglite, saveWorkspace, traceFor } from "@tensquads/adapters";
-import { type BusEvent, EMPTY_INBOX } from "@tensquads/domain";
+import { createMemoryBus, createRepositories, openPglite, saveWorkspace, squadId, traceFor } from "@tensquads/adapters";
+import { type AgentImage, type BusEvent, EMPTY_INBOX } from "@tensquads/domain";
+import { sql } from "drizzle-orm";
 
 import { extractDesign } from "../../../scripts/extract-design.mjs";
 import { design, homepageAgents, signupAgents, workspaceFromDesign } from "../src/index.ts";
@@ -85,6 +85,107 @@ test("the seed computes the nine numbers", async () => {
 		await opened.close();
 	}
 });
+
+test("the repository matches the design extract, field by field, in design order", async () => {
+	const opened = await openPglite();
+	try {
+		await saveWorkspace(opened.db, workspaceFromDesign());
+		const repos = createRepositories(opened.db);
+		const accounts = design.seed.accounts.map((account) => ({
+			...account,
+			mission: design.companyMissions[account.id] ?? "[MISSION NOT SET]",
+		}));
+		const plans = (Object.keys(design.planPrice) as (keyof typeof design.planPrice)[]).map((name) => ({
+			id: name,
+			name,
+			monthly: design.planPrice[name],
+		}));
+		const squads = design.seed.accounts.flatMap((account) =>
+			account.squads.map((name) => ({ id: squadId(name), accountId: account.id, name })),
+		);
+		const approvals = design.seed.approvals.map((item) => ({ ...item, status: "Pending" as const }));
+		const revenue = design.revenue.map((day) => ({ day: day.day, amount: day.amount }));
+		assert.deepEqual(Object.keys(design.planPrice), ["Starter", "Growth", "Scale"]);
+		assert.deepEqual(await repos.platform.listPlans(platform), plans);
+		assert.deepEqual(await repos.platform.listAccounts(platform), accounts);
+		assert.deepEqual(await repos.squads.listSquads(platform), squads);
+		assert.deepEqual(
+			await repos.squads.listSquads(demo),
+			squads.filter((squad) => squad.accountId === "demo"),
+		);
+		assert.deepEqual(await repos.squads.listAgents(demo), design.seed.agents);
+		assert.deepEqual(await repos.bus.listEvents(demo), design.seed.bus);
+		const store = await repos.bus.readStore(demo);
+		assert.deepEqual(store, design.seed.store);
+		assert.deepEqual(Object.keys(store), Object.keys(design.seed.store));
+		assert.equal(typeof store["inventory.low_stock"], "string");
+		assert.equal(store["inventory.low_stock"], '["Black hoodie M","A3 frame"]');
+		assert.deepEqual(await repos.policy.listRules(demo), design.seed.rules);
+		assert.deepEqual(await repos.policy.listApprovals(demo), approvals);
+		assert.deepEqual(await repos.policy.listMissionProposals(demo), design.seed.missionProposals);
+		assert.deepEqual((await repos.conversation.thread(demo))?.messages, design.seed.chat);
+		assert.deepEqual(await repos.platform.dailyRevenue(demo), revenue);
+		assert.deepEqual(await repos.catalog.listImages(platform), design.seed.images);
+
+		await reverseSort(opened.db);
+		assert.deepEqual(await repos.platform.listPlans(platform), [...plans].reverse());
+		assert.deepEqual(
+			await repos.platform.listAccounts(platform),
+			[...accounts].reverse().map((account) => ({ ...account, squads: [...account.squads].reverse() })),
+		);
+		assert.deepEqual(await repos.squads.listSquads(platform), [...squads].reverse());
+		assert.deepEqual(await repos.squads.listAgents(demo), reverseAgents(design.seed.agents));
+		assert.deepEqual(await repos.bus.listEvents(demo), [...design.seed.bus].reverse());
+		assert.deepEqual(Object.keys(await repos.bus.readStore(demo)), [...Object.keys(design.seed.store)].reverse());
+		assert.deepEqual(await repos.policy.listRules(demo), [...design.seed.rules].reverse());
+		assert.deepEqual(await repos.policy.listApprovals(demo), [...approvals].reverse());
+		assert.deepEqual(await repos.policy.listMissionProposals(demo), [...design.seed.missionProposals].reverse());
+		assert.deepEqual((await repos.conversation.thread(demo))?.messages, [...design.seed.chat].reverse());
+		assert.deepEqual(await repos.platform.dailyRevenue(demo), [...revenue].reverse());
+		assert.deepEqual(await repos.catalog.listImages(platform), reverseImages(design.seed.images));
+	} finally {
+		await opened.close();
+	}
+});
+
+async function reverseSort(db: { execute: (query: ReturnType<typeof sql>) => Promise<unknown> }): Promise<void> {
+	const tables = [
+		"accounts",
+		"subscriptions",
+		"squads",
+		"masters",
+		"agents",
+		"machines",
+		"skills",
+		"rules",
+		"approvals",
+		"mission_proposals",
+		"daily_revenue",
+		"threads",
+		"messages",
+		"plans",
+		"agent_images",
+		"bugs",
+		"feature_requests",
+		"state_entries",
+	];
+	for (const table of tables) {
+		await db.execute(sql`UPDATE ${sql.identifier(table)} SET sort_order = -sort_order`);
+	}
+	await db.execute(sql`UPDATE bus_events SET seq = -seq`);
+}
+
+function reverseAgents(agents: readonly (typeof design.seed.agents)[number][]) {
+	return [...agents].reverse().map((agent) => ({ ...agent, skills: [...agent.skills].reverse() }));
+}
+
+function reverseImages(images: readonly AgentImage[]) {
+	return [...images].reverse().map((image) => ({
+		...image,
+		bugs: [...image.bugs].reverse(),
+		features: [...image.features].reverse(),
+	}));
+}
 
 test("the memory bus walks the scripted events", () => {
 	const bus = createMemoryBus({

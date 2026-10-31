@@ -61,3 +61,24 @@ export function decideMission<A extends Pick<Agent, "mission" | "targets" | "con
 		proposal: { ...proposal, status: "Approved" },
 	};
 }
+
+// Main.dc.html:1186-1190. An existing proposal for the agent blocks a new one.
+// Approved is the removed state, so it does not block. The caller supplies the id.
+export function askRevise<A extends Pick<Agent, "id" | "mission" | "targets">>(
+	agent: A,
+	proposals: readonly MissionProposal[],
+	id: string,
+): { readonly proposals: readonly MissionProposal[] } {
+	const blocked = proposals.some((item) => item.agent === agent.id && item.status !== "Approved");
+	if (blocked) {
+		return { proposals };
+	}
+	const created: MissionProposal = {
+		id,
+		agent: agent.id,
+		mission: agent.mission,
+		targets: agent.targets.map(([label, , goal]) => [label, goal] as const),
+		status: "Revising",
+	};
+	return { proposals: [...proposals, created] };
+}

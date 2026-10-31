@@ -1,15 +1,22 @@
 import { readFileSync } from "node:fs";
 
 import { PGlite } from "@electric-sql/pglite";
+import { Pool } from "@neondatabase/serverless";
+import { drizzle as drizzleNeon, type NeonDatabase } from "drizzle-orm/neon-serverless";
 import { drizzle as drizzlePglite, type PgliteDatabase } from "drizzle-orm/pglite";
-import { drizzle as drizzlePostgres, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
 
 import { schema } from "./schema.ts";
 
 const migrationSql = readFileSync(new URL("./migration.sql", import.meta.url), "utf8");
 
-export type AppDatabase = PgliteDatabase<typeof schema> | PostgresJsDatabase<typeof schema>;
+export type AppDatabase = PgliteDatabase<typeof schema> | NeonDatabase<typeof schema>;
+
+export function migrationStatements(script: string): readonly string[] {
+	return script
+		.split(/;\s*(?:\n|$)/)
+		.map((statement) => statement.trim())
+		.filter((statement) => statement.length > 0);
+}
 
 export async function openPglite(): Promise<{ db: AppDatabase; close: () => Promise<void> }> {
 	const client = new PGlite();
@@ -27,14 +34,21 @@ export function openPostgres(connectionString: string): {
 	migrate: () => Promise<void>;
 	close: () => Promise<void>;
 } {
-	const client = postgres(connectionString, { ssl: "require", max: 1 });
+	const pool = new Pool({ connectionString, max: 1 });
 	return {
-		db: drizzlePostgres(client, { schema }),
+		db: drizzleNeon(pool, { schema }),
 		migrate: async () => {
-			await client.unsafe(migrationSql);
+			const client = await pool.connect();
+			try {
+				for (const statement of migrationStatements(migrationSql)) {
+					await client.query(statement);
+				}
+			} finally {
+				client.release();
+			}
 		},
 		close: async () => {
-			await client.end();
+			await pool.end();
 		},
 	};
 }

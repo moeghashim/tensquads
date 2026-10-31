@@ -12,7 +12,9 @@ export interface MachineRecord {
 	readonly secrets: readonly string[];
 }
 
-// Off means CPU 0% and uptime "Paused", even when the stored row says otherwise.
+// Off means CPU 0% and uptime "Paused". An on machine whose stored uptime is "Paused"
+// reports "Just started" (Main.dc.html:1267). Version 1 does not roll out an image.
+// makeTemplate and startFromTemplate only answer the MachineProvider methods.
 export function createTestMachine(rows: readonly MachineRecord[]): MachineProvider {
 	const byId = new Map(rows.map((row) => [row.id, row]));
 
@@ -29,8 +31,16 @@ export function createTestMachine(rows: readonly MachineRecord[]): MachineProvid
 		region: (agentId) => row(agentId).region,
 		size: (agentId) => row(agentId).size,
 		cpu: (agentId) => (row(agentId).on ? row(agentId).cpu : "0%"),
-		uptime: (agentId) => (row(agentId).on ? row(agentId).uptime : "Paused"),
+		uptime: (agentId) => {
+			const found = row(agentId);
+			if (!found.on) {
+				return "Paused";
+			}
+			return found.uptime === "Paused" ? "Just started" : found.uptime;
+		},
 		egress: (agentId) => row(agentId).egress,
 		secrets: (agentId) => row(agentId).secrets,
+		makeTemplate: (imageId) => ({ id: `template-${imageId}` }),
+		startFromTemplate: (templateId, agentId) => ({ templateId, agentId }),
 	};
 }

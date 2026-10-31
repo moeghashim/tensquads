@@ -5,3 +5,30 @@ commands:
   test: "npm ci && npm test"
   lint: "npm ci && npm run check && npm run fallow:audit"
   format: "npx biome format --write ."
+
+# protected_paths is read only from the default branch. This copy does nothing
+# until it is on origin/main. Until then, run the pipeline with
+# `--skip document` and never authorize `--action fix`. The document step's
+# first pass still edits files when it runs; auto_fix: 0 only stops the
+# follow-up loop. no-mistakes 1.29.1 has neither key. 1.84.0 has both, and
+# commit.trailers is read from this pushed branch.
+protected_paths:
+  - "docs/PLAN.md"
+  - "docs/BRIEF.md"
+  - "tasks/00-foundation.md"
+  - "README.md"
+  - "AGENTS.md"
+  - "CLAUDE.md"
+  - "design/**"
+
+commit:
+  trailers:
+    - "Signed-off-by: Moe Ghashim <mohanadgh@gmail.com>"
+
+auto_fix:
+  rebase: 0
+  review: 0
+  test: 0
+  document: 0
+  lint: 0
+  ci: 0
