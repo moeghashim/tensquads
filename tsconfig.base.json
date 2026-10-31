@@ -17,6 +17,7 @@
 		"inlineSources": true,
 		"inlineSourceMap": false,
 		"moduleResolution": "NodeNext",
+		"allowImportingTsExtensions": true,
 		"resolveJsonModule": true,
 		"types": [
 			"node"
