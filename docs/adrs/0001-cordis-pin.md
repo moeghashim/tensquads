@@ -20,7 +20,7 @@ Depend on `cordis` at exactly `4.0.0-rc.12`, which is commit `01b396240ce47cf277
 
 `packages/kernel/src/kernel.ts` is the only file that imports cordis. The six plug-ins live in `packages/kernel/src/plugins.ts` and do not import cordis. A test fails when any other file imports cordis.
 
-An update to cordis changes `packages/kernel/src/kernel.ts` and this ADR. It does not change a plug-in, a domain object, or an adapter. The plug-in names stay `platform`, `squads`, `bus`, `policy`, `catalog`, and `conversation`.
+An update to cordis changes the exact dependency in `packages/kernel/package.json`, the root lockfile, and this ADR. Put any API adaptation in `packages/kernel/src/kernel.ts`. It does not change a plug-in, a domain object, or an adapter. Run the kernel tests and `make verify` after the update. The plug-in names stay `platform`, `squads`, `bus`, `policy`, `catalog`, and `conversation`.
 
 ## Alternatives considered
 

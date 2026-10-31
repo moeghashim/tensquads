@@ -1,3 +1,5 @@
+> This is the original brief. Its wording stays as supplied. Read [the build plan](PLAN.md) for decisions 1–28 and [the foundation guide](foundation.md) for the implemented phase 0 data model, inbox rules, and checks. The design controls screen copy.
+
 Follow the framework https://github.com/cordiverse/cordis to make everything as a plugin more about this here https://arxiv.org/abs/2608.25512
 
 Use domain driven design as a software architecture. 

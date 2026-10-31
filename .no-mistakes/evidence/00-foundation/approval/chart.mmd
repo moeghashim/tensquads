@@ -1,0 +1,24 @@
+---
+title: "Approval inbox"
+---
+stateDiagram-v2
+  s0: Pending, Proposed
+  s1: Pending
+  s2: Declined, Proposed
+  s3: Pending, Revising
+  s4: Approved, Proposed
+  s5: Nothing waiting
+  s6: Declined, Revising
+  s7: Approved, Revising
+  [*] --> s0
+  s0 --> s1: Approve mission
+  s0 --> s2: Decline
+  s0 --> s3: Decline mission
+  s0 --> s4: Approve
+  s1 --> s5: Decline or Approve
+  s2 --> s5: Approve mission
+  s2 --> s6: Decline mission
+  s3 --> s6: Decline
+  s3 --> s7: Approve
+  s4 --> s5: Approve mission
+  s4 --> s7: Decline mission

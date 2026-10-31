@@ -23,6 +23,11 @@ import {
 } from "./schema.ts";
 import { type AccountSnapshot, squadId, type WorkspaceSnapshot } from "./snapshot.ts";
 
+/**
+ * Replace all tenant and catalog rows with this snapshot in one transaction.
+ * This is a full database seed, not an account-scoped update. A failure preserves existing rows.
+ * Apply the schema migration before calling this function.
+ */
 export async function saveWorkspace(db: AppDatabase, snapshot: WorkspaceSnapshot): Promise<void> {
 	await db.transaction(async (tx) => {
 		await tx.delete(messages);

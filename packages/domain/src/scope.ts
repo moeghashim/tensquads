@@ -1,6 +1,6 @@
-// Recommended shape. Recorded for the pull request.
 // A platform call still passes a non-empty accountId, and the repositories do not filter on it.
 // An account call filters every tenant read and write to that accountId.
+// The caller must authorize platform access. Scope validation is not authentication.
 
 export interface AccountScope {
 	readonly accountId: string;
