@@ -10,6 +10,7 @@ export const accounts = pgTable("accounts", {
 	name: text("name").notNull(),
 	owner: text("owner").notNull(),
 	email: text("email").notNull(),
+	clerkUserId: text("clerk_user_id"),
 	tint: text("tint").notNull(),
 	agents: integer("agents").notNull(),
 	online: integer("online").notNull(),

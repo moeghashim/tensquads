@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS accounts (
   name text NOT NULL,
   owner text NOT NULL,
   email text NOT NULL,
+  clerk_user_id text,
   tint text NOT NULL,
   agents integer NOT NULL,
   online integer NOT NULL,
@@ -240,3 +241,5 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAUL
 ALTER TABLE agent_images ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
 ALTER TABLE bugs ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
 ALTER TABLE feature_requests ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS clerk_user_id text;
+CREATE UNIQUE INDEX IF NOT EXISTS accounts_clerk_user_id_key ON accounts (clerk_user_id);

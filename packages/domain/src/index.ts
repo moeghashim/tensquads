@@ -21,11 +21,14 @@ export type {
 	Account,
 	AccountStatus,
 	DailyRevenue,
+	NewAgent,
 	OverviewTile,
 	Plan,
 	PlanName,
 	PlatformTotals,
 	Subscription,
+	WorkspaceCreated,
+	WorkspaceDraft,
 } from "./platform/types.ts";
 export { askRevise, decideApproval, decideMission, EMPTY_INBOX, inboxCount, inboxIsEmpty } from "./policy/decide.ts";
 export type { ApprovalDecided, MissionDecided, PolicyEvent } from "./policy/events.ts";
