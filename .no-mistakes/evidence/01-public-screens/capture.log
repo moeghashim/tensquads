@@ -1,0 +1,33 @@
+[WebServer] (node:8323) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 6 tests using 5 workers
+
+(node:8349) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:8348) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:8352) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:8351) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:8350) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/6] e2e/phase-evidence.spec.ts:5:5 › capture signup 1440 and run axe
+[2/6] e2e/phase-evidence.spec.ts:5:5 › capture home 390 and run axe
+[3/6] e2e/phase-evidence.spec.ts:5:5 › capture signup 390 and run axe
+[4/6] e2e/phase-evidence.spec.ts:5:5 › capture signin 1440 and run axe
+[5/6] e2e/phase-evidence.spec.ts:5:5 › capture home 1440 and run axe
+[6/6] e2e/phase-evidence.spec.ts:5:5 › capture signin 390 and run axe
+  6 passed (5.4s)

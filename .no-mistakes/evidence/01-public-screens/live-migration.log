@@ -1,0 +1,7 @@
+Disposable PostgreSQL 18: public schema starts empty.
+All 12 simultaneous real adapter migrations wait on the held advisory lock; no DDL completes.
+After releasing lock: all 12 migrations commit without a catalog collision.
+{"tables":["accounts","agent_images","agents","approvals","bugs","bus_events","daily_revenue","feature_requests","machines","masters","messages","mission_proposals","overview_tiles","plans","rules","skills","squads","state_entries","subscriptions","threads"],"clerk_user_id":true}
+Repeat migration completes on the existing schema.
+An incompatible existing view causes a real migration failure; all DDL rolls back and the advisory lock releases.
+The same adapter connection migrates successfully after the disposable conflict is removed.

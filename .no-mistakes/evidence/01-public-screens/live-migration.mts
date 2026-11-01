@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict';
+import { createConnection } from 'node:net';
+import { setTimeout } from 'node:timers/promises';
+import { WebSocketServer, WebSocket } from 'ws';
+import { neonConfig, Pool } from '@neondatabase/serverless';
+import { openPostgres } from '../packages/adapters/src/neon/postgres.ts';
+
+const proxy = new WebSocketServer({ host: '127.0.0.1', port: 55440 });
+proxy.on('connection', socket => {
+  const tcp = createConnection({host: '127.0.0.1', port: 55439});
+  socket.on('message', data => tcp.write(data as Buffer));
+  tcp.on('data', data => socket.send(data));
+  tcp.on('error', () => socket.close());
+  socket.on('close', () => tcp.destroy());
+  tcp.on('close', () => socket.close());
+});
+neonConfig.webSocketConstructor = WebSocket;
+neonConfig.wsProxy = () => '127.0.0.1:55440';
+neonConfig.useSecureWebSocket = false;
+neonConfig.pipelineConnect = false;
+const connection = 'postgres://test@127.0.0.1:55439/postgres?sslmode=disable';
+const observer = new Pool({connectionString: connection});
+const migrations = Array.from({length: 12}, () => openPostgres(connection));
+try {
+  await observer.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public');
+  const initial = await observer.query("select count(*)::int as count from information_schema.tables where table_schema='public'");
+  assert.equal(initial.rows[0].count, 0);
+  console.log('Disposable PostgreSQL 18: public schema starts empty.');
+  const holder = await observer.connect();
+  await holder.query('BEGIN');
+  await holder.query('SELECT pg_advisory_xact_lock(1952804467, 1)');
+  let completed = 0;
+  const pending = migrations.map(async db => {await db.migrate(); completed++;});
+  await setTimeout(300);
+  assert.equal(completed, 0);
+  const waiting = await observer.query("select count(*)::int as count from pg_locks where locktype='advisory' and not granted");
+  assert.equal(waiting.rows[0].count, 12);
+  console.log('All 12 simultaneous real adapter migrations wait on the held advisory lock; no DDL completes.');
+  await holder.query('COMMIT');
+  holder.release();
+  await Promise.all(pending);
+  assert.equal(completed, 12);
+  const tables = await observer.query("select table_name from information_schema.tables where table_schema='public' order by table_name");
+  assert.ok(tables.rows.some(row => row.table_name === 'accounts'));
+  const columns = await observer.query("select column_name from information_schema.columns where table_schema='public' and table_name='accounts' and column_name='clerk_user_id'");
+  assert.equal(columns.rows.length, 1);
+  console.log('After releasing lock: all 12 migrations commit without a catalog collision.');
+  console.log(JSON.stringify({tables: tables.rows.map(row => row.table_name), clerk_user_id: true}));
+  await migrations[0].migrate();
+  console.log('Repeat migration completes on the existing schema.');
+  await observer.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public; CREATE VIEW accounts AS SELECT 1 AS id');
+  await assert.rejects(migrations[0].migrate());
+  const afterFailure = await observer.query("select table_name from information_schema.tables where table_schema='public'");
+  assert.deepEqual(afterFailure.rows.map(row=>row.table_name), ['accounts']);
+  const locks = await observer.query("select count(*)::int as count from pg_locks where locktype='advisory'");
+  assert.equal(locks.rows[0].count, 0);
+  console.log('An incompatible existing view causes a real migration failure; all DDL rolls back and the advisory lock releases.');
+  await observer.query('DROP VIEW accounts');
+  await migrations[0].migrate();
+  console.log('The same adapter connection migrates successfully after the disposable conflict is removed.');
+} finally {
+  await Promise.all(migrations.map(db=>db.close()));
+  await observer.end();
+  for (const client of proxy.clients) client.terminate();
+  await new Promise<void>(resolve => proxy.close(()=>resolve()));
+}
