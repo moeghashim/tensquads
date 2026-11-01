@@ -40,6 +40,7 @@ function sessionCaller(failMigration) {
 	};
 	const boundaries = new Map([
 		["./support.ts", support],
+		["./workspace.ts", { deleteWorkspaceAccount: async () => {} }],
 		["@tensquads/adapters", adapters],
 		["@neondatabase/serverless", { neon: () => ({ query: async () => assert.fail("HTTP migration bypass") }) }],
 	]);
