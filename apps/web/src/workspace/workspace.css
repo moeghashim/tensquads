@@ -1,0 +1,26 @@
+.workspace-frame strong {
+	font-weight: 600;
+}
+
+.workspace-frame .nav-btn:hover {
+	background: rgba(13, 13, 13, 0.08);
+}
+
+.workspace-frame .row-btn:hover {
+	background: rgba(13, 13, 13, 0.05);
+}
+
+.workspace-frame .soft-btn:hover {
+	background: rgba(13, 13, 13, 0.12);
+}
+
+.workspace-frame button:focus-visible,
+.workspace-frame input:focus-visible,
+.workspace-frame select:focus-visible {
+	outline: 2px solid #0169cc;
+	outline-offset: 2px;
+}
+
+.workspace-frame #dock-input:focus-visible {
+	outline-offset: 4px;
+}

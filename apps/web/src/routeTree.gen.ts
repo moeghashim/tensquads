@@ -10,24 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ChatRouteImport } from './routes/chat'
-import { Route as OverviewRouteImport } from './routes/overview'
+import { Route as WorkspaceRouteImport } from './routes/_workspace'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as WorkspaceChatRouteImport } from './routes/_workspace/chat'
+import { Route as WorkspaceOverviewRouteImport } from './routes/_workspace/overview'
+import { Route as WorkspaceRulesRouteImport } from './routes/_workspace/rules'
+import { Route as WorkspaceTrafficRouteImport } from './routes/_workspace/traffic'
+import { Route as WorkspaceAgentsIndexRouteImport } from './routes/_workspace/agents.index'
+import { Route as WorkspaceAgentsIdRouteImport } from './routes/_workspace/agents.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ChatRoute = ChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OverviewRoute = OverviewRouteImport.update({
-  id: '/overview',
-  path: '/overview',
+const WorkspaceRoute = WorkspaceRouteImport.update({
+  id: '/_workspace',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SigninRoute = SigninRouteImport.update({
@@ -40,41 +39,112 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WorkspaceChatRoute = WorkspaceChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceOverviewRoute = WorkspaceOverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceRulesRoute = WorkspaceRulesRouteImport.update({
+  id: '/rules',
+  path: '/rules',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceTrafficRoute = WorkspaceTrafficRouteImport.update({
+  id: '/traffic',
+  path: '/traffic',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceAgentsIndexRoute = WorkspaceAgentsIndexRouteImport.update({
+  id: '/agents/',
+  path: '/agents/',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
+const WorkspaceAgentsIdRoute = WorkspaceAgentsIdRouteImport.update({
+  id: '/agents/$id',
+  path: '/agents/$id',
+  getParentRoute: () => WorkspaceRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/chat': typeof ChatRoute
-  '/overview': typeof OverviewRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/chat': typeof WorkspaceChatRoute
+  '/overview': typeof WorkspaceOverviewRoute
+  '/rules': typeof WorkspaceRulesRoute
+  '/traffic': typeof WorkspaceTrafficRoute
+  '/agents/$id': typeof WorkspaceAgentsIdRoute
+  '/agents/': typeof WorkspaceAgentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/chat': typeof ChatRoute
-  '/overview': typeof OverviewRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/chat': typeof WorkspaceChatRoute
+  '/overview': typeof WorkspaceOverviewRoute
+  '/rules': typeof WorkspaceRulesRoute
+  '/traffic': typeof WorkspaceTrafficRoute
+  '/agents/$id': typeof WorkspaceAgentsIdRoute
+  '/agents': typeof WorkspaceAgentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/chat': typeof ChatRoute
-  '/overview': typeof OverviewRoute
+  '/_workspace': typeof WorkspaceRouteWithChildren
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/_workspace/chat': typeof WorkspaceChatRoute
+  '/_workspace/overview': typeof WorkspaceOverviewRoute
+  '/_workspace/rules': typeof WorkspaceRulesRoute
+  '/_workspace/traffic': typeof WorkspaceTrafficRoute
+  '/_workspace/agents/$id': typeof WorkspaceAgentsIdRoute
+  '/_workspace/agents/': typeof WorkspaceAgentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/chat' | '/overview' | '/signin' | '/signup'
+  fullPaths:
+    | '/'
+    | '/signin'
+    | '/signup'
+    | '/chat'
+    | '/overview'
+    | '/rules'
+    | '/traffic'
+    | '/agents/$id'
+    | '/agents/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/chat' | '/overview' | '/signin' | '/signup'
-  id: '__root__' | '/' | '/chat' | '/overview' | '/signin' | '/signup'
+  to:
+    | '/'
+    | '/signin'
+    | '/signup'
+    | '/chat'
+    | '/overview'
+    | '/rules'
+    | '/traffic'
+    | '/agents/$id'
+    | '/agents'
+  id:
+    | '__root__'
+    | '/'
+    | '/_workspace'
+    | '/signin'
+    | '/signup'
+    | '/_workspace/chat'
+    | '/_workspace/overview'
+    | '/_workspace/rules'
+    | '/_workspace/traffic'
+    | '/_workspace/agents/$id'
+    | '/_workspace/agents/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ChatRoute: typeof ChatRoute
-  OverviewRoute: typeof OverviewRoute
+  WorkspaceRoute: typeof WorkspaceRouteWithChildren
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
 }
@@ -88,18 +158,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/chat': {
-      id: '/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof ChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/overview': {
-      id: '/overview'
-      path: '/overview'
-      fullPath: '/overview'
-      preLoaderRoute: typeof OverviewRouteImport
+    '/_workspace': {
+      id: '/_workspace'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof WorkspaceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signin': {
@@ -116,13 +179,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_workspace/chat': {
+      id: '/_workspace/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof WorkspaceChatRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/overview': {
+      id: '/_workspace/overview'
+      path: '/overview'
+      fullPath: '/overview'
+      preLoaderRoute: typeof WorkspaceOverviewRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/rules': {
+      id: '/_workspace/rules'
+      path: '/rules'
+      fullPath: '/rules'
+      preLoaderRoute: typeof WorkspaceRulesRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/traffic': {
+      id: '/_workspace/traffic'
+      path: '/traffic'
+      fullPath: '/traffic'
+      preLoaderRoute: typeof WorkspaceTrafficRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/agents/': {
+      id: '/_workspace/agents/'
+      path: '/agents'
+      fullPath: '/agents/'
+      preLoaderRoute: typeof WorkspaceAgentsIndexRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
+    '/_workspace/agents/$id': {
+      id: '/_workspace/agents/$id'
+      path: '/agents/$id'
+      fullPath: '/agents/$id'
+      preLoaderRoute: typeof WorkspaceAgentsIdRouteImport
+      parentRoute: typeof WorkspaceRoute
+    }
   }
 }
 
+interface WorkspaceRouteChildren {
+  WorkspaceChatRoute: typeof WorkspaceChatRoute
+  WorkspaceOverviewRoute: typeof WorkspaceOverviewRoute
+  WorkspaceRulesRoute: typeof WorkspaceRulesRoute
+  WorkspaceTrafficRoute: typeof WorkspaceTrafficRoute
+  WorkspaceAgentsIdRoute: typeof WorkspaceAgentsIdRoute
+  WorkspaceAgentsIndexRoute: typeof WorkspaceAgentsIndexRoute
+}
+
+const WorkspaceRouteChildren: WorkspaceRouteChildren = {
+  WorkspaceChatRoute: WorkspaceChatRoute,
+  WorkspaceOverviewRoute: WorkspaceOverviewRoute,
+  WorkspaceRulesRoute: WorkspaceRulesRoute,
+  WorkspaceTrafficRoute: WorkspaceTrafficRoute,
+  WorkspaceAgentsIdRoute: WorkspaceAgentsIdRoute,
+  WorkspaceAgentsIndexRoute: WorkspaceAgentsIndexRoute,
+}
+
+const WorkspaceRouteWithChildren = WorkspaceRoute._addFileChildren(
+  WorkspaceRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ChatRoute: ChatRoute,
-  OverviewRoute: OverviewRoute,
+  WorkspaceRoute: WorkspaceRouteWithChildren,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
 }
