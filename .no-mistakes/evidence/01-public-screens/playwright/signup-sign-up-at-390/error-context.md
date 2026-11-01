@@ -7,7 +7,7 @@
 # Test info
 
 - Name: signup.spec.ts >> sign-up at 390
-- Location: e2e/signup.spec.ts:100:2
+- Location: e2e/signup.spec.ts:101:2
 
 # Error details
 
@@ -96,109 +96,109 @@ Call log:
 # Test source
 
 ```ts
-  5   | 	expectNoHorizontalScroll,
-  6   | 	test,
-  7   | 	viewports,
-  8   | 	waitForScreenFonts,
-  9   | } from "./support.ts";
-  10  | 
-  11  | test("sign-up starts at business type and pre-selects the design squads", async ({ page }) => {
-  12  | 	await page.goto("/signup");
-  13  | 	await expect(page).toHaveTitle("Create your business");
-  14  | 	await expect(page.getByRole("heading", { name: "Where are you starting from?" })).toBeVisible();
-  15  | 	await page.getByRole("button", { name: /A new business/ }).click();
-  16  | 	await expect(page.getByText("Tell us about the business you want to start")).toBeVisible();
-  17  | 	await expect(page.getByText("What will you sell, and to whom?")).toBeVisible();
-  18  | 	await page.getByRole("button", { name: "Choose my squads" }).click();
-  19  | 	await expect(page.getByText("3 squads and one master squad will be created.")).toBeVisible();
-  20  | 	await expect(page.getByRole("button", { name: /Drafts your launch campaign/ })).toHaveAttribute(
-  21  | 		"aria-pressed",
-  22  | 		"true",
-  23  | 	);
-  24  | 	await expect(page.getByRole("button", { name: /Weekly profit summary/ })).toHaveAttribute("aria-pressed", "false");
-  25  | 	await page.getByRole("button", { name: "Back" }).click();
-  26  | 	await expect(page.getByRole("button", { name: "Choose my squads" })).toBeVisible();
-  27  | 	await page.getByRole("button", { name: "Back" }).click();
-  28  | 	await expect(page.getByRole("heading", { name: "Where are you starting from?" })).toBeVisible();
-  29  | });
-  30  | 
-  31  | test("an existing business shows its fields and four starter squads", async ({ page }) => {
-  32  | 	await page.goto("/signup");
-  33  | 	await page.getByRole("button", { name: /An existing business/ }).click();
-  34  | 	await expect(page.getByText("Tell us about your business")).toBeVisible();
-  35  | 	await expect(page.getByText("Where do you sell today?")).toBeVisible();
-  36  | 	await expect(page.getByLabel("Website")).toBeVisible();
-  37  | 	const amazon = page.getByRole("button", { name: "Amazon" });
-  38  | 	await expect(amazon).toHaveAttribute("aria-pressed", "false");
-  39  | 	await amazon.click();
-  40  | 	await expect(amazon).toHaveAttribute("aria-pressed", "true");
-  41  | 	await amazon.click();
-  42  | 	await expect(amazon).toHaveAttribute("aria-pressed", "false");
-  43  | 	const under = page.getByRole("button", { name: "Under 100" });
-  44  | 	const mid = page.getByRole("button", { name: "100 to 500" });
-  45  | 	await expect(mid).toHaveAttribute("aria-pressed", "true");
-  46  | 	await under.click();
-  47  | 	await expect(under).toHaveAttribute("aria-pressed", "true");
-  48  | 	await expect(mid).toHaveAttribute("aria-pressed", "false");
-  49  | 	await page.getByRole("button", { name: "Choose my squads" }).click();
-  50  | 	await expect(page.getByText("4 squads and one master squad will be created.")).toBeVisible();
-  51  | 	await expect(page.getByRole("button", { name: /Syncs tracking and chases the maker/ })).toHaveAttribute(
-  52  | 		"aria-pressed",
-  53  | 		"true",
-  54  | 	);
-  55  | 	await expect(page.getByRole("button", { name: /Drafts your launch campaign/ })).toHaveCount(0);
-  56  | 	await expect(page.getByRole("button", { name: /Watches ad spend and return/ })).toHaveAttribute(
-  57  | 		"aria-pressed",
-  58  | 		"false",
-  59  | 	);
-  60  | });
-  61  | 
-  62  | test("zero squads do not open the account form", async ({ page }) => {
-  63  | 	await page.goto("/signup");
-  64  | 	await page.getByRole("button", { name: /A new business/ }).click();
-  65  | 	await page.getByRole("button", { name: "Choose my squads" }).click();
-  66  | 	for (const name of [/Ready for your first order/, /Replies in your voice/, /Drafts your launch campaign/]) {
-  67  | 		await page.getByRole("button", { name }).click();
-  68  | 	}
-  69  | 	await expect(page.getByText("Pick at least one squad to start.")).toBeVisible();
-  70  | 	await page.getByRole("button", { name: "Create my workspace" }).click();
-  71  | 	await expect(page.getByLabel("Email")).toHaveCount(0);
-  72  | 	await expect(page).toHaveURL(/\/signup$/);
-  73  | });
-  74  | 
-  75  | test("the account step reuses the sign-in fields and blocks empty input", async ({ page }) => {
-  76  | 	await page.goto("/signup");
-  77  | 	await page.getByRole("button", { name: /A new business/ }).click();
-  78  | 	await page.getByRole("button", { name: "Choose my squads" }).click();
-  79  | 	await page.getByRole("button", { name: "Create my workspace" }).click();
-  80  | 	await expect(page.locator("ol li")).toHaveCount(3);
-  81  | 	await expect(page.getByText("Business type", { exact: true })).toBeVisible();
-  82  | 	await expect(page.locator("ol").getByText("Squads", { exact: true })).toBeVisible();
-  83  | 	await expect(page.getByLabel("Email")).toHaveAttribute("placeholder", "you@company.com");
-  84  | 	await expect(page.getByLabel("Password")).toHaveAttribute("placeholder", "Your password");
-  85  | 	await page.getByRole("button", { name: "Create my workspace" }).click();
-  86  | 	await expect(page.getByRole("alert")).toHaveText("Enter your email and password to sign in.");
-  87  | 	await expect(page).toHaveURL(/\/signup$/);
-  88  | 	await page.getByRole("button", { name: "Back" }).click();
-  89  | 	await expect(page.getByText("3 squads and one master squad will be created.")).toBeVisible();
-  90  | });
-  91  | 
-  92  | test("sign-up controls have labels", async ({ page }) => {
-  93  | 	await page.goto("/signup");
-  94  | 	await page.getByRole("button", { name: /A new business/ }).click();
-  95  | 	await expectLabeledInputs(page);
-  96  | 	await expectNamedButtons(page);
-  97  | });
-  98  | 
-  99  | for (const viewport of viewports) {
-  100 | 	test(`sign-up at ${viewport.name}`, async ({ page }) => {
-  101 | 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
-  102 | 		await page.goto("/signup");
-  103 | 		await waitForScreenFonts(page);
-  104 | 		await expectNoHorizontalScroll(page);
-> 105 | 		await expect(page).toHaveScreenshot(`signup-${viewport.name}.png`, { fullPage: true });
+  8   | 	waitForHydration,
+  9   | 	waitForScreenFonts,
+  10  | } from "./support.ts";
+  11  | 
+  12  | test("sign-up starts at business type and pre-selects the design squads", async ({ page }) => {
+  13  | 	await page.goto("/signup");
+  14  | 	await expect(page).toHaveTitle("Create your business");
+  15  | 	await expect(page.getByRole("heading", { name: "Where are you starting from?" })).toBeVisible();
+  16  | 	await page.getByRole("button", { name: /A new business/ }).click();
+  17  | 	await expect(page.getByText("Tell us about the business you want to start")).toBeVisible();
+  18  | 	await expect(page.getByText("What will you sell, and to whom?")).toBeVisible();
+  19  | 	await page.getByRole("button", { name: "Choose my squads" }).click();
+  20  | 	await expect(page.getByText("3 squads and one master squad will be created.")).toBeVisible();
+  21  | 	await expect(page.getByRole("button", { name: /Drafts your launch campaign/ })).toHaveAttribute(
+  22  | 		"aria-pressed",
+  23  | 		"true",
+  24  | 	);
+  25  | 	await expect(page.getByRole("button", { name: /Weekly profit summary/ })).toHaveAttribute("aria-pressed", "false");
+  26  | 	await page.getByRole("button", { name: "Back" }).click();
+  27  | 	await expect(page.getByRole("button", { name: "Choose my squads" })).toBeVisible();
+  28  | 	await page.getByRole("button", { name: "Back" }).click();
+  29  | 	await expect(page.getByRole("heading", { name: "Where are you starting from?" })).toBeVisible();
+  30  | });
+  31  | 
+  32  | test("an existing business shows its fields and four starter squads", async ({ page }) => {
+  33  | 	await page.goto("/signup");
+  34  | 	await page.getByRole("button", { name: /An existing business/ }).click();
+  35  | 	await expect(page.getByText("Tell us about your business")).toBeVisible();
+  36  | 	await expect(page.getByText("Where do you sell today?")).toBeVisible();
+  37  | 	await expect(page.getByLabel("Website")).toBeVisible();
+  38  | 	const amazon = page.getByRole("button", { name: "Amazon" });
+  39  | 	await expect(amazon).toHaveAttribute("aria-pressed", "false");
+  40  | 	await amazon.click();
+  41  | 	await expect(amazon).toHaveAttribute("aria-pressed", "true");
+  42  | 	await amazon.click();
+  43  | 	await expect(amazon).toHaveAttribute("aria-pressed", "false");
+  44  | 	const under = page.getByRole("button", { name: "Under 100" });
+  45  | 	const mid = page.getByRole("button", { name: "100 to 500" });
+  46  | 	await expect(mid).toHaveAttribute("aria-pressed", "true");
+  47  | 	await under.click();
+  48  | 	await expect(under).toHaveAttribute("aria-pressed", "true");
+  49  | 	await expect(mid).toHaveAttribute("aria-pressed", "false");
+  50  | 	await page.getByRole("button", { name: "Choose my squads" }).click();
+  51  | 	await expect(page.getByText("4 squads and one master squad will be created.")).toBeVisible();
+  52  | 	await expect(page.getByRole("button", { name: /Syncs tracking and chases the maker/ })).toHaveAttribute(
+  53  | 		"aria-pressed",
+  54  | 		"true",
+  55  | 	);
+  56  | 	await expect(page.getByRole("button", { name: /Drafts your launch campaign/ })).toHaveCount(0);
+  57  | 	await expect(page.getByRole("button", { name: /Watches ad spend and return/ })).toHaveAttribute(
+  58  | 		"aria-pressed",
+  59  | 		"false",
+  60  | 	);
+  61  | });
+  62  | 
+  63  | test("zero squads do not open the account form", async ({ page }) => {
+  64  | 	await page.goto("/signup");
+  65  | 	await page.getByRole("button", { name: /A new business/ }).click();
+  66  | 	await page.getByRole("button", { name: "Choose my squads" }).click();
+  67  | 	for (const name of [/Ready for your first order/, /Replies in your voice/, /Drafts your launch campaign/]) {
+  68  | 		await page.getByRole("button", { name }).click();
+  69  | 	}
+  70  | 	await expect(page.getByText("Pick at least one squad to start.")).toBeVisible();
+  71  | 	await page.getByRole("button", { name: "Create my workspace" }).click();
+  72  | 	await expect(page.getByLabel("Email")).toHaveCount(0);
+  73  | 	await expect(page).toHaveURL(/\/signup$/);
+  74  | });
+  75  | 
+  76  | test("the account step reuses the sign-in fields and blocks empty input", async ({ page }) => {
+  77  | 	await page.goto("/signup");
+  78  | 	await page.getByRole("button", { name: /A new business/ }).click();
+  79  | 	await page.getByRole("button", { name: "Choose my squads" }).click();
+  80  | 	await page.getByRole("button", { name: "Create my workspace" }).click();
+  81  | 	await expect(page.locator("ol li")).toHaveCount(3);
+  82  | 	await expect(page.getByText("Business type", { exact: true })).toBeVisible();
+  83  | 	await expect(page.locator("ol").getByText("Squads", { exact: true })).toBeVisible();
+  84  | 	await expect(page.getByLabel("Email")).toHaveAttribute("placeholder", "you@company.com");
+  85  | 	await expect(page.getByLabel("Password")).toHaveAttribute("placeholder", "Your password");
+  86  | 	await page.getByRole("button", { name: "Create my workspace" }).click();
+  87  | 	await expect(page.getByRole("alert")).toHaveText("Enter your email and password to sign in.");
+  88  | 	await expect(page).toHaveURL(/\/signup$/);
+  89  | 	await page.getByRole("button", { name: "Back" }).click();
+  90  | 	await expect(page.getByText("3 squads and one master squad will be created.")).toBeVisible();
+  91  | });
+  92  | 
+  93  | test("sign-up controls have labels", async ({ page }) => {
+  94  | 	await page.goto("/signup");
+  95  | 	await page.getByRole("button", { name: /A new business/ }).click();
+  96  | 	await expectLabeledInputs(page);
+  97  | 	await expectNamedButtons(page);
+  98  | });
+  99  | 
+  100 | for (const viewport of viewports) {
+  101 | 	test(`sign-up at ${viewport.name}`, async ({ page }) => {
+  102 | 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
+  103 | 		await page.goto("/signup");
+  104 | 		await waitForScreenFonts(page);
+  105 | 		await waitForHydration(page);
+  106 | 		await page.evaluate(() => document.fonts.ready);
+  107 | 		await expectNoHorizontalScroll(page);
+> 108 | 		await expect(page).toHaveScreenshot(`signup-${viewport.name}.png`, { fullPage: true });
       |                      ^ Error: expect(page).toHaveScreenshot(expected) failed
-  106 | 	});
-  107 | }
-  108 | 
+  109 | 	});
+  110 | }
+  111 | 
 ```

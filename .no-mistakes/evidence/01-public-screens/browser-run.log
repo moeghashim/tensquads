@@ -1,14 +1,14 @@
-[WebServer] (node:91238) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (node:14130) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 [WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
 
 
 Running 31 tests using 2 workers
 
-(node:91254) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(node:14145) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 (Use `node --trace-warnings ...` to show where the warning was created)
 
 
-(node:91253) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(node:14146) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 (Use `node --trace-warnings ...` to show where the warning was created)
 
 
@@ -33,73 +33,85 @@ Running 31 tests using 2 workers
 
     Error: publishable, secret, testDatabase is missing.
 
-       at support.ts:311
+       at support.ts:313
 
-      309 | 		return secrets;
-      310 | 	}
-    > 311 | 	throw new Error(`${missing.join(", ")} is missing.`);
+      311 | 		return secrets;
+      312 | 	}
+    > 313 | 	throw new Error(`${missing.join(", ")} is missing.`);
           | 	      ^
-      312 | }
-      313 |
-        at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/support.ts:311:8)
+      314 | }
+      315 |
+        at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/support.ts:313:8)
         at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/session.spec.ts:13:18
 
-    Error Context: ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright-results/session-a-correct-sign-in-opens-the-blank-overview/error-context.md
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright/session-a-correct-sign-in-opens-the-blank-overview/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright/session-a-correct-sign-in-opens-the-blank-overview/error-context.md
 
 
-(node:91345) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(node:14269) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 (Use `node --trace-warnings ...` to show where the warning was created)
 
 
 [18/31] e2e/session.spec.ts:38:1 › a new user makes one account and reaches overview
+[19/31] e2e/signin.spec.ts:13:1 › an empty sign-in shows the design error
   2) e2e/session.spec.ts:38:1 › a new user makes one account and reaches overview ──────────────────
 
     Error: publishable, secret, testDatabase is missing.
 
-       at support.ts:311
+       at support.ts:313
 
-      309 | 		return secrets;
-      310 | 	}
-    > 311 | 	throw new Error(`${missing.join(", ")} is missing.`);
+      311 | 		return secrets;
+      312 | 	}
+    > 313 | 	throw new Error(`${missing.join(", ")} is missing.`);
           | 	      ^
-      312 | }
-      313 |
-        at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/support.ts:311:8)
+      314 | }
+      315 |
+        at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/support.ts:313:8)
         at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/session.spec.ts:39:18
 
-    Error Context: ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright-results/session-a-new-user-makes-one-account-and-reaches-overview/error-context.md
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright/session-a-new-user-makes-one-account-and-reaches-overview/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright/session-a-new-user-makes-one-account-and-reaches-overview/error-context.md
 
 
-(node:91350) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(node:14287) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 (Use `node --trace-warnings ...` to show where the warning was created)
 
 
-[19/31] e2e/signin.spec.ts:13:1 › an empty sign-in shows the design error
 [20/31] e2e/signin.spec.ts:21:1 › a rejected sign-in shows the wrong-password text
   3) e2e/signin.spec.ts:21:1 › a rejected sign-in shows the wrong-password text ────────────────────
 
     Error: publishable, secret is missing.
 
-       at support.ts:311
+       at support.ts:313
 
-      309 | 		return secrets;
-      310 | 	}
-    > 311 | 	throw new Error(`${missing.join(", ")} is missing.`);
+      311 | 		return secrets;
+      312 | 	}
+    > 313 | 	throw new Error(`${missing.join(", ")} is missing.`);
           | 	      ^
-      312 | }
-      313 |
-        at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/support.ts:311:8)
+      314 | }
+      315 |
+        at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/support.ts:313:8)
         at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/signin.spec.ts:22:2
 
-    Error Context: ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright-results/signin-a-rejected-sign-in-shows-the-wrong-password-text/error-context.md
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright/signin-a-rejected-sign-in-shows-the-wrong-password-text/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright/signin-a-rejected-sign-in-shows-the-wrong-password-text/error-context.md
 
 
-(node:91356) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[21/31] e2e/signin.spec.ts:46:1 › sign-in controls have labels and the focus ring
+(node:14292) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 (Use `node --trace-warnings ...` to show where the warning was created)
 
 
-[21/31] e2e/signin.spec.ts:37:1 › forgot password and the email link do nothing
-[22/31] e2e/signin.spec.ts:46:1 › sign-in controls have labels and the focus ring
+[22/31] e2e/signin.spec.ts:37:1 › forgot password and the email link do nothing
 [23/31] e2e/signin.spec.ts:59:2 › sign-in at 1440
 [24/31] e2e/signin.spec.ts:59:2 › sign-in at 390
 [25/31] e2e/signup.spec.ts:12:1 › sign-up starts at business type and pre-selects the design squads
@@ -109,8 +121,56 @@ Running 31 tests using 2 workers
 [29/31] e2e/signup.spec.ts:93:1 › sign-up controls have labels
 [30/31] e2e/signup.spec.ts:101:2 › sign-up at 1440
 [31/31] e2e/signup.spec.ts:101:2 › sign-up at 390
-  3 failed
+  4) e2e/signup.spec.ts:101:2 › sign-up at 390 ─────────────────────────────────────────────────────
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      913 pixels (ratio 0.01 of all image pixels) are different.
+
+      Snapshot: signup-390.png
+
+    Call log:
+      - Expect "toHaveScreenshot(signup-390.png)" with timeout 5000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - 913 pixels (ratio 0.01 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - 913 pixels (ratio 0.01 of all image pixels) are different.
+
+
+      106 | 		await page.evaluate(() => document.fonts.ready);
+      107 | 		await expectNoHorizontalScroll(page);
+    > 108 | 		await expect(page).toHaveScreenshot(`signup-${viewport.name}.png`, { fullPage: true });
+          | 		                   ^
+      109 | 	});
+      110 | }
+      111 |
+        at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/signup.spec.ts:108:22
+
+    attachment #1: signup-390 (image/png) ──────────────────────────────────────────────────────────
+    Expected: e2e/signup.spec.ts-snapshots/signup-390.png
+    Received: ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright/signup-sign-up-at-390/signup-390-actual.png
+    Diff:     ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright/signup-sign-up-at-390/signup-390-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright/signup-sign-up-at-390/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright/signup-sign-up-at-390/error-context.md
+
+
+  4 failed
     e2e/session.spec.ts:12:1 › a correct sign-in opens the blank overview ──────────────────────────
     e2e/session.spec.ts:38:1 › a new user makes one account and reaches overview ───────────────────
     e2e/signin.spec.ts:21:1 › a rejected sign-in shows the wrong-password text ─────────────────────
-  28 passed (17.7s)
+    e2e/signup.spec.ts:101:2 › sign-up at 390 ──────────────────────────────────────────────────────
+  27 passed (19.1s)
