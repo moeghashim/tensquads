@@ -1,0 +1,37 @@
+[WebServer] (node:46990) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:47023) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 19 tests using 2 workers
+
+(node:47027) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:47026) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/19] e2e/home.spec.ts:25:1 › homepage calls to action follow the design routes
+[2/19] e2e/home.spec.ts:13:1 › the homepage toggle changes the prompt and fills an example
+[3/19] e2e/home.spec.ts:43:1 › homepage anchors scroll to the named sections
+[4/19] e2e/home.spec.ts:57:1 › homepage controls have labels and the focus ring
+[5/19] e2e/home.spec.ts:69:2 › homepage at 1440
+[6/19] e2e/home.spec.ts:69:2 › homepage at 390
+[7/19] e2e/signin.spec.ts:14:1 › an empty sign-in shows the design error
+[8/19] e2e/signin.spec.ts:38:1 › forgot password and the email link do nothing
+[9/19] e2e/signin.spec.ts:51:1 › sign-in controls have labels and the focus ring
+[10/19] e2e/signin.spec.ts:64:2 › sign-in at 1440
+[11/19] e2e/signin.spec.ts:64:2 › sign-in at 390
+[12/19] e2e/signup.spec.ts:13:1 › details keeps every selected channel and platform on
+[13/19] e2e/signup.spec.ts:39:1 › sign-up starts at business type and pre-selects the design squads
+[14/19] e2e/signup.spec.ts:59:1 › an existing business shows its fields and four starter squads
+[15/19] e2e/signup.spec.ts:90:1 › zero squads do not open the account form
+[16/19] e2e/signup.spec.ts:103:1 › the account step reuses the sign-in fields and blocks empty input
+[17/19] e2e/signup.spec.ts:120:1 › sign-up controls have labels
+[18/19] e2e/signup.spec.ts:128:2 › sign-up at 1440
+[19/19] e2e/signup.spec.ts:128:2 › sign-up at 390
+  19 passed (13.9s)
