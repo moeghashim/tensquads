@@ -35,6 +35,8 @@ These decisions cover states the design does not show. They are final for this t
 6. A request in flight adds no new text. The button keeps its label and is disabled, so a double click sends one request.
 7. Values the account form does not collect stay the receipt defaults: status Trial, plan Starter, mrr 0, ltv 0, owner equal to the email, tint `#e7efff`, squad name equal to the business name, and master name "Master". The limit defaults are the design seed in `Main.dc.html`: refund without asking 50, total ad spend per day 200, and reorder without asking 500.
 
+8. A design colour stays the design colour. Axe runs on /, /signup, and /signin at 1440 and 390 with every rule on. color-contrast is excluded only for the exact elements whose failing colour is the design's own value, through named selectors in one test helper. A contrast failure on any other colour still fails. These faults stay in the app on purpose. The fix is a change in the design canvas.
+
 Verify at sign-up and Device Trust are off in the development instance only. A production instance must turn both on, and that needs a designed code step before launch.
 
 ## Routes

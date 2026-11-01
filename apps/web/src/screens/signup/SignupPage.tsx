@@ -28,17 +28,20 @@ function SignupClerk() {
 			onCreate={async (state, isCurrent) => {
 				try {
 					if (!ready.current) {
-						const result = await signUp.password({
-							emailAddress: state.email.trim(),
-							password: state.password,
-						});
-						if (result.error) {
-							return "wrong";
+						if (signUp.status !== "complete") {
+							const result = await signUp.password({
+								emailAddress: state.email.trim(),
+								password: state.password,
+							});
+							if (result.error) {
+								return "wrong";
+							}
 						}
 						if (signUp.status !== "complete" || !signUp.createdSessionId) {
 							return "wrong";
 						}
-						await signUp.finalize();
+						const finalized = await signUp.finalize();
+						if (finalized.error) return "wrong";
 						ready.current = true;
 						setCredentialsLocked(true);
 					}

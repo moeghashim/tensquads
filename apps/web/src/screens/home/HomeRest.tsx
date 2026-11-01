@@ -344,7 +344,7 @@ export function HomeRest() {
 							</div>
 						))}
 					</div>
-					<p style={css("margin: 0; font-size: 13px; color: #737373")}>
+					<p data-design-contrast="home-pricing-note" style={css("margin: 0; font-size: 13px; color: #8f8f8f")}>
 						All plans start with 14 days free. Prices in USD, billed monthly. [VAT NOTE]
 					</p>
 				</div>
@@ -427,7 +427,7 @@ export function HomeRest() {
 						</div>
 					</div>
 				</div>
-				<div style={css("max-width: 1200px; margin: 24px auto 0; font-size: 12px; color: #737373")}>
+				<div data-design-contrast="home-footer-line" style={css("max-width: 1200px; margin: 24px auto 0; font-size: 12px; color: #8f8f8f")}>
 					© 2026 [COMPANY LEGAL NAME]. All rights reserved.
 				</div>
 			</footer>

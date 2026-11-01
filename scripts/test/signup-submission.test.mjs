@@ -9,9 +9,10 @@ const result = await esbuild.build({
 			import React from "react";
 			import { createRoot } from "react-dom/client";
 			import { SignupPage } from "./apps/web/src/screens/signup/SignupPage.tsx";
+			import { SignInPage } from "./apps/web/src/screens/signin/SignInPage.tsx";
 			window.calls = { password: 0, finalize: 0, create: 0, navigate: 0 };
 			window.root = createRoot(document.getElementById("root"));
-			window.root.render(React.createElement(SignupPage, { publishableKey: "test" }));
+			window.root.render(React.createElement(window.signin ? SignInPage : SignupPage, { publishableKey: "test" }));
 		`,
 		resolveDir: process.cwd(),
 		loader: "tsx",
@@ -27,11 +28,12 @@ const result = await esbuild.build({
 			build.onLoad({ filter: /.*/, namespace: "boundary" }, ({ path }) => ({
 				contents: path.startsWith("@clerk") ? `
 					const signUp = {
-						status: "complete", createdSessionId: "session",
-						password: async () => { window.calls.password++; return {}; },
-						finalize: async () => { window.calls.finalize++; }
+						status: "missing_requirements", createdSessionId: "session",
+						password: async () => { window.calls.password++; signUp.status = "complete"; return {}; },
+						finalize: async () => { window.calls.finalize++; return { error: window.finalizeError ? new Error("finalize failed") : null }; }
 					};
 					export const useSignUp = () => ({ signUp });
+					export const useSignIn = () => ({ signIn: signUp });
 				` : path.startsWith("@tanstack") ? `
 					export const useNavigate = () => async () => { window.calls.navigate++; };
 				` : `
@@ -87,3 +89,40 @@ test("finalized signup locks credentials and owns pending requests across steps"
 		await browser.close();
 	}
 });
+
+for (const signin of [false, true]) {
+	test(`${signin ? "sign-in" : "sign-up"} reports finalize errors and can retry`, async () => {
+		const browser = await chromium.launch({ headless: true });
+		try {
+			const page = await browser.newPage();
+			await page.setContent('<div id="root"></div>');
+			await page.evaluate((value) => { window.signin = value; window.finalizeError = true; }, signin);
+			await page.addScriptTag({ content: result.outputFiles[0].text });
+			if (!signin) {
+				await page.getByRole("button", { name: /A new business/ }).click();
+				await page.getByRole("button", { name: "Choose my squads" }).click();
+				await page.getByRole("button", { name: "Create my workspace" }).click();
+			}
+			await page.getByLabel("Email").fill("owner@example.com");
+			await page.getByLabel("Password").fill("password-at-least-16-characters");
+			const submit = page.getByRole("button", { name: signin ? "Sign in" : "Create my workspace", exact: true });
+			await submit.click();
+			await page.getByRole("alert").waitFor();
+			assert.equal(await page.getByRole("alert").textContent(), "That email or password is wrong.");
+			assert.equal(await page.getByLabel("Email").isEnabled(), true);
+			assert.equal(await page.getByLabel("Password").isEnabled(), true);
+			assert.deepEqual(await page.evaluate(() => window.calls), { password: 1, finalize: 1, create: 0, navigate: 0 });
+			await page.evaluate(() => { window.finalizeError = false; });
+			await submit.click();
+			if (!signin) {
+				await page.waitForFunction(() => window.calls.create === 1);
+				assert.equal(await page.evaluate(() => window.calls.password), 1);
+				await page.evaluate(() => window.finish());
+			}
+			await page.waitForFunction(() => window.calls.navigate === 1);
+			assert.equal(await page.evaluate(() => window.calls.finalize), 2);
+		} finally {
+			await browser.close();
+		}
+	});
+}

@@ -87,11 +87,11 @@ export function SignupCard({
 				{stepLabels.map((label, index) => {
 					const done = index < current;
 					const on = index === current;
-					const color = on ? "#0d0d0d" : done ? "#282828" : "#737373";
+					const color = on ? "#0d0d0d" : done ? "#282828" : "#8f8f8f";
 					return (
 						<li key={label} style={css("display: flex; align-items: center; gap: 8px")}>
 							<span style={css(stepDot(on || done))}>{done ? "✓" : String(index + 1)}</span>
-							<span style={{ color }}>{label}</span>
+							<span data-design-contrast={!on && !done ? "signup-inactive-step" : undefined} style={{ color }}>{label}</span>
 							{index < 2 ? (
 								<span style={css("width: 24px; height: 1px; background: rgba(13,13,13,.15); margin: 0 4px")} />
 							) : null}
@@ -114,7 +114,7 @@ export function SignupCard({
 					notice={notice}
 				/>
 			) : null}
-			<p style={css("margin: 0; font-size: 12px; color: #737373; text-align: center")}>
+			<p data-design-contrast="signup-terms" style={css("margin: 0; font-size: 12px; color: #8f8f8f; text-align: center")}>
 				By continuing you agree to the [TERMS] and [PRIVACY POLICY].
 			</p>
 		</section>

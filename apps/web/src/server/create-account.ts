@@ -58,7 +58,6 @@ export const createAccount = createServerFn({ method: "POST" })
 		const { openPostgres, createRepositories } = await import("@tensquads/adapters");
 		const database = openPostgres(connection);
 		try {
-			await database.migrate();
 			const repositories = createRepositories(database.db);
 			return await repositories.platform.createWorkspace(
 				{ accountId: crypto.randomUUID(), mode: "account" },
