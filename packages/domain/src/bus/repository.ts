@@ -4,4 +4,5 @@ import type { BusEvent } from "./types.ts";
 export interface BusRepository {
 	listEvents(scope: AccountScope): Promise<readonly BusEvent[]>;
 	readStore(scope: AccountScope): Promise<Readonly<Record<string, unknown>>>;
+	nextEvent(scope: AccountScope): Promise<void>;
 }

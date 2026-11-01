@@ -16,4 +16,5 @@ export interface PlatformRepository {
 	overviewTiles(scope: AccountScope): Promise<readonly OverviewTile[] | null>;
 	dailyRevenue(scope: AccountScope): Promise<readonly DailyRevenue[]>;
 	createWorkspace(scope: AccountScope, draft: WorkspaceDraft): Promise<WorkspaceCreated>;
+	accountForClerkUser(clerkUserId: string): Promise<Account | null>;
 }
