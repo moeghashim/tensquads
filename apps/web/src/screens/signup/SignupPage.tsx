@@ -21,29 +21,34 @@ function SignupClerk() {
 	const { signUp } = useSignUp();
 	const navigate = useNavigate();
 	const ready = useRef(false);
+	const completedCredentials = useRef<Pick<SignupState, "email" | "password"> | null>(null);
 	const [credentialsLocked, setCredentialsLocked] = useState(false);
 	return (
 		<SignupScreen
 			credentialsLocked={credentialsLocked}
 			onCreate={async (state, isCurrent) => {
 				try {
-					if (!ready.current) {
-						if (signUp.status !== "complete") {
-							const result = await signUp.password({
-								emailAddress: state.email.trim(),
-								password: state.password,
-							});
-							if (result.error) {
-								return "wrong";
-							}
-						}
-						if (signUp.status !== "complete" || !signUp.createdSessionId) {
+					if (!completedCredentials.current) {
+						const result = await signUp.password({
+							emailAddress: state.email.trim(),
+							password: state.password,
+						});
+						if (result.error || signUp.status !== "complete" || !signUp.createdSessionId) {
 							return "wrong";
 						}
+						completedCredentials.current = { email: state.email, password: state.password };
+						setCredentialsLocked(true);
+					}
+					if (
+						state.email !== completedCredentials.current.email ||
+						state.password !== completedCredentials.current.password
+					) {
+						return "wrong";
+					}
+					if (!ready.current) {
 						const finalized = await signUp.finalize();
 						if (finalized.error) return "wrong";
 						ready.current = true;
-						setCredentialsLocked(true);
 					}
 				} catch {
 					return "wrong";

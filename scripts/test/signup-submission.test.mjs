@@ -47,6 +47,23 @@ const result = await esbuild.build({
 	}],
 });
 
+async function expectCredentialMismatchRejected(page, submit, calls) {
+	for (const [label, changed, original] of [
+		["Email", "other@example.com", "owner@example.com"],
+		["Password", "another-password-at-least-16", "password-at-least-16-characters"],
+	]) {
+		const field = page.getByLabel(label);
+		await field.evaluate((input) => { input.disabled = false; });
+		await field.fill(changed);
+		await submit.click();
+		await page.getByRole("alert").waitFor();
+		assert.equal(await page.getByRole("alert").textContent(), "That email or password is wrong.");
+		assert.deepEqual(await page.evaluate(() => window.calls), calls);
+		await field.evaluate((input) => { input.disabled = false; });
+		await field.fill(original);
+	}
+}
+
 test("finalized signup locks credentials and owns pending requests across steps", async () => {
 	const browser = await chromium.launch({ headless: true });
 	try {
@@ -71,6 +88,7 @@ test("finalized signup locks credentials and owns pending requests across steps"
 		assert.equal(await page.getByLabel("Email").isDisabled(), true);
 		assert.equal(await page.getByLabel("Password").isDisabled(), true);
 		assert.equal(await submit.isEnabled(), true);
+		await expectCredentialMismatchRejected(page, submit, { password: 1, finalize: 1, create: 1, navigate: 0 });
 		await page.getByRole("button", { name: "Back" }).click();
 		await submit.click();
 		assert.equal(await page.getByLabel("Email").inputValue(), "owner@example.com");
@@ -109,9 +127,12 @@ for (const signin of [false, true]) {
 			await submit.click();
 			await page.getByRole("alert").waitFor();
 			assert.equal(await page.getByRole("alert").textContent(), "That email or password is wrong.");
-			assert.equal(await page.getByLabel("Email").isEnabled(), true);
-			assert.equal(await page.getByLabel("Password").isEnabled(), true);
+			assert.equal(await page.getByLabel("Email").isEnabled(), signin);
+			assert.equal(await page.getByLabel("Password").isEnabled(), signin);
 			assert.deepEqual(await page.evaluate(() => window.calls), { password: 1, finalize: 1, create: 0, navigate: 0 });
+			if (!signin) {
+				await expectCredentialMismatchRejected(page, submit, { password: 1, finalize: 1, create: 0, navigate: 0 });
+			}
 			await page.evaluate(() => { window.finalizeError = false; });
 			await submit.click();
 			if (!signin) {
