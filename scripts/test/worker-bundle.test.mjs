@@ -168,6 +168,7 @@ async function executeBundle(outfile) {
 		import { createRequire, isBuiltin, registerHooks, syncBuiltinESMExports } from "node:module";
 		const allow = new Set(${JSON.stringify(allow)});
 		const reads = [];
+		let deferredBuiltin = null;
 		const seen = new WeakSet();
 		const baseRequire = createRequire(process.cwd() + "/worker-guard.mjs");
 		function canonicalBuiltin(specifier) {
@@ -181,7 +182,9 @@ async function executeBundle(outfile) {
 		}
 		function rejectBuiltin(specifier) {
 			const name = canonicalBuiltin(specifier);
-			if (name && !reachesFs(specifier) && !allow.has(name)) throw new Error("Import-time built-in: " + name);
+			if (!name || allow.has(name)) return;
+			if (reachesFs(specifier)) { deferredBuiltin ??= name; return; }
+			throw new Error("Import-time built-in: " + name);
 		}
 		function wrapObject(target) {
 			if (target === null || (typeof target !== "object" && typeof target !== "function") || seen.has(target)) return;
@@ -212,7 +215,7 @@ async function executeBundle(outfile) {
 		syncBuiltinESMExports();
 		registerHooks({
 			resolve(specifier, context, nextResolve) {
-				if (!reachesFs(specifier)) rejectBuiltin(specifier);
+				rejectBuiltin(specifier);
 				return nextResolve(specifier, context);
 			},
 		});
@@ -228,25 +231,25 @@ async function executeBundle(outfile) {
 		});
 		const originalBinding = process.binding;
 		process.binding = (specifier) => {
-			if (reachesFs(specifier)) return fsFacade();
 			rejectBuiltin(specifier);
+			if (reachesFs(specifier)) return fsFacade();
 			return originalBinding(specifier);
 		};
 		const originalLinked = process._linkedBinding;
 		process._linkedBinding = (specifier) => {
-			if (reachesFs(specifier)) return fsFacade();
 			rejectBuiltin(specifier);
+			if (reachesFs(specifier)) return fsFacade();
 			return originalLinked(specifier);
 		};
 		const originalBuiltin = process.getBuiltinModule;
 		process.getBuiltinModule = (specifier) => {
-			if (!reachesFs(specifier)) rejectBuiltin(specifier);
+			rejectBuiltin(specifier);
 			const loaded = originalBuiltin(specifier);
 			if (reachesFs(specifier)) wrapObject(loaded);
 			return loaded;
 		};
 		const guardedRequire = (specifier) => {
-			if (!reachesFs(specifier)) rejectBuiltin(specifier);
+			rejectBuiltin(specifier);
 			const loaded = baseRequire(specifier);
 			if (reachesFs(specifier)) wrapObject(loaded);
 			return loaded;
@@ -255,7 +258,10 @@ async function executeBundle(outfile) {
 		globalThis.__workerGuardRequire = guardedRequire;
 		globalThis.fetch = () => { throw new Error("Network is disabled"); };
 		let error = null;
-		try { await import(${JSON.stringify(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`)}); }
+		try {
+			await import(${JSON.stringify(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`)});
+			if (deferredBuiltin) throw new Error("Import-time built-in: " + deferredBuiltin);
+		}
 		catch (cause) { error = cause instanceof Error ? cause.message : String(cause); }
 		process.stdout.write(JSON.stringify({ reads, error }));
 	`;
@@ -494,6 +500,18 @@ test("a third-party import may reach only built-ins the real bundle needs", asyn
 		],
 		[`import ${JSON.stringify(`node:${allowed}`)};\nexport const loaded = 1;`, null],
 	];
+	for (const specifier of ["fs", "node:fs", "fs/promises", "node:fs/promises"]) {
+		for (const source of [
+			`import "${specifier}";`,
+			`await import("${specifier}");`,
+			`require("${specifier}");`,
+			`process.getBuiltinModule("${specifier}");`,
+			`process.binding("${specifier}");`,
+			`process._linkedBinding("${specifier}");`,
+		]) {
+			cases.push([source, specifier.replace(/^node:/, "")]);
+		}
+	}
 	for (const [source, builtin] of cases) {
 		const directory = mkdtempSync(join(tmpdir(), "tensquads-allow-"));
 		const packageDir = join(directory, "node_modules", "reads-at-import");
