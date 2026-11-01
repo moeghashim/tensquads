@@ -528,3 +528,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-01 01-public-screens: A caught import-time reach of any built-in outside the production allow-list fails the Node filter. The sign-up test migrates through the locked Postgres helper.
 - 2026-11-01 01-public-screens: Sort the Postgres migration test imports.
 - 2026-11-01 01-public-screens: Split the worker allow-list test so its complexity stays under the Fallow gate.
+- 2026-11-01 01-public-screens: The workerd package fixture uses the default module import. Each fixture succeeds in Node before its workerd failure is accepted.

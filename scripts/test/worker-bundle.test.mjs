@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, wr
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import * as esbuild from "esbuild";
 
@@ -687,17 +687,33 @@ async function bootWorkerd(directory, compat) {
 	}
 }
 
+function writeScratchPackage(directory, source) {
+	const packageDir = join(directory, "node_modules", "scratch-proof");
+	mkdirSync(packageDir, { recursive: true });
+	writeFileSync(
+		join(packageDir, "package.json"),
+		JSON.stringify({ name: "scratch-proof", type: "module", main: "index.js" }),
+	);
+	writeFileSync(join(packageDir, "index.js"), source(packageDir));
+	return packageDir;
+}
+
+async function proveFixtureInNode(source) {
+	const directory = mkdtempSync(join(tmpdir(), "tensquads-node-fixture-"));
+	try {
+		const packageDir = writeScratchPackage(directory, source);
+		const loaded = await import(pathToFileURL(join(packageDir, "index.js")).href);
+		return loaded.value;
+	} finally {
+		rmSync(directory, { recursive: true, force: true });
+	}
+}
+
 async function bootThirdParty(source, compat) {
 	const directory = mkdtempSync(join(tmpdir(), "tensquads-workerd-"));
 	const workerDirectory = mkdtempSync(join(tmpdir(), "tensquads-workerd-bundle-"));
 	try {
-		const packageDir = join(directory, "node_modules", "scratch-proof");
-		mkdirSync(packageDir, { recursive: true });
-		writeFileSync(
-			join(packageDir, "package.json"),
-			JSON.stringify({ name: "scratch-proof", type: "module", main: "index.js" }),
-		);
-		writeFileSync(join(packageDir, "index.js"), source(packageDir));
+		writeScratchPackage(directory, source);
 		const entry = join(directory, "entry.js");
 		writeFileSync(
 			entry,
@@ -723,28 +739,79 @@ async function bootThirdParty(source, compat) {
 }
 
 function workerdFixtures(realPath) {
+	const fileText = readFileSync(realPath, "utf8");
 	return [
-		[
-			"fs.readFileSync",
-			(packageDir) =>
-				`import { readFileSync } from "node:fs";\nconst text = readFileSync(${JSON.stringify(realPath)}, "utf8");\nif (!text.includes("tensquads")) throw new Error("read failed");\nexport const value = ${JSON.stringify(packageDir)};\n`,
-		],
-		[
-			"process.binding",
-			() =>
-				`const binding = process.binding("fs");\nif (binding.internalModuleStat(${JSON.stringify(realPath)}) !== 0) throw new Error("stat failed");\nexport const value = 1;\n`,
-		],
-		[
-			"module._readPackage",
-			(packageDir) =>
-				`import * as module from "node:module";\nconst pkg = module._readPackage(${JSON.stringify(packageDir)});\nif (!pkg || pkg.name !== "scratch-proof") throw new Error("read failed");\nexport const value = 1;\n`,
-		],
-		[
-			"child_process.execFileSync",
-			() =>
-				'import { execFileSync } from "node:child_process";\nconst text = execFileSync("/bin/echo", ["ok"], { encoding: "utf8" });\nif (String(text).trim() !== "ok") throw new Error("exec failed");\nexport const value = 1;\n',
-		],
+		{
+			name: "fs.readFileSync",
+			nodeValue: fileText,
+			workerd: /no such file or directory, readAll/,
+			source(packageDir) {
+				return [
+					'import { readFileSync } from "node:fs";',
+					`const text = readFileSync(${JSON.stringify(realPath)}, "utf8");`,
+					'if (!text.includes("tensquads")) throw new Error("read failed");',
+					"export const value = text;",
+					`export const kept = ${JSON.stringify(packageDir)};`,
+				].join("\n");
+			},
+		},
+		{
+			name: "process.binding",
+			nodeValue: 0,
+			workerd: /The process\.binding method is not implemented/,
+			source(packageDir) {
+				return [
+					'const binding = process.binding("fs");',
+					`const stat = binding.internalModuleStat(${JSON.stringify(realPath)});`,
+					'if (stat !== 0) throw new Error("stat failed");',
+					"export const value = stat;",
+					`export const kept = ${JSON.stringify(packageDir)};`,
+				].join("\n");
+			},
+		},
+		{
+			// Default import. A namespace import leaves _readPackage undefined in Node 24.
+			// Node must read the scratch package. Workerd's node:module default has no _readPackage.
+			name: "module._readPackage",
+			nodeValue: "scratch-proof",
+			workerd: /TypeError: module\._readPackage is not a function/,
+			source(packageDir) {
+				return [
+					'import module from "node:module";',
+					`const pkg = module._readPackage(${JSON.stringify(packageDir)});`,
+					'if (!pkg || pkg.name !== "scratch-proof") throw new Error("read failed");',
+					"export const value = pkg.name;",
+				].join("\n");
+			},
+		},
+		{
+			name: "child_process.execFileSync",
+			nodeValue: "ok",
+			workerd: /The child_process\.execFileSync method is not implemented/,
+			source(packageDir) {
+				return [
+					'import { execFileSync } from "node:child_process";',
+					'const text = execFileSync("/bin/echo", ["ok"], { encoding: "utf8" });',
+					'if (String(text).trim() !== "ok") throw new Error("exec failed");',
+					"export const value = String(text).trim();",
+					`export const kept = ${JSON.stringify(packageDir)};`,
+				].join("\n");
+			},
+		},
 	];
+}
+
+function assertWorkerdRejection(fixture, result) {
+	const error = result.error ?? "";
+	assert.equal(
+		result.failed,
+		true,
+		`${fixture.name} did not fail in workerd. It would be harmless in production or need a named rule.`,
+	);
+	assert.match(error, fixture.workerd, fixture.name);
+	assert.equal(error.includes("read failed"), false, fixture.name);
+	assert.equal(error.includes("stat failed"), false, fixture.name);
+	assert.equal(error.includes("exec failed"), false, fixture.name);
 }
 
 test("workerd boots the built worker and rejects import-time builtin routes", async () => {
@@ -759,13 +826,9 @@ test("workerd boots the built worker and rejects import-time builtin routes", as
 	assert.equal(homepage.body.includes("tensquads homepage"), true);
 
 	const realPath = join(repoRoot, "package.json");
-	for (const [name, source] of workerdFixtures(realPath)) {
-		const result = await bootThirdParty(source, compat);
-		assert.equal(
-			result.failed,
-			true,
-			`${name} did not fail in workerd. It would be harmless in production or need a named rule.`,
-		);
+	for (const fixture of workerdFixtures(realPath)) {
+		assert.equal(await proveFixtureInNode(fixture.source), fixture.nodeValue, fixture.name);
+		assertWorkerdRejection(fixture, await bootThirdParty(fixture.source, compat));
 	}
 });
 
