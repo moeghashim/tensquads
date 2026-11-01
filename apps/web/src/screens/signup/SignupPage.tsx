@@ -21,9 +21,11 @@ function SignupClerk() {
 	const { signUp } = useSignUp();
 	const navigate = useNavigate();
 	const ready = useRef(false);
+	const [credentialsLocked, setCredentialsLocked] = useState(false);
 	return (
 		<SignupScreen
-			onCreate={async (state) => {
+			credentialsLocked={credentialsLocked}
+			onCreate={async (state, isCurrent) => {
 				try {
 					if (!ready.current) {
 						const result = await signUp.password({
@@ -38,10 +40,12 @@ function SignupClerk() {
 						}
 						await signUp.finalize();
 						ready.current = true;
+						setCredentialsLocked(true);
 					}
 				} catch {
 					return "wrong";
 				}
+				if (!isCurrent()) return "blocked";
 				try {
 					await createAccount({
 						data: {
@@ -50,6 +54,7 @@ function SignupClerk() {
 							agentIds: state.picked,
 						},
 					});
+					if (!isCurrent()) return "blocked";
 					await navigate({ to: "/overview" });
 					return "ok";
 				} catch {
@@ -60,7 +65,13 @@ function SignupClerk() {
 	);
 }
 
-function SignupScreen({ onCreate }: { onCreate: (state: SignupState) => Promise<AccountCreateResult> }) {
+function SignupScreen({
+	onCreate,
+	credentialsLocked = false,
+}: {
+	onCreate: (state: SignupState, isCurrent: () => boolean) => Promise<AccountCreateResult>;
+	credentialsLocked?: boolean;
+}) {
 	const [state, setState] = useState<SignupState>(initialSignup);
 	return (
 		<div
@@ -96,7 +107,12 @@ function SignupScreen({ onCreate }: { onCreate: (state: SignupState) => Promise<
 				)}
 			>
 				<SignupPitch />
-				<SignupCard state={state} onChange={setState} onCreate={onCreate} />
+				<SignupCard
+					state={state}
+					onChange={setState}
+					onCreate={onCreate}
+					credentialsLocked={credentialsLocked}
+				/>
 			</main>
 		</div>
 	);

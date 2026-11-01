@@ -1,5 +1,3 @@
-import { useRef, useState } from "react";
-
 import { css } from "../css.ts";
 import { Arrow } from "../marks.tsx";
 import { fieldsComplete, type SignupState } from "./machine.ts";
@@ -29,11 +27,20 @@ export function rowStyle() {
 	);
 }
 
-export function BackButton({ handler, onClick }: { handler: string; onClick: () => void }) {
+export function BackButton({
+	handler,
+	onClick,
+	disabled = false,
+}: {
+	handler: string;
+	onClick: () => void;
+	disabled?: boolean;
+}) {
 	return (
 		<button
 			type="button"
 			className="soft-btn"
+			disabled={disabled}
 			data-handler={handler}
 			onClick={onClick}
 			style={css(
@@ -71,15 +78,18 @@ export function StepButtons({
 export function AccountStep({
 	state,
 	onChange,
-	onCreate,
+	onSubmit,
+	pending,
+	credentialsLocked,
+	notice,
 }: {
 	state: SignupState;
 	onChange: (state: SignupState) => void;
-	onCreate: (state: SignupState) => Promise<AccountCreateResult>;
+	onSubmit: () => void;
+	pending: boolean;
+	credentialsLocked: boolean;
+	notice: "" | "wrong" | "failed";
 }) {
-	const [notice, setNotice] = useState<"" | "wrong" | "failed">("");
-	const [pending, setPending] = useState(false);
-	const pendingRef = useRef(false);
 	const showEmpty = state.tried && !fieldsComplete(state.email, state.password);
 	const message = showEmpty ? emptyError : notice === "wrong" ? wrongError : notice === "failed" ? failedError : "";
 	return (
@@ -94,9 +104,9 @@ export function AccountStep({
 					autoComplete="email"
 					placeholder="you@company.com"
 					value={state.email}
+					disabled={pending || credentialsLocked}
 					data-handler="onEmail"
 					onChange={(event) => {
-						setNotice("");
 						onChange({ ...state, email: event.target.value });
 					}}
 					style={css(fieldStyle)}
@@ -112,9 +122,9 @@ export function AccountStep({
 					autoComplete="new-password"
 					placeholder="Your password"
 					value={state.password}
+					disabled={pending || credentialsLocked}
 					data-handler="onPassword"
 					onChange={(event) => {
-						setNotice("");
 						onChange({ ...state, password: event.target.value });
 					}}
 					style={css(fieldStyle)}
@@ -131,31 +141,15 @@ export function AccountStep({
 				</div>
 			) : null}
 			<div style={rowStyle()}>
-				<BackButton handler="back" onClick={() => onChange({ ...state, step: "agents", tried: false })} />
+				<BackButton
+					disabled={pending}
+					handler="back"
+					onClick={() => onChange({ ...state, step: "agents", tried: false })}
+				/>
 				<button
 					type="button"
 					disabled={pending}
-					onClick={() => {
-						if (pendingRef.current) {
-							return;
-						}
-						const next = { ...state, tried: true };
-						onChange(next);
-						if (!fieldsComplete(next.email, next.password)) {
-							setNotice("");
-							return;
-						}
-						pendingRef.current = true;
-						setPending(true);
-						void onCreate(next)
-							.then((outcome) => {
-								setNotice(outcome === "wrong" || outcome === "failed" ? outcome : "");
-							})
-							.finally(() => {
-								pendingRef.current = false;
-								setPending(false);
-							});
-					}}
+					onClick={onSubmit}
 					style={css(primaryButton)}
 				>
 					Create my workspace

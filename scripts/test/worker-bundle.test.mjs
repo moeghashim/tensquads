@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -144,11 +145,35 @@ async function bundleWithMeta(entryPoints) {
 		conditions: ["workerd", "worker", "browser"],
 		outfile,
 		metafile: true,
+		banner: { js: 'import { createRequire as __workerGuardRequire } from "node:module"; const require = __workerGuardRequire(import.meta.url.startsWith("data:") ? process.cwd() + "/worker-guard.mjs" : import.meta.url);' },
 		legalComments: "none",
 		logLevel: "silent",
 		plugins: [externalNodePlugin()],
 	});
 	return { directory, outfile, metafile: result.metafile };
+}
+
+function executeBundle(outfile) {
+	const source = readFileSync(outfile, "utf8");
+	const script = `
+		import fs from "node:fs";
+		import { syncBuiltinESMExports } from "node:module";
+		const reads = [];
+		for (const name of ["readFileSync", "readFile", "existsSync", "createReadStream"]) {
+			fs[name] = (path) => {
+				reads.push({ name, path: String(path) });
+				throw new Error("Import-time filesystem read");
+			};
+		}
+		fs.promises.readFile = fs.readFile;
+		syncBuiltinESMExports();
+		globalThis.fetch = () => { throw new Error("Network is disabled"); };
+		let error = null;
+		try { await import(${JSON.stringify(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`)}); }
+		catch (cause) { error = cause.message; }
+		process.stdout.write(JSON.stringify({ reads, error }));
+	`;
+	return JSON.parse(execFileSync(process.execPath, ["--input-type=module"], { input: script, encoding: "utf8" }));
 }
 
 function thirdPartyImportReads(metafile) {
@@ -212,6 +237,7 @@ test("a third-party import-time file read fails the worker guard", async () => {
 	const real = await bundleWithMeta([entry]);
 	try {
 		assert.deepEqual(thirdPartyImportReads(real.metafile), []);
+		assert.deepEqual(executeBundle(real.outfile), { reads: [], error: null });
 	} finally {
 		rmSync(real.directory, { recursive: true, force: true });
 	}
@@ -231,6 +257,9 @@ test("a third-party import-time file read fails the worker guard", async () => {
 	writeFileSync(fixture, 'import "reads-at-import";\nexport const ok = 1;\n');
 	const bundled = await bundleWithMeta([fixture]);
 	try {
+		const execution = executeBundle(bundled.outfile);
+		assert.deepEqual(execution.reads, [{ name: "readFileSync", path: "secret.txt" }]);
+		assert.equal(execution.error, "Import-time filesystem read");
 		const hits = thirdPartyImportReads(bundled.metafile);
 		assert.equal(hits.length > 0, true);
 		assert.equal(
@@ -239,6 +268,29 @@ test("a third-party import-time file read fails the worker guard", async () => {
 		);
 	} finally {
 		rmSync(bundled.directory, { recursive: true, force: true });
+		rmSync(directory, { recursive: true, force: true });
+	}
+});
+
+test("bundle execution catches reads inside invoked functions and CommonJS wrappers", async () => {
+	const directory = mkdtempSync(join(tmpdir(), "tensquads-wrapped-read-"));
+	try {
+		for (const [extension, source] of [
+			["mjs", 'import { readFileSync } from "node:fs"; function load() { readFileSync("secret.txt"); } load();'],
+			["cjs", 'const fs = require("node:fs"); fs.readFileSync("secret.txt");'],
+		]) {
+			const fixture = join(directory, `entry.${extension}`);
+			writeFileSync(fixture, source);
+			const bundle = await bundleWithMeta([fixture]);
+			try {
+				const execution = executeBundle(bundle.outfile);
+				assert.deepEqual(execution.reads, [{ name: "readFileSync", path: "secret.txt" }]);
+				assert.equal(execution.error, "Import-time filesystem read");
+			} finally {
+				rmSync(bundle.directory, { recursive: true, force: true });
+			}
+		}
+	} finally {
 		rmSync(directory, { recursive: true, force: true });
 	}
 });

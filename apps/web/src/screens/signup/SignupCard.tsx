@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useCallback, useRef, useState } from "react";
 
 import { css } from "../css.ts";
 import { Arrow, Check, Mark } from "../marks.tsx";
@@ -11,7 +11,7 @@ import {
 	summaryLine,
 	volumeLabels,
 } from "./catalog.ts";
-import { openAccount, pickKind, type SignupState, togglePicked, toggleValue } from "./machine.ts";
+import { fieldsComplete, openAccount, pickKind, type SignupState, togglePicked, toggleValue } from "./machine.ts";
 import {
 	type AccountCreateResult,
 	AccountStep,
@@ -29,15 +29,51 @@ export function SignupCard({
 	state,
 	onChange,
 	onCreate,
+	credentialsLocked,
 }: {
 	state: SignupState;
 	onChange: (state: SignupState) => void;
-	onCreate: (state: SignupState) => Promise<AccountCreateResult>;
+	onCreate: (state: SignupState, isCurrent: () => boolean) => Promise<AccountCreateResult>;
+	credentialsLocked: boolean;
 }) {
+	const [pending, setPending] = useState(false);
+	const [notice, setNotice] = useState<"" | "wrong" | "failed">("");
+	const request = useRef<symbol | null>(null);
+	const bindSection = useCallback((node: HTMLElement | null) => {
+		if (node === null) request.current = null;
+	}, []);
+	function change(next: SignupState) {
+		if (request.current) return;
+		setNotice("");
+		onChange(next);
+	}
+	async function submit() {
+		if (request.current) return;
+		const next = { ...state, tried: true };
+		onChange(next);
+		setNotice("");
+		if (!fieldsComplete(next.email, next.password)) return;
+		const token = Symbol();
+		request.current = token;
+		setPending(true);
+		const isCurrent = () => request.current === token;
+		try {
+			const outcome = await onCreate(next, isCurrent);
+			if (isCurrent()) setNotice(outcome === "wrong" || outcome === "failed" ? outcome : "");
+		} catch {
+			if (isCurrent()) setNotice("failed");
+		} finally {
+			if (isCurrent()) {
+				request.current = null;
+				setPending(false);
+			}
+		}
+	}
 	const current = state.step === "choose" ? 0 : state.step === "details" ? 1 : 2;
 	const kind = state.kind ?? "existing";
 	return (
 		<section
+			ref={bindSection}
 			aria-label="Create your business"
 			style={css(
 				"flex: 1 1 460px; max-width: 620px; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 28px 32px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px",
@@ -63,12 +99,21 @@ export function SignupCard({
 					);
 				})}
 			</ol>
-			{state.step === "choose" ? <ChooseStep state={state} onChange={onChange} /> : null}
+			{state.step === "choose" ? <ChooseStep state={state} onChange={change} /> : null}
 			{state.step === "details" && state.kind ? (
-				<DetailsStep state={state} kind={state.kind} onChange={onChange} />
+				<DetailsStep state={state} kind={state.kind} onChange={change} />
 			) : null}
-			{state.step === "agents" ? <SquadStep state={state} kind={kind} onChange={onChange} /> : null}
-			{state.step === "account" ? <AccountStep state={state} onChange={onChange} onCreate={onCreate} /> : null}
+			{state.step === "agents" ? <SquadStep state={state} kind={kind} onChange={change} /> : null}
+			{state.step === "account" ? (
+				<AccountStep
+					state={state}
+					onChange={change}
+					onSubmit={submit}
+					pending={pending}
+					credentialsLocked={credentialsLocked}
+					notice={notice}
+				/>
+			) : null}
 			<p style={css("margin: 0; font-size: 12px; color: #8f8f8f; text-align: center")}>
 				By continuing you agree to the [TERMS] and [PRIVACY POLICY].
 			</p>
