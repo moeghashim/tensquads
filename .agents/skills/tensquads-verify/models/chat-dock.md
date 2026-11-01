@@ -43,10 +43,10 @@ A model failure is a path of Type, an empty send, no agent, a paused agent, a se
 
 | Check | Covers | Sync commit |
 | --- | --- | --- |
-| `send.test.ts` | ids, clock, no event, a pending task, and a dash skill | filled after the commit that adds this model |
-| `/statechart` on `ChatDock.tla` | one draft, one send, and a reload that keeps the Task | filled after the commit that adds this model |
+| `send.test.ts` | ids, clock, no event, a pending task, and a dash skill | `06ed4c7af446f86505fb095380e6a8587316e25a` |
+| `/statechart` on `ChatDock.tla` | one draft, one send, and a reload that keeps the Task | `06ed4c7af446f86505fb095380e6a8587316e25a` |
 
-TLC exited 0, reached 40 states and 172 steps, and named no broken rule. The rules are TypeOK, MessageOrder, SendShape, DockHidden, OneDraft, WritesDoNotChangeStore, SkillDash, and NoDeadlock. The chart draws 3 states and 4 arrows. The view hides 140 steps. `send.test.ts` exited 0.
+Both checks passed on `06ed4c7af446f86505fb095380e6a8587316e25a`. That tree keeps the dock send and the dock wait. `send.test.ts` exited 0. TLC exited 0, reached 40 states and 172 steps, and named no broken rule. The rules are TypeOK, MessageOrder, SendShape, DockHidden, OneDraft, WritesDoNotChangeStore, SkillDash, and NoDeadlock. The chart draws 3 states and 4 arrows. The view hides 140 steps.
 
 Move a sync commit forward only after both checks pass and you confirm that the model and the tests still describe the code at the new commit. An intended change updates `conversation.ts`, `send.test.ts`, and `ChatDock.tla` together.
 
