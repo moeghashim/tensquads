@@ -3,6 +3,7 @@ import {
 	expectLabeledInputs,
 	expectNamedButtons,
 	expectNoHorizontalScroll,
+	skipUnlessMacScreenshot,
 	test,
 	viewports,
 	waitForHydration,
@@ -66,6 +67,7 @@ test("homepage controls have labels and the focus ring", async ({ page }) => {
 
 for (const viewport of viewports) {
 	test(`homepage at ${viewport.name}`, async ({ page }) => {
+		skipUnlessMacScreenshot();
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		await page.goto("/");
 		await waitForScreenFonts(page);

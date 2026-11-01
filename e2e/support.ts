@@ -17,6 +17,13 @@ export const test = base.extend({
 
 export { expect };
 
+export function skipUnlessMacScreenshot() {
+	test.skip(
+		process.platform !== "darwin",
+		"Baselines are macOS captures. The macOS required job runs this pixel check.",
+	);
+}
+
 export const viewports = [
 	{ name: "1440", width: 1440, height: 900 },
 	{ name: "390", width: 390, height: 844 },

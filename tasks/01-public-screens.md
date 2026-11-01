@@ -37,6 +37,8 @@ These decisions cover states the design does not show. They are final for this t
 
 8. A design colour stays the design colour. Axe runs on /, /signup, and /signin at 1440 and 390 with every rule on. color-contrast is excluded only for the exact elements whose failing colour is the design's own value, through named selectors in one test helper. A contrast failure on any other colour still fails. These faults stay in the app on purpose. The fix is a change in the design canvas.
 
+9. The six toHaveScreenshot checks run on macOS only. The baselines are macOS captures, and Linux renders text differently. One helper in e2e/support.ts skips them when process.platform is not darwin, with the reason "Baselines are macOS captures. The macOS required job runs this pixel check." Every other test still runs on Ubuntu and macOS. The threshold, the six baselines, and the macOS behaviour stay as they are. Do not add Linux baselines. The macOS job and Required checks stay required.
+
 Verify at sign-up and Device Trust are off in the development instance only. A production instance must turn both on, and that needs a designed code step before launch.
 
 ## Routes

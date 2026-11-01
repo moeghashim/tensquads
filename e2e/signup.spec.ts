@@ -3,6 +3,7 @@ import {
 	expectLabeledInputs,
 	expectNamedButtons,
 	expectNoHorizontalScroll,
+	skipUnlessMacScreenshot,
 	test,
 	viewports,
 	waitForHydration,
@@ -99,6 +100,7 @@ test("sign-up controls have labels", async ({ page }) => {
 
 for (const viewport of viewports) {
 	test(`sign-up at ${viewport.name}`, async ({ page }) => {
+		skipUnlessMacScreenshot();
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		await page.goto("/signup");
 		await waitForScreenFonts(page);

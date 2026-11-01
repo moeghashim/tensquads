@@ -4,6 +4,7 @@ import {
 	expectNamedButtons,
 	expectNoHorizontalScroll,
 	secretsFor,
+	skipUnlessMacScreenshot,
 	test,
 	viewports,
 	waitForScreenFonts,
@@ -57,6 +58,7 @@ test("sign-in controls have labels and the focus ring", async ({ page }) => {
 
 for (const viewport of viewports) {
 	test(`sign-in at ${viewport.name}`, async ({ page }) => {
+		skipUnlessMacScreenshot();
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		await page.goto("/signin");
 		await waitForScreenFonts(page);
