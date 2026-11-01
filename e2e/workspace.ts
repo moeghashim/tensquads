@@ -66,16 +66,19 @@ export const test = base.extend<{ accountId: string }, { workspaceUser: Workspac
 		},
 		{ scope: "worker" },
 	],
-	accountId: async ({ workspaceUser }, use) => {
-		const secrets = secretsFor(["testDatabase"]);
-		const postgres = openPostgres(secrets.testDatabase);
-		try {
-			await replaceDemoAccount(postgres.db, workspaceUser.accountId, workspaceUser.userId);
-		} finally {
-			await postgres.close();
-		}
-		await use(workspaceUser.accountId);
-	},
+	accountId: [
+		async ({ workspaceUser }, use) => {
+			const secrets = secretsFor(["testDatabase"]);
+			const postgres = openPostgres(secrets.testDatabase);
+			try {
+				await replaceDemoAccount(postgres.db, workspaceUser.accountId, workspaceUser.userId);
+			} finally {
+				await postgres.close();
+			}
+			await use(workspaceUser.accountId);
+		},
+		{ auto: true },
+	],
 });
 
 export { expect };
