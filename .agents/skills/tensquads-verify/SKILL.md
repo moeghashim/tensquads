@@ -106,7 +106,9 @@ A model failure is a path of A new business, An existing business, Back, Choose 
 
 | Check | Covers | Sync commit |
 | --- | --- | --- |
-| `machine.test.ts` | `initialSignup`, `pickKind`, `back`, `nextDetails`, `openAccount`, `summaryLine` | pending the commit that adds this model |
-| `/statechart` on `Signup.tla` | Type, Details, Squad, Account, Created, and the zero-squad block | pending the commit that adds this model |
+| `machine.test.ts` | `initialSignup`, `pickKind`, `back`, `nextDetails`, `openAccount`, `summaryLine` | `3fdf3bad66a0dca75a58eea10c23a995ce85b1ec` |
+| `/statechart` on `Signup.tla` | Type, Details, Squad, Account, Created, and the zero-squad block | `3fdf3bad66a0dca75a58eea10c23a995ce85b1ec` |
+
+Both checks passed on `3fdf3bad66a0dca75a58eea10c23a995ce85b1ec`, the commit that adds this model. `machine.test.ts` exited 0. TLC exited 0, reached 17 states and 34 steps, and named no broken rule.
 
 Move a sync commit forward only after both checks pass and you confirm that the model and the tests still describe the code at the new commit. An intended change updates `machine.ts`, `machine.test.ts`, and `Signup.tla` together.
