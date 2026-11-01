@@ -146,12 +146,7 @@ export function AccountStep({
 					handler="back"
 					onClick={() => onChange({ ...state, step: "agents", tried: false })}
 				/>
-				<button
-					type="button"
-					disabled={pending}
-					onClick={onSubmit}
-					style={css(primaryButton)}
-				>
+				<button type="button" disabled={pending} onClick={onSubmit} style={css(primaryButton)}>
 					Create my workspace
 					<Arrow />
 				</button>

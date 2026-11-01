@@ -145,7 +145,9 @@ async function bundleWithMeta(entryPoints) {
 		conditions: ["workerd", "worker", "browser"],
 		outfile,
 		metafile: true,
-		banner: { js: 'import { createRequire as __workerGuardRequire } from "node:module"; const require = __workerGuardRequire(import.meta.url.startsWith("data:") ? process.cwd() + "/worker-guard.mjs" : import.meta.url);' },
+		banner: {
+			js: 'import { createRequire as __workerGuardRequire } from "node:module"; const require = __workerGuardRequire(import.meta.url.startsWith("data:") ? process.cwd() + "/worker-guard.mjs" : import.meta.url);',
+		},
 		legalComments: "none",
 		logLevel: "silent",
 		plugins: [externalNodePlugin()],

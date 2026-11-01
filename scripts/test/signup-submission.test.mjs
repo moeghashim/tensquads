@@ -21,12 +21,17 @@ const result = await esbuild.build({
 	write: false,
 	format: "iife",
 	jsx: "automatic",
-	plugins: [{
-		name: "signup-boundaries",
-		setup(build) {
-			build.onResolve({ filter: /^(@clerk\/tanstack-react-start|@tanstack\/react-router|#\/server\/create-account.ts)$/ }, (args) => ({ path: args.path, namespace: "boundary" }));
-			build.onLoad({ filter: /.*/, namespace: "boundary" }, ({ path }) => ({
-				contents: path.startsWith("@clerk") ? `
+	plugins: [
+		{
+			name: "signup-boundaries",
+			setup(build) {
+				build.onResolve(
+					{ filter: /^(@clerk\/tanstack-react-start|@tanstack\/react-router|#\/server\/create-account.ts)$/ },
+					(args) => ({ path: args.path, namespace: "boundary" }),
+				);
+				build.onLoad({ filter: /.*/, namespace: "boundary" }, ({ path }) => ({
+					contents: path.startsWith("@clerk")
+						? `
 					const signUp = {
 						status: "missing_requirements", createdSessionId: "session",
 						password: async () => { window.calls.password++; signUp.status = "complete"; return {}; },
@@ -34,17 +39,21 @@ const result = await esbuild.build({
 					};
 					export const useSignUp = () => ({ signUp });
 					export const useSignIn = () => ({ signIn: signUp });
-				` : path.startsWith("@tanstack") ? `
+				`
+						: path.startsWith("@tanstack")
+							? `
 					export const useNavigate = () => async (options) => { window.destination = options.to; window.calls.navigate++; };
-				` : `
+				`
+							: `
 					export const createAccount = async () => {
 						window.calls.create++;
 						await new Promise((resolve, reject) => { window.finish = resolve; window.fail = reject; });
 					};
 				`,
-			}));
+				}));
+			},
 		},
-	}],
+	],
 });
 
 async function expectCredentialMismatchRejected(page, submit, calls) {
@@ -53,13 +62,17 @@ async function expectCredentialMismatchRejected(page, submit, calls) {
 		["Password", "another-password-at-least-16", "password-at-least-16-characters"],
 	]) {
 		const field = page.getByLabel(label);
-		await field.evaluate((input) => { input.disabled = false; });
+		await field.evaluate((input) => {
+			input.disabled = false;
+		});
 		await field.fill(changed);
 		await submit.click();
 		await page.getByRole("alert").waitFor();
 		assert.equal(await page.getByRole("alert").textContent(), "That email or password is wrong.");
 		assert.deepEqual(await page.evaluate(() => window.calls), calls);
-		await field.evaluate((input) => { input.disabled = false; });
+		await field.evaluate((input) => {
+			input.disabled = false;
+		});
 		await field.fill(original);
 	}
 }
@@ -101,7 +114,10 @@ test("finalized signup locks credentials and owns pending requests across steps"
 		assert.equal(await page.evaluate(() => window.destination), "/overview");
 		await submit.click();
 		await page.waitForFunction(() => window.calls.create === 3);
-		await page.evaluate(() => { window.root.unmount(); window.finish(); });
+		await page.evaluate(() => {
+			window.root.unmount();
+			window.finish();
+		});
 		await page.evaluate(() => new Promise(requestAnimationFrame));
 		assert.equal(await page.evaluate(() => window.calls.navigate), 1);
 	} finally {
@@ -115,7 +131,10 @@ for (const signin of [false, true]) {
 		try {
 			const page = await browser.newPage();
 			await page.setContent('<div id="root"></div>');
-			await page.evaluate((value) => { window.signin = value; window.finalizeError = true; }, signin);
+			await page.evaluate((value) => {
+				window.signin = value;
+				window.finalizeError = true;
+			}, signin);
 			await page.addScriptTag({ content: result.outputFiles[0].text });
 			if (!signin) {
 				await page.getByRole("button", { name: /A new business/ }).click();
@@ -130,11 +149,18 @@ for (const signin of [false, true]) {
 			assert.equal(await page.getByRole("alert").textContent(), "That email or password is wrong.");
 			assert.equal(await page.getByLabel("Email").isEnabled(), signin);
 			assert.equal(await page.getByLabel("Password").isEnabled(), signin);
-			assert.deepEqual(await page.evaluate(() => window.calls), { password: 1, finalize: 1, create: 0, navigate: 0 });
+			assert.deepEqual(await page.evaluate(() => window.calls), {
+				password: 1,
+				finalize: 1,
+				create: 0,
+				navigate: 0,
+			});
 			if (!signin) {
 				await expectCredentialMismatchRejected(page, submit, { password: 1, finalize: 1, create: 0, navigate: 0 });
 			}
-			await page.evaluate(() => { window.finalizeError = false; });
+			await page.evaluate(() => {
+				window.finalizeError = false;
+			});
 			await submit.click();
 			if (!signin) {
 				await page.waitForFunction(() => window.calls.create === 1);
@@ -178,7 +204,12 @@ test("screen details and Back transitions preserve business fields and picked sq
 			await back.click();
 			await back.click();
 			await page.getByRole("heading", { name: "Where are you starting from?" }).waitFor();
-			assert.deepEqual(await page.evaluate(() => window.calls), { password: 0, finalize: 0, create: 0, navigate: 0 });
+			assert.deepEqual(await page.evaluate(() => window.calls), {
+				password: 0,
+				finalize: 0,
+				create: 0,
+				navigate: 0,
+			});
 			await page.close();
 		}
 	} finally {

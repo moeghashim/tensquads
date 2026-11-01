@@ -115,12 +115,7 @@ function SignupScreen({
 				)}
 			>
 				<SignupPitch />
-				<SignupCard
-					state={state}
-					onChange={setState}
-					onCreate={onCreate}
-					credentialsLocked={credentialsLocked}
-				/>
+				<SignupCard state={state} onChange={setState} onCreate={onCreate} credentialsLocked={credentialsLocked} />
 			</main>
 		</div>
 	);

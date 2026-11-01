@@ -427,7 +427,10 @@ export function HomeRest() {
 						</div>
 					</div>
 				</div>
-				<div data-design-contrast="home-footer-line" style={css("max-width: 1200px; margin: 24px auto 0; font-size: 12px; color: #8f8f8f")}>
+				<div
+					data-design-contrast="home-footer-line"
+					style={css("max-width: 1200px; margin: 24px auto 0; font-size: 12px; color: #8f8f8f")}
+				>
 					© 2026 [COMPANY LEGAL NAME]. All rights reserved.
 				</div>
 			</footer>
