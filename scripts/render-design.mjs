@@ -11,6 +11,11 @@ const linkMap = {
 };
 
 export async function renderDesign(page, design, state = {}, approval = {}) {
+	const html = await renderDesignMarkup(page, design, state, approval);
+	return inventoryHtml(html);
+}
+
+export async function renderDesignMarkup(page, design, state = {}, approval = {}) {
 	const source = readFileSync(new URL(`../design/${design.file}`, import.meta.url), "utf8");
 	assert.deepEqual(designInventory(design.file, source), design);
 	const html = await page.evaluate(
@@ -123,5 +128,5 @@ export async function renderDesign(page, design, state = {}, approval = {}) {
 			approval,
 		},
 	);
-	return inventoryHtml(html);
+	return html;
 }

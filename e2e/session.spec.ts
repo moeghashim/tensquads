@@ -4,17 +4,23 @@ import { openPostgres } from "@tensquads/adapters";
 import { allowTestSignUp, expect, recordAuthNotes, secretsFor, test, watchPageErrors } from "./support.ts";
 
 test("a visitor with no session is sent to sign-in", async ({ page }) => {
-	await page.goto("/overview");
-	await expect(page).toHaveURL(/\/signin$/);
-	await page.goto("/chat");
-	await expect(page).toHaveURL(/\/signin$/);
+	for (const path of ["/overview", "/chat", "/agents", "/agents/support", "/traffic", "/rules"]) {
+		await page.goto(path);
+		await expect(page).toHaveURL(/\/signin$/);
+	}
 });
 
-test("a correct sign-in opens the blank overview", async ({ page }) => {
+test("a sign-in with no account opens sign-up", async ({ page }) => {
 	const secrets = secretsFor(["publishable", "secret", "testDatabase"]);
 	const email = `sq-${randomUUID().slice(0, 8)}@example.com`;
 	const password = `Ts${randomUUID().replaceAll("-", "")}Zq7`;
 	const userId = await createClerkUser(secrets.secret, email, password);
+	const postgres = openPostgres(secrets.testDatabase);
+	try {
+		await postgres.migrate();
+	} finally {
+		await postgres.close();
+	}
 	const authNotes = await recordAuthNotes(page);
 	const notes = watchPageErrors(page);
 	try {
@@ -23,14 +29,13 @@ test("a correct sign-in opens the blank overview", async ({ page }) => {
 		await page.getByLabel("Password").fill(password);
 		await page.getByRole("button", { name: "Sign in" }).click();
 		try {
-			await expect(page).toHaveURL(/\/overview$/, { timeout: 20_000 });
+			await expect(page).toHaveURL(/\/signup$/, { timeout: 20_000 });
 		} catch {
 			const alert = (await page.getByRole("alert").allTextContents()).join(" ").trim();
 			const detail = [...authNotes, ...notes].join(" | ");
 			throw new Error(`Sign-in stayed on ${page.url()}. Alert: ${alert || "none"}. Notes: ${detail || "none"}.`);
 		}
-		await expect(page.locator("main")).toHaveText("");
-		await expect(page).toHaveTitle("tensquads");
+		await expect(page).toHaveTitle("Create your business");
 	} finally {
 		await deleteClerkUser(secrets.secret, userId);
 	}
@@ -70,6 +75,11 @@ test("a new user makes one account and reaches overview", async ({ page }) => {
 				`Sign-up stayed on ${page.url()}. Alert: ${alert.length > 0 ? alert : "none"}. Notes: ${detail || "none"}.`,
 			);
 		}
+		await expect(page).toHaveTitle("tensquads workspace");
+		await expect(page.locator("main")).toHaveText("");
+		await expect(page.getByText("Runs 3 squads · Harbor Test")).toBeVisible();
+		await expect(page.getByText("SQ", { exact: true })).toBeVisible();
+		await expect(page.locator("[data-if='dockUnread']")).toHaveCount(0);
 		const rows = await sql.query("select id from accounts where email = $1", [email]);
 		expect(rows).toHaveLength(1);
 		const accountId = String(rows[0]?.id ?? "");

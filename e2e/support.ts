@@ -302,10 +302,15 @@ export async function expectNoHorizontalScroll(page: Page) {
 }
 
 export async function expectLabeledInputs(page: Page) {
-	const inputs = page.locator("input, textarea");
+	const inputs = page.locator("input, textarea, select");
 	const count = await inputs.count();
 	for (let index = 0; index < count; index += 1) {
-		const id = await inputs.nth(index).getAttribute("id");
+		const control = inputs.nth(index);
+		const wrapped = await control.evaluate((element) => element.closest("label") !== null);
+		if (wrapped) {
+			continue;
+		}
+		const id = await control.getAttribute("id");
 		expect(id).toBeTruthy();
 		await expect(page.locator(`label[for="${id}"]`)).toHaveCount(1);
 	}
