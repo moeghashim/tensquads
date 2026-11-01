@@ -9,7 +9,7 @@ const masterName = "Master";
 const squadId = "main";
 const defaultLimits = [
 	["policy.refund_auto_limit", 50],
-	["policy.daily_ad_cap", 50],
+	["policy.daily_ad_cap", 200],
 	["policy.reorder_limit", 500],
 ] as const;
 

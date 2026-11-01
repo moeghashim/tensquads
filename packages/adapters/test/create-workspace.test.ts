@@ -48,7 +48,7 @@ test("one create makes one account and a repeat does not make a second", async (
 		assert.equal(master?.name, "Master");
 		const store = await repositories.bus.readStore({ accountId: "account-1", mode: "account" });
 		assert.equal(store["policy.refund_auto_limit"], 50);
-		assert.equal(store["policy.daily_ad_cap"], 50);
+		assert.equal(store["policy.daily_ad_cap"], 200);
 		assert.equal(store["policy.reorder_limit"], 500);
 	} finally {
 		await close();

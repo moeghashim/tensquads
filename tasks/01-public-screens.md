@@ -23,6 +23,20 @@ These three answers fill gaps in the design. They are final for this task. List 
 2. **Phase 2 links.** `/overview` and `/chat` exist as blank pages that need a session, as the blank page did in phase 0. A visitor with no session goes to `/signin`. Phase 2 fills these pages.
 3. **Wrong password.** When Clerk rejects a sign-in, show "That email or password is wrong." in the same place and style as the existing error. This is the only new text in this task. "Forgot password?" and "Email me a sign-in link" do nothing, as their `#` links do in the design. List them under "Does nothing, by design".
 
+## Orchestrator decisions
+
+These decisions cover states the design does not show. They are final for this task. List them in the pull request. Moe's three answers above stay as written.
+
+1. Verify at sign-up is off in the Clerk development instance. Add no code screen.
+2. Device Trust is off in the Clerk development instance. Add no code screen. If `needs_client_trust` still appears, show "That email or password is wrong." The screen must never leave the user with no message.
+3. An email already in use shows "That email or password is wrong." in the same alert.
+4. A sign-up password that Clerk rejects shows "That email or password is wrong." in the same alert. Tests use a password of at least 16 characters.
+5. A failed create shows "Something went wrong. Try again." in the same alert. The screen stays on the account form. A retry makes no second account.
+6. A request in flight adds no new text. The button keeps its label and is disabled, so a double click sends one request.
+7. Values the account form does not collect stay the receipt defaults: status Trial, plan Starter, mrr 0, ltv 0, owner equal to the email, tint `#e7efff`, squad name equal to the business name, and master name "Master". The limit defaults are the design seed in `Main.dc.html`: refund without asking 50, total ad spend per day 200, and reorder without asking 500.
+
+Verify at sign-up and Device Trust are off in the development instance only. A production instance must turn both on, and that needs a designed code step before launch.
+
 ## Routes
 
 | Route | Design | Notes |
