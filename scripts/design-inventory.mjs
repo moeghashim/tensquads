@@ -144,34 +144,43 @@ function inputIdentity(body, tag) {
 	return labelBefore(body, tag.index);
 }
 
+function handlerEvent(attrs, control) {
+	const explicit = attrs.match(/\bdata-event="([^"]+)"/)?.[1];
+	if (explicit) return explicit;
+	if (control === "input" || control === "textarea" || control === "select") return "onChange";
+	return "onClick";
+}
+
+function handlerText(body, tag, control) {
+	if (control === "input" || control === "textarea") return inputIdentity(body, tag);
+	return controlText(body.slice(tag.index + tag[0].length).split(`</${control}>`)[0]);
+}
+
+function collectLoop(loops, tag) {
+	const list = tag.match(/\bdata-loop="([^"]+)"/);
+	const as = tag.match(/\bdata-loop-as="([^"]+)"/);
+	if (list && as) loops.push({ kind: "for", list: list[1], as: as[1] });
+	const condition = tag.match(/\bdata-if="([^"]+)"/);
+	if (condition) loops.push({ kind: "if", value: condition[1] });
+}
+
 export function inventoryHtml(html) {
 	const body = visibleHtml(html);
 	const texts = extractTexts(body, />([^<]+?)</g);
 	const handlers = [];
-	const loops = [];
 	for (const tag of body.matchAll(/<(button|a|input|textarea|select)\b([^>]*)>/g)) {
 		const name = tag[2].match(/\bdata-handler="([^"]+)"/);
 		if (!name) continue;
 		const control = tag[1];
 		handlers.push({
 			tag: control,
-			event:
-				tag[2].match(/\bdata-event="([^"]+)"/)?.[1] ??
-				(control === "input" || control === "textarea" || control === "select" ? "onChange" : "onClick"),
+			event: handlerEvent(tag[2], control),
 			handler: name[1],
-			text:
-				control === "input" || control === "textarea"
-					? inputIdentity(body, tag)
-					: controlText(body.slice(tag.index + tag[0].length).split(`</${control}>`)[0]),
+			text: handlerText(body, tag, control),
 		});
 	}
-	for (const tag of body.matchAll(/<[^>]+>/g)) {
-		const list = tag[0].match(/\bdata-loop="([^"]+)"/);
-		const as = tag[0].match(/\bdata-loop-as="([^"]+)"/);
-		if (list && as) loops.push({ kind: "for", list: list[1], as: as[1] });
-		const condition = tag[0].match(/\bdata-if="([^"]+)"/);
-		if (condition) loops.push({ kind: "if", value: condition[1] });
-	}
+	const loops = [];
+	for (const tag of body.matchAll(/<[^>]+>/g)) collectLoop(loops, tag[0]);
 	const links = [...body.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g)].map((m) => ({
 		text: controlText(m[2]),
 		href: decode(m[1]),

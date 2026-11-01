@@ -52,19 +52,26 @@ async function assertHomeFaults(page, expected, actual) {
 	assert.deepEqual(compareInventory(expected, changed).extraLinks, [{ text: "Security", href: "/signup" }]);
 }
 
+async function openBusinessKind(page, kind) {
+	const name = kind === "new" ? /A new business/ : /An existing business/;
+	await page.getByRole("button", { name }).click();
+}
+
+async function swapMissionAndIdea(page, expected) {
+	await page.locator("#biz-mission").evaluate((node) => node.setAttribute("data-handler", "onIdea"));
+	await page.locator("#biz-idea").evaluate((node) => node.setAttribute("data-handler", "onMission"));
+	const diff = compareInventory(expected, await capture(page));
+	assert.equal(diff.extraHandlers.length, 2);
+	assert.equal(diff.missingHandlers.length, 2);
+	await page.locator("#biz-mission").evaluate((node) => node.setAttribute("data-handler", "onMission"));
+	await page.locator("#biz-idea").evaluate((node) => node.setAttribute("data-handler", "onIdea"));
+}
+
 async function compareOnboarding(page, compare) {
 	for (const kind of ["new", "existing"]) {
-		await page.getByRole("button", { name: kind === "new" ? /A new business/ : /An existing business/ }).click();
+		await openBusinessKind(page, kind);
 		const { expected } = await compare({ kind, step: "details" });
-		if (kind === "new") {
-			await page.locator("#biz-mission").evaluate((node) => node.setAttribute("data-handler", "onIdea"));
-			await page.locator("#biz-idea").evaluate((node) => node.setAttribute("data-handler", "onMission"));
-			const diff = compareInventory(expected, await capture(page));
-			assert.equal(diff.extraHandlers.length, 2);
-			assert.equal(diff.missingHandlers.length, 2);
-			await page.locator("#biz-mission").evaluate((node) => node.setAttribute("data-handler", "onMission"));
-			await page.locator("#biz-idea").evaluate((node) => node.setAttribute("data-handler", "onIdea"));
-		}
+		if (kind === "new") await swapMissionAndIdea(page, expected);
 		await page.getByRole("button", { name: "Choose my squads" }).click();
 		await compare({ kind, step: "agents" });
 		await page.getByRole("button", { name: "Create my workspace" }).click();
@@ -161,19 +168,23 @@ test("swapping onEmail and onPassword is a handler difference", () => {
 	}
 });
 
-test("swapping onMission and onIdea is a handler difference for empty textareas", () => {
-	for (const ids of [true, false]) {
-		const missionId = ids ? ' id="biz-mission"' : "";
-		const ideaId = ids ? ' id="biz-idea"' : "";
-		const before = `<label>Company mission</label><textarea${missionId} data-handler="onMission"></textarea><label>What will you sell, and to whom?</label><textarea${ideaId} data-handler="onIdea"></textarea>`;
-		const after = `<label>Company mission</label><textarea${missionId} data-handler="onIdea"></textarea><label>What will you sell, and to whom?</label><textarea${ideaId} data-handler="onMission"></textarea>`;
-		const expected = inventoryHtml(before);
-		assert.deepEqual(
-			expected.handlers.map((handler) => handler.text),
-			ids ? ["biz-mission", "biz-idea"] : ["Company mission", "What will you sell, and to whom?"],
-		);
-		const diff = compareInventory(expected, inventoryHtml(after));
-		assert.equal(diff.extraHandlers.length, 2);
-		assert.equal(diff.missingHandlers.length, 2);
-	}
+function assertTextareaSwap(missionId, ideaId, texts) {
+	const before = `<label>Company mission</label><textarea${missionId} data-handler="onMission"></textarea><label>What will you sell, and to whom?</label><textarea${ideaId} data-handler="onIdea"></textarea>`;
+	const after = `<label>Company mission</label><textarea${missionId} data-handler="onIdea"></textarea><label>What will you sell, and to whom?</label><textarea${ideaId} data-handler="onMission"></textarea>`;
+	const expected = inventoryHtml(before);
+	assert.deepEqual(
+		expected.handlers.map((handler) => handler.text),
+		texts,
+	);
+	const diff = compareInventory(expected, inventoryHtml(after));
+	assert.equal(diff.extraHandlers.length, 2);
+	assert.equal(diff.missingHandlers.length, 2);
+}
+
+test("swapping onMission and onIdea is a handler difference for textarea ids", () => {
+	assertTextareaSwap(' id="biz-mission"', ' id="biz-idea"', ["biz-mission", "biz-idea"]);
+});
+
+test("swapping onMission and onIdea is a handler difference for textarea labels", () => {
+	assertTextareaSwap("", "", ["Company mission", "What will you sell, and to whom?"]);
 });
