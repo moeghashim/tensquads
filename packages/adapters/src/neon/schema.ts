@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 
 // Column names that cannot be the design field: is_on (on), last_text (last), description (desc),
 // time_text (time), from_agent (from), to_agent (to), body (text), from_role (from), rule_when (when).
@@ -125,6 +125,7 @@ export const busEvents = pgTable(
 		accountId: text("account_id").notNull(),
 		id: text("id").notNull(),
 		timeText: text("time_text").notNull(),
+		occurredAt: timestamp("occurred_at", { withTimezone: true }),
 		fromAgent: text("from_agent").notNull(),
 		toAgent: text("to_agent").notNull(),
 		kind: text("kind").notNull(),

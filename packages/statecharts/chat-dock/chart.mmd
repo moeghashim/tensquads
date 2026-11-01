@@ -16,7 +16,8 @@ stateDiagram-v2
   [*] --> s0
   s0 --> s1: no agent matches or the agent is paused
   s0 --> s2: you send with no skill on or you send
-  s2 --> s0: you reload
+  s1 --> s0: you can send again
+  s2 --> s0: you reload and leave the Task
   s2 --> s1: the agent replies
   class s0 blue
   class s1 teal

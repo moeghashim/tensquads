@@ -7,7 +7,7 @@ import { DECIDER_MISSING, Kernel } from "../src/index.ts";
 
 const PLUGIN_NAMES = ["platform", "squads", "bus", "policy", "catalog", "conversation"];
 
-test("the kernel loads the six empty plug-ins", () => {
+test("the kernel loads the six plug-ins", () => {
 	const kernel = new Kernel();
 	assert.deepEqual([...kernel.pluginNames()].sort(), [...PLUGIN_NAMES].sort());
 	assert.equal(kernel.machine, null);

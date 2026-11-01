@@ -9,6 +9,7 @@ const hidden = new Set([
 	"Type",
 	"SendEmpty",
 	"SecondSend",
+    "Timeout",
 	"OpenChat",
 	"LeaveChat",
 	"OpenAdmin",
@@ -23,7 +24,8 @@ const labels = {
 	SendOn: "you send",
 	SendNoSkill: "you send with no skill on",
 	Finish: "the agent replies",
-	Reload: "you reload",
+	Reload: "you reload and leave the Task",
+    NextMessage: "you can send again",
 };
 
 export const step = (action) => {

@@ -1,4 +1,84 @@
-export function conversation(): void {}
+import type { AccountScope, ConversationTransaction, SendResult } from "@tensquads/domain";
+import { requireScope } from "@tensquads/domain";
+import type { Repositories } from "../ports.ts";
+import type { BusCommands } from "./bus.ts";
+
+export interface ConversationCommands {
+	beginSend(scope: AccountScope, text: string): Promise<SendResult>;
+	finishSend(scope: AccountScope, taskId: string): Promise<SendResult>;
+}
+
+export function conversation(
+	context: { provide(name: string, service: ConversationCommands): unknown },
+	config: { repositories: () => Repositories; bus: () => BusCommands },
+): void {
+	context.provide("workspaceConversation", {
+		async beginSend(scope, text) {
+			const checked = requireScope(scope);
+			const value = text.trim();
+			if (checked.mode !== "account" || value.length === 0) return { kind: "ignored" };
+			return config.repositories().conversation.transaction(checked, async (commands) => {
+				if (await commands.pendingTask()) return { kind: "ignored" };
+				return send(commands, value, route(value), config.bus());
+			});
+		},
+		async finishSend(scope, taskId) {
+			const checked = requireScope(scope);
+			if (checked.mode !== "account") return { kind: "ignored" };
+			return config.repositories().conversation.transaction(checked, async (commands) => {
+				const pending = await commands.pendingTask();
+				if (!pending || pending.id !== taskId) return { kind: "ignored" };
+				const planned = resultFor(pending.toAgent);
+				if (!planned) return { kind: "ignored" };
+				await commands.message("agent", planned.text, pending.toAgent);
+				await config.bus().append(commands, {
+					from: pending.toAgent,
+					to: "master",
+					kind: "Result",
+					skill: pending.skill,
+					text: planned.text,
+					payload: planned.payload,
+					writes: planned.writes,
+				});
+				await commands.completeAgent(pending.toAgent, planned.text);
+				return { kind: "replied", messages: await commands.messages() };
+			});
+		},
+	});
+}
+
+async function send(
+	commands: ConversationTransaction,
+	value: string,
+	agentId: string | null,
+	bus: BusCommands,
+): Promise<SendResult> {
+	const agent = agentId ? await commands.agent(agentId) : null;
+	await commands.message("user", value);
+	if (!agent || !agent.isOn) {
+		await commands.message("master", agent ? pausedReply(agent.name) : noAgentReply());
+		return { kind: "answered", messages: await commands.messages() };
+	}
+	const skill = skillFor(await commands.skills(agent.id));
+	await commands.message("master", workingReply(agent.name));
+	const taskId = await bus.append(commands, {
+		from: "master",
+		to: agent.id,
+		kind: "Task",
+		skill,
+		text: value,
+		payload: taskPayload(value, await commands.store()),
+	});
+	return {
+		kind: "working",
+		taskId,
+		agentId: agent.id,
+		agentName: agent.name,
+		skill,
+		text: value,
+		messages: await commands.messages(),
+	};
+}
 
 const routes: readonly (readonly [string, RegExp])[] = [
 	["support", /refund|return|complain|customer|ticket|email/],

@@ -41,7 +41,7 @@ export function WorkspaceProvider({
 	const refresh = useCallback(() => router.invalidate(), [router]);
 	useMountedFlag(mounted);
 	// A loader that arrives during a send must not replace the bubbles from that send.
-	const [seenFrame, setSeenFrame] = useState(frame);
+	const [seenFrame, setSeenFrame] = useState<WorkspaceFrameData | null>(frame);
 	if (frame !== seenFrame) {
 		setSeenFrame(frame);
 		if (!sending.current) {
@@ -70,6 +70,7 @@ export function WorkspaceProvider({
 				setPending,
 				refresh,
 				sending,
+				resetFrame: () => setSeenFrame(null),
 			});
 		},
 		[draft, refresh, thinking],
@@ -184,6 +185,7 @@ interface SendHooks {
 	readonly setPending: (value: boolean) => void;
 	readonly refresh: () => Promise<void>;
 	readonly sending: { current: boolean };
+	readonly resetFrame: () => void;
 }
 
 async function sendDraft(value: string, hooks: SendHooks) {
@@ -204,21 +206,25 @@ async function sendDraft(value: string, hooks: SendHooks) {
 		if (!hooks.mounted.current) {
 			return;
 		}
-		const finished = await finishWorkspaceSend();
+		const finished = await finishWorkspaceSend({ data: started.taskId });
 		if (hooks.mounted.current && finished.kind === "replied") {
 			hooks.setMessages(finished.messages);
 		}
 	} catch {
 		// Refresh below loads the thread the server kept. No local bubble remains.
 	} finally {
-		if (hooks.mounted.current) {
-			hooks.setPending(false);
-			hooks.setThinking(false);
-			hooks.setThinkingAgent("");
-			await hooks.refresh();
+		try {
+			if (hooks.mounted.current) await hooks.refresh();
+		} catch {
+		} finally {
+			hooks.sending.current = false;
+			if (hooks.mounted.current) {
+				hooks.resetFrame();
+				hooks.setPending(false);
+				hooks.setThinking(false);
+				hooks.setThinkingAgent("");
+			}
 		}
-		// Stay true until refresh ends so an older loader does not replace the new bubbles.
-		hooks.sending.current = false;
 	}
 }
 

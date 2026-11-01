@@ -229,6 +229,7 @@ ALTER TABLE masters ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT
 ALTER TABLE agents ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
 ALTER TABLE machines ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
 ALTER TABLE skills ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
+ALTER TABLE bus_events ADD COLUMN IF NOT EXISTS occurred_at timestamptz;
 ALTER TABLE bus_events ADD COLUMN IF NOT EXISTS seq integer NOT NULL DEFAULT 0;
 ALTER TABLE state_entries ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
 ALTER TABLE state_entries ALTER COLUMN value TYPE text USING value::text;

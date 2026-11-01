@@ -28,7 +28,7 @@ Moe delegated these build questions. Each item uses the recommended answer in it
 14. A blank value shows "—". An empty list shows its heading and no rows. The frame uses this for the owner and the agent list. Screen tasks use the same rule.
 15. An agent with no skills uses the skill value `-`.
 16. A `send()` Result lists `writes` and has no `set`. Store the key. Change no value.
-17. A reload during Working leaves the Task event and writes no Result. The test agents do not retry.
+17. A reload during Working leaves the Task event and writes no Result. The test agents do not retry. A Task blocks sends for 30 seconds from its stored absolute instant. A send inside that window is ignored. A later send goes through. A Result is written only inside that same window. The displayed clock stays unchanged.
 18. Add no dock scroll logic.
 
 02-overview:

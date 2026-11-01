@@ -1,6 +1,5 @@
-import type { AccountScope, Message, MessageFrom, SendResult } from "@tensquads/domain";
+import type { AccountScope, ConversationTransaction, Message, MessageFrom } from "@tensquads/domain";
 import { requireScope } from "@tensquads/domain";
-import { noAgentReply, pausedReply, resultFor, route, skillFor, taskPayload, workingReply } from "@tensquads/kernel";
 import { and, asc, eq, sql } from "drizzle-orm";
 
 import { workspaceTransaction } from "../lock.ts";
@@ -17,98 +16,41 @@ export function messageRank(id: string, sortOrder: number): number {
 	return match?.[1] ? Number(match[1]) : sortOrder;
 }
 
-export async function beginSend(db: AppDatabase, scope: AccountScope, text: string): Promise<SendResult> {
-	const checked = requireScope(scope);
-	if (checked.mode !== "account") {
-		return { kind: "ignored" };
-	}
-	const value = text.trim();
-	if (value.length === 0) {
-		return { kind: "ignored" };
-	}
-	return workspaceTransaction(db, async (tx) => {
-		const cursor = await lockCursor(tx, checked.accountId);
-		if (await pendingTask(tx, checked.accountId)) {
-			return { kind: "ignored" };
-		}
-		const routed = route(value);
-		const agent = routed ? await readAgent(tx, checked.accountId, routed) : null;
-		const user = await insertMessage(tx, checked.accountId, cursor, "user", value, null);
-		if (!agent) {
-			const master = await insertMessage(tx, checked.accountId, user.cursor, "master", noAgentReply(), null);
-			await saveCursor(tx, checked.accountId, master.cursor);
-			return { kind: "answered", messages: await listMessages(tx, checked.accountId) };
-		}
-		if (!agent.isOn) {
-			const master = await insertMessage(
-				tx,
-				checked.accountId,
-				user.cursor,
-				"master",
-				pausedReply(agent.name),
-				null,
-			);
-			await saveCursor(tx, checked.accountId, master.cursor);
-			return { kind: "answered", messages: await listMessages(tx, checked.accountId) };
-		}
-		const skill = skillFor(await readSkills(tx, checked.accountId, agent.id));
-		const master = await insertMessage(tx, checked.accountId, user.cursor, "master", workingReply(agent.name), null);
-		await saveCursor(tx, checked.accountId, master.cursor);
-		const store = await readStore(tx, checked.accountId);
-		await appendEvents(tx, checked.accountId, [
-			{
-				from: "master",
-				to: agent.id,
-				kind: "Task",
-				skill,
-				text: value,
-				payload: taskPayload(value, store),
-			},
-		]);
-		return {
-			kind: "working",
-			agentId: agent.id,
-			agentName: agent.name,
-			skill,
-			text: value,
-			messages: await listMessages(tx, checked.accountId),
-		};
-	});
-}
+export const PENDING_TASK_WINDOW_MS = 30_000;
 
-export async function finishSend(db: AppDatabase, scope: AccountScope): Promise<SendResult> {
+export async function conversationTransaction<T>(
+	db: AppDatabase,
+	scope: AccountScope,
+	work: (commands: ConversationTransaction) => Promise<T>,
+): Promise<T> {
 	const checked = requireScope(scope);
-	if (checked.mode !== "account") {
-		return { kind: "ignored" };
-	}
+	if (checked.mode !== "account") throw new Error("A send needs an account.");
+	const accountId = checked.accountId;
 	return workspaceTransaction(db, async (tx) => {
-		const cursor = await lockCursor(tx, checked.accountId);
-		const pending = await pendingTask(tx, checked.accountId);
-		if (!pending) {
-			return { kind: "ignored" };
-		}
-		const planned = resultFor(pending.toAgent);
-		if (!planned) {
-			return { kind: "ignored" };
-		}
-		const written = await insertMessage(tx, checked.accountId, cursor, "agent", planned.text, pending.toAgent);
-		await saveCursor(tx, checked.accountId, written.cursor);
-		await appendEvents(tx, checked.accountId, [
-			{
-				from: pending.toAgent,
-				to: "master",
-				kind: "Result",
-				skill: pending.skill,
-				text: planned.text,
-				payload: planned.payload,
-				writes: planned.writes,
+		await lockCursor(tx, accountId);
+		return work({
+			pendingTask: () => pendingTask(tx, accountId),
+			agent: (id) => readAgent(tx, accountId, id),
+			skills: (id) => readSkills(tx, accountId, id),
+			store: () => readStore(tx, accountId),
+			async message(from, text, agent) {
+				const cursor = await lockCursor(tx, accountId);
+				const written = await insertMessage(tx, accountId, cursor, from, text, agent ?? null);
+				await saveCursor(tx, accountId, written.cursor);
 			},
-		]);
-		await tx
-			.update(agents)
-			.set({ tasks: sql`${agents.tasks} + 1`, lastText: planned.text })
-			.where(and(eq(agents.accountId, checked.accountId), eq(agents.id, pending.toAgent)));
-		return { kind: "replied", messages: await listMessages(tx, checked.accountId) };
+			messages: () => listMessages(tx, accountId),
+			async appendEvent(draft) {
+				const [event] = await appendEvents(tx, accountId, [draft]);
+				if (!event) throw new Error("The event was not saved.");
+				return event.id;
+			},
+			async completeAgent(id, text) {
+				await tx
+					.update(agents)
+					.set({ tasks: sql`${agents.tasks} + 1`, lastText: text })
+					.where(and(eq(agents.accountId, accountId), eq(agents.id, id)));
+			},
+		});
 	});
 }
 
@@ -175,7 +117,13 @@ async function pendingTask(tx: Tx, accountId: string) {
 	const rows = await tx.select().from(busEvents).where(eq(busEvents.accountId, accountId));
 	const generated = rows.filter((row) => /^e\d+$/.test(row.id)).sort((left, right) => right.seq - left.seq);
 	const latest = generated[0];
-	if (!latest || latest.kind !== "Task" || !isChatPayload(latest.payload)) {
+	if (
+		!latest ||
+		latest.kind !== "Task" ||
+		!isChatPayload(latest.payload) ||
+		!latest.occurredAt ||
+		Date.now() - latest.occurredAt.getTime() >= PENDING_TASK_WINDOW_MS
+	) {
 		return null;
 	}
 	return latest;

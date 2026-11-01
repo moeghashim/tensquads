@@ -5,18 +5,18 @@
 \* Idle accepts one message. A matched agent that is on moves to Working.
 \* No agent and a paused agent answer at once and write no event.
 \* The agent reply moves Working to Replied. A reload during Working
-\* keeps the Task and writes no Result. A second message is out of this bound.
+\* keeps the Task and writes no Result. Timeout permits another message.
 
 EXTENDS Integers
 
 VARIABLES
     phase, page, dock, pageDraft, dockDraft, sent, skill,
     userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet,
-    storeSame, stuck
+    storeSame, abandoned, abandonedTask
 vars == <<
     phase, page, dock, pageDraft, dockDraft, sent, skill,
     userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet,
-    storeSame, stuck
+    storeSame, abandoned, abandonedTask
 >>
 
 Phases == {"idle", "working", "replied"}
@@ -43,7 +43,8 @@ TypeOK ==
     /\ tasks \in Bits
     /\ lastSet \in BOOLEAN
     /\ storeSame \in BOOLEAN
-    /\ stuck \in BOOLEAN
+    /\ abandoned \in BOOLEAN
+    /\ abandonedTask \in BOOLEAN
 
 \* A user message comes before the master message.
 \* A Task comes after both. A Result comes with the agent message, after the Task.
@@ -62,14 +63,14 @@ MessageOrder ==
 \* Working holds a Task and no Result.
 \* No agent and a paused agent write no event.
 \* A reload keeps the Task and writes no Result.
-\* The phase matches the send, the stuck flag, and the Result.
+\* The phase matches the send, the abandon flag, and the Result.
 SendShape ==
     /\ phase = "working" =>
-        sent \in {"on", "noskill"} /\ stuck = FALSE /\ resultEv = 0 /\ taskEv = 1
+        sent \in {"on", "noskill"} /\ abandoned = FALSE /\ resultEv = 0 /\ taskEv = 1
     /\ phase = "replied" =>
-        stuck = FALSE /\ (sent \in {"none", "paused"} \/ resultEv = 1)
-    /\ phase = "idle" /\ stuck = FALSE => sent = "no" /\ taskEv = 0 /\ resultEv = 0
-    /\ stuck => phase = "idle" /\ taskEv = 1 /\ resultEv = 0 /\ sent \in {"on", "noskill"}
+        abandoned = FALSE /\ (sent \in {"none", "paused"} \/ resultEv = 1)
+    /\ phase = "idle" /\ abandoned = FALSE => sent = "no" /\ taskEv = 0 /\ resultEv = 0
+    /\ abandoned => phase = "idle" /\ taskEv = 1 /\ resultEv = 0 /\ sent \in {"on", "noskill"}
 
 \* The dock is hidden on the chat page and on an admin page.
 DockHidden ==
@@ -79,7 +80,7 @@ DockHidden ==
 \* The page draft and the dock draft are the same value.
 OneDraft ==
     /\ pageDraft = dockDraft
-    /\ pageDraft = "text" => phase = "idle" /\ stuck = FALSE /\ sent = "no"
+    /\ pageDraft = "text" => phase = "idle" /\ abandoned = FALSE /\ sent = "no"
 
 \* A Result names its writes and does not change the store.
 WritesDoNotChangeStore == storeSame = TRUE
@@ -106,26 +107,27 @@ Init ==
     /\ tasks = 0
     /\ lastSet = FALSE
     /\ storeSame = TRUE
-    /\ stuck = FALSE
+    /\ abandoned = FALSE
+    /\ abandonedTask = FALSE
 
 Type ==
     /\ phase = "idle"
-    /\ stuck = FALSE
+    /\ abandoned = FALSE
     /\ sent = "no"
     /\ pageDraft = ""
     /\ pageDraft' = "text"
     /\ dockDraft' = "text"
-    /\ UNCHANGED <<phase, page, dock, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, stuck>>
+    /\ UNCHANGED <<phase, page, dock, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, abandoned, abandonedTask>>
 
 SendEmpty ==
     /\ phase = "idle"
-    /\ stuck = FALSE
+    /\ abandoned = FALSE
     /\ pageDraft = ""
     /\ UNCHANGED vars
 
 SendNone ==
     /\ phase = "idle"
-    /\ stuck = FALSE
+    /\ abandoned = FALSE
     /\ sent = "no"
     /\ pageDraft = "text"
     /\ phase' = "replied"
@@ -134,11 +136,11 @@ SendNone ==
     /\ masterMsg' = 1
     /\ pageDraft' = ""
     /\ dockDraft' = ""
-    /\ UNCHANGED <<page, dock, skill, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, stuck>>
+    /\ UNCHANGED <<page, dock, skill, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, abandoned, abandonedTask>>
 
 SendPaused ==
     /\ phase = "idle"
-    /\ stuck = FALSE
+    /\ abandoned = FALSE
     /\ sent = "no"
     /\ pageDraft = "text"
     /\ phase' = "replied"
@@ -147,11 +149,11 @@ SendPaused ==
     /\ masterMsg' = 1
     /\ pageDraft' = ""
     /\ dockDraft' = ""
-    /\ UNCHANGED <<page, dock, skill, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, stuck>>
+    /\ UNCHANGED <<page, dock, skill, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, abandoned, abandonedTask>>
 
 SendOn ==
     /\ phase = "idle"
-    /\ stuck = FALSE
+    /\ abandoned = FALSE
     /\ sent = "no"
     /\ pageDraft = "text"
     /\ phase' = "working"
@@ -162,11 +164,11 @@ SendOn ==
     /\ taskEv' = 1
     /\ pageDraft' = ""
     /\ dockDraft' = ""
-    /\ UNCHANGED <<page, dock, agentMsg, resultEv, tasks, lastSet, storeSame, stuck>>
+    /\ UNCHANGED <<page, dock, agentMsg, resultEv, tasks, lastSet, storeSame, abandoned, abandonedTask>>
 
 SendNoSkill ==
     /\ phase = "idle"
-    /\ stuck = FALSE
+    /\ abandoned = FALSE
     /\ sent = "no"
     /\ pageDraft = "text"
     /\ phase' = "working"
@@ -177,7 +179,7 @@ SendNoSkill ==
     /\ taskEv' = 1
     /\ pageDraft' = ""
     /\ dockDraft' = ""
-    /\ UNCHANGED <<page, dock, agentMsg, resultEv, tasks, lastSet, storeSame, stuck>>
+    /\ UNCHANGED <<page, dock, agentMsg, resultEv, tasks, lastSet, storeSame, abandoned, abandonedTask>>
 
 Finish ==
     /\ phase = "working"
@@ -186,13 +188,13 @@ Finish ==
     /\ agentMsg' = 1
     /\ tasks' = 1
     /\ lastSet' = TRUE
-    /\ UNCHANGED <<page, dock, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, taskEv, storeSame, stuck>>
+    /\ UNCHANGED <<page, dock, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, taskEv, storeSame, abandoned, abandonedTask>>
 
 Reload ==
     /\ phase = "working"
     /\ phase' = "idle"
-    /\ stuck' = TRUE
-    /\ UNCHANGED <<page, dock, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame>>
+    /\ abandoned' = TRUE
+    /\ UNCHANGED <<page, dock, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, abandonedTask>>
 
 SecondSend ==
     /\ phase = "working"
@@ -202,40 +204,71 @@ OpenDock ==
     /\ page = "workspace"
     /\ dock = "closed"
     /\ dock' = "open"
-    /\ UNCHANGED <<phase, page, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, stuck>>
+    /\ UNCHANGED <<phase, page, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, abandoned, abandonedTask>>
 
 CloseDock ==
     /\ page = "workspace"
     /\ dock = "open"
     /\ dock' = "closed"
-    /\ UNCHANGED <<phase, page, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, stuck>>
+    /\ UNCHANGED <<phase, page, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, abandoned, abandonedTask>>
 
 OpenChat ==
     /\ page # "chat"
     /\ page' = "chat"
     /\ dock' = "hidden"
-    /\ UNCHANGED <<phase, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, stuck>>
+    /\ UNCHANGED <<phase, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, abandoned, abandonedTask>>
 
 LeaveChat ==
     /\ page = "chat"
     /\ page' = "workspace"
     /\ dock' = "closed"
-    /\ UNCHANGED <<phase, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, stuck>>
+    /\ UNCHANGED <<phase, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, abandoned, abandonedTask>>
 
 OpenAdmin ==
     /\ page # "admin"
     /\ page' = "admin"
     /\ dock' = "hidden"
-    /\ UNCHANGED <<phase, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, stuck>>
+    /\ UNCHANGED <<phase, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, abandoned, abandonedTask>>
 
 LeaveAdmin ==
     /\ page = "admin"
     /\ page' = "workspace"
     /\ dock' = "closed"
-    /\ UNCHANGED <<phase, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, stuck>>
+    /\ UNCHANGED <<phase, pageDraft, dockDraft, sent, skill, userMsg, masterMsg, agentMsg, taskEv, resultEv, tasks, lastSet, storeSame, abandoned, abandonedTask>>
+
+Timeout ==
+    /\ phase = "idle"
+    /\ abandoned
+    /\ phase' = "idle"
+    /\ abandoned' = FALSE
+    /\ abandonedTask' = TRUE
+    /\ sent' = "no"
+    /\ skill' = "none"
+    /\ userMsg' = 0
+    /\ masterMsg' = 0
+    /\ agentMsg' = 0
+    /\ taskEv' = 0
+    /\ resultEv' = 0
+    /\ tasks' = 0
+    /\ lastSet' = FALSE
+    /\ UNCHANGED <<page, dock, pageDraft, dockDraft, storeSame>>
+
+NextMessage ==
+    /\ phase = "replied"
+    /\ phase' = "idle"
+    /\ sent' = "no"
+    /\ skill' = "none"
+    /\ userMsg' = 0
+    /\ masterMsg' = 0
+    /\ agentMsg' = 0
+    /\ taskEv' = 0
+    /\ resultEv' = 0
+    /\ tasks' = 0
+    /\ lastSet' = FALSE
+    /\ UNCHANGED <<page, dock, pageDraft, dockDraft, storeSame, abandoned, abandonedTask>>
 
 Stay ==
-    /\ phase = "replied" \/ stuck
+    /\ phase = "replied" \/ abandoned
     /\ UNCHANGED vars
 
 Next ==
@@ -255,7 +288,13 @@ Next ==
     \/ OpenAdmin
     \/ LeaveAdmin
     \/ Stay
+    \/ Timeout
+    \/ NextMessage
+
+Resolve == Finish \/ Reload
+SendAgain == []<>(phase = "idle" /\ ~abandoned /\ sent = "no")
 
 Spec == Init /\ [][Next]_vars
+    /\ WF_vars(Resolve) /\ WF_vars(Timeout) /\ WF_vars(NextMessage)
 
 ====

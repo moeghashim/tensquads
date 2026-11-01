@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { type AppDatabase, beginSend, finishSend, schema, traceFor } from "@tensquads/adapters";
+import { type AppDatabase, createRepositories, schema, traceFor } from "@tensquads/adapters";
+import { Kernel } from "@tensquads/kernel";
 import { and, eq } from "drizzle-orm";
 import { replaceDemoAccount } from "../../seed/src/demo-account.ts";
+import { PENDING_TASK_WINDOW_MS } from "../src/neon/commands/conversation.ts";
 import { openPglite } from "./pglite.ts";
 
 const ads = "How did ads do this week?";
@@ -10,6 +12,14 @@ const marketingResult = "Ad spend this week is $262 at a 3.4 return. The best ad
 const noAgent =
 	"That one I can answer myself, no agent needed. Ask me about orders, refunds, ads, profit or stock and I will hand it to the right agent.";
 const paused = "That is a job for the Inventory agent, but it is paused. Turn it on in Agents and ask me again.";
+
+function beginSend(db: AppDatabase, accountScope: ReturnType<typeof scope>, text: string) {
+	return new Kernel(createRepositories(db)).beginSend(accountScope, text);
+}
+
+function finishSend(db: AppDatabase, accountScope: ReturnType<typeof scope>, taskId = "e102") {
+	return new Kernel(createRepositories(db)).finishSend(accountScope, taskId);
+}
 
 async function withCopy(name: string, run: (db: AppDatabase, accountId: string) => Promise<void>) {
 	const { db, close } = await openPglite();
@@ -190,5 +200,29 @@ test("a marketing send with no skill on records a dash", async () => {
 		assert.equal(started.skill, "-");
 		const task = (await generated(db, accountId))[0];
 		assert.equal(task?.skill, "-");
+	});
+});
+
+test("an abandoned Task expires at 30 seconds and a later send gets its own reply", async (t) => {
+	t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-11-01T12:00:00Z") });
+	await withCopy("expired", async (db, accountId) => {
+		assert.equal((await beginSend(db, scope(accountId), ads)).kind, "working");
+		t.mock.timers.tick(PENDING_TASK_WINDOW_MS - 1);
+		assert.equal((await beginSend(db, scope(accountId), ads)).kind, "ignored");
+		t.mock.timers.tick(1);
+		assert.equal((await finishSend(db, scope(accountId))).kind, "ignored");
+		const second = await beginSend(db, scope(accountId), ads);
+		assert.equal(second.kind, "working");
+		if (second.kind !== "working") return;
+		assert.equal((await finishSend(db, scope(accountId), "e102")).kind, "ignored");
+		assert.equal((await finishSend(db, scope(accountId), second.taskId)).kind, "replied");
+		const events = await generated(db, accountId);
+		assert.deepEqual(
+			events.map(({ kind }) => kind),
+			["Task", "Task", "Result"],
+		);
+		assert.equal(events[0]?.timeText, "11:03");
+		assert.equal(events[1]?.timeText, "11:04");
+		assert.equal(events[2]?.timeText, "11:05");
 	});
 });

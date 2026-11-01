@@ -17,15 +17,19 @@ export const beginWorkspaceSend = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		const { requireWorkspace } = await import("./workspace-session.ts");
 		return requireWorkspace(async (scope, db) => {
-			const { beginSend } = await import("@tensquads/adapters");
-			return beginSend(db, scope, data);
+			const { createRepositories } = await import("@tensquads/adapters");
+			const { Kernel } = await import("@tensquads/kernel");
+			return new Kernel(createRepositories(db)).beginSend(scope, data);
 		});
 	});
 
-export const finishWorkspaceSend = createServerFn({ method: "POST" }).handler(async () => {
-	const { requireWorkspace } = await import("./workspace-session.ts");
-	return requireWorkspace(async (scope, db) => {
-		const { finishSend } = await import("@tensquads/adapters");
-		return finishSend(db, scope);
+export const finishWorkspaceSend = createServerFn({ method: "POST" })
+	.validator(validateText)
+	.handler(async ({ data }) => {
+		const { requireWorkspace } = await import("./workspace-session.ts");
+		return requireWorkspace(async (scope, db) => {
+			const { createRepositories } = await import("@tensquads/adapters");
+			const { Kernel } = await import("@tensquads/kernel");
+			return new Kernel(createRepositories(db)).finishSend(scope, data);
+		});
 	});
-});

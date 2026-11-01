@@ -38,7 +38,7 @@ import { asc, eq } from "drizzle-orm";
 
 import { askRevise, setAgentOn, setAutonomy, setSkillOn } from "./commands/agents.ts";
 import { decide, decideMission } from "./commands/approvals.ts";
-import { beginSend, finishSend } from "./commands/conversation.ts";
+import { conversationTransaction } from "./commands/conversation.ts";
 import { addRule, setLimit, setRuleOn } from "./commands/rules.ts";
 import { nextEvent } from "./commands/traffic.ts";
 import { createWorkspace } from "./create-workspace.ts";
@@ -110,8 +110,7 @@ export function createRepositories(db: AppDatabase): RepositoryBag {
 		},
 		conversation: {
 			thread: (scope) => readThread(db, scope),
-			beginSend: (scope, text) => beginSend(db, scope, text),
-			finishSend: (scope) => finishSend(db, scope),
+			transaction: (scope, work) => conversationTransaction(db, scope, work),
 		},
 	};
 }

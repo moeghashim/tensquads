@@ -17,6 +17,7 @@ export type SendResult =
 	| { readonly kind: "answered"; readonly messages: readonly Message[] }
 	| {
 			readonly kind: "working";
+			readonly taskId: string;
 			readonly agentId: string;
 			readonly agentName: string;
 			readonly skill: string;

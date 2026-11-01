@@ -79,6 +79,7 @@ export async function appendEvents(
 			accountId,
 			id,
 			timeText: time,
+			occurredAt: new Date(Date.now()),
 			fromAgent: draft.from,
 			toAgent: draft.to,
 			kind: draft.kind,

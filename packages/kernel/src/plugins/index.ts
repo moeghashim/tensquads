@@ -1,5 +1,3 @@
-// These six plug-ins are empty on purpose. This file must not import cordis.
-
 export { bus } from "./bus.ts";
 export { catalog } from "./catalog.ts";
 export {
@@ -23,4 +21,4 @@ import { platform } from "./platform.ts";
 import { policy } from "./policy.ts";
 import { squads } from "./squads.ts";
 
-export const emptyPlugins = [platform, squads, bus, policy, catalog, conversation] as const;
+export const plugins = [platform, squads, bus, policy, catalog, conversation] as const;
