@@ -1,0 +1,381 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: gate-font-negative.spec.ts >> unlisted Google font request must fail closed
+- Location: e2e/gate-font-negative.spec.ts:3:1
+
+# Error details
+
+```
+Error: Unpinned font request: https://fonts.gstatic.com/gate-unpinned.woff2
+```
+
+```
+Error: page.evaluate: Test ended.
+```
+
+# Page snapshot
+
+```yaml
+- main [ref=e2]:
+  - navigation "Site" [ref=e3]:
+    - generic [ref=e4]:
+      - link "tensquads" [ref=e5] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e11]:
+        - link "Agents" [ref=e12] [cursor=pointer]:
+          - /url: "#squad"
+        - link "How it works" [ref=e13] [cursor=pointer]:
+          - /url: "#how"
+        - link "Control" [ref=e14] [cursor=pointer]:
+          - /url: "#control"
+        - link "Pricing" [ref=e15] [cursor=pointer]:
+          - /url: "#pricing"
+      - generic [ref=e16]:
+        - link "Sign in" [ref=e17] [cursor=pointer]:
+          - /url: /signin
+        - link "Start free" [ref=e18] [cursor=pointer]:
+          - /url: /signup
+  - region "Hero" [ref=e19]:
+    - generic [ref=e20]: "New: Analytics agent in beta"
+    - heading "Hire a squad of AI agents to run your business" [level=1] [ref=e22]
+    - paragraph [ref=e23]: Orders, support, marketing, finance and stock, each handled by its own agent. One master keeps them in sync and only interrupts you when it matters.
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - button "New business" [ref=e26] [cursor=pointer]
+        - button "Existing business" [pressed] [ref=e27] [cursor=pointer]
+      - generic [ref=e28]: Describe your business
+      - textbox "Describe your business" [ref=e29]:
+        - /placeholder: Paste your store URL or describe what you sell…
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - button "A Shopify store doing 300 orders a month" [ref=e32] [cursor=pointer]
+          - button "A cafe with a wholesale side" [ref=e33] [cursor=pointer]
+          - button "Two Amazon listings and a website" [ref=e34] [cursor=pointer]
+        - link "Build my squad" [ref=e35] [cursor=pointer]:
+          - /url: /signup
+    - paragraph [ref=e38]: Free for 14 days · No credit card · Cancel from the dashboard
+  - region "Customers" [ref=e39]:
+    - generic [ref=e40]: Running the day-to-day at
+    - generic [ref=e41]:
+      - generic [ref=e42]: Leen Dates
+      - generic [ref=e43]: Northwind Apparel
+      - generic [ref=e44]: Atlas Outdoor
+      - generic [ref=e45]: Bloom Skincare
+      - generic [ref=e46]: Harbor Coffee
+      - generic [ref=e47]: Sunbeam Toys
+  - region "Product preview" [ref=e48]:
+    - generic [ref=e49]:
+      - generic [ref=e50]: app.tensquads.co / overview
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - generic [ref=e58]: M
+            - generic [ref=e59]: Master
+          - generic [ref=e60]: Overview
+          - generic [ref=e61]: Chat with the master
+          - generic [ref=e62]: Agents
+          - generic [ref=e63]: Agent traffic
+          - generic [ref=e64]: Rules and limits
+        - generic [ref=e65]:
+          - generic [ref=e66]:
+            - generic [ref=e67]:
+              - generic [ref=e68]: Good morning, Moe
+              - generic [ref=e69]: Last 7 days across the store and your agents
+            - generic [ref=e70]: 4 of 5 agents online
+          - generic [ref=e71]:
+            - generic [ref=e72]:
+              - generic [ref=e73]: Revenue
+              - generic [ref=e74]: $8,420
+              - generic [ref=e75]: +12% vs last week
+            - generic [ref=e76]:
+              - generic [ref=e77]: Orders
+              - generic [ref=e78]: "186"
+              - generic [ref=e79]: +8%
+            - generic [ref=e80]:
+              - generic [ref=e81]: Tasks done by agents
+              - generic [ref=e82]: "331"
+              - generic [ref=e83]: This week
+            - generic [ref=e84]:
+              - generic [ref=e85]: Hours saved
+              - generic [ref=e86]: 34h
+              - generic [ref=e87]: This week
+          - generic [ref=e88]:
+            - generic [ref=e89]:
+              - generic [ref=e90]: Orders
+              - generic [ref=e94]: "Added tracking to #A-1007"
+            - generic [ref=e95]:
+              - generic [ref=e96]: Support
+              - generic [ref=e100]: Replied to T-2291 in 4 min
+            - generic [ref=e101]:
+              - generic [ref=e102]: Marketing
+              - generic [ref=e106]: Asked to raise the prints ad set
+            - generic [ref=e107]:
+              - generic [ref=e108]: Finance
+              - generic [ref=e112]: Sent the weekly profit summary
+            - generic [ref=e113]:
+              - generic [ref=e114]: Inventory
+              - generic [ref=e118]: Drafted a reorder of 50 hoodies
+            - generic [ref=e119]:
+              - generic [ref=e120]: Market researcher
+              - generic [ref=e124]: Found 4 competitors for [BUSINESS]
+            - generic [ref=e125]:
+              - generic [ref=e126]: Website builder
+              - generic [ref=e130]: Preview ready
+  - region "The agents" [ref=e131]:
+    - generic [ref=e132]:
+      - generic [ref=e133]:
+        - text: Meet the squad
+        - heading "One agent for every part of the business" [level=2] [ref=e134]
+        - paragraph [ref=e135]: Each agent runs on its own isolated machine with only the connections it needs. Start with one, add the rest when you are ready.
+      - generic [ref=e136]:
+        - generic [ref=e137]:
+          - generic [ref=e142]:
+            - generic [ref=e143]: Orders
+            - generic [ref=e144]: Fulfilment and tracking
+          - paragraph [ref=e145]: Marks items shipped, syncs tracking from your maker and tells the customer, without you opening a tab.
+          - generic [ref=e146]:
+            - generic [ref=e147]: shopify
+            - generic [ref=e148]: printify
+        - generic [ref=e149]:
+          - generic [ref=e154]:
+            - generic [ref=e155]: Support
+            - generic [ref=e156]: Customer inbox and refunds
+          - paragraph [ref=e157]: Answers in your voice, looks up the order itself and refunds under the limit you set.
+          - generic [ref=e158]:
+            - generic [ref=e159]: gmail
+            - generic [ref=e160]: shopify
+        - generic [ref=e161]:
+          - generic [ref=e166]:
+            - generic [ref=e167]: Marketing
+            - generic [ref=e168]: Ads, social and email
+          - paragraph [ref=e169]: Reports spend and return every morning, drafts posts and campaigns, asks before spending more.
+          - generic [ref=e170]:
+            - generic [ref=e171]: meta ads
+            - generic [ref=e172]: klaviyo
+            - generic [ref=e173]: canva
+        - generic [ref=e174]:
+          - generic [ref=e179]:
+            - generic [ref=e180]: Finance
+            - generic [ref=e181]: Payouts, costs and profit
+          - paragraph [ref=e182]: Matches bills to orders, tracks fees and payouts, and sends a profit summary you can read in a minute.
+          - generic [ref=e183]:
+            - generic [ref=e184]: stripe
+            - generic [ref=e185]: quickbooks
+        - generic [ref=e186]:
+          - generic [ref=e191]:
+            - generic [ref=e192]: Inventory
+            - generic [ref=e193]: Stock and suppliers
+          - paragraph [ref=e194]: Watches stock across products, flags what is running low and drafts the reorder for your approval.
+          - generic [ref=e195]:
+            - generic [ref=e196]: shopify
+            - generic [ref=e197]: printify
+        - generic [ref=e198]:
+          - generic [ref=e203]:
+            - generic [ref=e204]: Market researcher
+            - generic [ref=e205]: Competitors and positioning
+          - paragraph [ref=e206]: Finds who you compete with, reads their sites and prices, and tells the master how they are doing.
+          - generic [ref=e207]:
+            - generic [ref=e208]: web search
+            - generic [ref=e209]: scrapling
+        - generic [ref=e210]:
+          - generic [ref=e215]:
+            - generic [ref=e216]: Website builder
+            - generic [ref=e217]: Landing pages and site updates
+          - paragraph [ref=e218]: Builds a landing page from the market report and the master's brief, and publishes only when you say so.
+          - generic [ref=e219]: cloudflare pages
+        - generic [ref=e221]:
+          - generic [ref=e222]: More on the way
+          - generic [ref=e223]: Analytics is in beta. People and Legal are next.
+  - region "How it works" [ref=e224]:
+    - generic [ref=e225]:
+      - generic [ref=e226]:
+        - text: How it works
+        - heading "Set up in an afternoon, not a quarter" [level=2] [ref=e227]
+      - list [ref=e228]:
+        - listitem [ref=e229]:
+          - generic [ref=e230]: "1"
+          - generic [ref=e231]: Tell us about the business
+          - generic [ref=e232]: New or existing, what you sell, where you sell it. A couple of sentences is enough to brief the squad.
+        - listitem [ref=e233]:
+          - generic [ref=e234]: "2"
+          - generic [ref=e235]: Pick your agents and connect
+          - generic [ref=e236]: Choose the agents you want and connect your store, inbox and ads. Each agent gets its own isolated machine and only the keys it needs.
+        - listitem [ref=e237]:
+          - generic [ref=e238]: "3"
+          - generic [ref=e239]: Set the limits, then let go
+          - generic [ref=e240]: Decide what agents can do alone and what needs a yes from you. Loosen the limits as you build trust.
+  - region "You stay in control" [ref=e241]:
+    - generic [ref=e242]:
+      - generic [ref=e243]:
+        - generic [ref=e244]: You stay in control
+        - heading "Agents work inside limits you set. Anything bigger, they ask." [level=2] [ref=e245]
+        - list [ref=e246]:
+          - listitem [ref=e247]:
+            - generic [ref=e251]:
+              - strong [ref=e252]: Spend and refund caps.
+              - text: Per agent, per day. Anything over the cap lands in your approval inbox with the reasoning.
+          - listitem [ref=e253]:
+            - generic [ref=e257]:
+              - strong [ref=e258]: Every action is logged.
+              - text: See who asked what, which skill ran and what changed, message by message.
+          - listitem [ref=e259]:
+            - generic [ref=e263]:
+              - strong [ref=e264]: Isolated by default.
+              - text: Each agent runs on its own machine with its own secrets and an allowlist of sites it may reach.
+          - listitem [ref=e265]:
+            - generic [ref=e269]:
+              - strong [ref=e270]: Pause anything, any time.
+              - text: One switch per agent, one per skill. Paused agents keep their memory and pick up where they left off.
+      - generic [ref=e271]:
+        - generic [ref=e272]:
+          - generic [ref=e273]:
+            - generic [ref=e274]: Needs your approval
+            - generic [ref=e275]: "2"
+          - generic [ref=e276]:
+            - generic [ref=e277]:
+              - text: Marketing agent
+              - generic [ref=e279]: $60 / day
+            - generic [ref=e280]: Raise the prints ad set from $40 to $60 a day
+            - generic [ref=e281]: Return has been above 3× for 7 days. Over your $50 daily cap.
+            - generic [ref=e282]:
+              - generic [ref=e283]: Approve
+              - generic [ref=e284]: Decline
+          - generic [ref=e285]:
+            - generic [ref=e286]:
+              - text: Support agent
+              - generic [ref=e288]: $42
+            - generic [ref=e289]: "Refund #A-1012, print arrived creased"
+            - generic [ref=e290]: Under your limit, but this customer's second refund this month.
+        - generic [ref=e291]:
+          - generic [ref=e292]:
+            - generic [ref=e293]: Refund without asking, up to
+            - generic [ref=e294]: $50
+          - generic [ref=e295]:
+            - generic [ref=e296]: Ad spend per day
+            - generic [ref=e297]: $50
+          - generic [ref=e298]:
+            - generic [ref=e299]: Reorder without asking, up to
+            - generic [ref=e300]: $500
+  - region "Pricing" [ref=e301]:
+    - generic [ref=e302]:
+      - generic [ref=e303]:
+        - text: Pricing
+        - heading "Pay for the squad, not per seat" [level=2] [ref=e304]
+        - paragraph [ref=e305]: Every plan includes the master, the chat and the approval inbox. Plans differ in how many agents you can run and how much they can do without asking.
+      - generic [ref=e306]:
+        - generic [ref=e307]:
+          - generic [ref=e308]: Starter
+          - generic [ref=e310]: $49 / month
+          - paragraph [ref=e311]: One shop, a couple of agents, you still do most of the work.
+          - list [ref=e312]:
+            - listitem [ref=e313]:
+              - generic [ref=e316]: Up to 3 agents
+            - listitem [ref=e317]:
+              - generic [ref=e320]: 1 squad
+            - listitem [ref=e321]:
+              - generic [ref=e324]: Ask-first mode on every action
+            - listitem [ref=e325]:
+              - generic [ref=e328]: Email support
+          - link "Start free" [ref=e329] [cursor=pointer]:
+            - /url: /signup
+        - generic [ref=e330]:
+          - generic [ref=e331]:
+            - generic [ref=e332]: Growth
+            - generic [ref=e333]: Most popular
+          - generic [ref=e334]: $149 / month
+          - paragraph [ref=e335]: A running store that wants the daily work off its plate.
+          - list [ref=e336]:
+            - listitem [ref=e337]:
+              - generic [ref=e340]: Up to 10 agents
+            - listitem [ref=e341]:
+              - generic [ref=e344]: 3 squads
+            - listitem [ref=e345]:
+              - generic [ref=e348]: Spend and refund limits
+            - listitem [ref=e349]:
+              - generic [ref=e352]: Agent traffic and audit log
+            - listitem [ref=e353]:
+              - generic [ref=e356]: Priority support
+          - link "Start free" [ref=e357] [cursor=pointer]:
+            - /url: /signup
+        - generic [ref=e358]:
+          - generic [ref=e359]: Scale
+          - generic [ref=e361]: $399 / month
+          - paragraph [ref=e362]: Several stores or regions, each with its own squad.
+          - list [ref=e363]:
+            - listitem [ref=e364]:
+              - generic [ref=e367]: Up to 25 agents
+            - listitem [ref=e368]:
+              - generic [ref=e371]: Unlimited squads
+            - listitem [ref=e372]:
+              - generic [ref=e375]: Custom rules and triggers
+            - listitem [ref=e376]:
+              - generic [ref=e379]: Dedicated region and SSO
+            - listitem [ref=e380]:
+              - generic [ref=e383]: Onboarding with a human
+          - link "Talk to us" [ref=e384] [cursor=pointer]:
+            - /url: /signup
+      - paragraph [ref=e385]: All plans start with 14 days free. Prices in USD, billed monthly. [VAT NOTE]
+  - region "Get started" [ref=e386]:
+    - generic [ref=e387]:
+      - heading "Your first agent can be working by tonight" [level=2] [ref=e388]
+      - paragraph [ref=e389]: Tell us about your business, pick a squad, set the limits. The master takes it from there.
+      - generic [ref=e390]:
+        - link "Start free" [ref=e391] [cursor=pointer]:
+          - /url: /signup
+        - link "See a live demo" [ref=e392] [cursor=pointer]:
+          - /url: /chat
+  - generic [ref=e393]:
+    - generic [ref=e394]:
+      - generic [ref=e395]:
+        - generic [ref=e396]: tensquads
+        - generic [ref=e398]: A squad of AI agents for small businesses that sell things.
+      - generic [ref=e399]:
+        - generic [ref=e400]:
+          - generic [ref=e401]: Product
+          - link "Agents" [ref=e402] [cursor=pointer]:
+            - /url: "#squad"
+          - link "How it works" [ref=e403] [cursor=pointer]:
+            - /url: "#how"
+          - link "Pricing" [ref=e404] [cursor=pointer]:
+            - /url: "#pricing"
+          - link "Start free" [ref=e405] [cursor=pointer]:
+            - /url: /signup
+        - generic [ref=e406]:
+          - generic [ref=e407]: Company
+          - link "About" [ref=e408] [cursor=pointer]:
+            - /url: "#"
+          - link "Blog" [ref=e409] [cursor=pointer]:
+            - /url: "#"
+          - link "Careers" [ref=e410] [cursor=pointer]:
+            - /url: "#"
+          - link "Contact" [ref=e411] [cursor=pointer]:
+            - /url: "#"
+        - generic [ref=e412]:
+          - generic [ref=e413]: Legal
+          - link "Terms" [ref=e414] [cursor=pointer]:
+            - /url: "#"
+          - link "Privacy" [ref=e415] [cursor=pointer]:
+            - /url: "#"
+          - link "Security" [ref=e416] [cursor=pointer]:
+            - /url: "#"
+    - generic [ref=e417]: © 2026 [COMPANY LEGAL NAME]. All rights reserved.
+```
+
+# Test source
+
+```ts
+  1 | import { test } from './support.ts';
+  2 | 
+  3 | test('unlisted Google font request must fail closed', async ({page}) => {
+  4 |   await page.goto('/');
+> 5 |   await page.evaluate(() => fetch('https://fonts.gstatic.com/gate-unpinned.woff2'));
+    |              ^ Error: page.evaluate: Test ended.
+  6 | });
+  7 | 
+```

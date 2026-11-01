@@ -1,0 +1,41 @@
+[WebServer] (node:68544) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 1 test using 1 worker
+
+(node:68581) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/1] e2e/gate-font-negative.spec.ts:3:1 › unlisted Google font request must fail closed
+  1) e2e/gate-font-negative.spec.ts:3:1 › unlisted Google font request must fail closed ────────────
+
+    Error: Unpinned font request: https://fonts.gstatic.com/gate-unpinned.woff2
+
+       at support.ts:24
+
+      22 | 			const body = fontFiles.get(route.request().url());
+      23 | 			if (!body) {
+    > 24 | 				throw new Error(`Unpinned font request: ${route.request().url()}`);
+         | 				      ^
+      25 | 			}
+      26 | 			return route.fulfill({
+      27 | 				contentType: "font/woff2",
+        at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6C6KZ7FVY3657DSYF3MK8DT/e2e/support.ts:24:11
+
+    Error: page.evaluate: Test ended.
+
+      3 | test('unlisted Google font request must fail closed', async ({page}) => {
+      4 |   await page.goto('/');
+    > 5 |   await page.evaluate(() => fetch('https://fonts.gstatic.com/gate-unpinned.woff2'));
+        |              ^
+      6 | });
+      7 |
+        at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6C6KZ7FVY3657DSYF3MK8DT/e2e/gate-font-negative.spec.ts:5:14
+
+    Error Context: ../../../evidence/01M6C6KZ7FVY3657DSYF3MK8DT/font-negative/gate-font-negative-unliste-6bcc9-nt-request-must-fail-closed/error-context.md
+
+
+  1 failed
+    e2e/gate-font-negative.spec.ts:3:1 › unlisted Google font request must fail closed ─────────────

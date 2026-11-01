@@ -1,0 +1,87 @@
+[WebServer] (node:68183) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 22 tests using 5 workers
+
+(node:68220) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:68218) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:68219) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:68217) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:68221) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/22] e2e/home.spec.ts:13:1 › the homepage toggle changes the prompt and fills an example
+[2/22] e2e/gate-live.spec.ts:36:1 › live inventories reject empty field handler swaps and keep hero identity
+[3/22] e2e/home.spec.ts:43:1 › homepage anchors scroll to the named sections
+[4/22] e2e/home.spec.ts:25:1 › homepage calls to action follow the design routes
+[5/22] e2e/gate-live.spec.ts:7:1 › capture public screens and independent chip removal on both branches
+e2e/gate-live.spec.ts:36:1 › live inventories reject empty field handler swaps and keep hero identity
+{"route":"/signin","extraHandlers":[{"tag":"input","event":"onChange","handler":"onPassword","text":"email"},{"tag":"input","event":"onChange","handler":"onEmail","text":"password"}],"missingHandlers":[{"tag":"input","event":"onChange","handler":"onEmail","text":"email"},{"tag":"input","event":"onChange","handler":"onPassword","text":"password"}]}
+
+[6/22] e2e/home.spec.ts:57:1 › homepage controls have labels and the focus ring
+[7/22] e2e/inventory.spec.ts:52:1 › the homepage inventory matches the design texts, handlers, loops, and links
+[8/22] e2e/inventory.spec.ts:62:2 › extra paragraph fails the homepage inventory
+{"route":"/signup","extraHandlers":[{"tag":"textarea","event":"onChange","handler":"onIdea","text":"biz-mission"},{"tag":"textarea","event":"onChange","handler":"onMission","text":"biz-idea"}],"missingHandlers":[{"tag":"textarea","event":"onChange","handler":"onMission","text":"biz-mission"},{"tag":"textarea","event":"onChange","handler":"onIdea","text":"biz-idea"}]}
+
+[9/22] e2e/inventory.spec.ts:62:2 › missing logo fails the homepage inventory
+e2e/inventory.spec.ts:62:2 › extra paragraph fails the homepage inventory
+
+
+e2e/inventory.spec.ts:52:1 › the homepage inventory matches the design texts, handlers, loops, and links
+
+
+[10/22] e2e/inventory.spec.ts:62:2 › changed Security target fails the homepage inventory
+[11/22] e2e/inventory.spec.ts:83:1 › the sign-up inventory matches the design texts, handlers, loops, and links
+e2e/inventory.spec.ts:62:2 › missing logo fails the homepage inventory
+
+
+[12/22] e2e/inventory.spec.ts:97:1 › the sign-in inventory matches the design texts, handlers, loops, and links
+e2e/inventory.spec.ts:83:1 › the sign-up inventory matches the design texts, handlers, loops, and links
+
+
+e2e/inventory.spec.ts:62:2 › changed Security target fails the homepage inventory
+
+
+[13/22] e2e/session.spec.ts:5:1 › a visitor with no session is sent to sign-in
+e2e/inventory.spec.ts:97:1 › the sign-in inventory matches the design texts, handlers, loops, and links
+
+
+
+
+[14/22] e2e/signin.spec.ts:14:1 › an empty sign-in shows the design error
+e2e/inventory.spec.ts:83:1 › the sign-up inventory matches the design texts, handlers, loops, and links
+
+
+[15/22] e2e/signin.spec.ts:38:1 › forgot password and the email link do nothing
+
+
+[16/22] e2e/signin.spec.ts:51:1 › sign-in controls have labels and the focus ring
+
+
+[17/22] e2e/signup.spec.ts:13:1 › details keeps every selected channel and platform on
+[18/22] e2e/signup.spec.ts:39:1 › sign-up starts at business type and pre-selects the design squads
+[19/22] e2e/signup.spec.ts:59:1 › an existing business shows its fields and four starter squads
+
+
+
+
+
+
+[20/22] e2e/signup.spec.ts:90:1 › zero squads do not open the account form
+[21/22] e2e/signup.spec.ts:103:1 › the account step reuses the sign-in fields and blocks empty input
+[22/22] e2e/signup.spec.ts:120:1 › sign-up controls have labels
+  22 passed (10.0s)

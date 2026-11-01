@@ -1,0 +1,267 @@
+[WebServer] (node:67366) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 60 tests using 5 workers
+
+(node:67514) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:67515) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:67512) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:67513) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/60] e2e/home.spec.ts:69:2 › homepage at 390
+(node:67516) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[2/60] e2e/signin.spec.ts:64:2 › sign-in at 1440
+[3/60] e2e/signup.spec.ts:128:2 › sign-up at 1440
+[4/60] e2e/home.spec.ts:69:2 › homepage at 1440
+[5/60] e2e/signin.spec.ts:64:2 › sign-in at 390
+[6/60] e2e/signup.spec.ts:128:2 › sign-up at 390
+(node:67564) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:67565) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[7/60] e2e/home.spec.ts:69:2 › homepage at 1440
+[8/60] e2e/home.spec.ts:69:2 › homepage at 390
+(node:67566) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[9/60] e2e/signin.spec.ts:64:2 › sign-in at 1440
+(node:67567) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[10/60] e2e/signin.spec.ts:64:2 › sign-in at 390
+(node:67584) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[11/60] e2e/signup.spec.ts:128:2 › sign-up at 1440
+[12/60] e2e/signup.spec.ts:128:2 › sign-up at 390
+(node:67593) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[13/60] e2e/home.spec.ts:69:2 › homepage at 1440
+(node:67598) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[14/60] e2e/home.spec.ts:69:2 › homepage at 390
+(node:67599) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[15/60] e2e/signin.spec.ts:64:2 › sign-in at 1440
+(node:67602) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[16/60] e2e/signin.spec.ts:64:2 › sign-in at 390
+(node:67619) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[17/60] e2e/signup.spec.ts:128:2 › sign-up at 1440
+[18/60] e2e/signup.spec.ts:128:2 › sign-up at 390
+(node:67640) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:67641) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[19/60] e2e/home.spec.ts:69:2 › homepage at 1440
+[20/60] e2e/home.spec.ts:69:2 › homepage at 390
+(node:67643) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[21/60] e2e/signin.spec.ts:64:2 › sign-in at 1440
+(node:67644) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[22/60] e2e/signin.spec.ts:64:2 › sign-in at 390
+(node:67654) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[23/60] e2e/signup.spec.ts:128:2 › sign-up at 1440
+[24/60] e2e/signup.spec.ts:128:2 › sign-up at 390
+(node:67670) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[25/60] e2e/home.spec.ts:69:2 › homepage at 1440
+(node:67671) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[26/60] e2e/home.spec.ts:69:2 › homepage at 390
+(node:67672) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[27/60] e2e/signin.spec.ts:64:2 › sign-in at 1440
+(node:67682) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[28/60] e2e/signin.spec.ts:64:2 › sign-in at 390
+(node:67689) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[29/60] e2e/signup.spec.ts:128:2 › sign-up at 1440
+[30/60] e2e/signup.spec.ts:128:2 › sign-up at 390
+(node:67711) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[31/60] e2e/home.spec.ts:69:2 › homepage at 1440
+(node:67712) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:67713) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[32/60] e2e/home.spec.ts:69:2 › homepage at 390
+[33/60] e2e/signin.spec.ts:64:2 › sign-in at 1440
+(node:67722) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[34/60] e2e/signin.spec.ts:64:2 › sign-in at 390
+(node:67726) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[35/60] e2e/signup.spec.ts:128:2 › sign-up at 1440
+[36/60] e2e/signup.spec.ts:128:2 › sign-up at 390
+(node:67745) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[37/60] e2e/home.spec.ts:69:2 › homepage at 1440
+(node:67746) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[38/60] e2e/home.spec.ts:69:2 › homepage at 390
+(node:67747) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[39/60] e2e/signin.spec.ts:64:2 › sign-in at 1440
+(node:67754) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[40/60] e2e/signin.spec.ts:64:2 › sign-in at 390
+(node:67765) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[41/60] e2e/signup.spec.ts:128:2 › sign-up at 1440
+[42/60] e2e/signup.spec.ts:128:2 › sign-up at 390
+(node:67793) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[43/60] e2e/home.spec.ts:69:2 › homepage at 1440
+(node:67794) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:67795) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:67796) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[44/60] e2e/home.spec.ts:69:2 › homepage at 390
+[45/60] e2e/signin.spec.ts:64:2 › sign-in at 390
+[46/60] e2e/signin.spec.ts:64:2 › sign-in at 1440
+(node:67816) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[47/60] e2e/signup.spec.ts:128:2 › sign-up at 1440
+[48/60] e2e/signup.spec.ts:128:2 › sign-up at 390
+(node:67822) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:67823) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[49/60] e2e/home.spec.ts:69:2 › homepage at 1440
+[50/60] e2e/home.spec.ts:69:2 › homepage at 390
+(node:67824) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[51/60] e2e/signin.spec.ts:64:2 › sign-in at 1440
+(node:67827) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[52/60] e2e/signin.spec.ts:64:2 › sign-in at 390
+(node:67837) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[53/60] e2e/signup.spec.ts:128:2 › sign-up at 1440
+[54/60] e2e/signup.spec.ts:128:2 › sign-up at 390
+(node:67866) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[55/60] e2e/home.spec.ts:69:2 › homepage at 1440
+(node:67867) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[56/60] e2e/home.spec.ts:69:2 › homepage at 390
+(node:67868) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[57/60] e2e/signin.spec.ts:64:2 › sign-in at 1440
+(node:67869) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[58/60] e2e/signin.spec.ts:64:2 › sign-in at 390
+(node:67885) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[59/60] e2e/signup.spec.ts:128:2 › sign-up at 1440
+[60/60] e2e/signup.spec.ts:128:2 › sign-up at 390
+  60 passed (18.9s)
