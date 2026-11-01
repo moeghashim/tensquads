@@ -1,0 +1,37 @@
+{
+	"name": "@tensquads/web",
+	"private": true,
+	"type": "module",
+	"imports": {
+		"#/*": "./src/*"
+	},
+	"scripts": {
+		"dev": "vite dev --port 3000",
+		"generate-routes": "tsr generate",
+		"build": "vite build",
+		"preview": "vite preview",
+		"check": "tsc --noEmit",
+		"cf:build": "vite build",
+		"cf:preview": "vite build && wrangler dev",
+		"cf:deploy": "vite build && wrangler deploy",
+		"cf:typegen": "wrangler types",
+		"deploy": "npm run cf:deploy"
+	},
+	"dependencies": {
+		"@tanstack/react-router": "1.170.46",
+		"@tanstack/react-start": "1.169.4",
+		"react": "^19.2.0",
+		"react-dom": "^19.2.0"
+	},
+	"devDependencies": {
+		"@cloudflare/vite-plugin": "^1.26.0",
+		"@tanstack/router-cli": "^1.132.0",
+		"@types/node": "^22.20.5",
+		"@types/react": "^19.2.0",
+		"@types/react-dom": "^19.2.0",
+		"@vitejs/plugin-react": "^6.0.1",
+		"typescript": "^6.0.2",
+		"vite": "^8.0.0",
+		"wrangler": "^4.156.0"
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "tensquads",
+	"compatibility_date": "2026-10-23",
+	"compatibility_flags": ["nodejs_compat"],
+	"main": "@tanstack/react-start/server-entry",
+	"observability": {
+		"enabled": true
+	}
+	// Decision 16. This Worker will also hold one Durable Object class and one Queue consumer.
+	// Do not add those bindings in phase 0.
+}

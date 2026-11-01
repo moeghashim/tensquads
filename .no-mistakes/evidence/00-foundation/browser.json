@@ -1,0 +1,54 @@
+[
+  {
+    "name": "worker",
+    "url": "http://localhost:8787/",
+    "width": 1440,
+    "height": 900,
+    "status": 200,
+    "title": "tensquads",
+    "visibleText": "",
+    "horizontalOverflow": false,
+    "controls": 0,
+    "errors": [],
+    "accessibilityViolations": []
+  },
+  {
+    "name": "worker",
+    "url": "http://localhost:8787/",
+    "width": 390,
+    "height": 844,
+    "status": 200,
+    "title": "tensquads",
+    "visibleText": "",
+    "horizontalOverflow": false,
+    "controls": 0,
+    "errors": [],
+    "accessibilityViolations": []
+  },
+  {
+    "name": "cloudflare",
+    "url": "https://tensquads.moe-678.workers.dev/",
+    "width": 1440,
+    "height": 900,
+    "status": 200,
+    "title": "tensquads",
+    "visibleText": "",
+    "horizontalOverflow": false,
+    "controls": 0,
+    "errors": [],
+    "accessibilityViolations": []
+  },
+  {
+    "name": "cloudflare",
+    "url": "https://tensquads.moe-678.workers.dev/",
+    "width": 390,
+    "height": 844,
+    "status": 200,
+    "title": "tensquads",
+    "visibleText": "",
+    "horizontalOverflow": false,
+    "controls": 0,
+    "errors": [],
+    "accessibilityViolations": []
+  }
+]

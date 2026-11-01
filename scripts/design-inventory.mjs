@@ -48,10 +48,10 @@ for (const file of files) {
 	const props = (src.match(/data-props='([^']*)'/) ?? ["", "{}"])[1];
 
 	const body = markup.replace(/<helmet>[\s\S]*?<\/helmet>/, "").replace(/<svg[\s\S]*?<\/svg>/g, "");
-	const texts = [...body.matchAll(/>([^<>{}]+?)</g)]
-		.map((m) => decode(m[1]))
-		.filter((t) => t.length > 0);
-	const attrTexts = [...body.matchAll(/\b(placeholder|aria-label|alt|title)="([^"{}]+)"/g)].map((m) => `${m[1]}: ${decode(m[2])}`);
+	const texts = [...body.matchAll(/>([^<>{}]+?)</g)].map((m) => decode(m[1])).filter((t) => t.length > 0);
+	const attrTexts = [...body.matchAll(/\b(placeholder|aria-label|alt|title)="([^"{}]+)"/g)].map(
+		(m) => `${m[1]}: ${decode(m[2])}`,
+	);
 
 	const styles = [...body.matchAll(/style="([^"]*)"/g)]
 		.flatMap((m) => m[1].split(";"))
@@ -60,25 +60,40 @@ for (const file of files) {
 
 	const colors = uniq([...(body + script).matchAll(/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)/g)].map((m) => m[0]));
 
-	const handlers = [...body.matchAll(/<(button|a|input|textarea|select)\b[^>]*?\b(onClick|onChange)="\{\{([^}]+)\}\}"[^>]*>/g)].map((m) => ({
+	const handlers = [
+		...body.matchAll(/<(button|a|input|textarea|select)\b[^>]*?\b(onClick|onChange)="\{\{([^}]+)\}\}"[^>]*>/g),
+	].map((m) => ({
 		tag: m[1],
 		event: m[2],
 		handler: m[3],
 	}));
 	const templates = uniq([...body.matchAll(/\{\{([^}]+)\}\}/g)].map((m) => m[1].trim()));
 	const loops = [
-		...[...body.matchAll(/<sc-for list="\{\{([^}]+)\}\}" as="([^"]+)"/g)].map((m) => ({ kind: "for", list: m[1], as: m[2] })),
+		...[...body.matchAll(/<sc-for list="\{\{([^}]+)\}\}" as="([^"]+)"/g)].map((m) => ({
+			kind: "for",
+			list: m[1],
+			as: m[2],
+		})),
 		...[...body.matchAll(/<sc-if value="\{\{([^}]+)\}\}"/g)].map((m) => ({ kind: "if", value: m[1] })),
 	];
 	const links = uniq([...body.matchAll(/href="([^"]*)"/g)].map((m) => m[1]));
 
-	const strings = [...script.matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((m) => m[1].replace(/\\'/g, "'")).filter((s) => s.length > 0);
+	const strings = [...script.matchAll(/'((?:[^'\\]|\\.)*)'/g)]
+		.map((m) => m[1].replace(/\\'/g, "'"))
+		.filter((s) => s.length > 0);
 	const keys = uniq([...script.matchAll(/(?:\{|,)\s*([A-Za-z_$][\w$]*)\s*:/g)].map((m) => m[1]));
 	const imports = [...markup.matchAll(/<dc-import\b([^>]*)>/g)].map((m) => m[1].trim());
 
 	const inventory = {
 		file,
-		counts: { texts: texts.length, styles: styles.length, colors: colors.length, handlers: handlers.length, loops: loops.length, strings: strings.length },
+		counts: {
+			texts: texts.length,
+			styles: styles.length,
+			colors: colors.length,
+			handlers: handlers.length,
+			loops: loops.length,
+			strings: strings.length,
+		},
 		imports,
 		props: JSON.parse(props),
 		texts,
@@ -94,5 +109,7 @@ for (const file of files) {
 	};
 	const out = resolve(outDir, file.replace(".dc.html", ".json"));
 	writeFileSync(out, `${JSON.stringify(inventory, null, 2)}\n`);
-	console.log(`${file}: ${texts.length} texts, ${Object.keys(inventory.styles).length} style declarations, ${colors.length} colours, ${handlers.length} handlers, ${strings.length} script strings -> ${out.replace(`${root}/`, "")}`);
+	console.log(
+		`${file}: ${texts.length} texts, ${Object.keys(inventory.styles).length} style declarations, ${colors.length} colours, ${handlers.length} handlers, ${strings.length} script strings -> ${out.replace(`${root}/`, "")}`,
+	);
 }

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Add a Developer Certificate of Origin sign-off when the message lacks one so the DCO check passes.
+message_file=$1
+name=$(git config user.name)
+email=$(git config user.email)
+if [ -z "$name" ] || [ -z "$email" ]; then
+	exit 0
+fi
+
+if ! grep -qi "^Signed-off-by: " "$message_file"; then
+	git interpret-trailers --in-place --trailer "Signed-off-by: $name <$email>" "$message_file"
+fi

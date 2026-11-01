@@ -1,0 +1,31 @@
+# Weekly dependency updates. Minor and patch bumps are grouped into one PR per ecosystem.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Node types track the runtime major in .nvmrc; bump both together by hand.
+      - dependency-name: "@types/node"
+        update-types:
+          - version-update:semver-major
+      # The root compiler is TypeScript 7. Bump it by hand with the app.
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"

@@ -1,0 +1,53 @@
+{
+	"name": "tensquads",
+	"private": true,
+	"license": "MIT",
+	"type": "module",
+	"packageManager": "npm@11.19.1",
+	"workspaces": [
+		"apps/*",
+		"packages/adapters",
+		"packages/domain",
+		"packages/kernel",
+		"packages/seed"
+	],
+	"scripts": {
+		"dco:fix": "git rebase --signoff",
+		"clean": "npm run clean --workspaces --if-present",
+		"build": "npm run build --workspaces --if-present",
+		"test": "node --test scripts/test/*.test.mjs && node scripts/run-workspaces.mjs test",
+		"fallow:audit": "fallow audit --changed-since origin/main",
+		"preview:cloudflare": "npm run cf:preview -w @tensquads/web",
+		"build:cloudflare": "npm run cf:build -w @tensquads/web",
+		"deploy:cloudflare": "npm run cf:deploy -w @tensquads/web",
+		"typegen:cloudflare": "npm run cf:typegen -w @tensquads/web",
+		"preflight:native-deps": "node scripts/preflight-native-deps.mjs",
+		"check": "npm run preflight:native-deps && biome check --error-on-warnings . && node scripts/check-file-length.mjs && node scripts/typecheck.mjs && node scripts/run-workspaces.mjs check",
+		"fix": "npm run preflight:native-deps && biome check --write --error-on-warnings .",
+		"prepare": "node scripts/prepare.mjs",
+		"design:check": "node scripts/design-check.mjs",
+		"design:inventory": "node scripts/design-inventory.mjs",
+		"seed": "node --experimental-strip-types packages/seed/src/cli.ts",
+		"e2e": "playwright test",
+		"statechart:check": "node scripts/statechart-check.mjs"
+	},
+	"devDependencies": {
+		"@axe-core/playwright": "^4.14.0",
+		"@biomejs/biome": "2.3.5",
+		"@playwright/test": "^1.64.1",
+		"@types/node": "^24.19.2",
+		"esbuild": "^0.28.2",
+		"fallow": "3.9.1",
+		"husky": "^9.1.7",
+		"typescript": "7.0.2",
+		"yaml": "2.9.1"
+	},
+	"engines": {
+		"node": "24.x"
+	},
+	"allowScripts": {
+		"esbuild@0.28.2": true,
+		"workerd@1.20261023.1": true,
+		"fsevents@2.3.3": true
+	}
+}

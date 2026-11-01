@@ -1,0 +1,32 @@
+# Keep push-time gate commands deterministic instead of relying on agent auto-detection.
+# Put the Node version from .nvmrc on the gate daemon's PATH using any manager.
+# npm run check enforces that version; the gate must not assume nvm is installed.
+commands:
+  test: "npm ci && npm test"
+  lint: "npm ci && npm run check && npm run fallow:audit"
+  format: "npx biome format --write ."
+
+# no-mistakes 1.84.0 (4822244) has no sign-off trailer setting. A correction
+# commit is `git commit --no-verify -m` and adds no sign-off. The GitHub DCO
+# check is the gate for sign-off. Every commit needs a Signed-off-by trailer.
+# protected_paths guards automatic staging only. no-mistakes reads that list
+# from the default branch. It does not stop a filesystem edit.
+# Keep `--skip document` for this repository. The document step edits files
+# before its gate. Every auto_fix count below is 0, so the pipeline makes no
+# commits on its own.
+protected_paths:
+  - "docs/PLAN.md"
+  - "docs/BRIEF.md"
+  - "tasks/00-foundation.md"
+  - "README.md"
+  - "AGENTS.md"
+  - "CLAUDE.md"
+  - "design/**"
+
+auto_fix:
+  rebase: 0
+  review: 0
+  test: 0
+  document: 0
+  lint: 0
+  ci: 0

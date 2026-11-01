@@ -1,0 +1,215 @@
+{
+  "database": "PGlite, migrated and seeded twice through the application adapters",
+  "totals": {
+    "accounts": 9,
+    "agents": 66,
+    "squads": 17,
+    "mrr": 1294,
+    "allTime": 14568,
+    "tasksDone": 331,
+    "images": 7,
+    "openBugs": 8,
+    "featuresRequested": 15
+  },
+  "demoAgents": [
+    {
+      "id": "finance",
+      "on": true,
+      "tasks": 24,
+      "mission": "Keep profit margin above 30% and every bill matched within a week."
+    },
+    {
+      "id": "inventory",
+      "on": false,
+      "tasks": 31,
+      "mission": ""
+    },
+    {
+      "id": "marketing",
+      "on": true,
+      "tasks": 38,
+      "mission": "Bring in repeat customers at a return above 3× on every dollar spent."
+    },
+    {
+      "id": "orders",
+      "on": true,
+      "tasks": 142,
+      "mission": "Ship every order within 24 hours and keep the customer informed."
+    },
+    {
+      "id": "support",
+      "on": true,
+      "tasks": 96,
+      "mission": "Answer every customer within an hour and keep satisfaction above 4.5."
+    }
+  ],
+  "revenue": [
+    {
+      "day": "2026-10-14",
+      "amount": 980
+    },
+    {
+      "day": "2026-10-15",
+      "amount": 1040
+    },
+    {
+      "day": "2026-10-16",
+      "amount": 1020
+    },
+    {
+      "day": "2026-10-17",
+      "amount": 1110
+    },
+    {
+      "day": "2026-10-18",
+      "amount": 1060
+    },
+    {
+      "day": "2026-10-19",
+      "amount": 1150
+    },
+    {
+      "day": "2026-10-20",
+      "amount": 1160
+    },
+    {
+      "day": "2026-10-21",
+      "amount": 1010
+    },
+    {
+      "day": "2026-10-22",
+      "amount": 1120
+    },
+    {
+      "day": "2026-10-23",
+      "amount": 1090
+    },
+    {
+      "day": "2026-10-24",
+      "amount": 1250
+    },
+    {
+      "day": "2026-10-25",
+      "amount": 1180
+    },
+    {
+      "day": "2026-10-26",
+      "amount": 1330
+    },
+    {
+      "day": "2026-10-27",
+      "amount": 1440
+    }
+  ],
+  "inbox": {
+    "approvals": [
+      {
+        "id": "ap1",
+        "agent": "support",
+        "title": "Refund $42 on #A-1012",
+        "detail": "Print arrived creased; photo attached. Second refund for this customer this month.",
+        "amount": "$42",
+        "status": "Pending"
+      },
+      {
+        "id": "ap2",
+        "agent": "marketing",
+        "title": "Raise prints ad set to $60 a day",
+        "detail": "Return on ad spend has been 3.4 for 7 days. Adds about $140 a week.",
+        "amount": "+$20/day",
+        "status": "Pending"
+      },
+      {
+        "id": "ap3",
+        "agent": "inventory",
+        "title": "Reorder 50 blank hoodies",
+        "detail": "Black hoodie M is down to 6. Usual supplier, 5-day delivery.",
+        "amount": "$610",
+        "status": "Pending"
+      }
+    ],
+    "proposals": [
+      {
+        "id": "mp-inventory",
+        "agent": "inventory",
+        "mission": "Never run out of a top-20 product and keep stock under 30 days of cover.",
+        "targets": [
+          [
+            "Stock-outs",
+            "0"
+          ],
+          [
+            "Days of stock",
+            "under 30"
+          ],
+          [
+            "Reorders approved in time",
+            "100%"
+          ]
+        ],
+        "status": "Proposed"
+      }
+    ],
+    "count": 4,
+    "empty": false,
+    "emptyText": ""
+  },
+  "otherAccountAgents": [],
+  "scriptedEvents": [
+    {
+      "id": "e100",
+      "time": "11:03",
+      "from": "master",
+      "to": "inventory",
+      "kind": "Task",
+      "skill": "shopify.stock_levels",
+      "text": "Daily stock check",
+      "payload": {
+        "intent": "stock_check",
+        "threshold": 10
+      },
+      "writes": [],
+      "trace": "tr_0cac87"
+    },
+    {
+      "id": "e101",
+      "time": "11:04",
+      "from": "inventory",
+      "to": "master",
+      "kind": "Result",
+      "skill": "shopify.stock_levels",
+      "text": "2 products under 10: Black hoodie M (6), A3 frame (8)",
+      "payload": {
+        "low": [
+          {
+            "sku": "HD-BLK-M",
+            "qty": 6
+          },
+          {
+            "sku": "FR-A3",
+            "qty": 8
+          }
+        ]
+      },
+      "writes": [
+        "inventory.low_stock"
+      ],
+      "trace": "tr_f9decc",
+      "set": {
+        "inventory.low_stock": "[\"Black hoodie M\",\"A3 frame\"]"
+      }
+    }
+  ],
+  "resultingStore": {
+    "order.A-1007.tracking": "LI400083615LT",
+    "order.A-1007.print_status": "in_production",
+    "order.A-1007.eta": "2026-11-03",
+    "policy.refund_auto_limit": 50,
+    "policy.daily_ad_cap": 200,
+    "policy.reorder_limit": 500,
+    "marketing.roas_7d": 3.4,
+    "finance.revenue_7d": 8420,
+    "finance.profit_7d": 2610,
+    "inventory.low_stock": "[\"Black hoodie M\",\"A3 frame\"]"
+  }
+}

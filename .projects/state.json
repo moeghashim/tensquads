@@ -1,0 +1,52 @@
+{
+  "version": 2,
+  "providers": {
+    "clerk": {
+      "name": "Clerk"
+    },
+    "cloudflare": {
+      "name": "Cloudflare"
+    },
+    "neon": {
+      "name": "Neon"
+    }
+  },
+  "resources": {
+    "clerk-auth": {
+      "livemode": true,
+      "name": "clerk-auth",
+      "providerName": "Clerk",
+      "serviceId": "auth"
+    },
+    "clerk-plan": {
+      "livemode": true,
+      "name": "clerk-plan",
+      "providerName": "Clerk",
+      "serviceId": "hobby"
+    },
+    "cloudflare-plan": {
+      "livemode": true,
+      "name": "cloudflare-plan",
+      "providerName": "Cloudflare",
+      "serviceId": "workers:free"
+    },
+    "cloudflare-workers": {
+      "livemode": true,
+      "name": "cloudflare-workers",
+      "providerName": "Cloudflare",
+      "serviceId": "workers"
+    },
+    "neon-plan": {
+      "livemode": true,
+      "name": "neon-plan",
+      "providerName": "Neon",
+      "serviceId": "free"
+    },
+    "neon-postgres": {
+      "livemode": true,
+      "name": "neon-postgres",
+      "providerName": "Neon",
+      "serviceId": "postgres"
+    }
+  }
+}

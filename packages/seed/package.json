@@ -1,0 +1,19 @@
+{
+	"name": "@tensquads/seed",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"check": "tsc --noEmit",
+		"test": "node --experimental-strip-types --test test/*.test.ts"
+	},
+	"dependencies": {
+		"@tensquads/adapters": "*",
+		"@tensquads/domain": "*"
+	},
+	"devDependencies": {
+		"typescript": "7.0.2"
+	}
+}

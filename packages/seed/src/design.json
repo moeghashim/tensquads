@@ -1,0 +1,1719 @@
+{
+	"seed": {
+		"view": "overview",
+		"agentId": null,
+		"agents": [
+			{
+				"id": "orders",
+				"name": "Orders",
+				"role": "Fulfilment and tracking",
+				"tint": "#e7efff",
+				"on": true,
+				"autonomy": "Full auto",
+				"mission": "Ship every order within 24 hours and keep the customer informed.",
+				"targets": [
+					[
+						"Fulfilment time",
+						"2.1 days",
+						"1 day"
+					],
+					[
+						"Tracking synced",
+						"100%",
+						"100%"
+					],
+					[
+						"Waiting on maker",
+						"3",
+						"0"
+					]
+				],
+				"contribution": 72,
+				"tasks": 142,
+				"success": "98%",
+				"saved": "11.5h",
+				"last": "Added tracking LI400083615LT to #A-1007",
+				"host": "vps-orders-01",
+				"region": "Frankfurt",
+				"size": "2 vCPU · 4 GB",
+				"cpu": "14%",
+				"uptime": "18 days",
+				"egress": [
+					"shopify.com",
+					"api.printify.com"
+				],
+				"secrets": [
+					"SHOPIFY_ORDERS_TOKEN",
+					"PRINTIFY_KEY"
+				],
+				"kpis": [
+					[
+						"Orders handled",
+						"142"
+					],
+					[
+						"Avg ship time",
+						"2.1 days"
+					],
+					[
+						"Tracking synced",
+						"100%"
+					],
+					[
+						"Waiting on maker",
+						"3"
+					]
+				],
+				"skills": [
+					{
+						"id": "shopify.fulfill_order",
+						"desc": "Mark items as shipped in Shopify",
+						"gate": "Auto",
+						"runs": 88,
+						"on": true
+					},
+					{
+						"id": "printify.get_shipment",
+						"desc": "Read shipping status from Printify",
+						"gate": "Auto",
+						"runs": 131,
+						"on": true
+					},
+					{
+						"id": "shopify.add_tracking",
+						"desc": "Attach a tracking number to the order",
+						"gate": "Auto",
+						"runs": 96,
+						"on": true
+					},
+					{
+						"id": "notify.customer",
+						"desc": "Email the customer a shipping update",
+						"gate": "Ask first",
+						"runs": 12,
+						"on": true
+					}
+				]
+			},
+			{
+				"id": "support",
+				"name": "Support",
+				"role": "Customer inbox and refunds",
+				"tint": "#def5ee",
+				"on": true,
+				"autonomy": "Auto under limit",
+				"mission": "Answer every customer within an hour and keep satisfaction above 4.5.",
+				"targets": [
+					[
+						"First reply",
+						"4 min",
+						"60 min"
+					],
+					[
+						"Satisfaction",
+						"4.7 / 5",
+						"4.5 / 5"
+					],
+					[
+						"Open tickets",
+						"5",
+						"under 10"
+					]
+				],
+				"contribution": 81,
+				"tasks": 96,
+				"success": "94%",
+				"saved": "9h",
+				"last": "Asked for tracking on #A-1007 for a customer",
+				"host": "vps-support-01",
+				"region": "Frankfurt",
+				"size": "2 vCPU · 4 GB",
+				"cpu": "22%",
+				"uptime": "18 days",
+				"egress": [
+					"gmail.googleapis.com",
+					"shopify.com"
+				],
+				"secrets": [
+					"GMAIL_OAUTH",
+					"SHOPIFY_REFUNDS_TOKEN"
+				],
+				"kpis": [
+					[
+						"Tickets closed",
+						"96"
+					],
+					[
+						"First reply",
+						"4 min"
+					],
+					[
+						"Satisfaction",
+						"4.7 / 5"
+					],
+					[
+						"Open now",
+						"5"
+					]
+				],
+				"skills": [
+					{
+						"id": "inbox.read",
+						"desc": "Read new customer emails",
+						"gate": "Auto",
+						"runs": 240,
+						"on": true
+					},
+					{
+						"id": "inbox.draft_reply",
+						"desc": "Write a reply in your voice",
+						"gate": "Auto",
+						"runs": 101,
+						"on": true
+					},
+					{
+						"id": "shopify.refund",
+						"desc": "Refund an order up to the limit",
+						"gate": "Under limit",
+						"runs": 14,
+						"on": true
+					},
+					{
+						"id": "orders.lookup",
+						"desc": "Ask Orders for status through the master",
+						"gate": "Auto",
+						"runs": 37,
+						"on": true
+					}
+				]
+			},
+			{
+				"id": "marketing",
+				"name": "Marketing",
+				"role": "Ads, social and email",
+				"tint": "#ece3ff",
+				"on": true,
+				"autonomy": "Ask first",
+				"mission": "Bring in repeat customers at a return above 3× on every dollar spent.",
+				"targets": [
+					[
+						"ROAS",
+						"3.4",
+						"3.0"
+					],
+					[
+						"Email open rate",
+						"41%",
+						"40%"
+					],
+					[
+						"Repeat buyers",
+						"18%",
+						"30%"
+					]
+				],
+				"contribution": 64,
+				"tasks": 38,
+				"success": "91%",
+				"saved": "6h",
+				"last": "Asked to raise the prints ad set to $60 a day",
+				"host": "vps-marketing-01",
+				"region": "Amsterdam",
+				"size": "2 vCPU · 8 GB",
+				"cpu": "9%",
+				"uptime": "6 days",
+				"egress": [
+					"graph.facebook.com",
+					"a.klaviyo.com",
+					"api.canva.com"
+				],
+				"secrets": [
+					"META_ADS_TOKEN",
+					"KLAVIYO_KEY"
+				],
+				"kpis": [
+					[
+						"Ad spend (7d)",
+						"$262"
+					],
+					[
+						"ROAS",
+						"3.4"
+					],
+					[
+						"Posts scheduled",
+						"12"
+					],
+					[
+						"Email open rate",
+						"41%"
+					]
+				],
+				"skills": [
+					{
+						"id": "meta_ads.report",
+						"desc": "Pull spend and return per ad set",
+						"gate": "Auto",
+						"runs": 44,
+						"on": true
+					},
+					{
+						"id": "meta_ads.set_budget",
+						"desc": "Change a daily budget",
+						"gate": "Ask first",
+						"runs": 6,
+						"on": true
+					},
+					{
+						"id": "klaviyo.send_campaign",
+						"desc": "Send an email campaign",
+						"gate": "Ask first",
+						"runs": 3,
+						"on": true
+					},
+					{
+						"id": "canva.create_post",
+						"desc": "Design a social post",
+						"gate": "Auto",
+						"runs": 18,
+						"on": true
+					}
+				]
+			},
+			{
+				"id": "finance",
+				"name": "Finance",
+				"role": "Payouts, costs and profit",
+				"tint": "#ffefa4",
+				"on": true,
+				"autonomy": "Full auto",
+				"mission": "Keep profit margin above 30% and every bill matched within a week.",
+				"targets": [
+					[
+						"Margin",
+						"31%",
+						"30%"
+					],
+					[
+						"Unmatched bills",
+						"0",
+						"0"
+					],
+					[
+						"Unpaid invoices",
+						"0",
+						"0"
+					]
+				],
+				"contribution": 90,
+				"tasks": 24,
+				"success": "100%",
+				"saved": "4h",
+				"last": "Sent the weekly profit summary",
+				"host": "vps-finance-01",
+				"region": "Frankfurt",
+				"size": "1 vCPU · 2 GB",
+				"cpu": "3%",
+				"uptime": "31 days",
+				"egress": [
+					"api.stripe.com",
+					"quickbooks.api.intuit.com"
+				],
+				"secrets": [
+					"STRIPE_READ_KEY",
+					"QBO_OAUTH"
+				],
+				"kpis": [
+					[
+						"Revenue (7d)",
+						"$8,420"
+					],
+					[
+						"Profit (7d)",
+						"$2,610"
+					],
+					[
+						"Margin",
+						"31%"
+					],
+					[
+						"Unpaid invoices",
+						"0"
+					]
+				],
+				"skills": [
+					{
+						"id": "stripe.payouts",
+						"desc": "Read payouts and fees",
+						"gate": "Auto",
+						"runs": 30,
+						"on": true
+					},
+					{
+						"id": "quickbooks.pnl",
+						"desc": "Build the profit and loss report",
+						"gate": "Auto",
+						"runs": 8,
+						"on": true
+					},
+					{
+						"id": "costs.reconcile",
+						"desc": "Match Printify bills to orders",
+						"gate": "Auto",
+						"runs": 21,
+						"on": true
+					}
+				]
+			},
+			{
+				"id": "inventory",
+				"name": "Inventory",
+				"role": "Stock and suppliers",
+				"tint": "#fee7c2",
+				"on": false,
+				"autonomy": "Ask first",
+				"mission": "",
+				"targets": [],
+				"contribution": 0,
+				"tasks": 31,
+				"success": "97%",
+				"saved": "3.5h",
+				"last": "Drafted a reorder of 50 blank hoodies",
+				"host": "vps-inventory-01",
+				"region": "Frankfurt",
+				"size": "1 vCPU · 2 GB",
+				"cpu": "0%",
+				"uptime": "Paused",
+				"egress": [
+					"shopify.com",
+					"api.printify.com"
+				],
+				"secrets": [
+					"SHOPIFY_STOCK_TOKEN"
+				],
+				"kpis": [
+					[
+						"Products tracked",
+						"64"
+					],
+					[
+						"Low stock",
+						"2"
+					],
+					[
+						"Reorders drafted",
+						"5"
+					],
+					[
+						"Days of stock",
+						"23"
+					]
+				],
+				"skills": [
+					{
+						"id": "shopify.stock_levels",
+						"desc": "Read stock for every product",
+						"gate": "Auto",
+						"runs": 66,
+						"on": true
+					},
+					{
+						"id": "printify.catalog",
+						"desc": "Check maker prices and stock",
+						"gate": "Auto",
+						"runs": 19,
+						"on": true
+					},
+					{
+						"id": "purchase.draft_reorder",
+						"desc": "Draft a reorder for approval",
+						"gate": "Ask first",
+						"runs": 5,
+						"on": true
+					}
+				]
+			}
+		],
+		"bus": [
+			{
+				"id": "e1041masterorders",
+				"time": "10:41",
+				"from": "master",
+				"to": "orders",
+				"kind": "Task",
+				"skill": "printify.get_shipment",
+				"text": "Check shipping for #A-1007",
+				"payload": {
+					"intent": "sync_tracking",
+					"order": "A-1007",
+					"items": [
+						"Sweatshirt · L",
+						"Tafakkar print · A3"
+					],
+					"state_in": {
+						"order.A-1007.status": "paid"
+					}
+				},
+				"writes": [],
+				"trace": "tr_7c9f58"
+			},
+			{
+				"id": "e1042ordersmaster",
+				"time": "10:42",
+				"from": "orders",
+				"to": "master",
+				"kind": "Result",
+				"skill": "shopify.add_tracking",
+				"text": "Sweatshirt shipped, tracking added. Print still in production.",
+				"payload": {
+					"order": "A-1007",
+					"shipped": [
+						"Sweatshirt · L"
+					],
+					"tracking": "LI400083615LT",
+					"pending": [
+						"Tafakkar print · A3"
+					],
+					"customer_notified": true
+				},
+				"writes": [
+					"order.A-1007.tracking",
+					"order.A-1007.print_status"
+				],
+				"trace": "tr_f90cf4"
+			},
+			{
+				"id": "e1043supportmaster",
+				"time": "10:43",
+				"from": "support",
+				"to": "master",
+				"kind": "Request",
+				"skill": "orders.lookup",
+				"text": "Customer on #A-1007 asks where the print is",
+				"payload": {
+					"ticket": "T-2291",
+					"order": "A-1007",
+					"need": "shipping_status",
+					"from_customer": "Where is my print?"
+				},
+				"writes": [],
+				"trace": "tr_08d893"
+			},
+			{
+				"id": "e1043masterorders",
+				"time": "10:43",
+				"from": "master",
+				"to": "orders",
+				"kind": "Relay",
+				"skill": "printify.get_shipment",
+				"text": "Support needs the print status for #A-1007",
+				"payload": {
+					"relay_for": "support",
+					"order": "A-1007",
+					"fields": [
+						"print_status",
+						"eta"
+					]
+				},
+				"writes": [],
+				"trace": "tr_6bdf03"
+			},
+			{
+				"id": "e1044ordersmaster",
+				"time": "10:44",
+				"from": "orders",
+				"to": "master",
+				"kind": "Result",
+				"skill": "printify.get_shipment",
+				"text": "Print ships in 2 days, ETA 3 Nov",
+				"payload": {
+					"order": "A-1007",
+					"print_status": "in_production",
+					"eta": "2026-11-03"
+				},
+				"writes": [
+					"order.A-1007.eta"
+				],
+				"trace": "tr_b00ba9"
+			},
+			{
+				"id": "e1044mastersupport",
+				"time": "10:44",
+				"from": "master",
+				"to": "support",
+				"kind": "Relay",
+				"skill": "inbox.draft_reply",
+				"text": "Here is the print status for T-2291",
+				"payload": {
+					"ticket": "T-2291",
+					"state_in": {
+						"order.A-1007.tracking": "LI400083615LT",
+						"order.A-1007.eta": "2026-11-03"
+					}
+				},
+				"writes": [],
+				"trace": "tr_a390cf"
+			},
+			{
+				"id": "e1050marketingmaster",
+				"time": "10:50",
+				"from": "marketing",
+				"to": "master",
+				"kind": "Escalation",
+				"skill": "meta_ads.set_budget",
+				"text": "Wants to raise the prints ad set to $60 a day",
+				"payload": {
+					"ad_set": "Prints · lookalike",
+					"budget_now": 40,
+					"budget_new": 60,
+					"roas_7d": 3.4,
+					"reason": "Return above 3 for 7 days"
+				},
+				"writes": [
+					"marketing.roas_7d"
+				],
+				"trace": "tr_64fb3a"
+			},
+			{
+				"id": "e1055supportmaster",
+				"time": "10:55",
+				"from": "support",
+				"to": "master",
+				"kind": "Escalation",
+				"skill": "shopify.refund",
+				"text": "Refund $42 on #A-1012 is under the limit but the customer is flagged",
+				"payload": {
+					"order": "A-1012",
+					"amount": 42,
+					"reason": "Print arrived creased",
+					"photo": true,
+					"flag": "second_refund_this_month"
+				},
+				"writes": [],
+				"trace": "tr_efb944"
+			},
+			{
+				"id": "e1056financemaster",
+				"time": "10:56",
+				"from": "finance",
+				"to": "master",
+				"kind": "Result",
+				"skill": "quickbooks.pnl",
+				"text": "Last 7 days: $8,420 revenue, $2,610 profit",
+				"payload": {
+					"revenue": 8420,
+					"cogs": 4120,
+					"ad_spend": 262,
+					"fees": 1428,
+					"profit": 2610,
+					"margin": 0.31
+				},
+				"writes": [
+					"finance.revenue_7d",
+					"finance.profit_7d"
+				],
+				"trace": "tr_faa0ac"
+			}
+		],
+		"selEvent": "e1042ordersmaster",
+		"accounts": [
+			{
+				"id": "demo",
+				"name": "Demo store",
+				"owner": "Moe Ghashim",
+				"email": "moe@demostore.co",
+				"plan": "Growth",
+				"tint": "#e7efff",
+				"squads": [
+					"Store ops"
+				],
+				"agents": 5,
+				"online": 4,
+				"tasks": 331,
+				"lastActive": "2 min ago",
+				"status": "Active",
+				"createdWeek": -1,
+				"started": "3 Mar 2026",
+				"mrr": 149,
+				"ltv": 1192
+			},
+			{
+				"id": "leen",
+				"name": "Leen Dates",
+				"owner": "Sara Haddad",
+				"email": "sara@leendates.com",
+				"plan": "Growth",
+				"tint": "#fee7c2",
+				"squads": [
+					"Wholesale",
+					"Retail"
+				],
+				"agents": 9,
+				"online": 8,
+				"tasks": 540,
+				"lastActive": "14 min ago",
+				"status": "Active",
+				"createdWeek": -1,
+				"started": "12 Jan 2026",
+				"mrr": 149,
+				"ltv": 1490
+			},
+			{
+				"id": "northwind",
+				"name": "Northwind Apparel",
+				"owner": "Tom Becker",
+				"email": "tom@northwind.io",
+				"plan": "Scale",
+				"tint": "#ece3ff",
+				"squads": [
+					"US store",
+					"EU store",
+					"Ads"
+				],
+				"agents": 14,
+				"online": 12,
+				"tasks": 1204,
+				"lastActive": "1 min ago",
+				"status": "Active",
+				"createdWeek": -1,
+				"started": "4 Nov 2025",
+				"mrr": 399,
+				"ltv": 4788
+			},
+			{
+				"id": "harbor",
+				"name": "Harbor Coffee Roasters",
+				"owner": "Nadia Khoury",
+				"email": "nadia@harborroast.com",
+				"plan": "Starter",
+				"tint": "#def5ee",
+				"squads": [
+					"Cafe"
+				],
+				"agents": 3,
+				"online": 3,
+				"tasks": 96,
+				"lastActive": "3 h ago",
+				"status": "Active",
+				"createdWeek": 3,
+				"started": "29 Sep 2026",
+				"mrr": 49,
+				"ltv": 74
+			},
+			{
+				"id": "bloom",
+				"name": "Bloom Skincare",
+				"owner": "Elena Rossi",
+				"email": "elena@bloomskin.co",
+				"plan": "Growth",
+				"tint": "#ffefa4",
+				"squads": [
+					"DTC",
+					"Support"
+				],
+				"agents": 7,
+				"online": 5,
+				"tasks": 412,
+				"lastActive": "28 min ago",
+				"status": "Active",
+				"createdWeek": -1,
+				"started": "2 Jun 2026",
+				"mrr": 149,
+				"ltv": 745
+			},
+			{
+				"id": "pixelforge",
+				"name": "PixelForge Studio",
+				"owner": "Dan Oyelaran",
+				"email": "dan@pixelforge.dev",
+				"plan": "Starter",
+				"tint": "#e7efff",
+				"squads": [
+					"Client work"
+				],
+				"agents": 2,
+				"online": 0,
+				"tasks": 18,
+				"lastActive": "9 days ago",
+				"status": "Trial",
+				"createdWeek": 5,
+				"started": "15 Oct 2026",
+				"mrr": 0,
+				"ltv": 0
+			},
+			{
+				"id": "atlas",
+				"name": "Atlas Outdoor",
+				"owner": "Priya Nair",
+				"email": "priya@atlasoutdoor.com",
+				"plan": "Scale",
+				"tint": "#def5ee",
+				"squads": [
+					"Shop",
+					"Warehouse",
+					"Marketing",
+					"Finance"
+				],
+				"agents": 18,
+				"online": 15,
+				"tasks": 1876,
+				"lastActive": "Just now",
+				"status": "Active",
+				"createdWeek": -1,
+				"started": "18 Aug 2025",
+				"mrr": 399,
+				"ltv": 5985
+			},
+			{
+				"id": "maple",
+				"name": "Maple & Co Books",
+				"owner": "Jon Whitfield",
+				"email": "jon@mapleandco.shop",
+				"plan": "Starter",
+				"tint": "#fee7c2",
+				"squads": [
+					"Bookshop"
+				],
+				"agents": 2,
+				"online": 0,
+				"tasks": 0,
+				"lastActive": "32 days ago",
+				"status": "Paused",
+				"createdWeek": -1,
+				"started": "7 Apr 2026",
+				"mrr": 0,
+				"ltv": 294
+			},
+			{
+				"id": "sunbeam",
+				"name": "Sunbeam Toys",
+				"owner": "Aisha Rahman",
+				"email": "aisha@sunbeamtoys.com",
+				"plan": "Growth",
+				"tint": "#ece3ff",
+				"squads": [
+					"Online",
+					"Wholesale"
+				],
+				"agents": 6,
+				"online": 6,
+				"tasks": 288,
+				"lastActive": "5 min ago",
+				"status": "Trial",
+				"createdWeek": 7,
+				"started": "27 Oct 2026",
+				"mrr": 0,
+				"ltv": 0
+			}
+		],
+		"acctQuery": "",
+		"acctFilter": "all",
+		"images": [
+			{
+				"id": "orders",
+				"name": "Orders",
+				"role": "Fulfilment and tracking",
+				"tint": "#e7efff",
+				"tag": "registry.agents.co/orders:1.8.2",
+				"version": "1.8.2",
+				"nextVersion": "1.8.3",
+				"updated": "2 days ago",
+				"updatedFull": "28 Oct 2026, 14:10",
+				"deployed": 31,
+				"onLatest": 29,
+				"status": "Stable",
+				"bugs": [
+					{
+						"id": "B-412",
+						"sev": "Low",
+						"title": "Tracking sync skips orders with two parcels",
+						"age": "4 days",
+						"reports": 2
+					}
+				],
+				"features": [
+					{
+						"id": "F-88",
+						"title": "Support for DHL Express tracking",
+						"votes": 14,
+						"stage": "Planned"
+					},
+					{
+						"id": "F-91",
+						"title": "Split shipments per maker",
+						"votes": 9,
+						"stage": "In review"
+					}
+				]
+			},
+			{
+				"id": "support",
+				"name": "Support",
+				"role": "Customer inbox and refunds",
+				"tint": "#def5ee",
+				"tag": "registry.agents.co/support:2.1.0",
+				"version": "2.1.0",
+				"nextVersion": "2.1.1",
+				"updated": "6 h ago",
+				"updatedFull": "30 Oct 2026, 12:40",
+				"deployed": 34,
+				"onLatest": 22,
+				"status": "Needs attention",
+				"bugs": [
+					{
+						"id": "B-430",
+						"sev": "High",
+						"title": "Refund over limit sent without asking when currency is EUR",
+						"age": "1 day",
+						"reports": 5
+					},
+					{
+						"id": "B-427",
+						"sev": "Medium",
+						"title": "Reply drafts lose the customer name on forwarded threads",
+						"age": "3 days",
+						"reports": 3
+					},
+					{
+						"id": "B-419",
+						"sev": "Low",
+						"title": "Satisfaction score rounds up",
+						"age": "8 days",
+						"reports": 1
+					}
+				],
+				"features": [
+					{
+						"id": "F-93",
+						"title": "WhatsApp inbox alongside email",
+						"votes": 27,
+						"stage": "Planned"
+					},
+					{
+						"id": "F-84",
+						"title": "Tone presets per brand",
+						"votes": 11,
+						"stage": "Backlog"
+					},
+					{
+						"id": "F-95",
+						"title": "Auto-tag tickets by order",
+						"votes": 6,
+						"stage": "Backlog"
+					}
+				]
+			},
+			{
+				"id": "marketing",
+				"name": "Marketing",
+				"role": "Ads, social and email",
+				"tint": "#ece3ff",
+				"tag": "registry.agents.co/marketing:1.4.0",
+				"version": "1.4.0",
+				"nextVersion": "1.5.0",
+				"updated": "9 days ago",
+				"updatedFull": "21 Oct 2026, 09:05",
+				"deployed": 22,
+				"onLatest": 22,
+				"status": "Stable",
+				"bugs": [],
+				"features": [
+					{
+						"id": "F-72",
+						"title": "TikTok Ads connector",
+						"votes": 31,
+						"stage": "In progress"
+					},
+					{
+						"id": "F-79",
+						"title": "Creative A/B tests with Canva",
+						"votes": 12,
+						"stage": "Planned"
+					},
+					{
+						"id": "F-90",
+						"title": "Weekly ad digest in chat",
+						"votes": 8,
+						"stage": "Backlog"
+					},
+					{
+						"id": "F-96",
+						"title": "Budget pacing by ROAS",
+						"votes": 5,
+						"stage": "Backlog"
+					}
+				]
+			},
+			{
+				"id": "finance",
+				"name": "Finance",
+				"role": "Payouts, costs and profit",
+				"tint": "#ffefa4",
+				"tag": "registry.agents.co/finance:1.2.5",
+				"version": "1.2.5",
+				"nextVersion": "1.3.0",
+				"updated": "16 days ago",
+				"updatedFull": "14 Oct 2026, 17:30",
+				"deployed": 19,
+				"onLatest": 17,
+				"status": "Stable",
+				"bugs": [
+					{
+						"id": "B-401",
+						"sev": "Medium",
+						"title": "Printify bills in GBP are matched at the wrong rate",
+						"age": "12 days",
+						"reports": 2
+					}
+				],
+				"features": [
+					{
+						"id": "F-70",
+						"title": "Xero connector",
+						"votes": 18,
+						"stage": "In progress"
+					},
+					{
+						"id": "F-86",
+						"title": "VAT summary per country",
+						"votes": 7,
+						"stage": "Planned"
+					}
+				]
+			},
+			{
+				"id": "inventory",
+				"name": "Inventory",
+				"role": "Stock and suppliers",
+				"tint": "#fee7c2",
+				"tag": "registry.agents.co/inventory:1.1.3",
+				"version": "1.1.3",
+				"nextVersion": "1.1.4",
+				"updated": "21 days ago",
+				"updatedFull": "9 Oct 2026, 11:00",
+				"deployed": 15,
+				"onLatest": 15,
+				"status": "Needs attention",
+				"bugs": [
+					{
+						"id": "B-433",
+						"sev": "High",
+						"title": "Reorder draft duplicates when a product has variants",
+						"age": "12 h",
+						"reports": 4
+					},
+					{
+						"id": "B-425",
+						"sev": "Low",
+						"title": "Days-of-stock ignores pre-orders",
+						"age": "5 days",
+						"reports": 1
+					}
+				],
+				"features": [
+					{
+						"id": "F-82",
+						"title": "Supplier lead times per product",
+						"votes": 10,
+						"stage": "Planned"
+					}
+				]
+			},
+			{
+				"id": "analytics",
+				"name": "Analytics",
+				"role": "Reports and weekly digests",
+				"tint": "#e7efff",
+				"tag": "registry.agents.co/analytics:0.9.1",
+				"version": "0.9.1",
+				"nextVersion": "1.0.0",
+				"updated": "1 day ago",
+				"updatedFull": "29 Oct 2026, 16:20",
+				"deployed": 6,
+				"onLatest": 6,
+				"status": "Beta",
+				"bugs": [
+					{
+						"id": "B-431",
+						"sev": "Medium",
+						"title": "Digest email renders blank in Outlook",
+						"age": "2 days",
+						"reports": 2
+					}
+				],
+				"features": [
+					{
+						"id": "F-94",
+						"title": "Compare two date ranges",
+						"votes": 9,
+						"stage": "In progress"
+					},
+					{
+						"id": "F-97",
+						"title": "Export to Google Sheets",
+						"votes": 4,
+						"stage": "Backlog"
+					}
+				]
+			},
+			{
+				"id": "hr",
+				"name": "People",
+				"role": "Hiring and onboarding",
+				"tint": "#def5ee",
+				"tag": "registry.agents.co/hr:0.3.0",
+				"version": "0.3.0",
+				"nextVersion": "0.4.0",
+				"updated": "5 days ago",
+				"updatedFull": "25 Oct 2026, 10:15",
+				"deployed": 0,
+				"onLatest": 0,
+				"status": "Draft",
+				"bugs": [],
+				"features": [
+					{
+						"id": "F-98",
+						"title": "Post jobs to LinkedIn",
+						"votes": 3,
+						"stage": "Backlog"
+					}
+				]
+			}
+		],
+		"imgSel": "support",
+		"imgFilter": "all",
+		"dockOpen": false,
+		"companyMission": "Reach $1M in annual sales with repeat customers by the end of 2027.",
+		"missionProposals": [
+			{
+				"id": "mp-inventory",
+				"agent": "inventory",
+				"mission": "Never run out of a top-20 product and keep stock under 30 days of cover.",
+				"targets": [
+					[
+						"Stock-outs",
+						"0"
+					],
+					[
+						"Days of stock",
+						"under 30"
+					],
+					[
+						"Reorders approved in time",
+						"100%"
+					]
+				],
+				"status": "Proposed"
+			}
+		],
+		"busFilter": "all",
+		"live": false,
+		"thinking": false,
+		"thinkingAgent": "",
+		"draft": "",
+		"clock": 662,
+		"approvals": [
+			{
+				"id": "ap1",
+				"agent": "support",
+				"title": "Refund $42 on #A-1012",
+				"detail": "Print arrived creased; photo attached. Second refund for this customer this month.",
+				"amount": "$42"
+			},
+			{
+				"id": "ap2",
+				"agent": "marketing",
+				"title": "Raise prints ad set to $60 a day",
+				"detail": "Return on ad spend has been 3.4 for 7 days. Adds about $140 a week.",
+				"amount": "+$20/day"
+			},
+			{
+				"id": "ap3",
+				"agent": "inventory",
+				"title": "Reorder 50 blank hoodies",
+				"detail": "Black hoodie M is down to 6. Usual supplier, 5-day delivery.",
+				"amount": "$610"
+			}
+		],
+		"chat": [
+			{
+				"id": "c1",
+				"from": "user",
+				"text": "Did the tracking for #A-1007 go through?"
+			},
+			{
+				"id": "c2",
+				"from": "master",
+				"text": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships."
+			},
+			{
+				"id": "c3",
+				"from": "agent",
+				"agent": "orders",
+				"text": "Print ETA is 3 November. I will add its tracking automatically."
+			},
+			{
+				"id": "c4",
+				"from": "user",
+				"text": "Good job. What needs me today?"
+			},
+			{
+				"id": "c5",
+				"from": "master",
+				"text": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview."
+			}
+		],
+		"store": {
+			"order.A-1007.tracking": "LI400083615LT",
+			"order.A-1007.print_status": "in_production",
+			"order.A-1007.eta": "2026-11-03",
+			"policy.refund_auto_limit": 50,
+			"policy.daily_ad_cap": 200,
+			"policy.reorder_limit": 500,
+			"marketing.roas_7d": 3.4,
+			"finance.revenue_7d": 8420,
+			"finance.profit_7d": 2610,
+			"inventory.low_stock": "[\"Black hoodie M\",\"A3 frame\"]"
+		},
+		"rules": [
+			{
+				"id": "r1",
+				"when": "a refund request comes in",
+				"agent": "support",
+				"action": "refund it if it is under the refund limit, otherwise ask me",
+				"approval": "Auto under limit",
+				"on": true
+			},
+			{
+				"id": "r2",
+				"when": "Printify ships an item",
+				"agent": "orders",
+				"action": "add the tracking number in Shopify and email the customer",
+				"approval": "Auto",
+				"on": true
+			},
+			{
+				"id": "r3",
+				"when": "return on ad spend is under 2 for 3 days",
+				"agent": "marketing",
+				"action": "pause that ad set",
+				"approval": "Ask first",
+				"on": true
+			},
+			{
+				"id": "r4",
+				"when": "a product drops under 10 in stock",
+				"agent": "inventory",
+				"action": "draft a reorder from the usual supplier",
+				"approval": "Ask first",
+				"on": true
+			},
+			{
+				"id": "r5",
+				"when": "it is Monday at 8:00",
+				"agent": "finance",
+				"action": "send me last week's profit summary",
+				"approval": "Auto",
+				"on": false
+			}
+		],
+		"form": {
+			"when": "A new order arrives",
+			"agent": "orders",
+			"action": "",
+			"approval": "Ask first"
+		}
+	},
+	"companyMissions": {
+		"demo": "Reach $1M in annual sales with repeat customers by the end of 2027.",
+		"leen": "Make Leen the first name in premium dates across the Gulf and the UK.",
+		"northwind": "Grow to $5M a year across the US and EU without adding staff.",
+		"harbor": "Sell out every roast and open a second cafe by 2028.",
+		"bloom": "Reach 10,000 subscribers on the monthly skincare box.",
+		"pixelforge": "Take on five retained clients and keep every project on time.",
+		"atlas": "Become the go-to outdoor brand for families in the UK.",
+		"maple": "Keep the shop open and profitable on online sales alone.",
+		"sunbeam": "Double wholesale revenue while keeping the online store growing."
+	},
+	"revenue": [
+		{
+			"day": "2026-10-14",
+			"amount": 980,
+			"h": 65,
+			"fill": "#c9c9c9",
+			"label": "14",
+			"title": "Oct 14: $980"
+		},
+		{
+			"day": "2026-10-15",
+			"amount": 1040,
+			"h": 69,
+			"fill": "#c9c9c9",
+			"label": "15",
+			"title": "Oct 15: $1,040"
+		},
+		{
+			"day": "2026-10-16",
+			"amount": 1020,
+			"h": 68,
+			"fill": "#c9c9c9",
+			"label": "16",
+			"title": "Oct 16: $1,020"
+		},
+		{
+			"day": "2026-10-17",
+			"amount": 1110,
+			"h": 74,
+			"fill": "#c9c9c9",
+			"label": "17",
+			"title": "Oct 17: $1,110"
+		},
+		{
+			"day": "2026-10-18",
+			"amount": 1060,
+			"h": 71,
+			"fill": "#c9c9c9",
+			"label": "18",
+			"title": "Oct 18: $1,060"
+		},
+		{
+			"day": "2026-10-19",
+			"amount": 1150,
+			"h": 77,
+			"fill": "#c9c9c9",
+			"label": "19",
+			"title": "Oct 19: $1,150"
+		},
+		{
+			"day": "2026-10-20",
+			"amount": 1160,
+			"h": 77,
+			"fill": "#c9c9c9",
+			"label": "20",
+			"title": "Oct 20: $1,160"
+		},
+		{
+			"day": "2026-10-21",
+			"amount": 1010,
+			"h": 67,
+			"fill": "#181818",
+			"label": "21",
+			"title": "Oct 21: $1,010"
+		},
+		{
+			"day": "2026-10-22",
+			"amount": 1120,
+			"h": 75,
+			"fill": "#181818",
+			"label": "22",
+			"title": "Oct 22: $1,120"
+		},
+		{
+			"day": "2026-10-23",
+			"amount": 1090,
+			"h": 73,
+			"fill": "#181818",
+			"label": "23",
+			"title": "Oct 23: $1,090"
+		},
+		{
+			"day": "2026-10-24",
+			"amount": 1250,
+			"h": 83,
+			"fill": "#181818",
+			"label": "24",
+			"title": "Oct 24: $1,250"
+		},
+		{
+			"day": "2026-10-25",
+			"amount": 1180,
+			"h": 79,
+			"fill": "#181818",
+			"label": "25",
+			"title": "Oct 25: $1,180"
+		},
+		{
+			"day": "2026-10-26",
+			"amount": 1330,
+			"h": 89,
+			"fill": "#181818",
+			"label": "26",
+			"title": "Oct 26: $1,330"
+		},
+		{
+			"day": "2026-10-27",
+			"amount": 1440,
+			"h": 96,
+			"fill": "#181818",
+			"label": "27",
+			"title": "Oct 27: $1,440"
+		}
+	],
+	"tiles": [
+		{
+			"label": "Revenue",
+			"value": "$8,420",
+			"delta": "+12% vs last week",
+			"deltaColor": "#00692a"
+		},
+		{
+			"label": "Orders",
+			"value": "186",
+			"delta": "+8% vs last week",
+			"deltaColor": "#00692a"
+		},
+		{
+			"label": "Average order",
+			"value": "$45.27",
+			"delta": "+4% vs last week",
+			"deltaColor": "#00692a"
+		},
+		{
+			"label": "Profit margin",
+			"value": "31%",
+			"delta": "−1 pt vs last week",
+			"deltaColor": "#911e1b"
+		},
+		{
+			"label": "Tasks done by squads",
+			"value": "331",
+			"delta": "This week",
+			"deltaColor": "#5d5d5d"
+		},
+		{
+			"label": "Hours saved",
+			"value": "34h",
+			"delta": "This week",
+			"deltaColor": "#5d5d5d"
+		}
+	],
+	"script": [
+		{
+			"from": "master",
+			"to": "inventory",
+			"kind": "Task",
+			"skill": "shopify.stock_levels",
+			"text": "Daily stock check",
+			"payload": {
+				"intent": "stock_check",
+				"threshold": 10
+			}
+		},
+		{
+			"from": "inventory",
+			"to": "master",
+			"kind": "Result",
+			"skill": "shopify.stock_levels",
+			"text": "2 products under 10: Black hoodie M (6), A3 frame (8)",
+			"payload": {
+				"low": [
+					{
+						"sku": "HD-BLK-M",
+						"qty": 6
+					},
+					{
+						"sku": "FR-A3",
+						"qty": 8
+					}
+				]
+			},
+			"writes": [
+				"inventory.low_stock"
+			],
+			"set": {
+				"inventory.low_stock": "[\"Black hoodie M\",\"A3 frame\"]"
+			}
+		},
+		{
+			"from": "support",
+			"to": "master",
+			"kind": "Request",
+			"skill": "orders.lookup",
+			"text": "Customer asks if #A-1019 has shipped",
+			"payload": {
+				"ticket": "T-2304",
+				"order": "A-1019",
+				"need": "shipping_status"
+			}
+		},
+		{
+			"from": "master",
+			"to": "orders",
+			"kind": "Relay",
+			"skill": "printify.get_shipment",
+			"text": "Support needs status for #A-1019",
+			"payload": {
+				"relay_for": "support",
+				"order": "A-1019"
+			}
+		},
+		{
+			"from": "orders",
+			"to": "master",
+			"kind": "Result",
+			"skill": "printify.get_shipment",
+			"text": "#A-1019 shipped today, tracking LI400091277LT",
+			"payload": {
+				"order": "A-1019",
+				"tracking": "LI400091277LT"
+			},
+			"writes": [
+				"order.A-1019.tracking"
+			],
+			"set": {
+				"order.A-1019.tracking": "LI400091277LT"
+			}
+		},
+		{
+			"from": "master",
+			"to": "support",
+			"kind": "Relay",
+			"skill": "inbox.draft_reply",
+			"text": "Tracking for T-2304 is ready",
+			"payload": {
+				"ticket": "T-2304",
+				"state_in": {
+					"order.A-1019.tracking": "LI400091277LT"
+				}
+			}
+		},
+		{
+			"from": "master",
+			"to": "marketing",
+			"kind": "Task",
+			"skill": "meta_ads.report",
+			"text": "Midday ad check",
+			"payload": {
+				"intent": "ads_report",
+				"window": "today"
+			}
+		},
+		{
+			"from": "marketing",
+			"to": "master",
+			"kind": "Result",
+			"skill": "meta_ads.report",
+			"text": "Spend $31 so far today, return 3.6",
+			"payload": {
+				"spend_today": 31,
+				"roas_today": 3.6,
+				"cap": 200
+			},
+			"writes": [
+				"marketing.roas_7d"
+			],
+			"set": {
+				"marketing.roas_7d": 3.5
+			}
+		}
+	],
+	"planPrice": {
+		"Starter": 49,
+		"Growth": 149,
+		"Scale": 399
+	},
+	"emptyInbox": "Nothing waiting. Your squads are working inside their limits.",
+	"homepage": [
+		{
+			"name": "Orders",
+			"role": "Fulfilment and tracking",
+			"tint": "#e7efff",
+			"dot": "#00a240",
+			"last": "Added tracking to #A-1007",
+			"pitch": "Marks items shipped, syncs tracking from your maker and tells the customer, without you opening a tab.",
+			"tools": [
+				"shopify",
+				"printify"
+			]
+		},
+		{
+			"name": "Support",
+			"role": "Customer inbox and refunds",
+			"tint": "#def5ee",
+			"dot": "#00a240",
+			"last": "Replied to T-2291 in 4 min",
+			"pitch": "Answers in your voice, looks up the order itself and refunds under the limit you set.",
+			"tools": [
+				"gmail",
+				"shopify"
+			]
+		},
+		{
+			"name": "Marketing",
+			"role": "Ads, social and email",
+			"tint": "#ece3ff",
+			"dot": "#00a240",
+			"last": "Asked to raise the prints ad set",
+			"pitch": "Reports spend and return every morning, drafts posts and campaigns, asks before spending more.",
+			"tools": [
+				"meta ads",
+				"klaviyo",
+				"canva"
+			]
+		},
+		{
+			"name": "Finance",
+			"role": "Payouts, costs and profit",
+			"tint": "#ffefa4",
+			"dot": "#00a240",
+			"last": "Sent the weekly profit summary",
+			"pitch": "Matches bills to orders, tracks fees and payouts, and sends a profit summary you can read in a minute.",
+			"tools": [
+				"stripe",
+				"quickbooks"
+			]
+		},
+		{
+			"name": "Inventory",
+			"role": "Stock and suppliers",
+			"tint": "#fee7c2",
+			"dot": "#cdcdcd",
+			"last": "Drafted a reorder of 50 hoodies",
+			"pitch": "Watches stock across products, flags what is running low and drafts the reorder for your approval.",
+			"tools": [
+				"shopify",
+				"printify"
+			]
+		},
+		{
+			"name": "Market researcher",
+			"role": "Competitors and positioning",
+			"tint": "#fde2f3",
+			"dot": "#00a240",
+			"last": "Found 4 competitors for [BUSINESS]",
+			"pitch": "Finds who you compete with, reads their sites and prices, and tells the master how they are doing.",
+			"tools": [
+				"web search",
+				"scrapling"
+			]
+		},
+		{
+			"name": "Website builder",
+			"role": "Landing pages and site updates",
+			"tint": "#e5e9f0",
+			"dot": "#00a240",
+			"last": "Preview ready",
+			"pitch": "Builds a landing page from the market report and the master's brief, and publishes only when you say so.",
+			"tools": [
+				"cloudflare pages"
+			]
+		}
+	],
+	"signup": {
+		"new": [
+			{
+				"id": "orders",
+				"name": "Orders",
+				"role": "Fulfilment and tracking",
+				"tint": "#e7efff",
+				"why": "Ready for your first order"
+			},
+			{
+				"id": "support",
+				"name": "Support",
+				"role": "Customer inbox and refunds",
+				"tint": "#def5ee",
+				"why": "Replies in your voice, refunds under a limit you set"
+			},
+			{
+				"id": "marketing",
+				"name": "Marketing",
+				"role": "Ads, social and email",
+				"tint": "#ece3ff",
+				"why": "Drafts your launch campaign and first posts"
+			},
+			{
+				"id": "finance",
+				"name": "Finance",
+				"role": "Payouts, costs and profit",
+				"tint": "#ffefa4",
+				"why": "Weekly profit summary, bills matched to orders"
+			},
+			{
+				"id": "inventory",
+				"name": "Inventory",
+				"role": "Stock and suppliers",
+				"tint": "#fee7c2",
+				"why": "Add once you hold stock"
+			},
+			{
+				"id": "market",
+				"name": "Market researcher",
+				"role": "Competitors and positioning",
+				"tint": "#fde2f3",
+				"why": "Finds your competitors before you launch"
+			},
+			{
+				"id": "website",
+				"name": "Website builder",
+				"role": "Landing pages and site updates",
+				"tint": "#e5e9f0",
+				"why": "Builds your first landing page from the market report"
+			}
+		],
+		"existing": [
+			{
+				"id": "orders",
+				"name": "Orders",
+				"role": "Fulfilment and tracking",
+				"tint": "#e7efff",
+				"why": "Syncs tracking and chases the maker"
+			},
+			{
+				"id": "support",
+				"name": "Support",
+				"role": "Customer inbox and refunds",
+				"tint": "#def5ee",
+				"why": "Replies in your voice, refunds under a limit you set"
+			},
+			{
+				"id": "marketing",
+				"name": "Marketing",
+				"role": "Ads, social and email",
+				"tint": "#ece3ff",
+				"why": "Watches ad spend and return"
+			},
+			{
+				"id": "finance",
+				"name": "Finance",
+				"role": "Payouts, costs and profit",
+				"tint": "#ffefa4",
+				"why": "Weekly profit summary, bills matched to orders"
+			},
+			{
+				"id": "inventory",
+				"name": "Inventory",
+				"role": "Stock and suppliers",
+				"tint": "#fee7c2",
+				"why": "Flags low stock and drafts reorders"
+			},
+			{
+				"id": "market",
+				"name": "Market researcher",
+				"role": "Competitors and positioning",
+				"tint": "#fde2f3",
+				"why": "Watches how your competitors price and sell"
+			},
+			{
+				"id": "website",
+				"name": "Website builder",
+				"role": "Landing pages and site updates",
+				"tint": "#e5e9f0",
+				"why": "Updates your site from the market report"
+			}
+		]
+	},
+	"defaultAgents": {
+		"new": [
+			"marketing",
+			"orders",
+			"support"
+		],
+		"existing": [
+			"orders",
+			"support",
+			"finance",
+			"inventory"
+		]
+	}
+}
