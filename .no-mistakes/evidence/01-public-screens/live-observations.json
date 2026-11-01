@@ -1,0 +1,81 @@
+[
+  {
+    "route": "/",
+    "width": 1440,
+    "status": 200,
+    "noHorizontalOverflow": true,
+    "inertAnchors": [
+      "About",
+      "Blog",
+      "Careers",
+      "Contact",
+      "Terms",
+      "Privacy",
+      "Security"
+    ]
+  },
+  {
+    "action": "Inject visible Save {amount} into running homepage",
+    "diff": {
+      "extraTexts": [
+        "Save {amount}"
+      ],
+      "missingTexts": [],
+      "extraLinks": [],
+      "missingLinks": [],
+      "extraHandlers": [],
+      "missingHandlers": [],
+      "extraLoops": [],
+      "missingLoops": []
+    }
+  },
+  {
+    "route": "/",
+    "width": 390,
+    "status": 200,
+    "noHorizontalOverflow": true,
+    "inertAnchors": [
+      "About",
+      "Blog",
+      "Careers",
+      "Contact",
+      "Terms",
+      "Privacy",
+      "Security"
+    ]
+  },
+  {
+    "route": "/signup",
+    "width": 1440,
+    "status": 200,
+    "noHorizontalOverflow": true,
+    "inertAnchors": []
+  },
+  {
+    "route": "/signup",
+    "width": 390,
+    "status": 200,
+    "noHorizontalOverflow": true,
+    "inertAnchors": []
+  },
+  {
+    "route": "/signin",
+    "width": 1440,
+    "status": 200,
+    "noHorizontalOverflow": true,
+    "inertAnchors": [
+      "Forgot password?",
+      "Email me a sign-in link"
+    ]
+  },
+  {
+    "route": "/signin",
+    "width": 390,
+    "status": 200,
+    "noHorizontalOverflow": true,
+    "inertAnchors": [
+      "Forgot password?",
+      "Email me a sign-in link"
+    ]
+  }
+]
