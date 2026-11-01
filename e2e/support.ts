@@ -15,9 +15,7 @@ const fontFiles = new Map(
 
 export const test = base.extend({
 	page: async ({ page }, use) => {
-		await page.route(fontStylesheetUrl, (route) =>
-			route.fulfill({ contentType: "text/css", body: fontStylesheet }),
-		);
+		await page.route(fontStylesheetUrl, (route) => route.fulfill({ contentType: "text/css", body: fontStylesheet }));
 		await page.route("https://fonts.gstatic.com/**", (route) => {
 			const body = fontFiles.get(route.request().url());
 			if (!body) {
