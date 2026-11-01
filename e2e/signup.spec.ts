@@ -5,6 +5,7 @@ import {
 	expectNoHorizontalScroll,
 	test,
 	viewports,
+	waitForHydration,
 	waitForScreenFonts,
 } from "./support.ts";
 
@@ -101,6 +102,8 @@ for (const viewport of viewports) {
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		await page.goto("/signup");
 		await waitForScreenFonts(page);
+		await waitForHydration(page);
+		await page.evaluate(() => document.fonts.ready);
 		await expectNoHorizontalScroll(page);
 		await expect(page).toHaveScreenshot(`signup-${viewport.name}.png`, { fullPage: true });
 	});
