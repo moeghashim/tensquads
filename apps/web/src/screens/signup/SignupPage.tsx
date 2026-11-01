@@ -34,7 +34,7 @@ function SignupClerk() {
 							return "wrong";
 						}
 						if (signUp.status !== "complete" || !signUp.createdSessionId) {
-							return "blocked";
+							return "wrong";
 						}
 						await signUp.finalize();
 						ready.current = true;
