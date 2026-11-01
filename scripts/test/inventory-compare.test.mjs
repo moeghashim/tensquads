@@ -55,7 +55,16 @@ async function assertHomeFaults(page, expected, actual) {
 async function compareOnboarding(page, compare) {
 	for (const kind of ["new", "existing"]) {
 		await page.getByRole("button", { name: kind === "new" ? /A new business/ : /An existing business/ }).click();
-		await compare({ kind, step: "details" });
+		const { expected } = await compare({ kind, step: "details" });
+		if (kind === "new") {
+			await page.locator("#biz-mission").evaluate((node) => node.setAttribute("data-handler", "onIdea"));
+			await page.locator("#biz-idea").evaluate((node) => node.setAttribute("data-handler", "onMission"));
+			const diff = compareInventory(expected, await capture(page));
+			assert.equal(diff.extraHandlers.length, 2);
+			assert.equal(diff.missingHandlers.length, 2);
+			await page.locator("#biz-mission").evaluate((node) => node.setAttribute("data-handler", "onMission"));
+			await page.locator("#biz-idea").evaluate((node) => node.setAttribute("data-handler", "onIdea"));
+		}
 		await page.getByRole("button", { name: "Choose my squads" }).click();
 		await compare({ kind, step: "agents" });
 		await page.getByRole("button", { name: "Create my workspace" }).click();
@@ -85,6 +94,7 @@ test("built screen inventories match each rendered design state and reject occur
 			};
 			const { expected, actual } = await compare();
 			if (name === "Home") {
+				assert.equal(actual.handlers.find((handler) => handler.handler === "onDraft").text, "hero-prompt");
 				await assertHomeFaults(page, expected, actual);
 				await page.getByRole("button", { name: "New business", exact: true }).click();
 				await compare({ kind: "new" });
@@ -146,6 +156,23 @@ test("swapping onEmail and onPassword is a handler difference", () => {
 	for (const [before, after] of pairs) {
 		const diff = compareInventory(inventoryHtml(before), inventoryHtml(after));
 		assert.notDeepEqual(diff, emptyDiff);
+		assert.equal(diff.extraHandlers.length, 2);
+		assert.equal(diff.missingHandlers.length, 2);
+	}
+});
+
+test("swapping onMission and onIdea is a handler difference for empty textareas", () => {
+	for (const ids of [true, false]) {
+		const missionId = ids ? ' id="biz-mission"' : "";
+		const ideaId = ids ? ' id="biz-idea"' : "";
+		const before = `<label>Company mission</label><textarea${missionId} data-handler="onMission"></textarea><label>What will you sell, and to whom?</label><textarea${ideaId} data-handler="onIdea"></textarea>`;
+		const after = `<label>Company mission</label><textarea${missionId} data-handler="onIdea"></textarea><label>What will you sell, and to whom?</label><textarea${ideaId} data-handler="onMission"></textarea>`;
+		const expected = inventoryHtml(before);
+		assert.deepEqual(
+			expected.handlers.map((handler) => handler.text),
+			ids ? ["biz-mission", "biz-idea"] : ["Company mission", "What will you sell, and to whom?"],
+		);
+		const diff = compareInventory(expected, inventoryHtml(after));
 		assert.equal(diff.extraHandlers.length, 2);
 		assert.equal(diff.missingHandlers.length, 2);
 	}

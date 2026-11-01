@@ -131,7 +131,7 @@ function labelBefore(body, index) {
 	if (labels.length > 0) {
 		const last = labels[labels.length - 1];
 		const between = before.slice(last.index + last[0].length);
-		if (!/<input\b/i.test(between)) return decode(last[1].replace(/<[^>]*>/g, " "));
+		if (!/<(?:input|textarea)\b/i.test(between)) return decode(last[1].replace(/<[^>]*>/g, " "));
 	}
 	const open = before.match(/<label\b[^>]*>([^<]*)$/i);
 	return open ? decode(open[1]) : "";
@@ -160,7 +160,7 @@ export function inventoryHtml(html) {
 				(control === "input" || control === "textarea" || control === "select" ? "onChange" : "onClick"),
 			handler: name[1],
 			text:
-				control === "input"
+				control === "input" || control === "textarea"
 					? inputIdentity(body, tag)
 					: controlText(body.slice(tag.index + tag[0].length).split(`</${control}>`)[0]),
 		});
