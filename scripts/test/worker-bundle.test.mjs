@@ -488,6 +488,15 @@ test("a third-party import may reach only built-ins the real bundle needs", asyn
 	assert.equal(allow.size > 0, true);
 
 	const allowed = [...allow].sort()[0];
+	for (const [source, builtin] of builtinImportCases(allowed)) {
+		assert.deepEqual(await executeImportFixture(source), {
+			reads: [],
+			error: builtin === null ? null : `Import-time built-in: ${builtin}`,
+		});
+	}
+});
+
+function builtinImportCases(allowed) {
 	const cases = [
 		['const loaded = process.getBuiltinModule("module"); loaded._stat("/dev/null");', "module"],
 		['const loaded = process.getBuiltinModule("module"); loaded._readPackage("/tmp");', "module"],
@@ -515,13 +524,8 @@ test("a third-party import may reach only built-ins the real bundle needs", asyn
 			cases.push([source, specifier.replace(/^node:/, "")]);
 		}
 	}
-	for (const [source, builtin] of cases) {
-		assert.deepEqual(await executeImportFixture(source), {
-			reads: [],
-			error: builtin === null ? null : `Import-time built-in: ${builtin}`,
-		});
-	}
-});
+	return cases;
+}
 
 async function executeImportFixture(source) {
 	const directory = mkdtempSync(join(tmpdir(), "tensquads-allow-"));

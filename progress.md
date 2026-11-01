@@ -527,3 +527,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-01 01-public-screens: Bare filesystem reaches fail the Worker filter without hiding recorded calls. Postgres migrations hold one transaction advisory lock across all statements and roll back on failure. All nine focused tests passed.
 - 2026-11-01 01-public-screens: A caught import-time reach of any built-in outside the production allow-list fails the Node filter. The sign-up test migrates through the locked Postgres helper.
 - 2026-11-01 01-public-screens: Sort the Postgres migration test imports.
+- 2026-11-01 01-public-screens: Split the worker allow-list test so its complexity stays under the Fallow gate.
