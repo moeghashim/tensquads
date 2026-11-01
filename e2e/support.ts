@@ -159,6 +159,21 @@ export async function recordAuthNotes(page: Page) {
 			"missing_requirements",
 			"abandoned",
 		]);
+		function authExtra(text: string) {
+			try {
+				const body = JSON.parse(text) as {
+					errors?: { code?: string }[];
+					response?: { status?: string; errors?: { code?: string }[] };
+				};
+				const codes = [...(body.errors ?? []), ...(body.response?.errors ?? [])]
+					.map((error) => error.code ?? "")
+					.filter((code) => code.length > 0 && code.length < 80);
+				const flow = body.response?.status ?? "";
+				return `${codes.join(",")} ${known.has(flow) ? flow : ""}`.trim();
+			} catch {
+				return "";
+			}
+		}
 		const record = (url: string, status: number, text: string) => {
 			let path = url;
 			try {
@@ -169,20 +184,7 @@ export async function recordAuthNotes(page: Page) {
 			if (path.startsWith("/@") || path.startsWith("/node_modules") || path.startsWith("/src")) {
 				return;
 			}
-			let extra = "";
-			try {
-				const body = JSON.parse(text) as {
-					errors?: { code?: string }[];
-					response?: { status?: string; errors?: { code?: string }[] };
-				};
-				const codes = [...(body.errors ?? []), ...(body.response?.errors ?? [])]
-					.map((error) => error.code ?? "")
-					.filter((code) => code.length > 0 && code.length < 80);
-				const flow = body.response?.status ?? "";
-				extra = `${codes.join(",")} ${known.has(flow) ? flow : ""}`.trim();
-			} catch {
-				extra = "";
-			}
+			const extra = authExtra(text);
 			if (status < 400 && extra.length === 0) {
 				return;
 			}

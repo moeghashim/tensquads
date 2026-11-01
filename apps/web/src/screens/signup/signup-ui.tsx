@@ -90,8 +90,8 @@ export function AccountStep({
 	credentialsLocked: boolean;
 	notice: "" | "wrong" | "failed";
 }) {
-	const showEmpty = state.tried && !fieldsComplete(state.email, state.password);
-	const message = showEmpty ? emptyError : notice === "wrong" ? wrongError : notice === "failed" ? failedError : "";
+	const message = accountMessage(state, notice);
+	const fieldsDisabled = pending || credentialsLocked;
 	return (
 		<div style={css("display: flex; flex-direction: column; gap: 20px")}>
 			<div style={css("display: flex; flex-direction: column; gap: 6px")}>
@@ -104,7 +104,7 @@ export function AccountStep({
 					autoComplete="email"
 					placeholder="you@company.com"
 					value={state.email}
-					disabled={pending || credentialsLocked}
+					disabled={fieldsDisabled}
 					data-handler="onEmail"
 					onChange={(event) => {
 						onChange({ ...state, email: event.target.value });
@@ -122,7 +122,7 @@ export function AccountStep({
 					autoComplete="new-password"
 					placeholder="Your password"
 					value={state.password}
-					disabled={pending || credentialsLocked}
+					disabled={fieldsDisabled}
 					data-handler="onPassword"
 					onChange={(event) => {
 						onChange({ ...state, password: event.target.value });
@@ -153,4 +153,9 @@ export function AccountStep({
 			</div>
 		</div>
 	);
+}
+
+function accountMessage(state: SignupState, notice: "" | "wrong" | "failed") {
+	if (state.tried && !fieldsComplete(state.email, state.password)) return emptyError;
+	return { "": "", wrong: wrongError, failed: failedError }[notice];
 }

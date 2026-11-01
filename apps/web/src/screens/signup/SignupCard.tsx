@@ -57,20 +57,26 @@ export function SignupCard({
 		request.current = token;
 		setPending(true);
 		const isCurrent = () => request.current === token;
+		await finishSubmission(next, isCurrent);
+	}
+	async function finishSubmission(next: SignupState, isCurrent: () => boolean) {
 		try {
 			const outcome = await onCreate(next, isCurrent);
-			if (isCurrent()) setNotice(outcome === "wrong" || outcome === "failed" ? outcome : "");
+			if (isCurrent()) setNotice(submissionNotice(outcome));
 		} catch {
 			if (isCurrent()) setNotice("failed");
 		} finally {
-			if (isCurrent()) {
-				request.current = null;
-				setPending(false);
-			}
+			clearSubmission(isCurrent);
 		}
 	}
-	const current = state.step === "choose" ? 0 : state.step === "details" ? 1 : 2;
-	const kind = state.kind ?? "existing";
+	function clearSubmission(isCurrent: () => boolean) {
+		if (isCurrent()) {
+			request.current = null;
+			setPending(false);
+		}
+	}
+	const current = stepIndex(state.step);
+
 	return (
 		<section
 			ref={bindSection}
@@ -79,33 +85,10 @@ export function SignupCard({
 				"flex: 1 1 460px; max-width: 620px; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 28px 32px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px",
 			)}
 		>
-			<ol
-				style={css(
-					"margin: 0; padding: 0; list-style: none; display: flex; gap: 8px; align-items: center; font-size: 12px; font-weight: 500",
-				)}
-			>
-				{stepLabels.map((label, index) => {
-					const done = index < current;
-					const on = index === current;
-					const color = on ? "#0d0d0d" : done ? "#282828" : "#8f8f8f";
-					return (
-						<li key={label} style={css("display: flex; align-items: center; gap: 8px")}>
-							<span style={css(stepDot(on || done))}>{done ? "✓" : String(index + 1)}</span>
-							<span data-design-contrast={!on && !done ? "signup-inactive-step" : undefined} style={{ color }}>
-								{label}
-							</span>
-							{index < 2 ? (
-								<span style={css("width: 24px; height: 1px; background: rgba(13,13,13,.15); margin: 0 4px")} />
-							) : null}
-						</li>
-					);
-				})}
-			</ol>
+			<StepRow current={current} />
 			{state.step === "choose" ? <ChooseStep state={state} onChange={change} /> : null}
-			{state.step === "details" && state.kind ? (
-				<DetailsStep state={state} kind={state.kind} onChange={change} />
-			) : null}
-			{state.step === "agents" ? <SquadStep state={state} kind={kind} onChange={change} /> : null}
+			<CurrentDetails state={state} onChange={change} />
+			<CurrentSquads state={state} onChange={change} />
 			{state.step === "account" ? (
 				<AccountStep
 					state={state}
@@ -233,16 +216,7 @@ function DetailsStep({
 	const isNew = kind === "new";
 	return (
 		<div style={css("display: flex; flex-direction: column; gap: 20px")}>
-			<div>
-				<h2 style={heading()}>
-					{isNew ? "Tell us about the business you want to start" : "Tell us about your business"}
-				</h2>
-				<p style={css("margin: 6px 0 0; color: #5d5d5d")}>
-					{isNew
-						? "A sentence or two is enough. The agents fill in the rest with you."
-						: "We use this to pick the right agents and what to connect."}
-				</p>
-			</div>
+			<DetailsHeading isNew={isNew} />
 			<div style={css("display: flex; flex-direction: column; gap: 6px")}>
 				<label htmlFor="biz-name" style={labelStyle()}>
 					Business name
@@ -521,4 +495,76 @@ function SquadStep({
 			</div>
 		</div>
 	);
+}
+
+function StepRow({ current }: { current: number }) {
+	return (
+		<ol
+			style={css(
+				"margin: 0; padding: 0; list-style: none; display: flex; gap: 8px; align-items: center; font-size: 12px; font-weight: 500",
+			)}
+		>
+			{stepLabels.map((label, index) => (
+				<StepLabel key={label} label={label} index={index} current={current} />
+			))}
+		</ol>
+	);
+}
+
+function StepLabel({ label, index, current }: { label: string; index: number; current: number }) {
+	const done = index < current;
+	const on = index === current;
+	const color = stepColor(on, done);
+	return (
+		<li style={css("display: flex; align-items: center; gap: 8px")}>
+			<span style={css(stepDot(on || done))}>{done ? "✓" : String(index + 1)}</span>
+			<span data-design-contrast={inactiveContrast(on, done)} style={{ color }}>
+				{label}
+			</span>
+			{index < 2 ? (
+				<span style={css("width: 24px; height: 1px; background: rgba(13,13,13,.15); margin: 0 4px")} />
+			) : null}
+		</li>
+	);
+}
+
+function stepColor(on: boolean, done: boolean) {
+	if (on) return "#0d0d0d";
+	return done ? "#282828" : "#8f8f8f";
+}
+function inactiveContrast(on: boolean, done: boolean) {
+	return !on && !done ? "signup-inactive-step" : undefined;
+}
+
+function DetailsHeading({ isNew }: { isNew: boolean }) {
+	return (
+		<div>
+			<h2 style={heading()}>
+				{isNew ? "Tell us about the business you want to start" : "Tell us about your business"}
+			</h2>
+			<p style={css("margin: 6px 0 0; color: #5d5d5d")}>
+				{isNew
+					? "A sentence or two is enough. The agents fill in the rest with you."
+					: "We use this to pick the right agents and what to connect."}
+			</p>
+		</div>
+	);
+}
+
+function stepIndex(step: SignupState["step"]) {
+	return step === "choose" ? 0 : step === "details" ? 1 : 2;
+}
+function CurrentDetails({ state, onChange }: { state: SignupState; onChange: (state: SignupState) => void }) {
+	return state.step === "details" && state.kind ? (
+		<DetailsStep state={state} kind={state.kind} onChange={onChange} />
+	) : null;
+}
+function CurrentSquads({ state, onChange }: { state: SignupState; onChange: (state: SignupState) => void }) {
+	return state.step === "agents" ? (
+		<SquadStep state={state} kind={state.kind ?? "existing"} onChange={onChange} />
+	) : null;
+}
+
+function submissionNotice(outcome: AccountCreateResult) {
+	return outcome === "wrong" || outcome === "failed" ? outcome : "";
 }

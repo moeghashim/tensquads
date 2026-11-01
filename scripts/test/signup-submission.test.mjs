@@ -136,11 +136,7 @@ for (const signin of [false, true]) {
 				window.finalizeError = true;
 			}, signin);
 			await page.addScriptTag({ content: result.outputFiles[0].text });
-			if (!signin) {
-				await page.getByRole("button", { name: /A new business/ }).click();
-				await page.getByRole("button", { name: "Choose my squads" }).click();
-				await page.getByRole("button", { name: "Create my workspace" }).click();
-			}
+			await openCredentialForm(page, signin);
 			await page.getByLabel("Email").fill("owner@example.com");
 			await page.getByLabel("Password").fill("password-at-least-16-characters");
 			const submit = page.getByRole("button", { name: signin ? "Sign in" : "Create my workspace", exact: true });
@@ -162,11 +158,7 @@ for (const signin of [false, true]) {
 				window.finalizeError = false;
 			});
 			await submit.click();
-			if (!signin) {
-				await page.waitForFunction(() => window.calls.create === 1);
-				assert.equal(await page.evaluate(() => window.calls.password), 1);
-				await page.evaluate(() => window.finish());
-			}
+			await finishWorkspaceRetry(page, signin);
 			await page.waitForFunction(() => window.calls.navigate === 1);
 			assert.equal(await page.evaluate(() => window.calls.finalize), 2);
 		} finally {
@@ -216,3 +208,19 @@ test("screen details and Back transitions preserve business fields and picked sq
 		await browser.close();
 	}
 });
+
+async function openCredentialForm(page, signin) {
+	if (!signin) {
+		await page.getByRole("button", { name: /A new business/ }).click();
+		await page.getByRole("button", { name: "Choose my squads" }).click();
+		await page.getByRole("button", { name: "Create my workspace" }).click();
+	}
+}
+
+async function finishWorkspaceRetry(page, signin) {
+	if (!signin) {
+		await page.waitForFunction(() => window.calls.create === 1);
+		assert.equal(await page.evaluate(() => window.calls.password), 1);
+		await page.evaluate(() => window.finish());
+	}
+}

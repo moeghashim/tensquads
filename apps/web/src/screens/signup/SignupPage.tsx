@@ -23,51 +23,59 @@ function SignupClerk() {
 	const ready = useRef(false);
 	const completedCredentials = useRef<Pick<SignupState, "email" | "password"> | null>(null);
 	const [credentialsLocked, setCredentialsLocked] = useState(false);
+	async function prepareCredentials(state: SignupState) {
+		if (!completedCredentials.current) {
+			const result = await signUp.password({
+				emailAddress: state.email.trim(),
+				password: state.password,
+			});
+			if (!completedSignup(result.error, signUp.status, signUp.createdSessionId)) {
+				return false;
+			}
+			completedCredentials.current = { email: state.email, password: state.password };
+			setCredentialsLocked(true);
+		}
+		return true;
+	}
+	async function createWorkspace(state: SignupState, isCurrent: () => boolean): Promise<AccountCreateResult> {
+		if (!isCurrent()) return "blocked";
+		try {
+			await createAccount({
+				data: {
+					name: state.name.trim(),
+					mission: state.mission,
+					agentIds: state.picked,
+				},
+			});
+			if (!isCurrent()) return "blocked";
+			await navigate({ to: "/overview" });
+			return "ok";
+		} catch {
+			return "failed";
+		}
+	}
+	async function finalizeCredentials(state: SignupState) {
+		if (!credentialsMatch(state, completedCredentials.current)) {
+			return false;
+		}
+		if (!ready.current) {
+			const finalized = await signUp.finalize();
+			if (finalized.error) return false;
+			ready.current = true;
+		}
+		return true;
+	}
 	return (
 		<SignupScreen
 			credentialsLocked={credentialsLocked}
 			onCreate={async (state, isCurrent) => {
 				try {
-					if (!completedCredentials.current) {
-						const result = await signUp.password({
-							emailAddress: state.email.trim(),
-							password: state.password,
-						});
-						if (result.error || signUp.status !== "complete" || !signUp.createdSessionId) {
-							return "wrong";
-						}
-						completedCredentials.current = { email: state.email, password: state.password };
-						setCredentialsLocked(true);
-					}
-					if (
-						state.email !== completedCredentials.current.email ||
-						state.password !== completedCredentials.current.password
-					) {
-						return "wrong";
-					}
-					if (!ready.current) {
-						const finalized = await signUp.finalize();
-						if (finalized.error) return "wrong";
-						ready.current = true;
-					}
+					if (!(await prepareCredentials(state))) return "wrong";
+					if (!(await finalizeCredentials(state))) return "wrong";
 				} catch {
 					return "wrong";
 				}
-				if (!isCurrent()) return "blocked";
-				try {
-					await createAccount({
-						data: {
-							name: state.name.trim(),
-							mission: state.mission,
-							agentIds: state.picked,
-						},
-					});
-					if (!isCurrent()) return "blocked";
-					await navigate({ to: "/overview" });
-					return "ok";
-				} catch {
-					return "failed";
-				}
+				return createWorkspace(state, isCurrent);
 			}}
 		/>
 	);
@@ -119,4 +127,12 @@ function SignupScreen({
 			</main>
 		</div>
 	);
+}
+
+function completedSignup(error: unknown, status: string | null, sessionId: string | null) {
+	return !error && status === "complete" && !!sessionId;
+}
+function credentialsMatch(state: SignupState, completed: Pick<SignupState, "email" | "password"> | null) {
+	if (completed === null) return false;
+	return state.email === completed.email && state.password === completed.password;
 }

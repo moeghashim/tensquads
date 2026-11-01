@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { css } from "../css.ts";
 import { Check } from "../marks.tsx";
 import { controls, homeAgents, plans, steps } from "./data.ts";
@@ -11,20 +12,10 @@ export function HomeRest() {
 		<>
 			<section id="squad" aria-label="The agents" style={css("padding: 0 24px 96px")}>
 				<div style={css("max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px")}>
-					<div style={css("max-width: 640px")}>
-						<span style={css("font-size: 13px; font-weight: 600; color: #0169cc")}>Meet the squad</span>
-						<h2
-							style={css(
-								"margin: 8px 0 0; font-size: 40px; line-height: 46px; font-weight: 700; letter-spacing: -0.03em; color: #0d0d0d",
-							)}
-						>
-							One agent for every part of the business
-						</h2>
-						<p style={css("margin: 12px 0 0; font-size: 17px; line-height: 26px; color: #5d5d5d")}>
-							Each agent runs on its own isolated machine with only the connections it needs. Start with one, add
-							the rest when you are ready.
-						</p>
-					</div>
+					<SectionHeading kicker="Meet the squad" title="One agent for every part of the business">
+						Each agent runs on its own isolated machine with only the connections it needs. Start with one, add
+						the rest when you are ready.
+					</SectionHeading>
 					<div
 						style={css("display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px")}
 					>
@@ -265,20 +256,10 @@ export function HomeRest() {
 						"max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; align-items: center; text-align: center",
 					)}
 				>
-					<div style={css("max-width: 640px")}>
-						<span style={css("font-size: 13px; font-weight: 600; color: #0169cc")}>Pricing</span>
-						<h2
-							style={css(
-								"margin: 8px 0 0; font-size: 40px; line-height: 46px; font-weight: 700; letter-spacing: -0.03em; color: #0d0d0d",
-							)}
-						>
-							Pay for the squad, not per seat
-						</h2>
-						<p style={css("margin: 12px 0 0; font-size: 17px; line-height: 26px; color: #5d5d5d")}>
-							Every plan includes the master, the chat and the approval inbox. Plans differ in how many agents
-							you can run and how much they can do without asking.
-						</p>
-					</div>
+					<SectionHeading kicker="Pricing" title="Pay for the squad, not per seat">
+						Every plan includes the master, the chat and the approval inbox. Plans differ in how many agents you
+						can run and how much they can do without asking.
+					</SectionHeading>
 					<div
 						style={css(
 							"width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; text-align: left",
@@ -435,5 +416,21 @@ export function HomeRest() {
 				</div>
 			</footer>
 		</>
+	);
+}
+
+function SectionHeading({ kicker, title, children }: { kicker: string; title: string; children: ReactNode }) {
+	return (
+		<div style={css("max-width: 640px")}>
+			<span style={css("font-size: 13px; font-weight: 600; color: #0169cc")}>{kicker}</span>
+			<h2
+				style={css(
+					"margin: 8px 0 0; font-size: 40px; line-height: 46px; font-weight: 700; letter-spacing: -0.03em; color: #0d0d0d",
+				)}
+			>
+				{title}
+			</h2>
+			<p style={css("margin: 12px 0 0; font-size: 17px; line-height: 26px; color: #5d5d5d")}>{children}</p>
+		</div>
 	);
 }

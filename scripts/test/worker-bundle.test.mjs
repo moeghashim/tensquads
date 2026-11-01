@@ -19,99 +19,103 @@ function isIdent(char) {
 	return /[A-Za-z0-9_$]/.test(char);
 }
 
+function skipLineComment(source, index) {
+	index += 2;
+	while (index < source.length && source[index] !== "\n") index += 1;
+	return index;
+}
+
+function blockCommentEnd(source, index) {
+	return source[index] === "*" && source[index + 1] === "/";
+}
+
+function skipBlockComment(source, index) {
+	index += 2;
+	while (index < source.length && !blockCommentEnd(source, index)) index += 1;
+	return Math.min(source.length, index + 2);
+}
+
+function skipQuoted(source, index) {
+	const quote = source[index];
+	index += 1;
+	while (index < source.length) {
+		if (source[index] === "\\") {
+			index += 2;
+			continue;
+		}
+		if (source[index] === quote) return index + 1;
+		index += 1;
+	}
+	return index;
+}
+
+function templateExpression(source, index) {
+	return source[index] === "$" && source[index + 1] === "{";
+}
+
+function skipTemplate(source, index, depth) {
+	index += 1;
+	while (index < source.length) {
+		if (source[index] === "\\") {
+			index += 2;
+			continue;
+		}
+		const end = templateBoundary(source, index, depth);
+		if (end) return end;
+		index += 1;
+	}
+	return { index, depth };
+}
+
+function readCall(source, index, hits) {
+	const start = index;
+	index += 1;
+	while (index < source.length && isIdent(source[index])) index += 1;
+	const name = source.slice(start, index);
+	if (readNames.has(name)) recordReadCall(source, index, name, hits);
+	return index;
+}
+
+function recordReadCall(source, index, name, hits) {
+	let cursor = index;
+	while (cursor < source.length && /\s/.test(source[cursor])) cursor += 1;
+	if (source[cursor] === "(") hits.push(name);
+}
+
+function scanCode(source, index, depth, hits) {
+	const char = source[index];
+	if (char === "{") return { index: index + 1, depth: depth + 1 };
+	if (char === "}") return { index: index + 1, depth: Math.max(0, depth - 1) };
+	if (topLevelIdentifier(char, depth)) return { index: readCall(source, index, hits), depth };
+	return { index: index + 1, depth };
+}
+
+function skipComment(source, index) {
+	if (source[index] !== "/") return index;
+	if (source[index + 1] === "/") return skipLineComment(source, index);
+	if (source[index + 1] === "*") return skipBlockComment(source, index);
+	return index;
+}
+
 // A call at brace depth 0 runs when the module is imported.
 // A call inside a function body does not. Comments and strings do not count.
 export function importTimeFileReads(source) {
 	const hits = [];
 	let index = 0;
 	let depth = 0;
-	const length = source.length;
-
-	while (index < length) {
-		const char = source[index];
-		const next = source[index + 1];
-		if (char === "/" && next === "/") {
-			index += 2;
-			while (index < length && source[index] !== "\n") {
-				index += 1;
-			}
+	while (index < source.length) {
+		const afterComment = skipComment(source, index);
+		if (afterComment !== index) {
+			index = afterComment;
 			continue;
 		}
-		if (char === "/" && next === "*") {
-			index += 2;
-			while (index < length && !(source[index] === "*" && source[index + 1] === "/")) {
-				index += 1;
-			}
-			index = Math.min(length, index + 2);
+		if (["'", '"'].includes(source[index])) {
+			index = skipQuoted(source, index);
 			continue;
 		}
-		if (char === "'" || char === '"') {
-			const quote = char;
-			index += 1;
-			while (index < length) {
-				if (source[index] === "\\") {
-					index += 2;
-					continue;
-				}
-				if (source[index] === quote) {
-					index += 1;
-					break;
-				}
-				index += 1;
-			}
-			continue;
-		}
-		if (char === "`") {
-			index += 1;
-			while (index < length) {
-				if (source[index] === "\\") {
-					index += 2;
-					continue;
-				}
-				if (source[index] === "`") {
-					index += 1;
-					break;
-				}
-				if (source[index] === "$" && source[index + 1] === "{") {
-					index += 2;
-					depth += 1;
-					break;
-				}
-				index += 1;
-			}
-			continue;
-		}
-		if (char === "{") {
-			depth += 1;
-			index += 1;
-			continue;
-		}
-		if (char === "}") {
-			depth = Math.max(0, depth - 1);
-			index += 1;
-			continue;
-		}
-		if (depth === 0 && isIdentStart(char)) {
-			const start = index;
-			index += 1;
-			while (index < length && isIdent(source[index])) {
-				index += 1;
-			}
-			const name = source.slice(start, index);
-			if (readNames.has(name)) {
-				let cursor = index;
-				while (cursor < length && /\s/.test(source[cursor])) {
-					cursor += 1;
-				}
-				if (source[cursor] === "(") {
-					hits.push(name);
-				}
-			}
-			continue;
-		}
-		index += 1;
+		const scanned = scanToken(source, index, depth, hits);
+		({ index, depth } = scanned);
 	}
-
 	return hits;
 }
 
@@ -296,3 +300,16 @@ test("bundle execution catches reads inside invoked functions and CommonJS wrapp
 		rmSync(directory, { recursive: true, force: true });
 	}
 });
+
+function templateBoundary(source, index, depth) {
+	if (source[index] === "`") return { index: index + 1, depth };
+	if (templateExpression(source, index)) return { index: index + 2, depth: depth + 1 };
+	return null;
+}
+function topLevelIdentifier(char, depth) {
+	return depth === 0 && isIdentStart(char);
+}
+
+function scanToken(source, index, depth, hits) {
+	return source[index] === "`" ? skipTemplate(source, index, depth) : scanCode(source, index, depth, hits);
+}

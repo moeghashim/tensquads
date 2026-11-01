@@ -11,11 +11,11 @@ interface CreateAccountInput {
 }
 
 function validateCreateAccount(input: unknown): CreateAccountInput {
-	if (typeof input !== "object" || input === null) {
+	if (!isRecord(input)) {
 		throw new Error("The create request is not valid.");
 	}
 	const record = input as Record<string, unknown>;
-	if (typeof record.name !== "string" || typeof record.mission !== "string" || !Array.isArray(record.agentIds)) {
+	if (!hasAccountFields(record)) {
 		throw new Error("The create request is not valid.");
 	}
 	const agentIds = record.agentIds.filter((id): id is string => typeof id === "string");
@@ -43,14 +43,8 @@ export const createAccount = createServerFn({ method: "POST" })
 		}
 		const user = await clerkClient().users.getUser(session.userId);
 		const primary = user.emailAddresses.find((item) => item.id === user.primaryEmailAddressId);
-		const email = primary?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? "";
-		const agents = data.agentIds.map((id) => {
-			const squad = squadById(id);
-			if (!squad) {
-				throw new Error("The create request is not valid.");
-			}
-			return { id: squad.id, name: squad.name, role: squad.role, tint: squad.tint };
-		});
+		const email = accountEmail(primary, user.emailAddresses);
+		const agents = workspaceAgents(data.agentIds);
 		const connection = await databaseUrl();
 		if (connection.length === 0) {
 			throw new Error("The database is not configured.");
@@ -73,3 +67,30 @@ export const createAccount = createServerFn({ method: "POST" })
 			await database.close();
 		}
 	});
+
+function isRecord(input: unknown): input is Record<string, unknown> {
+	return typeof input === "object" && input !== null;
+}
+
+function workspaceAgents(agentIds: readonly string[]) {
+	return agentIds.map((id) => {
+		const squad = squadById(id);
+		if (!squad) {
+			throw new Error("The create request is not valid.");
+		}
+		return { id: squad.id, name: squad.name, role: squad.role, tint: squad.tint };
+	});
+}
+
+function hasAccountFields(
+	record: Record<string, unknown>,
+): record is { name: string; mission: string; agentIds: unknown[] } {
+	return typeof record.name === "string" && typeof record.mission === "string" && Array.isArray(record.agentIds);
+}
+
+function accountEmail(primary: { emailAddress: string } | undefined, addresses: { emailAddress: string }[]) {
+	return primary?.emailAddress ?? firstEmail(addresses);
+}
+function firstEmail(addresses: { emailAddress: string }[]) {
+	return addresses[0]?.emailAddress ?? "";
+}

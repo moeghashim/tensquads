@@ -28,7 +28,7 @@ function SignInClerk() {
 			onAttempt={async (email, password) => {
 				try {
 					const result = await signIn.password({ emailAddress: email, password });
-					if (result.error || signIn.status !== "complete" || !signIn.createdSessionId) {
+					if (!completedSignIn(result.error, signIn.status, signIn.createdSessionId)) {
 						return "wrong";
 					}
 					const finalized = await signIn.finalize();
@@ -55,7 +55,7 @@ function SignInScreen({
 	const [pending, setPending] = useState(false);
 	const pendingRef = useRef(false);
 	const complete = fieldsComplete(email, password);
-	const message = tried && !complete ? emptyError : tried && rejected ? wrongError : "";
+	const message = signInMessage(tried, complete, rejected);
 	return (
 		<div
 			style={css(
@@ -232,4 +232,13 @@ function SignInScreen({
 			</main>
 		</div>
 	);
+}
+
+function completedSignIn(error: unknown, status: string | null, sessionId: string | null) {
+	return !error && status === "complete" && !!sessionId;
+}
+function signInMessage(tried: boolean, complete: boolean, rejected: boolean) {
+	if (!tried) return "";
+	if (!complete) return emptyError;
+	return rejected ? wrongError : "";
 }
