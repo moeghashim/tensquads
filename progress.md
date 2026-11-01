@@ -523,3 +523,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-01 01-public-screens: Inventory handler helpers stay under the complexity gate, and empty textarea swaps still count as handler differences.
 - 2026-11-01 01-public-screens: Browser tests pin Inter and JetBrains Mono locally. All 60 macOS screenshot checks passed with full parallelism and no retries; 0 failed.
 - 2026-11-01 01-public-screens: Format the pinned font stylesheet route to match Biome without changing its behavior.
+- 2026-11-01 01-public-screens: The worker guard's Node stage allows only built-ins the production bundle imports. Workerd boots the built worker at / and rejects import-time filesystem, binding, package, and child-process reads.

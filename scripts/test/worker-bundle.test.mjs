@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -150,7 +150,7 @@ async function bundleWithMeta(entryPoints) {
 		outfile,
 		metafile: true,
 		banner: {
-			js: 'import { createRequire as __workerGuardRequire } from "node:module"; const require = __workerGuardRequire(import.meta.url.startsWith("data:") ? process.cwd() + "/worker-guard.mjs" : import.meta.url);',
+			js: "const require = globalThis.__workerGuardRequire;",
 		},
 		legalComments: "none",
 		logLevel: "silent",
@@ -159,13 +159,30 @@ async function bundleWithMeta(entryPoints) {
 	return { directory, outfile, metafile: result.metafile };
 }
 
-function executeBundle(outfile) {
+// This Node stage is a fast filter. At import time a third-party module may reach
+// only the built-ins the real production bundle imports. The workerd boot is the proof.
+async function executeBundle(outfile) {
 	const source = readFileSync(outfile, "utf8");
+	const allow = [...(await productionBuiltinAllowList())].sort();
 	const script = `
-		import { createRequire, syncBuiltinESMExports } from "node:module";
-		const require = createRequire(process.cwd() + "/worker-guard.mjs");
+		import { createRequire, isBuiltin, registerHooks, syncBuiltinESMExports } from "node:module";
+		const allow = new Set(${JSON.stringify(allow)});
 		const reads = [];
 		const seen = new WeakSet();
+		const baseRequire = createRequire(process.cwd() + "/worker-guard.mjs");
+		function canonicalBuiltin(specifier) {
+			const name = String(specifier);
+			if (!isBuiltin(name)) return null;
+			return name.startsWith("node:") ? name.slice(5) : name;
+		}
+		function reachesFs(specifier) {
+			const name = canonicalBuiltin(specifier);
+			return name === "fs" || name === "fs/promises";
+		}
+		function rejectBuiltin(specifier) {
+			const name = canonicalBuiltin(specifier);
+			if (name && !reachesFs(specifier) && !allow.has(name)) throw new Error("Import-time built-in: " + name);
+		}
 		function wrapObject(target) {
 			if (target === null || (typeof target !== "object" && typeof target !== "function") || seen.has(target)) return;
 			seen.add(target);
@@ -191,12 +208,14 @@ function executeBundle(outfile) {
 				} catch {}
 			}
 		}
-		for (const specifier of ["fs", "node:fs", "fs/promises", "node:fs/promises"]) wrapObject(require(specifier));
+		for (const specifier of ["fs", "node:fs", "fs/promises", "node:fs/promises"]) wrapObject(baseRequire(specifier));
 		syncBuiltinESMExports();
-		const reachesFs = (specifier) => {
-			const name = String(specifier);
-			return name === "fs" || name === "node:fs" || name === "fs/promises" || name === "node:fs/promises";
-		};
+		registerHooks({
+			resolve(specifier, context, nextResolve) {
+				if (!reachesFs(specifier)) rejectBuiltin(specifier);
+				return nextResolve(specifier, context);
+			},
+		});
 		const fsFacade = () => new Proxy(function () {}, {
 			get(_target, key) {
 				if (key === "promises") return fsFacade();
@@ -208,15 +227,32 @@ function executeBundle(outfile) {
 			},
 		});
 		const originalBinding = process.binding;
-		process.binding = (specifier) => (reachesFs(specifier) ? fsFacade() : originalBinding(specifier));
+		process.binding = (specifier) => {
+			if (reachesFs(specifier)) return fsFacade();
+			rejectBuiltin(specifier);
+			return originalBinding(specifier);
+		};
 		const originalLinked = process._linkedBinding;
-		process._linkedBinding = (specifier) => (reachesFs(specifier) ? fsFacade() : originalLinked(specifier));
+		process._linkedBinding = (specifier) => {
+			if (reachesFs(specifier)) return fsFacade();
+			rejectBuiltin(specifier);
+			return originalLinked(specifier);
+		};
 		const originalBuiltin = process.getBuiltinModule;
 		process.getBuiltinModule = (specifier) => {
+			if (!reachesFs(specifier)) rejectBuiltin(specifier);
 			const loaded = originalBuiltin(specifier);
 			if (reachesFs(specifier)) wrapObject(loaded);
 			return loaded;
 		};
+		const guardedRequire = (specifier) => {
+			if (!reachesFs(specifier)) rejectBuiltin(specifier);
+			const loaded = baseRequire(specifier);
+			if (reachesFs(specifier)) wrapObject(loaded);
+			return loaded;
+		};
+		guardedRequire.resolve = (specifier) => baseRequire.resolve(specifier);
+		globalThis.__workerGuardRequire = guardedRequire;
 		globalThis.fetch = () => { throw new Error("Network is disabled"); };
 		let error = null;
 		try { await import(${JSON.stringify(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`)}); }
@@ -287,7 +323,7 @@ test("a third-party import-time file read fails the worker guard", async () => {
 	const real = await bundleWithMeta([entry]);
 	try {
 		assert.deepEqual(thirdPartyImportReads(real.metafile), []);
-		assert.deepEqual(executeBundle(real.outfile), { reads: [], error: null });
+		assert.deepEqual(await executeBundle(real.outfile), { reads: [], error: null });
 	} finally {
 		rmSync(real.directory, { recursive: true, force: true });
 	}
@@ -307,7 +343,7 @@ test("a third-party import-time file read fails the worker guard", async () => {
 	writeFileSync(fixture, 'import "reads-at-import";\nexport const ok = 1;\n');
 	const bundled = await bundleWithMeta([fixture]);
 	try {
-		const execution = executeBundle(bundled.outfile);
+		const execution = await executeBundle(bundled.outfile);
 		assert.deepEqual(execution.reads, [{ name: "readFileSync", path: "secret.txt" }]);
 		assert.equal(execution.error, "Import-time filesystem read");
 		const hits = thirdPartyImportReads(bundled.metafile);
@@ -333,7 +369,7 @@ test("bundle execution catches reads inside invoked functions and CommonJS wrapp
 			writeFileSync(fixture, source);
 			const bundle = await bundleWithMeta([fixture]);
 			try {
-				const execution = executeBundle(bundle.outfile);
+				const execution = await executeBundle(bundle.outfile);
 				assert.deepEqual(execution.reads, [{ name: "readFileSync", path: "secret.txt" }]);
 				assert.equal(execution.error, "Import-time filesystem read");
 			} finally {
@@ -384,7 +420,7 @@ test("every filesystem function records an import-time call", async () => {
 		const bundled = await bundleWithMeta([fixture]);
 		try {
 			assert.deepEqual(thirdPartyImportReads(bundled.metafile), []);
-			const execution = executeBundle(bundled.outfile);
+			const execution = await executeBundle(bundled.outfile);
 			assert.deepEqual(execution.reads, [{ name, path }]);
 			assert.equal(execution.error, "Import-time filesystem read");
 		} finally {
@@ -424,13 +460,249 @@ test("process bindings that reach fs fail the worker guard", async () => {
 		const bundled = await bundleWithMeta([fixture]);
 		try {
 			assert.deepEqual(thirdPartyImportReads(bundled.metafile), []);
-			const execution = executeBundle(bundled.outfile);
+			const execution = await executeBundle(bundled.outfile);
 			assert.deepEqual(execution.reads, [{ name, path }]);
 			assert.equal(execution.error, "Import-time filesystem read");
 		} finally {
 			rmSync(bundled.directory, { recursive: true, force: true });
 			rmSync(directory, { recursive: true, force: true });
 		}
+	}
+});
+
+test("a third-party import may reach only built-ins the real bundle needs", async () => {
+	const allow = await productionBuiltinAllowList();
+	assert.equal(allow.has("fs"), false);
+	assert.equal(allow.has("fs/promises"), false);
+	assert.equal(allow.has("child_process"), false);
+	assert.equal(allow.has("module"), false);
+	assert.equal(allow.size > 0, true);
+
+	const allowed = [...allow].sort()[0];
+	const cases = [
+		['const loaded = process.getBuiltinModule("module"); loaded._stat("/dev/null");', "module"],
+		['const loaded = process.getBuiltinModule("module"); loaded._readPackage("/tmp");', "module"],
+		[
+			'const childProcess = process.getBuiltinModule("child_process"); childProcess.execFileSync("/bin/echo", ["ok"]);',
+			"child_process",
+		],
+		['require("child_process").execFileSync("/bin/echo", ["ok"]);', "child_process"],
+		['await import("node:child_process");', "child_process"],
+		[
+			'import { createRequire } from "node:module"; createRequire(process.cwd() + "/x.js")("child_process");',
+			"module",
+		],
+		[`import ${JSON.stringify(`node:${allowed}`)};\nexport const loaded = 1;`, null],
+	];
+	for (const [source, builtin] of cases) {
+		const directory = mkdtempSync(join(tmpdir(), "tensquads-allow-"));
+		const packageDir = join(directory, "node_modules", "reads-at-import");
+		mkdirSync(packageDir, { recursive: true });
+		writeFileSync(
+			join(packageDir, "package.json"),
+			JSON.stringify({ name: "reads-at-import", type: "module", main: "index.js" }),
+		);
+		writeFileSync(join(packageDir, "index.js"), `${source}\nexport const value = 1;\n`);
+		const fixture = join(directory, "entry.js");
+		writeFileSync(fixture, 'import "reads-at-import";\nexport const ok = 1;\n');
+		const bundled = await bundleWithMeta([fixture]);
+		try {
+			const execution = await executeBundle(bundled.outfile);
+			if (builtin === null) {
+				assert.deepEqual(execution, { reads: [], error: null });
+				continue;
+			}
+			assert.equal(execution.error, `Import-time built-in: ${builtin}`);
+			assert.deepEqual(execution.reads, []);
+		} finally {
+			rmSync(bundled.directory, { recursive: true, force: true });
+			rmSync(directory, { recursive: true, force: true });
+		}
+	}
+});
+
+const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+const serverDirectory = join(repoRoot, "apps/web/dist/server");
+
+let productionBuilt = false;
+let productionAllowList;
+
+function readWorkerCompat() {
+	const text = readFileSync(join(repoRoot, "apps/web/wrangler.jsonc"), "utf8");
+	const config = JSON.parse(
+		text
+			.split("\n")
+			.filter((line) => !line.trim().startsWith("//"))
+			.join("\n"),
+	);
+	return {
+		compatibilityDate: config.compatibility_date,
+		compatibilityFlags: config.compatibility_flags,
+	};
+}
+
+function buildProductionWorker() {
+	if (productionBuilt) return;
+	execFileSync("npm", ["run", "build", "-w", "@tensquads/web"], {
+		cwd: repoRoot,
+		stdio: ["ignore", "ignore", "pipe"],
+	});
+	productionBuilt = true;
+}
+
+function jsFiles(root) {
+	const files = [];
+	const pending = [root];
+	while (pending.length > 0) pushJsDirectory(pending.pop(), pending, files);
+	return files;
+}
+
+function pushJsDirectory(dir, pending, files) {
+	for (const name of readdirSync(dir)) pushJsEntry(join(dir, name), name, pending, files);
+}
+
+function pushJsEntry(path, name, pending, files) {
+	if (name === ".vite") return;
+	if (statSync(path).isDirectory()) {
+		pending.push(path);
+		return;
+	}
+	if (name.endsWith(".js")) files.push(path);
+}
+
+function scanProductionBuiltins(directory) {
+	const names = new Set();
+	const pattern = /(?:import\s*(?:[^'"()]*?\sfrom\s*)?|import\s*\(\s*|require\s*\(\s*)["']node:([^"']+)["']/g;
+	for (const path of jsFiles(directory)) {
+		for (const match of readFileSync(path, "utf8").matchAll(pattern)) names.add(match[1]);
+	}
+	return names;
+}
+
+async function productionBuiltinAllowList() {
+	if (!productionAllowList) {
+		buildProductionWorker();
+		productionAllowList = scanProductionBuiltins(serverDirectory);
+	}
+	return productionAllowList;
+}
+
+function workerModules(directory) {
+	const modules = {};
+	for (const path of jsFiles(directory)) {
+		modules[relative(directory, path)] = { type: "esm", contents: readFileSync(path, "utf8") };
+	}
+	return modules;
+}
+
+async function bootWorkerd(directory, compat) {
+	const { Miniflare, NoOpLog } = await import("miniflare");
+	const mf = new Miniflare({
+		log: new NoOpLog(),
+		workers: [
+			{
+				config: {
+					name: "tensquads",
+					compatibilityDate: compat.compatibilityDate,
+					compatibilityFlags: compat.compatibilityFlags,
+					manifest: {
+						mainModule: "index.js",
+						modulesRoot: directory,
+						modules: workerModules(directory),
+					},
+				},
+			},
+		],
+	});
+	try {
+		const response = await mf.dispatchFetch("http://localhost/");
+		return { failed: response.status !== 200, status: response.status, body: await response.text() };
+	} catch (cause) {
+		return { failed: true, status: 0, body: "", error: cause instanceof Error ? cause.message : String(cause) };
+	} finally {
+		await mf.dispose().catch(() => {});
+	}
+}
+
+async function bootThirdParty(source, compat) {
+	const directory = mkdtempSync(join(tmpdir(), "tensquads-workerd-"));
+	const workerDirectory = mkdtempSync(join(tmpdir(), "tensquads-workerd-bundle-"));
+	try {
+		const packageDir = join(directory, "node_modules", "scratch-proof");
+		mkdirSync(packageDir, { recursive: true });
+		writeFileSync(
+			join(packageDir, "package.json"),
+			JSON.stringify({ name: "scratch-proof", type: "module", main: "index.js" }),
+		);
+		writeFileSync(join(packageDir, "index.js"), source(packageDir));
+		const entry = join(directory, "entry.js");
+		writeFileSync(
+			entry,
+			'import "scratch-proof";\nexport default { fetch() { return new Response("ok", { status: 200 }); } };\n',
+		);
+		await esbuild.build({
+			entryPoints: [entry],
+			bundle: true,
+			format: "esm",
+			platform: "neutral",
+			target: "es2024",
+			conditions: ["workerd", "worker", "browser"],
+			outfile: join(workerDirectory, "index.js"),
+			legalComments: "none",
+			logLevel: "silent",
+			plugins: [externalNodePlugin()],
+		});
+		return await bootWorkerd(workerDirectory, compat);
+	} finally {
+		rmSync(directory, { recursive: true, force: true });
+		rmSync(workerDirectory, { recursive: true, force: true });
+	}
+}
+
+function workerdFixtures(realPath) {
+	return [
+		[
+			"fs.readFileSync",
+			(packageDir) =>
+				`import { readFileSync } from "node:fs";\nconst text = readFileSync(${JSON.stringify(realPath)}, "utf8");\nif (!text.includes("tensquads")) throw new Error("read failed");\nexport const value = ${JSON.stringify(packageDir)};\n`,
+		],
+		[
+			"process.binding",
+			() =>
+				`const binding = process.binding("fs");\nif (binding.internalModuleStat(${JSON.stringify(realPath)}) !== 0) throw new Error("stat failed");\nexport const value = 1;\n`,
+		],
+		[
+			"module._readPackage",
+			(packageDir) =>
+				`import * as module from "node:module";\nconst pkg = module._readPackage(${JSON.stringify(packageDir)});\nif (!pkg || pkg.name !== "scratch-proof") throw new Error("read failed");\nexport const value = 1;\n`,
+		],
+		[
+			"child_process.execFileSync",
+			() =>
+				'import { execFileSync } from "node:child_process";\nconst text = execFileSync("/bin/echo", ["ok"], { encoding: "utf8" });\nif (String(text).trim() !== "ok") throw new Error("exec failed");\nexport const value = 1;\n',
+		],
+	];
+}
+
+test("workerd boots the built worker and rejects import-time builtin routes", async () => {
+	const compat = readWorkerCompat();
+	buildProductionWorker();
+	const built = JSON.parse(readFileSync(join(serverDirectory, "wrangler.json"), "utf8"));
+	assert.equal(built.compatibility_date, compat.compatibilityDate);
+	assert.deepEqual(built.compatibility_flags, compat.compatibilityFlags);
+
+	const homepage = await bootWorkerd(serverDirectory, compat);
+	assert.equal(homepage.status, 200);
+	assert.equal(homepage.body.includes("tensquads homepage"), true);
+
+	const realPath = join(repoRoot, "package.json");
+	for (const [name, source] of workerdFixtures(realPath)) {
+		const result = await bootThirdParty(source, compat);
+		assert.equal(
+			result.failed,
+			true,
+			`${name} did not fail in workerd. It would be harmless in production or need a named rule.`,
+		);
 	}
 });
 
