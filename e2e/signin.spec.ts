@@ -6,6 +6,7 @@ import {
 	secretsFor,
 	test,
 	viewports,
+	waitForScreenFonts,
 	watchPageErrors,
 } from "./support.ts";
 
@@ -58,7 +59,7 @@ for (const viewport of viewports) {
 	test(`sign-in at ${viewport.name}`, async ({ page }) => {
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		await page.goto("/signin");
-		await page.evaluate(() => document.fonts.ready);
+		await waitForScreenFonts(page);
 		await expectNoHorizontalScroll(page);
 		await expect(page).toHaveScreenshot(`signin-${viewport.name}.png`, { fullPage: true });
 	});

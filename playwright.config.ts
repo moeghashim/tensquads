@@ -18,6 +18,9 @@ export default defineConfig({
 		baseURL: "http://localhost:3000",
 		deviceScaleFactor: 1,
 		viewport: { width: 1440, height: 900 },
+		launchOptions: {
+			args: ["--font-render-hinting=none", "--disable-font-subpixel-positioning", "--force-color-profile=srgb"],
+		},
 	},
 	webServer: {
 		command: "npm run dev -w @tensquads/web",

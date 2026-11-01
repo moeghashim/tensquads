@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
-import { expect, recordAuthNotes, secretsFor, test, watchPageErrors } from "./support.ts";
+import { allowTestSignUp, expect, recordAuthNotes, secretsFor, test, watchPageErrors } from "./support.ts";
 
 test("a visitor with no session is sent to sign-in", async ({ page }) => {
 	await page.goto("/overview");
@@ -42,6 +42,8 @@ test("a new user makes one account and reaches overview", async ({ page }) => {
 	const sql = neon(secrets.testDatabase);
 	await applyMigration(sql);
 	const notes = watchPageErrors(page);
+	const authNotes = await recordAuthNotes(page);
+	await allowTestSignUp(page, secrets.publishable, secrets.secret);
 	let userId = "";
 	try {
 		await page.goto("/signup");
@@ -57,8 +59,10 @@ test("a new user makes one account and reaches overview", async ({ page }) => {
 			await page.waitForURL("**/overview", { timeout: 20_000 });
 		} catch {
 			const alert = (await page.getByRole("alert").allTextContents()).join(" ").trim();
-			const detail = notes.length > 0 ? ` Notes: ${notes.join(" | ")}` : "";
-			throw new Error(`Sign-up stayed on ${page.url()}. Alert: ${alert.length > 0 ? alert : "none"}.${detail}`);
+			const detail = [...authNotes, ...notes].join(" | ");
+			throw new Error(
+				`Sign-up stayed on ${page.url()}. Alert: ${alert.length > 0 ? alert : "none"}. Notes: ${detail || "none"}.`,
+			);
 		}
 		const rows = await sql.query("select id from accounts where email = $1", [email]);
 		expect(rows).toHaveLength(1);

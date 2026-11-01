@@ -5,6 +5,7 @@ import {
 	expectNoHorizontalScroll,
 	test,
 	viewports,
+	waitForScreenFonts,
 } from "./support.ts";
 
 test("sign-up starts at business type and pre-selects the design squads", async ({ page }) => {
@@ -99,7 +100,7 @@ for (const viewport of viewports) {
 	test(`sign-up at ${viewport.name}`, async ({ page }) => {
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		await page.goto("/signup");
-		await page.evaluate(() => document.fonts.ready);
+		await waitForScreenFonts(page);
 		await expectNoHorizontalScroll(page);
 		await expect(page).toHaveScreenshot(`signup-${viewport.name}.png`, { fullPage: true });
 	});

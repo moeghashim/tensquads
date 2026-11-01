@@ -61,6 +61,87 @@ export async function waitForHydration(page: Page) {
 	});
 }
 
+export async function waitForScreenFonts(page: Page) {
+	await page.waitForFunction(() => document.fonts.size > 0);
+	const ready = await page.evaluate(async () => {
+		const faces = [
+			"400 15px Inter",
+			"500 15px Inter",
+			"600 15px Inter",
+			"700 15px Inter",
+			"400 14px Inter",
+			"500 14px Inter",
+			"500 12px Inter",
+			"400 13px Inter",
+			"400 12px 'JetBrains Mono'",
+			"500 11px 'JetBrains Mono'",
+		];
+		await Promise.all(faces.map((face) => document.fonts.load(face)));
+		await document.fonts.ready;
+		return document.fonts.check("500 14px Inter") && document.fonts.check("400 15px Inter");
+	});
+	if (!ready) {
+		throw new Error("Inter is not loaded.");
+	}
+	await page.addStyleTag({
+		content: "html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }",
+	});
+}
+
+export async function allowTestSignUp(page: Page, publishable: string, secret: string) {
+	const host = clerkFrontendHost(publishable);
+	const token = await clerkTestingToken(secret);
+	const escaped = host.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	await page.route(new RegExp(`^https://${escaped}/v1/`), async (route) => {
+		const url = new URL(route.request().url());
+		url.searchParams.set("__clerk_testing_token", token);
+		const response = await route.fetch({ url: url.toString() });
+		const type = response.headers()["content-type"] ?? "";
+		if (!type.includes("json")) {
+			await route.fulfill({ response });
+			return;
+		}
+		const json = (await response.json()) as {
+			response?: { captcha_bypass?: boolean };
+			client?: { captcha_bypass?: boolean };
+		};
+		if (json.response?.captcha_bypass === false) {
+			json.response.captcha_bypass = true;
+		}
+		if (json.client?.captcha_bypass === false) {
+			json.client.captcha_bypass = true;
+		}
+		await route.fulfill({ response, json });
+	});
+}
+
+function clerkFrontendHost(publishable: string) {
+	const encoded = publishable
+		.replace(/^pk_(?:test|live)_/, "")
+		.replace(/-/g, "+")
+		.replace(/_/g, "/");
+	const host = Buffer.from(encoded, "base64").toString("utf8").replace(/\$$/, "");
+	if (!host.endsWith(".clerk.accounts.dev")) {
+		throw new Error("Clerk publishable key has no frontend host.");
+	}
+	return host;
+}
+
+async function clerkTestingToken(secret: string) {
+	const response = await fetch("https://api.clerk.com/v1/testing_tokens", {
+		method: "POST",
+		headers: { Authorization: `Bearer ${secret}` },
+	});
+	if (!response.ok) {
+		throw new Error(`Clerk testing token failed with status ${response.status}.`);
+	}
+	const body = (await response.json()) as { token?: string };
+	if (!body.token) {
+		throw new Error("Clerk testing token returned no token.");
+	}
+	return body.token;
+}
+
 export async function recordAuthNotes(page: Page) {
 	const notes: string[] = [];
 	await page.exposeBinding("__recordAuthNote", (_source, note: string) => {

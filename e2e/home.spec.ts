@@ -5,6 +5,7 @@ import {
 	expectNoHorizontalScroll,
 	test,
 	viewports,
+	waitForScreenFonts,
 } from "./support.ts";
 
 test("the homepage toggle changes the prompt and fills an example", async ({ page }) => {
@@ -66,7 +67,7 @@ for (const viewport of viewports) {
 	test(`homepage at ${viewport.name}`, async ({ page }) => {
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		await page.goto("/");
-		await page.evaluate(() => document.fonts.ready);
+		await waitForScreenFonts(page);
 		await expectNoHorizontalScroll(page);
 		await expect(page).toHaveScreenshot(`home-${viewport.name}.png`, { fullPage: true });
 	});
