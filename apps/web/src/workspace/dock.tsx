@@ -187,8 +187,14 @@ function DockPanel({
 				)}
 			>
 				<div data-loop="dockChat" data-loop-as="m">
-					{messages.map((message) => (
-						<DockBubble key={message.id} message={message} masterName={masterName} agents={agents} />
+					{messages.map((message, index) => (
+						<DockBubble
+							key={message.id}
+							message={message}
+							masterName={masterName}
+							agents={agents}
+							markTag={firstTag(messages, index)}
+						/>
 					))}
 				</div>
 				{thinking ? (
@@ -274,14 +280,24 @@ function DockPanel({
 	);
 }
 
+function firstTag(messages: readonly FrameMessage[], index: number): boolean {
+	const message = messages[index];
+	if (!message || message.from === "user") {
+		return false;
+	}
+	return messages.slice(0, index).every((item) => item.from === "user");
+}
+
 function DockBubble({
 	message,
 	masterName,
 	agents,
+	markTag,
 }: {
 	readonly message: FrameMessage;
 	readonly masterName: string;
 	readonly agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[];
+	readonly markTag: boolean;
 }) {
 	const user = message.from === "user";
 	const agent = message.from === "agent" ? agents.find((item) => item.id === message.agent) : undefined;
@@ -291,7 +307,7 @@ function DockBubble({
 	return (
 		<div style={css(`display: flex; flex-direction: column; align-items: ${align}; gap: 4px`)}>
 			{user ? null : (
-				<div data-if="m.hasTag">
+				<div {...(markTag ? { "data-if": "m.hasTag" } : {})}>
 					<span
 						style={css("font-size: 11px; color: #5d5d5d; display: inline-flex; align-items: center; gap: 6px")}
 					>
