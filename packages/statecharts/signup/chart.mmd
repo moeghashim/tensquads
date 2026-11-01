@@ -1,0 +1,22 @@
+---
+title: "Sign up"
+---
+stateDiagram-v2
+  s0: Type
+  s1: Details
+  s2: Squad
+  s3: Account
+  s4: Squad, none picked
+  s5: Created
+  [*] --> s0
+  s0 --> s1: A new business or An existing business
+  s1 --> s2: Choose my squads
+  s1 --> s0: Back
+  s2 --> s1: Back
+  s2 --> s3: Create my workspace
+  s2 --> s4: Untick the last squad
+  s3 --> s2: Back
+  s3 --> s5: Create my workspace
+  s4 --> s2: Tick the squads again
+  s4 --> s1: Back
+  s1 --> s4: Choose my squads
