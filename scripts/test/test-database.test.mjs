@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import { syncBuiltinESMExports } from "node:module";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import { localSecrets } from "../write-dev-vars.mjs";
 
-test("TEST_DATABASE_URL does not fall back to the Neon connection", async () => {
+test("TEST_DATABASE_URL does not fall back to the Neon connection", async (context) => {
+	isolateDotEnv(context);
 	const savedTest = process.env.TEST_DATABASE_URL;
 	const savedNeon = process.env.NEON_POSTGRES_CONNECTION_STRING;
 	const savedActions = process.env.GITHUB_ACTIONS;
@@ -35,6 +39,7 @@ function restore(name, value) {
 }
 
 test("Dependabot prints one exact sentence for every missing secret", async (context) => {
+	isolateDotEnv(context);
 	const { secretsFor, test: playwrightTest } = await import("../../e2e/support.ts");
 	for (const name of [
 		"CLERK_PUBLISHABLE_KEY",
@@ -65,3 +70,17 @@ test("Dependabot prints one exact sentence for every missing secret", async (con
 	]);
 	assert.equal(skip.mock.callCount(), 1);
 });
+
+function isolateDotEnv(context) {
+	const file = fileURLToPath(new URL("../../.env", import.meta.url));
+	const read = fs.readFileSync;
+	const mocked = context.mock.method(fs, "readFileSync", (path, ...options) => {
+		if (path === file) return "";
+		return read(path, ...options);
+	});
+	syncBuiltinESMExports();
+	context.after(() => {
+		mocked.mock.restore();
+		syncBuiltinESMExports();
+	});
+}

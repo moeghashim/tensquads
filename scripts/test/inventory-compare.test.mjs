@@ -54,6 +54,13 @@ test("built screen inventories match each rendered design state and reject occur
 			};
 			const { expected, actual } = await compare();
 			if (name === "Home") {
+				await page.evaluate(() => {
+					const paragraph = document.createElement("p");
+					paragraph.textContent = "Save {amount}";
+					document.body.append(paragraph);
+				});
+				assert.deepEqual(compareInventory(expected, await capture(page)).extraTexts, ["Save {amount}"]);
+				await page.getByText("Save {amount}", { exact: true }).evaluate((paragraph) => paragraph.remove());
 				const extra = structuredClone(actual);
 				extra.texts.push("About Terms");
 				assert.deepEqual(compareInventory(expected, extra).extraTexts, ["About Terms"]);

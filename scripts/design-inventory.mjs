@@ -123,7 +123,7 @@ function controlText(html, tag) {
 
 export function inventoryHtml(html) {
 	const body = visibleHtml(html);
-	const texts = [...body.matchAll(/>([^<>{}]+?)</g)].map((m) => decode(m[1])).filter((t) => t.length > 0);
+	const texts = [...body.matchAll(/>([^<]+?)</g)].map((m) => decode(m[1])).filter((t) => t.length > 0);
 	const handlers = [];
 	const loops = [];
 	for (const tag of body.matchAll(/<(button|a|input|textarea|select)\b([^>]*)>/g)) {
