@@ -87,7 +87,7 @@ export function SignupCard({
 				{stepLabels.map((label, index) => {
 					const done = index < current;
 					const on = index === current;
-					const color = on ? "#0d0d0d" : done ? "#282828" : "#8f8f8f";
+					const color = on ? "#0d0d0d" : done ? "#282828" : "#737373";
 					return (
 						<li key={label} style={css("display: flex; align-items: center; gap: 8px")}>
 							<span style={css(stepDot(on || done))}>{done ? "✓" : String(index + 1)}</span>
@@ -114,7 +114,7 @@ export function SignupCard({
 					notice={notice}
 				/>
 			) : null}
-			<p style={css("margin: 0; font-size: 12px; color: #8f8f8f; text-align: center")}>
+			<p style={css("margin: 0; font-size: 12px; color: #737373; text-align: center")}>
 				By continuing you agree to the [TERMS] and [PRIVACY POLICY].
 			</p>
 		</section>

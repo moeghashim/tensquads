@@ -190,7 +190,7 @@ function SignInScreen({
 						Sign in
 						<Arrow />
 					</button>
-					<div style={css("display: flex; align-items: center; gap: 12px; color: #8f8f8f; font-size: 12px")}>
+					<div style={css("display: flex; align-items: center; gap: 12px; color: #737373; font-size: 12px")}>
 						<span style={css("flex: 1; height: 1px; background: rgba(13,13,13,.08)")} />
 						or
 						<span style={css("flex: 1; height: 1px; background: rgba(13,13,13,.08)")} />
@@ -218,7 +218,7 @@ function SignInScreen({
 						</svg>
 						Email me a sign-in link
 					</button>
-					<p style={css("margin: 0; font-size: 12px; color: #8f8f8f; text-align: center")}>
+					<p style={css("margin: 0; font-size: 12px; color: #737373; text-align: center")}>
 						By signing in you agree to the [TERMS] and [PRIVACY POLICY].
 					</p>
 				</section>

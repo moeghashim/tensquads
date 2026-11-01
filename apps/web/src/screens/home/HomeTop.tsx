@@ -162,7 +162,7 @@ export function HomeTop({
 						</a>
 					</div>
 				</div>
-				<p style={css("margin: 0; font-size: 13px; color: #8f8f8f")}>
+				<p style={css("margin: 0; font-size: 13px; color: #737373")}>
 					Free for 14 days · No credit card · Cancel from the dashboard
 				</p>
 			</section>
@@ -172,7 +172,7 @@ export function HomeTop({
 			>
 				<span
 					style={css(
-						"font-size: 12px; font-weight: 500; color: #8f8f8f; text-transform: uppercase; letter-spacing: .08em",
+						"font-size: 12px; font-weight: 500; color: #737373; text-transform: uppercase; letter-spacing: .08em",
 					)}
 				>
 					Running the day-to-day at
@@ -181,7 +181,7 @@ export function HomeTop({
 					{logos.map((name) => (
 						<span
 							key={name}
-							style={css("font-size: 16px; font-weight: 600; color: #8f8f8f; letter-spacing: -0.02em")}
+							style={css("font-size: 16px; font-weight: 600; color: #737373; letter-spacing: -0.02em")}
 						>
 							{name}
 						</span>
@@ -260,7 +260,7 @@ export function HomeTop({
 								</div>
 								<span
 									style={css(
-										"height: 22px; padding: 0 8px; border-radius: 999px; background: #04b84c14; color: #008635; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center",
+										"height: 22px; padding: 0 8px; border-radius: 999px; background: #04b84c14; color: #00692a; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center",
 									)}
 								>
 									4 of 5 agents online
