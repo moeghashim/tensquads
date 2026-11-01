@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { setImmediate } from "node:timers/promises";
 import test from "node:test";
+import { setImmediate } from "node:timers/promises";
 
 import { Pool, type PoolClient } from "@neondatabase/serverless";
 
