@@ -110,10 +110,10 @@ A model failure is a path of A new business, An existing business, Back, Choose 
 
 | Check | Covers | Sync commit |
 | --- | --- | --- |
-| `machine.test.ts` | `initialSignup`, `pickKind`, `togglePicked`, `openAccount`, `summaryLine` | Pending verification |
-| `signup-submission.test.mjs` | Details to Squads, Back from Account, Squads and Details, field and squad retention, creation to `/overview` | Pending verification |
-| `/statechart` on `Signup.tla` | Type, Details, Squad, Account, the create request, a stored account, and a failed navigation | Pending verification |
+| `machine.test.ts` | `initialSignup`, `pickKind`, `togglePicked`, `openAccount`, `summaryLine` | `52dd87132519215e100845f625c608259faca83a` |
+| `signup-submission.test.mjs` | Details to Squads, Back from Account, Squads and Details, field and squad retention, creation to `/overview` | `52dd87132519215e100845f625c608259faca83a` |
+| `/statechart` on `Signup.tla` | Type, Details, Squad, Account, the create request, a stored account, and a failed navigation | `52dd87132519215e100845f625c608259faca83a` |
 
-TLC exited 0, reached 41 states and 84 steps, and named no broken rule. The chart draws 10 states and 20 arrows. It hides Stay. Move the sync commit to this change only after `machine.test.ts` and `signup-submission.test.mjs` also exit 0.
+Both checks passed on `52dd87132519215e100845f625c608259faca83a`. `machine.test.ts` and `signup-submission.test.mjs` exited 0. TLC exited 0, reached 41 states and 84 steps, and named no broken rule. The chart draws 10 states and 20 arrows. It hides Stay.
 
 Move a sync commit forward only after both checks pass and you confirm that the model and the tests still describe the code at the new commit. An intended change updates `machine.ts`, `machine.test.ts`, and `Signup.tla` together.
