@@ -1,0 +1,61 @@
+{
+  "exit": 0,
+  "states": {
+    "distinct": 41,
+    "initial": 1,
+    "complete": true,
+    "cut": false
+  },
+  "rules": [
+    {
+      "rule": {
+        "kind": "invariant",
+        "name": "TypeOK"
+      },
+      "outcome": "holds"
+    },
+    {
+      "rule": {
+        "kind": "invariant",
+        "name": "PresetHolds"
+      },
+      "outcome": "holds"
+    },
+    {
+      "rule": {
+        "kind": "invariant",
+        "name": "AccountNeedsSquad"
+      },
+      "outcome": "holds"
+    },
+    {
+      "rule": {
+        "kind": "invariant",
+        "name": "CreatedHasAccount"
+      },
+      "outcome": "holds"
+    },
+    {
+      "rule": {
+        "kind": "invariant",
+        "name": "AccountFlow"
+      },
+      "outcome": "holds"
+    },
+    {
+      "rule": {
+        "kind": "invariant",
+        "name": "KindAfterType"
+      },
+      "outcome": "holds"
+    },
+    {
+      "rule": {
+        "kind": "deadlock",
+        "name": "NoDeadlock"
+      },
+      "outcome": "holds"
+    }
+  ],
+  "steps": 84
+}

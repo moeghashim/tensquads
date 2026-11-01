@@ -1,0 +1,81 @@
+[WebServer] (node:94104) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 31 tests using 2 workers
+
+(node:94141) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:94140) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/31] e2e/accessibility.spec.ts:7:3 › / passes axe at 1440
+[2/31] e2e/accessibility.spec.ts:7:3 › / passes axe at 390
+[3/31] e2e/accessibility.spec.ts:7:3 › /signup passes axe at 1440
+[4/31] e2e/accessibility.spec.ts:7:3 › /signup passes axe at 390
+[5/31] e2e/accessibility.spec.ts:7:3 › /signin passes axe at 1440
+[6/31] e2e/accessibility.spec.ts:7:3 › /signin passes axe at 390
+[7/31] e2e/home.spec.ts:13:1 › the homepage toggle changes the prompt and fills an example
+[8/31] e2e/home.spec.ts:25:1 › homepage calls to action follow the design routes
+[9/31] e2e/home.spec.ts:43:1 › homepage anchors scroll to the named sections
+[10/31] e2e/home.spec.ts:57:1 › homepage controls have labels and the focus ring
+[11/31] e2e/home.spec.ts:69:2 › homepage at 1440
+[12/31] e2e/home.spec.ts:69:2 › homepage at 390
+[13/31] e2e/inventory.spec.ts:52:1 › the homepage inventory matches the design texts, handlers, loops, and links
+[14/31] e2e/inventory.spec.ts:62:2 › extra paragraph fails the homepage inventory
+e2e/inventory.spec.ts:62:2 › extra paragraph fails the homepage inventory
+
+
+[15/31] e2e/inventory.spec.ts:62:2 › missing logo fails the homepage inventory
+e2e/inventory.spec.ts:52:1 › the homepage inventory matches the design texts, handlers, loops, and links
+
+
+[16/31] e2e/inventory.spec.ts:62:2 › changed Security target fails the homepage inventory
+e2e/inventory.spec.ts:62:2 › missing logo fails the homepage inventory
+
+
+[17/31] e2e/inventory.spec.ts:83:1 › the sign-up inventory matches the design texts, handlers, loops, and links
+e2e/inventory.spec.ts:62:2 › changed Security target fails the homepage inventory
+
+
+[18/31] e2e/inventory.spec.ts:97:1 › the sign-in inventory matches the design texts, handlers, loops, and links
+e2e/inventory.spec.ts:83:1 › the sign-up inventory matches the design texts, handlers, loops, and links
+
+
+e2e/inventory.spec.ts:97:1 › the sign-in inventory matches the design texts, handlers, loops, and links
+
+
+e2e/inventory.spec.ts:83:1 › the sign-up inventory matches the design texts, handlers, loops, and links
+
+
+e2e/inventory.spec.ts:97:1 › the sign-in inventory matches the design texts, handlers, loops, and links
+
+
+[19/31] e2e/session.spec.ts:5:1 › a visitor with no session is sent to sign-in
+e2e/inventory.spec.ts:83:1 › the sign-up inventory matches the design texts, handlers, loops, and links
+
+
+
+
+[20/31] e2e/signin.spec.ts:14:1 › an empty sign-in shows the design error
+
+
+
+
+
+
+[21/31] e2e/signin.spec.ts:38:1 › forgot password and the email link do nothing
+[22/31] e2e/signin.spec.ts:51:1 › sign-in controls have labels and the focus ring
+[23/31] e2e/signin.spec.ts:64:2 › sign-in at 1440
+[24/31] e2e/signin.spec.ts:64:2 › sign-in at 390
+[25/31] e2e/signup.spec.ts:13:1 › sign-up starts at business type and pre-selects the design squads
+[26/31] e2e/signup.spec.ts:33:1 › an existing business shows its fields and four starter squads
+[27/31] e2e/signup.spec.ts:64:1 › zero squads do not open the account form
+[28/31] e2e/signup.spec.ts:77:1 › the account step reuses the sign-in fields and blocks empty input
+[29/31] e2e/signup.spec.ts:94:1 › sign-up controls have labels
+[30/31] e2e/signup.spec.ts:102:2 › sign-up at 1440
+[31/31] e2e/signup.spec.ts:102:2 › sign-up at 390
+  31 passed (18.6s)

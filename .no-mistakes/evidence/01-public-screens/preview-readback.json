@@ -1,0 +1,29 @@
+[
+  {
+    "path": "/",
+    "status": 200,
+    "signupAssets": [
+      "/signup",
+      "/signup",
+      "/signup",
+      "/signup",
+      "/signup",
+      "/signup",
+      "/signup"
+    ]
+  },
+  {
+    "path": "/signup",
+    "status": 200,
+    "signupAssets": [
+      "/assets/signup-Cp5R0CrU.js"
+    ]
+  },
+  {
+    "path": "/signin",
+    "status": 200,
+    "signupAssets": [
+      "/signup"
+    ]
+  }
+]

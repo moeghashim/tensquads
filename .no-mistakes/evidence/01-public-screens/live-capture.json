@@ -1,0 +1,79 @@
+[
+  {
+    "path": "/",
+    "width": 1440,
+    "status": 200,
+    "overflow": false
+  },
+  {
+    "injection": "Save {amount}",
+    "extraTexts": [
+      "Save {amount}"
+    ]
+  },
+  {
+    "control": "About",
+    "href": "#",
+    "pathname": "/"
+  },
+  {
+    "control": "Blog",
+    "href": "#",
+    "pathname": "/"
+  },
+  {
+    "control": "Careers",
+    "href": "#",
+    "pathname": "/"
+  },
+  {
+    "control": "Contact",
+    "href": "#",
+    "pathname": "/"
+  },
+  {
+    "control": "Terms",
+    "href": "#",
+    "pathname": "/"
+  },
+  {
+    "control": "Privacy",
+    "href": "#",
+    "pathname": "/"
+  },
+  {
+    "control": "Security",
+    "href": "#",
+    "pathname": "/"
+  },
+  {
+    "path": "/signup",
+    "width": 1440,
+    "status": 200,
+    "overflow": false
+  },
+  {
+    "path": "/signin",
+    "width": 1440,
+    "status": 200,
+    "overflow": false
+  },
+  {
+    "path": "/",
+    "width": 390,
+    "status": 200,
+    "overflow": false
+  },
+  {
+    "path": "/signup",
+    "width": 390,
+    "status": 200,
+    "overflow": false
+  },
+  {
+    "path": "/signin",
+    "width": 390,
+    "status": 200,
+    "overflow": false
+  }
+]

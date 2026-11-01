@@ -1,0 +1,63 @@
+
+> build
+> vite build
+
+vite v8.3.5 building client environment for production...
+transforming...
+✓ 273 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/client/.assetsignore                  0.02 kB
+dist/client/assets/index-YAZqwzyt.css      1.79 kB │ gzip:   0.57 kB
+dist/client/assets/chat-6TzMuq8F.js        0.12 kB │ gzip:   0.12 kB
+dist/client/assets/overview-6TzMuq8F.js    0.12 kB │ gzip:   0.12 kB
+dist/client/assets/marks-40h4hkcc.js       1.15 kB │ gzip:   0.52 kB
+dist/client/assets/signin-BcXBFnjO.js      5.81 kB │ gzip:   2.00 kB
+dist/client/assets/machine-B5cnsXl8.js     6.18 kB │ gzip:   2.33 kB
+dist/client/assets/signup-D6VyB_zk.js     22.77 kB │ gzip:   6.11 kB
+dist/client/assets/routes-B4512mfQ.js     31.11 kB │ gzip:   6.94 kB
+dist/client/assets/index-DlkbFoED.js     470.96 kB │ gzip: 144.31 kB
+
+✓ built in 606ms
+vite v8.3.5 building ssr environment for production...
+transforming...
+✓ 448 modules transformed.
+rendering chunks...
+Using secrets defined in .dev.vars
+computing gzip size...
+dist/server/.dev.vars                                                   0.10 kB
+dist/server/wrangler.json                                               1.47 kB │ gzip:   0.74 kB
+dist/server/.vite/manifest.json                                         8.89 kB │ gzip:   1.35 kB
+dist/server/assets/__root-YAZqwzyt.css                                  1.79 kB │ gzip:   0.57 kB
+dist/server/assets/empty-plugin-adapters-Butv5p6u.js                    0.27 kB │ gzip:   0.18 kB │ map:     0.50 kB
+dist/server/assets/chat-Bez7pJua.js                                     0.41 kB │ gzip:   0.28 kB │ map:     0.53 kB
+dist/server/assets/overview-DQj_-k25.js                                 0.42 kB │ gzip:   0.28 kB │ map:     0.54 kB
+dist/server/assets/utils-DmGNaRx5.js                                    0.55 kB │ gzip:   0.37 kB │ map:     0.74 kB
+dist/server/assets/publishable-key-BFBLQxg3.js                          0.84 kB │ gzip:   0.45 kB │ map:     1.02 kB
+dist/server/assets/async-local-storage-BCf_psWi.js                      0.86 kB │ gzip:   0.44 kB │ map:     1.36 kB
+dist/server/assets/worker-env-DrI7k3zx.js                               0.89 kB │ gzip:   0.49 kB │ map:     1.74 kB
+dist/server/assets/session-CyDwc9tz.js                                  0.95 kB │ gzip:   0.51 kB │ map:     1.45 kB
+dist/server/assets/jsx-runtime-DB7t3X6Y.js                              1.43 kB │ gzip:   0.68 kB │ map:     1.96 kB
+dist/server/assets/rolldown-runtime-SbdDWaPq.js                         1.43 kB │ gzip:   0.66 kB
+dist/server/assets/_tanstack-start-manifest_v-MAJIv2jI.js               1.72 kB │ gzip:   0.51 kB
+dist/server/assets/marks-DsYNCFKH.js                                    2.16 kB │ gzip:   0.79 kB │ map:     3.32 kB
+dist/server/assets/catalog-Bd2W_vwE.js                                  3.00 kB │ gzip:   1.25 kB │ map:     4.97 kB
+dist/server/assets/create-account-B6YXFRl7.js                           3.06 kB │ gzip:   1.25 kB │ map:     6.49 kB
+dist/server/assets/createCsrfMiddleware-qNTY461U.js                     3.62 kB │ gzip:   1.15 kB │ map:     8.23 kB
+dist/server/assets/utils-DqfMutt2.js                                    8.21 kB │ gzip:   3.49 kB │ map:    16.02 kB
+dist/server/assets/start-C_ZBrthK.js                                    9.55 kB │ gzip:   3.27 kB │ map:    15.85 kB
+dist/server/assets/signin-Air7v9yM.js                                   9.99 kB │ gzip:   2.65 kB │ map:    14.86 kB
+dist/server/assets/router-BP4bUoSl.js                                  10.63 kB │ gzip:   3.29 kB │ map:    33.77 kB
+dist/server/assets/createServerFn-P1h2l6k6.js                          15.98 kB │ gzip:   5.08 kB │ map:    36.15 kB
+dist/server/assets/react-BwxVcRvJ.js                                   16.51 kB │ gzip:   4.48 kB │ map:    28.75 kB
+dist/server/assets/signup-D2_Bgrjt.js                                  38.51 kB │ gzip:   8.16 kB │ map:    61.34 kB
+dist/server/assets/deprecated-o9KMpeDt.js                              42.62 kB │ gzip:  13.05 kB │ map:    97.18 kB
+dist/server/assets/routes-C_YzwTnh.js                                  46.90 kB │ gzip:   8.43 kB │ map:    64.24 kB
+dist/server/assets/__23tanstack-start-server-fn-resolver-CyGh0ya-.js  142.54 kB │ gzip:  35.40 kB │ map:   310.50 kB
+dist/server/assets/server-B2ez-oLV.js                                 291.32 kB │ gzip:  60.45 kB │ map:   492.05 kB
+dist/server/assets/__root-2oPaGD64.js                                 337.19 kB │ gzip:  75.25 kB │ map:   690.43 kB
+dist/server/assets/src-CRv5RPTz.js                                    391.53 kB │ gzip:  92.04 kB │ map:   742.88 kB
+dist/server/assets/machine-CoRe67xL.js                                549.64 kB │ gzip: 104.24 kB │ map:   965.22 kB
+dist/server/index.js                                                  727.03 kB │ gzip: 153.47 kB │ map: 1,335.17 kB
+
+✓ built in 117ms

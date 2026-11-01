@@ -1,0 +1,76 @@
+
+Running 3 tests using 1 worker
+
+(node:94795) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/3] e2e/session.spec.ts:12:1 › a correct sign-in opens the blank overview
+  1) e2e/session.spec.ts:12:1 › a correct sign-in opens the blank overview ─────────────────────────
+
+    Error: publishable, secret, testDatabase is missing.
+
+       at support.ts:326
+
+      324 | 		return secrets;
+      325 | 	}
+    > 326 | 	throw new Error(`${missing.join(", ")} is missing.`);
+          | 	      ^
+      327 | }
+      328 |
+        at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BYHVJ2PF9886389K2B5XZM/e2e/support.ts:326:8)
+        at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BYHVJ2PF9886389K2B5XZM/e2e/session.spec.ts:13:18
+
+    Error Context: ../../../evidence/01M6BYHVJ2PF9886389K2B5XZM/auth-results/session-a-correct-sign-in-opens-the-blank-overview/error-context.md
+
+
+(node:94800) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[2/3] e2e/session.spec.ts:38:1 › a new user makes one account and reaches overview
+  2) e2e/session.spec.ts:38:1 › a new user makes one account and reaches overview ──────────────────
+
+    Error: publishable, secret, testDatabase is missing.
+
+       at support.ts:326
+
+      324 | 		return secrets;
+      325 | 	}
+    > 326 | 	throw new Error(`${missing.join(", ")} is missing.`);
+          | 	      ^
+      327 | }
+      328 |
+        at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BYHVJ2PF9886389K2B5XZM/e2e/support.ts:326:8)
+        at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BYHVJ2PF9886389K2B5XZM/e2e/session.spec.ts:39:18
+
+    Error Context: ../../../evidence/01M6BYHVJ2PF9886389K2B5XZM/auth-results/session-a-new-user-makes-one-account-and-reaches-overview/error-context.md
+
+
+(node:94806) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[3/3] e2e/signin.spec.ts:22:1 › a rejected sign-in shows the wrong-password text
+  3) e2e/signin.spec.ts:22:1 › a rejected sign-in shows the wrong-password text ────────────────────
+
+    Error: publishable, secret is missing.
+
+       at support.ts:326
+
+      324 | 		return secrets;
+      325 | 	}
+    > 326 | 	throw new Error(`${missing.join(", ")} is missing.`);
+          | 	      ^
+      327 | }
+      328 |
+        at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BYHVJ2PF9886389K2B5XZM/e2e/support.ts:326:8)
+        at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BYHVJ2PF9886389K2B5XZM/e2e/signin.spec.ts:23:2
+
+    Error Context: ../../../evidence/01M6BYHVJ2PF9886389K2B5XZM/auth-results/signin-a-rejected-sign-in-shows-the-wrong-password-text/error-context.md
+
+
+  3 failed
+    e2e/session.spec.ts:12:1 › a correct sign-in opens the blank overview ──────────────────────────
+    e2e/session.spec.ts:38:1 › a new user makes one account and reaches overview ───────────────────
+    e2e/signin.spec.ts:22:1 › a rejected sign-in shows the wrong-password text ─────────────────────
