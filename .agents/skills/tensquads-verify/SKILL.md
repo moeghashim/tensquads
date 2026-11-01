@@ -75,6 +75,10 @@ Run this check when a change touches any of these:
 
 - `apps/web/src/screens/signup/machine.ts`
 - `apps/web/src/screens/signup/machine.test.ts`
+- `apps/web/src/screens/signup/SignupCard.tsx`
+- `apps/web/src/screens/signup/signup-ui.tsx`
+- `apps/web/src/screens/signup/SignupPage.tsx`
+- `scripts/test/signup-submission.test.mjs`
 - `packages/statecharts/signup/Signup.tla`
 - `packages/statecharts/signup/Signup.cfg`
 - `packages/statecharts/signup/view.mjs`
@@ -87,10 +91,10 @@ A rename or a move of one of these files is still a covered change.
 Run the code check from the repository root:
 
 ```sh
-node --experimental-strip-types --test apps/web/src/screens/signup/machine.test.ts
+node --experimental-strip-types --test apps/web/src/screens/signup/machine.test.ts scripts/test/signup-submission.test.mjs
 ```
 
-Exit 0 means the screen machine still matches the rules above. A failure is a break in the code. Do not change the test to hide it.
+Exit 0 means the helpers and the screen transitions still match the rules above. A failure is a break in the code. Do not change the test to hide it.
 
 Then read the model with `/statechart`. The spec is `packages/statecharts/signup/Signup.tla`. The config is `packages/statecharts/signup/Signup.cfg`. The view is `packages/statecharts/signup/view.mjs`. The chart is `packages/statecharts/signup/chart.mmd`. `/statechart` is the only way to read the TLC result. Do not copy its command into this skill or into a script.
 
@@ -100,15 +104,16 @@ TLC does not read `machine.ts`. A pass of the model does not prove the TypeScrip
 
 ## What a failure means
 
-A model failure is a path of A new business, An existing business, Back, Choose my squads, Create my workspace, Untick the last squad, or Tick the squads again. Replay that path in `pickKind`, `back`, `nextDetails`, `openAccount`, and `togglePicked`. If the code can do the path, the code is wrong. If the code cannot do a step, the model is wrong. Say which.
+A model failure is a path of A new business, An existing business, Back, Choose my squads, Create my workspace, Untick the last squad, or Tick the squads again. Replay that path in `pickKind`, `openAccount`, and `togglePicked`, and through the Details and Back controls in `SignupCard` and `AccountStep`. Replay Submit through `SignupPage` to `/overview`. If the code can do the path, the code is wrong. If the code cannot do a step, the model is wrong. Say which.
 
 ## Keep the check in step
 
 | Check | Covers | Sync commit |
 | --- | --- | --- |
-| `machine.test.ts` | `initialSignup`, `pickKind`, `back`, `nextDetails`, `openAccount`, `summaryLine` | `3fdf3bad66a0dca75a58eea10c23a995ce85b1ec` |
+| `machine.test.ts` | `initialSignup`, `pickKind`, `togglePicked`, `openAccount`, `summaryLine` | Pending verification |
+| `signup-submission.test.mjs` | Details to Squads, Back from Account, Squads and Details, field and squad retention, creation to `/overview` | Pending verification |
 | `/statechart` on `Signup.tla` | Type, Details, Squad, Account, Created, and the zero-squad block | `3fdf3bad66a0dca75a58eea10c23a995ce85b1ec` |
 
-Both checks passed on `3fdf3bad66a0dca75a58eea10c23a995ce85b1ec`, the commit that adds this model. `machine.test.ts` exited 0. TLC exited 0, reached 17 states and 34 steps, and named no broken rule.
+The previous checks passed on `3fdf3bad66a0dca75a58eea10c23a995ce85b1ec`, the commit that adds this model. `machine.test.ts` exited 0. TLC exited 0, reached 17 states and 34 steps, and named no broken rule.
 
 Move a sync commit forward only after both checks pass and you confirm that the model and the tests still describe the code at the new commit. An intended change updates `machine.ts`, `machine.test.ts`, and `Signup.tla` together.

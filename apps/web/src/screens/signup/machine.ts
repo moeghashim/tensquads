@@ -40,26 +40,6 @@ export function pickKind(state: SignupState, kind: BusinessKind): SignupState {
 	return { ...state, kind, step: "details", picked: defaultSquadIds(kind), tried: false };
 }
 
-export function back(state: SignupState): SignupState {
-	if (state.step === "account") {
-		return { ...state, step: "agents", tried: false };
-	}
-	if (state.step === "agents") {
-		return { ...state, step: "details" };
-	}
-	if (state.step === "details") {
-		return { ...state, step: "choose" };
-	}
-	return state;
-}
-
-export function nextDetails(state: SignupState): SignupState {
-	if (state.step !== "details") {
-		return state;
-	}
-	return { ...state, step: "agents" };
-}
-
 export function toggleValue(values: readonly string[], value: string): readonly string[] {
 	return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
 }
@@ -73,13 +53,6 @@ export function openAccount(state: SignupState): SignupState {
 		return state;
 	}
 	return { ...state, step: "account", tried: false };
-}
-
-export function markCreated(state: SignupState): SignupState {
-	if (state.step !== "account" || state.picked.length === 0) {
-		return state;
-	}
-	return { ...state, step: "created" };
 }
 
 export function fieldsComplete(email: string, password: string): boolean {

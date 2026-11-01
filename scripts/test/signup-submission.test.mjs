@@ -35,7 +35,7 @@ const result = await esbuild.build({
 					export const useSignUp = () => ({ signUp });
 					export const useSignIn = () => ({ signIn: signUp });
 				` : path.startsWith("@tanstack") ? `
-					export const useNavigate = () => async () => { window.calls.navigate++; };
+					export const useNavigate = () => async (options) => { window.destination = options.to; window.calls.navigate++; };
 				` : `
 					export const createAccount = async () => {
 						window.calls.create++;
@@ -98,6 +98,7 @@ test("finalized signup locks credentials and owns pending requests across steps"
 		assert.deepEqual(await page.evaluate(() => window.calls), { password: 1, finalize: 1, create: 2, navigate: 0 });
 		await page.evaluate(() => window.finish());
 		await page.waitForFunction(() => window.calls.navigate === 1);
+		assert.equal(await page.evaluate(() => window.destination), "/overview");
 		await submit.click();
 		await page.waitForFunction(() => window.calls.create === 3);
 		await page.evaluate(() => { window.root.unmount(); window.finish(); });
@@ -147,3 +148,40 @@ for (const signin of [false, true]) {
 		}
 	});
 }
+
+test("screen details and Back transitions preserve business fields and picked squads", async () => {
+	const browser = await chromium.launch({ headless: true });
+	try {
+		for (const kind of ["new", "existing"]) {
+			const page = await browser.newPage();
+			await page.setContent('<div id="root"></div>');
+			await page.addScriptTag({ content: result.outputFiles[0].text });
+			await page.getByRole("button", { name: kind === "new" ? /A new business/ : /An existing business/ }).click();
+			await page.getByLabel("Business name").fill("Harbor Coffee");
+			await page.getByLabel("Company mission").fill("Serve the neighborhood");
+			const details = page.getByRole("button", { name: "Choose my squads" });
+			const back = page.getByRole("button", { name: "Back", exact: true });
+			await details.click();
+			const support = page.getByRole("button", { name: /Replies in your voice/ });
+			assert.equal(await support.getAttribute("aria-pressed"), "true");
+			await support.click();
+			await page.getByRole("button", { name: "Create my workspace" }).click();
+			await page.getByLabel("Email").waitFor();
+			await back.click();
+			assert.equal(await page.getByLabel("Email").count(), 0);
+			assert.equal(await support.getAttribute("aria-pressed"), "false");
+			await back.click();
+			assert.equal(await page.getByLabel("Business name").inputValue(), "Harbor Coffee");
+			assert.equal(await page.getByLabel("Company mission").inputValue(), "Serve the neighborhood");
+			await details.click();
+			assert.equal(await support.getAttribute("aria-pressed"), "false");
+			await back.click();
+			await back.click();
+			await page.getByRole("heading", { name: "Where are you starting from?" }).waitFor();
+			assert.deepEqual(await page.evaluate(() => window.calls), { password: 0, finalize: 0, create: 0, navigate: 0 });
+			await page.close();
+		}
+	} finally {
+		await browser.close();
+	}
+});
