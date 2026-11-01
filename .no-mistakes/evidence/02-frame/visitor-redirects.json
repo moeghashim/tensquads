@@ -1,0 +1,38 @@
+[
+  {
+    "requested": "/overview",
+    "final": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  },
+  {
+    "requested": "/chat",
+    "final": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  },
+  {
+    "requested": "/agents",
+    "final": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  },
+  {
+    "requested": "/agents/support",
+    "final": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  },
+  {
+    "requested": "/traffic",
+    "final": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  },
+  {
+    "requested": "/rules",
+    "final": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  }
+]
