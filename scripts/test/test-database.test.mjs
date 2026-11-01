@@ -33,3 +33,35 @@ function restore(name, value) {
 	}
 	process.env[name] = value;
 }
+
+test("Dependabot prints one exact sentence for every missing secret", async (context) => {
+	const { secretsFor, test: playwrightTest } = await import("../../e2e/support.ts");
+	for (const name of [
+		"CLERK_PUBLISHABLE_KEY",
+		"VITE_CLERK_PUBLISHABLE_KEY",
+		"CLERK_SECRET_KEY",
+		"TEST_DATABASE_URL",
+	]) {
+		const saved = process.env[name];
+		delete process.env[name];
+		context.after(() => restore(name, saved));
+	}
+	for (const [name, value] of [
+		["GITHUB_ACTIONS", "true"],
+		["GITHUB_ACTOR", "dependabot[bot]"],
+	]) {
+		const saved = process.env[name];
+		process.env[name] = value;
+		context.after(() => restore(name, saved));
+	}
+	const lines = [];
+	context.mock.method(console, "log", (line) => lines.push(line));
+	const skip = context.mock.method(playwrightTest, "skip", () => {});
+	secretsFor(["publishable", "secret", "testDatabase"]);
+	assert.deepEqual(lines, [
+		"CLERK_PUBLISHABLE_KEY was skipped. A Dependabot pull request gets no secrets.",
+		"CLERK_SECRET_KEY was skipped. A Dependabot pull request gets no secrets.",
+		"TEST_DATABASE_URL was skipped. A Dependabot pull request gets no secrets.",
+	]);
+	assert.equal(skip.mock.callCount(), 1);
+});

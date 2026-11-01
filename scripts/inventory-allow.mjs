@@ -1,20 +1,13 @@
-// Strings and targets the task adds on top of the design inventories.
-// tasks/01-public-screens.md: the account step reuses the sign-in fields.
-// The squads control no longer navigates to Main, and the sign-in submit target is dynamic.
-
 export const inventoryAllow = {
 	Onboarding: {
-		texts: ["Email", "Password", "Enter your email and password to sign in.", "you@company.com", "Your password"],
-		handlers: ["onEmail", "onPassword"],
-		links: ["Main.dc.html"],
+		controls: [{ selector: 'a[href="Main.dc.html"]', removeHref: true, tag: "button" }],
+		account: `<div><div><label>Email</label><input data-handler="onEmail" /></div><div><label>Password</label><input data-handler="onPassword" /></div><div><button data-handler="back">Back</button><button>Create my workspace</button></div></div>`,
 	},
 	SignIn: {
-		texts: [],
-		handlers: [],
-		links: ["{{target}}"],
+		controls: [{ selector: '[data-handler="submit"]', removeHref: true, tag: "button" }],
 	},
 };
 
 export function allowFor(name) {
-	return inventoryAllow[name] ?? { texts: [], handlers: [], links: [] };
+	return inventoryAllow[name] ?? {};
 }

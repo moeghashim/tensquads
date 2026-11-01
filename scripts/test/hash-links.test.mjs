@@ -1,19 +1,30 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
+import { chromium } from "@playwright/test";
+import { bundle } from "./screen-bundle.mjs";
 
-const reason = "The design keeps this link as #.";
-
-test("design hash controls are anchors", () => {
-	const home = readFileSync(new URL("../../apps/web/src/screens/home/HomeRest.tsx", import.meta.url), "utf8");
-	const signin = readFileSync(new URL("../../apps/web/src/screens/signin/SignInPage.tsx", import.meta.url), "utf8");
-	for (const name of ["About", "Blog", "Careers", "Contact", "Terms", "Privacy", "Security"]) {
-		assert.match(home, new RegExp(`<a\\b[^>]*href="#"[^>]*>\\s*${name}\\s*</a>`));
+test("design hash controls render as real anchors", async () => {
+	const browser = await chromium.launch({ headless: true });
+	try {
+		for (const signin of [false, true]) {
+			const page = await browser.newPage();
+			await page.setContent('<div id="root"></div>');
+			await page.evaluate((value) => {
+				window.screenName = value ? "SignIn" : "Home";
+			}, signin);
+			await page.addScriptTag({ content: bundle.outputFiles[0].text });
+			const labels = signin
+				? ["Forgot password?", "Email me a sign-in link"]
+				: ["About", "Blog", "Careers", "Contact", "Terms", "Privacy", "Security"];
+			for (const name of labels) {
+				const anchor = page.getByRole("link", { name, exact: true });
+				await anchor.waitFor();
+				assert.equal(await anchor.getAttribute("href"), "#");
+			}
+			assert.equal(await page.locator('a[href="#"]').count(), labels.length);
+			await page.close();
+		}
+	} finally {
+		await browser.close();
 	}
-	assert.match(signin, /<a\b[^>]*href="#"[^>]*>\s*Forgot password\?\s*<\/a>/);
-	assert.match(signin, /<a\b[^>]*href="#"[^>]*>[\s\S]*?Email me a sign-in link\s*<\/a>/);
-	const anchors = `${home}\n${signin}`.match(/<a\b[^>]*href="#"/g) ?? [];
-	assert.equal(anchors.length, 9);
-	const ignores = `${home}\n${signin}`.match(new RegExp(reason.replace(/[.]/g, "\\."), "g")) ?? [];
-	assert.equal(ignores.length, 9);
 });

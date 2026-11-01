@@ -317,7 +317,9 @@ export function secretsFor(names: readonly ("publishable" | "secret" | "testData
 			}
 			return "TEST_DATABASE_URL";
 		});
-		console.log(`${labels.join(", ")} was skipped. A Dependabot pull request gets no secrets.`);
+		for (const label of labels) {
+			console.log(`${label} was skipped. A Dependabot pull request gets no secrets.`);
+		}
 		test.skip(true, "A Dependabot pull request gets no secrets.");
 		return secrets;
 	}
