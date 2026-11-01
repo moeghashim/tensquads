@@ -27,9 +27,3 @@ export interface RuleForm {
 	readonly action: string;
 	readonly approval: string;
 }
-
-export interface SendStart {
-	readonly kind: "ignored" | "answered" | "working" | "replied";
-	readonly messages?: readonly FrameMessage[];
-	readonly agentName?: string;
-}

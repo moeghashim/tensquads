@@ -16,6 +16,7 @@ const bundle = await esbuild.build({
 		contents: `
    import React from "react";
    import { createRoot } from "react-dom/client";
+   import { createRootRoute, createRoute, createRouter, createMemoryHistory, Outlet, RouterProvider } from "@tanstack/react-router";
    import { WorkspaceProvider } from "./apps/web/src/workspace/provider.tsx";
    import { Dock } from "./apps/web/src/workspace/dock.tsx";
    import { useWorkspace } from "./apps/web/src/workspace/context.ts";
@@ -24,8 +25,30 @@ const bundle = await esbuild.build({
     return <><Dock /><output id="pending">{String(value.pending)}</output>
      <output id="count">{value.approvalCount}</output></>;
    }
-   const root = createRoot(document.getElementById("root"));
-   window.renderFrame = (frame) => root.render(<WorkspaceProvider frame={frame}><Probe /></WorkspaceProvider>);
+   const rootRoute = createRootRoute({component: Outlet});
+   const workspaceRoute = createRoute({
+    getParentRoute: () => rootRoute, id: "_workspace",
+    loader: async () => {
+     if (window.holdLoader) await new Promise(resolve => { window.releaseLoader = resolve; });
+     if (window.nextLoaderFrame) {
+      const frame = window.nextLoaderFrame;
+      window.nextLoaderFrame = undefined;
+      return frame;
+     }
+     return window.readFrame();
+    },
+    component: () => <WorkspaceProvider frame={workspaceRoute.useLoaderData()}><Probe /></WorkspaceProvider>,
+   });
+   const overview = createRoute({getParentRoute: () => workspaceRoute, path: "/overview"});
+   const router = createRouter({routeTree: rootRoute.addChildren([workspaceRoute.addChildren([overview])]),
+    history: createMemoryHistory({initialEntries: ["/overview"]})});
+   const invalidate = router.invalidate.bind(router);
+   router.invalidate = (options) => {
+    if (window.rejectRefresh) { window.rejectRefresh = false; return Promise.reject(new Error("Read failed")); }
+    return invalidate(options);
+   };
+   window.router = router;
+   createRoot(document.getElementById("root")).render(<RouterProvider router={router} />);
   `,
 		resolveDir: process.cwd(),
 		loader: "tsx",
@@ -38,22 +61,12 @@ const bundle = await esbuild.build({
 		{
 			name: "workspace-boundaries",
 			setup(build) {
-				build.onResolve({ filter: /^(@tanstack\/react-router|#\/server\/workspace.ts)$/ }, ({ path }) => ({
+				build.onResolve({ filter: /^#\/server\/workspace.ts$/ }, ({ path }) => ({
 					path,
 					namespace: "boundary",
 				}));
-				build.onLoad({ filter: /.*/, namespace: "boundary" }, ({ path }) => ({
-					contents: path.startsWith("@tanstack")
-						? `
-     const router = { invalidate: async () => {
-      window.renderFrame(await window.readFrame());
-      await new Promise(requestAnimationFrame);
-     }};
-     export const useRouter = () => router;
-     export const useNavigate = () => async () => {};
-     export const useRouterState = ({select}) => select({location: {pathname: "/overview"}});
-    `
-						: `
+				build.onLoad({ filter: /.*/, namespace: "boundary" }, () => ({
+					contents: `
      export const beginWorkspaceSend = ({data}) => window.beginSend(data);
      export const finishWorkspaceSend = ({data}) => window.finishSend(data);
     `,
@@ -68,7 +81,7 @@ async function withDock(t, run) {
 	const { db, close } = await openPglite();
 	const browser = await chromium.launch({ headless: true });
 	const scope = { accountId: "dock-regression", mode: "account" };
-	const faults = { begin: false, finish: false, refresh: false };
+	const faults = { begin: false, finish: false };
 	try {
 		await replaceDemoAccount(db, scope.accountId, "clerk-dock-regression");
 		const page = await browser.newPage();
@@ -94,16 +107,11 @@ async function withDock(t, run) {
 			return result;
 		});
 		await page.exposeFunction("readFrame", async () => {
-			if (faults.refresh) {
-				faults.refresh = false;
-				throw new Error("Read failed");
-			}
 			return readWorkspaceFrame(db, scope);
 		});
 		const mount = async () => {
 			await page.setContent('<div id="root"></div>');
 			await page.addScriptTag({ content: bundle.outputFiles[0].text });
-			await page.evaluate((frame) => window.renderFrame(frame), await readWorkspaceFrame(db, scope));
 			await page.getByRole("button", { name: "Ask Master" }).click();
 		};
 		await mount();
@@ -161,7 +169,17 @@ test("a lost finish response recovers the saved reply and approval count", async
 		await page.clock.install();
 		faults.finish = true;
 		await send(page);
+		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
+		await page.evaluate(() => {
+			window.holdLoader = true;
+		});
 		await advanceReply(page);
+		await page.waitForFunction(() => window.releaseLoader);
+		await expect(page.locator("#pending")).toHaveText("true");
+		await page.evaluate(() => {
+			window.holdLoader = false;
+			window.releaseLoader();
+		});
 		await expect(page.locator("#pending")).toHaveText("false");
 		await expect(page.getByText(reply, { exact: true })).toBeVisible();
 		await expect(page.locator("#count")).toHaveText("1");
@@ -172,16 +190,75 @@ test("a failed recovery read releases the send guard and older loaders cannot re
 	await withDock(t, async ({ page, db, scope, faults }) => {
 		await page.clock.install();
 		faults.begin = true;
-		faults.refresh = true;
+		await page.evaluate(() => {
+			window.rejectRefresh = true;
+		});
 		await send(page);
 		await expect(page.locator("#pending")).toHaveText("false");
 		const older = await readWorkspaceFrame(db, scope);
 		await send(page);
 		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
-		await page.evaluate((frame) => window.renderFrame(frame), older);
+		await page.evaluate((frame) => {
+			window.nextLoaderFrame = frame;
+			return window.router.invalidate({ sync: true });
+		}, older);
 		await expect(page.locator("[data-loop='dockChat']").getByText(question, { exact: true })).toBeVisible();
 		await advanceReply(page);
 		await expect(page.getByText(reply, { exact: true })).toBeVisible();
 		await expect(page.locator("#pending")).toHaveText("false");
+	});
+});
+
+test("saved bubbles stay while invalidation completes before the loader frame is rendered", async (t) => {
+	await withDock(t, async ({ page }) => {
+		await page.clock.install();
+		await page.evaluate(() => {
+			window.holdLoader = true;
+			window.router.invalidate().then(() => {
+				window.invalidated = true;
+			});
+		});
+		await page.waitForFunction(() => window.invalidated && window.releaseLoader);
+		await page.evaluate(() => {
+			window.holdLoader = false;
+			window.releaseLoader();
+			window.releaseLoader = undefined;
+		});
+		await page.waitForFunction(() => !window.router.state.isLoading);
+		await send(page);
+		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
+		await page.evaluate(() => {
+			window.holdLoader = true;
+		});
+		await advanceReply(page);
+		await page.waitForFunction(() => window.releaseLoader);
+		await expect(page.getByText(reply, { exact: true })).toBeVisible();
+		await expect(page.locator("#pending")).toHaveText("true");
+		await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+		await expect(page.getByText(reply, { exact: true })).toBeVisible();
+		await page.evaluate(() => {
+			window.holdLoader = false;
+			window.releaseLoader();
+		});
+		await expect(page.locator("#pending")).toHaveText("false");
+		await expect(page.getByText(reply, { exact: true })).toBeVisible();
+	});
+});
+
+test("a failed refresh keeps returned messages and permits another send", async (t) => {
+	await withDock(t, async ({ page }) => {
+		await page.clock.install();
+		await send(page);
+		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
+		await page.evaluate(() => {
+			window.rejectRefresh = true;
+		});
+		await advanceReply(page);
+		await expect(page.locator("#pending")).toHaveText("false");
+		await expect(page.getByText(reply, { exact: true })).toBeVisible();
+		await send(page);
+		await advanceReply(page);
+		await expect(page.locator("#pending")).toHaveText("false");
+		await expect(page.getByText(reply, { exact: true })).toHaveCount(2);
 	});
 });

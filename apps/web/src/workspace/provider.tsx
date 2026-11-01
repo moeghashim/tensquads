@@ -38,10 +38,17 @@ export function WorkspaceProvider({
 	});
 	const sending = useRef(false);
 	const mounted = useRef(true);
-	const refresh = useCallback(() => router.invalidate(), [router]);
+	const refresh = useCallback(() => router.invalidate({ sync: true }), [router]);
+	const refreshFrame = useCallback(async (): Promise<WorkspaceFrameData> => {
+		await refresh();
+		const match = router.state.matches.find((item) => item.routeId === "/_workspace");
+		if (!match || match.status !== "success" || !match.loaderData)
+			throw new Error("The workspace frame did not load.");
+		return match.loaderData;
+	}, [refresh, router]);
 	useMountedFlag(mounted);
 	// A loader that arrives during a send must not replace the bubbles from that send.
-	const [seenFrame, setSeenFrame] = useState<WorkspaceFrameData | null>(frame);
+	const [seenFrame, setSeenFrame] = useState(frame);
 	if (frame !== seenFrame) {
 		setSeenFrame(frame);
 		if (!sending.current) {
@@ -68,12 +75,15 @@ export function WorkspaceProvider({
 				setThinking,
 				setThinkingAgent,
 				setPending,
-				refresh,
+				refreshFrame,
 				sending,
-				resetFrame: () => setSeenFrame(null),
+				applyFrame: (loaded: WorkspaceFrameData) => {
+					setMessages(loaded.messages);
+					setApprovalCount(loaded.approvalCount);
+				},
 			});
 		},
-		[draft, refresh, thinking],
+		[draft, refreshFrame, thinking],
 	);
 
 	const value = useMemo(
@@ -183,9 +193,9 @@ interface SendHooks {
 	readonly setThinking: (value: boolean) => void;
 	readonly setThinkingAgent: (value: string) => void;
 	readonly setPending: (value: boolean) => void;
-	readonly refresh: () => Promise<void>;
+	readonly refreshFrame: () => Promise<WorkspaceFrameData>;
 	readonly sending: { current: boolean };
-	readonly resetFrame: () => void;
+	readonly applyFrame: (frame: WorkspaceFrameData) => void;
 }
 
 async function sendDraft(value: string, hooks: SendHooks) {
@@ -213,13 +223,14 @@ async function sendDraft(value: string, hooks: SendHooks) {
 	} catch {
 		// Refresh below loads the thread the server kept. No local bubble remains.
 	} finally {
+		let refreshed: WorkspaceFrameData | undefined;
 		try {
-			if (hooks.mounted.current) await hooks.refresh();
+			if (hooks.mounted.current) refreshed = await hooks.refreshFrame();
 		} catch {
 		} finally {
 			hooks.sending.current = false;
 			if (hooks.mounted.current) {
-				hooks.resetFrame();
+				if (refreshed) hooks.applyFrame(refreshed);
 				hooks.setPending(false);
 				hooks.setThinking(false);
 				hooks.setThinkingAgent("");
