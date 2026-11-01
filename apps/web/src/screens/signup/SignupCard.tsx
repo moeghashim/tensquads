@@ -111,7 +111,7 @@ export function SignupCard({
 
 function ChooseStep({ state, onChange }: { state: SignupState; onChange: (state: SignupState) => void }) {
 	return (
-		<div style={css("display: flex; flex-direction: column; gap: 20px")}>
+		<div data-if="isChoose" style={css("display: flex; flex-direction: column; gap: 20px")}>
 			<div>
 				<h2 style={heading()}>Where are you starting from?</h2>
 				<p style={css("margin: 6px 0 0; color: #5d5d5d")}>
@@ -215,7 +215,7 @@ function DetailsStep({
 }) {
 	const isNew = kind === "new";
 	return (
-		<div style={css("display: flex; flex-direction: column; gap: 20px")}>
+		<div data-if="isDetails" style={css("display: flex; flex-direction: column; gap: 20px")}>
 			<DetailsHeading isNew={isNew} />
 			<div style={css("display: flex; flex-direction: column; gap: 6px")}>
 				<label htmlFor="biz-name" style={labelStyle()}>
@@ -251,7 +251,7 @@ function DetailsStep({
 				<span style={css("font-size: 12px; color: #5d5d5d")}>
 					One or two sentences. Every squad works toward this.
 				</span>
-				<div style={css("display: flex; flex-wrap: wrap; gap: 6px")}>
+				<div data-loop="missionExamples" data-loop-as="m" style={css("display: flex; flex-wrap: wrap; gap: 6px")}>
 					{missionExamples[kind].map((label) => (
 						<button
 							key={label}
@@ -286,7 +286,7 @@ function DetailsStep({
 
 function NewFields({ state, onChange }: { state: SignupState; onChange: (state: SignupState) => void }) {
 	return (
-		<>
+		<div data-if="isNew" style={css("display: contents")}>
 			<div style={css("display: flex; flex-direction: column; gap: 6px")}>
 				<label htmlFor="biz-idea" style={labelStyle()}>
 					What will you sell, and to whom?
@@ -306,7 +306,7 @@ function NewFields({ state, onChange }: { state: SignupState; onChange: (state: 
 			</div>
 			<div style={css("display: flex; flex-direction: column; gap: 8px")}>
 				<span style={labelStyle()}>Where do you plan to sell?</span>
-				<div style={css("display: flex; flex-wrap: wrap; gap: 8px")}>
+				<div data-loop="channels" data-loop-as="c" style={css("display: flex; flex-wrap: wrap; gap: 8px")}>
 					{channelLabels.map((label) => {
 						const on = state.channels.includes(label);
 						return (
@@ -325,16 +325,20 @@ function NewFields({ state, onChange }: { state: SignupState; onChange: (state: 
 					})}
 				</div>
 			</div>
-		</>
+		</div>
 	);
 }
 
 function ExistingFields({ state, onChange }: { state: SignupState; onChange: (state: SignupState) => void }) {
 	return (
-		<>
+		<div data-if="isExisting" style={css("display: contents")}>
 			<div style={css("display: flex; flex-direction: column; gap: 8px")}>
 				<span style={labelStyle()}>Where do you sell today?</span>
-				<div style={css("display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px")}>
+				<div
+					data-loop="platforms"
+					data-loop-as="p"
+					style={css("display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px")}
+				>
 					{platformLabels.map((platform) => {
 						const on = state.platforms.includes(platform.label);
 						return (
@@ -377,7 +381,7 @@ function ExistingFields({ state, onChange }: { state: SignupState; onChange: (st
 			</div>
 			<div style={css("display: flex; flex-direction: column; gap: 8px")}>
 				<span style={labelStyle()}>Roughly how many orders a month?</span>
-				<div style={css("display: flex; flex-wrap: wrap; gap: 8px")}>
+				<div data-loop="volumes" data-loop-as="v" style={css("display: flex; flex-wrap: wrap; gap: 8px")}>
 					{volumeLabels.map((label) => {
 						const on = state.volume === label;
 						return (
@@ -396,7 +400,7 @@ function ExistingFields({ state, onChange }: { state: SignupState; onChange: (st
 					})}
 				</div>
 			</div>
-		</>
+		</div>
 	);
 }
 
@@ -411,7 +415,7 @@ function SquadStep({
 }) {
 	const name = state.name.trim() || "your business";
 	return (
-		<div style={css("display: flex; flex-direction: column; gap: 20px")}>
+		<div data-if="isAgents" style={css("display: flex; flex-direction: column; gap: 20px")}>
 			<div>
 				<h2 style={heading()}>Your first squads for {name}</h2>
 				<p style={css("margin: 6px 0 0; color: #5d5d5d")}>
@@ -420,7 +424,7 @@ function SquadStep({
 						: "We picked the squads that take over day-to-day work. Untick any you do not want yet."}
 				</p>
 			</div>
-			<div style={css("display: flex; flex-direction: column; gap: 8px")}>
+			<div data-loop="agents" data-loop-as="a" style={css("display: flex; flex-direction: column; gap: 8px")}>
 				{squadChoices.map((squad) => {
 					const on = state.picked.includes(squad.id);
 					return (
@@ -500,6 +504,8 @@ function SquadStep({
 function StepRow({ current }: { current: number }) {
 	return (
 		<ol
+			data-loop="steps"
+			data-loop-as="st"
 			style={css(
 				"margin: 0; padding: 0; list-style: none; display: flex; gap: 8px; align-items: center; font-size: 12px; font-weight: 500",
 			)}
@@ -522,7 +528,10 @@ function StepLabel({ label, index, current }: { label: string; index: number; cu
 				{label}
 			</span>
 			{index < 2 ? (
-				<span style={css("width: 24px; height: 1px; background: rgba(13,13,13,.15); margin: 0 4px")} />
+				<span
+					data-if={index === 0 ? "st.hasLine" : undefined}
+					style={css("width: 24px; height: 1px; background: rgba(13,13,13,.15); margin: 0 4px")}
+				/>
 			) : null}
 		</li>
 	);

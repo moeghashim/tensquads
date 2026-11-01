@@ -65,7 +65,7 @@ The model does not cover a second approval, a second proposal, the bus, the targ
 
 # Sign up
 
-Sign-up starts at Business type. A new business pre-selects Marketing, Orders and Support. An existing business pre-selects Orders, Support, Finance and Inventory. Choose my squads always opens the squad list. Create my workspace opens the account form only when at least one squad is picked. Back goes one step and keeps the picked squads. Submit makes one account. The chart hides Stay. Stay changes nothing. It exists so Created is not a deadlock.
+Sign-up starts at Business type. A new business pre-selects Marketing, Orders and Support. An existing business pre-selects Orders, Support, Finance and Inventory. Choose my squads always opens the squad list. Create my workspace opens the account form only when at least one squad is picked. Back goes one step and keeps the picked squads. Submit starts the request. The account is stored before overview opens. A failed response or a failed navigation leaves the form in place. Trying again uses the stored account and does not create a second one. The chart hides Stay. Stay changes nothing. It exists so Created is not a deadlock.
 
 The model does not pick squads one by one. It turns the whole preset off, then back on. The screen can untick one squad. Zero picked still blocks the account form in both.
 
@@ -104,7 +104,7 @@ TLC does not read `machine.ts`. A pass of the model does not prove the TypeScrip
 
 ## What a failure means
 
-A model failure is a path of A new business, An existing business, Back, Choose my squads, Create my workspace, Untick the last squad, or Tick the squads again. Replay that path in `pickKind`, `openAccount`, and `togglePicked`, and through the Details and Back controls in `SignupCard` and `AccountStep`. Replay Submit through `SignupPage` to `/overview`. If the code can do the path, the code is wrong. If the code cannot do a step, the model is wrong. Say which.
+A model failure is a path of A new business, An existing business, Back, Choose my squads, Create my workspace, Try again, The request fails, Overview does not open, Untick the last squad, or Tick the squads again. Replay that path in `pickKind`, `openAccount`, and `togglePicked`, and through the Details and Back controls in `SignupCard` and `AccountStep`. Replay Submit, the stored account, a failed response, and a failed navigation through `SignupPage` to `/overview`. A retry must not insert a second account. If the code can do the path, the code is wrong. If the code cannot do a step, the model is wrong. Say which.
 
 ## Keep the check in step
 
@@ -112,8 +112,8 @@ A model failure is a path of A new business, An existing business, Back, Choose 
 | --- | --- | --- |
 | `machine.test.ts` | `initialSignup`, `pickKind`, `togglePicked`, `openAccount`, `summaryLine` | Pending verification |
 | `signup-submission.test.mjs` | Details to Squads, Back from Account, Squads and Details, field and squad retention, creation to `/overview` | Pending verification |
-| `/statechart` on `Signup.tla` | Type, Details, Squad, Account, Created, and the zero-squad block | `3fdf3bad66a0dca75a58eea10c23a995ce85b1ec` |
+| `/statechart` on `Signup.tla` | Type, Details, Squad, Account, the create request, a stored account, and a failed navigation | Pending verification |
 
-The previous checks passed on `3fdf3bad66a0dca75a58eea10c23a995ce85b1ec`, the commit that adds this model. `machine.test.ts` exited 0. TLC exited 0, reached 17 states and 34 steps, and named no broken rule.
+TLC exited 0, reached 41 states and 84 steps, and named no broken rule. The chart draws 10 states and 20 arrows. It hides Stay. Move the sync commit to this change only after `machine.test.ts` and `signup-submission.test.mjs` also exit 0.
 
 Move a sync commit forward only after both checks pass and you confirm that the model and the tests still describe the code at the new commit. An intended change updates `machine.ts`, `machine.test.ts`, and `Signup.tla` together.

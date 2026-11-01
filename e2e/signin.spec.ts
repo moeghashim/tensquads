@@ -37,10 +37,14 @@ test("a rejected sign-in shows the wrong-password text", async ({ page }) => {
 
 test("forgot password and the email link do nothing", async ({ page }) => {
 	await page.goto("/signin");
-	await page.getByRole("button", { name: "Forgot password?" }).click();
-	await expect(page).toHaveURL(/\/signin$/);
-	await page.getByRole("button", { name: "Email me a sign-in link" }).click();
-	await expect(page).toHaveURL(/\/signin$/);
+	const forgot = page.getByRole("link", { name: "Forgot password?" });
+	await expect(forgot).toHaveAttribute("href", "#");
+	await forgot.click();
+	await expect(page).toHaveURL(/\/signin#?$/);
+	const email = page.getByRole("link", { name: "Email me a sign-in link" });
+	await expect(email).toHaveAttribute("href", "#");
+	await email.click();
+	await expect(page).toHaveURL(/\/signin#?$/);
 	await expect(page.getByRole("heading", { name: "Sign in to tensquads" })).toBeVisible();
 });
 

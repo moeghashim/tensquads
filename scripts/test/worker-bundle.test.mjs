@@ -126,7 +126,7 @@ function externalNodePlugin() {
 			build.onResolve(
 				{
 					filter:
-						/^(node:|cloudflare:|fs$|path$|os$|crypto$|stream$|util$|buffer$|events$|net$|tls$|http$|https$|zlib$|child_process$|url$|assert$)/,
+						/^(node:|cloudflare:|fs$|fs\/promises$|path$|os$|crypto$|stream$|util$|buffer$|events$|net$|tls$|http$|https$|zlib$|child_process$|url$|assert$)/,
 				},
 				(args) => ({
 					path: args.path,
@@ -162,21 +162,34 @@ async function bundleWithMeta(entryPoints) {
 function executeBundle(outfile) {
 	const source = readFileSync(outfile, "utf8");
 	const script = `
-		import fs from "node:fs";
-		import { syncBuiltinESMExports } from "node:module";
+		import { createRequire, syncBuiltinESMExports } from "node:module";
+		const require = createRequire(process.cwd() + "/worker-guard.mjs");
 		const reads = [];
-		for (const name of ["readFileSync", "readFile", "existsSync", "createReadStream"]) {
-			fs[name] = (path) => {
-				reads.push({ name, path: String(path) });
-				throw new Error("Import-time filesystem read");
-			};
+		const seen = new WeakSet();
+		function wrapObject(target) {
+			if (target === null || (typeof target !== "object" && typeof target !== "function") || seen.has(target)) return;
+			seen.add(target);
+			for (const name of Object.getOwnPropertyNames(target)) {
+				const descriptor = Object.getOwnPropertyDescriptor(target, name);
+				if (!descriptor) continue;
+				if (name === "promises") {
+					try { wrapObject(target.promises); } catch {}
+					continue;
+				}
+				if (descriptor.get || descriptor.set || typeof descriptor.value !== "function") continue;
+				const wrapped = function (...args) {
+					reads.push({ name, path: args.length === 0 ? "" : String(args[0]) });
+					throw new Error("Import-time filesystem read");
+				};
+				try { target[name] = wrapped; } catch {}
+			}
 		}
-		fs.promises.readFile = fs.readFile;
+		for (const specifier of ["fs", "node:fs", "fs/promises", "node:fs/promises"]) wrapObject(require(specifier));
 		syncBuiltinESMExports();
 		globalThis.fetch = () => { throw new Error("Network is disabled"); };
 		let error = null;
 		try { await import(${JSON.stringify(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`)}); }
-		catch (cause) { error = cause.message; }
+		catch (cause) { error = cause instanceof Error ? cause.message : String(cause); }
 		process.stdout.write(JSON.stringify({ reads, error }));
 	`;
 	return JSON.parse(execFileSync(process.execPath, ["--input-type=module"], { input: script, encoding: "utf8" }));
@@ -298,6 +311,37 @@ test("bundle execution catches reads inside invoked functions and CommonJS wrapp
 		}
 	} finally {
 		rmSync(directory, { recursive: true, force: true });
+	}
+});
+
+test("every filesystem function records an import-time call", async () => {
+	const calls = [
+		['import { openSync } from "node:fs";\nopenSync("secret.txt", "r");\n', "openSync", "secret.txt"],
+		['import { readSync } from "node:fs";\nreadSync(3, Buffer.alloc(0));\n', "readSync", "3"],
+		['import { fdatasyncSync } from "node:fs";\nfdatasyncSync(3);\n', "fdatasyncSync", "3"],
+		['import { chmod } from "node:fs/promises";\nchmod("secret.txt", 0o600);\n', "chmod", "secret.txt"],
+	];
+	for (const [source, name, path] of calls) {
+		const directory = mkdtempSync(join(tmpdir(), "tensquads-any-fs-"));
+		const packageDir = join(directory, "node_modules", "reads-at-import");
+		mkdirSync(packageDir, { recursive: true });
+		writeFileSync(
+			join(packageDir, "package.json"),
+			JSON.stringify({ name: "reads-at-import", type: "module", main: "index.js" }),
+		);
+		writeFileSync(join(packageDir, "index.js"), `${source}export const value = 1;\n`);
+		const fixture = join(directory, "entry.js");
+		writeFileSync(fixture, 'import "reads-at-import";\nexport const ok = 1;\n');
+		const bundled = await bundleWithMeta([fixture]);
+		try {
+			assert.deepEqual(thirdPartyImportReads(bundled.metafile), []);
+			const execution = executeBundle(bundled.outfile);
+			assert.deepEqual(execution.reads, [{ name, path }]);
+			assert.equal(execution.error, "Import-time filesystem read");
+		} finally {
+			rmSync(bundled.directory, { recursive: true, force: true });
+			rmSync(directory, { recursive: true, force: true });
+		}
 	}
 });
 

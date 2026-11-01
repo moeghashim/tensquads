@@ -9,6 +9,9 @@ import { fieldsComplete } from "../signup/machine.ts";
 const inputStyle = css(
 	"height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; border-radius: 10px; background: rgba(13,13,13,.06); font-family: inherit; font-size: 14px; color: #0d0d0d",
 );
+const emailLinkStyle = css(
+	"height: 40px; border-radius: 999px; background: rgba(13,13,13,.08); color: #282828; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 8px",
+);
 
 const emptyError = "Enter your email and password to sign in.";
 const wrongError = "That email or password is wrong.";
@@ -131,9 +134,10 @@ function SignInScreen({
 							<label htmlFor="password" style={css("font-size: 13px; font-weight: 500; color: #0d0d0d")}>
 								Password
 							</label>
-							<button type="button" className="text-link">
+							{/* biome-ignore lint/a11y/useValidAnchor: The design keeps this link as #. */}
+							<a href="#" className="text-link">
 								Forgot password?
-							</button>
+							</a>
 						</div>
 						<input
 							id="password"
@@ -151,6 +155,7 @@ function SignInScreen({
 					</div>
 					{message.length > 0 ? (
 						<div
+							data-if="showError"
 							role="alert"
 							style={css(
 								"padding: 10px 12px; border-radius: 10px; background: #fa423e14; color: #911e1b; font-size: 13px",
@@ -199,13 +204,8 @@ function SignInScreen({
 						or
 						<span style={css("flex: 1; height: 1px; background: rgba(13,13,13,.08)")} />
 					</div>
-					<button
-						type="button"
-						className="btn-soft"
-						style={css(
-							"height: 40px; border-radius: 999px; background: rgba(13,13,13,.08); color: #282828; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 8px",
-						)}
-					>
+					{/* biome-ignore lint/a11y/useValidAnchor: The design keeps this link as #. */}
+					<a href="#" className="btn-soft" style={emailLinkStyle}>
 						<svg
 							width="16"
 							height="16"
@@ -221,7 +221,7 @@ function SignInScreen({
 							<path d="M2.5 5l5.5 4 5.5-4" />
 						</svg>
 						Email me a sign-in link
-					</button>
+					</a>
 					<p
 						data-design-contrast="signin-terms"
 						style={css("margin: 0; font-size: 12px; color: #8f8f8f; text-align: center")}

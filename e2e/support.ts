@@ -32,8 +32,12 @@ export const viewports = [
 export function readInventory(name: string) {
 	const file = new URL(`../design/inventory/${name}.json`, import.meta.url);
 	return JSON.parse(readFileSync(file, "utf8")) as {
+		file: string;
 		texts: string[];
-		handlers: { handler: string }[];
+		strings: Record<string, number>;
+		handlers: { tag: string; event: string; handler: string }[];
+		loops: { kind: string; list?: string; as?: string; value?: string }[];
+		links: string[];
 	};
 }
 

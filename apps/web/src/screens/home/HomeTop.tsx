@@ -100,7 +100,7 @@ export function HomeTop({
 						"width: 100%; max-width: 760px; background: #fff; border-radius: 20px; box-shadow: 0 0 0 1px rgba(13,13,13,.1), 0 16px 48px rgba(13,13,13,.08); padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; text-align: left",
 					)}
 				>
-					<div style={css("display: flex; gap: 8px; flex-wrap: wrap")}>
+					<div data-loop="kinds" data-loop-as="k" style={css("display: flex; gap: 8px; flex-wrap: wrap")}>
 						{(
 							[
 								["new", "New business"],
@@ -141,7 +141,7 @@ export function HomeTop({
 							"display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid rgba(13,13,13,.06); padding-top: 12px",
 						)}
 					>
-						<div style={css("display: flex; gap: 6px; flex-wrap: wrap")}>
+						<div data-loop="examples" data-loop-as="ex" style={css("display: flex; gap: 6px; flex-wrap: wrap")}>
 							{examples.map((label) => (
 								<button
 									key={label}
@@ -178,7 +178,11 @@ export function HomeTop({
 				>
 					Running the day-to-day at
 				</span>
-				<div style={css("display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; align-items: center")}>
+				<div
+					data-loop="logos"
+					data-loop-as="l"
+					style={css("display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; align-items: center")}
+				>
 					{logos.map((name) => (
 						<span
 							key={name}
@@ -270,6 +274,8 @@ export function HomeTop({
 								</span>
 							</div>
 							<div
+								data-loop="previewKpis"
+								data-loop-as="k"
 								style={css(
 									"display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px",
 								)}
@@ -294,6 +300,8 @@ export function HomeTop({
 								))}
 							</div>
 							<div
+								data-loop="agents"
+								data-loop-as="a"
 								style={css(
 									"display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px",
 								)}

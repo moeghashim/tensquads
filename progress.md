@@ -517,3 +517,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-10-31 00-foundation: The empty app, seed, tokens, and Approval model landed before any screen. A spend approve adds one task, a mission approve adds none, and TLC reported no broken rule.
 - 2026-11-01 01-public-screens: The homepage, sign-up, and sign-in match the design. A new user makes one account, a correct sign-in opens the overview, and TLC reported no broken rule.
 - 2026-11-01 01-public-screens: The six screenshot checks run on macOS only. Ubuntu skips those six, and every other test still runs on both systems.
+- 2026-11-01 01-public-screens: The worker guard records every filesystem call, tests do not use the Neon connection, design hash links stay anchors, and the sign-up model separates the create request from a failed navigation.

@@ -7,7 +7,11 @@ stateDiagram-v2
   s2: Squad
   s3: Account
   s4: Squad, none picked
-  s5: Created
+  s5: Creating the account
+  s6: The request failed
+  s7: Account created
+  s8: Account created, still on the form
+  s9: Created
   [*] --> s0
   s0 --> s1: A new business or An existing business
   s1 --> s2: Choose my squads
@@ -16,7 +20,16 @@ stateDiagram-v2
   s2 --> s3: Create my workspace
   s2 --> s4: Untick the last squad
   s3 --> s2: Back
-  s3 --> s5: Create my workspace
+  s3 --> s5: Create my workspace or Try again
   s4 --> s2: Tick the squads again
   s4 --> s1: Back
   s1 --> s4: Choose my squads
+  s5 --> s6: The request fails
+  s5 --> s7: The account is created or The account is already there
+  s6 --> s2: Back
+  s6 --> s5: Try again
+  s7 --> s8: Overview does not open
+  s7 --> s9: Overview opens
+  s8 --> s2: Back
+  s8 --> s5: Try again
+  s5 --> s8: The request fails

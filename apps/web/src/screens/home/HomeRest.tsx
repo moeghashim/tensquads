@@ -17,9 +17,11 @@ export function HomeRest() {
 						the rest when you are ready.
 					</SectionHeading>
 					<div
+						data-loop="agents"
+						data-loop-as="a"
 						style={css("display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px")}
 					>
-						{homeAgents.map((agent) => (
+						{homeAgents.map((agent, index) => (
 							<div
 								key={agent.name}
 								className="card"
@@ -53,7 +55,11 @@ export function HomeRest() {
 								<p style={css("margin: 0; font-size: 14px; line-height: 21px; color: #414141")}>
 									{agent.pitch}
 								</p>
-								<div style={css("display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto")}>
+								<div
+									data-loop={index === 0 ? "a.tools" : undefined}
+									data-loop-as={index === 0 ? "t" : undefined}
+									style={css("display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto")}
+								>
 									{agent.tools.map((tool) => (
 										<span
 											key={tool}
@@ -98,6 +104,8 @@ export function HomeRest() {
 						</h2>
 					</div>
 					<ol
+						data-loop="steps"
+						data-loop-as="st"
 						style={css(
 							"margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px",
 						)}
@@ -136,6 +144,8 @@ export function HomeRest() {
 							Agents work inside limits you set. Anything bigger, they ask.
 						</h2>
 						<ul
+							data-loop="controls"
+							data-loop-as="c"
 							style={css(
 								"margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px",
 							)}
@@ -261,16 +271,19 @@ export function HomeRest() {
 						can run and how much they can do without asking.
 					</SectionHeading>
 					<div
+						data-loop="plans"
+						data-loop-as="p"
 						style={css(
 							"width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; text-align: left",
 						)}
 					>
-						{plans.map((plan) => (
+						{plans.map((plan, index) => (
 							<div key={plan.name} style={css(planStyle(plan.dark))}>
 								<div style={css("display: flex; justify-content: space-between; align-items: center")}>
 									<span style={css("font-size: 17px; font-weight: 600")}>{plan.name}</span>
 									{plan.popular ? (
 										<span
+											data-if="p.popular"
 											style={css(
 												"height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(255,255,255,.14); font-size: 12px; font-weight: 500; display: inline-flex; align-items: center",
 											)}
@@ -291,6 +304,8 @@ export function HomeRest() {
 								</div>
 								<p style={css("margin: 0; font-size: 14px; line-height: 21px; opacity: .75")}>{plan.who}</p>
 								<ul
+									data-loop={index === 0 ? "p.features" : undefined}
+									data-loop-as={index === 0 ? "f" : undefined}
 									style={css(
 										"margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 14px",
 									)}
@@ -395,16 +410,23 @@ export function HomeRest() {
 						</div>
 						<div style={css("display: flex; flex-direction: column; gap: 8px")}>
 							<span style={css("font-size: 12px; font-weight: 600; color: #0d0d0d")}>Company</span>
-							<button type="button">About</button>
-							<button type="button">Blog</button>
-							<button type="button">Careers</button>
-							<button type="button">Contact</button>
+							{/* biome-ignore lint/a11y/useValidAnchor: The design keeps this link as #. */}
+							<a href="#">About</a>
+							{/* biome-ignore lint/a11y/useValidAnchor: The design keeps this link as #. */}
+							<a href="#">Blog</a>
+							{/* biome-ignore lint/a11y/useValidAnchor: The design keeps this link as #. */}
+							<a href="#">Careers</a>
+							{/* biome-ignore lint/a11y/useValidAnchor: The design keeps this link as #. */}
+							<a href="#">Contact</a>
 						</div>
 						<div style={css("display: flex; flex-direction: column; gap: 8px")}>
 							<span style={css("font-size: 12px; font-weight: 600; color: #0d0d0d")}>Legal</span>
-							<button type="button">Terms</button>
-							<button type="button">Privacy</button>
-							<button type="button">Security</button>
+							{/* biome-ignore lint/a11y/useValidAnchor: The design keeps this link as #. */}
+							<a href="#">Terms</a>
+							{/* biome-ignore lint/a11y/useValidAnchor: The design keeps this link as #. */}
+							<a href="#">Privacy</a>
+							{/* biome-ignore lint/a11y/useValidAnchor: The design keeps this link as #. */}
+							<a href="#">Security</a>
 						</div>
 					</div>
 				</div>

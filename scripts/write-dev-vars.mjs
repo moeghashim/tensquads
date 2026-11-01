@@ -68,11 +68,7 @@ export function localSecrets() {
 		publishable: first(process.env.CLERK_PUBLISHABLE_KEY, process.env.VITE_CLERK_PUBLISHABLE_KEY, clerk.publishable),
 		secret: first(process.env.CLERK_SECRET_KEY, clerk.secret),
 		neon: first(process.env.NEON_POSTGRES_CONNECTION_STRING, file.get("NEON_POSTGRES_CONNECTION_STRING")),
-		testDatabase: first(
-			process.env.TEST_DATABASE_URL,
-			process.env.NEON_POSTGRES_CONNECTION_STRING,
-			file.get("NEON_POSTGRES_CONNECTION_STRING"),
-		),
+		testDatabase: first(process.env.TEST_DATABASE_URL, file.get("TEST_DATABASE_URL")),
 		cloudflareToken: first(process.env.CLOUDFLARE_API_TOKEN, file.get("CLOUDFLARE_WORKERS_API_TOKEN")),
 		cloudflareAccount: first(process.env.CLOUDFLARE_ACCOUNT_ID, file.get("CLOUDFLARE_WORKERS_ACCOUNT_ID")),
 	};
