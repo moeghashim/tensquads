@@ -529,3 +529,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-01 01-public-screens: Sort the Postgres migration test imports.
 - 2026-11-01 01-public-screens: Split the worker allow-list test so its complexity stays under the Fallow gate.
 - 2026-11-01 01-public-screens: The workerd package fixture uses the default module import. Each fixture succeeds in Node before its workerd failure is accepted.
+- 2026-11-01 01-public-screens: The evidence commit adds the six screen pairs and the CI make verify logs. No app file, test, or check changed.

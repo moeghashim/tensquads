@@ -1,0 +1,526 @@
+Required checks (ubuntu-latest), step Verify.
+Command: make verify
+Head: 2b160c433df19989607a5d41dbb635946943a4d6
+Run: https://github.com/moeghashim/tensquads/actions/runs/41345507910
+This evidence commit changes no app file, no test, and no check.
+The local shell has no TEST_DATABASE_URL, so a local run cannot execute the two session tests.
+CI supplies CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY, and TEST_DATABASE_URL and runs this command.
+
+npm run check
+
+> check
+> npm run preflight:native-deps && biome check --error-on-warnings . && node scripts/check-file-length.mjs && node scripts/typecheck.mjs && node scripts/run-workspaces.mjs check
+
+
+> preflight:native-deps
+> node scripts/preflight-native-deps.mjs
+
+Checked 125 files in 160ms. No fixes applied.
+File length check passed (max 600 lines).
+
+> check
+> tsc --noEmit
+
+
+> check
+> tsc --noEmit
+
+
+> check
+> tsc --noEmit
+
+
+> check
+> tsc --noEmit
+
+
+> check
+> tsc --noEmit
+
+npm test
+
+> test
+> node --test scripts/test/*.test.mjs && node scripts/run-workspaces.mjs test
+
+✔ dco:fix signs existing commits on an up-to-date branch without changing files (92.681609ms)
+✔ gate commands reach npm with the .nvmrc Node on PATH and no nvm (7.347165ms)
+✔ no-mistakes makes no commits and does not declare a sign-off trailer (0.455205ms)
+✔ the mise cache is saved by actions/cache and keyed by the lock hash (0.512011ms)
+✔ stable Required checks job fails closed for failed, skipped or cancelled dependencies (1944.125527ms)
+✔ design hash controls render as real anchors (1434.208191ms)
+✔ each design icon is a 16 px stroke at 1.5 (7.836682ms)
+✔ built screen inventories match each rendered design state and reject occurrence faults (3523.838028ms)
+✔ duplicates, control associations, and handler events remain significant (1.870679ms)
+✔ built targets retain their literal URL instead of accepting design filenames (0.276059ms)
+✔ swapping onEmail and onPassword is a handler difference (1.021822ms)
+✔ swapping onMission and onIdea is a handler difference for textarea ids (0.492306ms)
+✔ swapping onMission and onIdea is a handler difference for textarea labels (0.357843ms)
+✔ signup test calls the Postgres migrator and closes it before browser work (3.800388ms)
+✔ signup test closes the Postgres migrator when migration fails (1.061076ms)
+✔ TLC separates submission, creation, navigation failure, and an idempotent retry (3719.870524ms)
+✔ finalized signup locks credentials and owns pending requests across steps (1382.740114ms)
+✔ sign-up reports finalize errors and can retry (1207.035831ms)
+✔ sign-in reports finalize errors and can retry (569.75339ms)
+✔ screen details and Back transitions preserve business fields and picked squads (1819.14467ms)
+✔ push checks packages/statecharts/example/Example.tla even when origin/main equals HEAD (162.566453ms)
+✔ push checks policy.ts even when origin/main equals HEAD (253.902976ms)
+✔ push skips model checks for unrelated committed changes (135.355728ms)
+✔ push checks models when comparison cannot be read: missing (173.497825ms)
+✔ push checks models when comparison cannot be read: malformed (111.238469ms)
+✔ push checks models when comparison cannot be read: ffffffffffffffffffffffffffffffffffffffff (143.601818ms)
+✔ origin/main comparison remains active for {"event":"0000000000000000000000000000000000000000"} (184.605549ms)
+✔ origin/main comparison remains active for {"event":"invalid"} (118.837037ms)
+✔ origin/main comparison remains active for {"event":"absent"} (108.816984ms)
+✔ origin/main comparison remains active for {"eventName":"pull_request"} (140.268824ms)
+✔ TEST_DATABASE_URL does not fall back to the Neon connection (682.978504ms)
+✔ Dependabot prints one exact sentence for every missing secret (3.845315ms)
+✔ the committed tokens match the light theme and the inline overrides (47.973997ms)
+✔ required colours appear as tokens or shadow values (0.703851ms)
+✔ the worker bundle has no filesystem read and no PGlite (39.15643ms)
+(node:4581) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4588) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ a third-party import-time file read fails the worker guard (3410.549034ms)
+(node:4595) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4602) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ bundle execution catches reads inside invoked functions and CommonJS wrappers (75.024244ms)
+(node:4609) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4616) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4623) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4630) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4637) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4644) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4651) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4658) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4665) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4672) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4679) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4686) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4693) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4700) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4707) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4714) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4721) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4728) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4735) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4742) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4749) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4756) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4763) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4770) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4777) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4784) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4791) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4799) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4806) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ every filesystem function records an import-time call (1125.129144ms)
+(node:4813) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4820) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4827) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4834) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4841) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ process bindings that reach fs fail the worker guard (193.12113ms)
+(node:4849) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4856) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4863) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4870) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4877) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4884) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4891) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4898) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4905) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4912) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4919) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4926) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4933) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4940) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4947) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4954) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4961) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4968) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4975) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4982) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4989) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:4996) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5003) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5010) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5017) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5024) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5031) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5038) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5045) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5052) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5059) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ a third-party import may reach only built-ins the real bundle needs (1188.560958ms)
+(node:5066) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5073) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5080) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5087) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5094) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5101) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5108) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5115) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5122) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5129) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5136) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5143) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5150) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5157) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5164) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5171) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5178) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5185) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5192) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5199) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5206) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ caught forbidden built-in reaches still fail the worker guard (810.553194ms)
+(node:5213) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5220) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5227) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5234) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5241) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ caught filesystem calls retain their read evidence (189.755158ms)
+service core:user:tensquads: Uncaught Error: no such file or directory, readAll '/home/runner/work/tensquads/tensquads/package.json'
+  at node-internal:internal_fs_sync:369:21
+  at node-internal:internal_fs_sync:370:7 in readFileSync
+  at index.js:3:12
+service core:user:tensquads: Uncaught Error: The process.binding method is not implemented
+  at node-internal:public_process:193:11 in binding
+  at index.js:2:23
+service core:user:tensquads: Uncaught TypeError: module._readPackage is not a function
+  at index.js:3:18
+service core:user:tensquads: Uncaught Error: The child_process.execFileSync method is not implemented
+  at node:child_process:58:11 in execFileSync
+  at index.js:3:12
+✔ workerd boots the built worker and rejects import-time builtin routes (1197.210222ms)
+ℹ tests 43
+ℹ suites 0
+ℹ pass 43
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14718.975249
+
+> test
+> node --experimental-strip-types --test src/screens/signup/machine.test.ts
+
+▶ sign-up machine
+  ✔ starts at business type with no squads (1.817744ms)
+  ✔ pre-selects the design squads for each type (0.411793ms)
+  ✔ blocks the account form when no squad is picked (0.342614ms)
+  ✔ opens the account form with the picked squads (0.249108ms)
+✔ sign-up machine (4.555036ms)
+ℹ tests 4
+ℹ suites 1
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 132.918573
+
+> test
+> node --experimental-strip-types --test test/*.test.ts
+
+✔ trace is a hash of the event id (1.79417ms)
+✔ an off machine reports CPU 0% and uptime Paused (0.313208ms)
+✔ an on machine reports Just started when its stored uptime is Paused (0.904349ms)
+✔ the memory bus appends the next event and applies its set (0.381737ms)
+✔ the memory bus hashes each event id by default and preserves custom traces (0.53894ms)
+✔ every store value round-trips as its own type (2988.717691ms)
+✔ placeholder write returns the design value and does not change the store (0.83008ms)
+✔ tenant tables have account_id and catalog tables do not (1509.091262ms)
+✔ repositories reject a missing scope and isolate accounts (1544.626067ms)
+✔ a failed workspace replacement preserves every existing table (1598.88678ms)
+✔ one create makes one account and a repeat does not make a second (2976.753413ms)
+✔ the bundled migration text matches migration.sql (1.322093ms)
+✔ overlapping Postgres migrations serialize all statements in transactions (13.775093ms)
+✔ a failed Postgres migration rolls back and releases its client (1.4485ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8663.288707
+
+> test
+> node --experimental-strip-types --test test/*.test.ts
+
+✔ approve adds one task and sets last (1.582994ms)
+✔ decline changes no agent (0.221296ms)
+✔ approving a mission adds no task (1.27232ms)
+✔ ask to revise adds one Revising proposal when that agent has none (0.47882ms)
+✔ declining a mission sets Revising (2.129781ms)
+✔ the count is pending approvals plus Proposed proposals (0.690497ms)
+✔ spend approve ignores a second approve (0.166072ms)
+✔ mission approve ignores a second approve (0.228088ms)
+✔ spend approve ignores a second decline (0.17558ms)
+✔ mission approve ignores a second decline (0.241263ms)
+✔ spend decline ignores a second approve (0.126458ms)
+✔ mission decline ignores a second approve (0.164278ms)
+✔ spend decline ignores a second decline (0.170831ms)
+✔ mission decline ignores a second decline (0.114325ms)
+✔ a call without a scope is rejected (1.265296ms)
+✔ account and platform scopes pass (0.208722ms)
+✔ the domain package imports no database and no cordis (3.445773ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 141.802662
+
+> test
+> node --experimental-strip-types --test test/*.test.ts
+
+✔ the kernel loads the six empty plug-ins (6.937923ms)
+✔ the decider has no adapter in version 1 (2.685435ms)
+✔ only kernel.ts imports cordis (24.375109ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 153.968758
+
+> test
+> node --experimental-strip-types --test test/*.test.ts
+
+✔ the committed extract matches the design files (19.122795ms)
+✔ the seed computes the nine numbers (2182.012819ms)
+✔ the repository matches the design extract, field by field, in design order (1581.104368ms)
+✔ the memory bus walks the scripted events (1.212196ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4479.015971
+npm run e2e
+
+> e2e
+> playwright test
+
+
+Running 36 tests using 2 workers
+
+[1/36] e2e/accessibility.spec.ts:7:3 › / passes axe at 1440
+[2/36] e2e/accessibility.spec.ts:7:3 › / passes axe at 390
+[3/36] e2e/accessibility.spec.ts:7:3 › /signup passes axe at 1440
+[4/36] e2e/accessibility.spec.ts:7:3 › /signup passes axe at 390
+[5/36] e2e/accessibility.spec.ts:7:3 › /signin passes axe at 1440
+[6/36] e2e/accessibility.spec.ts:7:3 › /signin passes axe at 390
+[7/36] e2e/home.spec.ts:13:1 › the homepage toggle changes the prompt and fills an example
+[8/36] e2e/home.spec.ts:25:1 › homepage calls to action follow the design routes
+[9/36] e2e/home.spec.ts:43:1 › homepage anchors scroll to the named sections
+[10/36] e2e/home.spec.ts:57:1 › homepage controls have labels and the focus ring
+[11/36] e2e/home.spec.ts:69:2 › homepage at 1440
+[12/36] e2e/home.spec.ts:69:2 › homepage at 390
+[13/36] e2e/inventory.spec.ts:52:1 › the homepage inventory matches the design texts, handlers, loops, and links
+[14/36] e2e/inventory.spec.ts:62:2 › extra paragraph fails the homepage inventory
+e2e/inventory.spec.ts:52:1 › the homepage inventory matches the design texts, handlers, loops, and links
+
+
+[15/36] e2e/inventory.spec.ts:62:2 › missing logo fails the homepage inventory
+e2e/inventory.spec.ts:62:2 › extra paragraph fails the homepage inventory
+
+
+[16/36] e2e/inventory.spec.ts:62:2 › changed Security target fails the homepage inventory
+
+e2e/inventory.spec.ts:62:2 › missing logo fails the homepage inventory
+
+[17/36] e2e/inventory.spec.ts:83:1 › the sign-up inventory matches the design texts, handlers, loops, and links
+e2e/inventory.spec.ts:62:2 › changed Security target fails the homepage inventory
+
+
+[18/36] e2e/inventory.spec.ts:97:1 › the sign-in inventory matches the design texts, handlers, loops, and links
+e2e/inventory.spec.ts:83:1 › the sign-up inventory matches the design texts, handlers, loops, and links
+
+
+e2e/inventory.spec.ts:97:1 › the sign-in inventory matches the design texts, handlers, loops, and links
+
+
+
+
+
+e2e/inventory.spec.ts:83:1 › the sign-up inventory matches the design texts, handlers, loops, and links
+
+
+
+
+
+[19/36] e2e/session.spec.ts:6:1 › a visitor with no session is sent to sign-in
+
+
+
+
+
+
+[20/36] e2e/session.spec.ts:39:1 › a new user makes one account and reaches overview
+[21/36] e2e/session.spec.ts:13:1 › a correct sign-in opens the blank overview
+[22/36] e2e/signin.spec.ts:14:1 › an empty sign-in shows the design error
+[23/36] e2e/signin.spec.ts:22:1 › a rejected sign-in shows the wrong-password text
+[24/36] e2e/signin.spec.ts:38:1 › forgot password and the email link do nothing
+[25/36] e2e/signin.spec.ts:51:1 › sign-in controls have labels and the focus ring
+[26/36] e2e/signin.spec.ts:64:2 › sign-in at 1440
+[27/36] e2e/signin.spec.ts:64:2 › sign-in at 390
+[28/36] e2e/signup.spec.ts:13:1 › details keeps every selected channel and platform on
+[29/36] e2e/signup.spec.ts:39:1 › sign-up starts at business type and pre-selects the design squads
+[30/36] e2e/signup.spec.ts:59:1 › an existing business shows its fields and four starter squads
+[31/36] e2e/signup.spec.ts:90:1 › zero squads do not open the account form
+[32/36] e2e/signup.spec.ts:103:1 › the account step reuses the sign-in fields and blocks empty input
+[33/36] e2e/signup.spec.ts:120:1 › sign-up controls have labels
+[34/36] e2e/signup.spec.ts:128:2 › sign-up at 1440
+[35/36] e2e/signup.spec.ts:128:2 › sign-up at 390
+[36/36] e2e/tokens.spec.ts:4:1 › the browser resolves canvas, text, and ring
+  6 skipped
+  30 passed (44.7s)
+npm run design:check
+
+> design:check
+> node scripts/design-check.mjs
+
+OK   Accounts.dc.html
+OK   AgentDetail.dc.html
+OK   AgentImages.dc.html
+OK   Agents.dc.html
+OK   Chat.dc.html
+OK   Home.dc.html
+OK   Main.dc.html
+OK   Onboarding.dc.html
+OK   Rules.dc.html
+OK   SignIn.dc.html
+OK   Traffic.dc.html
+OK   canvas.json
+OK   ds/agent-ui/tokens.json
+canvas https://claude.ai/artifact/B7seDz5psECQTerDG6rfy4 version 1793448823-a766, pulled 2026-10-31
+design/ matches the canvas.
+npm run statechart:check
+
+> statechart:check
+> node scripts/statechart-check.mjs
+
+# Signup
+
+TLC reached 41 states and 84 steps. The chart draws 10 states and 20 arrows.
+The view hides 2 steps, so the chart does not draw them.
+
+## Rules that hold
+TypeOK, PresetHolds, AccountNeedsSquad, CreatedHasAccount, AccountFlow, KindAfterType, NoDeadlock
+
+Wrote /tmp/tensquads-statechart-ONB8Ba
+# Approval
+
+TLC reached 12 states and 23 steps. The chart draws 8 states and 14 arrows.
+The view hides 6 steps, so the chart does not draw them.
+
+## Rules that hold
+TypeOK, SpendApproved, SpendDeclined, MissionKeepsTasks, MissionRevise, BadgeMatches, RevisingNotCounted, EmptyCopy, NoDeadlock
+
+Wrote /tmp/tensquads-statechart-BTlaVH
+statechart:check passed 2 model(s).
+
+EXIT:0
