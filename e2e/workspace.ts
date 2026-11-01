@@ -1,9 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { neon } from "@neondatabase/serverless";
 import type { Page } from "@playwright/test";
-import { openPostgres, schema } from "@tensquads/adapters";
-import { eq } from "drizzle-orm";
+import { openPostgres, schema, workspaceTransaction } from "@tensquads/adapters";
+import { eq, sql } from "drizzle-orm";
 import { replaceDemoAccount } from "../packages/seed/src/demo-account.ts";
 import { designInventory } from "../scripts/design-inventory.mjs";
 import { test as base, expect, recordAuthNotes, secretsFor, watchPageErrors } from "./support.ts";
@@ -62,8 +61,7 @@ export const test = base.extend<{ accountId: string }, { workspaceUser: Workspac
 				await postgres.close();
 			}
 			await use({ email, password, userId, accountId });
-			const sql = neon(secrets.testDatabase);
-			await deleteAccount(sql, accountId);
+			await deleteWorkspaceAccount(accountId);
 			await deleteClerkUser(secrets.secret, userId);
 		},
 		{ scope: "worker" },
@@ -183,9 +181,17 @@ async function deleteClerkUser(secret: string, userId: string) {
 	}
 }
 
-async function deleteAccount(sql: ReturnType<typeof neon>, accountId: string) {
-	for (const table of childTables) {
-		await sql.query(`delete from ${table} where account_id = $1`, [accountId]);
+export async function deleteWorkspaceAccount(accountId: string): Promise<void> {
+	const secrets = secretsFor(["testDatabase"]);
+	const postgres = openPostgres(secrets.testDatabase);
+	try {
+		await workspaceTransaction(postgres.db, async (tx) => {
+			for (const table of childTables) {
+				await tx.execute(sql`delete from ${sql.identifier(table)} where account_id = ${accountId}`);
+			}
+			await tx.delete(schema.accounts).where(eq(schema.accounts.id, accountId));
+		});
+	} finally {
+		await postgres.close();
 	}
-	await sql.query("delete from accounts where id = $1", [accountId]);
 }

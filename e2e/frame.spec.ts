@@ -1,3 +1,4 @@
+import { mkdirSync, readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { compareInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
@@ -12,7 +13,7 @@ import {
 	viewports,
 	waitForScreenFonts,
 } from "./support.ts";
-import { expect, generatedEvents, mainSection, openWorkspace, test } from "./workspace.ts";
+import { expect, generatedEvents, installLocalFonts, mainSection, openWorkspace, test } from "./workspace.ts";
 
 const marketingResult = "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.";
 const noAgent =
@@ -166,9 +167,10 @@ test("the frame has no accessibility violations", async ({ page, workspaceUser }
 	await openWorkspace(page, workspaceUser);
 	for (const viewport of viewports) {
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
-		expect(await accessibilityViolations(page)).toEqual([]);
+		// The screen body is blank. Its heading arrives with the screen task. A heading here would add text.
+		expect(await accessibilityViolations(page, ["page-has-heading-one"])).toEqual([]);
 		await page.getByRole("button", { name: "Ask Master" }).click();
-		expect(await accessibilityViolations(page)).toEqual([]);
+		expect(await accessibilityViolations(page, ["page-has-heading-one"])).toEqual([]);
 		await page.getByRole("button", { name: "Hide chat" }).click();
 	}
 });
@@ -209,6 +211,29 @@ test("the keyboard reaches the dock, shows the focus ring, and Enter sends", asy
 	await input.press("Enter");
 	await expect(page.getByText(noAgent)).toBeVisible();
 	expect(await generatedEvents(accountId)).toEqual([]);
+});
+
+test("the side-by-side evidence shows the design and the build", async ({ page, workspaceUser }) => {
+	test.skip(
+		process.env.FRAME_EVIDENCE !== "1" || process.platform !== "darwin",
+		"Side-by-side evidence is captured once on macOS.",
+	);
+	const dir = ".no-mistakes/evidence/02-frame";
+	mkdirSync(dir, { recursive: true });
+	await openWorkspace(page, workspaceUser);
+	for (const viewport of viewports) {
+		await page.setViewportSize({ width: viewport.width, height: viewport.height });
+		await waitForScreenFonts(page);
+		const closedBuild = await shot(page);
+		const closedDesign = await designShot(page, viewport.width, viewport.height, false);
+		await stitch(page, closedDesign, closedBuild, `${dir}/side-by-side-${viewport.name}.png`);
+		await page.getByRole("button", { name: "Ask Master" }).click();
+		await waitForScreenFonts(page);
+		const openBuild = await shot(page);
+		const openDesign = await designShot(page, viewport.width, viewport.height, true);
+		await stitch(page, openDesign, openBuild, `${dir}/side-by-side-open-${viewport.name}.png`);
+		await page.getByRole("button", { name: "Hide chat" }).click();
+	}
 });
 
 test("the frame matches the macOS screenshot baselines", async ({ page, workspaceUser }) => {
@@ -261,6 +286,74 @@ function expectMatch(
 
 function identities(handlers: { tag: string; event: string; handler: string }[]) {
 	return handlers.map((handler) => `${handler.tag}|${handler.event}|${handler.handler}`).sort();
+}
+
+async function shot(page: Page) {
+	return page.screenshot({ fullPage: true, animations: "disabled", caret: "hide", scale: "css" });
+}
+
+async function designShot(page: Page, width: number, height: number, dockOpen: boolean) {
+	const canvas = await page.context().newPage();
+	try {
+		await installLocalFonts(canvas);
+		await canvas.setViewportSize({ width, height });
+		const body = await renderDesignMarkup(canvas, readInventory("Main"), { view: "overview", dockOpen });
+		const source = readFileSync(new URL("../design/Main.dc.html", import.meta.url), "utf8");
+		const css = source.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
+		await canvas.setContent(
+			`<!doctype html><html lang="en"><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"><style>${css}x-dc{display:contents}</style></head><body>${body}</body></html>`,
+		);
+		await canvas.locator("[data-handler='goAdmin']").evaluate((element) => element.remove());
+		await canvas.locator("main").evaluate((element) => element.replaceChildren());
+		// The evidence renderer wraps each loop in a div. The design source does not, so the chips stay on one row.
+		await canvas.evaluate(() => {
+			for (const loop of document.querySelectorAll("[data-loop]")) {
+				const parent = loop.parentElement;
+				if (!parent) {
+					continue;
+				}
+				parent.setAttribute("data-loop", loop.getAttribute("data-loop") ?? "");
+				const as = loop.getAttribute("data-loop-as");
+				if (as) {
+					parent.setAttribute("data-loop-as", as);
+				}
+				loop.replaceWith(...loop.childNodes);
+			}
+		});
+		await waitForScreenFonts(canvas);
+		return await shot(canvas);
+	} finally {
+		await canvas.close();
+	}
+}
+
+function pngSize(image: Buffer) {
+	return { width: image.readUInt32BE(16), height: image.readUInt32BE(20) };
+}
+
+async function stitch(page: Page, design: Buffer, build: Buffer, file: string) {
+	const board = await page.context().newPage();
+	const left = pngSize(design);
+	const right = pngSize(build);
+	try {
+		await board.route("https://evidence.local/design.png", (route) =>
+			route.fulfill({ contentType: "image/png", body: design }),
+		);
+		await board.route("https://evidence.local/build.png", (route) =>
+			route.fulfill({ contentType: "image/png", body: build }),
+		);
+		await board.setViewportSize({
+			width: left.width + right.width,
+			height: Math.max(left.height, right.height),
+		});
+		await board.setContent(
+			'<!doctype html><html><body style="margin:0;display:flex;background:#fff"><img alt="Design" src="https://evidence.local/design.png"><img alt="Build" src="https://evidence.local/build.png"></body></html>',
+		);
+		await board.locator("img").nth(1).waitFor();
+		await board.screenshot({ path: file, fullPage: true, animations: "disabled", caret: "hide", scale: "css" });
+	} finally {
+		await board.close();
+	}
 }
 
 async function sectionInventory(page: Page, selector: string) {

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { openPostgres } from "@tensquads/adapters";
 import { allowTestSignUp, expect, recordAuthNotes, secretsFor, test, watchPageErrors } from "./support.ts";
+import { deleteWorkspaceAccount } from "./workspace.ts";
 
 test("a visitor with no session is sent to sign-in", async ({ page }) => {
 	for (const path of ["/overview", "/chat", "/agents", "/agents/support", "/traffic", "/rules"]) {
@@ -155,12 +156,6 @@ async function deleteAccountRows(sql: Sql, clerkUserId: string) {
 		if (id.length === 0) {
 			continue;
 		}
-		await sql.query("delete from machines where account_id = $1", [id]);
-		await sql.query("delete from agents where account_id = $1", [id]);
-		await sql.query("delete from squads where account_id = $1", [id]);
-		await sql.query("delete from masters where account_id = $1", [id]);
-		await sql.query("delete from subscriptions where account_id = $1", [id]);
-		await sql.query("delete from state_entries where account_id = $1", [id]);
-		await sql.query("delete from accounts where id = $1", [id]);
+		await deleteWorkspaceAccount(id);
 	}
 }
