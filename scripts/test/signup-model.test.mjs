@@ -9,7 +9,26 @@ import { compile } from "../../.agents/skills/statechart/scripts/pipeline.ts";
 import { check } from "../../.agents/skills/statechart/scripts/run.ts";
 import * as view from "../../packages/statecharts/signup/view.mjs";
 
-test("TLC separates submission, creation, navigation failure, and an idempotent retry", async () => {
+function assertSubmission(edge, from, to) {
+	if (edge.action === "Submit") {
+		assert.equal(to.phase, "request");
+		assert.equal(to.step, "account");
+		assert.equal(to.accounts, from.accounts);
+	}
+}
+
+function assertTransition(edge, states) {
+	const from = states.get(edge.from).vars;
+	const to = states.get(edge.to).vars;
+	assertSubmission(edge, from, to);
+	if (edge.action === "Create" || edge.action === "FindExisting") assert.equal(to.accounts, 1);
+	if (edge.action === "FailNavigation") {
+		assert.equal(to.accounts, 1);
+		assert.equal(to.step, "account");
+	}
+}
+
+function configureTools() {
 	const env = { ...process.env, MISE_TRUSTED_CONFIG_PATHS: process.cwd() };
 	const tool =
 		"http:tla2tools[url=https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar,checksum=sha256:936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88]@1.7.4";
@@ -21,26 +40,17 @@ test("TLC separates submission, creation, navigation failure, and an idempotent 
 		env,
 		encoding: "utf8",
 	}).trim();
+}
+
+test("TLC separates submission, creation, navigation failure, and an idempotent retry", async () => {
+	configureTools();
 	const result = await check("packages/statecharts/signup/Signup.tla", "packages/statecharts/signup/Signup.cfg");
 	assert.equal(result.exit, 0);
 	assert.equal(result.states.distinct, 41);
 	assert.ok(result.rules.every((rule) => rule.outcome === "holds"));
 	const { states, steps } = result.graph;
 	assert.equal(steps.length, 84);
-	for (const edge of steps) {
-		const from = states.get(edge.from).vars;
-		const to = states.get(edge.to).vars;
-		if (edge.action === "Submit") {
-			assert.equal(to.phase, "request");
-			assert.equal(to.step, "account");
-			assert.equal(to.accounts, from.accounts);
-		}
-		if (edge.action === "Create" || edge.action === "FindExisting") assert.equal(to.accounts, 1);
-		if (edge.action === "FailNavigation") {
-			assert.equal(to.accounts, 1);
-			assert.equal(to.step, "account");
-		}
-	}
+	for (const edge of steps) assertTransition(edge, states);
 	let current = [...states].find(([, state]) => state.start)[0];
 	for (const action of [
 		"PickNew",

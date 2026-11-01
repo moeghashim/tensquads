@@ -303,33 +303,7 @@ export function HomeRest() {
 									<span style={css("font-size: 14px; opacity: .7")}> / month</span>
 								</div>
 								<p style={css("margin: 0; font-size: 14px; line-height: 21px; opacity: .75")}>{plan.who}</p>
-								<ul
-									data-loop={index === 0 ? "p.features" : undefined}
-									data-loop-as={index === 0 ? "f" : undefined}
-									style={css(
-										"margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 14px",
-									)}
-								>
-									{plan.features.map((feature) => (
-										<li key={feature} style={css("display: flex; gap: 8px; align-items: flex-start")}>
-											<svg
-												width="14"
-												height="14"
-												viewBox="0 0 16 16"
-												fill="none"
-												stroke="currentColor"
-												strokeWidth="2"
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												aria-hidden="true"
-												style={css("flex: none; margin-top: 4px")}
-											>
-												<path d="M3 8.5 6.5 12 13 4.5" />
-											</svg>
-											<span>{feature}</span>
-										</li>
-									))}
-								</ul>
+								<PlanFeatures features={plan.features} index={index} />
 								<a
 									href="/signup"
 									className={plan.dark ? "btn-dark" : "btn-soft"}
@@ -454,5 +428,37 @@ function SectionHeading({ kicker, title, children }: { kicker: string; title: st
 			</h2>
 			<p style={css("margin: 12px 0 0; font-size: 17px; line-height: 26px; color: #5d5d5d")}>{children}</p>
 		</div>
+	);
+}
+
+function PlanFeatures({ features, index }: { features: readonly string[]; index: number }) {
+	return (
+		<ul
+			data-loop={index === 0 ? "p.features" : undefined}
+			data-loop-as={index === 0 ? "f" : undefined}
+			style={css(
+				"margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 14px",
+			)}
+		>
+			{features.map((feature) => (
+				<li key={feature} style={css("display: flex; gap: 8px; align-items: flex-start")}>
+					<svg
+						width="14"
+						height="14"
+						viewBox="0 0 16 16"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						aria-hidden="true"
+						style={css("flex: none; margin-top: 4px")}
+					>
+						<path d="M3 8.5 6.5 12 13 4.5" />
+					</svg>
+					<span>{feature}</span>
+				</li>
+			))}
+		</ul>
 	);
 }

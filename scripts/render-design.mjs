@@ -35,6 +35,52 @@ export async function renderDesign(page, design, state = {}, approval = {}) {
 			const marked = new Set();
 			const value = (expression, scope) =>
 				new Function(...Object.keys(scope), `return (${expression});`)(...Object.values(scope));
+			const expression = (node, attr) => node.getAttribute(attr).slice(2, -2);
+			const markLoop = (node, result) => {
+				if (marked.has(node)) return;
+				result.dataset.loop = expression(node, "list");
+				result.dataset.loopAs = node.getAttribute("as");
+				marked.add(node);
+			};
+			const expandLoop = (node, result, scope) => {
+				markLoop(node, result);
+				for (const item of value(expression(node, "list"), scope)) {
+					for (const child of node.childNodes)
+						result.append(expand(child, { ...scope, [node.getAttribute("as")]: item }));
+				}
+				return result;
+			};
+			const copyAttributes = (node, result, scope) => {
+				for (const attr of node.attributes) {
+					if (/^on(Click|Change)$/i.test(attr.name)) {
+						result.dataset.handler = attr.value.slice(2, -2);
+						result.dataset.event = attr.name.toLowerCase() === "onclick" ? "onClick" : "onChange";
+					} else {
+						result.setAttribute(
+							attr.name,
+							attr.value.replace(/\{\{([^}]+)\}\}/g, (_, key) => String(value(key, scope))),
+						);
+					}
+				}
+			};
+			const markCondition = (node, result) => {
+				if (marked.has(node)) return;
+				result.dataset.if = expression(node, "value");
+				marked.add(node);
+			};
+			const elementTag = (node) => (node.tagName === "SC-FOR" || node.tagName === "SC-IF" ? "div" : node.tagName);
+			const expandElement = (node, scope) => {
+				const result = document.createElement(elementTag(node));
+				if (node.tagName === "SC-FOR") return expandLoop(node, result, scope);
+				if (node.tagName === "SC-IF") {
+					if (!value(expression(node, "value"), scope)) return document.createTextNode("");
+					markCondition(node, result);
+				} else {
+					copyAttributes(node, result, scope);
+				}
+				for (const child of node.childNodes) result.append(expand(child, scope));
+				return result;
+			};
 			const expand = (node, scope) => {
 				if (node.nodeType === Node.TEXT_NODE) {
 					return document.createTextNode(
@@ -42,56 +88,23 @@ export async function renderDesign(page, design, state = {}, approval = {}) {
 					);
 				}
 				if (node.nodeType !== Node.ELEMENT_NODE) return document.createTextNode("");
-				const result = document.createElement(
-					node.tagName === "SC-FOR" || node.tagName === "SC-IF" ? "div" : node.tagName,
-				);
-				const expression = (attr) => node.getAttribute(attr).slice(2, -2);
-				if (node.tagName === "SC-FOR") {
-					if (!marked.has(node)) {
-						result.dataset.loop = expression("list");
-						result.dataset.loopAs = node.getAttribute("as");
-						marked.add(node);
-					}
-					for (const item of value(expression("list"), scope)) {
-						for (const child of node.childNodes)
-							result.append(expand(child, { ...scope, [node.getAttribute("as")]: item }));
-					}
-					return result;
-				}
-				if (node.tagName === "SC-IF") {
-					if (!value(expression("value"), scope)) return document.createTextNode("");
-					if (!marked.has(node)) {
-						result.dataset.if = expression("value");
-						marked.add(node);
-					}
-				} else {
-					for (const attr of node.attributes) {
-						if (/^on(Click|Change)$/i.test(attr.name)) {
-							result.dataset.handler = attr.value.slice(2, -2);
-							result.dataset.event = attr.name.toLowerCase() === "onclick" ? "onClick" : "onChange";
-						} else {
-							result.setAttribute(
-								attr.name,
-								attr.value.replace(/\{\{([^}]+)\}\}/g, (_, key) => String(value(key, scope))),
-							);
-						}
-					}
-				}
-				for (const child of node.childNodes) result.append(expand(child, scope));
-				return result;
+				return expandElement(node, scope);
 			};
 			const rendered = expand(template, values);
-			for (const change of approval.controls ?? []) {
-				const control = rendered.querySelector(change.selector);
-				if (!control) continue;
-				if (change.removeHref) control.removeAttribute("href");
-				if (change.tag) {
-					const replacement = document.createElement(change.tag);
-					for (const attr of control.attributes) replacement.setAttribute(attr.name, attr.value);
-					replacement.append(...control.childNodes);
-					control.replaceWith(replacement);
+			const applyControls = () => {
+				for (const change of approval.controls ?? []) {
+					const control = rendered.querySelector(change.selector);
+					if (!control) continue;
+					if (change.removeHref) control.removeAttribute("href");
+					if (change.tag) {
+						const replacement = document.createElement(change.tag);
+						for (const attr of control.attributes) replacement.setAttribute(attr.name, attr.value);
+						replacement.append(...control.childNodes);
+						control.replaceWith(replacement);
+					}
 				}
-			}
+			};
+			applyControls();
 			if (account) {
 				const card = rendered.querySelector('[aria-label="Create your business"]');
 				card.querySelector('[data-if="isAgents"]').outerHTML = approval.account;

@@ -321,13 +321,8 @@ test("bundle execution catches reads inside invoked functions and CommonJS wrapp
 	}
 });
 
-test("every filesystem function records an import-time call", async () => {
-	const calls = [
-		['import { openSync } from "node:fs";\nopenSync("secret.txt", "r");\n', "openSync", "secret.txt"],
-		['import { readSync } from "node:fs";\nreadSync(3, Buffer.alloc(0));\n', "readSync", "3"],
-		['import { fdatasyncSync } from "node:fs";\nfdatasyncSync(3);\n', "fdatasyncSync", "3"],
-		['import { chmod } from "node:fs/promises";\nchmod("secret.txt", 0o600);\n', "chmod", "secret.txt"],
-	];
+function streamConstructorCalls() {
+	const calls = [];
 	for (const specifier of ["fs", "node:fs"]) {
 		for (const name of ["ReadStream", "FileReadStream", "WriteStream", "FileWriteStream"]) {
 			for (const source of [
@@ -339,6 +334,17 @@ test("every filesystem function records an import-time call", async () => {
 			}
 		}
 	}
+	return calls;
+}
+
+test("every filesystem function records an import-time call", async () => {
+	const calls = [
+		['import { openSync } from "node:fs";\nopenSync("secret.txt", "r");\n', "openSync", "secret.txt"],
+		['import { readSync } from "node:fs";\nreadSync(3, Buffer.alloc(0));\n', "readSync", "3"],
+		['import { fdatasyncSync } from "node:fs";\nfdatasyncSync(3);\n', "fdatasyncSync", "3"],
+		['import { chmod } from "node:fs/promises";\nchmod("secret.txt", 0o600);\n', "chmod", "secret.txt"],
+	];
+	calls.push(...streamConstructorCalls());
 	calls.push(['import { chmod } from "fs/promises"; chmod("secret.txt", 0o600);', "chmod", "secret.txt"]);
 	for (const [source, name, path] of calls) {
 		const directory = mkdtempSync(join(tmpdir(), "tensquads-any-fs-"));

@@ -33,6 +33,37 @@ async function capture(page) {
 	}
 }
 
+async function assertHomeFaults(page, expected, actual) {
+	await page.evaluate(() => {
+		const paragraph = document.createElement("p");
+		paragraph.textContent = "Save {amount}";
+		document.body.append(paragraph);
+	});
+	assert.deepEqual(compareInventory(expected, await capture(page)).extraTexts, ["Save {amount}"]);
+	await page.getByText("Save {amount}", { exact: true }).evaluate((paragraph) => paragraph.remove());
+	const extra = structuredClone(actual);
+	extra.texts.push("About Terms");
+	assert.deepEqual(compareInventory(expected, extra).extraTexts, ["About Terms"]);
+	const missing = structuredClone(actual);
+	missing.texts.splice(missing.texts.indexOf("Northwind Apparel"), 1);
+	assert.deepEqual(compareInventory(expected, missing).missingTexts, ["Northwind Apparel"]);
+	const changed = structuredClone(actual);
+	changed.links.find((link) => link.text === "Security").href = "/signup";
+	assert.deepEqual(compareInventory(expected, changed).extraLinks, [{ text: "Security", href: "/signup" }]);
+}
+
+async function compareOnboarding(page, compare) {
+	for (const kind of ["new", "existing"]) {
+		await page.getByRole("button", { name: kind === "new" ? /A new business/ : /An existing business/ }).click();
+		await compare({ kind, step: "details" });
+		await page.getByRole("button", { name: "Choose my squads" }).click();
+		await compare({ kind, step: "agents" });
+		await page.getByRole("button", { name: "Create my workspace" }).click();
+		await compare({ kind, step: "account" });
+		for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Back", exact: true }).click();
+	}
+}
+
 test("built screen inventories match each rendered design state and reject occurrence faults", async () => {
 	const browser = await chromium.launch({ headless: true });
 	try {
@@ -54,39 +85,14 @@ test("built screen inventories match each rendered design state and reject occur
 			};
 			const { expected, actual } = await compare();
 			if (name === "Home") {
-				await page.evaluate(() => {
-					const paragraph = document.createElement("p");
-					paragraph.textContent = "Save {amount}";
-					document.body.append(paragraph);
-				});
-				assert.deepEqual(compareInventory(expected, await capture(page)).extraTexts, ["Save {amount}"]);
-				await page.getByText("Save {amount}", { exact: true }).evaluate((paragraph) => paragraph.remove());
-				const extra = structuredClone(actual);
-				extra.texts.push("About Terms");
-				assert.deepEqual(compareInventory(expected, extra).extraTexts, ["About Terms"]);
-				const missing = structuredClone(actual);
-				missing.texts.splice(missing.texts.indexOf("Northwind Apparel"), 1);
-				assert.deepEqual(compareInventory(expected, missing).missingTexts, ["Northwind Apparel"]);
-				const changed = structuredClone(actual);
-				changed.links.find((link) => link.text === "Security").href = "/signup";
-				assert.deepEqual(compareInventory(expected, changed).extraLinks, [{ text: "Security", href: "/signup" }]);
+				await assertHomeFaults(page, expected, actual);
 				await page.getByRole("button", { name: "New business", exact: true }).click();
 				await compare({ kind: "new" });
 			} else if (name === "SignIn") {
 				await page.getByRole("button", { name: "Sign in", exact: true }).click();
 				await compare({ tried: true });
 			} else {
-				for (const kind of ["new", "existing"]) {
-					await page
-						.getByRole("button", { name: kind === "new" ? /A new business/ : /An existing business/ })
-						.click();
-					await compare({ kind, step: "details" });
-					await page.getByRole("button", { name: "Choose my squads" }).click();
-					await compare({ kind, step: "agents" });
-					await page.getByRole("button", { name: "Create my workspace" }).click();
-					await compare({ kind, step: "account" });
-					for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Back", exact: true }).click();
-				}
+				await compareOnboarding(page, compare);
 			}
 			await page.close();
 		}

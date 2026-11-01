@@ -40,13 +40,17 @@ const decode = (s) =>
 		.replace(/\s+/g, " ")
 		.trim();
 
+function extractTexts(body, pattern) {
+	return [...body.matchAll(pattern)].map((m) => decode(m[1])).filter((t) => t.length > 0);
+}
+
 export function designInventory(file, src) {
 	const markup = (src.match(/<x-dc>([\s\S]*?)<\/x-dc>/) ?? ["", ""])[1];
 	const script = (src.match(/<script type="text\/x-dc"[^>]*>([\s\S]*?)<\/script>/) ?? ["", ""])[1];
 	const props = (src.match(/data-props='([^']*)'/) ?? ["", "{}"])[1];
 
 	const body = markup.replace(/<helmet>[\s\S]*?<\/helmet>/, "").replace(/<svg[\s\S]*?<\/svg>/g, "");
-	const texts = [...body.matchAll(/>([^<>{}]+?)</g)].map((m) => decode(m[1])).filter((t) => t.length > 0);
+	const texts = extractTexts(body, />([^<>{}]+?)</g);
 	const attrTexts = [...body.matchAll(/\b(placeholder|aria-label|alt|title)="([^"{}]+)"/g)].map(
 		(m) => `${m[1]}: ${decode(m[2])}`,
 	);
@@ -123,7 +127,7 @@ function controlText(html, tag) {
 
 export function inventoryHtml(html) {
 	const body = visibleHtml(html);
-	const texts = [...body.matchAll(/>([^<]+?)</g)].map((m) => decode(m[1])).filter((t) => t.length > 0);
+	const texts = extractTexts(body, />([^<]+?)</g);
 	const handlers = [];
 	const loops = [];
 	for (const tag of body.matchAll(/<(button|a|input|textarea|select)\b([^>]*)>/g)) {

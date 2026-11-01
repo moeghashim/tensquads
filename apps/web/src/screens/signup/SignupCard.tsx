@@ -523,7 +523,7 @@ function StepLabel({ label, index, current }: { label: string; index: number; cu
 	const color = stepColor(on, done);
 	return (
 		<li style={css("display: flex; align-items: center; gap: 8px")}>
-			<span style={css(stepDot(on || done))}>{done ? "✓" : String(index + 1)}</span>
+			<span style={css(stepDot(on || done))}>{stepNumber(done, index)}</span>
 			<span data-design-contrast={inactiveContrast(on, done)} style={{ color }}>
 				{label}
 			</span>
@@ -535,6 +535,10 @@ function StepLabel({ label, index, current }: { label: string; index: number; cu
 			) : null}
 		</li>
 	);
+}
+
+function stepNumber(done: boolean, index: number) {
+	return done ? "✓" : String(index + 1);
 }
 
 function stepColor(on: boolean, done: boolean) {
