@@ -19,6 +19,8 @@ const marketingResult = "Ad spend this week is $262 at a 3.4 return. The best ad
 const noAgent =
 	"That one I can answer myself, no agent needed. Ask me about orders, refunds, ads, profit or stock and I will hand it to the right agent.";
 const paused = "That is a job for the Inventory agent, but it is paused. Turn it on in Agents and ask me again.";
+// Parallel resets share the workspace lock with each send, so a full run waits longer than one send.
+const dockReplyTimeout = 30_000;
 
 publicTest("the design section cutter finds the sidebar and the dock", () => {
 	const side = mainSection("Sidebar");
@@ -98,15 +100,16 @@ test("a dock message shows the bubble, the working line, the reply, and writes t
 	workspaceUser,
 	accountId,
 }) => {
+	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
 	await page.getByRole("button", { name: "Ask Master" }).click();
 	await page.locator("#dock-input").fill("How did ads do this week?");
 	await page.getByRole("button", { name: "Send" }).click();
 	const chat = page.locator("[data-loop='dockChat']");
-	await expect(chat.getByText("How did ads do this week?")).toBeVisible({ timeout: 15_000 });
+	await expect(chat.getByText("How did ads do this week?")).toBeVisible({ timeout: dockReplyTimeout });
 	await expect(chat.getByText("Passing this to the Marketing agent. I will report back here.")).toBeVisible();
 	await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
-	await expect(page.getByText(marketingResult)).toBeVisible({ timeout: 10_000 });
+	await expect(page.getByText(marketingResult)).toBeVisible({ timeout: dockReplyTimeout });
 	await expect(page.getByText("Did the tracking for #A-1007 go through?")).toHaveCount(0);
 	await expect(page.locator("[data-loop='dockChat'] > div")).toHaveCount(6);
 	const events = await generatedEvents(accountId);
@@ -118,28 +121,31 @@ test("a dock message shows the bubble, the working line, the reply, and writes t
 });
 
 test("a message with no agent gets the master answer and no event", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
 	await page.getByRole("button", { name: "Ask Master" }).click();
 	await page.getByRole("button", { name: "How did ads do this week?" }).waitFor();
 	await page.locator("#dock-input").fill("Hello there");
 	await page.getByRole("button", { name: "Send" }).click();
-	await expect(page.getByText("Hello there")).toBeVisible();
-	await expect(page.getByText(noAgent)).toBeVisible();
+	await expect(page.getByText("Hello there")).toBeVisible({ timeout: dockReplyTimeout });
+	await expect(page.getByText(noAgent)).toBeVisible({ timeout: dockReplyTimeout });
 	await expect(page.getByText("agent is working on it…")).toHaveCount(0);
 	expect(await generatedEvents(accountId)).toEqual([]);
 });
 
 test("a message to a paused agent gets the paused answer and no event", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
 	await page.getByRole("button", { name: "Ask Master" }).click();
 	await page.locator("#dock-input").fill("Is anything low on stock?");
 	await page.getByRole("button", { name: "Send" }).click();
-	await expect(page.getByText(paused)).toBeVisible();
+	await expect(page.getByText(paused)).toBeVisible({ timeout: dockReplyTimeout });
 	await expect(page.getByText("agent is working on it…")).toHaveCount(0);
 	expect(await generatedEvents(accountId)).toEqual([]);
 });
 
 test("an empty message or a second send does nothing", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
 	await page.getByRole("button", { name: "Ask Master" }).click();
 	await page.locator("#dock-input").fill("   ");
@@ -151,7 +157,7 @@ test("an empty message or a second send does nothing", async ({ page, workspaceU
 	await expect(page.getByRole("button", { name: "Send" })).toBeDisabled();
 	await page.locator("#dock-input").fill("Hello there");
 	await page.locator("#dock-input").press("Enter");
-	await expect(page.getByText(marketingResult)).toBeVisible({ timeout: 10_000 });
+	await expect(page.getByText(marketingResult)).toBeVisible({ timeout: dockReplyTimeout });
 	await expect(page.getByText(noAgent)).toHaveCount(0);
 	const events = await generatedEvents(accountId);
 	expect(events.map((event) => `${event.kind}`)).toEqual(["Task", "Result"]);
@@ -196,6 +202,7 @@ test("the keyboard reaches the dock, shows the focus ring, and Enter sends", asy
 	workspaceUser,
 	accountId,
 }) => {
+	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
 	await page.getByRole("button", { name: "Ask Master" }).click();
 	await expect(page.getByRole("button", { name: "Hide chat" })).toBeFocused();
@@ -210,7 +217,7 @@ test("the keyboard reaches the dock, shows the focus ring, and Enter sends", asy
 	await expect(input).toHaveCSS("outline-offset", "4px");
 	await input.fill("Hello there");
 	await input.press("Enter");
-	await expect(page.getByText(noAgent)).toBeVisible();
+	await expect(page.getByText(noAgent)).toBeVisible({ timeout: dockReplyTimeout });
 	expect(await generatedEvents(accountId)).toEqual([]);
 });
 
