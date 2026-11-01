@@ -1,0 +1,32 @@
+[
+  {
+    "requested": "/overview",
+    "finalPath": "/signin",
+    "status": 200
+  },
+  {
+    "requested": "/chat",
+    "finalPath": "/signin",
+    "status": 200
+  },
+  {
+    "requested": "/agents",
+    "finalPath": "/signin",
+    "status": 200
+  },
+  {
+    "requested": "/agents/support",
+    "finalPath": "/signin",
+    "status": 200
+  },
+  {
+    "requested": "/traffic",
+    "finalPath": "/signin",
+    "status": 200
+  },
+  {
+    "requested": "/rules",
+    "finalPath": "/signin",
+    "status": 200
+  }
+]
