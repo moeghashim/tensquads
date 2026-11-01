@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/")({
-	component: Home,
-});
+import { HomePage } from "#/screens/home/HomePage.tsx";
 
-function Home() {
-	return <main />;
-}
+export const Route = createFileRoute("/")({
+	head: () => ({
+		meta: [{ title: "tensquads homepage" }],
+	}),
+	component: HomePage,
+});

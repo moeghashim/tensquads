@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-11-01T12:28:06.630Z",
+        "reason": "Root head loads the same Inter stylesheet the design helmet names."
+      }
+    ]
+  }
+}

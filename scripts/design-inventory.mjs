@@ -14,16 +14,14 @@
 // handlers, loops and strings. The reviewer compares the two files.
 // Run: node scripts/design-inventory.mjs            (all files)
 //      node scripts/design-inventory.mjs Home       (one file)
+//      node scripts/design-inventory.mjs --html FILE --out FILE.json
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const root = resolve(new URL("..", import.meta.url).pathname);
 const designDir = resolve(root, "design");
 const outDir = resolve(designDir, "inventory");
-mkdirSync(outDir, { recursive: true });
-
-const only = process.argv[2];
-const files = readdirSync(designDir).filter((f) => f.endsWith(".dc.html") && (!only || f.startsWith(only)));
 
 const count = (list) => {
 	const m = new Map();
@@ -38,17 +36,21 @@ const decode = (s) =>
 		.replace(/&gt;/g, ">")
 		.replace(/&quot;/g, '"')
 		.replace(/&#39;/g, "'")
+		.replace(/&#x27;/g, "'")
 		.replace(/\s+/g, " ")
 		.trim();
 
-for (const file of files) {
-	const src = readFileSync(resolve(designDir, file), "utf8");
+function extractTexts(body, pattern) {
+	return [...body.matchAll(pattern)].map((m) => decode(m[1])).filter((t) => t.length > 0);
+}
+
+export function designInventory(file, src) {
 	const markup = (src.match(/<x-dc>([\s\S]*?)<\/x-dc>/) ?? ["", ""])[1];
 	const script = (src.match(/<script type="text\/x-dc"[^>]*>([\s\S]*?)<\/script>/) ?? ["", ""])[1];
 	const props = (src.match(/data-props='([^']*)'/) ?? ["", "{}"])[1];
 
 	const body = markup.replace(/<helmet>[\s\S]*?<\/helmet>/, "").replace(/<svg[\s\S]*?<\/svg>/g, "");
-	const texts = [...body.matchAll(/>([^<>{}]+?)</g)].map((m) => decode(m[1])).filter((t) => t.length > 0);
+	const texts = extractTexts(body, />([^<>{}]+?)</g);
 	const attrTexts = [...body.matchAll(/\b(placeholder|aria-label|alt|title)="([^"{}]+)"/g)].map(
 		(m) => `${m[1]}: ${decode(m[2])}`,
 	);
@@ -84,7 +86,7 @@ for (const file of files) {
 	const keys = uniq([...script.matchAll(/(?:\{|,)\s*([A-Za-z_$][\w$]*)\s*:/g)].map((m) => m[1]));
 	const imports = [...markup.matchAll(/<dc-import\b([^>]*)>/g)].map((m) => m[1].trim());
 
-	const inventory = {
+	return {
 		file,
 		counts: {
 			texts: texts.length,
@@ -107,9 +109,142 @@ for (const file of files) {
 		strings: count(strings),
 		keys,
 	};
-	const out = resolve(outDir, file.replace(".dc.html", ".json"));
-	writeFileSync(out, `${JSON.stringify(inventory, null, 2)}\n`);
-	console.log(
-		`${file}: ${texts.length} texts, ${Object.keys(inventory.styles).length} style declarations, ${colors.length} colours, ${handlers.length} handlers, ${strings.length} script strings -> ${out.replace(`${root}/`, "")}`,
-	);
+}
+
+function visibleHtml(html) {
+	return html
+		.replace(/<head[\s\S]*?<\/head>/gi, "")
+		.replace(/<script[\s\S]*?<\/script>/gi, "")
+		.replace(/<style[\s\S]*?<\/style>/gi, "")
+		.replace(/<svg[\s\S]*?<\/svg>/gi, "")
+		.replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
+		.replace(/<!--[\s\S]*?-->/g, "");
+}
+
+function controlText(html) {
+	return decode(html.replace(/<[^>]*>/g, " "));
+}
+
+function labelBefore(body, index) {
+	const before = body.slice(0, index);
+	const labels = [...before.matchAll(/<label\b[^>]*>([\s\S]*?)<\/label>/gi)];
+	if (labels.length > 0) {
+		const last = labels[labels.length - 1];
+		const between = before.slice(last.index + last[0].length);
+		if (!/<(?:input|textarea)\b/i.test(between)) return decode(last[1].replace(/<[^>]*>/g, " "));
+	}
+	const open = before.match(/<label\b[^>]*>([^<]*)$/i);
+	return open ? decode(open[1]) : "";
+}
+
+function inputIdentity(body, tag) {
+	const id = tag[2].match(/\bid="([^"]*)"/);
+	const decoded = id ? decode(id[1]) : "";
+	if (decoded) return decoded;
+	return labelBefore(body, tag.index);
+}
+
+function handlerEvent(attrs, control) {
+	const explicit = attrs.match(/\bdata-event="([^"]+)"/)?.[1];
+	if (explicit) return explicit;
+	if (control === "input" || control === "textarea" || control === "select") return "onChange";
+	return "onClick";
+}
+
+function handlerText(body, tag, control) {
+	if (control === "input" || control === "textarea") return inputIdentity(body, tag);
+	return controlText(body.slice(tag.index + tag[0].length).split(`</${control}>`)[0]);
+}
+
+function collectLoop(loops, tag) {
+	const list = tag.match(/\bdata-loop="([^"]+)"/);
+	const as = tag.match(/\bdata-loop-as="([^"]+)"/);
+	if (list && as) loops.push({ kind: "for", list: list[1], as: as[1] });
+	const condition = tag.match(/\bdata-if="([^"]+)"/);
+	if (condition) loops.push({ kind: "if", value: condition[1] });
+}
+
+export function inventoryHtml(html) {
+	const body = visibleHtml(html);
+	const texts = extractTexts(body, />([^<]+?)</g);
+	const handlers = [];
+	for (const tag of body.matchAll(/<(button|a|input|textarea|select)\b([^>]*)>/g)) {
+		const name = tag[2].match(/\bdata-handler="([^"]+)"/);
+		if (!name) continue;
+		const control = tag[1];
+		handlers.push({
+			tag: control,
+			event: handlerEvent(tag[2], control),
+			handler: name[1],
+			text: handlerText(body, tag, control),
+		});
+	}
+	const loops = [];
+	for (const tag of body.matchAll(/<[^>]+>/g)) collectLoop(loops, tag[0]);
+	const links = [...body.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g)].map((m) => ({
+		text: controlText(m[2]),
+		href: decode(m[1]),
+	}));
+	return { texts, handlers, loops, links, strings: {} };
+}
+
+function occurrenceDiff(expected, actual) {
+	const remaining = [...actual];
+	const missing = [];
+	for (const item of expected) {
+		const index = remaining.findIndex((candidate) => JSON.stringify(candidate) === JSON.stringify(item));
+		if (index === -1) missing.push(item);
+		else remaining.splice(index, 1);
+	}
+	return { extra: remaining, missing };
+}
+
+export function compareInventory(design, built) {
+	const texts = occurrenceDiff(design.texts ?? [], built.texts ?? []);
+	const links = occurrenceDiff(design.links ?? [], built.links ?? []);
+	const handlers = occurrenceDiff(design.handlers ?? [], built.handlers ?? []);
+	const loops = occurrenceDiff(design.loops ?? [], built.loops ?? []);
+	return {
+		extraTexts: texts.extra,
+		missingTexts: texts.missing,
+		extraLinks: links.extra,
+		missingLinks: links.missing,
+		extraHandlers: handlers.extra,
+		missingHandlers: handlers.missing,
+		extraLoops: loops.extra,
+		missingLoops: loops.missing,
+	};
+}
+
+function writeDesignInventories(only) {
+	mkdirSync(outDir, { recursive: true });
+	const files = readdirSync(designDir).filter((f) => f.endsWith(".dc.html") && (!only || f.startsWith(only)));
+	for (const file of files) {
+		const src = readFileSync(resolve(designDir, file), "utf8");
+		const inventory = designInventory(file, src);
+		const out = resolve(outDir, file.replace(".dc.html", ".json"));
+		writeFileSync(out, `${JSON.stringify(inventory, null, 2)}\n`);
+		console.log(
+			`${file}: ${inventory.texts.length} texts, ${Object.keys(inventory.styles).length} style declarations, ${inventory.colors.length} colours, ${inventory.handlers.length} handlers, ${inventory.strings.length === undefined ? 0 : Object.values(inventory.strings).reduce((sum, n) => sum + n, 0)} script strings -> ${out.replace(`${root}/`, "")}`,
+		);
+	}
+}
+
+function writeHtmlInventory(args) {
+	const file = args[1];
+	const outFlag = args.indexOf("--out");
+	const html = readFileSync(resolve(file), "utf8");
+	const json = `${JSON.stringify(inventoryHtml(html), null, 2)}\n`;
+	if (outFlag === -1) {
+		process.stdout.write(json);
+		return;
+	}
+	writeFileSync(resolve(args[outFlag + 1]), json);
+}
+
+const invoked = import.meta.url === pathToFileURL(process.argv[1]).href;
+if (invoked) {
+	const args = process.argv.slice(2);
+	if (args[0] === "--html") writeHtmlInventory(args);
+	else writeDesignInventories(args[0]);
 }

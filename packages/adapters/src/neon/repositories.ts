@@ -36,6 +36,7 @@ import {
 } from "@tensquads/domain";
 import { asc, eq } from "drizzle-orm";
 
+import { createWorkspace } from "./create-workspace.ts";
 import type { AppDatabase } from "./postgres.ts";
 import {
 	accounts,
@@ -68,6 +69,7 @@ export function createRepositories(db: AppDatabase): RepositoryBag {
 			listPlans: (scope) => listPlans(db, scope),
 			overviewTiles: (scope) => listTiles(db, scope),
 			dailyRevenue: (scope) => listRevenue(db, scope),
+			createWorkspace: (scope, draft) => createWorkspace(db, scope, draft),
 		},
 		squads: {
 			listSquads: (scope) => listSquads(db, scope),

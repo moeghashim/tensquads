@@ -34,11 +34,13 @@
 	"devDependencies": {
 		"@axe-core/playwright": "^4.14.0",
 		"@biomejs/biome": "2.3.5",
+		"@neondatabase/serverless": "1.2.0",
 		"@playwright/test": "^1.64.1",
 		"@types/node": "^24.19.2",
 		"esbuild": "^0.28.2",
 		"fallow": "3.9.1",
 		"husky": "^9.1.7",
+		"miniflare": "5.20261023.1-beta",
 		"typescript": "7.0.2",
 		"yaml": "2.9.1"
 	},

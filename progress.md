@@ -515,3 +515,18 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - Changed Paths:
   - AGENTS.md
 - 2026-10-31 00-foundation: The empty app, seed, tokens, and Approval model landed before any screen. A spend approve adds one task, a mission approve adds none, and TLC reported no broken rule.
+- 2026-11-01 01-public-screens: The homepage, sign-up, and sign-in match the design. A new user makes one account, a correct sign-in opens the overview, and TLC reported no broken rule.
+- 2026-11-01 01-public-screens: The six screenshot checks run on macOS only. Ubuntu skips those six, and every other test still runs on both systems.
+- 2026-11-01 01-public-screens: The worker guard records every filesystem call, tests do not use the Neon connection, design hash links stay anchors, and the sign-up model separates the create request from a failed navigation.
+- 2026-11-01 01-public-screens: The worker guard rejects a filesystem binding, input handlers keep an id or a label, and the sign-up details step keeps a second channel or platform selected.
+
+- 2026-11-01 01-public-screens: Inventory handler helpers stay under the complexity gate, and empty textarea swaps still count as handler differences.
+- 2026-11-01 01-public-screens: Browser tests pin Inter and JetBrains Mono locally. All 60 macOS screenshot checks passed with full parallelism and no retries; 0 failed.
+- 2026-11-01 01-public-screens: Format the pinned font stylesheet route to match Biome without changing its behavior.
+- 2026-11-01 01-public-screens: The worker guard's Node stage allows only built-ins the production bundle imports. Workerd boots the built worker at / and rejects import-time filesystem, binding, package, and child-process reads.
+- 2026-11-01 01-public-screens: Bare filesystem reaches fail the Worker filter without hiding recorded calls. Postgres migrations hold one transaction advisory lock across all statements and roll back on failure. All nine focused tests passed.
+- 2026-11-01 01-public-screens: A caught import-time reach of any built-in outside the production allow-list fails the Node filter. The sign-up test migrates through the locked Postgres helper.
+- 2026-11-01 01-public-screens: Sort the Postgres migration test imports.
+- 2026-11-01 01-public-screens: Split the worker allow-list test so its complexity stays under the Fallow gate.
+- 2026-11-01 01-public-screens: The workerd package fixture uses the default module import. Each fixture succeeds in Node before its workerd failure is accepted.
+- 2026-11-01 01-public-screens: The evidence commit adds the six screen pairs and the CI make verify logs. No app file, test, or check changed.

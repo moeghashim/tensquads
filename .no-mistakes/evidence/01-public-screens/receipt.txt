@@ -1,0 +1,58 @@
+Receipt for task 01-public-screens. Moe said go for this phase on 1 November 2026.
+
+Files read, SHA-256:
+
+08bc149b95c08cf2c725f1f9fd1aed63200f903a39e9346c6ed622ae4dd16e38  AGENTS.md
+e572ba0ce506896949484f630d495c3377b5e958c47ddaee2bb0a03426cc694d  docs/PLAN.md
+26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
+1f6479ef2e42a81fbced9c491acfb0f7edae2be1c2c658fb7aaf48024ca0c2d6  progress.md
+ff324b1c33ee6fde5784e318bdadfab2c4333140c8da92652f43656375002289  tasks/01-public-screens.md
+31254b6205702f73a5db18d0f1588ecc6cf6fe933f7afd0be41224ae5e1cee13  design/Home.dc.html
+3cec9e7b1bb5b1b5c7e1582addd5c338ad35eea7582270b7585f25258c14b98c  design/Onboarding.dc.html
+f2a1b9a09f35093ceb1299d151e6dd7cb05830afcc9eaeacb395a9c91c8370bd  design/SignIn.dc.html
+4479ec88571ef079a54474c40babbaef48a4d1d81c6ace71692bbe79ca0ba882  design/inventory/Home.json
+0caa55a3bb3b9f7e0e3948abf4a7b1bf57f9bfe57d71cdeb1b0bf741f086a2be  design/inventory/Onboarding.json
+298c8236c406972307c86f656d2464b0fa9be56412c78855094cea837834dba1  design/inventory/SignIn.json
+318f8cf0d42396656424f2c40df8a2f67601130b83801f5c30aa5a47e8837e6b  apps/web/src/design/OVERRIDES.md
+
+design-check output:
+
+OK   Accounts.dc.html
+OK   AgentDetail.dc.html
+OK   AgentImages.dc.html
+OK   Agents.dc.html
+OK   Chat.dc.html
+OK   Home.dc.html
+OK   Main.dc.html
+OK   Onboarding.dc.html
+OK   Rules.dc.html
+OK   SignIn.dc.html
+OK   Traffic.dc.html
+OK   canvas.json
+OK   ds/agent-ui/tokens.json
+canvas https://claude.ai/artifact/B7seDz5psECQTerDG6rfy4 version 1793448823-a766, pulled 2026-10-31
+design/ matches the canvas.
+
+Decisions 1 to 28 read.
+Questions, each with one recommended answer. Unblocked work continues. The blocked path waits.
+
+1. Clerk requires an email code before a new user is complete. The environment has verify_at_sign_up on, and the verification is email_code. The design shows no code step. Recommended answer: turn off email verification at sign-up in the Clerk dashboard. Do not add a code screen.
+2. The design does not show an email that is already in use. Recommended answer: add no new string. Keep the person on the account form.
+3. The design does not show a password that Clerk rejects on sign-up. The instance minimum is 15 characters. Recommended answer: add no new string. Show "That email or password is wrong." in the same alert as sign-in. Use a password of at least 16 characters in tests.
+4. The design does not show a failed create. Recommended answer: add no new string. Keep the person on the account form.
+5. The design does not show a loading state. Recommended answer: add no new string. The button stays "Create my workspace" until the account exists.
+6. A new account needs values the form does not collect. Recommended answer: status Trial, plan Starter, mrr 0, ltv 0, owner is the email, tint #e7efff, squad name is the business name (empty string when blank), master name "Master", limits 50, 50 and 500, each agent is on and "Ask first".
+
+Mapped differences, not unmapped lines:
+
+- BRIEF says homepage Sign in opens the workspace Overview. Decision 13 and SignIn.dc.html send it to /signin. A successful sign-in then opens /overview.
+- BRIEF says five agents and the sentences "N agents and one master will be created" and "Pick at least one agent to start". The design uses seven squads and "N squad(s) and one master squad will be created." and "Pick at least one squad to start."
+- BRIEF says Talk to us does nothing. The design href is Onboarding.dc.html, so the button goes to /signup.
+- BRIEF says Create opens Overview at once. Answer 1 inserts the email and password form first.
+- Onboarding details copy still says "agents" in two subtitles. The design words stay.
+- Homepage "See a live demo" goes to /chat. A visitor with no session goes to /signin.
+- Zero squads: the click does not advance and adds no new string.
+- Approve and Decline on the homepage mock, the footer # links, "Forgot password?" and "Email me a sign-in link" do nothing.
+
+Unmapped lines in the three design files and the named brief sections: none.
+Screens 3 to 10 are out of scope. They are not unmapped lines.

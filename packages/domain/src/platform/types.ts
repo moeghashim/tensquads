@@ -51,6 +51,26 @@ export interface OverviewTile {
 	readonly deltaColor: string;
 }
 
+export interface NewAgent {
+	readonly id: string;
+	readonly name: string;
+	readonly role: string;
+	readonly tint: string;
+}
+
+export interface WorkspaceDraft {
+	readonly clerkUserId: string;
+	readonly email: string;
+	readonly name: string;
+	readonly mission: string;
+	readonly agents: readonly NewAgent[];
+}
+
+export interface WorkspaceCreated {
+	readonly accountId: string;
+	readonly created: boolean;
+}
+
 export interface PlatformTotals {
 	readonly accounts: number;
 	readonly agents: number;
