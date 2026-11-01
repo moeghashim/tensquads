@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 
+import { workspaceTransaction } from "./lock.ts";
 import type { AppDatabase } from "./postgres.ts";
 import {
 	accounts,
@@ -348,7 +349,7 @@ async function insertMetrics(
 
 export async function writeAccount(db: AppDatabase, entry: AccountSnapshot): Promise<void> {
 	const id = entry.account.id;
-	await db.transaction(async (tx) => {
+	await workspaceTransaction(db, async (tx) => {
 		await tx.delete(messages).where(eq(messages.accountId, id));
 		await tx.delete(threads).where(eq(threads.accountId, id));
 		await tx.delete(skills).where(eq(skills.accountId, id));

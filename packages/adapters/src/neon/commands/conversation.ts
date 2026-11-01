@@ -3,6 +3,7 @@ import { requireScope } from "@tensquads/domain";
 import { noAgentReply, pausedReply, resultFor, route, skillFor, taskPayload, workingReply } from "@tensquads/kernel";
 import { and, asc, eq, sql } from "drizzle-orm";
 
+import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { agents, busEvents, messages, skills, stateEntries, threads } from "../schema.ts";
 import { appendEvents, type BusCursor, lockCursor, saveCursor } from "./bus.ts";
@@ -25,7 +26,7 @@ export async function beginSend(db: AppDatabase, scope: AccountScope, text: stri
 	if (value.length === 0) {
 		return { kind: "ignored" };
 	}
-	return db.transaction(async (tx) => {
+	return workspaceTransaction(db, async (tx) => {
 		const cursor = await lockCursor(tx, checked.accountId);
 		if (await pendingTask(tx, checked.accountId)) {
 			return { kind: "ignored" };
@@ -80,7 +81,7 @@ export async function finishSend(db: AppDatabase, scope: AccountScope): Promise<
 	if (checked.mode !== "account") {
 		return { kind: "ignored" };
 	}
-	return db.transaction(async (tx) => {
+	return workspaceTransaction(db, async (tx) => {
 		const cursor = await lockCursor(tx, checked.accountId);
 		const pending = await pendingTask(tx, checked.accountId);
 		if (!pending) {

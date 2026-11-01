@@ -2,6 +2,7 @@ export { createMemoryBus, type MemoryBus, type ScriptedBusEvent } from "./memory
 export { appendEvents, type EventDraft } from "./neon/commands/bus.ts";
 export { beginSend, finishSend } from "./neon/commands/conversation.ts";
 export { accountForClerkUser, FRAME_QUERY_COUNT, readWorkspaceFrame, type WorkspaceFrame } from "./neon/frame.ts";
+export { workspaceTransaction } from "./neon/lock.ts";
 export { type AppDatabase, openPostgres } from "./neon/postgres.ts";
 export { createRepositories } from "./neon/repositories.ts";
 export { saveWorkspace, writeAccount } from "./neon/save.ts";
