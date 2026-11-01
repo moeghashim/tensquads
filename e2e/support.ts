@@ -1,0 +1,231 @@
+import { readFileSync } from "node:fs";
+import { test as base, expect, type Page } from "@playwright/test";
+
+import { localSecrets } from "../scripts/write-dev-vars.mjs";
+
+export const test = base.extend({
+	page: async ({ page }, use) => {
+		const goto = page.goto.bind(page);
+		page.goto = (async (url: string, options?: Parameters<Page["goto"]>[1]) => {
+			const response = await goto(url, options);
+			await waitForHydration(page);
+			return response;
+		}) as Page["goto"];
+		await use(page);
+	},
+});
+
+export { expect };
+
+export const viewports = [
+	{ name: "1440", width: 1440, height: 900 },
+	{ name: "390", width: 390, height: 844 },
+] as const;
+
+export function readInventory(name: string) {
+	const file = new URL(`../design/inventory/${name}.json`, import.meta.url);
+	return JSON.parse(readFileSync(file, "utf8")) as {
+		texts: string[];
+		handlers: { handler: string }[];
+	};
+}
+
+export async function bodyText(page: Page) {
+	const text = await page.locator("body").evaluate((body) => {
+		const parts: string[] = [];
+		const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
+			acceptNode(node) {
+				const parent = node.parentElement;
+				if (!parent) {
+					return NodeFilter.FILTER_REJECT;
+				}
+				const tag = parent.tagName;
+				if (tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT") {
+					return NodeFilter.FILTER_REJECT;
+				}
+				return NodeFilter.FILTER_ACCEPT;
+			},
+		});
+		while (walker.nextNode()) {
+			parts.push(walker.currentNode.textContent ?? "");
+		}
+		return parts.join(" ");
+	});
+	return text.replace(/\s+/g, " ").trim();
+}
+
+export async function waitForHydration(page: Page) {
+	await page.waitForFunction(() => {
+		const nodes = document.querySelectorAll("button, a, input, textarea");
+		return Array.from(nodes).some((node) => Object.keys(node).some((key) => key.startsWith("__reactProps$")));
+	});
+}
+
+export async function recordAuthNotes(page: Page) {
+	const notes: string[] = [];
+	await page.exposeBinding("__recordAuthNote", (_source, note: string) => {
+		notes.push(note.slice(0, 180));
+	});
+	await page.addInitScript(() => {
+		const known = new Set([
+			"complete",
+			"needs_identifier",
+			"needs_first_factor",
+			"needs_second_factor",
+			"needs_new_password",
+			"needs_client_trust",
+			"needs_protect_check",
+			"missing_requirements",
+			"abandoned",
+		]);
+		const record = (url: string, status: number, text: string) => {
+			let path = url;
+			try {
+				path = new URL(url, location.href).pathname;
+			} catch {
+				path = "request";
+			}
+			if (path.startsWith("/@") || path.startsWith("/node_modules") || path.startsWith("/src")) {
+				return;
+			}
+			let extra = "";
+			try {
+				const body = JSON.parse(text) as {
+					errors?: { code?: string }[];
+					response?: { status?: string; errors?: { code?: string }[] };
+				};
+				const codes = [...(body.errors ?? []), ...(body.response?.errors ?? [])]
+					.map((error) => error.code ?? "")
+					.filter((code) => code.length > 0 && code.length < 80);
+				const flow = body.response?.status ?? "";
+				extra = `${codes.join(",")} ${known.has(flow) ? flow : ""}`.trim();
+			} catch {
+				extra = "";
+			}
+			if (status < 400 && extra.length === 0) {
+				return;
+			}
+			void (window as unknown as { __recordAuthNote: (note: string) => void }).__recordAuthNote(
+				`${status} ${path} ${extra}`,
+			);
+		};
+		const original = window.fetch;
+		window.fetch = async (input, init) => {
+			const response = await original(input, init);
+			const url = typeof input === "string" ? input : input instanceof Request ? input.url : String(input);
+			const text = await response.clone().text();
+			record(url, response.status, text);
+			return response;
+		};
+		const open = XMLHttpRequest.prototype.open;
+		const send = XMLHttpRequest.prototype.send;
+		XMLHttpRequest.prototype.open = function (method: string, url: string | URL, ...rest: unknown[]) {
+			(this as XMLHttpRequest & { __url?: string }).__url = String(url);
+			return open.call(this, method, url, ...(rest as [boolean, string?, string?]));
+		};
+		XMLHttpRequest.prototype.send = function (...args: unknown[]) {
+			this.addEventListener("load", () => {
+				const target = this as XMLHttpRequest & { __url?: string };
+				record(target.__url ?? "", target.status, target.responseText);
+			});
+			return send.apply(this, args as [Document | XMLHttpRequestBodyInit | null | undefined]);
+		};
+	});
+	return notes;
+}
+
+export function watchPageErrors(page: Page) {
+	const notes: string[] = [];
+	const keep = (value: string) => {
+		const clean = value
+			.replace(/pk_(?:test|live)_[A-Za-z0-9]+/g, "[redacted]")
+			.replace(/sk_(?:test|live)_[A-Za-z0-9]+/g, "[redacted]")
+			.replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted]")
+			.replace(/[\w.+-]+@[\w.-]+/g, "[email]")
+			.slice(0, 240);
+		if (clean.length > 0) {
+			notes.push(clean);
+		}
+	};
+	page.on("pageerror", (error) => {
+		keep(error.message);
+	});
+	page.on("response", (response) => {
+		const url = response.url();
+		if (!url.includes("clerk")) {
+			return;
+		}
+		void response
+			.json()
+			.then((body: { errors?: { code?: string }[]; status?: string; response?: { status?: string } }) => {
+				const codes = (body.errors ?? []).map((error) => error.code ?? "unknown");
+				const status = body.response?.status ?? body.status ?? "";
+				if (codes.length > 0 || response.status() >= 400) {
+					const path = new URL(url).pathname;
+					keep(`${response.status()} ${path} ${codes.join(",")} ${status}`);
+				}
+			})
+			.catch(() => undefined);
+	});
+	return notes;
+}
+
+export async function handlerNames(page: Page) {
+	const names = await page.locator("[data-handler]").evaluateAll((elements) => {
+		return elements.map((element) => element.getAttribute("data-handler") ?? "");
+	});
+	return [...new Set(names)].sort();
+}
+
+export async function expectNoHorizontalScroll(page: Page) {
+	const fits = await page.evaluate(() => {
+		const root = document.documentElement;
+		return root.scrollWidth <= root.clientWidth;
+	});
+	expect(fits).toBe(true);
+}
+
+export async function expectLabeledInputs(page: Page) {
+	const inputs = page.locator("input, textarea");
+	const count = await inputs.count();
+	for (let index = 0; index < count; index += 1) {
+		const id = await inputs.nth(index).getAttribute("id");
+		expect(id).toBeTruthy();
+		await expect(page.locator(`label[for="${id}"]`)).toHaveCount(1);
+	}
+}
+
+export async function expectNamedButtons(page: Page) {
+	const unnamed = await page.locator("button").evaluateAll((elements) => {
+		return elements.filter((element) => {
+			const label = element.getAttribute("aria-label") ?? "";
+			const text = (element.textContent ?? "").replace(/\s+/g, " ").trim();
+			return label.length === 0 && text.length === 0;
+		}).length;
+	});
+	expect(unnamed).toBe(0);
+}
+
+export function secretsFor(names: readonly ("publishable" | "secret" | "testDatabase")[]) {
+	const secrets = localSecrets();
+	const missing = names.filter((name) => secrets[name].length === 0);
+	if (missing.length === 0) {
+		return secrets;
+	}
+	const actor = process.env.GITHUB_ACTOR ?? "";
+	if (process.env.GITHUB_ACTIONS === "true" && actor === "dependabot[bot]") {
+		const labels = missing.map((name) => {
+			if (name === "publishable") {
+				return "CLERK_PUBLISHABLE_KEY";
+			}
+			if (name === "secret") {
+				return "CLERK_SECRET_KEY";
+			}
+			return "TEST_DATABASE_URL";
+		});
+		console.log(`${labels.join(", ")} was skipped. A Dependabot pull request gets no secrets.`);
+		test.skip(true, "A Dependabot pull request gets no secrets.");
+		return secrets;
+	}
+	throw new Error(`${missing.join(", ")} is missing.`);
+}
