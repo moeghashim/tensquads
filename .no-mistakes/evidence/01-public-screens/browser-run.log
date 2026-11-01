@@ -1,0 +1,116 @@
+[WebServer] (node:91238) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 31 tests using 2 workers
+
+(node:91254) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:91253) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/31] e2e/accessibility.spec.ts:7:3 › / passes axe at 1440
+[2/31] e2e/accessibility.spec.ts:7:3 › / passes axe at 390
+[3/31] e2e/accessibility.spec.ts:7:3 › /signup passes axe at 1440
+[4/31] e2e/accessibility.spec.ts:7:3 › /signup passes axe at 390
+[5/31] e2e/accessibility.spec.ts:7:3 › /signin passes axe at 1440
+[6/31] e2e/accessibility.spec.ts:7:3 › /signin passes axe at 390
+[7/31] e2e/home.spec.ts:12:1 › the homepage toggle changes the prompt and fills an example
+[8/31] e2e/home.spec.ts:24:1 › homepage calls to action follow the design routes
+[9/31] e2e/home.spec.ts:42:1 › homepage anchors scroll to the named sections
+[10/31] e2e/home.spec.ts:56:1 › homepage controls have labels and the focus ring
+[11/31] e2e/home.spec.ts:68:2 › homepage at 1440
+[12/31] e2e/home.spec.ts:68:2 › homepage at 390
+[13/31] e2e/inventory.spec.ts:3:1 › the homepage inventory matches the design texts and handlers
+[14/31] e2e/inventory.spec.ts:16:1 › the sign-up inventory matches the design texts and handlers
+[15/31] e2e/inventory.spec.ts:59:1 › the sign-in inventory matches the design texts and handlers
+[16/31] e2e/session.spec.ts:5:1 › a visitor with no session is sent to sign-in
+[17/31] e2e/session.spec.ts:12:1 › a correct sign-in opens the blank overview
+  1) e2e/session.spec.ts:12:1 › a correct sign-in opens the blank overview ─────────────────────────
+
+    Error: publishable, secret, testDatabase is missing.
+
+       at support.ts:311
+
+      309 | 		return secrets;
+      310 | 	}
+    > 311 | 	throw new Error(`${missing.join(", ")} is missing.`);
+          | 	      ^
+      312 | }
+      313 |
+        at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/support.ts:311:8)
+        at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/session.spec.ts:13:18
+
+    Error Context: ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright-results/session-a-correct-sign-in-opens-the-blank-overview/error-context.md
+
+
+(node:91345) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[18/31] e2e/session.spec.ts:38:1 › a new user makes one account and reaches overview
+  2) e2e/session.spec.ts:38:1 › a new user makes one account and reaches overview ──────────────────
+
+    Error: publishable, secret, testDatabase is missing.
+
+       at support.ts:311
+
+      309 | 		return secrets;
+      310 | 	}
+    > 311 | 	throw new Error(`${missing.join(", ")} is missing.`);
+          | 	      ^
+      312 | }
+      313 |
+        at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/support.ts:311:8)
+        at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/session.spec.ts:39:18
+
+    Error Context: ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright-results/session-a-new-user-makes-one-account-and-reaches-overview/error-context.md
+
+
+(node:91350) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[19/31] e2e/signin.spec.ts:13:1 › an empty sign-in shows the design error
+[20/31] e2e/signin.spec.ts:21:1 › a rejected sign-in shows the wrong-password text
+  3) e2e/signin.spec.ts:21:1 › a rejected sign-in shows the wrong-password text ────────────────────
+
+    Error: publishable, secret is missing.
+
+       at support.ts:311
+
+      309 | 		return secrets;
+      310 | 	}
+    > 311 | 	throw new Error(`${missing.join(", ")} is missing.`);
+          | 	      ^
+      312 | }
+      313 |
+        at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/support.ts:311:8)
+        at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6BNFBY1SP71MQW7C63D6KKB/e2e/signin.spec.ts:22:2
+
+    Error Context: ../../../evidence/01M6BNFBY1SP71MQW7C63D6KKB/playwright-results/signin-a-rejected-sign-in-shows-the-wrong-password-text/error-context.md
+
+
+(node:91356) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[21/31] e2e/signin.spec.ts:37:1 › forgot password and the email link do nothing
+[22/31] e2e/signin.spec.ts:46:1 › sign-in controls have labels and the focus ring
+[23/31] e2e/signin.spec.ts:59:2 › sign-in at 1440
+[24/31] e2e/signin.spec.ts:59:2 › sign-in at 390
+[25/31] e2e/signup.spec.ts:12:1 › sign-up starts at business type and pre-selects the design squads
+[26/31] e2e/signup.spec.ts:32:1 › an existing business shows its fields and four starter squads
+[27/31] e2e/signup.spec.ts:63:1 › zero squads do not open the account form
+[28/31] e2e/signup.spec.ts:76:1 › the account step reuses the sign-in fields and blocks empty input
+[29/31] e2e/signup.spec.ts:93:1 › sign-up controls have labels
+[30/31] e2e/signup.spec.ts:101:2 › sign-up at 1440
+[31/31] e2e/signup.spec.ts:101:2 › sign-up at 390
+  3 failed
+    e2e/session.spec.ts:12:1 › a correct sign-in opens the blank overview ──────────────────────────
+    e2e/session.spec.ts:38:1 › a new user makes one account and reaches overview ───────────────────
+    e2e/signin.spec.ts:21:1 › a rejected sign-in shows the wrong-password text ─────────────────────
+  28 passed (17.7s)

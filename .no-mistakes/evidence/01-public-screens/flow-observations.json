@@ -1,0 +1,28 @@
+[
+  {
+    "kind": "new",
+    "businessName": "Harbor Coffee",
+    "mission": "Reach 500 paying customers in year one",
+    "selectedChannel": "Marketplace",
+    "supportDeselectionPreserved": true,
+    "stepCount": 3,
+    "emptyAlert": "Enter your email and password to sign in.",
+    "accountDimensions": {
+      "clientWidth": 390,
+      "scrollWidth": 390
+    }
+  },
+  {
+    "kind": "existing",
+    "businessName": "Harbor Coffee",
+    "mission": "Grow 30% without adding staff",
+    "selectedChannel": "Amazon",
+    "supportDeselectionPreserved": true,
+    "stepCount": 3,
+    "emptyAlert": "Enter your email and password to sign in.",
+    "accountDimensions": {
+      "clientWidth": 390,
+      "scrollWidth": 390
+    }
+  }
+]

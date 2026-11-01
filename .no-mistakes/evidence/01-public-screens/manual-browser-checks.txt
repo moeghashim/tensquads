@@ -1,0 +1,8 @@
+home at 1440: captured rendered screen
+home at 390: captured rendered screen
+signup at 1440: captured rendered screen
+signup at 390: captured rendered screen
+signin at 1440: captured rendered screen
+signin at 390: captured rendered screen
+new business: at 390px, account form has three steps, rejects empty credentials, fits viewport; Back preserves fields and deselected squad and returns to type.
+existing business: at 390px, account form has three steps, rejects empty credentials, fits viewport; Back preserves fields and deselected squad and returns to type.
