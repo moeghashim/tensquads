@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
+import { openPostgres } from "@tensquads/adapters";
 import { allowTestSignUp, expect, recordAuthNotes, secretsFor, test, watchPageErrors } from "./support.ts";
 
 test("a visitor with no session is sent to sign-in", async ({ page }) => {
@@ -40,7 +41,12 @@ test("a new user makes one account and reaches overview", async ({ page }) => {
 	const email = `sq-${randomUUID().slice(0, 8)}@example.com`;
 	const password = `Ts${randomUUID().replaceAll("-", "")}Zq7`;
 	const sql = neon(secrets.testDatabase);
-	await applyMigration(sql);
+	const postgres = openPostgres(secrets.testDatabase);
+	try {
+		await postgres.migrate();
+	} finally {
+		await postgres.close();
+	}
 	const notes = watchPageErrors(page);
 	const authNotes = await recordAuthNotes(page);
 	await allowTestSignUp(page, secrets.publishable, secrets.secret);
@@ -129,23 +135,6 @@ async function deleteClerkUser(secret: string, userId: string) {
 	});
 	if (!response.ok && response.status !== 404) {
 		throw new Error(`Clerk delete user failed with status ${response.status}.`);
-	}
-}
-
-async function applyMigration(sql: Sql) {
-	const { readFileSync } = await import("node:fs");
-	const script = readFileSync(new URL("../packages/adapters/src/neon/migration.sql", import.meta.url), "utf8");
-	const statements = script
-		.split(/;\s*(?:\n|$)/)
-		.map((statement) => statement.trim())
-		.filter((statement) => statement.length > 0);
-	for (const statement of statements) {
-		try {
-			await sql.query(statement);
-		} catch (error) {
-			const message = error instanceof Error ? error.message : "migration failed";
-			throw new Error(message.replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted]"));
-		}
 	}
 }
 

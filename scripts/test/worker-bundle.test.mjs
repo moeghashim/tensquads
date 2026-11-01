@@ -168,7 +168,7 @@ async function executeBundle(outfile) {
 		import { createRequire, isBuiltin, registerHooks, syncBuiltinESMExports } from "node:module";
 		const allow = new Set(${JSON.stringify(allow)});
 		const reads = [];
-		let deferredBuiltin = null;
+		const forbiddenBuiltins = [];
 		const seen = new WeakSet();
 		const baseRequire = createRequire(process.cwd() + "/worker-guard.mjs");
 		function canonicalBuiltin(specifier) {
@@ -183,7 +183,8 @@ async function executeBundle(outfile) {
 		function rejectBuiltin(specifier) {
 			const name = canonicalBuiltin(specifier);
 			if (!name || allow.has(name)) return;
-			if (reachesFs(specifier)) { deferredBuiltin ??= name; return; }
+			forbiddenBuiltins.push(name);
+			if (reachesFs(specifier)) return;
 			throw new Error("Import-time built-in: " + name);
 		}
 		function wrapObject(target) {
@@ -260,9 +261,11 @@ async function executeBundle(outfile) {
 		let error = null;
 		try {
 			await import(${JSON.stringify(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`)});
-			if (deferredBuiltin) throw new Error("Import-time built-in: " + deferredBuiltin);
 		}
 		catch (cause) { error = cause instanceof Error ? cause.message : String(cause); }
+		if (error === null && forbiddenBuiltins.length > 0) {
+			error = reads.length > 0 ? "Import-time filesystem read" : "Import-time built-in: " + forbiddenBuiltins[0];
+		}
 		process.stdout.write(JSON.stringify({ reads, error }));
 	`;
 	return JSON.parse(execFileSync(process.execPath, ["--input-type=module"], { input: script, encoding: "utf8" }));
@@ -513,7 +516,17 @@ test("a third-party import may reach only built-ins the real bundle needs", asyn
 		}
 	}
 	for (const [source, builtin] of cases) {
-		const directory = mkdtempSync(join(tmpdir(), "tensquads-allow-"));
+		assert.deepEqual(await executeImportFixture(source), {
+			reads: [],
+			error: builtin === null ? null : `Import-time built-in: ${builtin}`,
+		});
+	}
+});
+
+async function executeImportFixture(source) {
+	const directory = mkdtempSync(join(tmpdir(), "tensquads-allow-"));
+	let bundled;
+	try {
 		const packageDir = join(directory, "node_modules", "reads-at-import");
 		mkdirSync(packageDir, { recursive: true });
 		writeFileSync(
@@ -523,19 +536,47 @@ test("a third-party import may reach only built-ins the real bundle needs", asyn
 		writeFileSync(join(packageDir, "index.js"), `${source}\nexport const value = 1;\n`);
 		const fixture = join(directory, "entry.js");
 		writeFileSync(fixture, 'import "reads-at-import";\nexport const ok = 1;\n');
-		const bundled = await bundleWithMeta([fixture]);
-		try {
-			const execution = await executeBundle(bundled.outfile);
-			if (builtin === null) {
-				assert.deepEqual(execution, { reads: [], error: null });
-				continue;
-			}
-			assert.equal(execution.error, `Import-time built-in: ${builtin}`);
-			assert.deepEqual(execution.reads, []);
-		} finally {
-			rmSync(bundled.directory, { recursive: true, force: true });
-			rmSync(directory, { recursive: true, force: true });
+		bundled = await bundleWithMeta([fixture]);
+		return await executeBundle(bundled.outfile);
+	} finally {
+		if (bundled) rmSync(bundled.directory, { recursive: true, force: true });
+		rmSync(directory, { recursive: true, force: true });
+	}
+}
+
+test("caught forbidden built-in reaches still fail the worker guard", async () => {
+	for (const specifier of ["child_process", "node:child_process", "module", "node:module"]) {
+		for (const call of [
+			`require("${specifier}")`,
+			`await import("${specifier}")`,
+			`process.getBuiltinModule("${specifier}")`,
+			`process.binding("${specifier}")`,
+			`process._linkedBinding("${specifier}")`,
+		]) {
+			assert.deepEqual(await executeImportFixture(`try { ${call}; } catch {}`), {
+				reads: [],
+				error: `Import-time built-in: ${specifier.replace(/^node:/, "")}`,
+			});
 		}
+	}
+	assert.deepEqual(
+		await executeImportFixture('try { process.getBuiltinModule("module")._readPackage("/tmp"); } catch {}'),
+		{ reads: [], error: "Import-time built-in: module" },
+	);
+});
+
+test("caught filesystem calls retain their read evidence", async () => {
+	for (const call of [
+		'process.getBuiltinModule("fs").statSync("secret.txt")',
+		'require("fs").statSync("secret.txt")',
+		'(await import("node:fs/promises")).stat("secret.txt")',
+		'process.binding("fs").statSync("secret.txt")',
+		'process._linkedBinding("fs").statSync("secret.txt")',
+	]) {
+		const result = await executeImportFixture(`try { ${call}; } catch {}`);
+		assert.equal(result.error, "Import-time filesystem read");
+		assert.equal(result.reads.length, 1);
+		assert.equal(result.reads[0].path, "secret.txt");
 	}
 });
 
