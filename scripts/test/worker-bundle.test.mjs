@@ -176,12 +176,19 @@ function executeBundle(outfile) {
 					try { wrapObject(target.promises); } catch {}
 					continue;
 				}
-				if (descriptor.get || descriptor.set || typeof descriptor.value !== "function") continue;
+				if (typeof Reflect.get(target, name) !== "function") continue;
 				const wrapped = function (...args) {
 					reads.push({ name, path: args.length === 0 ? "" : String(args[0]) });
 					throw new Error("Import-time filesystem read");
 				};
-				try { target[name] = wrapped; } catch {}
+				try {
+					Object.defineProperty(target, name, {
+						value: wrapped,
+						writable: true,
+						enumerable: descriptor.enumerable,
+						configurable: descriptor.configurable,
+					});
+				} catch {}
 			}
 		}
 		for (const specifier of ["fs", "node:fs", "fs/promises", "node:fs/promises"]) wrapObject(require(specifier));
@@ -321,6 +328,18 @@ test("every filesystem function records an import-time call", async () => {
 		['import { fdatasyncSync } from "node:fs";\nfdatasyncSync(3);\n', "fdatasyncSync", "3"],
 		['import { chmod } from "node:fs/promises";\nchmod("secret.txt", 0o600);\n', "chmod", "secret.txt"],
 	];
+	for (const specifier of ["fs", "node:fs"]) {
+		for (const name of ["ReadStream", "FileReadStream", "WriteStream", "FileWriteStream"]) {
+			for (const source of [
+				`import { ${name} } from "${specifier}"; new ${name}(null, { fd: 0, autoClose: false });`,
+				`import fs from "${specifier}"; new fs.${name}(null, { fd: 0, autoClose: false });`,
+				`const fs = require("${specifier}"); new fs.${name}(null, { fd: 0, autoClose: false });`,
+			]) {
+				calls.push([source, name, "null"]);
+			}
+		}
+	}
+	calls.push(['import { chmod } from "fs/promises"; chmod("secret.txt", 0o600);', "chmod", "secret.txt"]);
 	for (const [source, name, path] of calls) {
 		const directory = mkdtempSync(join(tmpdir(), "tensquads-any-fs-"));
 		const packageDir = join(directory, "node_modules", "reads-at-import");
