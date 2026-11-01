@@ -1,7 +1,18 @@
-import { createRepositories, openPostgres, saveWorkspace } from "@tensquads/adapters";
+import { createRepositories, openPostgres, saveWorkspace, type WorkspaceSnapshot } from "@tensquads/adapters";
 
 import { loadEnv } from "./env.ts";
 import { workspaceFromDesign } from "./workspace.ts";
+
+function stampDemoOwner(snapshot: WorkspaceSnapshot, clerkUserId: string | undefined): WorkspaceSnapshot {
+	const id = clerkUserId?.trim() ?? "";
+	if (id.length === 0) {
+		return snapshot;
+	}
+	return {
+		...snapshot,
+		accounts: snapshot.accounts.map((entry) => (entry.account.id === "demo" ? { ...entry, clerkUserId: id } : entry)),
+	};
+}
 
 loadEnv();
 const connection = process.env.NEON_POSTGRES_CONNECTION_STRING;
@@ -15,7 +26,7 @@ try {
 	// The migration creates missing tables and adds columns an older database lacks.
 	// Apply it on every seed. Do not branch on a driver-specific row shape.
 	await opened.migrate();
-	const snapshot = workspaceFromDesign();
+	const snapshot = stampDemoOwner(workspaceFromDesign(), process.env.DEMO_CLERK_USER_ID);
 	await saveWorkspace(opened.db, snapshot);
 	const totals = await createRepositories(opened.db).platform.totals({
 		accountId: "platform",
