@@ -243,3 +243,10 @@ ALTER TABLE bugs ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
 ALTER TABLE feature_requests ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
 ALTER TABLE accounts ADD COLUMN IF NOT EXISTS clerk_user_id text;
 CREATE UNIQUE INDEX IF NOT EXISTS accounts_clerk_user_id_key ON accounts (clerk_user_id);
+
+CREATE TABLE IF NOT EXISTS bus_cursors (
+  account_id text PRIMARY KEY REFERENCES accounts (id),
+  seq integer NOT NULL,
+  clock integer NOT NULL,
+  script_index integer NOT NULL
+);

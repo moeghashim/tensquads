@@ -4,11 +4,15 @@ import { migrationSql } from "../src/neon/migration-sql.ts";
 import type { AppDatabase } from "../src/neon/postgres.ts";
 import { schema } from "../src/neon/schema.ts";
 
-export async function openPglite(): Promise<{ db: AppDatabase; close: () => Promise<void> }> {
+interface QueryLogger {
+	logQuery(query: string, params: unknown[]): void;
+}
+
+export async function openPglite(logger?: QueryLogger): Promise<{ db: AppDatabase; close: () => Promise<void> }> {
 	const client = new PGlite();
 	await client.exec(migrationSql);
 	return {
-		db: drizzlePglite(client, { schema }),
+		db: drizzlePglite(client, { schema, logger }),
 		close: async () => {
 			await client.close();
 		},

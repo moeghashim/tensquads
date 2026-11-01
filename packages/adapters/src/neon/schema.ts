@@ -110,6 +110,15 @@ export const skills = pgTable(
 	(table) => [primaryKey({ columns: [table.accountId, table.agentId, table.id] })],
 );
 
+export const busCursors = pgTable("bus_cursors", {
+	accountId: text("account_id")
+		.primaryKey()
+		.references(() => accounts.id),
+	seq: integer("seq").notNull(),
+	clock: integer("clock").notNull(),
+	scriptIndex: integer("script_index").notNull(),
+});
+
 export const busEvents = pgTable(
 	"bus_events",
 	{
@@ -270,6 +279,7 @@ export const schema = {
 	agents,
 	machines,
 	skills,
+	busCursors,
 	busEvents,
 	stateEntries,
 	rules,

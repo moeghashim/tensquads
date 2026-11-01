@@ -36,7 +36,13 @@ import {
 } from "@tensquads/domain";
 import { asc, eq } from "drizzle-orm";
 
+import { askRevise, setAgentOn, setAutonomy, setSkillOn } from "./commands/agents.ts";
+import { decide, decideMission } from "./commands/approvals.ts";
+import { beginSend, finishSend } from "./commands/conversation.ts";
+import { addRule, setLimit, setRuleOn } from "./commands/rules.ts";
+import { nextEvent } from "./commands/traffic.ts";
 import { createWorkspace } from "./create-workspace.ts";
+import { accountForClerkUser } from "./frame.ts";
 import type { AppDatabase } from "./postgres.ts";
 import {
 	accounts,
@@ -70,22 +76,33 @@ export function createRepositories(db: AppDatabase): RepositoryBag {
 			overviewTiles: (scope) => listTiles(db, scope),
 			dailyRevenue: (scope) => listRevenue(db, scope),
 			createWorkspace: (scope, draft) => createWorkspace(db, scope, draft),
+			accountForClerkUser: (clerkUserId) => accountForClerkUser(db, clerkUserId),
 		},
 		squads: {
 			listSquads: (scope) => listSquads(db, scope),
 			listAgents: (scope) => listAgents(db, scope),
 			master: (scope) => readMaster(db, scope),
 			tasksDone: (scope) => tasksDone(db, scope),
+			setAgentOn: (scope, agentId, on) => setAgentOn(db, scope, agentId, on),
+			setSkillOn: (scope, agentId, skillId, on) => setSkillOn(db, scope, agentId, skillId, on),
+			setAutonomy: (scope, agentId, autonomy) => setAutonomy(db, scope, agentId, autonomy),
+			askRevise: (scope, agentId) => askRevise(db, scope, agentId),
 		},
 		bus: {
 			listEvents: (scope) => listEvents(db, scope),
 			readStore: (scope) => readStore(db, scope),
+			nextEvent: (scope) => nextEvent(db, scope),
 		},
 		policy: {
 			listRules: (scope) => listRules(db, scope),
 			listApprovals: (scope) => listApprovals(db, scope),
 			listMissionProposals: (scope) => listProposals(db, scope),
 			inbox: (scope) => readInbox(db, scope),
+			decide: (scope, id, ok) => decide(db, scope, id, ok),
+			decideMission: (scope, id, ok) => decideMission(db, scope, id, ok),
+			setRuleOn: (scope, id, on) => setRuleOn(db, scope, id, on),
+			addRule: (scope, draft) => addRule(db, scope, draft),
+			setLimit: (scope, key, value) => setLimit(db, scope, key, value),
 		},
 		catalog: {
 			listImages: (scope) => listImages(db, scope),
@@ -93,6 +110,8 @@ export function createRepositories(db: AppDatabase): RepositoryBag {
 		},
 		conversation: {
 			thread: (scope) => readThread(db, scope),
+			beginSend: (scope, text) => beginSend(db, scope, text),
+			finishSend: (scope) => finishSend(db, scope),
 		},
 	};
 }
