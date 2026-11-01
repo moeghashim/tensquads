@@ -1,6 +1,6 @@
 import { Context } from "cordis";
 
-import { emptyPlugins } from "./plugins.ts";
+import { emptyPlugins } from "./plugins/index.ts";
 import {
 	DECIDER_MISSING,
 	type Decider,

@@ -1,5 +1,20 @@
 export { Kernel } from "./kernel.ts";
-export { bus, catalog, conversation, emptyPlugins, platform, policy, squads } from "./plugins.ts";
+export {
+	bus,
+	catalog,
+	conversation,
+	emptyPlugins,
+	noAgentReply,
+	pausedReply,
+	platform,
+	policy,
+	resultFor,
+	route,
+	skillFor,
+	squads,
+	taskPayload,
+	workingReply,
+} from "./plugins/index.ts";
 export {
 	type AccountScope,
 	type BusEventRecord,
