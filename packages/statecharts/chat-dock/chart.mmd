@@ -1,0 +1,23 @@
+---
+title: "Chat and dock"
+---
+stateDiagram-v2
+  state "Legend" as legend {
+    lg0: Idle
+    lg1: Working
+    lg2: Replied
+  }
+  class lg0 blue
+  class lg1 orange
+  class lg2 teal
+  s0: Idle
+  s1: Replied
+  s2: Working
+  [*] --> s0
+  s0 --> s1: no agent matches or the agent is paused
+  s0 --> s2: you send with no skill on or you send
+  s2 --> s0: you reload
+  s2 --> s1: the agent replies
+  class s0 blue
+  class s1 teal
+  class s2 orange
