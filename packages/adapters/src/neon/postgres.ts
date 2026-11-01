@@ -17,9 +17,15 @@ function migrationStatements(script: string): readonly string[] {
 async function applyMigration(pool: Pool): Promise<void> {
 	const client = await pool.connect();
 	try {
+		await client.query("BEGIN");
+		await client.query("SELECT pg_advisory_xact_lock(1952804467, 1)");
 		for (const statement of migrationStatements(migrationSql)) {
 			await client.query(statement);
 		}
+		await client.query("COMMIT");
+	} catch (error) {
+		await client.query("ROLLBACK");
+		throw error;
 	} finally {
 		client.release();
 	}
