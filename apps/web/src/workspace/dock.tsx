@@ -21,6 +21,16 @@ export function Dock() {
 	if (pathname.startsWith("/chat")) {
 		return null;
 	}
+	return <VisibleDock workspace={workspace} navigate={navigate} />;
+}
+
+function VisibleDock({
+	workspace,
+	navigate,
+}: {
+	readonly workspace: ReturnType<typeof useWorkspace>;
+	readonly navigate: ReturnType<typeof useNavigate>;
+}) {
 	const {
 		frame,
 		dockOpen,
@@ -36,7 +46,7 @@ export function Dock() {
 	} = workspace;
 	const mark = masterInitial(frame.masterName);
 	const online = frame.agents.filter((agent) => agent.on).length;
-	const unread = !dockOpen && approvalCount > 0;
+	const unread = dockUnread(dockOpen, approvalCount);
 	const label = dockOpen ? "Hide chat" : `Ask ${frame.masterName}`;
 	return (
 		<div data-if="showDock">
@@ -96,6 +106,10 @@ export function Dock() {
 			</div>
 		</div>
 	);
+}
+
+function dockUnread(open: boolean, approvalCount: number): boolean {
+	return !open && approvalCount > 0;
 }
 
 function DockPanel({
@@ -300,10 +314,8 @@ function DockBubble({
 	readonly markTag: boolean;
 }) {
 	const user = message.from === "user";
-	const agent = message.from === "agent" ? agents.find((item) => item.id === message.agent) : undefined;
 	const align = user ? "flex-end" : "flex-start";
-	const tint = agent?.tint ?? "#181818";
-	const tag = agent ? `${agent.name} squad, via ${masterName}` : masterName;
+	const { tint, tag } = bubbleTag(message, masterName, agents);
 	return (
 		<div style={css(`display: flex; flex-direction: column; align-items: ${align}; gap: 4px`)}>
 			{user ? null : (
@@ -319,6 +331,24 @@ function DockBubble({
 			<div style={css(dockBubble(message.from))}>{message.text}</div>
 		</div>
 	);
+}
+
+function bubbleAgent(
+	message: FrameMessage,
+	agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[],
+) {
+	return message.from === "agent" ? agents.find((item) => item.id === message.agent) : undefined;
+}
+
+function bubbleTag(
+	message: FrameMessage,
+	masterName: string,
+	agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[],
+) {
+	const agent = bubbleAgent(message, agents);
+	const tint = agent?.tint ?? "#181818";
+	const tag = agent ? `${agent.name} squad, via ${masterName}` : masterName;
+	return { tint, tag };
 }
 
 function dockBubble(from: FrameMessage["from"]): string {

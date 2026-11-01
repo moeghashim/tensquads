@@ -15,21 +15,13 @@ export const loadWorkspaceFrame = createServerFn({ method: "GET" }).handler(asyn
 export const beginWorkspaceSend = createServerFn({ method: "POST" })
 	.validator(validateText)
 	.handler(async ({ data }) => {
-		const { requireWorkspace } = await import("./workspace-session.ts");
-		return requireWorkspace(async (scope, db) => {
-			const { createRepositories } = await import("@tensquads/adapters");
-			const { Kernel } = await import("@tensquads/kernel");
-			return new Kernel(createRepositories(db)).beginSend(scope, data);
-		});
+		const { sendWorkspace } = await import("./workspace-session.ts");
+		return sendWorkspace("beginSend", data);
 	});
 
 export const finishWorkspaceSend = createServerFn({ method: "POST" })
 	.validator(validateText)
 	.handler(async ({ data }) => {
-		const { requireWorkspace } = await import("./workspace-session.ts");
-		return requireWorkspace(async (scope, db) => {
-			const { createRepositories } = await import("@tensquads/adapters");
-			const { Kernel } = await import("@tensquads/kernel");
-			return new Kernel(createRepositories(db)).finishSend(scope, data);
-		});
+		const { sendWorkspace } = await import("./workspace-session.ts");
+		return sendWorkspace("finishSend", data);
 	});

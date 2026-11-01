@@ -25,66 +25,26 @@ export function WorkspaceProvider({
 	const [thinking, setThinking] = useState(false);
 	const [thinkingAgent, setThinkingAgent] = useState("");
 	const [pending, setPending] = useState(false);
-	const [selEvent, setSelEvent] = useState("");
-	const [busFilter, setBusFilter] = useState("all");
-	const [live, setLive] = useState(false);
-	const [messages, setMessages] = useState(frame.messages);
-	const [approvalCount, setApprovalCount] = useState(frame.approvalCount);
-	const [ruleForm, setRuleForm] = useState<RuleForm>({
-		when: "A new order arrives",
-		agent: frame.agents[0]?.id ?? "orders",
-		action: "",
-		approval: "Ask first",
-	});
+	const { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive, ruleForm, setRuleForm } =
+		useWorkspaceControls(frame);
 	const sending = useRef(false);
+	const { messages, setMessages, approvalCount, applyFrame } = useFrameMessages(frame, sending);
+
 	const mounted = useRef(true);
 	const refresh = useCallback(() => router.invalidate({ sync: true }), [router]);
-	const refreshFrame = useCallback(async (): Promise<WorkspaceFrameData> => {
-		await refresh();
-		const match = router.state.matches.find((item) => item.routeId === "/_workspace");
-		if (!match || match.status !== "success" || !match.loaderData)
-			throw new Error("The workspace frame did not load.");
-		return match.loaderData;
-	}, [refresh, router]);
+	const refreshFrame = useFrameRefresh(router, refresh);
 	useMountedFlag(mounted);
-	// A loader that arrives during a send must not replace the bubbles from that send.
-	const [seenFrame, setSeenFrame] = useState(frame);
-	if (frame !== seenFrame) {
-		setSeenFrame(frame);
-		if (!sending.current) {
-			setMessages(frame.messages);
-			setApprovalCount(frame.approvalCount);
-		}
-	}
 
-	const submit = useCallback(
-		(text?: string) => {
-			if (sending.current || thinking) {
-				return;
-			}
-			const value = (text ?? draft).trim();
-			if (value.length === 0) {
-				return;
-			}
-			sending.current = true;
-			setPending(true);
-			setDraft("");
-			void sendDraft(value, {
-				mounted,
-				setMessages,
-				setThinking,
-				setThinkingAgent,
-				setPending,
-				refreshFrame,
-				sending,
-				applyFrame: (loaded: WorkspaceFrameData) => {
-					setMessages(loaded.messages);
-					setApprovalCount(loaded.approvalCount);
-				},
-			});
-		},
-		[draft, refreshFrame, thinking],
-	);
+	const submit = useSubmit(draft, thinking, setDraft, {
+		mounted,
+		setMessages,
+		setThinking,
+		setThinkingAgent,
+		setPending,
+		refreshFrame,
+		sending,
+		applyFrame,
+	});
 
 	const value = useMemo(
 		() => ({
@@ -123,6 +83,10 @@ export function WorkspaceProvider({
 			refresh,
 			ruleForm,
 			selEvent,
+			setBusFilter,
+			setLive,
+			setRuleForm,
+			setSelEvent,
 			submit,
 			thinking,
 			thinkingAgent,
@@ -134,6 +98,73 @@ export function WorkspaceProvider({
 			<InspectBridge>{children}</InspectBridge>
 		</WorkspaceContext.Provider>
 	);
+}
+
+function useWorkspaceControls(frame: WorkspaceFrameData) {
+	const [selEvent, setSelEvent] = useState("");
+	const [busFilter, setBusFilter] = useState("all");
+	const [live, setLive] = useState(false);
+	const [ruleForm, setRuleForm] = useState<RuleForm>({
+		when: "A new order arrives",
+		agent: frame.agents[0]?.id ?? "orders",
+		action: "",
+		approval: "Ask first",
+	});
+	return { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive, ruleForm, setRuleForm };
+}
+
+function useSubmit(draft: string, thinking: boolean, setDraft: (value: string) => void, hooks: SendHooks) {
+	const { sending, setPending } = hooks;
+	return useCallback(
+		(text?: string) => {
+			if (sendBlocked(sending.current, thinking)) return;
+			const value = draftValue(text, draft);
+			if (value.length === 0) return;
+			sending.current = true;
+			setPending(true);
+			setDraft("");
+			void sendDraft(value, hooks);
+		},
+		[draft, hooks, sending, setDraft, setPending, thinking],
+	);
+}
+
+function useFrameRefresh(router: ReturnType<typeof useRouter>, refresh: () => Promise<void>) {
+	return useCallback(async (): Promise<WorkspaceFrameData> => {
+		await refresh();
+		const match = router.state.matches.find((item) => item.routeId === "/_workspace");
+		if (!match || match.status !== "success" || !match.loaderData)
+			throw new Error("The workspace frame did not load.");
+		return match.loaderData;
+	}, [refresh, router]);
+}
+
+function sendBlocked(sending: boolean, thinking: boolean): boolean {
+	return sending || thinking;
+}
+
+function draftValue(text: string | undefined, draft: string): string {
+	return (text ?? draft).trim();
+}
+
+function useFrameMessages(frame: WorkspaceFrameData, sending: { current: boolean }) {
+	const [messages, setMessages] = useState(frame.messages);
+	const [approvalCount, setApprovalCount] = useState(frame.approvalCount);
+	const applyFrame = useCallback((loaded: WorkspaceFrameData) => {
+		setMessages(loaded.messages);
+		setApprovalCount(loaded.approvalCount);
+	}, []);
+	// A loader that arrives during a send must not replace the bubbles from that send.
+	const [seenFrame, setSeenFrame] = useState(frame);
+	if (frame !== seenFrame) {
+		setSeenFrame(frame);
+		if (!sending.current) {
+			setMessages(frame.messages);
+			setApprovalCount(frame.approvalCount);
+		}
+	}
+
+	return { messages, setMessages, approvalCount, applyFrame };
 }
 
 function InspectBridge({ children }: { readonly children: ReactNode }) {
@@ -200,43 +231,65 @@ interface SendHooks {
 
 async function sendDraft(value: string, hooks: SendHooks) {
 	try {
-		const started = await beginWorkspaceSend({ data: value });
-		if (!hooks.mounted.current) {
-			return;
-		}
-		if (started.kind === "answered" || started.kind === "working") {
-			hooks.setMessages(started.messages);
-		}
-		if (started.kind !== "working") {
-			return;
-		}
-		hooks.setThinking(true);
-		hooks.setThinkingAgent(started.agentName);
-		await delay(replyWaitMs);
-		if (!hooks.mounted.current) {
-			return;
-		}
-		const finished = await finishWorkspaceSend({ data: started.taskId });
-		if (hooks.mounted.current && finished.kind === "replied") {
-			hooks.setMessages(finished.messages);
-		}
+		await performSend(value, hooks);
 	} catch {
 		// Refresh below loads the thread the server kept. No local bubble remains.
 	} finally {
-		let refreshed: WorkspaceFrameData | undefined;
-		try {
-			if (hooks.mounted.current) refreshed = await hooks.refreshFrame();
-		} catch {
-		} finally {
-			hooks.sending.current = false;
-			if (hooks.mounted.current) {
-				if (refreshed) hooks.applyFrame(refreshed);
-				hooks.setPending(false);
-				hooks.setThinking(false);
-				hooks.setThinkingAgent("");
-			}
-		}
+		await refreshAfterSend(hooks);
 	}
+}
+
+async function performSend(value: string, hooks: SendHooks) {
+	const started = await beginWorkspaceSend({ data: value });
+	if (!hooks.mounted.current) {
+		return;
+	}
+	showStartedMessages(started, hooks);
+	if (started.kind !== "working") {
+		return;
+	}
+	await finishWorkingSend(started, hooks);
+}
+
+function showStartedMessages(started: Awaited<ReturnType<typeof beginWorkspaceSend>>, hooks: SendHooks) {
+	if (started.kind === "answered" || started.kind === "working") {
+		hooks.setMessages(started.messages);
+	}
+}
+
+async function finishWorkingSend(
+	started: Extract<Awaited<ReturnType<typeof beginWorkspaceSend>>, { kind: "working" }>,
+	hooks: SendHooks,
+) {
+	hooks.setThinking(true);
+	hooks.setThinkingAgent(started.agentName);
+	await delay(replyWaitMs);
+	if (!hooks.mounted.current) {
+		return;
+	}
+	const finished = await finishWorkspaceSend({ data: started.taskId });
+	if (hooks.mounted.current && finished.kind === "replied") {
+		hooks.setMessages(finished.messages);
+	}
+}
+
+async function refreshAfterSend(hooks: SendHooks) {
+	let refreshed: WorkspaceFrameData | undefined;
+	try {
+		if (hooks.mounted.current) refreshed = await hooks.refreshFrame();
+	} catch {
+	} finally {
+		hooks.sending.current = false;
+		completeSend(hooks, refreshed);
+	}
+}
+
+function completeSend(hooks: SendHooks, refreshed: WorkspaceFrameData | undefined) {
+	if (!hooks.mounted.current) return;
+	if (refreshed) hooks.applyFrame(refreshed);
+	hooks.setPending(false);
+	hooks.setThinking(false);
+	hooks.setThinkingAgent("");
 }
 
 function delay(ms: number) {

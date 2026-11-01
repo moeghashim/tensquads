@@ -11,7 +11,7 @@ type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 
 const MAIN_THREAD = "main";
 
-export function messageRank(id: string, sortOrder: number): number {
+function messageRank(id: string, sortOrder: number): number {
 	const match = /^c(\d+)$/.exec(id);
 	return match?.[1] ? Number(match[1]) : sortOrder;
 }

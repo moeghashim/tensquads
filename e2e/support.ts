@@ -3,30 +3,11 @@ import { test as base, expect, type Page } from "@playwright/test";
 
 import { localSecrets } from "../scripts/write-dev-vars.mjs";
 
-const fontStylesheetUrl =
-	"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
-const fontStylesheet = readFileSync(new URL("./fonts/google-fonts.css", import.meta.url), "utf8");
-const fontFiles = new Map(
-	[...fontStylesheet.matchAll(/url\((https:\/\/fonts\.gstatic\.com\/[^)]+)\)/g)].map(([, url]) => [
-		url,
-		readFileSync(new URL(`./fonts/${new URL(url).pathname.split("/").at(-1)}`, import.meta.url)),
-	]),
-);
+import { installPinnedFonts } from "./fonts.ts";
 
 export const test = base.extend({
 	page: async ({ page }, use) => {
-		await page.route(fontStylesheetUrl, (route) => route.fulfill({ contentType: "text/css", body: fontStylesheet }));
-		await page.route("https://fonts.gstatic.com/**", (route) => {
-			const body = fontFiles.get(route.request().url());
-			if (!body) {
-				throw new Error(`Unpinned font request: ${route.request().url()}`);
-			}
-			return route.fulfill({
-				contentType: "font/woff2",
-				headers: { "access-control-allow-origin": "*" },
-				body,
-			});
-		});
+		await installPinnedFonts(page);
 		const goto = page.goto.bind(page);
 		page.goto = (async (url: string, options?: Parameters<Page["goto"]>[1]) => {
 			const response = await goto(url, options);

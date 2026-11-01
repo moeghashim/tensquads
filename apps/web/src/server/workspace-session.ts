@@ -1,5 +1,6 @@
 import { redirect } from "@tanstack/react-router";
 
+import { requireClerkUser } from "./session.ts";
 import { workerEnv } from "./worker-env.ts";
 
 interface AccountScope {
@@ -16,15 +17,7 @@ async function databaseUrl(): Promise<string> {
 }
 
 export async function requireWorkspace<T>(work: (scope: AccountScope, db: WorkspaceDb) => Promise<T>): Promise<T> {
-	const secret = await workerEnv("CLERK_SECRET_KEY");
-	if (secret.length === 0) {
-		throw redirect({ to: "/signin" });
-	}
-	const { auth } = await import("@clerk/tanstack-react-start/server");
-	const session = await auth();
-	if (!session.userId) {
-		throw redirect({ to: "/signin" });
-	}
+	const userId = await requireClerkUser();
 	const connection = await databaseUrl();
 	if (connection.length === 0) {
 		throw new Error("The database is not configured.");
@@ -32,7 +25,7 @@ export async function requireWorkspace<T>(work: (scope: AccountScope, db: Worksp
 	const { openPostgres, accountForClerkUser } = await import("@tensquads/adapters");
 	const database = openPostgres(connection);
 	try {
-		const account = await accountForClerkUser(database.db, session.userId);
+		const account = await accountForClerkUser(database.db, userId);
 		if (!account) {
 			throw redirect({ to: "/signup" });
 		}
@@ -47,4 +40,12 @@ type WorkspaceDb = Parameters<typeof readFrame>[0];
 export async function readFrame(db: import("@tensquads/adapters").AppDatabase, scope: AccountScope) {
 	const { readWorkspaceFrame } = await import("@tensquads/adapters");
 	return readWorkspaceFrame(db, scope);
+}
+
+export async function sendWorkspace(method: "beginSend" | "finishSend", data: string) {
+	return requireWorkspace(async (scope, db) => {
+		const { createRepositories } = await import("@tensquads/adapters");
+		const { Kernel } = await import("@tensquads/kernel");
+		return new Kernel(createRepositories(db))[method](scope, data);
+	});
 }

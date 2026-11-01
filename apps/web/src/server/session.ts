@@ -1,9 +1,8 @@
 import { redirect } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 
 import { workerEnv } from "./worker-env.ts";
 
-export const requireSession = createServerFn({ method: "GET" }).handler(async () => {
+export async function requireClerkUser(): Promise<string> {
 	const secret = await workerEnv("CLERK_SECRET_KEY");
 	if (secret.length === 0) {
 		throw redirect({ to: "/signin" });
@@ -13,5 +12,5 @@ export const requireSession = createServerFn({ method: "GET" }).handler(async ()
 	if (!session.userId) {
 		throw redirect({ to: "/signin" });
 	}
-	return { userId: session.userId };
-});
+	return session.userId;
+}

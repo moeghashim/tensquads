@@ -8,13 +8,23 @@ export interface MissionAgent {
 export function missionBits(agent: MissionAgent, masterName: string) {
 	const mission = agent.mission ?? "";
 	const contribution = agent.contribution ?? 0;
-	const pending = mission.length === 0;
+	if (mission.length === 0) return pendingMission(masterName);
 	return {
-		missionLine: pending ? `Mission pending. ${masterName} has proposed one; approve it in the inbox.` : mission,
-		missionColor: pending ? "#923b0f" : "#282828",
-		contribution: pending ? 0 : contribution,
-		contributionLabel: pending ? "Pending" : `${contribution}% done`,
-		barColor: barColor(pending, contribution),
+		missionLine: mission,
+		missionColor: "#282828",
+		contribution,
+		contributionLabel: `${contribution}% done`,
+		barColor: barColor(false, contribution),
+	};
+}
+
+function pendingMission(masterName: string) {
+	return {
+		missionLine: `Mission pending. ${masterName} has proposed one; approve it in the inbox.`,
+		missionColor: "#923b0f",
+		contribution: 0,
+		contributionLabel: "Pending",
+		barColor: barColor(true, 0),
 	};
 }
 
@@ -39,6 +49,7 @@ export function agentStatus(on: boolean) {
 	};
 }
 
+// fallow-ignore-next-line unused-export
 export function skillChips(skills: readonly { readonly id: string; readonly on: boolean }[]): readonly string[] {
 	return skills
 		.filter((skill) => skill.on)
@@ -51,6 +62,10 @@ export function initials(owner: string): string {
 		const local = owner.split("@")[0] ?? "";
 		return local.slice(0, 2).toUpperCase();
 	}
+	return nameInitials(owner);
+}
+
+function nameInitials(owner: string): string {
 	const words = owner
 		.trim()
 		.split(/\s+/)

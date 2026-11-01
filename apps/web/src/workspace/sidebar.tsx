@@ -117,22 +117,14 @@ export function Sidebar() {
 }
 
 function currentPage(pathname: string): "overview" | "chat" | "agents" | "flow" | "rules" | "" {
-	if (pathname.startsWith("/agents")) {
-		return "agents";
-	}
-	if (pathname.startsWith("/traffic")) {
-		return "flow";
-	}
-	if (pathname.startsWith("/rules")) {
-		return "rules";
-	}
-	if (pathname.startsWith("/chat")) {
-		return "chat";
-	}
-	if (pathname.startsWith("/overview")) {
-		return "overview";
-	}
-	return "";
+	const pages = [
+		["/agents", "agents"],
+		["/traffic", "flow"],
+		["/rules", "rules"],
+		["/chat", "chat"],
+		["/overview", "overview"],
+	] as const;
+	return pages.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? "";
 }
 
 function NavButton({

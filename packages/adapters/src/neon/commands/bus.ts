@@ -5,8 +5,8 @@ import { traceFor } from "../../trace.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { busCursors, busEvents, stateEntries } from "../schema.ts";
 
-export const CURSOR_SEQ = 100;
-export const CURSOR_CLOCK = 11 * 60 + 2;
+const CURSOR_SEQ = 100;
+const CURSOR_CLOCK = 11 * 60 + 2;
 
 export interface EventDraft {
 	readonly from: string;
@@ -33,7 +33,7 @@ export interface BusCursor {
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 
-export function clockText(minutes: number): string {
+function clockText(minutes: number): string {
 	const hours = Math.floor(minutes / 60);
 	const rest = minutes % 60;
 	return `${String(hours).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
