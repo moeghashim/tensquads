@@ -1,0 +1,30 @@
+{"scenario":"production worker homepage","status":200,"homepageMarker":true}
+{"fixture":"fs.readFileSync","runtime":"Node","value":"{\n\t\"name\": \"tensquads\",\n\t\"private\": true,\n\t\"license\": \"MIT\",\n\t\"type\": \"module\",\n\t\"packageManager\": \"npm@11.19.1\",\n\t\"workspaces\": [\n\t\t\"apps/*\",\n\t\t\"packages/adapters\",\n\t\t\"packages/domain\",\n\t\t\"packages/kernel\",\n\t\t\"packages/seed\"\n\t],\n\t\"scripts\": {\n\t\t\"dco:fix\": \"git rebase --signoff\",\n\t\t\"clean\": \"npm run clean --workspaces --if-present\",\n\t\t\"build\": \"npm run build --workspaces --if-present\",\n\t\t\"test\": \"node --test scripts/test/*.test.mjs && node scripts/run-workspaces.mjs test\",\n\t\t\"fallow:audit\": \"fallow audit --changed-since origin/main\",\n\t\t\"preview:cloudflare\": \"npm run cf:preview -w @tensquads/web\",\n\t\t\"build:cloudflare\": \"npm run cf:build -w @tensquads/web\",\n\t\t\"deploy:cloudflare\": \"npm run cf:deploy -w @tensquads/web\",\n\t\t\"typegen:cloudflare\": \"npm run cf:typegen -w @tensquads/web\",\n\t\t\"preflight:native-deps\": \"node scripts/preflight-native-deps.mjs\",\n\t\t\"check\": \"npm run preflight:native-deps && biome check --error-on-warnings . && node scripts/check-file-length.mjs && node scripts/typecheck.mjs && node scripts/run-workspaces.mjs check\",\n\t\t\"fix\": \"npm run preflight:native-deps && biome check --write --error-on-warnings .\",\n\t\t\"prepare\": \"node scripts/prepare.mjs\",\n\t\t\"design:check\": \"node scripts/design-check.mjs\",\n\t\t\"design:inventory\": \"node scripts/design-inventory.mjs\",\n\t\t\"seed\": \"node --experimental-strip-types packages/seed/src/cli.ts\",\n\t\t\"e2e\": \"playwright test\",\n\t\t\"statechart:check\": \"node scripts/statechart-check.mjs\"\n\t},\n\t\"devDependencies\": {\n\t\t\"@axe-core/playwright\": \"^4.14.0\",\n\t\t\"@biomejs/biome\": \"2.3.5\",\n\t\t\"@neondatabase/serverless\": \"1.2.0\",\n\t\t\"@playwright/test\": \"^1.64.1\",\n\t\t\"@types/node\": \"^24.19.2\",\n\t\t\"esbuild\": \"^0.28.2\",\n\t\t\"fallow\": \"3.9.1\",\n\t\t\"husky\": \"^9.1.7\",\n\t\t\"miniflare\": \"5.20261023.1-beta\",\n\t\t\"typescript\": \"7.0.2\",\n\t\t\"yaml\": \"2.9.1\"\n\t},\n\t\"engines\": {\n\t\t\"node\": \"24.x\"\n\t},\n\t\"allowScripts\": {\n\t\t\"esbuild@0.28.2\": true,\n\t\t\"workerd@1.20261023.1\": true,\n\t\t\"fsevents@2.3.3\": true\n\t}\n}\n"}
+service core:user:tensquads: Uncaught Error: no such file or directory, readAll '/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6CBCFH2H6M9TW820PNYZ4WC/package.json'
+  at node-internal:internal_fs_sync:369:21
+  at node-internal:internal_fs_sync:370:7 in readFileSync
+  at index.js:3:12
+{"fixture":"fs.readFileSync","runtime":"workerd","failed":true,"status":0,"body":"","error":"The Workers runtime failed to start. There was likely a problem with the workerd binary or your configuration.\nRuntime stderr:\n{\"timestamp\":\"1793563713320\",\"level\":\"error\",\"source\":\"src/workerd/server/server/entry.rs:169\",\"message\":\"service core:user:tensquads: Uncaught Error: no such file or directory, readAll '/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6CBCFH2H6M9TW820PNYZ4WC/package.json'\\n  at node-internal:internal_fs_sync:369:21\\n  at node-internal:internal_fs_sync:370:7 in readFileSync\\n  at index.js:3:12\",\"context_depth\":0}"}
+{"fixture":"process.binding","runtime":"Node","value":0}
+service core:user:tensquads: Uncaught Error: The process.binding method is not implemented
+  at node-internal:public_process:193:11 in binding
+  at index.js:2:23
+{"fixture":"process.binding","runtime":"workerd","failed":true,"status":0,"body":"","error":"The Workers runtime failed to start. There was likely a problem with the workerd binary or your configuration.\nRuntime stderr:\n{\"timestamp\":\"1793563713365\",\"level\":\"error\",\"source\":\"src/workerd/server/server/entry.rs:169\",\"message\":\"service core:user:tensquads: Uncaught Error: The process.binding method is not implemented\\n  at node-internal:public_process:193:11 in binding\\n  at index.js:2:23\",\"context_depth\":0}"}
+{"fixture":"module._readPackage","runtime":"Node","value":"scratch-proof"}
+service core:user:tensquads: Uncaught TypeError: module._readPackage is not a function
+  at index.js:3:18
+{"fixture":"module._readPackage","runtime":"workerd","failed":true,"status":0,"body":"","error":"The Workers runtime failed to start. There was likely a problem with the workerd binary or your configuration.\nRuntime stderr:\n{\"timestamp\":\"1793563713408\",\"level\":\"error\",\"source\":\"src/workerd/server/server/entry.rs:169\",\"message\":\"service core:user:tensquads: Uncaught TypeError: module._readPackage is not a function\\n  at index.js:3:18\",\"context_depth\":0}"}
+{"fixture":"child_process.execFileSync","runtime":"Node","value":"ok"}
+service core:user:tensquads: Uncaught Error: The child_process.execFileSync method is not implemented
+  at node:child_process:58:11 in execFileSync
+  at index.js:3:12
+{"fixture":"child_process.execFileSync","runtime":"workerd","failed":true,"status":0,"body":"","error":"The Workers runtime failed to start. There was likely a problem with the workerd binary or your configuration.\nRuntime stderr:\n{\"timestamp\":\"1793563713452\",\"level\":\"error\",\"source\":\"src/workerd/server/server/entry.rs:169\",\"message\":\"service core:user:tensquads: Uncaught Error: The child_process.execFileSync method is not implemented\\n  at node:child_process:58:11 in execFileSync\\n  at index.js:3:12\",\"context_depth\":0}"}
+✔ workerd boots the built worker and rejects import-time builtin routes (1306.451291ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1345.335916

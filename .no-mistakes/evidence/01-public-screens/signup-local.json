@@ -1,0 +1,13 @@
+{
+  "page": "http://127.0.0.1:4173/signup",
+  "status": 200,
+  "asset": "http://127.0.0.1:4173/assets/signup-D6VyB_zk.js",
+  "assetStatus": 200,
+  "identicalToBuild": true,
+  "browserResponses": [
+    {
+      "url": "http://127.0.0.1:4173/assets/signup-D6VyB_zk.js",
+      "status": 200
+    }
+  ]
+}

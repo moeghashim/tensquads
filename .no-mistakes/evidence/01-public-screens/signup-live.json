@@ -1,0 +1,13 @@
+{
+  "page": "https://tensquads.moe-678.workers.dev/signup",
+  "status": 200,
+  "asset": "https://tensquads.moe-678.workers.dev/assets/signup-D6VyB_zk.js",
+  "assetStatus": 200,
+  "identicalToBuild": true,
+  "browserResponses": [
+    {
+      "url": "https://tensquads.moe-678.workers.dev/assets/signup-D6VyB_zk.js",
+      "status": 200
+    }
+  ]
+}
