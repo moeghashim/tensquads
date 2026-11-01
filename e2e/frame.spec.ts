@@ -102,8 +102,9 @@ test("a dock message shows the bubble, the working line, the reply, and writes t
 	await page.getByRole("button", { name: "Ask Master" }).click();
 	await page.locator("#dock-input").fill("How did ads do this week?");
 	await page.getByRole("button", { name: "Send" }).click();
-	await expect(page.getByText("How did ads do this week?")).toBeVisible();
-	await expect(page.getByText("Passing this to the Marketing agent. I will report back here.")).toBeVisible();
+	const chat = page.locator("[data-loop='dockChat']");
+	await expect(chat.getByText("How did ads do this week?")).toBeVisible({ timeout: 15_000 });
+	await expect(chat.getByText("Passing this to the Marketing agent. I will report back here.")).toBeVisible();
 	await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
 	await expect(page.getByText(marketingResult)).toBeVisible({ timeout: 10_000 });
 	await expect(page.getByText("Did the tracking for #A-1007 go through?")).toHaveCount(0);
@@ -213,7 +214,8 @@ test("the keyboard reaches the dock, shows the focus ring, and Enter sends", asy
 	expect(await generatedEvents(accountId)).toEqual([]);
 });
 
-test("the side-by-side evidence shows the design and the build", async ({ page, workspaceUser }) => {
+test("the side-by-side evidence shows the design and the build", async ({ page, workspaceUser, accountId }) => {
+	void accountId;
 	test.skip(
 		process.env.FRAME_EVIDENCE !== "1" || process.platform !== "darwin",
 		"Side-by-side evidence is captured once on macOS.",
@@ -236,7 +238,8 @@ test("the side-by-side evidence shows the design and the build", async ({ page, 
 	}
 });
 
-test("the frame matches the macOS screenshot baselines", async ({ page, workspaceUser }) => {
+test("the frame matches the macOS screenshot baselines", async ({ page, workspaceUser, accountId }) => {
+	void accountId;
 	skipUnlessMacScreenshot();
 	await openWorkspace(page, workspaceUser);
 	for (const viewport of viewports) {
