@@ -121,8 +121,27 @@ function visibleHtml(html) {
 		.replace(/<!--[\s\S]*?-->/g, "");
 }
 
-function controlText(html, tag) {
-	return tag === "input" ? "" : decode(html.replace(/<[^>]*>/g, " "));
+function controlText(html) {
+	return decode(html.replace(/<[^>]*>/g, " "));
+}
+
+function labelBefore(body, index) {
+	const before = body.slice(0, index);
+	const labels = [...before.matchAll(/<label\b[^>]*>([\s\S]*?)<\/label>/gi)];
+	if (labels.length > 0) {
+		const last = labels[labels.length - 1];
+		const between = before.slice(last.index + last[0].length);
+		if (!/<input\b/i.test(between)) return decode(last[1].replace(/<[^>]*>/g, " "));
+	}
+	const open = before.match(/<label\b[^>]*>([^<]*)$/i);
+	return open ? decode(open[1]) : "";
+}
+
+function inputIdentity(body, tag) {
+	const id = tag[2].match(/\bid="([^"]*)"/);
+	const decoded = id ? decode(id[1]) : "";
+	if (decoded) return decoded;
+	return labelBefore(body, tag.index);
 }
 
 export function inventoryHtml(html) {
@@ -140,7 +159,10 @@ export function inventoryHtml(html) {
 				tag[2].match(/\bdata-event="([^"]+)"/)?.[1] ??
 				(control === "input" || control === "textarea" || control === "select" ? "onChange" : "onClick"),
 			handler: name[1],
-			text: controlText(body.slice(tag.index + tag[0].length).split(`</${control}>`)[0], control),
+			text:
+				control === "input"
+					? inputIdentity(body, tag)
+					: controlText(body.slice(tag.index + tag[0].length).split(`</${control}>`)[0]),
 		});
 	}
 	for (const tag of body.matchAll(/<[^>]+>/g)) {
@@ -151,7 +173,7 @@ export function inventoryHtml(html) {
 		if (condition) loops.push({ kind: "if", value: condition[1] });
 	}
 	const links = [...body.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g)].map((m) => ({
-		text: controlText(m[2], "a"),
+		text: controlText(m[2]),
 		href: decode(m[1]),
 	}));
 	return { texts, handlers, loops, links, strings: {} };

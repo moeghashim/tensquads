@@ -131,3 +131,22 @@ test("built targets retain their literal URL instead of accepting design filenam
 	const actual = inventoryHtml('<a href="Home.dc.html">tensquads</a>');
 	assert.deepEqual(compareInventory(expected, actual).extraLinks, [{ text: "tensquads", href: "Home.dc.html" }]);
 });
+
+test("swapping onEmail and onPassword is a handler difference", () => {
+	const pairs = [
+		[
+			'<label for="email">Email</label><input id="email" data-handler="onEmail" /><label for="password">Password</label><input id="password" data-handler="onPassword" />',
+			'<label for="email">Email</label><input id="email" data-handler="onPassword" /><label for="password">Password</label><input id="password" data-handler="onEmail" />',
+		],
+		[
+			'<label>Email</label><input data-handler="onEmail" /><label>Password</label><input data-handler="onPassword" />',
+			'<label>Email</label><input data-handler="onPassword" /><label>Password</label><input data-handler="onEmail" />',
+		],
+	];
+	for (const [before, after] of pairs) {
+		const diff = compareInventory(inventoryHtml(before), inventoryHtml(after));
+		assert.notDeepEqual(diff, emptyDiff);
+		assert.equal(diff.extraHandlers.length, 2);
+		assert.equal(diff.missingHandlers.length, 2);
+	}
+});

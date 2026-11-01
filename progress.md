@@ -518,3 +518,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-01 01-public-screens: The homepage, sign-up, and sign-in match the design. A new user makes one account, a correct sign-in opens the overview, and TLC reported no broken rule.
 - 2026-11-01 01-public-screens: The six screenshot checks run on macOS only. Ubuntu skips those six, and every other test still runs on both systems.
 - 2026-11-01 01-public-screens: The worker guard records every filesystem call, tests do not use the Neon connection, design hash links stay anchors, and the sign-up model separates the create request from a failed navigation.
+- 2026-11-01 01-public-screens: The worker guard rejects a filesystem binding, input handlers keep an id or a label, and the sign-up details step keeps a second channel or platform selected.

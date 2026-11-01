@@ -193,6 +193,30 @@ function executeBundle(outfile) {
 		}
 		for (const specifier of ["fs", "node:fs", "fs/promises", "node:fs/promises"]) wrapObject(require(specifier));
 		syncBuiltinESMExports();
+		const reachesFs = (specifier) => {
+			const name = String(specifier);
+			return name === "fs" || name === "node:fs" || name === "fs/promises" || name === "node:fs/promises";
+		};
+		const fsFacade = () => new Proxy(function () {}, {
+			get(_target, key) {
+				if (key === "promises") return fsFacade();
+				if (typeof key !== "string") return undefined;
+				return (...args) => {
+					reads.push({ name: key, path: args.length === 0 ? "" : String(args[0]) });
+					throw new Error("Import-time filesystem read");
+				};
+			},
+		});
+		const originalBinding = process.binding;
+		process.binding = (specifier) => (reachesFs(specifier) ? fsFacade() : originalBinding(specifier));
+		const originalLinked = process._linkedBinding;
+		process._linkedBinding = (specifier) => (reachesFs(specifier) ? fsFacade() : originalLinked(specifier));
+		const originalBuiltin = process.getBuiltinModule;
+		process.getBuiltinModule = (specifier) => {
+			const loaded = originalBuiltin(specifier);
+			if (reachesFs(specifier)) wrapObject(loaded);
+			return loaded;
+		};
 		globalThis.fetch = () => { throw new Error("Network is disabled"); };
 		let error = null;
 		try { await import(${JSON.stringify(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`)}); }
@@ -355,6 +379,46 @@ test("every filesystem function records an import-time call", async () => {
 			JSON.stringify({ name: "reads-at-import", type: "module", main: "index.js" }),
 		);
 		writeFileSync(join(packageDir, "index.js"), `${source}export const value = 1;\n`);
+		const fixture = join(directory, "entry.js");
+		writeFileSync(fixture, 'import "reads-at-import";\nexport const ok = 1;\n');
+		const bundled = await bundleWithMeta([fixture]);
+		try {
+			assert.deepEqual(thirdPartyImportReads(bundled.metafile), []);
+			const execution = executeBundle(bundled.outfile);
+			assert.deepEqual(execution.reads, [{ name, path }]);
+			assert.equal(execution.error, "Import-time filesystem read");
+		} finally {
+			rmSync(bundled.directory, { recursive: true, force: true });
+			rmSync(directory, { recursive: true, force: true });
+		}
+	}
+});
+
+test("process bindings that reach fs fail the worker guard", async () => {
+	const calls = [
+		[
+			'const binding = process.binding("fs"); binding.internalModuleStat("/dev/null");',
+			"internalModuleStat",
+			"/dev/null",
+		],
+		[
+			'const binding = process._linkedBinding("fs"); binding.internalModuleStat("/dev/null");',
+			"internalModuleStat",
+			"/dev/null",
+		],
+		['const fs = process.getBuiltinModule("fs"); fs.statSync("/dev/null");', "statSync", "/dev/null"],
+		['const fs = process.getBuiltinModule("node:fs"); fs.statSync("/dev/null");', "statSync", "/dev/null"],
+		['const fs = process.getBuiltinModule("node:fs/promises"); await fs.stat("/dev/null");', "stat", "/dev/null"],
+	];
+	for (const [source, name, path] of calls) {
+		const directory = mkdtempSync(join(tmpdir(), "tensquads-binding-"));
+		const packageDir = join(directory, "node_modules", "reads-at-import");
+		mkdirSync(packageDir, { recursive: true });
+		writeFileSync(
+			join(packageDir, "package.json"),
+			JSON.stringify({ name: "reads-at-import", type: "module", main: "index.js" }),
+		);
+		writeFileSync(join(packageDir, "index.js"), `${source}\nexport const value = 1;\n`);
 		const fixture = join(directory, "entry.js");
 		writeFileSync(fixture, 'import "reads-at-import";\nexport const ok = 1;\n');
 		const bundled = await bundleWithMeta([fixture]);

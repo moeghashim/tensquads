@@ -10,6 +10,32 @@ import {
 	waitForScreenFonts,
 } from "./support.ts";
 
+test("details keeps every selected channel and platform on", async ({ page }) => {
+	await page.goto("/signup");
+	await page.getByRole("button", { name: /A new business/ }).click();
+	const online = page.getByRole("button", { name: "Online store", exact: true });
+	const marketplace = page.getByRole("button", { name: "Marketplace", exact: true });
+	await expect(online).toHaveAttribute("aria-pressed", "true");
+	await marketplace.click();
+	await expect(online).toHaveAttribute("aria-pressed", "true");
+	await expect(marketplace).toHaveAttribute("aria-pressed", "true");
+	await marketplace.click();
+	await expect(marketplace).toHaveAttribute("aria-pressed", "false");
+	await expect(online).toHaveAttribute("aria-pressed", "true");
+
+	await page.getByRole("button", { name: "Back", exact: true }).click();
+	await page.getByRole("button", { name: /An existing business/ }).click();
+	const shopify = page.getByRole("button", { name: "Shopify", exact: true });
+	const amazon = page.getByRole("button", { name: "Amazon", exact: true });
+	await expect(shopify).toHaveAttribute("aria-pressed", "true");
+	await amazon.click();
+	await expect(shopify).toHaveAttribute("aria-pressed", "true");
+	await expect(amazon).toHaveAttribute("aria-pressed", "true");
+	await amazon.click();
+	await expect(amazon).toHaveAttribute("aria-pressed", "false");
+	await expect(shopify).toHaveAttribute("aria-pressed", "true");
+});
+
 test("sign-up starts at business type and pre-selects the design squads", async ({ page }) => {
 	await page.goto("/signup");
 	await expect(page).toHaveTitle("Create your business");
