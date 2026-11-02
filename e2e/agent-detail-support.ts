@@ -438,8 +438,22 @@ export async function openAgent(page: Page, user: WorkspaceUser, agentId: string
 	await waitForScreenFonts(page);
 }
 
+function serverFnExport(url: string): string {
+	const id = new URL(url).pathname.split("/").pop() ?? "";
+	try {
+		const parsed: unknown = JSON.parse(Buffer.from(id, "base64url").toString("utf8"));
+		if (typeof parsed === "object" && parsed !== null && "export" in parsed && typeof parsed.export === "string") {
+			return parsed.export;
+		}
+	} catch {
+		// A production id is a hash. The dev server id is base64 JSON.
+	}
+	return "";
+}
+
 export async function holdAgentReads(page: Page, includeFrame = false) {
 	let held = 0;
+	const exports: string[] = [];
 	let releaseGate: () => void = () => undefined;
 	const gate = new Promise<void>((resolve) => {
 		releaseGate = resolve;
@@ -450,6 +464,7 @@ export async function holdAgentReads(page: Page, includeFrame = false) {
 		if (request.method() === "GET" && (includeFrame || decodeURIComponent(request.url()).includes('"support"'))) {
 			const response = await route.fetch();
 			held += 1;
+			exports.push(serverFnExport(request.url()));
 			await gate;
 			await route.fulfill({ response }).catch(() => undefined);
 			return;
@@ -460,6 +475,7 @@ export async function holdAgentReads(page: Page, includeFrame = false) {
 	return {
 		held: () => held > 0,
 		count: () => held,
+		exports: () => exports.slice(),
 		release: () => releaseGate(),
 		async stop() {
 			releaseGate();

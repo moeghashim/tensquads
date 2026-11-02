@@ -264,7 +264,10 @@ test("a frame read started before off cannot restore the Running sidebar dot", a
 			if (!router) throw new Error("The router is missing.");
 			void router.invalidate();
 		});
-		await expect.poll(() => held.count(), settled).toBe(2);
+		await expect
+			.poll(() => held.exports().join("\n"), settled)
+			.toContain("loadWorkspaceFrame_createServerFn_handler");
+		await expect.poll(() => held.exports().join("\n"), settled).toContain("loadAgentDetail_createServerFn_handler");
 		await squadSwitch(page).click();
 		await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(false);
 		await expect(supportDot(page, "Paused")).toBeVisible();
