@@ -1,13 +1,13 @@
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { blankText, revisingLine } from "@tensquads/domain";
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 
 import { css } from "#/screens/css.ts";
 import { decideMissionOverview, decideOverview } from "#/server/overview.ts";
 import { missionBits } from "#/workspace/agent-view.ts";
 import { useRefresh } from "#/workspace/context.ts";
 
-import { enqueueDecision } from "./actions.ts";
+import { enqueueDecision, patchSnapshot, subscribeDecisions } from "./actions.ts";
 import type { OverviewAgentView, OverviewData } from "./types.ts";
 import { type DecisionPatch, presentOverview } from "./view.ts";
 
@@ -91,20 +91,27 @@ const stats = "display: flex; gap: 14px; font-size: 12px; color: #5d5d5d";
 const strong = "color: #0d0d0d";
 const contents = "display: contents";
 
+const emptyPatches: readonly DecisionPatch[] = [];
+
 export function OverviewPage({ data }: { readonly data: OverviewData }) {
 	const navigate = useNavigate();
 	const refresh = useRefresh();
-	const [patches, setPatches] = useState<readonly DecisionPatch[]>([]);
+	const router = useRouter();
+	const patches = useSyncExternalStore(subscribeDecisions, patchSnapshot, () => emptyPatches);
 	const shown = presentOverview(data, patches);
 	const accept = (patch: DecisionPatch, work: (signal: AbortSignal) => Promise<unknown>) => {
-		const queued = enqueueDecision(patch.key, data.count, work, refresh, (result) => {
-			if (!result.wrote || result.refreshed) {
-				setPatches((current) => current.filter((item) => item.key !== patch.key));
-			}
-		});
-		if (queued) {
-			setPatches((current) => (current.some((item) => item.key === patch.key) ? current : [...current, patch]));
-		}
+		enqueueDecision(
+			patch,
+			data.count,
+			work,
+			async () => {
+				await refresh();
+				const match = router.state.matches.find((item) => item.routeId === "/_workspace");
+				if (match?.status !== "success" || !match.loaderData) throw new Error("The workspace frame did not load.");
+				return match.loaderData.approvalCount;
+			},
+			() => undefined,
+		);
 	};
 	const decide = (id: string, ok: boolean) => {
 		accept({ key: `spend:${id}`, kind: ok ? "spend-approve" : "spend-decline", id }, (signal) =>

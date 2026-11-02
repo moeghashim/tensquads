@@ -203,10 +203,30 @@ test("a second card is sent after the first, in click order", async ({ page, wor
 	await expect(printsCard(page)).toHaveCount(0);
 	await expect(dockBadge(page)).toHaveText("2");
 	await expect.poll(held.posts).toBe(1);
+	const secondDone = decisionDone(page, "ap2");
 	held.release();
 	await expect.poll(held.posts, settled).toBe(2);
 	expect(held.bodies[0]).toContain("ap1");
 	expect(held.bodies[1]).toContain("ap2");
+	await secondDone;
+});
+
+test("queued cards and counts survive leaving and returning to overview", async ({ page, workspaceUser }) => {
+	await openWorkspace(page, workspaceUser);
+	const held = await gatePosts(page, false);
+	await refundCard(page).getByRole("button", { name: "Approve", exact: true }).click();
+	await printsCard(page).getByRole("button", { name: "Decline", exact: true }).click();
+	await expect.poll(held.posts).toBe(1);
+	await page.locator("main").getByRole("button", { name: "See squad traffic" }).click();
+	await expect(page).toHaveURL(/\/traffic$/);
+	await page.getByRole("button", { name: "Overview", exact: true }).click();
+	await expect(refundCard(page)).toHaveCount(0);
+	await expect(printsCard(page)).toHaveCount(0);
+	await expect(inboxCount(page)).toHaveText("2");
+	await expect(dockBadge(page)).toHaveText("2");
+	const secondDone = decisionDone(page, "ap2");
+	held.release();
+	await secondDone;
 });
 
 test("a double click approves once and the badge changes at the click", async ({ page, workspaceUser }) => {
@@ -232,6 +252,7 @@ test("a failed write restores the server and the queued card still sends", async
 	await expect(printsCard(page)).toHaveCount(0);
 	await expect(dockBadge(page)).toHaveText("2");
 	await expect.poll(held.posts).toBe(1);
+	const secondDone = decisionDone(page, "ap2");
 	held.release();
 	await expect(refundCard(page)).toHaveCount(1, settled);
 	await expect(printsCard(page)).toHaveCount(0);
@@ -239,6 +260,7 @@ test("a failed write restores the server and the queued card still sends", async
 	await expect(dockBadge(page)).toHaveText("3", settled);
 	expect(held.bodies[0]).toContain("ap1");
 	expect(held.bodies[1]).toContain("ap2");
+	await secondDone;
 });
 
 test("an empty proposal mission shows an em dash", async ({ page, workspaceUser, accountId }) => {
@@ -379,12 +401,19 @@ async function designMain(page: Page) {
 async function openDesignOverview(page: Page, width: number, height: number) {
 	const canvas = await page.context().newPage();
 	await installLocalFonts(canvas);
+	const fonts = readFileSync(new URL("./fonts/google-fonts.css", import.meta.url), "utf8").replace(
+		/@font-face\s*\{[^}]*font-weight:\s*700;[^}]*\}/g,
+		"",
+	);
+	await canvas.route("https://fonts.googleapis.com/css2**", (route) =>
+		route.fulfill({ contentType: "text/css", body: fonts }),
+	);
 	await canvas.setViewportSize({ width, height });
 	const body = await renderDesignMarkup(canvas, readInventory("Main"), { view: "overview", dockOpen: false });
 	const source = readFileSync(new URL("../design/Main.dc.html", import.meta.url), "utf8");
 	const css = source.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
 	await canvas.setContent(
-		`<!doctype html><html lang="en"><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"><style>${css}x-dc{display:contents}</style></head><body>${body}</body></html>`,
+		`<!doctype html><html lang="en"><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"><style>${css}x-dc{display:contents}</style></head><body>${body}</body></html>`,
 	);
 	await canvas.locator("[data-handler='goAdmin']").evaluate((element) => element.remove());
 	await canvas.evaluate(() => {

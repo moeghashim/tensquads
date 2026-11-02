@@ -1,14 +1,17 @@
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 
+import type { DecisionPatch } from "./view.ts";
+
 export interface DecisionResult {
 	readonly wrote: boolean;
 	readonly refreshed: boolean;
+	readonly count: number | null;
 }
 
 interface Job {
 	readonly key: string;
 	readonly work: (signal: AbortSignal) => Promise<unknown>;
-	readonly refresh: () => Promise<unknown>;
+	readonly refresh: () => Promise<number>;
 	readonly settled: (result: DecisionResult) => void;
 }
 
@@ -18,7 +21,7 @@ const listeners = new Set<() => void>();
 let running = false;
 let generation = 0;
 let target: number | null = null;
-let pendingHolds = 0;
+let patches: readonly DecisionPatch[] = [];
 
 export function resetDecisions(): void {
 	generation += 1;
@@ -26,7 +29,7 @@ export function resetDecisions(): void {
 	jobs.length = 0;
 	running = false;
 	target = null;
-	pendingHolds = 0;
+	patches = [];
 	notify();
 }
 
@@ -45,19 +48,25 @@ export function decisionSnapshot(): number | null {
 	return target;
 }
 
+export function patchSnapshot(): readonly DecisionPatch[] {
+	return patches;
+}
+
 // One card keeps one place in the queue. A second click on that card does nothing.
 // Different cards run one at a time, in click order.
 export function enqueueDecision(
-	key: string,
+	patch: DecisionPatch,
 	serverCount: number,
 	work: (signal: AbortSignal) => Promise<unknown>,
-	refresh: () => Promise<unknown>,
+	refresh: () => Promise<number>,
 	settled: (result: DecisionResult) => void,
 ): boolean {
+	const key = patch.key;
 	if (keys.has(key)) {
 		return false;
 	}
 	keys.add(key);
+	patches = [...patches, patch];
 	hold(serverCount);
 	jobs.push({ key, work, refresh, settled });
 	pump();
@@ -67,17 +76,13 @@ export function enqueueDecision(
 function hold(serverCount: number): void {
 	const base = target === null ? serverCount : target;
 	target = Math.max(0, base - 1);
-	pendingHolds += 1;
 	notify();
 }
 
-function settle(ok: boolean, refreshed: boolean): void {
-	pendingHolds = Math.max(0, pendingHolds - 1);
-	if (!ok && target !== null) {
-		target += 1;
-	}
-	if (pendingHolds === 0 && (!ok || refreshed)) {
-		target = null;
+function settle(job: Job, result: DecisionResult): void {
+	if (result.count !== null) {
+		patches = patches.filter((patch) => patch.key !== job.key && keys.has(patch.key));
+		target = patches.length === 0 ? null : Math.max(0, result.count - patches.length);
 	}
 	notify();
 }
@@ -100,8 +105,8 @@ async function runJob(job: Job, gen: number): Promise<void> {
 	if (gen !== generation) {
 		return;
 	}
+	settle(job, result);
 	job.settled(result);
-	settle(result.wrote, result.refreshed);
 	keys.delete(job.key);
 	running = false;
 	queueMicrotask(() => {
@@ -118,14 +123,15 @@ async function runBounded(job: Job): Promise<DecisionResult> {
 	} catch {
 		wrote = false;
 	}
+	let count: number | null = null;
 	let refreshed = false;
 	try {
-		await bounded(() => job.refresh());
+		count = await bounded(() => job.refresh());
 		refreshed = true;
 	} catch {
 		refreshed = false;
 	}
-	return { wrote, refreshed };
+	return { wrote, refreshed, count };
 }
 
 function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {

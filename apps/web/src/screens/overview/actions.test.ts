@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { enqueueDecision, resetDecisions, shownApprovalCount } from "./actions.ts";
+import { enqueueDecision, patchSnapshot, resetDecisions, shownApprovalCount } from "./actions.ts";
 
 describe("overview decisions", { concurrency: false }, () => {
 	test("a finished decision refreshes and clears the guard", async () => {
@@ -16,6 +16,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				refreshed += 1;
+				return 4;
 			},
 		);
 		assert.equal(calls, 1);
@@ -29,6 +30,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				refreshed += 1;
+				return 4;
 			},
 		);
 		assert.equal(calls, 2);
@@ -45,16 +47,17 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				refreshed += 1;
+				return 4;
 			},
 		);
 		assert.equal(refreshed, 1);
 		assert.equal(result.wrote, false);
 		assert.equal(shownApprovalCount(4), 4);
 		const again = enqueueDecision(
-			"one",
+			patch("one"),
 			4,
 			async () => undefined,
-			async () => undefined,
+			async () => 4,
 			() => undefined,
 		);
 		assert.equal(again, true);
@@ -75,10 +78,10 @@ describe("overview decisions", { concurrency: false }, () => {
 		assert.equal(result.refreshed, false);
 		assert.equal(shownApprovalCount(4), 3);
 		const again = enqueueDecision(
-			"one",
+			patch("one"),
 			3,
 			async () => undefined,
-			async () => undefined,
+			async () => 4,
 			() => undefined,
 		);
 		assert.equal(again, true);
@@ -117,12 +120,12 @@ describe("overview decisions", { concurrency: false }, () => {
 		assert.deepEqual(seen, ["refund"]);
 		assert.equal(shownApprovalCount(4), 2);
 		const duplicate = enqueueDecision(
-			"refund",
+			patch("refund"),
 			4,
 			async () => {
 				seen.push("duplicate");
 			},
-			async () => undefined,
+			async () => 4,
 			() => undefined,
 		);
 		assert.equal(duplicate, false);
@@ -170,6 +173,63 @@ describe("overview decisions", { concurrency: false }, () => {
 		assert.equal(shownApprovalCount(4), 4);
 	});
 
+	test("a lost response reconciles the server count before the next write", async () => {
+		resetDecisions();
+		let release = () => {};
+		const gate = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const first = settled(
+			"refund",
+			4,
+			async () => {
+				await gate;
+				throw new Error("The response was lost after commit.");
+			},
+			async () => 3,
+		);
+		let releaseSecond = () => {};
+		const secondGate = new Promise<void>((resolve) => {
+			releaseSecond = resolve;
+		});
+		const second = settled(
+			"marketing",
+			4,
+			async () => {
+				await secondGate;
+			},
+			async () => 2,
+		);
+		assert.equal(shownApprovalCount(4), 2);
+		release();
+		await first;
+		assert.equal(shownApprovalCount(3), 2);
+		assert.deepEqual(patchSnapshot().map((item) => item.key), ["marketing"]);
+		releaseSecond();
+		await second;
+		assert.equal(shownApprovalCount(2), 2);
+		assert.deepEqual(patchSnapshot(), []);
+	});
+
+	test("a failed read keeps the optimistic count and patches until a successful read", async () => {
+		resetDecisions();
+		await settled(
+			"refund",
+			4,
+			async () => {
+				throw new Error("Lost response");
+			},
+			async () => {
+				throw new Error("The read failed.");
+			},
+		);
+		assert.equal(shownApprovalCount(4), 3);
+		assert.deepEqual(patchSnapshot().map((item) => item.key), ["refund"]);
+		await settled("marketing", 4, async () => undefined, async () => 2);
+		assert.equal(shownApprovalCount(2), 2);
+		assert.deepEqual(patchSnapshot(), []);
+	});
+
 	test("a hung write aborts, refreshes, and the queue goes on", async (t) => {
 		t.mock.timers.enable({ apis: ["setTimeout"] });
 		resetDecisions();
@@ -180,6 +240,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			() => new Promise(() => undefined),
 			async () => {
 				refreshed += 1;
+				return 4;
 			},
 		);
 		const next = settled(
@@ -188,6 +249,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			async () => undefined,
 			async () => {
 				refreshed += 1;
+				return 4;
 			},
 		);
 		await Promise.resolve();
@@ -204,10 +266,14 @@ function settled(
 	key: string,
 	serverCount: number,
 	work: (signal: AbortSignal) => Promise<unknown>,
-	refresh: () => Promise<unknown>,
+	refresh: () => Promise<number | void>,
 ): Promise<{ readonly wrote: boolean; readonly refreshed: boolean }> {
 	return new Promise((resolve) => {
-		const queued = enqueueDecision(key, serverCount, work, refresh, resolve);
+		const queued = enqueueDecision(patch(key), serverCount, work, async () => (await refresh()) ?? 4, resolve);
 		assert.equal(queued, true);
 	});
+}
+
+function patch(key: string) {
+	return { key, id: key, kind: "spend-approve" as const };
 }
