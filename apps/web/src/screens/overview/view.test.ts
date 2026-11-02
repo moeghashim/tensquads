@@ -59,6 +59,8 @@ test("an approval click removes that card and lowers the count", () => {
 	assert.equal(shown.approvals.length, 0);
 	assert.equal(shown.count, 1);
 	assert.equal(shown.proposals.length, 1);
+	assert.equal(shown.empty, false);
+	assert.equal(shown.emptyText, "");
 });
 
 test("a mission approval shows the mission on the agent and lowers the count", () => {
@@ -75,6 +77,16 @@ test("ask for another shows the revising card and lowers the count", () => {
 	assert.equal(shown.proposals[0]?.revising, true);
 	assert.equal(shown.proposals[0]?.proposed, false);
 	assert.equal(shown.count, 1);
+});
+
+test("the last decision shows the empty inbox sentence", () => {
+	const shown = presentOverview(data(), [
+		{ key: "spend:ap1", kind: "spend-approve", id: "ap1" },
+		{ key: "mission:mp1", kind: "mission-approve", id: "mp1" },
+	]);
+	assert.equal(shown.empty, true);
+	assert.equal(shown.count, 0);
+	assert.equal(shown.emptyText, "Nothing waiting. Your squads are working inside their limits.");
 });
 
 test("a settled server row is not counted twice", () => {

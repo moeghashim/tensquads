@@ -1,4 +1,4 @@
-import { proposalTitle } from "@tensquads/domain";
+import { EMPTY_INBOX, proposalTitle } from "@tensquads/domain";
 
 import type { OverviewData, OverviewProposalView } from "./types.ts";
 
@@ -71,5 +71,13 @@ function finish(
 ): OverviewData {
 	const next = Math.max(0, count);
 	const empty = approvals.length === 0 && proposals.length === 0;
-	return { ...data, approvals, proposals, agents, count: next, empty };
+	return {
+		...data,
+		approvals,
+		proposals,
+		agents,
+		count: next,
+		empty,
+		emptyText: empty ? EMPTY_INBOX : "",
+	};
 }

@@ -78,10 +78,12 @@ test("decline removes the approval and changes no agent", async ({ page, workspa
 		.locator("main [data-loop='approvals'] > div")
 		.filter({ hasText: "Raise prints ad set to $60 a day" });
 	await card.getByRole("button", { name: "Decline", exact: true }).focus();
+	const posted = decisionDone(page, "ap2");
 	await page.keyboard.press("Enter");
 	await expect(card).toHaveCount(0, settled);
 	await expect(marketing).toContainText("38");
 	await expect(marketing).toContainText("Asked to raise the prints ad set to $60 a day");
+	await posted;
 	const events = await generatedEvents(accountId);
 	expect(events.map((event) => event.kind)).toEqual(["Declined"]);
 	expect((await mandateFor(accountId, "ap2")).row).toBeNull();
@@ -91,17 +93,21 @@ test("an empty inbox shows the nothing waiting text and no badge", async ({ page
 	// Four writes share one test database. Each write may take the full 15 second bound.
 	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
+	const missionPost = decisionDone(page, "mp-inventory");
 	await page.locator("main").getByRole("button", { name: "Approve mission" }).click();
+	await missionPost;
 	await expect(page.locator("[data-if='dockUnread']")).toHaveText("3", settled);
 	await expect(page.locator("main").getByRole("button", { name: "Decline", exact: true })).toHaveCount(3);
 	for (const left of [2, 1, 0]) {
+		const posted = decisionDone(page, '"ap');
 		await page.locator("main").getByRole("button", { name: "Decline", exact: true }).first().click();
 		await expect(page.locator("main").getByRole("button", { name: "Decline", exact: true })).toHaveCount(
 			left,
 			settled,
 		);
+		await posted;
 	}
-	await expect(page.locator("main")).toContainText(emptyInbox);
+	await expect(page.locator("main")).toContainText(emptyInbox, settled);
 	await expect(page.locator("main section[aria-label='Needs you'] h2 + span")).toHaveText("0");
 	await expect(page.locator("[data-if='dockUnread']")).toHaveCount(0);
 });
@@ -112,12 +118,14 @@ test("approve mission sets the mission, the targets and zero contribution", asyn
 	accountId,
 }) => {
 	await openWorkspace(page, workspaceUser);
+	const posted = decisionDone(page, "mp-inventory");
 	await page.locator("main").getByRole("button", { name: "Approve mission" }).click();
 	const inventory = page.locator("main [data-loop='agents'] > button").filter({ hasText: "Inventory" });
 	await expect(inventory).toContainText(mission, settled);
 	await expect(inventory).toContainText("0% done");
 	await expect(inventory).toContainText("31");
 	await expect(page.locator("main [data-loop='missionProposals'] > div")).toHaveCount(0);
+	await posted;
 	const events = await generatedEvents(accountId);
 	expect(events).toEqual([]);
 	const agent = await agentFor(accountId, "inventory");
@@ -134,12 +142,14 @@ test("approve mission sets the mission, the targets and zero contribution", asyn
 test("ask for another shows the revising text and lowers the count", async ({ page, workspaceUser }) => {
 	await openWorkspace(page, workspaceUser);
 	await expect(page.locator("[data-if='dockUnread']")).toHaveText("4");
+	const posted = decisionDone(page, "mp-inventory");
 	await page.locator("main").getByRole("button", { name: "Ask for another" }).click();
 	await expect(page.locator("main")).toContainText(revisingCopy, settled);
 	await expect(page.locator("main")).toContainText("Revised mission on its way");
 	await expect(page.locator("main [data-loop='missionProposals'] > div")).toHaveCount(1);
 	await expect(page.locator("[data-if='dockUnread']")).toHaveText("3");
 	await expect(page.locator("main section[aria-label='Needs you'] h2 + span")).toHaveText("3");
+	await posted;
 });
 
 test("a held Approve changes the card and the badge at the click", async ({ page, workspaceUser }) => {
@@ -194,7 +204,7 @@ test("a second card is sent after the first, in click order", async ({ page, wor
 	await expect(dockBadge(page)).toHaveText("2");
 	await expect.poll(held.posts).toBe(1);
 	held.release();
-	await expect.poll(held.posts).toBe(2);
+	await expect.poll(held.posts, settled).toBe(2);
 	expect(held.bodies[0]).toContain("ap1");
 	expect(held.bodies[1]).toContain("ap2");
 });
@@ -225,7 +235,7 @@ test("a failed write restores the server and the queued card still sends", async
 	held.release();
 	await expect(refundCard(page)).toHaveCount(1, settled);
 	await expect(printsCard(page)).toHaveCount(0);
-	await expect.poll(held.posts).toBe(2);
+	await expect.poll(held.posts, settled).toBe(2);
 	await expect(dockBadge(page)).toHaveText("3", settled);
 	expect(held.bodies[0]).toContain("ap1");
 	expect(held.bodies[1]).toContain("ap2");
@@ -513,6 +523,18 @@ function dockBadge(page: Page) {
 
 function inboxCount(page: Page) {
 	return page.locator("main section[aria-label='Needs you'] h2 + span");
+}
+
+function decisionDone(page: Page, id: string): Promise<unknown> {
+	return page.waitForResponse((response) => {
+		const request = response.request();
+		return (
+			request.method() === "POST" &&
+			request.url().startsWith("http://localhost:3000") &&
+			(request.postData() ?? "").includes(id) &&
+			response.ok()
+		);
+	}, settled);
 }
 
 async function gatePosts(page: Page, failFirst: boolean) {
