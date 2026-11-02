@@ -58,7 +58,7 @@ async function step(refresh: () => void | Promise<void>): Promise<void> {
 	}
 	noteSelection(id);
 	try {
-		await Promise.resolve(refresh());
+		await bounded(async () => refresh());
 	} catch {
 		// A failed refresh still clears the guard.
 	}
