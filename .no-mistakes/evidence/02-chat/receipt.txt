@@ -1,0 +1,31 @@
+02-chat receipt
+
+Read order, SHA-256:
+
+2e85b8f9298c0e268f6db94242f54dbb5b18a0e923f11ca6140076e3dddc512c  AGENTS.md
+afea3c45c89da2bd0514baf7e2dba2a2f27b17443690fb36eef554efce6a6eac  docs/PLAN.md
+26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
+dfa46241022a43e52a760cf3f326f88ce916f702a85d8f480bff33d54416cd51  tasks/02-chat.md
+7b72581686e9de32b4f63c9354998d4e4b6e02fb062eb3fe4f6c02aba8cdd576  tasks/02-frame.md
+4adab2f07d7cdbb618d70cded61211d044121a2efef05e348231dcc0175f0587  design/Chat.dc.html
+376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89  design/Main.dc.html
+9021bd2a42b0b7ce199f9b9e855d26e693b26748ae74b381c5de1a368b963f31  design/inventory/Chat.json
+deccce08d6932c707935dd44be6fd089e3a27d9c514e067d576129632117d5ec  design/inventory/Main.json
+908b77171516041419df52e593618a985f42028d0482f765b6f96aeac5da78d5  progress.md
+b9df65feb55df50cc093338c81224003ce85cbc1464ccd36aca2cb91e51dd405  .agents/skills/tensquads-verify/models/chat-dock.md
+0660ecded866118e4d09aa715ac26e198ac409d871a427a2e8d902b31a8112e3  packages/statecharts/chat-dock/chart.mmd
+
+node scripts/design-check.mjs
+OK Accounts.dc.html through Traffic.dc.html, canvas.json, and ds/agent-ui/tokens.json.
+canvas https://claude.ai/artifact/B7seDz5psECQTerDG6rfy4 version 1793448823-a766, pulled 2026-10-31
+design/ matches the canvas.
+
+Decisions 1 to 32 read. No question.
+
+Orchestrator answers used, from the recommended lines:
+1. An empty thread shows the heading, the chips, and the input. Add no text.
+2. Empty hand-offs show the heading and the sentence, with no rows.
+3. Add no page scroll.
+Frame items 10, 11, 13, 15, 16, and 17 stay as recorded in tasks/02-frame.md. This screen does not change send().
+
+No brief or design line for this screen is outside the task. The pull request will report the hand-off scope and the words agent and Agents.

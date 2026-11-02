@@ -1,12 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { ChatPage } from "#/screens/chat/ChatPage.tsx";
+import { loadChat } from "#/server/chat.ts";
+
 export const Route = createFileRoute("/_workspace/chat")({
 	head: () => ({
 		meta: [{ title: "Chat with the master" }],
 	}),
-	component: ChatPage,
+	loader: () => loadChat(),
+	component: ChatRoute,
 });
 
-function ChatPage() {
-	return null;
+function ChatRoute() {
+	const data = Route.useLoaderData();
+	return <ChatPage threadId={data.threadId} events={data.events} />;
 }

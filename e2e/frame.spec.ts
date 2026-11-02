@@ -90,7 +90,7 @@ test("the dock shows the badge, opens the panel, and hides on the chat page", as
 	await expect(page).toHaveTitle("Chat with the master");
 	await expect(page.getByRole("button", { name: "Ask Master" })).toHaveCount(0);
 	await expect(page.getByRole("button", { name: "Hide chat" })).toHaveCount(0);
-	await expect(page.locator("main")).toHaveText("");
+	await expect(page.getByRole("heading", { level: 1, name: "Master" })).toBeVisible();
 	await page.getByRole("button", { name: "Overview" }).click();
 	await expect(page.locator("#dock-input")).toHaveValue("keep this");
 });
