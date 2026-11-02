@@ -276,9 +276,9 @@ async function holdAdds(page) {
 }
 
 async function typeSecondDraft(page) {
-	await page.getByLabel("When", { exact: true }).selectOption("A refund request comes in");
-	await page.getByLabel("Agent", { exact: true }).selectOption("support");
-	await page.getByLabel("Approval", { exact: true }).selectOption("Auto");
+	await page.getByLabel("When").selectOption("A refund request comes in");
+	await page.getByLabel("Agent").selectOption("support");
+	await page.getByLabel("Approval").selectOption("Auto");
 	await page.getByLabel("Then", { exact: true }).fill("Draft B");
 }
 
@@ -295,9 +295,9 @@ test("add rule: an old failure after navigation preserves the current provider d
 		assert.equal(await page.evaluate(() => window.adds[0].signal.aborted), false);
 		await page.evaluate(async () => { window.adds[0].reject(new Error("HTTP 500")); await window.flush(); });
 		await expect(page.getByLabel("Then", { exact: true })).toHaveValue("Draft B");
-		await expect(page.getByLabel("When", { exact: true })).toHaveValue("A refund request comes in");
-		await expect(page.getByLabel("Agent", { exact: true })).toHaveValue("support");
-		await expect(page.getByLabel("Approval", { exact: true })).toHaveValue("Auto");
+		await expect(page.getByLabel("When")).toHaveValue("A refund request comes in");
+		await expect(page.getByLabel("Agent")).toHaveValue("support");
+		await expect(page.getByLabel("Approval")).toHaveValue("Auto");
 	});
 });
 
@@ -327,9 +327,9 @@ for (const outcome of ["failure", "success"]) {
 			await expect(action).toHaveValue("");
 			await expect(page.locator("section[aria-label='Rules']").getByText("Draft B", { exact: false })).toHaveCount(1);
 			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(outcome === "failure" ? 1 : 2);
-			await expect(page.getByLabel("When", { exact: true })).toHaveValue("A refund request comes in");
-			await expect(page.getByLabel("Agent", { exact: true })).toHaveValue("support");
-			await expect(page.getByLabel("Approval", { exact: true })).toHaveValue("Auto");
+			await expect(page.getByLabel("When")).toHaveValue("A refund request comes in");
+			await expect(page.getByLabel("Agent")).toHaveValue("support");
+			await expect(page.getByLabel("Approval")).toHaveValue("Auto");
 			await page.evaluate(async () => { window.adds[1].reject(new Error("HTTP 500")); await window.flush(); });
 			await expect(action).toHaveValue("Draft B");
 			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(outcome === "failure" ? 0 : 1);
