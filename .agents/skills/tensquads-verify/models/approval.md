@@ -1,6 +1,6 @@
 # Approval inbox
 
-An approve of a spend adds one task and sets `last` to the title plus " (approved)". A decline of a spend changes no agent field. An approve of a mission sets the mission, sets contribution to 0, and adds no task. A decline of a mission sets the proposal to Revising and changes no agent field. `askRevise` adds one Revising proposal when that agent has no Proposed or Revising proposal left. An Approved proposal does not block it. The caller supplies the id. The badge count is the number of Pending approvals plus the number of Proposed proposals. The model writes that sum in `BadgeMatches` and does not call `Count` from the invariant. The inbox is empty only when no approval is Pending and every proposal is Approved. The empty inbox shows "Nothing waiting. Your squads are working inside their limits."
+An approve of a spend adds one task and sets `last` to the title plus " (approved)". A decline of a spend changes no agent field. An approve of a spend writes one bus event and one Mandate. A decline of a spend writes one bus event and no Mandate. An approve of a mission sets the mission, sets contribution to 0, and adds no task. A decline of a mission sets the proposal to Revising and changes no agent field. A mission decision writes no bus event and no Mandate. `askRevise` adds one Revising proposal when that agent has no Proposed or Revising proposal left. An Approved proposal does not block it. The caller supplies the id. The badge count is the number of Pending approvals plus the number of Proposed proposals. The model writes that sum in `BadgeMatches` and does not call `Count` from the invariant. The inbox is empty only when no approval is Pending and every proposal is Approved. The empty inbox shows "Nothing waiting. Your squads are working inside their limits."
 
 A break lets an agent spend or change its mission without the matching task, last line, or badge.
 
@@ -37,16 +37,16 @@ TLC does not read `decide.ts`. A pass of the model does not prove the TypeScript
 
 A model failure is a path of Approve, Decline, Approve mission, Decline mission, or Ask to revise. Replay that path in `decideApproval`, `decideMission`, or `askRevise`. If the code can do the path, the code is wrong. If the code cannot do a step, the model is wrong. Say which.
 
-The chart hides Idle. Idle changes nothing. It exists so a finished inbox is not a deadlock. The chart also draws one "Nothing waiting" state for an approved mission with either an approved spend or a declined spend. The model still keeps those two states apart. `SpendApproved` and `SpendDeclined` check the task count and `last`.
+The chart hides Idle. Idle changes nothing. It exists so a finished inbox is not a deadlock. The chart also draws one "Nothing waiting" state for an approved mission with either an approved spend or a declined spend. The model still keeps those two states apart. `SpendApproved` and `SpendDeclined` check the task count and `last`. `EventRecorded` checks that a spend decision writes one bus event and that a mission decision writes none. `MandateRecorded` checks that only an approved spend has a Mandate.
 
 ## Keep the check in step
 
 | Check | Covers | Sync commit |
 | --- | --- | --- |
-| `decide.test.ts` | `decideApproval`, `decideMission`, `askRevise`, `inboxCount`, `inboxIsEmpty`, `EMPTY_INBOX` | `18fd6378854b33f70323e869c50757ce7c04ecd8` |
-| `/statechart` on `Approval.tla` | The same actions, one approval and one proposal | `18fd6378854b33f70323e869c50757ce7c04ecd8` |
+| `decide.test.ts` | `decideApproval`, `decideMission`, `askRevise`, `inboxCount`, `inboxIsEmpty`, `EMPTY_INBOX` | `b806aa1afef2451ff1ab56487085880a3b04cf05` |
+| `/statechart` on `Approval.tla` | The same actions, one approval and one proposal, the bus event, and the Mandate | `b806aa1afef2451ff1ab56487085880a3b04cf05` |
 
-Both checks passed on `18fd6378854b33f70323e869c50757ce7c04ecd8`, the commit that adds `askRevise`. `decide.test.ts` exited 0. TLC exited 0, reached 12 states and 23 steps, and named no broken rule.
+Both checks passed on `b806aa1afef2451ff1ab56487085880a3b04cf05`, the commit that records the Mandate and the bus event. `decide.test.ts` exited 0. TLC exited 0, reached 12 states and 23 steps, and named no broken rule.
 
 Move a sync commit forward only after both checks pass and you confirm that the model and the tests still describe the code at the new commit. An intended change updates `decide.ts`, `decide.test.ts`, and `Approval.tla` together.
 
@@ -54,6 +54,6 @@ When covered code changed and this check was not run, use `/maintain-formal-veri
 
 ## Bounds
 
-The model is one spend approval and one mission proposal. Tasks start at 1 and can become 2. Contribution starts at 10 and becomes 0 only when the mission is approved. The empty sentence is the constant `EmptyInbox` in `Approval.cfg`, and it matches `EMPTY_INBOX`.
+The model is one spend approval and one mission proposal. Tasks start at 1 and can become 2. Contribution starts at 10 and becomes 0 only when the mission is approved. The empty sentence is the constant `EmptyInbox` in `Approval.cfg`, and it matches `EMPTY_INBOX`. A spend decision writes one bus event. An approved spend sets the Mandate. A declined spend leaves the Mandate false. A mission action and Ask to revise do not change the event count or the Mandate.
 
-The model does not cover a second approval, a second proposal, the bus, the target rows, or the other seven machines in `docs/PLAN.md`. The code test checks the em dash in each approved mission target. The model does not.
+The model does not cover a second approval, a second proposal, the target rows, or the other seven machines in `docs/PLAN.md`. The code test checks the em dash in each approved mission target. The model does not.
