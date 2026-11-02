@@ -63,6 +63,7 @@ export async function appendEvents(
 	tx: Tx,
 	accountId: string,
 	drafts: readonly EventDraft[],
+	occurredAt: Date,
 ): Promise<readonly StampedEvent[]> {
 	const cursor = await lockCursor(tx, accountId);
 	if (drafts.length === 0) {
@@ -79,7 +80,7 @@ export async function appendEvents(
 			accountId,
 			id,
 			timeText: time,
-			occurredAt: new Date(Date.now()),
+			occurredAt,
 			fromAgent: draft.from,
 			toAgent: draft.to,
 			kind: draft.kind,

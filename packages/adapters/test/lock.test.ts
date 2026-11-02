@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-
 import { workspaceTransaction } from "../src/neon/lock.ts";
+import { PENDING_TASK_WINDOW_MS } from "../src/pending-window.ts";
 
 function hangingTransaction(error: unknown) {
 	let attempts = 0;
@@ -54,4 +54,34 @@ test("a deadlock code on a cause retries, and the words alone do not", async () 
 	const byText = hangingTransaction(words);
 	await assert.rejects(() => workspaceTransaction(byText.db as never, async () => "ok"), /deadlock detected/);
 	assert.equal(byText.attempts(), 1);
+});
+
+test("deadlock retries set timeouts that stay inside the pending window", async () => {
+	const seen: string[] = [];
+	let attempts = 0;
+	const deadlock = Object.assign(new Error("could not serialize"), { code: "40P01" });
+	const db = {
+		async transaction(run: (tx: { execute: (query: unknown) => Promise<void> }) => Promise<unknown>) {
+			attempts += 1;
+			await run({
+				async execute(query: unknown) {
+					seen.push(JSON.stringify(query));
+				},
+			});
+			throw deadlock;
+		},
+	};
+	await assert.rejects(() => workspaceTransaction(db as never, async () => "ok"));
+	assert.equal(attempts, 3);
+	const text = seen.join("\n");
+	assert.equal((text.match(/lock_timeout/g) ?? []).length, 3);
+	assert.equal((text.match(/statement_timeout/g) ?? []).length, 3);
+	const budgets = [...text.matchAll(/(\d+)ms/g)].map((match) => Number(match[1]));
+	assert.ok(budgets.length >= 6);
+	const distinct = [...new Set(budgets)];
+	assert.equal(distinct.length, 1);
+	const budget = distinct[0] ?? 0;
+	assert.ok(budget > 0);
+	assert.ok(budget < PENDING_TASK_WINDOW_MS);
+	assert.ok(budget * 3 < PENDING_TASK_WINDOW_MS);
 });

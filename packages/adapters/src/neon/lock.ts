@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 
+import { PENDING_TASK_WINDOW_MS } from "../pending-window.ts";
 import type { AppDatabase } from "./postgres.ts";
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
@@ -7,15 +8,23 @@ type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 // The migration takes this lock. A test reset waits for it, so the two cannot deadlock.
 const workspaceLock = sql`SELECT pg_advisory_xact_lock(1952804467, 1)`;
 
+// Three deadlock attempts must end before the client abandons the send.
+const sendAttempts = 3;
+const sendAttemptMs = Math.floor((PENDING_TASK_WINDOW_MS - 1) / sendAttempts);
+const lockTimeout = sql.raw(`SET LOCAL lock_timeout = '${sendAttemptMs}ms'`);
+const statementTimeout = sql.raw(`SET LOCAL statement_timeout = '${sendAttemptMs}ms'`);
+
 export async function workspaceTransaction<T>(db: AppDatabase, run: (tx: Tx) => Promise<T>): Promise<T> {
-	for (let attempt = 1; attempt <= 3; attempt++) {
+	for (let attempt = 1; attempt <= sendAttempts; attempt++) {
 		try {
 			return await db.transaction(async (tx) => {
+				await tx.execute(lockTimeout);
+				await tx.execute(statementTimeout);
 				await tx.execute(workspaceLock);
 				return await run(tx);
 			});
 		} catch (error) {
-			if (attempt === 3 || !isDeadlock(error)) {
+			if (attempt === sendAttempts || !isDeadlock(error)) {
 				throw error;
 			}
 		}

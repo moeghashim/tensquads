@@ -27,7 +27,11 @@ export async function conversationTransaction<T>(
 	const checked = requireScope(scope);
 	if (checked.mode !== "account") throw new Error("A send needs an account.");
 	const accountId = checked.accountId;
+	const startedAt = new Date();
 	return workspaceTransaction(db, async (tx) => {
+		if (Date.now() - startedAt.getTime() >= PENDING_TASK_WINDOW_MS) {
+			return { kind: "ignored" } as T;
+		}
 		await lockCursor(tx, accountId);
 		return work({
 			pendingTask: () => pendingTask(tx, accountId),
@@ -41,7 +45,7 @@ export async function conversationTransaction<T>(
 			},
 			messages: () => listMessages(tx, accountId),
 			async appendEvent(draft) {
-				const [event] = await appendEvents(tx, accountId, [draft]);
+				const [event] = await appendEvents(tx, accountId, [draft], startedAt);
 				if (!event) throw new Error("The event was not saved.");
 				return event.id;
 			},
