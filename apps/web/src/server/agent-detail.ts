@@ -5,7 +5,12 @@ import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import type { AccountScope, Agent, Autonomy, BusEvent } from "@tensquads/domain";
 import type { Kernel } from "@tensquads/kernel";
 
-import { type AgentDetailSource, type AgentDetailView, AUTONOMY_OPTIONS, agentDetailView } from "#/screens/agent-detail/model.ts";
+import {
+	type AgentDetailSource,
+	type AgentDetailView,
+	AUTONOMY_OPTIONS,
+	agentDetailView,
+} from "#/screens/agent-detail/model.ts";
 
 function validateAgentId(input: unknown): string {
 	if (typeof input !== "string" || input.length === 0) {

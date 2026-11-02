@@ -51,7 +51,10 @@ function harness() {
 		storedUptime: "18 days",
 		events: ["old message"],
 		skills: [{ id: "inbox.read", onStr: "true" }],
-		autonomyOpts: [{ label: "Ask first", onStr: "true" }, { label: "Full auto", onStr: "false" }],
+		autonomyOpts: [
+			{ label: "Ask first", onStr: "true" },
+			{ label: "Full auto", onStr: "false" },
+		],
 	};
 	let loader = structuredClone(server);
 	const match = { status: "success" };

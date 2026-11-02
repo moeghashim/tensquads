@@ -55,7 +55,12 @@ const exports = {
 	"@tanstack/react-router": { redirect: (options) => options },
 	"@tanstack/react-start": {
 		createServerFn: () => ({
-			validator: (validate) => ({ handler: (run) => ({ data }) => run({ data: validate(data) }) }),
+			validator: (validate) => ({
+				handler:
+					(run) =>
+					({ data }) =>
+						run({ data: validate(data) }),
+			}),
 		}),
 	},
 	"@tensquads/adapters/pending-window": { PENDING_TASK_WINDOW_MS: 30_000 },
