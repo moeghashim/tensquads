@@ -14,6 +14,7 @@ import {
 	secretsFor,
 	skipUnlessMacScreenshot,
 	viewports,
+	waitForHydration,
 	waitForScreenFonts,
 } from "./support.ts";
 import { expect, installLocalFonts, openWorkspace, test } from "./workspace.ts";
@@ -202,6 +203,9 @@ test("an acknowledged Task stays retired after newer loader lists and navigation
 	const other = await page.context().newPage();
 	try {
 		await other.goto("/chat");
+		await expect(other).toHaveURL(/\/chat$/);
+		await expect(other).toHaveTitle("Chat with the master");
+		await waitForHydration(other);
 		const newerButtons = other.locator("[data-loop='chatBus'] button");
 		for (const [text, reply] of [scriptedRoutes[0], scriptedRoutes[1], scriptedRoutes[3]]) {
 			await sendAndSee(other, text, reply);
