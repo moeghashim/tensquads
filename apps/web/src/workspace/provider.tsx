@@ -28,7 +28,7 @@ export function WorkspaceProvider({
 	frame,
 	children,
 }: {
-	readonly frame: WorkspaceFrameData;
+	readonly frame: WorkspaceFrameData & { readonly readStartedAt: number };
 	readonly children: ReactNode;
 }) {
 	const router = useRouter();
@@ -50,15 +50,11 @@ export function WorkspaceProvider({
 		setStartedTask,
 	} = useWorkspaceControls(frame);
 	const sending = useRef(false);
-	const reads = useRef<number[]>([]);
 	const { messages, setMessages, applyFrame } = useFrameMessages(frame, sending);
-	const { approvalCount, noteDecision } = useApprovalCount(frame, reads);
+	const { approvalCount, noteDecision } = useApprovalCount(frame);
 
 	const mounted = useRef(true);
-	const refresh = useCallback(() => {
-		reads.current.push(Date.now());
-		return router.invalidate({ sync: true });
-	}, [router]);
+	const refresh = useCallback(() => router.invalidate({ sync: true }), [router]);
 	const refreshFrame = useFrameRefresh(router, refresh);
 	useMountedFlag(mounted);
 
@@ -221,37 +217,18 @@ function useFrameMessages(frame: WorkspaceFrameData, sending: { current: boolean
 	return { messages, setMessages, applyFrame };
 }
 
-function useApprovalCount(frame: WorkspaceFrameData, reads: { current: number[] }) {
+function useApprovalCount(frame: WorkspaceFrameData & { readonly readStartedAt: number }) {
 	const [clock, setClock] = useState(() => seedApprovalCount(frame.approvalCount));
 	const [seenFrame, setSeenFrame] = useState(frame);
-	const consumed = useRef(new WeakMap<WorkspaceFrameData, number | null>());
 	const noteDecision = useCallback((count: number) => {
 		const answeredAt = Date.now();
 		setClock((current) => noteDecisionCount(current, count, answeredAt));
 	}, []);
 	if (frame !== seenFrame) {
 		setSeenFrame(frame);
-		const startedAt = frameReadStart(consumed.current, reads, frame);
-		if (startedAt !== null) {
-			setClock((current) => noteFrameCount(current, frame.approvalCount, startedAt));
-		}
+		setClock((current) => noteFrameCount(current, frame.approvalCount, frame.readStartedAt));
 	}
 	return { approvalCount: clock.value, noteDecision };
-}
-
-// One frame object takes one start time, including a repeated render of that object.
-function frameReadStart(
-	consumed: WeakMap<WorkspaceFrameData, number | null>,
-	reads: { current: number[] },
-	frame: WorkspaceFrameData,
-): number | null {
-	if (consumed.has(frame)) {
-		return consumed.get(frame) ?? null;
-	}
-	const startedAt = reads.current.shift();
-	const value = startedAt === undefined ? null : startedAt;
-	consumed.set(frame, value);
-	return value;
 }
 
 function InspectBridge({ children }: { readonly children: ReactNode }) {

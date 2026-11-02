@@ -5,7 +5,10 @@ import { WorkspaceProvider } from "#/workspace/provider.tsx";
 import { WorkspaceShell } from "#/workspace/shell.tsx";
 
 export const Route = createFileRoute("/_workspace")({
-	loader: () => loadWorkspaceFrame(),
+	loader: async () => {
+		const readStartedAt = Date.now();
+		return { ...(await loadWorkspaceFrame()), readStartedAt };
+	},
 	component: WorkspaceLayout,
 });
 

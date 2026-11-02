@@ -1,12 +1,19 @@
 import { mkdirSync, readFileSync } from "node:fs";
-import type { Page } from "@playwright/test";
+import type { Page, Request } from "@playwright/test";
 import { openPostgres, schema } from "@tensquads/adapters";
 import { policyVersion } from "@tensquads/domain";
 import { and, asc, eq } from "drizzle-orm";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
-import { readInventory, secretsFor, skipUnlessMacScreenshot, viewports, waitForScreenFonts } from "./support.ts";
+import {
+	readInventory,
+	secretsFor,
+	skipUnlessMacScreenshot,
+	viewports,
+	waitForHydration,
+	waitForScreenFonts,
+} from "./support.ts";
 import { expect, generatedEvents, installLocalFonts, openWorkspace, test, type WorkspaceUser } from "./workspace.ts";
 
 const mission = "Never run out of a top-20 product and keep stock under 30 days of cover.";
@@ -229,6 +236,27 @@ test("queued cards and counts survive leaving and returning to overview", async 
 	await secondDone;
 });
 
+test("navigation frame reads update the count after another tab decides", async ({ page, workspaceUser }) => {
+	await openWorkspace(page, workspaceUser);
+	await expect(dockBadge(page)).toHaveText("4");
+	await page.locator("main").getByRole("button", { name: "See squad traffic" }).click();
+	await expect(page).toHaveURL(/\/traffic$/);
+	const other = await page.context().newPage();
+	try {
+		await other.goto("/overview");
+		await waitForHydration(other);
+		const decided = decisionDone(other, "ap1");
+		await refundCard(other).getByRole("button", { name: "Decline", exact: true }).click();
+		await decided;
+		await page.getByRole("button", { name: "Overview", exact: true }).click();
+		await expect(refundCard(page)).toHaveCount(0, settled);
+		await expect(inboxCount(page)).toHaveText("3", settled);
+		await expect(dockBadge(page)).toHaveText("3", settled);
+	} finally {
+		await other.close();
+	}
+});
+
 test("a held dock begin keeps the server count on traffic", async ({ page, workspaceUser }) => {
 	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
@@ -241,8 +269,7 @@ test("a held dock begin keeps the server count on traffic", async ({ page, works
 		await page.getByRole("button", { name: "Close chat" }).click();
 		await approveRefundThenOpenTraffic(page);
 	} finally {
-		held.release();
-		await page.unroute("**/_serverFn/**");
+		await held.finish();
 	}
 });
 
@@ -260,8 +287,7 @@ test("a held chat finish keeps the server count on traffic", async ({ page, work
 		await expect(page).toHaveURL(/\/overview$/);
 		await approveRefundThenOpenTraffic(page);
 	} finally {
-		held.release();
-		await page.unroute("**/_serverFn/**");
+		await held.finish();
 	}
 });
 
@@ -630,6 +656,7 @@ async function gatePosts(page: Page, failFirst: boolean) {
 
 async function holdWorkspaceSend(page: Page, step: "begin" | "finish") {
 	const state = { sends: 0, held: false };
+	let finishRequest: Request | undefined;
 	let release = () => {};
 	const gate = new Promise<void>((resolve) => {
 		release = resolve;
@@ -647,13 +674,34 @@ async function holdWorkspaceSend(page: Page, step: "begin" | "finish") {
 			return;
 		}
 		state.sends += 1;
+		if (state.sends === 2) finishRequest = request;
 		if (state.sends === target) {
 			state.held = true;
 			await gate;
 		}
 		await route.continue();
 	});
-	return { release, held: () => state.held };
+	return {
+		held: () => state.held,
+		finish: async () => {
+			const finished = page.waitForResponse((response) => response.request() === finishRequest, {
+				timeout: 30_000,
+			});
+			release();
+			try {
+				await test.step("wait for the released send and its frame refresh", async () => {
+					const response = await finished;
+					expect(response.ok()).toBe(true);
+					expect(await response.finished()).toBeNull();
+					const closedDock = page.locator("button[data-handler='toggleDock'][aria-expanded='false']");
+					if (await closedDock.count()) await closedDock.click();
+					await expect(page.getByRole("button", { name: "Send", exact: true })).toBeEnabled({ timeout: 30_000 });
+				}, { timeout: 30_000 });
+			} finally {
+				await page.unroute("**/_serverFn/**");
+			}
+		},
+	};
 }
 
 async function approveRefundThenOpenTraffic(page: Page) {
