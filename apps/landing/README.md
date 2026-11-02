@@ -12,4 +12,4 @@ Do not use `npm run deploy:cloudflare` here. That command deploys the product.
 
 `/review` holds the build plan and the design for the team. `build-review.mjs` makes them in `public/`, which git ignores. The design files are copied byte for byte. `review-src/support.js` is a small runtime for them, because the canvas runtime is not in this repository.
 
-Run `node build-review.mjs <git ref>` before you deploy. The ref names the plan to publish. The pages are public, with no sign-in. Search engines are told to skip them.
+Run `node build-review.mjs <git ref>` before you deploy. The ref names the plan to publish. `review-src/diagrams.mjs` holds the three diagrams, redrawn from the plan text. The pages are public, with no sign-in. Search engines are told to skip them.

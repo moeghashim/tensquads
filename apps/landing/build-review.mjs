@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { DIAGRAM_CSS, DIAGRAM_NOTE, DIAGRAMS } from "./review-src/diagrams.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "../..");
@@ -41,14 +42,20 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 </style></head><body><main>${body}</main></body></html>`;
 
 // Moe set the customer site domain on 2 November 2026. The repository edit follows in a pull request.
-const plan = git("show", `${ref}:docs/PLAN.md`).replaceAll("tensquads.co", "10squads.com").replace(/&#91;embedded content: ([^\\\]]*)\\?\]/g, "*[Diagram not included: $1]*");
+const plan = git("show", `${ref}:docs/PLAN.md`)
+	.replaceAll("tensquads.co", "10squads.com")
+	.replace(/&#91;embedded content: ([^\\\]·]*?) ·[^\]]*\]/g, (line, name) => {
+		if (!DIAGRAMS[name.trim()]) throw new Error(`No diagram for: ${line}`);
+		return `\n\n${DIAGRAMS[name.trim()].replace(/\n/g, "")}${DIAGRAM_NOTE}\n\n`;
+	});
+if (plan.includes("embedded content")) throw new Error("A diagram placeholder is left in the plan.");
 const planFile = join(here, ".plan.tmp.md");
 writeFileSync(planFile, plan);
 const html = execFileSync("npx", ["--yes", "marked@15", "--gfm", "-i", planFile], { encoding: "utf8", maxBuffer: 1 << 26 });
 rmSync(planFile);
 writeFileSync(
 	join(out, "plan.html"),
-	page("tensquads build plan", `<p class="note"><a href="/review/">Back to review</a> · Plan at commit ${sha}, with the 10squads.com domain edit.</p>${html.replaceAll("<table>", '<div class="scroll"><table>').replaceAll("</table>", "</table></div>")}`),
+	page("tensquads build plan", `<p class="note"><a href="/review/">Back to review</a> · Plan at commit ${sha}, with the 10squads.com domain edit.</p>${DIAGRAM_CSS}${html.replaceAll("<table>", '<div class="scroll"><table>').replaceAll("</table>", "</table></div>")}`),
 );
 
 const cards = canvas.order
