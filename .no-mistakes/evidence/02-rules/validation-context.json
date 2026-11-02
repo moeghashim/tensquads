@@ -1,0 +1,37 @@
+{
+  "baseline": "npm ci && npm test was reported successful by the outer executor; not rerun",
+  "screenChecks": {
+    "command": "node --test scripts/test/rules-writes.test.mjs",
+    "passed": 72,
+    "live": false,
+    "reason": "Real RulesScreen and loader with stubbed server functions in a React harness"
+  },
+  "adapterChecks": {
+    "command": "node --experimental-strip-types --test packages/adapters/test/rules.test.ts",
+    "passed": 5,
+    "live": false,
+    "database": "disposable in-memory PGlite"
+  },
+  "e2eAttempt": {
+    "command": "npm run e2e -- e2e/rules.spec.ts --grep \"rules shows five rules\" --workers=1 --output=/Users/moeghashim/.no-mistakes/evidence/01M6F51SNEFSNVJM1RRR7G02J5/playwright",
+    "error": "publishable, secret, testDatabase is missing.",
+    "classification": "setup blocker; no Rules interaction occurred"
+  },
+  "liveAttempt": {
+    "requested": "/rules",
+    "observed": "/signin",
+    "screenshot": "rules-auth-blocker.png"
+  },
+  "credentialsPresent": {
+    "CLERK_PUBLISHABLE_KEY": false,
+    "CLERK_SECRET_KEY": false,
+    "TEST_DATABASE_URL": false
+  },
+  "workaround": "Disposable PGlite exercised repository and kernel behavior. Docker daemon unavailable. Product requires Clerk authentication and has no local authentication mode; substituting auth would not validate the real flow.",
+  "model": {
+    "states": 472,
+    "steps": 1912,
+    "chartMatches": true
+  },
+  "visualLimitation": "Authenticated Rules screenshots and fresh design comparisons could not be captured; the available screenshot shows the live access blocker."
+}

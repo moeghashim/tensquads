@@ -1,0 +1,11 @@
+{
+  "boundary": "Kernel with disposable in-memory PGlite; supplemental integration check, not browser E2E",
+  "attemptedCap": 240,
+  "storedCap": 200,
+  "errors": [
+    "The workspace write did not finish.",
+    "The workspace write did not finish.",
+    "The workspace write did not finish."
+  ],
+  "rulesUnchanged": true
+}

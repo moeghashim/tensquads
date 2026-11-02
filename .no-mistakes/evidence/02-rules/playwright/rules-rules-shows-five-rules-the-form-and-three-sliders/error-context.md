@@ -7,7 +7,7 @@
 # Test info
 
 - Name: rules.spec.ts >> rules shows five rules, the form and three sliders
-- Location: e2e/rules.spec.ts:41:1
+- Location: e2e/rules.spec.ts:43:1
 
 # Error details
 
