@@ -68,7 +68,18 @@ const bundle = await esbuild.build({
 				build.onLoad({ filter: /.*/, namespace: "boundary" }, () => ({
 					contents: `
      export const beginWorkspaceSend = ({data}) => window.beginSend(data);
-     export const finishWorkspaceSend = ({data}) => window.finishSend(data);
+     export const finishWorkspaceSend = ({data, signal}) => {
+      if (window.holdFinish) {
+       window.finishHeld = true;
+       return new Promise((resolve, reject) => {
+        const abort = () => reject(new DOMException("The operation was aborted.", "AbortError"));
+        if (!signal) return;
+        if (signal.aborted) abort();
+        else signal.addEventListener("abort", abort, { once: true });
+       });
+      }
+      return window.finishSend(data);
+     };
     `,
 				}));
 			},
@@ -244,6 +255,44 @@ test("saved bubbles stay while invalidation completes before the loader frame is
 		await expect(page.getByText(reply, { exact: true })).toBeVisible();
 	});
 });
+
+test(
+	"a finish request that never settles releases the guard and accepts another send",
+	{ timeout: 90_000 },
+	async (t) => {
+		await withDock(t, async ({ page }) => {
+			await page.clock.install();
+			await page.evaluate(() => {
+				const read = window.readFrame;
+				window.reads = 0;
+				window.readFrame = async () => {
+					window.reads += 1;
+					return read();
+				};
+				window.holdFinish = true;
+				window.finishHeld = false;
+			});
+			await send(page);
+			await advanceReply(page);
+			await expect(page.locator("#pending")).toHaveText("true");
+			await expect.poll(() => page.evaluate(() => window.finishHeld)).toBe(true);
+			const readsBefore = await page.evaluate(() => window.reads);
+			await page.clock.fastForward(PENDING_TASK_WINDOW_MS);
+			await expect(page.locator("#pending")).toHaveText("false");
+			await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0);
+			const readsAfter = await page.evaluate(() => window.reads);
+			assert.ok(readsAfter > readsBefore);
+			t.mock.timers.tick(PENDING_TASK_WINDOW_MS + 1);
+			await page.evaluate(() => {
+				window.holdFinish = false;
+			});
+			await send(page);
+			await advanceReply(page);
+			await expect(page.getByText(reply, { exact: true })).toBeVisible();
+			await expect(page.locator("#pending")).toHaveText("false");
+		});
+	},
+);
 
 test("a failed refresh keeps returned messages and permits another send", async (t) => {
 	await withDock(t, async ({ page }) => {

@@ -1,4 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
+import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import { type ReactNode, useCallback, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { beginWorkspaceSend, finishWorkspaceSend } from "#/server/workspace.ts";
@@ -267,9 +268,17 @@ async function finishWorkingSend(
 	if (!hooks.mounted.current) {
 		return;
 	}
-	const finished = await finishWorkspaceSend({ data: started.taskId });
-	if (hooks.mounted.current && finished.kind === "replied") {
-		hooks.setMessages(finished.messages);
+	const controller = new AbortController();
+	const timer = setTimeout(() => {
+		controller.abort();
+	}, PENDING_TASK_WINDOW_MS);
+	try {
+		const finished = await finishWorkspaceSend({ data: started.taskId, signal: controller.signal });
+		if (hooks.mounted.current && finished.kind === "replied") {
+			hooks.setMessages(finished.messages);
+		}
+	} finally {
+		clearTimeout(timer);
 	}
 }
 

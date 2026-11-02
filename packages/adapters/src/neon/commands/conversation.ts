@@ -2,10 +2,13 @@ import type { AccountScope, ConversationTransaction, Message, MessageFrom } from
 import { requireScope } from "@tensquads/domain";
 import { and, asc, eq, sql } from "drizzle-orm";
 
+import { PENDING_TASK_WINDOW_MS } from "../../pending-window.ts";
 import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { agents, busEvents, messages, skills, stateEntries, threads } from "../schema.ts";
 import { appendEvents, type BusCursor, lockCursor, saveCursor } from "./bus.ts";
+
+export { PENDING_TASK_WINDOW_MS };
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 
@@ -15,8 +18,6 @@ function messageRank(id: string, sortOrder: number): number {
 	const match = /^c(\d+)$/.exec(id);
 	return match?.[1] ? Number(match[1]) : sortOrder;
 }
-
-export const PENDING_TASK_WINDOW_MS = 30_000;
 
 export async function conversationTransaction<T>(
 	db: AppDatabase,
