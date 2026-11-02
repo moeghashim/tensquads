@@ -1,0 +1,13 @@
+
+Running 2 tests using 1 worker
+
+(node:53878) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/2] e2e/validation-traffic.spec.ts:655:1 › missing scripted agents show ids and do not create hub nodes
+[2/2] e2e/validation-traffic.spec.ts:667:1 › repeating an event id leaves the event store and cursor unchanged
+e2e/validation-traffic.spec.ts:667:1 › repeating an event id leaves the event store and cursor unchanged
+{"duplicateId":"e100","unchanged":true,"events":10,"cursor":[{"account_id":"validation","seq":100,"clock":662,"script_index":0}]}
+
+  2 passed (2.7s)

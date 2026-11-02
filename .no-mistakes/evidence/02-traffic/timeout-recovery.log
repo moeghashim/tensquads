@@ -1,0 +1,24 @@
+
+Running 4 tests using 1 worker
+
+(node:53297) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/4] e2e/validation-traffic.spec.ts:612:3 › send resumes without reload after successful advance and hung loader
+e2e/validation-traffic.spec.ts:612:3 › send resumes without reload after successful advance and hung loader
+{"mode":"send","stallsAdvance":false,"stalledReads":3,"posts":2,"persistedEvents":2,"reloaded":false}
+
+[2/4] e2e/validation-traffic.spec.ts:612:3 › send resumes without reload after timed-out advance and hung loader
+e2e/validation-traffic.spec.ts:612:3 › send resumes without reload after timed-out advance and hung loader
+{"mode":"send","stallsAdvance":true,"stalledReads":3,"posts":2,"persistedEvents":1,"reloaded":false}
+
+[3/4] e2e/validation-traffic.spec.ts:612:3 › live resumes without reload after successful advance and hung loader
+e2e/validation-traffic.spec.ts:612:3 › live resumes without reload after successful advance and hung loader
+{"mode":"live","stallsAdvance":false,"stalledReads":3,"posts":2,"persistedEvents":2,"reloaded":false}
+
+[4/4] e2e/validation-traffic.spec.ts:612:3 › live resumes without reload after timed-out advance and hung loader
+e2e/validation-traffic.spec.ts:612:3 › live resumes without reload after timed-out advance and hung loader
+{"mode":"live","stallsAdvance":true,"stalledReads":3,"posts":2,"persistedEvents":1,"reloaded":false}
+
+  4 passed (21.6s)
