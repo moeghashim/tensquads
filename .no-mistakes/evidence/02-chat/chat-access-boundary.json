@@ -1,0 +1,9 @@
+{
+  "requested": "/chat",
+  "landed": "http://localhost:3000/signin",
+  "headings": [
+    "Sign in to tensquads"
+  ],
+  "chatInputs": 0,
+  "handoffPanels": 0
+}
