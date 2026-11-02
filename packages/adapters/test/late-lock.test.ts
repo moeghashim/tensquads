@@ -39,12 +39,11 @@ function refuseProduction(): void {
 	if (databaseName(connection) === "neondb") throw new Error("refusing the production database");
 }
 
-async function copyAccount(db: ReturnType<typeof openPostgres>["db"], accountId: string, clerkId: string) {
+async function retryLockWait<T>(run: () => Promise<T>): Promise<T> {
 	const deadline = Date.now() + 90_000;
 	for (;;) {
 		try {
-			await replaceDemoAccount(db, accountId, clerkId);
-			return;
+			return await run();
 		} catch (error) {
 			if (!isLockWait(error) || Date.now() >= deadline) throw error;
 			await delay(250);
@@ -79,10 +78,10 @@ async function abandonedBegin(kernel: Kernel, scope: { accountId: string; mode: 
 }
 
 async function replyAfter(kernel: Kernel, scope: { accountId: string; mode: "account" }) {
-	const started = await kernel.beginSend(scope, ads);
+	const started = await retryLockWait(() => kernel.beginSend(scope, ads));
 	assert.equal(started.kind, "working");
 	if (started.kind !== "working") return;
-	const finished = await kernel.finishSend(scope, started.taskId);
+	const finished = await retryLockWait(() => kernel.finishSend(scope, started.taskId));
 	assert.equal(finished.kind, "replied");
 	if (finished.kind !== "replied") return;
 	assert.ok(finished.messages.some((message) => message.text === reply));
@@ -120,7 +119,7 @@ test(
 		const client = await holder.connect();
 		let locked = false;
 		try {
-			await copyAccount(opened.db, accountId, `clerk-${suffix}`);
+			await retryLockWait(() => replaceDemoAccount(opened.db, accountId, `clerk-${suffix}`));
 			const scope = { accountId, mode: "account" as const };
 			const kernel = new Kernel(createRepositories(opened.db));
 			await holdLock(client);
