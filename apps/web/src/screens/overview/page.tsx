@@ -7,7 +7,7 @@ import { decideMissionOverview, decideOverview } from "#/server/overview.ts";
 import { missionBits } from "#/workspace/agent-view.ts";
 import { useRefresh } from "#/workspace/context.ts";
 
-import { enqueueDecision, patchSnapshot, subscribeDecisions } from "./actions.ts";
+import { enqueueDecision, patchSnapshot, subscribeDecisions, watchServerCount } from "./actions.ts";
 import type { OverviewAgentView, OverviewData } from "./types.ts";
 import { type DecisionPatch, presentOverview } from "./view.ts";
 
@@ -98,6 +98,7 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 	const refresh = useRefresh();
 	const router = useRouter();
 	const patches = useSyncExternalStore(subscribeDecisions, patchSnapshot, () => emptyPatches);
+	watchServerCount(data.count, data);
 	const shown = presentOverview(data, patches);
 	const accept = (patch: DecisionPatch, work: (signal: AbortSignal) => Promise<unknown>) => {
 		enqueueDecision(

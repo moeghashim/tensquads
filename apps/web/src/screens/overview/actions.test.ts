@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { enqueueDecision, patchSnapshot, resetDecisions, shownApprovalCount } from "./actions.ts";
+import { enqueueDecision, patchSnapshot, reconcileDecisions, resetDecisions, shownApprovalCount } from "./actions.ts";
 
 describe("overview decisions", { concurrency: false }, () => {
 	test("a finished decision refreshes and clears the guard", async () => {
@@ -64,7 +64,7 @@ describe("overview decisions", { concurrency: false }, () => {
 		resetDecisions();
 	});
 
-	test("a failed refresh still clears the guard", async () => {
+	test("a failed refresh keeps the card until a server read", async () => {
 		resetDecisions();
 		const result = await settled(
 			"one",
@@ -77,6 +77,10 @@ describe("overview decisions", { concurrency: false }, () => {
 		assert.equal(result.wrote, true);
 		assert.equal(result.refreshed, false);
 		assert.equal(shownApprovalCount(4), 3);
+		assert.deepEqual(
+			patchSnapshot().map((item) => item.key),
+			["one"],
+		);
 		const again = enqueueDecision(
 			patch("one"),
 			3,
@@ -84,8 +88,11 @@ describe("overview decisions", { concurrency: false }, () => {
 			async () => 4,
 			() => undefined,
 		);
-		assert.equal(again, true);
-		resetDecisions();
+		assert.equal(again, false);
+		assert.equal(patchSnapshot().filter((item) => item.key === "one").length, 1);
+		reconcileDecisions(4);
+		assert.deepEqual(patchSnapshot(), []);
+		assert.equal(shownApprovalCount(4), 4);
 	});
 
 	test("two cards queue in click order and a double click sends one write", async () => {
@@ -204,7 +211,10 @@ describe("overview decisions", { concurrency: false }, () => {
 		release();
 		await first;
 		assert.equal(shownApprovalCount(3), 2);
-		assert.deepEqual(patchSnapshot().map((item) => item.key), ["marketing"]);
+		assert.deepEqual(
+			patchSnapshot().map((item) => item.key),
+			["marketing"],
+		);
 		releaseSecond();
 		await second;
 		assert.equal(shownApprovalCount(2), 2);
@@ -224,10 +234,82 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 		);
 		assert.equal(shownApprovalCount(4), 3);
-		assert.deepEqual(patchSnapshot().map((item) => item.key), ["refund"]);
-		await settled("marketing", 4, async () => undefined, async () => 2);
+		assert.deepEqual(
+			patchSnapshot().map((item) => item.key),
+			["refund"],
+		);
+		await settled(
+			"marketing",
+			4,
+			async () => undefined,
+			async () => 2,
+		);
 		assert.equal(shownApprovalCount(2), 2);
 		assert.deepEqual(patchSnapshot(), []);
+	});
+
+	test("a timed-out refresh keeps the card until a server read and a second click sends nothing", async (t) => {
+		t.mock.timers.enable({ apis: ["setTimeout"] });
+		resetDecisions();
+		let refreshStarted = () => {};
+		const started = new Promise<void>((resolve) => {
+			refreshStarted = resolve;
+		});
+		const first = settled(
+			"refund",
+			4,
+			async () => {
+				throw new Error("The response was lost.");
+			},
+			() => {
+				refreshStarted();
+				return new Promise(() => undefined);
+			},
+		);
+		await started;
+		t.mock.timers.tick(30_000);
+		await first;
+		assert.deepEqual(
+			patchSnapshot().map((item) => item.key),
+			["refund"],
+		);
+		assert.equal(shownApprovalCount(4), 3);
+		let sent = 0;
+		const duplicate = enqueueDecision(
+			patch("refund"),
+			4,
+			async () => {
+				sent += 1;
+			},
+			async () => 4,
+			() => undefined,
+		);
+		assert.equal(duplicate, false);
+		assert.equal(sent, 0);
+		assert.equal(patchSnapshot().filter((item) => item.key === "refund").length, 1);
+		let release = () => {};
+		const gate = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const second = settled(
+			"marketing",
+			4,
+			async () => {
+				await gate;
+			},
+			async () => 3,
+		);
+		await Promise.resolve();
+		reconcileDecisions(4);
+		assert.deepEqual(
+			patchSnapshot().map((item) => item.key),
+			["marketing"],
+		);
+		assert.equal(shownApprovalCount(4), 3);
+		release();
+		await second;
+		assert.deepEqual(patchSnapshot(), []);
+		assert.equal(shownApprovalCount(3), 3);
 	});
 
 	test("a hung write aborts, refreshes, and the queue goes on", async (t) => {
@@ -266,7 +348,7 @@ function settled(
 	key: string,
 	serverCount: number,
 	work: (signal: AbortSignal) => Promise<unknown>,
-	refresh: () => Promise<number | void>,
+	refresh: () => Promise<number | undefined>,
 ): Promise<{ readonly wrote: boolean; readonly refreshed: boolean }> {
 	return new Promise((resolve) => {
 		const queued = enqueueDecision(patch(key), serverCount, work, async () => (await refresh()) ?? 4, resolve);

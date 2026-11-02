@@ -22,6 +22,8 @@ let running = false;
 let generation = 0;
 let target: number | null = null;
 let patches: readonly DecisionPatch[] = [];
+let activeKey: string | null = null;
+let seenServer: object | null = null;
 
 export function resetDecisions(): void {
 	generation += 1;
@@ -30,6 +32,8 @@ export function resetDecisions(): void {
 	running = false;
 	target = null;
 	patches = [];
+	activeKey = null;
+	seenServer = null;
 	notify();
 }
 
@@ -62,7 +66,7 @@ export function enqueueDecision(
 	settled: (result: DecisionResult) => void,
 ): boolean {
 	const key = patch.key;
-	if (keys.has(key)) {
+	if (keys.has(key) || patches.some((item) => item.key === key)) {
 		return false;
 	}
 	keys.add(key);
@@ -79,12 +83,51 @@ function hold(serverCount: number): void {
 	notify();
 }
 
-function settle(job: Job, result: DecisionResult): void {
-	if (result.count !== null) {
-		patches = patches.filter((patch) => patch.key !== job.key && keys.has(patch.key));
-		target = patches.length === 0 ? null : Math.max(0, result.count - patches.length);
+function liveKeys(): Set<string> {
+	const live = new Set(jobs.map((item) => item.key));
+	if (activeKey !== null) {
+		live.add(activeKey);
 	}
+	return live;
+}
+
+// A count from the server drops patches whose writes have finished.
+// A card that is still queued or in flight stays, and the badge is the server
+// count minus those cards. A refresh that returns no count leaves its patch
+// in place, so a second click on that card still sends nothing.
+export function reconcileDecisions(serverCount: number): void {
+	const live = liveKeys();
+	const next: DecisionPatch[] = [];
+	let dropped = false;
+	for (const patch of patches) {
+		if (live.has(patch.key)) {
+			next.push(patch);
+			continue;
+		}
+		keys.delete(patch.key);
+		dropped = true;
+	}
+	const nextTarget = next.length === 0 ? null : Math.max(0, serverCount - next.length);
+	if (!dropped && nextTarget === target) {
+		return;
+	}
+	patches = next;
+	target = nextTarget;
 	notify();
+}
+
+export function watchServerCount(serverCount: number, token: object): void {
+	if (token === seenServer) {
+		return;
+	}
+	seenServer = token;
+	const gen = generation;
+	queueMicrotask(() => {
+		if (gen !== generation || patches.every((patch) => liveKeys().has(patch.key))) {
+			return;
+		}
+		reconcileDecisions(serverCount);
+	});
 }
 
 function pump(): void {
@@ -101,13 +144,18 @@ function pump(): void {
 }
 
 async function runJob(job: Job, gen: number): Promise<void> {
+	activeKey = job.key;
 	const result = await runBounded(job);
+	if (activeKey === job.key) {
+		activeKey = null;
+	}
 	if (gen !== generation) {
 		return;
 	}
-	settle(job, result);
+	if (result.count !== null) {
+		reconcileDecisions(result.count);
+	}
 	job.settled(result);
-	keys.delete(job.key);
 	running = false;
 	queueMicrotask(() => {
 		if (gen === generation) {

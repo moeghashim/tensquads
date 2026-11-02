@@ -558,3 +558,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-02 02-overview: The overview replaces the blank page. The system computes Tasks done, the last seven days of revenue, and hours saved. Approve writes one Mandate in the same transaction as the Approval. The overview read is 12 queries and took 707 ms. TLC reached 12 states and 23 steps with no broken rule.
 - 2026-11-02 02-overview: A click changes the card and the badge at once. Writes queue in click order, and a second click on the same card sends one request. An empty proposal mission shows an em dash.
 - 2026-11-02 02-overview: The last decision shows "Nothing waiting. Your squads are working inside their limits." at the click. A settled test waits for its write before it reads the server.
+- 2026-11-02 02-overview: A timed-out refresh keeps the card until a server read, and a second click on that card sends nothing.
