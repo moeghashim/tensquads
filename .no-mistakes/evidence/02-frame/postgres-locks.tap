@@ -1,0 +1,10 @@
+✔ a lock held past the window does not block the next send (31318.605ms)
+✔ a reset waiting on the advisory lock longer than the send timeout succeeds (12213.989042ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44087.126583

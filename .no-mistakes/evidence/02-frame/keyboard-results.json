@@ -1,0 +1,12 @@
+{
+  "result": "pass",
+  "focusableControls": 19,
+  "reached": 19,
+  "inputOffset": "4px",
+  "messageListRing": {
+    "width": "2px",
+    "offset": "2px",
+    "color": "rgb(1, 105, 204)"
+  },
+  "enterSend": "replied"
+}

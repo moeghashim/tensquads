@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import {writeFile} from 'node:fs/promises';
+import {chromium,expect} from '@playwright/test';
+const evidence='/Users/moeghashim/.no-mistakes/evidence/01M6DN54VTEX6MZG45D17D2FEQ';
+const results=[]; const origin='http://127.0.0.1:55441';
+async function api(path,data){const response=await fetch(origin+'/api/'+path,data===undefined?{}:{method:'POST',body:JSON.stringify(data)});return {status:response.status,value:await response.json()};}
+async function state(){return (await api('state')).value;}
+async function control(data){assert.equal((await api('control',data)).status,200);}
+function generated(s){return s.events.filter(e=>/^e\d+$/.test(e.id));}
+const ads='How did ads do this week?',reply='Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.';
+async function record(name,run){const start=Date.now();try{const detail=await run();results.push({name,result:'pass',elapsedMs:Date.now()-start,...detail});}catch(e){results.push({name,result:'fail',error:e.stack});}await writeFile(evidence+'/live-results.json',JSON.stringify(results,null,2));console.log(results.at(-1));}
+const browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1440,height:900}}); const errors=[];page.on('pageerror',e=>errors.push(e.message));
+await record('Sidebar navigation, status dots, dock badge, draft persistence and chat hiding',async()=>{
+ await control({reset:true});await page.goto(origin+'/overview');await expect(page.getByRole('navigation',{name:'Workspace'})).toBeVisible();await expect(page.getByRole('img',{name:'Running'})).toHaveCount(4);await expect(page.getByRole('img',{name:'Paused'})).toHaveCount(1);await expect(page.locator('[data-if="dockUnread"]')).toHaveText('4');
+ await page.screenshot({path:evidence+'/frame-closed-1440.png'});await page.getByRole('button',{name:'Ask Master'}).click();await page.locator('#dock-input').fill('keep this');await page.getByRole('button',{name:'Rules and limits'}).click();await expect(page).toHaveURL(/\/rules$/);await expect(page.locator('#dock-input')).toHaveValue('keep this');await page.getByRole('button',{name:'Chat with the master'}).click();await expect(page.locator('#dock-input')).toHaveCount(0);await page.getByRole('button',{name:'Inventory'}).click();await expect(page).toHaveURL(/\/agents\/inventory$/);await expect(page.getByRole('button',{name:'Squads',exact:true})).toHaveCSS('font-weight','600');await page.getByRole('button',{name:'Overview',exact:true}).click();await expect(page.locator('#dock-input')).toHaveValue('keep this');await page.locator('#dock-input').fill('');await page.screenshot({path:evidence+'/frame-open-1440.png'});
+ await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.screenshot({path:evidence+'/frame-open-390.png'});await page.setViewportSize({width:1440,height:900});return {badge:4,running:4,paused:1};
+});
+await record('Dock Enter send displays working then Marketing reply and persists exactly one Task and Result',async()=>{
+ await page.locator('#dock-input').fill(ads);await page.locator('#dock-input').press('Enter');await expect(page.getByText('Marketing agent is working on it…')).toBeVisible();await page.screenshot({path:evidence+'/dock-working.png'});await expect(page.getByText(reply,{exact:true})).toBeVisible();await page.screenshot({path:evidence+'/dock-replied.png'});const s=await state();assert.deepEqual(generated(s).map(e=>e.kind),['Task','Result']);assert.equal(errors.length,0);return {events:generated(s),reply};
+});
+await record('Unmatched and paused-agent requests answer without bus events; blank send changes nothing',async()=>{
+ await control({reset:true});await page.reload();await page.getByRole('button',{name:'Ask Master'}).click();for(const [text,answer] of [['Hello there','That one I can answer myself, no agent needed. Ask me about orders, refunds, ads, profit or stock and I will hand it to the right agent.'],['Is anything low on stock?','That is a job for the Inventory agent, but it is paused. Turn it on in Agents and ask me again.']]){await page.locator('#dock-input').fill(text);await page.locator('#dock-input').press('Enter');await expect(page.getByText(answer,{exact:true})).toBeVisible();}const before=await state();await page.locator('#dock-input').fill('  ');await page.locator('#dock-input').press('Enter');assert.deepEqual(await state(),before);assert.equal(generated(before).length,0);return {events:0};
+});
+await record('Two eight-second statements commit inside thirty seconds and finish replies',async()=>{
+ await control({reset:true,delays:2});const start=Date.now(),begin=await api('begin',ads);assert.equal(begin.value.kind,'working');const elapsed=Date.now()-start;assert.ok(elapsed>=16000&&elapsed<30000);const finish=await api('finish',begin.value.taskId);assert.equal(finish.value.kind,'replied');return {elapsed,begin:begin.value,finish:finish.value};
+});
+await record('Four eight-second statements roll back; unfinished UI leaves draft empty and next send replies',async()=>{
+ await control({reset:true,delays:4});await page.reload();await page.getByRole('button',{name:'Ask Master'}).click();const before=await state();const start=Date.now();await page.locator('#dock-input').fill(ads);await page.locator('#dock-input').press('Enter');await expect(page.getByRole('button',{name:'Send',exact:true})).toBeEnabled({timeout:40000});await new Promise(r=>setTimeout(r,33000-(Date.now()-start)>0?33000-(Date.now()-start):0));await expect(page.locator('#dock-input')).toHaveValue('');assert.deepEqual(await state(),before);await page.screenshot({path:evidence+'/unfinished-draft-empty.png'});await page.locator('#dock-input').fill(ads);await page.locator('#dock-input').press('Enter');await expect(page.getByText(reply,{exact:true})).toBeVisible();return {rolledBack:true,draft:'',nextReply:reply};
+});
+await record('Finish uses original Task expiry, rolls back completion and permits next send',async()=>{
+ await control({reset:true,delays:2});const begin=await api('begin',ads);assert.equal(begin.value.kind,'working');const before=await state();await control({delays:2});const finish=await api('finish',begin.value.taskId);assert.equal(finish.status,500);assert.equal(finish.value.error,'The workspace write did not finish.');assert.deepEqual(await state(),before);const next=await api('begin',ads);assert.equal(next.value.kind,'working');assert.equal((await api('finish',next.value.taskId)).value.kind,'replied');return {finish,completionUnchanged:true,nextReply:reply};
+});
+await record('Pending Task blocks duplicate begin; finish after expiry is ignored without changes',async()=>{
+ await control({reset:true});const begin=await api('begin',ads);assert.equal(begin.value.kind,'working');const before=await state();assert.equal((await api('begin',ads)).value.kind,'ignored');await new Promise(r=>setTimeout(r,30100));const finish=await api('finish',begin.value.taskId);assert.equal(finish.status,200);assert.equal(finish.value.kind,'ignored');assert.deepEqual(await state(),before);return {duplicate:'ignored',lateFinish:finish.value,persistedTask:generated(before)};
+});
+await browser.close();if(results.some(r=>r.result==='fail'))process.exitCode=1;

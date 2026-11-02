@@ -1,0 +1,10 @@
+import EmbeddedPostgres from 'embedded-postgres';
+import { WebSocketServer } from 'ws';
+import net from 'node:net';
+const pg = new EmbeddedPostgres({databaseDir: process.cwd()+'/.phase-test/pg',user:'phase_user',password:'phase_password',port:55439,persistent:true,autoRehydrateSymlinks:true,postgresFlags:['-h','127.0.0.1','-k',''],onLog:console.log,onError:console.error});
+await pg.start(); await pg.createDatabase('phase_test');
+const wss=new WebSocketServer({host:'127.0.0.1',port:55440});
+wss.on('connection',ws=>{const tcp=net.connect(55439,'127.0.0.1');ws.on('message',b=>tcp.write(b));tcp.on('data',b=>ws.send(b));tcp.on('error',()=>ws.close());ws.on('close',()=>tcp.destroy());tcp.on('close',()=>ws.close());});
+console.log('Disposable PostgreSQL and WebSocket transport ready');
+process.on('SIGTERM',async()=>{wss.close();await pg.stop();process.exit();});
+process.on('SIGINT',async()=>{wss.close();await pg.stop();process.exit();});

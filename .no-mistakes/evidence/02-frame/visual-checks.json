@@ -1,0 +1,26 @@
+[
+  {
+    "width": 1440,
+    "open": false,
+    "noHorizontalScroll": true,
+    "fontLoaded": true
+  },
+  {
+    "width": 1440,
+    "open": true,
+    "noHorizontalScroll": true,
+    "fontLoaded": true
+  },
+  {
+    "width": 390,
+    "open": false,
+    "noHorizontalScroll": true,
+    "fontLoaded": true
+  },
+  {
+    "width": 390,
+    "open": true,
+    "noHorizontalScroll": true,
+    "fontLoaded": true
+  }
+]

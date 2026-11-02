@@ -1,0 +1,13 @@
+✔ a change to a rule after an Approval does not change that Approval's Mandate (1137.753959ms)
+✔ two statements delayed 8 seconds each do not commit past the pending window (17200.600042ms)
+✔ a finish past its Task expiry rolls back all completion writes (32539.515542ms)
+✔ a send that passes the pending window rolls back and the next send replies (32479.161083ms)
+✔ a chat Trigger passes its code gate for the account owner (0.335916ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 82536.909542

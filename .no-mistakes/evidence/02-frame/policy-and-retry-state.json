@@ -1,0 +1,76 @@
+{
+  "seedTotals": {
+    "accounts": 9,
+    "agents": 66,
+    "squads": 17,
+    "mrr": 1294,
+    "allTime": 14568,
+    "tasksDone": 331,
+    "images": 7,
+    "openBugs": 8,
+    "featuresRequested": 15
+  },
+  "seedMandates": 0,
+  "pendingRefusal": "An Approval has a Mandate only after a person says yes.",
+  "declinedRefusal": "An Approval has a Mandate only after a person says yes.",
+  "made": {
+    "approvalId": "ap1",
+    "ruleId": "r1",
+    "ruleWhen": "a refund request comes in",
+    "ruleAction": "refund it if it is under the refund limit, otherwise ask me",
+    "ruleApproval": "Auto under limit",
+    "limitValue": 40,
+    "policyVersion": "policy-1",
+    "saidYes": "owner",
+    "at": "2026-11-02T08:28:02.781Z"
+  },
+  "readAfterRuleEdit": {
+    "approvalId": "ap1",
+    "ruleId": "r1",
+    "ruleWhen": "a refund request comes in",
+    "ruleAction": "refund it if it is under the refund limit, otherwise ask me",
+    "ruleApproval": "Auto under limit",
+    "limitValue": 40,
+    "policyVersion": "policy-1",
+    "saidYes": "owner",
+    "at": "2026-11-02T08:28:02.781Z"
+  },
+  "otherAccountRead": null,
+  "afterResetMandates": 0,
+  "ownerGate": {
+    "gate": true,
+    "judgement": null
+  },
+  "otherOwnerGate": {
+    "gate": false,
+    "judgement": null
+  },
+  "retries": [
+    {
+      "databaseSQLSTATE": "40P01",
+      "attempts": 3
+    },
+    {
+      "databaseSQLSTATE": "23505",
+      "attempts": 1
+    },
+    {
+      "databaseSQLSTATE": "57014",
+      "attempts": 1
+    },
+    {
+      "databaseSQLSTATE": "55P03",
+      "attempts": 1
+    }
+  ],
+  "insufficientRetryBudget": {
+    "attempts": 1,
+    "deadlineMs": 120,
+    "delayMs": 90
+  },
+  "noSendOptions": {
+    "lock_timeout": "0",
+    "statement_timeout": "0"
+  },
+  "result": "pass"
+}

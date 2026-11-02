@@ -1,0 +1,235 @@
+[
+  {
+    "name": "Sidebar navigation, status dots, dock badge, draft persistence and chat hiding",
+    "result": "pass",
+    "elapsedMs": 1167,
+    "badge": 4,
+    "running": 4,
+    "paused": 1
+  },
+  {
+    "name": "Dock Enter send displays working then Marketing reply and persists exactly one Task and Result",
+    "result": "pass",
+    "elapsedMs": 2017,
+    "events": [
+      {
+        "accountId": "live-phase",
+        "id": "e102",
+        "timeText": "11:03",
+        "occurredAt": "2026-11-02T08:27:35.804Z",
+        "fromAgent": "master",
+        "toAgent": "marketing",
+        "kind": "Task",
+        "skill": "meta_ads.report",
+        "body": "How did ads do this week?",
+        "payload": {
+          "from": "chat",
+          "intent": "user_request",
+          "limits": {
+            "daily_ad_cap": 200,
+            "refund_auto_limit": 50
+          },
+          "user_text": "How did ads do this week?"
+        },
+        "writes": [],
+        "trace": "tr_5789f6",
+        "seq": 102
+      },
+      {
+        "accountId": "live-phase",
+        "id": "e104",
+        "timeText": "11:04",
+        "occurredAt": "2026-11-02T08:27:37.422Z",
+        "fromAgent": "marketing",
+        "toAgent": "master",
+        "kind": "Result",
+        "skill": "meta_ads.report",
+        "body": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.",
+        "payload": {
+          "best": "Prints · lookalike",
+          "roas_7d": 3.4,
+          "spend_7d": 262
+        },
+        "writes": [
+          "marketing.roas_7d"
+        ],
+        "trace": "tr_110d6d",
+        "seq": 104
+      }
+    ],
+    "reply": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike."
+  },
+  {
+    "name": "Unmatched and paused-agent requests answer without bus events; blank send changes nothing",
+    "result": "pass",
+    "elapsedMs": 527,
+    "events": 0
+  },
+  {
+    "name": "Two eight-second statements commit inside thirty seconds and finish replies",
+    "result": "pass",
+    "elapsedMs": 16180,
+    "elapsed": 16062,
+    "begin": {
+      "kind": "working",
+      "taskId": "e102",
+      "agentId": "marketing",
+      "agentName": "Marketing",
+      "skill": "meta_ads.report",
+      "text": "How did ads do this week?",
+      "messages": [
+        {
+          "id": "c1",
+          "from": "user",
+          "text": "Did the tracking for #A-1007 go through?"
+        },
+        {
+          "id": "c2",
+          "from": "master",
+          "text": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships."
+        },
+        {
+          "id": "c3",
+          "from": "agent",
+          "agent": "orders",
+          "text": "Print ETA is 3 November. I will add its tracking automatically."
+        },
+        {
+          "id": "c4",
+          "from": "user",
+          "text": "Good job. What needs me today?"
+        },
+        {
+          "id": "c5",
+          "from": "master",
+          "text": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview."
+        },
+        {
+          "id": "c100",
+          "from": "user",
+          "text": "How did ads do this week?"
+        },
+        {
+          "id": "c101",
+          "from": "master",
+          "text": "Passing this to the Marketing agent. I will report back here."
+        }
+      ]
+    },
+    "finish": {
+      "kind": "replied",
+      "messages": [
+        {
+          "id": "c1",
+          "from": "user",
+          "text": "Did the tracking for #A-1007 go through?"
+        },
+        {
+          "id": "c2",
+          "from": "master",
+          "text": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships."
+        },
+        {
+          "id": "c3",
+          "from": "agent",
+          "agent": "orders",
+          "text": "Print ETA is 3 November. I will add its tracking automatically."
+        },
+        {
+          "id": "c4",
+          "from": "user",
+          "text": "Good job. What needs me today?"
+        },
+        {
+          "id": "c5",
+          "from": "master",
+          "text": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview."
+        },
+        {
+          "id": "c100",
+          "from": "user",
+          "text": "How did ads do this week?"
+        },
+        {
+          "id": "c101",
+          "from": "master",
+          "text": "Passing this to the Marketing agent. I will report back here."
+        },
+        {
+          "id": "c103",
+          "from": "agent",
+          "agent": "marketing",
+          "text": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike."
+        }
+      ]
+    }
+  },
+  {
+    "name": "Four eight-second statements roll back; unfinished UI leaves draft empty and next send replies",
+    "result": "pass",
+    "elapsedMs": 35192,
+    "rolledBack": true,
+    "draft": "",
+    "nextReply": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike."
+  },
+  {
+    "name": "Pending Task blocks duplicate begin; finish after expiry is ignored without changes",
+    "result": "pass",
+    "elapsedMs": 30358,
+    "duplicate": "ignored",
+    "lateFinish": {
+      "kind": "ignored"
+    },
+    "persistedTask": [
+      {
+        "accountId": "live-phase",
+        "id": "e102",
+        "timeText": "11:03",
+        "occurredAt": "2026-11-02T08:29:02.015Z",
+        "fromAgent": "master",
+        "toAgent": "marketing",
+        "kind": "Task",
+        "skill": "meta_ads.report",
+        "body": "How did ads do this week?",
+        "payload": {
+          "from": "chat",
+          "intent": "user_request",
+          "limits": {
+            "daily_ad_cap": 200,
+            "refund_auto_limit": 50
+          },
+          "user_text": "How did ads do this week?"
+        },
+        "writes": [],
+        "trace": "tr_5789f6",
+        "seq": 102
+      }
+    ]
+  },
+  {
+    "name": "Finish uses original Task expiry, rolls back completion and permits next send",
+    "result": "pass",
+    "elapsedMs": 32360,
+    "finish": {
+      "status": 500,
+      "value": {
+        "error": "The workspace write did not finish."
+      }
+    },
+    "completionUnchanged": true,
+    "nextReply": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike."
+  },
+  {
+    "name": "Four delayed statements return the exact unfinished error with no persisted Task",
+    "result": "pass",
+    "elapsedMs": 32199,
+    "begin": {
+      "status": 500,
+      "value": {
+        "error": "The workspace write did not finish."
+      }
+    },
+    "elapsed": 32081,
+    "noWrites": true
+  }
+]

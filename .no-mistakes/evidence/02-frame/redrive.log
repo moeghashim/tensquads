@@ -1,0 +1,22 @@
+{
+  name: 'Finish uses original Task expiry, rolls back completion and permits next send',
+  result: 'pass',
+  elapsedMs: 32360,
+  finish: {
+    status: 500,
+    value: { error: 'The workspace write did not finish.' }
+  },
+  completionUnchanged: true,
+  nextReply: 'Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.'
+}
+{
+  name: 'Four delayed statements return the exact unfinished error with no persisted Task',
+  result: 'pass',
+  elapsedMs: 32199,
+  begin: {
+    status: 500,
+    value: { error: 'The workspace write did not finish.' }
+  },
+  elapsed: 32081,
+  noWrites: true
+}

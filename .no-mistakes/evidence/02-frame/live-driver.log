@@ -1,0 +1,125 @@
+{
+  name: 'Sidebar navigation, status dots, dock badge, draft persistence and chat hiding',
+  result: 'pass',
+  elapsedMs: 1167,
+  badge: 4,
+  running: 4,
+  paused: 1
+}
+{
+  name: 'Dock Enter send displays working then Marketing reply and persists exactly one Task and Result',
+  result: 'pass',
+  elapsedMs: 2017,
+  events: [
+    {
+      accountId: 'live-phase',
+      id: 'e102',
+      timeText: '11:03',
+      occurredAt: '2026-11-02T08:27:35.804Z',
+      fromAgent: 'master',
+      toAgent: 'marketing',
+      kind: 'Task',
+      skill: 'meta_ads.report',
+      body: 'How did ads do this week?',
+      payload: [Object],
+      writes: [],
+      trace: 'tr_5789f6',
+      seq: 102
+    },
+    {
+      accountId: 'live-phase',
+      id: 'e104',
+      timeText: '11:04',
+      occurredAt: '2026-11-02T08:27:37.422Z',
+      fromAgent: 'marketing',
+      toAgent: 'master',
+      kind: 'Result',
+      skill: 'meta_ads.report',
+      body: 'Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.',
+      payload: [Object],
+      writes: [Array],
+      trace: 'tr_110d6d',
+      seq: 104
+    }
+  ],
+  reply: 'Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.'
+}
+{
+  name: 'Unmatched and paused-agent requests answer without bus events; blank send changes nothing',
+  result: 'pass',
+  elapsedMs: 527,
+  events: 0
+}
+{
+  name: 'Two eight-second statements commit inside thirty seconds and finish replies',
+  result: 'pass',
+  elapsedMs: 16180,
+  elapsed: 16062,
+  begin: {
+    kind: 'working',
+    taskId: 'e102',
+    agentId: 'marketing',
+    agentName: 'Marketing',
+    skill: 'meta_ads.report',
+    text: 'How did ads do this week?',
+    messages: [
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object],
+      [Object]
+    ]
+  },
+  finish: {
+    kind: 'replied',
+    messages: [
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object]
+    ]
+  }
+}
+{
+  name: 'Four eight-second statements roll back; unfinished UI leaves draft empty and next send replies',
+  result: 'pass',
+  elapsedMs: 35192,
+  rolledBack: true,
+  draft: '',
+  nextReply: 'Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.'
+}
+{
+  name: 'Finish uses original Task expiry, rolls back completion and permits next send',
+  result: 'fail',
+  error: 'AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n' +
+    '\n' +
+    '200 !== 500\n' +
+    '\n' +
+    '    at file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6DN54VTEX6MZG45D17D2FEQ/.phase-test/drive.mjs:31:227\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n' +
+    '    at async record (file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6DN54VTEX6MZG45D17D2FEQ/.phase-test/drive.mjs:11:73)\n' +
+    '    at async file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6DN54VTEX6MZG45D17D2FEQ/.phase-test/drive.mjs:30:1'
+}
+{
+  name: 'Pending Task blocks duplicate begin; finish after expiry is ignored without changes',
+  result: 'pass',
+  elapsedMs: 30358,
+  duplicate: 'ignored',
+  lateFinish: { kind: 'ignored' },
+  persistedTask: [
+    {
+      accountId: 'live-phase',
+      id: 'e102',
+      timeText: '11:03',
+      occurredAt: '2026-11-02T08:29:02.015Z',
+      fromAgent: 'master',
+      toAgent: 'marketing',
+      kind: 'Task',
+      skill: 'meta_ads.report',
+      body: 'How did ads do this week?',
+      payload: [Object],
+      writes: [],
+      trace: 'tr_5789f6',
+      seq: 102
+    }
+  ]
+}
