@@ -144,6 +144,7 @@ export function proposalTitle(status: MissionProposal["status"]): string {
 }
 
 export function chipText(label: string, goal: string): string {
+	if (label.trim().length === 0 && goal.trim().length === 0) return BLANK;
 	return `${label}: ${goal}`;
 }
 

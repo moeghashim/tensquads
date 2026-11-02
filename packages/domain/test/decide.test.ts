@@ -6,6 +6,7 @@ import {
 	askRevise,
 	assembleTiles,
 	BLANK,
+	chipText,
 	decideApproval,
 	decideMission,
 	EMPTY_INBOX,
@@ -132,6 +133,18 @@ test("the greeting uses the first word, and an email uses the part before @", ()
 	assert.equal(greetingLine("Moe Ghashim"), "Good morning, Moe");
 	assert.equal(greetingLine(""), `Good morning, ${BLANK}`);
 	assert.equal(onlineLine(4, 5), "4 of 5 squads online");
+});
+
+test("a target chip shows an em dash when both fields are blank", () => {
+	assert.equal(chipText("", ""), BLANK);
+	assert.equal(chipText(" \t", "\n "), BLANK);
+});
+
+test("a target chip preserves its text when either field has text", () => {
+	assert.equal(chipText("Stock-outs", "0"), "Stock-outs: 0");
+	assert.equal(chipText(" Stock-outs ", " 0 "), " Stock-outs :  0 ");
+	assert.equal(chipText("Stock-outs", ""), "Stock-outs: ");
+	assert.equal(chipText("", "0"), ": 0");
 });
 
 test("tiles compute tasks, revenue, and hours, and a stored tasks tile is ignored", () => {
