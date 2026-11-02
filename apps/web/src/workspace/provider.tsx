@@ -51,8 +51,7 @@ export function WorkspaceProvider({
 		setStartedTask,
 	} = useWorkspaceControls(frame);
 	const sending = useRef(false);
-	const { messages, setMessages, applyFrame } = useFrameMessages(frame, sending);
-	const { approvalCount, noteDecision } = useApprovalCount(frame);
+	const { messages, setMessages, applyFrame, approvalCount, noteDecision } = useFrameAndCount(frame, sending);
 
 	const mounted = useRef(true);
 	const refresh = useCallback(() => router.invalidate({ sync: true }), [router]);
@@ -199,6 +198,15 @@ function sendBlocked(sending: boolean, thinking: boolean): boolean {
 
 function draftValue(text: string | undefined, draft: string): string {
 	return (text ?? draft).trim();
+}
+
+function useFrameAndCount(
+	frame: WorkspaceFrameData & { readonly readStartedAt: number },
+	sending: { current: boolean },
+) {
+	const messages = useFrameMessages(frame, sending);
+	const count = useApprovalCount(frame);
+	return { ...messages, ...count };
 }
 
 function useFrameMessages(frame: WorkspaceFrameData, sending: { current: boolean }) {
