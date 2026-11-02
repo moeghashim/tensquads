@@ -1,0 +1,24 @@
+
+ENGINE: PGlite
+Repeat migration with existing account and Mandate: trigger count 1
+Existing approvals foreign key upgraded to cascade: [ { confdeltype: 'c' } ]
+UPDATE mandates SET limit_value=999 WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
+UPDATE mandates SET limit_value=limit_value WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
+DELETE FROM mandates WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
+DELETE FROM approvals WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
+INSERT INTO mandates SELECT * FROM mandates WHERE account_id='live-account' ON CONFLICT(account_id,approval_id) DO UPDATE SET limit_value=999 => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
+Repository replacement attempt => An Approval holds exactly one Mandate.
+DELETE account => account, approval and Mandate removed through cascade.
+saveWorkspace(empty disposable snapshot) => account cascade clears Mandate successfully.
+
+ENGINE: Postgres via Neon driver
+Repeat migration with existing account and Mandate: trigger count 1
+Existing approvals foreign key upgraded to cascade: [ { confdeltype: 'c' } ]
+UPDATE mandates SET limit_value=999 WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
+UPDATE mandates SET limit_value=limit_value WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
+DELETE FROM mandates WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
+DELETE FROM approvals WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
+INSERT INTO mandates SELECT * FROM mandates WHERE account_id='live-account' ON CONFLICT(account_id,approval_id) DO UPDATE SET limit_value=999 => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
+Repository replacement attempt => An Approval holds exactly one Mandate.
+DELETE account => account, approval and Mandate removed through cascade.
+saveWorkspace(empty disposable snapshot) => account cascade clears Mandate successfully.
