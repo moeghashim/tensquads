@@ -1460,3 +1460,72 @@ test("recovery: server reads hold no browser recovery state", async () => {
 	assert.equal(worker.queue.readNeeded(), false);
 	assert.equal(worker.queue.rulesRecoveryGeneration(), 0);
 });
+
+const overlappingRecoveries = [
+	{ first: snapshotAxes[1], second: snapshotAxes[2], shared: snapshotAxes[3] },
+	{ first: snapshotAxes[0], second: { kind: "add" }, shared: snapshotAxes[1] },
+	{ first: snapshotAxes[3], second: snapshotAxes[0], shared: snapshotAxes[2] },
+];
+
+for (const { first, second, shared } of overlappingRecoveries) {
+	for (const outcome of ["success", "failure"]) {
+		test(`recovery: ${first.id ?? first.kind} then ${second.id ?? second.kind} gets two reads (${outcome})`, async () => {
+			await withPage(async (page) => {
+				await seedSnapshot(page);
+				await page.evaluate(() => {
+					window.recoveries = [];
+					window.failWrite = true;
+					window.send = async (data) => {
+						if (window.failWrite) throw new Error("POST failed");
+						return typeof data.value === "number" ? { key: data.key, value: data.value } : window.ruleRow(data);
+					};
+					window.refresh = () => {
+						window.refreshCalls += 1;
+						window.recoveries.push({
+							done: window.done,
+							finish: window.finish,
+							fail: window.fail,
+							loadRules: window.loadRules,
+							loadLimits: window.loadLimits,
+						});
+						return window.done.catch(() => undefined);
+					};
+				});
+				await actOnRecoveryAxis(page, first);
+				await page.waitForFunction(() => window.refreshCalls === 1);
+				await page.evaluate(() => {
+					window.failWrite = false;
+				});
+				await actOnRecoveryAxis(page, shared);
+				assert.equal(await page.evaluate(() => window.refreshCalls), 1);
+				await page.evaluate(() => {
+					window.failWrite = true;
+				});
+				await actOnRecoveryAxis(page, second);
+				assert.equal(await page.evaluate(() => window.refreshCalls), 2);
+				await page.evaluate(async () => {
+					window.recoveries[0].loadRules([...window.seedRules]);
+					window.recoveries[0].loadLimits(window.seedLimits.map((row) => ({ ...row })));
+					await window.recoveries[0].done;
+					await window.flush();
+				});
+				assert.equal(await page.evaluate(() => window.queue.readNeeded()), true);
+				await page.evaluate(() => {
+					window.failWrite = false;
+				});
+				await actOnRecoveryAxis(page, { ...shared, saved: shared.later });
+				assert.equal(await page.evaluate(() => window.refreshCalls), 2);
+				await page.evaluate(async (outcome) => {
+					const latest = window.recoveries[1];
+					if (outcome === "success") latest.finish();
+					else latest.fail();
+					await latest.done.catch(() => undefined);
+					await window.flush();
+				}, outcome);
+				assert.equal(await page.evaluate(() => window.queue.readNeeded()), outcome === "failure");
+				await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+				assert.equal(await page.evaluate(() => window.refreshCalls), 2);
+			});
+		});
+	}
+}

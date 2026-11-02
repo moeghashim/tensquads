@@ -1,39 +1,30 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
 import type { RulesPageData } from "#/server/rules.ts";
 
-import { bounded, readNeeded, rulesWrittenSince } from "./write-queue.ts";
+import { bounded, readNeeded, rulesRecoveryGeneration, rulesWrittenSince } from "./write-queue.ts";
 
 export interface RulesSnapshotPage extends RulesPageData {
 	readonly readCounter: number;
 }
 
 interface Refresh {
-	readonly finish: () => void;
+	readonly generation: number;
 	done: Promise<void>;
 }
 
 // A read keeps the number it started with, so a later page cannot replace a newer write.
 export function useRulesSnapshot(page: RulesSnapshotPage, read: () => Promise<void>) {
 	const snapshot = mergePage(page);
-	const [seenPage, setSeenPage] = useState(page);
 	const waiting = useRef<Refresh | null>(null);
 	const recovered = useRef(false);
-	if (page !== seenPage) {
-		setSeenPage(page);
-		waiting.current?.finish();
-	}
 	const refresh = (): Promise<void> => {
+		const generation = rulesRecoveryGeneration();
 		const current = waiting.current;
-		if (current) return current.done;
-		let finish = () => {};
-		const arrived = new Promise<void>((resolve) => {
-			finish = resolve;
-		});
-		const next: Refresh = { finish, done: Promise.resolve() };
+		if (current?.generation === generation) return current.done;
+		const next: Refresh = { generation, done: Promise.resolve() };
 		waiting.current = next;
-		const reading = read().catch(() => undefined);
-		next.done = bounded(() => Promise.race([reading, arrived]))
+		next.done = bounded(() => read())
 			.catch(() => undefined)
 			.finally(() => {
 				if (waiting.current === next) waiting.current = null;
