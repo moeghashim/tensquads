@@ -1,0 +1,28 @@
+✖ three Send next event clicks each add one event, in order (2.913792ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 76.071459
+
+✖ failing tests:
+
+test at scripts/test/.traffic-old-live.test.mjs:70:1
+✖ three Send next event clicks each add one event, in order (2.913792ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ECTYVV78E1D9B09SS3DVZM/scripts/test/.traffic-old-live.test.mjs:96:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

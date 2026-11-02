@@ -1,0 +1,42 @@
+PASS Workspace lookup time counts toward the same deadline before the event read
+PASS A late Result rolls back a changed shared-state value as well as its event and cursor
+PASS Nine queued clicks wrap the eight-event script with unique ids and updated state
+PASS If the selected id disappears, the inspector shows the last available event
+PASS A caller without a deadline receives a fresh window and commits one event
+[
+  {
+    "name": "Workspace lookup time counts toward the same deadline before the event read",
+    "result": "pass",
+    "live": true,
+    "evidence": "extra-live-results.json and extra-live-transcript.txt",
+    "reason": ""
+  },
+  {
+    "name": "A late Result rolls back a changed shared-state value as well as its event and cursor",
+    "result": "pass",
+    "live": true,
+    "evidence": "extra-live-results.json and extra-live-transcript.txt",
+    "reason": ""
+  },
+  {
+    "name": "Nine queued clicks wrap the eight-event script with unique ids and updated state",
+    "result": "pass",
+    "live": true,
+    "evidence": "extra-live-results.json and extra-live-transcript.txt",
+    "reason": ""
+  },
+  {
+    "name": "If the selected id disappears, the inspector shows the last available event",
+    "result": "pass",
+    "live": true,
+    "evidence": "extra-live-results.json and extra-live-transcript.txt",
+    "reason": ""
+  },
+  {
+    "name": "A caller without a deadline receives a fresh window and commits one event",
+    "result": "pass",
+    "live": true,
+    "evidence": "extra-live-results.json and extra-live-transcript.txt",
+    "reason": ""
+  }
+]

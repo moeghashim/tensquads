@@ -1,0 +1,82 @@
+PASS Open traffic, inspect an event, and filter without losing the inspector
+PASS Three rapid Send clicks commit three ordered events and select the newest
+PASS A failed advance refreshes and the next queued click still commits
+PASS Live ticks while clicks are pending are skipped and do not pile up
+PASS Live commits away from traffic and selects that event when traffic is reopened
+PASS A successful advance with a hung refresh releases the guard after 30 seconds
+PASS A hung advance followed by a hung refresh releases queued clicks within 60 seconds
+PASS An advance whose pre-transaction read exceeds its deadline commits nothing
+PASS A write exceeding the original deadline rolls back its event, state writes, and cursor
+PASS Fewer than four milliseconds remaining rejects before opening a transaction
+[
+  {
+    "name": "Open traffic, inspect an event, and filter without losing the inspector",
+    "result": "pass",
+    "live": true,
+    "evidence": "live-results.json and live-transcript.txt",
+    "reason": ""
+  },
+  {
+    "name": "Three rapid Send clicks commit three ordered events and select the newest",
+    "result": "pass",
+    "live": true,
+    "evidence": "live-results.json and live-transcript.txt",
+    "reason": ""
+  },
+  {
+    "name": "A failed advance refreshes and the next queued click still commits",
+    "result": "pass",
+    "live": true,
+    "evidence": "live-results.json and live-transcript.txt",
+    "reason": ""
+  },
+  {
+    "name": "Live ticks while clicks are pending are skipped and do not pile up",
+    "result": "pass",
+    "live": true,
+    "evidence": "live-results.json and live-transcript.txt",
+    "reason": ""
+  },
+  {
+    "name": "Live commits away from traffic and selects that event when traffic is reopened",
+    "result": "pass",
+    "live": true,
+    "evidence": "live-results.json and live-transcript.txt",
+    "reason": ""
+  },
+  {
+    "name": "A successful advance with a hung refresh releases the guard after 30 seconds",
+    "result": "pass",
+    "live": true,
+    "evidence": "live-results.json and live-transcript.txt",
+    "reason": ""
+  },
+  {
+    "name": "A hung advance followed by a hung refresh releases queued clicks within 60 seconds",
+    "result": "pass",
+    "live": true,
+    "evidence": "live-results.json and live-transcript.txt",
+    "reason": ""
+  },
+  {
+    "name": "An advance whose pre-transaction read exceeds its deadline commits nothing",
+    "result": "pass",
+    "live": true,
+    "evidence": "live-results.json and live-transcript.txt",
+    "reason": ""
+  },
+  {
+    "name": "A write exceeding the original deadline rolls back its event, state writes, and cursor",
+    "result": "pass",
+    "live": true,
+    "evidence": "live-results.json and live-transcript.txt",
+    "reason": ""
+  },
+  {
+    "name": "Fewer than four milliseconds remaining rejects before opening a transaction",
+    "result": "pass",
+    "live": true,
+    "evidence": "live-results.json and live-transcript.txt",
+    "reason": ""
+  }
+]

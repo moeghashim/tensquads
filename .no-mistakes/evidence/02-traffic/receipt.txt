@@ -1,0 +1,28 @@
+2e85b8f9298c0e268f6db94242f54dbb5b18a0e923f11ca6140076e3dddc512c  AGENTS.md
+1fc58b0cd33d82880ca67d45cc940f326ca062fb6c00911eb6edb3c1d9dec8fc  docs/PLAN.md
+b2f5f24d144280eca45606025bdbccb2c4cb353b85e752fe328b04619f4e7e9e  tasks/02-traffic.md
+1e084bf939dec51d1eb287f6cb3160581ec4b9e449cfb7a66354505eb96b8eae  design/Traffic.dc.html
+376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89  design/Main.dc.html
+075c1cf3456b7d35d4d04ed667adfc1c483ac02fe7c715ac0622b03f2aed2b9b  design/inventory/Traffic.json
+deccce08d6932c707935dd44be6fd089e3a27d9c514e067d576129632117d5ec  design/inventory/Main.json
+26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
+523772f833f36d26d4492a7fc431b93f478e72601ad06098ee0c4700e1f66702  progress.md
+
+OK   Accounts.dc.html
+OK   AgentDetail.dc.html
+OK   AgentImages.dc.html
+OK   Agents.dc.html
+OK   Chat.dc.html
+OK   Home.dc.html
+OK   Main.dc.html
+OK   Onboarding.dc.html
+OK   Rules.dc.html
+OK   SignIn.dc.html
+OK   Traffic.dc.html
+OK   canvas.json
+OK   ds/agent-ui/tokens.json
+canvas https://claude.ai/artifact/B7seDz5psECQTerDG6rfy4 version 1793448823-a766, pulled 2026-10-31
+design/ matches the canvas.
+
+Decisions 1 to 32 read. No question.
+No unmapped traffic requirement found.

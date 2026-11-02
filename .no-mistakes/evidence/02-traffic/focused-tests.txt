@@ -1,0 +1,18 @@
+✔ a read past the deadline commits nothing (971.351125ms)
+✔ a write past the original deadline commits nothing (496.706292ms)
+✔ send recovers from a hung refresh after successful advance (2.50925ms)
+✔ send recovers from a hung refresh after timed-out advance (0.637333ms)
+✔ live recovers from a hung refresh after successful advance (0.426125ms)
+✔ live recovers from a hung refresh after timed-out advance (0.381459ms)
+✔ three Send next event clicks each add one event, in order (0.681083ms)
+✔ a failed advance refreshes and the queued click runs (0.288583ms)
+✔ a live tick does not queue behind an open send (0.302667ms)
+✔ each queued click keeps its id for its caller (0.292334ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1815.888833

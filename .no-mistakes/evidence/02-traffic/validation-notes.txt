@@ -1,0 +1,31 @@
+Target: ab73016febc9dbae5d2b6cc5c0bbdaaa81dbfa81
+Base: 88cad9b377667624751c10a7048240b15192ffb1
+
+The outer executor reports npm ci && npm test passed as baseline. This phase did not rerun the full suite, lint, static analysis, CI, or deployment.
+
+Runtime setup:
+- Actual TanStack Start routes, TrafficPage, WorkspaceProvider, traffic loaders, advanceTraffic server function, advanceTrafficAccount, Kernel, repository, memory bus, transaction helper, and schema.
+- Vite dev server on 127.0.0.1:3107 with temporary configuration. Cloudflare plugin omitted for the Node-only disposable PGlite runtime.
+- Only workspace-session and worker-env were substituted at the environment boundary. No Clerk or database secrets were available. requireWorkspace supplied a single disposable account in a migrated in-memory PGlite database. workerEnv returned empty strings. Clerk sign-in, Neon networking, and the deployed Cloudflare runtime were not tested.
+- The setup copies the exact seed via replaceDemoAccount, never operator data. It exposes localhost-only fixture controls for resets, a shared-state sentinel, one deleted event, delays, and reading persisted state. The traffic advance and read paths remain product code.
+- Playwright used a fresh headless Chromium profile. Network interception held or failed real server-function requests for failure/timeout checks. Browser virtual time was used for Live ticks and the 30+30 second browser guard. Server-side deadline cases used real elapsed time: a 31-second read; a 20-second read plus an 11-second delay after a real bus insert; and a 31-second workspace lookup. State snapshots include bus events, shared state, cursor, and transaction-start counts.
+- A 3ms deadline was passed to the actual Kernel/repository with the real database to verify rejection without opening a transaction. The no-deadline Kernel entry point also committed successfully.
+
+Commands:
+node --experimental-strip-types --test scripts/test/traffic-deadline.test.mjs scripts/test/traffic-live.test.mjs
+(cd apps/web && ../../node_modules/.bin/vite --config .traffic-validation/vite.config.mjs)
+node .traffic-validation.mjs
+node .traffic-validation-extra.mjs
+
+Regression sensitivity:
+- git show 0d978fa:apps/web/src/workspace/live.ts supplied the old executable queue module. The existing three-click regression was copied with only its module import changed. It failed because the second advance never started (1 !== 2).
+- The body of 0d978fa's advanceTraffic requireWorkspace callback was extracted into an executable advanceTrafficAccount wrapper. The two existing deadline regressions were copied with only that import changed. It ran against the current repository's unchanged default fresh-window behavior. Both tests failed with Missing expected rejection. This specifically reproduces the old handler's loss of elapsed pre-read time; it is not a full historical app checkout.
+- Final-head focused regressions pass. Intentional old-code failures are expected evidence, not final-head findings.
+
+Artifacts:
+- live-results.json and extra-live-results.json retain named outcomes plus database snapshots and injected-delay timelines.
+- Browser screenshots show actual 1440px and 390px product UI, successful queued events, and recovery after rollback. The 390px viewport had no document-level horizontal scroll.
+- No React cross-component render-update error was seen in any driven scenario.
+- A preliminary harness used the wrong expected third-event copy; it was corrected to the design script's Customer asks if #A-1019 has shipped and the full run passed. failure-2.png is from that discarded harness expectation, not a product failure.
+
+All temporary setup, historical-code copies, and browser drivers were removed from the worktree after copying them under harness/ here. The server was stopped, destroying the disposable database. No tracked file was changed.

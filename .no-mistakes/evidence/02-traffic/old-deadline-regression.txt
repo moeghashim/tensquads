@@ -1,0 +1,42 @@
+✖ a read past the deadline commits nothing (1215.904375ms)
+✖ a write past the original deadline commits nothing (592.553875ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2469.503708
+
+✖ failing tests:
+
+test at scripts/test/.traffic-old-deadline.test.mjs:66:1
+✖ a read past the deadline commits nothing (1215.904375ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ECTYVV78E1D9B09SS3DVZM/scripts/test/.traffic-old-deadline.test.mjs:77:4
+      at async withAccount (file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ECTYVV78E1D9B09SS3DVZM/scripts/test/.traffic-old-deadline.test.mjs:56:3)
+      at async TestContext.<anonymous> (file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ECTYVV78E1D9B09SS3DVZM/scripts/test/.traffic-old-deadline.test.mjs:67:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at scripts/test/.traffic-old-deadline.test.mjs:91:1
+✖ a write past the original deadline commits nothing (592.553875ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ECTYVV78E1D9B09SS3DVZM/scripts/test/.traffic-old-deadline.test.mjs:103:4
+      at async withAccount (file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ECTYVV78E1D9B09SS3DVZM/scripts/test/.traffic-old-deadline.test.mjs:56:3)
+      at async TestContext.<anonymous> (file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ECTYVV78E1D9B09SS3DVZM/scripts/test/.traffic-old-deadline.test.mjs:92:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }

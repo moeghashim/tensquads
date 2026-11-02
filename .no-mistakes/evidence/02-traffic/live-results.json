@@ -1,0 +1,3057 @@
+{
+  "setup": "Actual TanStack app and server functions. Test-only requireWorkspace uses an isolated migrated PGlite database; Clerk and Neon connections are not exercised.",
+  "results": [
+    {
+      "name": "Open traffic, inspect an event, and filter without losing the inspector",
+      "result": "pass",
+      "live": true,
+      "evidence": "live-results.json and live-transcript.txt",
+      "reason": ""
+    },
+    {
+      "name": "Three rapid Send clicks commit three ordered events and select the newest",
+      "result": "pass",
+      "live": true,
+      "evidence": "live-results.json and live-transcript.txt",
+      "reason": ""
+    },
+    {
+      "name": "A failed advance refreshes and the next queued click still commits",
+      "result": "pass",
+      "live": true,
+      "evidence": "live-results.json and live-transcript.txt",
+      "reason": ""
+    },
+    {
+      "name": "Live ticks while clicks are pending are skipped and do not pile up",
+      "result": "pass",
+      "live": true,
+      "evidence": "live-results.json and live-transcript.txt",
+      "reason": ""
+    },
+    {
+      "name": "Live commits away from traffic and selects that event when traffic is reopened",
+      "result": "pass",
+      "live": true,
+      "evidence": "live-results.json and live-transcript.txt",
+      "reason": ""
+    },
+    {
+      "name": "A successful advance with a hung refresh releases the guard after 30 seconds",
+      "result": "pass",
+      "live": true,
+      "evidence": "live-results.json and live-transcript.txt",
+      "reason": ""
+    },
+    {
+      "name": "A hung advance followed by a hung refresh releases queued clicks within 60 seconds",
+      "result": "pass",
+      "live": true,
+      "evidence": "live-results.json and live-transcript.txt",
+      "reason": ""
+    },
+    {
+      "name": "An advance whose pre-transaction read exceeds its deadline commits nothing",
+      "result": "pass",
+      "live": true,
+      "evidence": "live-results.json and live-transcript.txt",
+      "reason": ""
+    },
+    {
+      "name": "A write exceeding the original deadline rolls back its event, state writes, and cursor",
+      "result": "pass",
+      "live": true,
+      "evidence": "live-results.json and live-transcript.txt",
+      "reason": ""
+    },
+    {
+      "name": "Fewer than four milliseconds remaining rejects before opening a transaction",
+      "result": "pass",
+      "live": true,
+      "evidence": "live-results.json and live-transcript.txt",
+      "reason": ""
+    }
+  ],
+  "timeline": [
+    {
+      "scenario": "rapid-clicks",
+      "posts": 3,
+      "maxActive": 1,
+      "events": [
+        {
+          "accountId": "local-traffic-validation",
+          "id": "e100",
+          "timeText": "11:03",
+          "occurredAt": "2026-11-02T15:16:23.057Z",
+          "fromAgent": "master",
+          "toAgent": "inventory",
+          "kind": "Task",
+          "skill": "shopify.stock_levels",
+          "body": "Daily stock check",
+          "payload": {
+            "intent": "stock_check",
+            "threshold": 10
+          },
+          "writes": [],
+          "trace": "tr_0cac87",
+          "seq": 100
+        },
+        {
+          "accountId": "local-traffic-validation",
+          "id": "e101",
+          "timeText": "11:04",
+          "occurredAt": "2026-11-02T15:16:23.083Z",
+          "fromAgent": "inventory",
+          "toAgent": "master",
+          "kind": "Result",
+          "skill": "shopify.stock_levels",
+          "body": "2 products under 10: Black hoodie M (6), A3 frame (8)",
+          "payload": {
+            "low": [
+              {
+                "qty": 6,
+                "sku": "HD-BLK-M"
+              },
+              {
+                "qty": 8,
+                "sku": "FR-A3"
+              }
+            ]
+          },
+          "writes": [
+            "inventory.low_stock"
+          ],
+          "trace": "tr_f9decc",
+          "seq": 101
+        },
+        {
+          "accountId": "local-traffic-validation",
+          "id": "e102",
+          "timeText": "11:05",
+          "occurredAt": "2026-11-02T15:16:23.103Z",
+          "fromAgent": "support",
+          "toAgent": "master",
+          "kind": "Request",
+          "skill": "orders.lookup",
+          "body": "Customer asks if #A-1019 has shipped",
+          "payload": {
+            "need": "shipping_status",
+            "order": "A-1019",
+            "ticket": "T-2304"
+          },
+          "writes": [],
+          "trace": "tr_5789f6",
+          "seq": 102
+        }
+      ],
+      "store": [
+        {
+          "accountId": "local-traffic-validation",
+          "key": "finance.profit_7d",
+          "value": "2610",
+          "sortOrder": 8
+        },
+        {
+          "accountId": "local-traffic-validation",
+          "key": "inventory.low_stock",
+          "value": "\"[\\\"Black hoodie M\\\",\\\"A3 frame\\\"]\"",
+          "sortOrder": 9
+        },
+        {
+          "accountId": "local-traffic-validation",
+          "key": "order.A-1007.tracking",
+          "value": "\"LI400083615LT\"",
+          "sortOrder": 0
+        },
+        {
+          "accountId": "local-traffic-validation",
+          "key": "order.A-1007.print_status",
+          "value": "\"in_production\"",
+          "sortOrder": 1
+        },
+        {
+          "accountId": "local-traffic-validation",
+          "key": "order.A-1007.eta",
+          "value": "\"2026-11-03\"",
+          "sortOrder": 2
+        },
+        {
+          "accountId": "local-traffic-validation",
+          "key": "policy.refund_auto_limit",
+          "value": "50",
+          "sortOrder": 3
+        },
+        {
+          "accountId": "local-traffic-validation",
+          "key": "policy.daily_ad_cap",
+          "value": "200",
+          "sortOrder": 4
+        },
+        {
+          "accountId": "local-traffic-validation",
+          "key": "policy.reorder_limit",
+          "value": "500",
+          "sortOrder": 5
+        },
+        {
+          "accountId": "local-traffic-validation",
+          "key": "marketing.roas_7d",
+          "value": "3.4",
+          "sortOrder": 6
+        },
+        {
+          "accountId": "local-traffic-validation",
+          "key": "finance.revenue_7d",
+          "value": "8420",
+          "sortOrder": 7
+        }
+      ],
+      "cursor": [
+        {
+          "accountId": "local-traffic-validation",
+          "seq": 103,
+          "clock": 665,
+          "scriptIndex": 3
+        }
+      ]
+    },
+    {
+      "scenario": "failed-advance",
+      "posts": 2,
+      "gets": 6,
+      "state": {
+        "events": [
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e100",
+            "timeText": "11:03",
+            "occurredAt": "2026-11-02T15:16:24.510Z",
+            "fromAgent": "master",
+            "toAgent": "inventory",
+            "kind": "Task",
+            "skill": "shopify.stock_levels",
+            "body": "Daily stock check",
+            "payload": {
+              "intent": "stock_check",
+              "threshold": 10
+            },
+            "writes": [],
+            "trace": "tr_0cac87",
+            "seq": 100
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1041masterorders",
+            "timeText": "10:41",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Task",
+            "skill": "printify.get_shipment",
+            "body": "Check shipping for #A-1007",
+            "payload": {
+              "items": [
+                "Sweatshirt · L",
+                "Tafakkar print · A3"
+              ],
+              "order": "A-1007",
+              "intent": "sync_tracking",
+              "state_in": {
+                "order.A-1007.status": "paid"
+              }
+            },
+            "writes": [],
+            "trace": "tr_7c9f58",
+            "seq": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1042ordersmaster",
+            "timeText": "10:42",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "shopify.add_tracking",
+            "body": "Sweatshirt shipped, tracking added. Print still in production.",
+            "payload": {
+              "order": "A-1007",
+              "pending": [
+                "Tafakkar print · A3"
+              ],
+              "shipped": [
+                "Sweatshirt · L"
+              ],
+              "tracking": "LI400083615LT",
+              "customer_notified": true
+            },
+            "writes": [
+              "order.A-1007.tracking",
+              "order.A-1007.print_status"
+            ],
+            "trace": "tr_f90cf4",
+            "seq": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043masterorders",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Relay",
+            "skill": "printify.get_shipment",
+            "body": "Support needs the print status for #A-1007",
+            "payload": {
+              "order": "A-1007",
+              "fields": [
+                "print_status",
+                "eta"
+              ],
+              "relay_for": "support"
+            },
+            "writes": [],
+            "trace": "tr_6bdf03",
+            "seq": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043supportmaster",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Request",
+            "skill": "orders.lookup",
+            "body": "Customer on #A-1007 asks where the print is",
+            "payload": {
+              "need": "shipping_status",
+              "order": "A-1007",
+              "ticket": "T-2291",
+              "from_customer": "Where is my print?"
+            },
+            "writes": [],
+            "trace": "tr_08d893",
+            "seq": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044mastersupport",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "support",
+            "kind": "Relay",
+            "skill": "inbox.draft_reply",
+            "body": "Here is the print status for T-2291",
+            "payload": {
+              "ticket": "T-2291",
+              "state_in": {
+                "order.A-1007.eta": "2026-11-03",
+                "order.A-1007.tracking": "LI400083615LT"
+              }
+            },
+            "writes": [],
+            "trace": "tr_a390cf",
+            "seq": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044ordersmaster",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "printify.get_shipment",
+            "body": "Print ships in 2 days, ETA 3 Nov",
+            "payload": {
+              "eta": "2026-11-03",
+              "order": "A-1007",
+              "print_status": "in_production"
+            },
+            "writes": [
+              "order.A-1007.eta"
+            ],
+            "trace": "tr_b00ba9",
+            "seq": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1050marketingmaster",
+            "timeText": "10:50",
+            "occurredAt": null,
+            "fromAgent": "marketing",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "meta_ads.set_budget",
+            "body": "Wants to raise the prints ad set to $60 a day",
+            "payload": {
+              "ad_set": "Prints · lookalike",
+              "reason": "Return above 3 for 7 days",
+              "roas_7d": 3.4,
+              "budget_new": 60,
+              "budget_now": 40
+            },
+            "writes": [
+              "marketing.roas_7d"
+            ],
+            "trace": "tr_64fb3a",
+            "seq": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1055supportmaster",
+            "timeText": "10:55",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "shopify.refund",
+            "body": "Refund $42 on #A-1012 is under the limit but the customer is flagged",
+            "payload": {
+              "flag": "second_refund_this_month",
+              "order": "A-1012",
+              "photo": true,
+              "amount": 42,
+              "reason": "Print arrived creased"
+            },
+            "writes": [],
+            "trace": "tr_efb944",
+            "seq": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1056financemaster",
+            "timeText": "10:56",
+            "occurredAt": null,
+            "fromAgent": "finance",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "quickbooks.pnl",
+            "body": "Last 7 days: $8,420 revenue, $2,610 profit",
+            "payload": {
+              "cogs": 4120,
+              "fees": 1428,
+              "margin": 0.31,
+              "profit": 2610,
+              "revenue": 8420,
+              "ad_spend": 262
+            },
+            "writes": [
+              "finance.revenue_7d",
+              "finance.profit_7d"
+            ],
+            "trace": "tr_faa0ac",
+            "seq": 8
+          }
+        ],
+        "store": [
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.tracking",
+            "value": "\"LI400083615LT\"",
+            "sortOrder": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.print_status",
+            "value": "\"in_production\"",
+            "sortOrder": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.eta",
+            "value": "\"2026-11-03\"",
+            "sortOrder": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.refund_auto_limit",
+            "value": "50",
+            "sortOrder": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.daily_ad_cap",
+            "value": "200",
+            "sortOrder": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.reorder_limit",
+            "value": "500",
+            "sortOrder": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "marketing.roas_7d",
+            "value": "3.4",
+            "sortOrder": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.revenue_7d",
+            "value": "8420",
+            "sortOrder": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.profit_7d",
+            "value": "2610",
+            "sortOrder": 8
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "inventory.low_stock",
+            "value": "\"[\\\"Black hoodie M\\\",\\\"A3 frame\\\"]\"",
+            "sortOrder": 9
+          }
+        ],
+        "cursor": [
+          {
+            "accountId": "local-traffic-validation",
+            "seq": 101,
+            "clock": 663,
+            "scriptIndex": 1
+          }
+        ],
+        "controls": {
+          "readDelay": 0,
+          "writeDelay": 0,
+          "lookupDelay": 0,
+          "transactionStarts": 1,
+          "log": []
+        }
+      }
+    },
+    {
+      "scenario": "live-no-pileup",
+      "posts": 3,
+      "state": {
+        "events": [
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e100",
+            "timeText": "11:03",
+            "occurredAt": "2026-11-02T15:16:26.211Z",
+            "fromAgent": "master",
+            "toAgent": "inventory",
+            "kind": "Task",
+            "skill": "shopify.stock_levels",
+            "body": "Daily stock check",
+            "payload": {
+              "intent": "stock_check",
+              "threshold": 10
+            },
+            "writes": [],
+            "trace": "tr_0cac87",
+            "seq": 100
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e101",
+            "timeText": "11:04",
+            "occurredAt": "2026-11-02T15:16:26.244Z",
+            "fromAgent": "inventory",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "shopify.stock_levels",
+            "body": "2 products under 10: Black hoodie M (6), A3 frame (8)",
+            "payload": {
+              "low": [
+                {
+                  "qty": 6,
+                  "sku": "HD-BLK-M"
+                },
+                {
+                  "qty": 8,
+                  "sku": "FR-A3"
+                }
+              ]
+            },
+            "writes": [
+              "inventory.low_stock"
+            ],
+            "trace": "tr_f9decc",
+            "seq": 101
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e102",
+            "timeText": "11:05",
+            "occurredAt": "2026-11-02T15:16:28.811Z",
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Request",
+            "skill": "orders.lookup",
+            "body": "Customer asks if #A-1019 has shipped",
+            "payload": {
+              "need": "shipping_status",
+              "order": "A-1019",
+              "ticket": "T-2304"
+            },
+            "writes": [],
+            "trace": "tr_5789f6",
+            "seq": 102
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1041masterorders",
+            "timeText": "10:41",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Task",
+            "skill": "printify.get_shipment",
+            "body": "Check shipping for #A-1007",
+            "payload": {
+              "items": [
+                "Sweatshirt · L",
+                "Tafakkar print · A3"
+              ],
+              "order": "A-1007",
+              "intent": "sync_tracking",
+              "state_in": {
+                "order.A-1007.status": "paid"
+              }
+            },
+            "writes": [],
+            "trace": "tr_7c9f58",
+            "seq": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1042ordersmaster",
+            "timeText": "10:42",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "shopify.add_tracking",
+            "body": "Sweatshirt shipped, tracking added. Print still in production.",
+            "payload": {
+              "order": "A-1007",
+              "pending": [
+                "Tafakkar print · A3"
+              ],
+              "shipped": [
+                "Sweatshirt · L"
+              ],
+              "tracking": "LI400083615LT",
+              "customer_notified": true
+            },
+            "writes": [
+              "order.A-1007.tracking",
+              "order.A-1007.print_status"
+            ],
+            "trace": "tr_f90cf4",
+            "seq": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043masterorders",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Relay",
+            "skill": "printify.get_shipment",
+            "body": "Support needs the print status for #A-1007",
+            "payload": {
+              "order": "A-1007",
+              "fields": [
+                "print_status",
+                "eta"
+              ],
+              "relay_for": "support"
+            },
+            "writes": [],
+            "trace": "tr_6bdf03",
+            "seq": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043supportmaster",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Request",
+            "skill": "orders.lookup",
+            "body": "Customer on #A-1007 asks where the print is",
+            "payload": {
+              "need": "shipping_status",
+              "order": "A-1007",
+              "ticket": "T-2291",
+              "from_customer": "Where is my print?"
+            },
+            "writes": [],
+            "trace": "tr_08d893",
+            "seq": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044mastersupport",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "support",
+            "kind": "Relay",
+            "skill": "inbox.draft_reply",
+            "body": "Here is the print status for T-2291",
+            "payload": {
+              "ticket": "T-2291",
+              "state_in": {
+                "order.A-1007.eta": "2026-11-03",
+                "order.A-1007.tracking": "LI400083615LT"
+              }
+            },
+            "writes": [],
+            "trace": "tr_a390cf",
+            "seq": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044ordersmaster",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "printify.get_shipment",
+            "body": "Print ships in 2 days, ETA 3 Nov",
+            "payload": {
+              "eta": "2026-11-03",
+              "order": "A-1007",
+              "print_status": "in_production"
+            },
+            "writes": [
+              "order.A-1007.eta"
+            ],
+            "trace": "tr_b00ba9",
+            "seq": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1050marketingmaster",
+            "timeText": "10:50",
+            "occurredAt": null,
+            "fromAgent": "marketing",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "meta_ads.set_budget",
+            "body": "Wants to raise the prints ad set to $60 a day",
+            "payload": {
+              "ad_set": "Prints · lookalike",
+              "reason": "Return above 3 for 7 days",
+              "roas_7d": 3.4,
+              "budget_new": 60,
+              "budget_now": 40
+            },
+            "writes": [
+              "marketing.roas_7d"
+            ],
+            "trace": "tr_64fb3a",
+            "seq": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1055supportmaster",
+            "timeText": "10:55",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "shopify.refund",
+            "body": "Refund $42 on #A-1012 is under the limit but the customer is flagged",
+            "payload": {
+              "flag": "second_refund_this_month",
+              "order": "A-1012",
+              "photo": true,
+              "amount": 42,
+              "reason": "Print arrived creased"
+            },
+            "writes": [],
+            "trace": "tr_efb944",
+            "seq": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1056financemaster",
+            "timeText": "10:56",
+            "occurredAt": null,
+            "fromAgent": "finance",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "quickbooks.pnl",
+            "body": "Last 7 days: $8,420 revenue, $2,610 profit",
+            "payload": {
+              "cogs": 4120,
+              "fees": 1428,
+              "margin": 0.31,
+              "profit": 2610,
+              "revenue": 8420,
+              "ad_spend": 262
+            },
+            "writes": [
+              "finance.revenue_7d",
+              "finance.profit_7d"
+            ],
+            "trace": "tr_faa0ac",
+            "seq": 8
+          }
+        ],
+        "store": [
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.tracking",
+            "value": "\"LI400083615LT\"",
+            "sortOrder": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.print_status",
+            "value": "\"in_production\"",
+            "sortOrder": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.eta",
+            "value": "\"2026-11-03\"",
+            "sortOrder": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.refund_auto_limit",
+            "value": "50",
+            "sortOrder": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.daily_ad_cap",
+            "value": "200",
+            "sortOrder": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.reorder_limit",
+            "value": "500",
+            "sortOrder": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "marketing.roas_7d",
+            "value": "3.4",
+            "sortOrder": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.revenue_7d",
+            "value": "8420",
+            "sortOrder": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.profit_7d",
+            "value": "2610",
+            "sortOrder": 8
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "inventory.low_stock",
+            "value": "\"[\\\"Black hoodie M\\\",\\\"A3 frame\\\"]\"",
+            "sortOrder": 9
+          }
+        ],
+        "cursor": [
+          {
+            "accountId": "local-traffic-validation",
+            "seq": 103,
+            "clock": 665,
+            "scriptIndex": 3
+          }
+        ],
+        "controls": {
+          "readDelay": 0,
+          "writeDelay": 0,
+          "lookupDelay": 0,
+          "transactionStarts": 3,
+          "log": []
+        }
+      }
+    },
+    {
+      "scenario": "live-away",
+      "state": {
+        "events": [
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e100",
+            "timeText": "11:03",
+            "occurredAt": "2026-11-02T15:16:33.940Z",
+            "fromAgent": "master",
+            "toAgent": "inventory",
+            "kind": "Task",
+            "skill": "shopify.stock_levels",
+            "body": "Daily stock check",
+            "payload": {
+              "intent": "stock_check",
+              "threshold": 10
+            },
+            "writes": [],
+            "trace": "tr_0cac87",
+            "seq": 100
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1041masterorders",
+            "timeText": "10:41",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Task",
+            "skill": "printify.get_shipment",
+            "body": "Check shipping for #A-1007",
+            "payload": {
+              "items": [
+                "Sweatshirt · L",
+                "Tafakkar print · A3"
+              ],
+              "order": "A-1007",
+              "intent": "sync_tracking",
+              "state_in": {
+                "order.A-1007.status": "paid"
+              }
+            },
+            "writes": [],
+            "trace": "tr_7c9f58",
+            "seq": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1042ordersmaster",
+            "timeText": "10:42",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "shopify.add_tracking",
+            "body": "Sweatshirt shipped, tracking added. Print still in production.",
+            "payload": {
+              "order": "A-1007",
+              "pending": [
+                "Tafakkar print · A3"
+              ],
+              "shipped": [
+                "Sweatshirt · L"
+              ],
+              "tracking": "LI400083615LT",
+              "customer_notified": true
+            },
+            "writes": [
+              "order.A-1007.tracking",
+              "order.A-1007.print_status"
+            ],
+            "trace": "tr_f90cf4",
+            "seq": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043masterorders",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Relay",
+            "skill": "printify.get_shipment",
+            "body": "Support needs the print status for #A-1007",
+            "payload": {
+              "order": "A-1007",
+              "fields": [
+                "print_status",
+                "eta"
+              ],
+              "relay_for": "support"
+            },
+            "writes": [],
+            "trace": "tr_6bdf03",
+            "seq": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043supportmaster",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Request",
+            "skill": "orders.lookup",
+            "body": "Customer on #A-1007 asks where the print is",
+            "payload": {
+              "need": "shipping_status",
+              "order": "A-1007",
+              "ticket": "T-2291",
+              "from_customer": "Where is my print?"
+            },
+            "writes": [],
+            "trace": "tr_08d893",
+            "seq": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044mastersupport",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "support",
+            "kind": "Relay",
+            "skill": "inbox.draft_reply",
+            "body": "Here is the print status for T-2291",
+            "payload": {
+              "ticket": "T-2291",
+              "state_in": {
+                "order.A-1007.eta": "2026-11-03",
+                "order.A-1007.tracking": "LI400083615LT"
+              }
+            },
+            "writes": [],
+            "trace": "tr_a390cf",
+            "seq": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044ordersmaster",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "printify.get_shipment",
+            "body": "Print ships in 2 days, ETA 3 Nov",
+            "payload": {
+              "eta": "2026-11-03",
+              "order": "A-1007",
+              "print_status": "in_production"
+            },
+            "writes": [
+              "order.A-1007.eta"
+            ],
+            "trace": "tr_b00ba9",
+            "seq": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1050marketingmaster",
+            "timeText": "10:50",
+            "occurredAt": null,
+            "fromAgent": "marketing",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "meta_ads.set_budget",
+            "body": "Wants to raise the prints ad set to $60 a day",
+            "payload": {
+              "ad_set": "Prints · lookalike",
+              "reason": "Return above 3 for 7 days",
+              "roas_7d": 3.4,
+              "budget_new": 60,
+              "budget_now": 40
+            },
+            "writes": [
+              "marketing.roas_7d"
+            ],
+            "trace": "tr_64fb3a",
+            "seq": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1055supportmaster",
+            "timeText": "10:55",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "shopify.refund",
+            "body": "Refund $42 on #A-1012 is under the limit but the customer is flagged",
+            "payload": {
+              "flag": "second_refund_this_month",
+              "order": "A-1012",
+              "photo": true,
+              "amount": 42,
+              "reason": "Print arrived creased"
+            },
+            "writes": [],
+            "trace": "tr_efb944",
+            "seq": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1056financemaster",
+            "timeText": "10:56",
+            "occurredAt": null,
+            "fromAgent": "finance",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "quickbooks.pnl",
+            "body": "Last 7 days: $8,420 revenue, $2,610 profit",
+            "payload": {
+              "cogs": 4120,
+              "fees": 1428,
+              "margin": 0.31,
+              "profit": 2610,
+              "revenue": 8420,
+              "ad_spend": 262
+            },
+            "writes": [
+              "finance.revenue_7d",
+              "finance.profit_7d"
+            ],
+            "trace": "tr_faa0ac",
+            "seq": 8
+          }
+        ],
+        "store": [
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.tracking",
+            "value": "\"LI400083615LT\"",
+            "sortOrder": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.print_status",
+            "value": "\"in_production\"",
+            "sortOrder": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.eta",
+            "value": "\"2026-11-03\"",
+            "sortOrder": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.refund_auto_limit",
+            "value": "50",
+            "sortOrder": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.daily_ad_cap",
+            "value": "200",
+            "sortOrder": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.reorder_limit",
+            "value": "500",
+            "sortOrder": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "marketing.roas_7d",
+            "value": "3.4",
+            "sortOrder": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.revenue_7d",
+            "value": "8420",
+            "sortOrder": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.profit_7d",
+            "value": "2610",
+            "sortOrder": 8
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "inventory.low_stock",
+            "value": "\"[\\\"Black hoodie M\\\",\\\"A3 frame\\\"]\"",
+            "sortOrder": 9
+          }
+        ],
+        "cursor": [
+          {
+            "accountId": "local-traffic-validation",
+            "seq": 101,
+            "clock": 663,
+            "scriptIndex": 1
+          }
+        ],
+        "controls": {
+          "readDelay": 0,
+          "writeDelay": 0,
+          "lookupDelay": 0,
+          "transactionStarts": 1,
+          "log": []
+        }
+      }
+    },
+    {
+      "scenario": "hung-refresh",
+      "posts": 2,
+      "gets": 6,
+      "state": {
+        "events": [
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e100",
+            "timeText": "11:03",
+            "occurredAt": "2026-11-02T15:16:35.560Z",
+            "fromAgent": "master",
+            "toAgent": "inventory",
+            "kind": "Task",
+            "skill": "shopify.stock_levels",
+            "body": "Daily stock check",
+            "payload": {
+              "intent": "stock_check",
+              "threshold": 10
+            },
+            "writes": [],
+            "trace": "tr_0cac87",
+            "seq": 100
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e101",
+            "timeText": "11:04",
+            "occurredAt": "2026-11-02T15:16:36.150Z",
+            "fromAgent": "inventory",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "shopify.stock_levels",
+            "body": "2 products under 10: Black hoodie M (6), A3 frame (8)",
+            "payload": {
+              "low": [
+                {
+                  "qty": 6,
+                  "sku": "HD-BLK-M"
+                },
+                {
+                  "qty": 8,
+                  "sku": "FR-A3"
+                }
+              ]
+            },
+            "writes": [
+              "inventory.low_stock"
+            ],
+            "trace": "tr_f9decc",
+            "seq": 101
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1041masterorders",
+            "timeText": "10:41",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Task",
+            "skill": "printify.get_shipment",
+            "body": "Check shipping for #A-1007",
+            "payload": {
+              "items": [
+                "Sweatshirt · L",
+                "Tafakkar print · A3"
+              ],
+              "order": "A-1007",
+              "intent": "sync_tracking",
+              "state_in": {
+                "order.A-1007.status": "paid"
+              }
+            },
+            "writes": [],
+            "trace": "tr_7c9f58",
+            "seq": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1042ordersmaster",
+            "timeText": "10:42",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "shopify.add_tracking",
+            "body": "Sweatshirt shipped, tracking added. Print still in production.",
+            "payload": {
+              "order": "A-1007",
+              "pending": [
+                "Tafakkar print · A3"
+              ],
+              "shipped": [
+                "Sweatshirt · L"
+              ],
+              "tracking": "LI400083615LT",
+              "customer_notified": true
+            },
+            "writes": [
+              "order.A-1007.tracking",
+              "order.A-1007.print_status"
+            ],
+            "trace": "tr_f90cf4",
+            "seq": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043masterorders",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Relay",
+            "skill": "printify.get_shipment",
+            "body": "Support needs the print status for #A-1007",
+            "payload": {
+              "order": "A-1007",
+              "fields": [
+                "print_status",
+                "eta"
+              ],
+              "relay_for": "support"
+            },
+            "writes": [],
+            "trace": "tr_6bdf03",
+            "seq": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043supportmaster",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Request",
+            "skill": "orders.lookup",
+            "body": "Customer on #A-1007 asks where the print is",
+            "payload": {
+              "need": "shipping_status",
+              "order": "A-1007",
+              "ticket": "T-2291",
+              "from_customer": "Where is my print?"
+            },
+            "writes": [],
+            "trace": "tr_08d893",
+            "seq": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044mastersupport",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "support",
+            "kind": "Relay",
+            "skill": "inbox.draft_reply",
+            "body": "Here is the print status for T-2291",
+            "payload": {
+              "ticket": "T-2291",
+              "state_in": {
+                "order.A-1007.eta": "2026-11-03",
+                "order.A-1007.tracking": "LI400083615LT"
+              }
+            },
+            "writes": [],
+            "trace": "tr_a390cf",
+            "seq": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044ordersmaster",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "printify.get_shipment",
+            "body": "Print ships in 2 days, ETA 3 Nov",
+            "payload": {
+              "eta": "2026-11-03",
+              "order": "A-1007",
+              "print_status": "in_production"
+            },
+            "writes": [
+              "order.A-1007.eta"
+            ],
+            "trace": "tr_b00ba9",
+            "seq": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1050marketingmaster",
+            "timeText": "10:50",
+            "occurredAt": null,
+            "fromAgent": "marketing",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "meta_ads.set_budget",
+            "body": "Wants to raise the prints ad set to $60 a day",
+            "payload": {
+              "ad_set": "Prints · lookalike",
+              "reason": "Return above 3 for 7 days",
+              "roas_7d": 3.4,
+              "budget_new": 60,
+              "budget_now": 40
+            },
+            "writes": [
+              "marketing.roas_7d"
+            ],
+            "trace": "tr_64fb3a",
+            "seq": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1055supportmaster",
+            "timeText": "10:55",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "shopify.refund",
+            "body": "Refund $42 on #A-1012 is under the limit but the customer is flagged",
+            "payload": {
+              "flag": "second_refund_this_month",
+              "order": "A-1012",
+              "photo": true,
+              "amount": 42,
+              "reason": "Print arrived creased"
+            },
+            "writes": [],
+            "trace": "tr_efb944",
+            "seq": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1056financemaster",
+            "timeText": "10:56",
+            "occurredAt": null,
+            "fromAgent": "finance",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "quickbooks.pnl",
+            "body": "Last 7 days: $8,420 revenue, $2,610 profit",
+            "payload": {
+              "cogs": 4120,
+              "fees": 1428,
+              "margin": 0.31,
+              "profit": 2610,
+              "revenue": 8420,
+              "ad_spend": 262
+            },
+            "writes": [
+              "finance.revenue_7d",
+              "finance.profit_7d"
+            ],
+            "trace": "tr_faa0ac",
+            "seq": 8
+          }
+        ],
+        "store": [
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.tracking",
+            "value": "\"LI400083615LT\"",
+            "sortOrder": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.print_status",
+            "value": "\"in_production\"",
+            "sortOrder": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.eta",
+            "value": "\"2026-11-03\"",
+            "sortOrder": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.refund_auto_limit",
+            "value": "50",
+            "sortOrder": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.daily_ad_cap",
+            "value": "200",
+            "sortOrder": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.reorder_limit",
+            "value": "500",
+            "sortOrder": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "marketing.roas_7d",
+            "value": "3.4",
+            "sortOrder": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.revenue_7d",
+            "value": "8420",
+            "sortOrder": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.profit_7d",
+            "value": "2610",
+            "sortOrder": 8
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "inventory.low_stock",
+            "value": "\"[\\\"Black hoodie M\\\",\\\"A3 frame\\\"]\"",
+            "sortOrder": 9
+          }
+        ],
+        "cursor": [
+          {
+            "accountId": "local-traffic-validation",
+            "seq": 102,
+            "clock": 664,
+            "scriptIndex": 2
+          }
+        ],
+        "controls": {
+          "readDelay": 0,
+          "writeDelay": 0,
+          "lookupDelay": 0,
+          "transactionStarts": 2,
+          "log": []
+        }
+      }
+    },
+    {
+      "scenario": "60-second-bound",
+      "posts": 2,
+      "gets": 6,
+      "state": {
+        "events": [
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e100",
+            "timeText": "11:03",
+            "occurredAt": "2026-11-02T15:16:37.441Z",
+            "fromAgent": "master",
+            "toAgent": "inventory",
+            "kind": "Task",
+            "skill": "shopify.stock_levels",
+            "body": "Daily stock check",
+            "payload": {
+              "intent": "stock_check",
+              "threshold": 10
+            },
+            "writes": [],
+            "trace": "tr_0cac87",
+            "seq": 100
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1041masterorders",
+            "timeText": "10:41",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Task",
+            "skill": "printify.get_shipment",
+            "body": "Check shipping for #A-1007",
+            "payload": {
+              "items": [
+                "Sweatshirt · L",
+                "Tafakkar print · A3"
+              ],
+              "order": "A-1007",
+              "intent": "sync_tracking",
+              "state_in": {
+                "order.A-1007.status": "paid"
+              }
+            },
+            "writes": [],
+            "trace": "tr_7c9f58",
+            "seq": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1042ordersmaster",
+            "timeText": "10:42",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "shopify.add_tracking",
+            "body": "Sweatshirt shipped, tracking added. Print still in production.",
+            "payload": {
+              "order": "A-1007",
+              "pending": [
+                "Tafakkar print · A3"
+              ],
+              "shipped": [
+                "Sweatshirt · L"
+              ],
+              "tracking": "LI400083615LT",
+              "customer_notified": true
+            },
+            "writes": [
+              "order.A-1007.tracking",
+              "order.A-1007.print_status"
+            ],
+            "trace": "tr_f90cf4",
+            "seq": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043masterorders",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Relay",
+            "skill": "printify.get_shipment",
+            "body": "Support needs the print status for #A-1007",
+            "payload": {
+              "order": "A-1007",
+              "fields": [
+                "print_status",
+                "eta"
+              ],
+              "relay_for": "support"
+            },
+            "writes": [],
+            "trace": "tr_6bdf03",
+            "seq": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043supportmaster",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Request",
+            "skill": "orders.lookup",
+            "body": "Customer on #A-1007 asks where the print is",
+            "payload": {
+              "need": "shipping_status",
+              "order": "A-1007",
+              "ticket": "T-2291",
+              "from_customer": "Where is my print?"
+            },
+            "writes": [],
+            "trace": "tr_08d893",
+            "seq": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044mastersupport",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "support",
+            "kind": "Relay",
+            "skill": "inbox.draft_reply",
+            "body": "Here is the print status for T-2291",
+            "payload": {
+              "ticket": "T-2291",
+              "state_in": {
+                "order.A-1007.eta": "2026-11-03",
+                "order.A-1007.tracking": "LI400083615LT"
+              }
+            },
+            "writes": [],
+            "trace": "tr_a390cf",
+            "seq": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044ordersmaster",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "printify.get_shipment",
+            "body": "Print ships in 2 days, ETA 3 Nov",
+            "payload": {
+              "eta": "2026-11-03",
+              "order": "A-1007",
+              "print_status": "in_production"
+            },
+            "writes": [
+              "order.A-1007.eta"
+            ],
+            "trace": "tr_b00ba9",
+            "seq": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1050marketingmaster",
+            "timeText": "10:50",
+            "occurredAt": null,
+            "fromAgent": "marketing",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "meta_ads.set_budget",
+            "body": "Wants to raise the prints ad set to $60 a day",
+            "payload": {
+              "ad_set": "Prints · lookalike",
+              "reason": "Return above 3 for 7 days",
+              "roas_7d": 3.4,
+              "budget_new": 60,
+              "budget_now": 40
+            },
+            "writes": [
+              "marketing.roas_7d"
+            ],
+            "trace": "tr_64fb3a",
+            "seq": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1055supportmaster",
+            "timeText": "10:55",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "shopify.refund",
+            "body": "Refund $42 on #A-1012 is under the limit but the customer is flagged",
+            "payload": {
+              "flag": "second_refund_this_month",
+              "order": "A-1012",
+              "photo": true,
+              "amount": 42,
+              "reason": "Print arrived creased"
+            },
+            "writes": [],
+            "trace": "tr_efb944",
+            "seq": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1056financemaster",
+            "timeText": "10:56",
+            "occurredAt": null,
+            "fromAgent": "finance",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "quickbooks.pnl",
+            "body": "Last 7 days: $8,420 revenue, $2,610 profit",
+            "payload": {
+              "cogs": 4120,
+              "fees": 1428,
+              "margin": 0.31,
+              "profit": 2610,
+              "revenue": 8420,
+              "ad_spend": 262
+            },
+            "writes": [
+              "finance.revenue_7d",
+              "finance.profit_7d"
+            ],
+            "trace": "tr_faa0ac",
+            "seq": 8
+          }
+        ],
+        "store": [
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.tracking",
+            "value": "\"LI400083615LT\"",
+            "sortOrder": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.print_status",
+            "value": "\"in_production\"",
+            "sortOrder": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.eta",
+            "value": "\"2026-11-03\"",
+            "sortOrder": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.refund_auto_limit",
+            "value": "50",
+            "sortOrder": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.daily_ad_cap",
+            "value": "200",
+            "sortOrder": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.reorder_limit",
+            "value": "500",
+            "sortOrder": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "marketing.roas_7d",
+            "value": "3.4",
+            "sortOrder": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.revenue_7d",
+            "value": "8420",
+            "sortOrder": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.profit_7d",
+            "value": "2610",
+            "sortOrder": 8
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "inventory.low_stock",
+            "value": "\"[\\\"Black hoodie M\\\",\\\"A3 frame\\\"]\"",
+            "sortOrder": 9
+          }
+        ],
+        "cursor": [
+          {
+            "accountId": "local-traffic-validation",
+            "seq": 101,
+            "clock": 663,
+            "scriptIndex": 1
+          }
+        ],
+        "controls": {
+          "readDelay": 0,
+          "writeDelay": 0,
+          "lookupDelay": 0,
+          "transactionStarts": 1,
+          "log": []
+        }
+      }
+    },
+    {
+      "scenario": "late-read",
+      "elapsed": 32144,
+      "before": {
+        "events": [
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1041masterorders",
+            "timeText": "10:41",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Task",
+            "skill": "printify.get_shipment",
+            "body": "Check shipping for #A-1007",
+            "payload": {
+              "items": [
+                "Sweatshirt · L",
+                "Tafakkar print · A3"
+              ],
+              "order": "A-1007",
+              "intent": "sync_tracking",
+              "state_in": {
+                "order.A-1007.status": "paid"
+              }
+            },
+            "writes": [],
+            "trace": "tr_7c9f58",
+            "seq": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1042ordersmaster",
+            "timeText": "10:42",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "shopify.add_tracking",
+            "body": "Sweatshirt shipped, tracking added. Print still in production.",
+            "payload": {
+              "order": "A-1007",
+              "pending": [
+                "Tafakkar print · A3"
+              ],
+              "shipped": [
+                "Sweatshirt · L"
+              ],
+              "tracking": "LI400083615LT",
+              "customer_notified": true
+            },
+            "writes": [
+              "order.A-1007.tracking",
+              "order.A-1007.print_status"
+            ],
+            "trace": "tr_f90cf4",
+            "seq": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043masterorders",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Relay",
+            "skill": "printify.get_shipment",
+            "body": "Support needs the print status for #A-1007",
+            "payload": {
+              "order": "A-1007",
+              "fields": [
+                "print_status",
+                "eta"
+              ],
+              "relay_for": "support"
+            },
+            "writes": [],
+            "trace": "tr_6bdf03",
+            "seq": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043supportmaster",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Request",
+            "skill": "orders.lookup",
+            "body": "Customer on #A-1007 asks where the print is",
+            "payload": {
+              "need": "shipping_status",
+              "order": "A-1007",
+              "ticket": "T-2291",
+              "from_customer": "Where is my print?"
+            },
+            "writes": [],
+            "trace": "tr_08d893",
+            "seq": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044mastersupport",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "support",
+            "kind": "Relay",
+            "skill": "inbox.draft_reply",
+            "body": "Here is the print status for T-2291",
+            "payload": {
+              "ticket": "T-2291",
+              "state_in": {
+                "order.A-1007.eta": "2026-11-03",
+                "order.A-1007.tracking": "LI400083615LT"
+              }
+            },
+            "writes": [],
+            "trace": "tr_a390cf",
+            "seq": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044ordersmaster",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "printify.get_shipment",
+            "body": "Print ships in 2 days, ETA 3 Nov",
+            "payload": {
+              "eta": "2026-11-03",
+              "order": "A-1007",
+              "print_status": "in_production"
+            },
+            "writes": [
+              "order.A-1007.eta"
+            ],
+            "trace": "tr_b00ba9",
+            "seq": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1050marketingmaster",
+            "timeText": "10:50",
+            "occurredAt": null,
+            "fromAgent": "marketing",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "meta_ads.set_budget",
+            "body": "Wants to raise the prints ad set to $60 a day",
+            "payload": {
+              "ad_set": "Prints · lookalike",
+              "reason": "Return above 3 for 7 days",
+              "roas_7d": 3.4,
+              "budget_new": 60,
+              "budget_now": 40
+            },
+            "writes": [
+              "marketing.roas_7d"
+            ],
+            "trace": "tr_64fb3a",
+            "seq": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1055supportmaster",
+            "timeText": "10:55",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "shopify.refund",
+            "body": "Refund $42 on #A-1012 is under the limit but the customer is flagged",
+            "payload": {
+              "flag": "second_refund_this_month",
+              "order": "A-1012",
+              "photo": true,
+              "amount": 42,
+              "reason": "Print arrived creased"
+            },
+            "writes": [],
+            "trace": "tr_efb944",
+            "seq": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1056financemaster",
+            "timeText": "10:56",
+            "occurredAt": null,
+            "fromAgent": "finance",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "quickbooks.pnl",
+            "body": "Last 7 days: $8,420 revenue, $2,610 profit",
+            "payload": {
+              "cogs": 4120,
+              "fees": 1428,
+              "margin": 0.31,
+              "profit": 2610,
+              "revenue": 8420,
+              "ad_spend": 262
+            },
+            "writes": [
+              "finance.revenue_7d",
+              "finance.profit_7d"
+            ],
+            "trace": "tr_faa0ac",
+            "seq": 8
+          }
+        ],
+        "store": [
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.daily_ad_cap",
+            "value": "200",
+            "sortOrder": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.reorder_limit",
+            "value": "500",
+            "sortOrder": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "marketing.roas_7d",
+            "value": "3.4",
+            "sortOrder": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.tracking",
+            "value": "\"LI400083615LT\"",
+            "sortOrder": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.print_status",
+            "value": "\"in_production\"",
+            "sortOrder": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.eta",
+            "value": "\"2026-11-03\"",
+            "sortOrder": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.refund_auto_limit",
+            "value": "50",
+            "sortOrder": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.revenue_7d",
+            "value": "8420",
+            "sortOrder": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.profit_7d",
+            "value": "2610",
+            "sortOrder": 8
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "inventory.low_stock",
+            "value": "\"[\\\"Black hoodie M\\\",\\\"A3 frame\\\"]\"",
+            "sortOrder": 9
+          }
+        ],
+        "cursor": [
+          {
+            "accountId": "local-traffic-validation",
+            "seq": 100,
+            "clock": 662,
+            "scriptIndex": 0
+          }
+        ],
+        "controls": {
+          "readDelay": 0,
+          "writeDelay": 0,
+          "lookupDelay": 0,
+          "transactionStarts": 0,
+          "log": []
+        }
+      },
+      "after": {
+        "events": [
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1041masterorders",
+            "timeText": "10:41",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Task",
+            "skill": "printify.get_shipment",
+            "body": "Check shipping for #A-1007",
+            "payload": {
+              "items": [
+                "Sweatshirt · L",
+                "Tafakkar print · A3"
+              ],
+              "order": "A-1007",
+              "intent": "sync_tracking",
+              "state_in": {
+                "order.A-1007.status": "paid"
+              }
+            },
+            "writes": [],
+            "trace": "tr_7c9f58",
+            "seq": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1042ordersmaster",
+            "timeText": "10:42",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "shopify.add_tracking",
+            "body": "Sweatshirt shipped, tracking added. Print still in production.",
+            "payload": {
+              "order": "A-1007",
+              "pending": [
+                "Tafakkar print · A3"
+              ],
+              "shipped": [
+                "Sweatshirt · L"
+              ],
+              "tracking": "LI400083615LT",
+              "customer_notified": true
+            },
+            "writes": [
+              "order.A-1007.tracking",
+              "order.A-1007.print_status"
+            ],
+            "trace": "tr_f90cf4",
+            "seq": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043masterorders",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Relay",
+            "skill": "printify.get_shipment",
+            "body": "Support needs the print status for #A-1007",
+            "payload": {
+              "order": "A-1007",
+              "fields": [
+                "print_status",
+                "eta"
+              ],
+              "relay_for": "support"
+            },
+            "writes": [],
+            "trace": "tr_6bdf03",
+            "seq": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043supportmaster",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Request",
+            "skill": "orders.lookup",
+            "body": "Customer on #A-1007 asks where the print is",
+            "payload": {
+              "need": "shipping_status",
+              "order": "A-1007",
+              "ticket": "T-2291",
+              "from_customer": "Where is my print?"
+            },
+            "writes": [],
+            "trace": "tr_08d893",
+            "seq": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044mastersupport",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "support",
+            "kind": "Relay",
+            "skill": "inbox.draft_reply",
+            "body": "Here is the print status for T-2291",
+            "payload": {
+              "ticket": "T-2291",
+              "state_in": {
+                "order.A-1007.eta": "2026-11-03",
+                "order.A-1007.tracking": "LI400083615LT"
+              }
+            },
+            "writes": [],
+            "trace": "tr_a390cf",
+            "seq": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044ordersmaster",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "printify.get_shipment",
+            "body": "Print ships in 2 days, ETA 3 Nov",
+            "payload": {
+              "eta": "2026-11-03",
+              "order": "A-1007",
+              "print_status": "in_production"
+            },
+            "writes": [
+              "order.A-1007.eta"
+            ],
+            "trace": "tr_b00ba9",
+            "seq": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1050marketingmaster",
+            "timeText": "10:50",
+            "occurredAt": null,
+            "fromAgent": "marketing",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "meta_ads.set_budget",
+            "body": "Wants to raise the prints ad set to $60 a day",
+            "payload": {
+              "ad_set": "Prints · lookalike",
+              "reason": "Return above 3 for 7 days",
+              "roas_7d": 3.4,
+              "budget_new": 60,
+              "budget_now": 40
+            },
+            "writes": [
+              "marketing.roas_7d"
+            ],
+            "trace": "tr_64fb3a",
+            "seq": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1055supportmaster",
+            "timeText": "10:55",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "shopify.refund",
+            "body": "Refund $42 on #A-1012 is under the limit but the customer is flagged",
+            "payload": {
+              "flag": "second_refund_this_month",
+              "order": "A-1012",
+              "photo": true,
+              "amount": 42,
+              "reason": "Print arrived creased"
+            },
+            "writes": [],
+            "trace": "tr_efb944",
+            "seq": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1056financemaster",
+            "timeText": "10:56",
+            "occurredAt": null,
+            "fromAgent": "finance",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "quickbooks.pnl",
+            "body": "Last 7 days: $8,420 revenue, $2,610 profit",
+            "payload": {
+              "cogs": 4120,
+              "fees": 1428,
+              "margin": 0.31,
+              "profit": 2610,
+              "revenue": 8420,
+              "ad_spend": 262
+            },
+            "writes": [
+              "finance.revenue_7d",
+              "finance.profit_7d"
+            ],
+            "trace": "tr_faa0ac",
+            "seq": 8
+          }
+        ],
+        "store": [
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.daily_ad_cap",
+            "value": "200",
+            "sortOrder": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.reorder_limit",
+            "value": "500",
+            "sortOrder": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "marketing.roas_7d",
+            "value": "3.4",
+            "sortOrder": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.tracking",
+            "value": "\"LI400083615LT\"",
+            "sortOrder": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.print_status",
+            "value": "\"in_production\"",
+            "sortOrder": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.eta",
+            "value": "\"2026-11-03\"",
+            "sortOrder": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.refund_auto_limit",
+            "value": "50",
+            "sortOrder": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.revenue_7d",
+            "value": "8420",
+            "sortOrder": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.profit_7d",
+            "value": "2610",
+            "sortOrder": 8
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "inventory.low_stock",
+            "value": "\"[\\\"Black hoodie M\\\",\\\"A3 frame\\\"]\"",
+            "sortOrder": 9
+          }
+        ],
+        "cursor": [
+          {
+            "accountId": "local-traffic-validation",
+            "seq": 100,
+            "clock": 662,
+            "scriptIndex": 0
+          }
+        ],
+        "controls": {
+          "readDelay": 0,
+          "writeDelay": 0,
+          "lookupDelay": 0,
+          "transactionStarts": 0,
+          "log": [
+            {
+              "stage": "pre-read-delay",
+              "ms": 31000,
+              "at": 1793632598231
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "late-write",
+      "elapsed": 33126,
+      "before": {
+        "events": [
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e100",
+            "timeText": "11:03",
+            "occurredAt": "2026-11-02T15:17:11.067Z",
+            "fromAgent": "master",
+            "toAgent": "inventory",
+            "kind": "Task",
+            "skill": "shopify.stock_levels",
+            "body": "Daily stock check",
+            "payload": {
+              "intent": "stock_check",
+              "threshold": 10
+            },
+            "writes": [],
+            "trace": "tr_0cac87",
+            "seq": 100
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1041masterorders",
+            "timeText": "10:41",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Task",
+            "skill": "printify.get_shipment",
+            "body": "Check shipping for #A-1007",
+            "payload": {
+              "items": [
+                "Sweatshirt · L",
+                "Tafakkar print · A3"
+              ],
+              "order": "A-1007",
+              "intent": "sync_tracking",
+              "state_in": {
+                "order.A-1007.status": "paid"
+              }
+            },
+            "writes": [],
+            "trace": "tr_7c9f58",
+            "seq": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1042ordersmaster",
+            "timeText": "10:42",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "shopify.add_tracking",
+            "body": "Sweatshirt shipped, tracking added. Print still in production.",
+            "payload": {
+              "order": "A-1007",
+              "pending": [
+                "Tafakkar print · A3"
+              ],
+              "shipped": [
+                "Sweatshirt · L"
+              ],
+              "tracking": "LI400083615LT",
+              "customer_notified": true
+            },
+            "writes": [
+              "order.A-1007.tracking",
+              "order.A-1007.print_status"
+            ],
+            "trace": "tr_f90cf4",
+            "seq": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043masterorders",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Relay",
+            "skill": "printify.get_shipment",
+            "body": "Support needs the print status for #A-1007",
+            "payload": {
+              "order": "A-1007",
+              "fields": [
+                "print_status",
+                "eta"
+              ],
+              "relay_for": "support"
+            },
+            "writes": [],
+            "trace": "tr_6bdf03",
+            "seq": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043supportmaster",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Request",
+            "skill": "orders.lookup",
+            "body": "Customer on #A-1007 asks where the print is",
+            "payload": {
+              "need": "shipping_status",
+              "order": "A-1007",
+              "ticket": "T-2291",
+              "from_customer": "Where is my print?"
+            },
+            "writes": [],
+            "trace": "tr_08d893",
+            "seq": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044mastersupport",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "support",
+            "kind": "Relay",
+            "skill": "inbox.draft_reply",
+            "body": "Here is the print status for T-2291",
+            "payload": {
+              "ticket": "T-2291",
+              "state_in": {
+                "order.A-1007.eta": "2026-11-03",
+                "order.A-1007.tracking": "LI400083615LT"
+              }
+            },
+            "writes": [],
+            "trace": "tr_a390cf",
+            "seq": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044ordersmaster",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "printify.get_shipment",
+            "body": "Print ships in 2 days, ETA 3 Nov",
+            "payload": {
+              "eta": "2026-11-03",
+              "order": "A-1007",
+              "print_status": "in_production"
+            },
+            "writes": [
+              "order.A-1007.eta"
+            ],
+            "trace": "tr_b00ba9",
+            "seq": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1050marketingmaster",
+            "timeText": "10:50",
+            "occurredAt": null,
+            "fromAgent": "marketing",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "meta_ads.set_budget",
+            "body": "Wants to raise the prints ad set to $60 a day",
+            "payload": {
+              "ad_set": "Prints · lookalike",
+              "reason": "Return above 3 for 7 days",
+              "roas_7d": 3.4,
+              "budget_new": 60,
+              "budget_now": 40
+            },
+            "writes": [
+              "marketing.roas_7d"
+            ],
+            "trace": "tr_64fb3a",
+            "seq": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1055supportmaster",
+            "timeText": "10:55",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "shopify.refund",
+            "body": "Refund $42 on #A-1012 is under the limit but the customer is flagged",
+            "payload": {
+              "flag": "second_refund_this_month",
+              "order": "A-1012",
+              "photo": true,
+              "amount": 42,
+              "reason": "Print arrived creased"
+            },
+            "writes": [],
+            "trace": "tr_efb944",
+            "seq": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1056financemaster",
+            "timeText": "10:56",
+            "occurredAt": null,
+            "fromAgent": "finance",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "quickbooks.pnl",
+            "body": "Last 7 days: $8,420 revenue, $2,610 profit",
+            "payload": {
+              "cogs": 4120,
+              "fees": 1428,
+              "margin": 0.31,
+              "profit": 2610,
+              "revenue": 8420,
+              "ad_spend": 262
+            },
+            "writes": [
+              "finance.revenue_7d",
+              "finance.profit_7d"
+            ],
+            "trace": "tr_faa0ac",
+            "seq": 8
+          }
+        ],
+        "store": [
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.tracking",
+            "value": "\"LI400083615LT\"",
+            "sortOrder": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.print_status",
+            "value": "\"in_production\"",
+            "sortOrder": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.eta",
+            "value": "\"2026-11-03\"",
+            "sortOrder": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.refund_auto_limit",
+            "value": "50",
+            "sortOrder": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.daily_ad_cap",
+            "value": "200",
+            "sortOrder": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.reorder_limit",
+            "value": "500",
+            "sortOrder": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "marketing.roas_7d",
+            "value": "3.4",
+            "sortOrder": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.revenue_7d",
+            "value": "8420",
+            "sortOrder": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.profit_7d",
+            "value": "2610",
+            "sortOrder": 8
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "inventory.low_stock",
+            "value": "\"[\\\"Black hoodie M\\\",\\\"A3 frame\\\"]\"",
+            "sortOrder": 9
+          }
+        ],
+        "cursor": [
+          {
+            "accountId": "local-traffic-validation",
+            "seq": 101,
+            "clock": 663,
+            "scriptIndex": 1
+          }
+        ],
+        "controls": {
+          "readDelay": 0,
+          "writeDelay": 0,
+          "lookupDelay": 0,
+          "transactionStarts": 1,
+          "log": []
+        }
+      },
+      "after": {
+        "events": [
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e100",
+            "timeText": "11:03",
+            "occurredAt": "2026-11-02T15:17:11.067Z",
+            "fromAgent": "master",
+            "toAgent": "inventory",
+            "kind": "Task",
+            "skill": "shopify.stock_levels",
+            "body": "Daily stock check",
+            "payload": {
+              "intent": "stock_check",
+              "threshold": 10
+            },
+            "writes": [],
+            "trace": "tr_0cac87",
+            "seq": 100
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1041masterorders",
+            "timeText": "10:41",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Task",
+            "skill": "printify.get_shipment",
+            "body": "Check shipping for #A-1007",
+            "payload": {
+              "items": [
+                "Sweatshirt · L",
+                "Tafakkar print · A3"
+              ],
+              "order": "A-1007",
+              "intent": "sync_tracking",
+              "state_in": {
+                "order.A-1007.status": "paid"
+              }
+            },
+            "writes": [],
+            "trace": "tr_7c9f58",
+            "seq": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1042ordersmaster",
+            "timeText": "10:42",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "shopify.add_tracking",
+            "body": "Sweatshirt shipped, tracking added. Print still in production.",
+            "payload": {
+              "order": "A-1007",
+              "pending": [
+                "Tafakkar print · A3"
+              ],
+              "shipped": [
+                "Sweatshirt · L"
+              ],
+              "tracking": "LI400083615LT",
+              "customer_notified": true
+            },
+            "writes": [
+              "order.A-1007.tracking",
+              "order.A-1007.print_status"
+            ],
+            "trace": "tr_f90cf4",
+            "seq": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043masterorders",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "orders",
+            "kind": "Relay",
+            "skill": "printify.get_shipment",
+            "body": "Support needs the print status for #A-1007",
+            "payload": {
+              "order": "A-1007",
+              "fields": [
+                "print_status",
+                "eta"
+              ],
+              "relay_for": "support"
+            },
+            "writes": [],
+            "trace": "tr_6bdf03",
+            "seq": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1043supportmaster",
+            "timeText": "10:43",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Request",
+            "skill": "orders.lookup",
+            "body": "Customer on #A-1007 asks where the print is",
+            "payload": {
+              "need": "shipping_status",
+              "order": "A-1007",
+              "ticket": "T-2291",
+              "from_customer": "Where is my print?"
+            },
+            "writes": [],
+            "trace": "tr_08d893",
+            "seq": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044mastersupport",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "master",
+            "toAgent": "support",
+            "kind": "Relay",
+            "skill": "inbox.draft_reply",
+            "body": "Here is the print status for T-2291",
+            "payload": {
+              "ticket": "T-2291",
+              "state_in": {
+                "order.A-1007.eta": "2026-11-03",
+                "order.A-1007.tracking": "LI400083615LT"
+              }
+            },
+            "writes": [],
+            "trace": "tr_a390cf",
+            "seq": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1044ordersmaster",
+            "timeText": "10:44",
+            "occurredAt": null,
+            "fromAgent": "orders",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "printify.get_shipment",
+            "body": "Print ships in 2 days, ETA 3 Nov",
+            "payload": {
+              "eta": "2026-11-03",
+              "order": "A-1007",
+              "print_status": "in_production"
+            },
+            "writes": [
+              "order.A-1007.eta"
+            ],
+            "trace": "tr_b00ba9",
+            "seq": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1050marketingmaster",
+            "timeText": "10:50",
+            "occurredAt": null,
+            "fromAgent": "marketing",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "meta_ads.set_budget",
+            "body": "Wants to raise the prints ad set to $60 a day",
+            "payload": {
+              "ad_set": "Prints · lookalike",
+              "reason": "Return above 3 for 7 days",
+              "roas_7d": 3.4,
+              "budget_new": 60,
+              "budget_now": 40
+            },
+            "writes": [
+              "marketing.roas_7d"
+            ],
+            "trace": "tr_64fb3a",
+            "seq": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1055supportmaster",
+            "timeText": "10:55",
+            "occurredAt": null,
+            "fromAgent": "support",
+            "toAgent": "master",
+            "kind": "Escalation",
+            "skill": "shopify.refund",
+            "body": "Refund $42 on #A-1012 is under the limit but the customer is flagged",
+            "payload": {
+              "flag": "second_refund_this_month",
+              "order": "A-1012",
+              "photo": true,
+              "amount": 42,
+              "reason": "Print arrived creased"
+            },
+            "writes": [],
+            "trace": "tr_efb944",
+            "seq": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "id": "e1056financemaster",
+            "timeText": "10:56",
+            "occurredAt": null,
+            "fromAgent": "finance",
+            "toAgent": "master",
+            "kind": "Result",
+            "skill": "quickbooks.pnl",
+            "body": "Last 7 days: $8,420 revenue, $2,610 profit",
+            "payload": {
+              "cogs": 4120,
+              "fees": 1428,
+              "margin": 0.31,
+              "profit": 2610,
+              "revenue": 8420,
+              "ad_spend": 262
+            },
+            "writes": [
+              "finance.revenue_7d",
+              "finance.profit_7d"
+            ],
+            "trace": "tr_faa0ac",
+            "seq": 8
+          }
+        ],
+        "store": [
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.tracking",
+            "value": "\"LI400083615LT\"",
+            "sortOrder": 0
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.print_status",
+            "value": "\"in_production\"",
+            "sortOrder": 1
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "order.A-1007.eta",
+            "value": "\"2026-11-03\"",
+            "sortOrder": 2
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.refund_auto_limit",
+            "value": "50",
+            "sortOrder": 3
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.daily_ad_cap",
+            "value": "200",
+            "sortOrder": 4
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "policy.reorder_limit",
+            "value": "500",
+            "sortOrder": 5
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "marketing.roas_7d",
+            "value": "3.4",
+            "sortOrder": 6
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.revenue_7d",
+            "value": "8420",
+            "sortOrder": 7
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "finance.profit_7d",
+            "value": "2610",
+            "sortOrder": 8
+          },
+          {
+            "accountId": "local-traffic-validation",
+            "key": "inventory.low_stock",
+            "value": "\"[\\\"Black hoodie M\\\",\\\"A3 frame\\\"]\"",
+            "sortOrder": 9
+          }
+        ],
+        "cursor": [
+          {
+            "accountId": "local-traffic-validation",
+            "seq": 101,
+            "clock": 663,
+            "scriptIndex": 1
+          }
+        ],
+        "controls": {
+          "readDelay": 0,
+          "writeDelay": 0,
+          "lookupDelay": 0,
+          "transactionStarts": 2,
+          "log": [
+            {
+              "stage": "pre-read-delay",
+              "ms": 20000,
+              "at": 1793632631215
+            },
+            {
+              "stage": "after-insert-delay",
+              "ms": 11000,
+              "at": 1793632651257
+            }
+          ]
+        }
+      }
+    },
+    {
+      "scenario": "three-ms-boundary",
+      "result": {
+        "error": "The workspace write did not finish.",
+        "transactions": 0
+      }
+    }
+  ]
+}
