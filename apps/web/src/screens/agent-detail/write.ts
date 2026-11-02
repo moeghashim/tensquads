@@ -49,7 +49,7 @@ interface Snapshot {
 
 const emptySnapshot: Snapshot = { base: null, loaderUpdatedAt: 0, pending: [] };
 
-function createQueue(agentId: string, currentLoad: () => number) {
+function createQueue(agentId: string) {
 	const queue: Write[] = [];
 	let busy = false;
 	let state = emptySnapshot;
@@ -72,14 +72,21 @@ function createQueue(agentId: string, currentLoad: () => number) {
 
 	async function load() {
 		const number = ++readNumber;
+		const loaderUpdatedAt = state.loaderUpdatedAt;
 		const view = await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
-		return { number, view };
+		return { number, loaderUpdatedAt, view };
 	}
 
-	function store(result: { readonly number: number; readonly view: AgentDetailView }) {
-		if (result.number > storedRead) {
+	function store(
+		result: { readonly number: number; readonly loaderUpdatedAt: number; readonly view: AgentDetailView },
+		write?: Write,
+	) {
+		if (result.loaderUpdatedAt < state.loaderUpdatedAt) {
+			if (write && state.base) publish({ ...state, base: write.apply(state.base) });
+			storedRead = Math.max(storedRead, result.number);
+		} else if (result.number > storedRead) {
 			storedRead = result.number;
-			publish({ ...state, base: result.view, loaderUpdatedAt: Math.max(state.loaderUpdatedAt, currentLoad()) });
+			publish({ ...state, base: result.view });
 		}
 	}
 
@@ -104,7 +111,7 @@ function createQueue(agentId: string, currentLoad: () => number) {
 				void confirm(write);
 				return;
 			}
-			store(result);
+			store(result, write);
 			if (!state.base || !write.matches(state.base)) {
 				await pause(PENDING_TASK_WINDOW_MS);
 				void confirm(write);
@@ -145,7 +152,6 @@ function createQueue(agentId: string, currentLoad: () => number) {
 		snapshot: () => state,
 		reconcile(view: AgentDetailView, updatedAt: number) {
 			if (updatedAt > state.loaderUpdatedAt) {
-				storedRead = ++readNumber;
 				publish({ ...state, base: view, loaderUpdatedAt: updatedAt });
 			}
 		},
@@ -189,7 +195,7 @@ function runningFace(view: AgentDetailView, on: boolean): AgentDetailView {
 const queues = new WeakMap<object, Map<string, ReturnType<typeof createQueue>>>();
 const serverSnapshot = () => emptySnapshot;
 
-function agentQueue(owner: object, agentId: string, currentLoad: () => number) {
+function agentQueue(owner: object, agentId: string) {
 	let agents = queues.get(owner);
 	if (!agents) {
 		agents = new Map();
@@ -197,7 +203,7 @@ function agentQueue(owner: object, agentId: string, currentLoad: () => number) {
 	}
 	let queue = agents.get(agentId);
 	if (!queue) {
-		queue = createQueue(agentId, currentLoad);
+		queue = createQueue(agentId);
 		agents.set(agentId, queue);
 	}
 	return queue;
@@ -208,12 +214,7 @@ export function useAgentWrites(serverView: AgentDetailView) {
 	const router = useRouter();
 	const navigate = useNavigate();
 	const match = useMatch({ from: "/_workspace/agents/$id" });
-	const { enqueue, snapshot, subscribe, reconcile } = agentQueue(router, agentId, () => {
-		const current = router.state.matches.find(
-			(value) => value.routeId === "/_workspace/agents/$id" && "id" in value.params && value.params.id === agentId,
-		);
-		return current?.status === "success" ? current.updatedAt : 0;
-	});
+	const { enqueue, snapshot, subscribe, reconcile } = agentQueue(router, agentId);
 	const state = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
 	useEffect(() => {
 		if (match.status === "success") reconcile(serverView, match.updatedAt);
