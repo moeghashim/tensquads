@@ -1,7 +1,7 @@
 import { useMatch, useNavigate, useRouter } from "@tanstack/react-router";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import type { Autonomy } from "@tensquads/domain";
-import { useEffect, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import {
 	askAgentRevise,
 	loadAgentDetail,
@@ -36,32 +36,20 @@ function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
 
 interface Write {
 	readonly key: string;
-	readonly work: (signal: AbortSignal) => Promise<void>;
+	readonly work: (signal: AbortSignal) => Promise<AgentDetailView>;
 	readonly apply: (view: AgentDetailView) => AgentDetailView;
-	readonly matches: (view: AgentDetailView) => boolean;
-}
-
-type ConfirmedPatch = Pick<Write, "key" | "apply" | "matches">;
-
-function applyConfirmed(view: AgentDetailView, patches: readonly ConfirmedPatch[]): AgentDetailView {
-	return patches.reduce((base, patch) => (patch.matches(base) ? base : patch.apply(base)), view);
 }
 
 interface Snapshot {
-	readonly base: AgentDetailView | null;
-	readonly loaderUpdatedAt: number;
+	readonly view: AgentDetailView;
 	readonly pending: readonly Write[];
-	readonly confirmed: readonly ConfirmedPatch[];
 }
 
-const emptySnapshot: Snapshot = { base: null, loaderUpdatedAt: 0, pending: [], confirmed: [] };
-
-function createQueue(agentId: string) {
+function createQueue(agentId: string, initialView: AgentDetailView) {
 	const queue: Write[] = [];
 	let busy = false;
-	let state = emptySnapshot;
-	let readNumber = 0;
-	let storedRead = 0;
+	let state: Snapshot = { view: initialView, pending: [] };
+	let loaderView = initialView;
 	const listeners = new Set<() => void>();
 
 	function publish(next: Snapshot) {
@@ -69,71 +57,13 @@ function createQueue(agentId: string) {
 		for (const listener of listeners) listener();
 	}
 
-	function clear(write: Write) {
-		publish({ ...state, pending: state.pending.filter((value) => value !== write) });
-	}
-
-	function stillPending(write: Write) {
-		return state.pending.includes(write);
-	}
-
-	async function load() {
-		const number = ++readNumber;
-		const loaderUpdatedAt = state.loaderUpdatedAt;
-		const view = await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
-		return { number, loaderUpdatedAt, view };
-	}
-
-	function store(
-		result: { readonly number: number; readonly loaderUpdatedAt: number; readonly view: AgentDetailView },
-		write?: Write,
-	) {
-		const confirmed =
-			write && write.key !== "revise"
-				? [
-						...state.confirmed.filter((patch) => patch.key !== write.key),
-						{ key: write.key, apply: write.apply, matches: write.matches },
-					]
-				: state.confirmed;
-		const base =
-			result.loaderUpdatedAt < state.loaderUpdatedAt || result.number <= storedRead ? state.base : result.view;
-		storedRead = Math.max(storedRead, result.number);
-		publish({ ...state, confirmed, base: base ? applyConfirmed(base, confirmed) : base });
-	}
-
 	async function read() {
 		try {
-			store(await load());
+			const view = await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
+			publish({ ...state, view });
 		} catch {
-			await pause(PENDING_TASK_WINDOW_MS);
-			void read();
-		}
-	}
-
-	async function confirm(write: Write) {
-		if (!stillPending(write)) {
 			return;
 		}
-		try {
-			const result = await load();
-			if (!stillPending(write)) return;
-			if (!write.matches(result.view)) {
-				await pause(PENDING_TASK_WINDOW_MS);
-				void confirm(write);
-				return;
-			}
-			store(result, write);
-			if (!state.base || !write.matches(state.base)) {
-				await pause(PENDING_TASK_WINDOW_MS);
-				void confirm(write);
-				return;
-			}
-		} catch {
-			await pause(PENDING_TASK_WINDOW_MS);
-			void confirm(write);
-			return;
-		}
-		clear(write);
 	}
 
 	async function drain() {
@@ -143,15 +73,12 @@ function createQueue(agentId: string) {
 			let write = queue.shift();
 			while (write) {
 				try {
-					await bounded(write.work);
+					const view = await bounded(write.work);
+					publish({ view, pending: state.pending.filter((value) => value !== write) });
 				} catch {
-					clear(write);
+					publish({ ...state, pending: state.pending.filter((value) => value !== write) });
 					void read();
-					write = queue.shift();
-					continue;
 				}
-				const sent = write;
-				void confirm(sent);
 				write = queue.shift();
 			}
 		} finally {
@@ -161,10 +88,10 @@ function createQueue(agentId: string) {
 
 	return {
 		snapshot: () => state,
-		reconcile(view: AgentDetailView, updatedAt: number) {
-			if (updatedAt > state.loaderUpdatedAt) {
-				const confirmed = state.confirmed.filter((patch) => !patch.matches(view));
-				publish({ ...state, base: applyConfirmed(view, confirmed), loaderUpdatedAt: updatedAt, confirmed });
+		load(view: AgentDetailView) {
+			if (view !== loaderView) {
+				loaderView = view;
+				publish({ ...state, view });
 			}
 		},
 		subscribe(listener: () => void) {
@@ -174,19 +101,18 @@ function createQueue(agentId: string) {
 			};
 		},
 		enqueue(write: Write) {
-			publish({ ...state, pending: [...state.pending.filter((value) => value.key !== write.key), write] });
 			const index = queue.findIndex((value) => value.key === write.key);
-			if (index === -1) queue.push(write);
-			else queue[index] = write;
+			if (index === -1) {
+				queue.push(write);
+				publish({ ...state, pending: [...state.pending, write] });
+			} else {
+				const replaced = queue[index];
+				queue[index] = write;
+				publish({ ...state, pending: state.pending.map((value) => (value === replaced ? write : value)) });
+			}
 			void drain();
 		},
 	};
-}
-
-function pause(ms: number) {
-	return new Promise<void>((resolve) => {
-		setTimeout(resolve, ms);
-	});
 }
 
 function runningFace(view: AgentDetailView, on: boolean): AgentDetailView {
@@ -205,9 +131,8 @@ function runningFace(view: AgentDetailView, on: boolean): AgentDetailView {
 }
 
 const queues = new WeakMap<object, Map<string, ReturnType<typeof createQueue>>>();
-const serverSnapshot = () => emptySnapshot;
 
-function agentQueue(owner: object, agentId: string) {
+function agentQueue(owner: object, agentId: string, initialView: AgentDetailView) {
 	let agents = queues.get(owner);
 	if (!agents) {
 		agents = new Map();
@@ -215,7 +140,7 @@ function agentQueue(owner: object, agentId: string) {
 	}
 	let queue = agents.get(agentId);
 	if (!queue) {
-		queue = createQueue(agentId);
+		queue = createQueue(agentId, initialView);
 		agents.set(agentId, queue);
 	}
 	return queue;
@@ -226,28 +151,22 @@ export function useAgentWrites(serverView: AgentDetailView) {
 	const router = useRouter();
 	const navigate = useNavigate();
 	const match = useMatch({ from: "/_workspace/agents/$id" });
-	const { enqueue, snapshot, subscribe, reconcile } = agentQueue(router, agentId);
-	const state = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
-	useEffect(() => {
-		if (match.status === "success") reconcile(serverView, match.updatedAt);
-	}, [match.status, match.updatedAt, reconcile, serverView]);
-	const base =
-		match.status === "success" && match.updatedAt > state.loaderUpdatedAt ? serverView : (state.base ?? serverView);
+	const { enqueue, snapshot, subscribe, load } = agentQueue(router, agentId, serverView);
+	if (match.status === "success") load(serverView);
+	const state = useSyncExternalStore(subscribe, snapshot, snapshot);
 
 	return {
-		view: state.pending.reduce((view, write) => write.apply(view), applyConfirmed(base, state.confirmed)),
+		view: state.pending.reduce((view, write) => write.apply(view), state.view),
 		toggleAgent(on: boolean) {
 			enqueue({
 				key: "running",
 				work: (signal) => setAgentRunning({ data: { agentId, on }, signal }),
 				apply: (view) => runningFace(view, on),
-				matches: (view) => view.on === on,
 			});
 		},
 		toggleSkill(skillId: string, on: boolean) {
 			enqueue({
 				key: `skill:${skillId}`,
-				matches: (view) => view.skills.some((skill) => skill.id === skillId && skill.onStr === String(on)),
 				work: (signal) => setSkillEnabled({ data: { agentId, skillId, on }, signal }),
 				apply: (view) => ({
 					...view,
@@ -258,7 +177,6 @@ export function useAgentWrites(serverView: AgentDetailView) {
 		pickAutonomy(autonomy: Autonomy) {
 			enqueue({
 				key: "autonomy",
-				matches: (view) => view.autonomyOpts.some((option) => option.label === autonomy && option.onStr === "true"),
 				work: (signal) => setAgentAutonomy({ data: { agentId, autonomy }, signal }),
 				apply: (view) => ({
 					...view,
@@ -275,7 +193,6 @@ export function useAgentWrites(serverView: AgentDetailView) {
 				key: "revise",
 				work: (signal) => askAgentRevise({ data: agentId, signal }),
 				apply: (view) => view,
-				matches: () => true,
 			});
 			void navigate({ to: "/overview" });
 		},

@@ -5,7 +5,7 @@ import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import type { AccountScope, Agent, Autonomy, BusEvent } from "@tensquads/domain";
 import type { Kernel } from "@tensquads/kernel";
 
-import { type AgentDetailSource, AUTONOMY_OPTIONS, agentDetailView } from "#/screens/agent-detail/model.ts";
+import { type AgentDetailSource, type AgentDetailView, AUTONOMY_OPTIONS, agentDetailView } from "#/screens/agent-detail/model.ts";
 
 function validateAgentId(input: unknown): string {
 	if (typeof input !== "string" || input.length === 0) {
@@ -76,8 +76,9 @@ function validateAutonomy(input: unknown): AutonomyInput {
 const unfinished = "The workspace write did not finish.";
 
 async function writeThroughKernel(
+	agentId: string,
 	run: (kernel: Kernel, scope: AccountScope, deadlineAt: number) => Promise<void>,
-): Promise<void> {
+): Promise<AgentDetailView> {
 	const deadlineAt = Date.now() + PENDING_TASK_WINDOW_MS;
 	const { requireWorkspace } = await import("./workspace-session.ts");
 	return requireWorkspace(async (scope, db) => {
@@ -87,6 +88,14 @@ async function writeThroughKernel(
 		const { createRepositories } = await import("@tensquads/adapters");
 		const { Kernel: WorkspaceKernel } = await import("@tensquads/kernel");
 		await run(new WorkspaceKernel(createRepositories(db)), scope, deadlineAt);
+		if (Date.now() >= deadlineAt) {
+			throw new Error(unfinished);
+		}
+		const view = await loadView(db, scope, agentId);
+		if (Date.now() >= deadlineAt) {
+			throw new Error(unfinished);
+		}
+		return view;
 	});
 }
 
@@ -164,7 +173,7 @@ async function loadView(db: AppDatabase, scope: AccountScope, agentId: string) {
 	const agents = await repos.squads.listAgents(scope);
 	const agent = agents.find((item) => item.id === agentId);
 	if (!agent) {
-		return null;
+		throw redirect({ to: "/agents" });
 	}
 	const machine = createTestMachine([machineRecord(agent)]);
 	const master = await repos.squads.master(scope);
@@ -191,17 +200,13 @@ export const loadAgentDetail = createServerFn({ method: "GET" })
 	.validator(validateAgentId)
 	.handler(async ({ data }) => {
 		const { requireWorkspace } = await import("./workspace-session.ts");
-		const view = await requireWorkspace((scope, db) => loadView(db, scope, data));
-		if (!view) {
-			throw redirect({ to: "/agents" });
-		}
-		return view;
+		return requireWorkspace((scope, db) => loadView(db, scope, data));
 	});
 
 export const setAgentRunning = createServerFn({ method: "POST" })
 	.validator(validateRunning)
 	.handler(async ({ data }) => {
-		await writeThroughKernel((kernel, scope, deadlineAt) =>
+		return writeThroughKernel(data.agentId, (kernel, scope, deadlineAt) =>
 			kernel.setAgentOn(scope, data.agentId, data.on, deadlineAt),
 		);
 	});
@@ -209,7 +214,7 @@ export const setAgentRunning = createServerFn({ method: "POST" })
 export const setSkillEnabled = createServerFn({ method: "POST" })
 	.validator(validateSkill)
 	.handler(async ({ data }) => {
-		await writeThroughKernel((kernel, scope, deadlineAt) =>
+		return writeThroughKernel(data.agentId, (kernel, scope, deadlineAt) =>
 			kernel.setSkillOn(scope, data.agentId, data.skillId, data.on, deadlineAt),
 		);
 	});
@@ -217,7 +222,7 @@ export const setSkillEnabled = createServerFn({ method: "POST" })
 export const setAgentAutonomy = createServerFn({ method: "POST" })
 	.validator(validateAutonomy)
 	.handler(async ({ data }) => {
-		await writeThroughKernel((kernel, scope, deadlineAt) =>
+		return writeThroughKernel(data.agentId, (kernel, scope, deadlineAt) =>
 			kernel.setAutonomy(scope, data.agentId, data.autonomy, deadlineAt),
 		);
 	});
@@ -225,5 +230,5 @@ export const setAgentAutonomy = createServerFn({ method: "POST" })
 export const askAgentRevise = createServerFn({ method: "POST" })
 	.validator(validateAgentId)
 	.handler(async ({ data }) => {
-		await writeThroughKernel((kernel, scope, deadlineAt) => kernel.askRevise(scope, data, deadlineAt));
+		return writeThroughKernel(data, (kernel, scope, deadlineAt) => kernel.askRevise(scope, data, deadlineAt));
 	});

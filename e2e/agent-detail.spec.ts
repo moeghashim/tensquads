@@ -440,10 +440,10 @@ test("a confirmed skill write survives a later loader failure", async ({ page, w
 		await expect
 			.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.read"), settled)
 			.toBe(false);
-		await expect.poll(() => reads, settled).toBeGreaterThan(0);
 		await expect(button).toHaveAttribute("aria-pressed", "false");
 		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
 		await wait(PENDING_TASK_WINDOW_MS + 1_000);
+		expect(reads).toBe(0);
 		await expect(button).toHaveAttribute("aria-pressed", "false");
 		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
 	} finally {
@@ -474,10 +474,10 @@ test("a committed skill write stays on screen when the read fails", async ({ pag
 		await expect
 			.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.read"), settled)
 			.toBe(false);
-		await expect.poll(() => reads, settled).toBeGreaterThan(0);
 		await expect(button).toHaveAttribute("aria-pressed", "false");
 		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
-		await expect.poll(() => reads, { timeout: PENDING_TASK_WINDOW_MS + 15_000 }).toBeGreaterThan(1);
+		await wait(PENDING_TASK_WINDOW_MS + 1_000);
+		expect(reads).toBe(0);
 		await expect(button).toHaveAttribute("aria-pressed", "false");
 		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
 	} finally {
@@ -485,6 +485,53 @@ test("a committed skill write stays on screen when the read fails", async ({ pag
 	}
 	await reloadAgent(page);
 	await expect(skillRow(page, "inbox.read").getByRole("button")).toHaveAttribute("aria-pressed", "false");
+});
+
+test("a failed off write recovers the successful held on response", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(120_000);
+	await openAgent(page, workspaceUser, "support");
+	const button = skillRow(page, "inbox.read").getByRole("button");
+	await button.click();
+	await expect.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.read"), settled).toBe(false);
+	await expect(button).toHaveAttribute("aria-pressed", "false");
+	let release: () => void = () => undefined;
+	const held = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	let posts = 0;
+	let responseHeld = false;
+	const pattern = /\/_serverFn\//;
+	const handler = async (route: Route) => {
+		if (route.request().method() !== "POST") return route.continue();
+		posts += 1;
+		if (posts === 1) {
+			const response = await route.fetch();
+			responseHeld = true;
+			await held;
+			await route.fulfill({ response });
+			return;
+		}
+		await route.fulfill({ status: 500, contentType: "text/plain", body: "Write failed" });
+	};
+	await page.route(pattern, handler);
+	try {
+		await button.click();
+		await expect.poll(() => responseHeld, settled).toBe(true);
+		await expect.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.read"), settled).toBe(true);
+		await button.click();
+		await expect(button).toHaveAttribute("aria-pressed", "false");
+		release();
+		await expect.poll(() => posts, settled).toBe(2);
+		await expect(button).toHaveAttribute("aria-pressed", "true", settled);
+		expect(skillFlag(await readAgent(accountId, "support"), "inbox.read")).toBe(true);
+		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+		await wait(PENDING_TASK_WINDOW_MS + 1_000);
+		await expect(button).toHaveAttribute("aria-pressed", "true");
+		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+	} finally {
+		release();
+		await page.unroute(pattern, handler);
+	}
 });
 
 test("revise opens overview while its write and a skill write are held", async ({ page, workspaceUser, accountId }) => {

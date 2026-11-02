@@ -31,7 +31,7 @@ export const colors = {
 	Reload: "yellow",
 };
 
-const hidden = new Set(["Stay", "ChangeAutonomy", "RunSkill", "EndSkill", "RefreshTimeout"]);
+const hidden = new Set(["Stay", "ChangeAutonomy", "RunSkill", "EndSkill"]);
 
 const labels = {
 	SwitchOn: "you switch it on",
@@ -41,9 +41,10 @@ const labels = {
 	EnterQueue: "you queue a change",
 	MarkFailed: "the write fails",
 	MarkLate: "the deadline passes",
-	MarkReload: "the write lands",
-	ReadAfterFailure: "the page reads again",
-	ConfirmRead: "the read confirms",
+	MarkReload: "the write response arrives",
+	ReadAfterFailure: "one recovery read starts",
+	ConfirmRead: "the recovery read returns",
+	RefreshTimeout: "the recovery wait ends at its bound",
 };
 
 export const step = (action) => {

@@ -6,9 +6,9 @@
 \* Starting and Stopping each last one step.
 \* A click enters the per-agent queue. The queue then fails, lands, or is late.
 \* Late is the 30-second write deadline. A late write does not commit.
-\* Failed and late each start a reload. A landed write reloads too.
-\* A 30-second refresh timeout stays on the written screen and reads again.
-\* A read that confirms the server ends the wait.
+\* A successful write response supplies the view and ends the wait.
+\* Failed and late each start one bounded recovery read.
+\* The recovery response or its 30-second bound ends the wait. No read loops.
 \* # model: packages/adapters/src/test-machine.ts
 \* # model: packages/kernel/src/plugins/squads.ts
 \* # model: packages/kernel/src/ports.ts
@@ -178,7 +178,7 @@ MarkLate ==
 
 MarkReload ==
     /\ wait = "queue"
-    /\ wait' = "reload"
+    /\ wait' = "none"
     /\ tick' = 0
     /\ machine
 
@@ -194,11 +194,11 @@ ConfirmRead ==
     /\ tick' = 0
     /\ machine
 
-\* The 30-second refresh bound. The written screen stays up.
+\* The 30-second recovery bound ends the wait even if the read never starts.
 RefreshTimeout ==
-    /\ wait = "reload"
-    /\ wait' = "reload"
-    /\ tick' = IF tick = 0 THEN 1 ELSE 0
+    /\ wait \in {"failed", "late", "reload"}
+    /\ wait' = "none"
+    /\ tick' = 0
     /\ machine
 
 Stay == UNCHANGED vars
@@ -223,7 +223,7 @@ Next ==
 WaitEnds ==
     /\ [](phase = "Starting" => <>(phase = "On"))
     /\ [](phase = "Stopping" => <>(phase = "Paused"))
-    /\ [](wait = "queue" => <>(wait # "queue"))
+    /\ [](wait # "none" => <>(wait = "none"))
 
 Spec == Init /\ [][Next]_vars
     /\ WF_vars(Boot) /\ WF_vars(Halt)
