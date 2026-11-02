@@ -90,7 +90,7 @@ async function runAttempt<T>(db: AppDatabase, run: WorkspaceWork<T>, bound: Send
 		const value = await run(tx, (deadline) => {
 			if (bound) bound.deadline = Math.min(bound.deadline, deadline);
 		});
-		// Last step before commit. A late send throws, so the task rolls back.
+		// Last step before commit. A late send throws, so all its writes roll back.
 		assertBeforeDeadline(bound);
 		return value;
 	});
