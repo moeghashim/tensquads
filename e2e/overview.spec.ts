@@ -342,7 +342,7 @@ test("a rejected decision restores the badge after leaving overview", async ({ p
 	await expect(dockBadge(page)).toHaveText("4", settled);
 });
 
-test("navigation frame reads update the count after another tab decides", async ({ page, workspaceUser }) => {
+test("navigation frame reads update the count after another tab declines", async ({ page, workspaceUser }) => {
 	await openWorkspace(page, workspaceUser);
 	await expect(dockBadge(page)).toHaveText("4");
 	await page.locator("main").getByRole("button", { name: "See squad traffic" }).click();
