@@ -1,7 +1,7 @@
-import { useNavigate, useRouter } from "@tanstack/react-router";
+import { useMatch, useNavigate, useRouter } from "@tanstack/react-router";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import type { Autonomy } from "@tensquads/domain";
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import {
 	askAgentRevise,
 	loadAgentDetail,
@@ -11,7 +11,7 @@ import {
 } from "#/server/agent-detail.ts";
 import { agentStatus } from "#/workspace/agent-view.ts";
 import { switchParts } from "#/workspace/styles.ts";
-import { type AgentDetailView, autonomyStyle } from "./model.ts";
+import { type AgentDetailView, autonomyStyle, blank } from "./model.ts";
 
 function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
 	const controller = new AbortController();
@@ -43,12 +43,13 @@ interface Write {
 
 interface Snapshot {
 	readonly base: AgentDetailView | null;
+	readonly loaderUpdatedAt: number;
 	readonly pending: readonly Write[];
 }
 
-const emptySnapshot: Snapshot = { base: null, pending: [] };
+const emptySnapshot: Snapshot = { base: null, loaderUpdatedAt: 0, pending: [] };
 
-function createQueue(agentId: string) {
+function createQueue(agentId: string, currentLoad: () => number) {
 	const queue: Write[] = [];
 	let busy = false;
 	let state = emptySnapshot;
@@ -78,7 +79,7 @@ function createQueue(agentId: string) {
 	function store(result: { readonly number: number; readonly view: AgentDetailView }) {
 		if (result.number > storedRead) {
 			storedRead = result.number;
-			publish({ ...state, base: result.view });
+			publish({ ...state, base: result.view, loaderUpdatedAt: Math.max(state.loaderUpdatedAt, currentLoad()) });
 		}
 	}
 
@@ -142,6 +143,12 @@ function createQueue(agentId: string) {
 
 	return {
 		snapshot: () => state,
+		reconcile(view: AgentDetailView, updatedAt: number) {
+			if (updatedAt > state.loaderUpdatedAt) {
+				storedRead = ++readNumber;
+				publish({ ...state, base: view, loaderUpdatedAt: updatedAt });
+			}
+		},
 		subscribe(listener: () => void) {
 			listeners.add(listener);
 			return () => {
@@ -174,15 +181,15 @@ function runningFace(view: AgentDetailView, on: boolean): AgentDetailView {
 		statusLabel: status.statusLabel,
 		statusStyle: status.statusStyle,
 		vmState: on ? "Isolated · running" : "Isolated · stopped",
-		cpu: on ? view.storedCpu : "0%",
-		uptime: on ? (storedUptime === "Paused" ? "Just started" : storedUptime) : "Paused",
+		cpu: on ? blank(view.storedCpu) : "0%",
+		uptime: on ? (storedUptime === "Paused" ? "Just started" : blank(storedUptime)) : "Paused",
 	};
 }
 
 const queues = new WeakMap<object, Map<string, ReturnType<typeof createQueue>>>();
 const serverSnapshot = () => emptySnapshot;
 
-function agentQueue(owner: object, agentId: string) {
+function agentQueue(owner: object, agentId: string, currentLoad: () => number) {
 	let agents = queues.get(owner);
 	if (!agents) {
 		agents = new Map();
@@ -190,7 +197,7 @@ function agentQueue(owner: object, agentId: string) {
 	}
 	let queue = agents.get(agentId);
 	if (!queue) {
-		queue = createQueue(agentId);
+		queue = createQueue(agentId, currentLoad);
 		agents.set(agentId, queue);
 	}
 	return queue;
@@ -200,11 +207,22 @@ export function useAgentWrites(serverView: AgentDetailView) {
 	const agentId = serverView.id;
 	const router = useRouter();
 	const navigate = useNavigate();
-	const { enqueue, snapshot, subscribe } = agentQueue(router, agentId);
+	const match = useMatch({ from: "/_workspace/agents/$id" });
+	const { enqueue, snapshot, subscribe, reconcile } = agentQueue(router, agentId, () => {
+		const current = router.state.matches.find(
+			(value) => value.routeId === "/_workspace/agents/$id" && "id" in value.params && value.params.id === agentId,
+		);
+		return current?.status === "success" ? current.updatedAt : 0;
+	});
 	const state = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
+	useEffect(() => {
+		if (match.status === "success") reconcile(serverView, match.updatedAt);
+	}, [match.status, match.updatedAt, reconcile, serverView]);
+	const base =
+		match.status === "success" && match.updatedAt > state.loaderUpdatedAt ? serverView : (state.base ?? serverView);
 
 	return {
-		view: state.pending.reduce((view, write) => write.apply(view), state.base ?? serverView),
+		view: state.pending.reduce((view, write) => write.apply(view), base),
 		toggleAgent(on: boolean) {
 			enqueue({
 				key: "running",

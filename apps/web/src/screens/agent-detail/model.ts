@@ -8,7 +8,7 @@ export const AUTONOMY_OPTIONS = ["Ask first", "Auto under limit", "Full auto"] a
 
 const blankMark = "—";
 
-function blank(value: string): string {
+export function blank(value: string): string {
 	return value.length === 0 ? blankMark : value;
 }
 
