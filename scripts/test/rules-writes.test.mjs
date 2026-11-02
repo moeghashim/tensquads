@@ -700,7 +700,15 @@ for (const refreshResult of ["success", "reject", "timeout"]) {
 				await window.flush();
 			});
 			await page.waitForFunction(() => window.refreshCalls === 1);
-			if (refreshResult === "timeout") await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+			if (refreshResult === "timeout") {
+				// Complete B before its own write deadline. Its saved row must survive the hung reads.
+				await page.evaluate(async () => {
+					window.adds[1].resolve({ id: "r100" });
+					await window.flush();
+				});
+				await page.waitForFunction(() => window.refreshCalls === 2);
+				await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+			}
 			await expect(page.locator("section[aria-label='Rules']").getByText("Draft B", { exact: false })).toHaveCount(1);
 			await expect(action).toHaveValue("");
 			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(refreshResult === "success" ? 2 : 1);
