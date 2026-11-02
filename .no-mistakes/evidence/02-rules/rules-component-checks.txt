@@ -1,0 +1,31 @@
+✔ limit: a confirmed idle flight yields to later loader reads (180.745541ms)
+✔ limit: the last value queued during refresh goes out after settle (225.261875ms)
+✔ limit: the last value queued during refresh goes out after timeout (161.352125ms)
+✔ limit: a failed write after refresh timeout preserves confirmed storage (147.273208ms)
+✔ rule: a confirmed idle flight yields to later loader reads (146.013083ms)
+✔ rule: the last value queued during refresh goes out after settle (162.809166ms)
+✔ rule: the last value queued during refresh goes out after timeout (161.8755ms)
+✔ rule: a failed write after refresh timeout preserves confirmed storage (144.444458ms)
+✔ limit: a newer read reconciles without first observing the confirmed value (147.708ms)
+✔ add rule: refresh timeout after POST success preserves the cleared draft or newer typing () (504.071083ms)
+✔ add rule: refresh timeout after POST success preserves the cleared draft or newer typing (A newer action) (461.675667ms)
+✔ add rule: refresh reject after POST success preserves the cleared draft or newer typing () (595.418583ms)
+✔ add rule: refresh reject after POST success preserves the cleared draft or newer typing (A newer action) (430.941125ms)
+✔ add rule: POST rejection restores only an unchanged draft () (301.032625ms)
+✔ add rule: POST rejection restores only an unchanged draft (A newer action) (358.708416ms)
+✔ limit: a rejected POST preserves the last queued write (150.021583ms)
+✔ rule: a rejected POST preserves the last queued write (152.020625ms)
+✔ add rule: a successful refresh keeps the action cleared (262.208125ms)
+✔ add rule: an old failure after navigation preserves the current provider draft (668.562083ms)
+✔ add rule: an older failure cannot clear a newer submission (412.808459ms)
+✔ add rule: an older success cannot clear a newer submission (495.606917ms)
+✔ add rule: editing and clearing an action prevents old draft restoration (353.861958ms)
+✔ add rule: identical submissions keep the newer pending row until its own refresh settles (500.412708ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7377.365917
