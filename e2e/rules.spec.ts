@@ -79,7 +79,12 @@ test("the form adds a rule with the chosen trigger, agent, action and approval",
 	await page.getByLabel("Agent").selectOption("support");
 	await page.getByLabel("Then").fill(" email the customer ");
 	await page.getByLabel("Approval").selectOption("Auto");
+	const addedResponse = page.waitForResponse((response) => {
+		const request = response.request();
+		return request.method() === "POST" && (request.postData() ?? "").includes("email the customer");
+	});
 	await page.getByRole("button", { name: "Add rule" }).click();
+	expect((await addedResponse).ok()).toBe(true);
 	const added = page.locator("[data-loop='rules'] > div").nth(5);
 	await expect(added).toContainText("printify ships an item");
 	await expect(added).toContainText("email the customer");
@@ -116,7 +121,12 @@ test("after a new rule only the action field clears", async ({ page, workspaceUs
 	await page.getByLabel("Agent").selectOption("marketing");
 	await page.getByLabel("Then").fill("pause that ad set");
 	await page.getByLabel("Approval").selectOption("Ask first");
+	const addedResponse = page.waitForResponse((response) => {
+		const request = response.request();
+		return request.method() === "POST" && (request.postData() ?? "").includes("pause that ad set");
+	});
 	await page.getByRole("button", { name: "Add rule" }).click();
+	expect((await addedResponse).ok()).toBe(true);
 	await expect(page.locator("[data-loop='rules'] > div")).toHaveCount(6);
 	await expect(page.getByLabel("Then")).toHaveValue("");
 	await expect(page.getByLabel("When")).toHaveValue("A customer leaves a bad review");
@@ -239,7 +249,12 @@ test("a later change on this screen does not change an existing Mandate", async 
 	await first.click();
 	await expect(first).toHaveAttribute("aria-pressed", "false");
 	await page.getByLabel("Then").fill("draft a reply");
+	const addedResponse = page.waitForResponse((response) => {
+		const request = response.request();
+		return request.method() === "POST" && (request.postData() ?? "").includes("draft a reply");
+	});
 	await page.getByRole("button", { name: "Add rule" }).click();
+	expect((await addedResponse).ok()).toBe(true);
 	await expect(page.locator("[data-loop='rules'] > div")).toHaveCount(6);
 	await setSlider(page, "#lim-refund", "45");
 	await expectStored(accountId, "policy.refund_auto_limit", 45);
