@@ -1,0 +1,21 @@
+[
+  {
+    "requested": "/agents/support",
+    "width": 1440,
+    "url": "http://localhost:3107/signin",
+    "status": 200,
+    "heading": "Sign in to tensquads"
+  },
+  {
+    "requested": "/agents/support",
+    "width": 390,
+    "url": "http://localhost:3107/signin",
+    "status": 200,
+    "heading": "Sign in to tensquads"
+  },
+  {
+    "action": "Submit disposable local credentials with no Clerk configuration",
+    "url": "http://localhost:3107/signin",
+    "dashboardVisible": false
+  }
+]

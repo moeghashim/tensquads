@@ -1,0 +1,340 @@
+{
+  "config": {
+    "argv": [
+      "/opt/homebrew/Cellar/node@24/24.21.0/bin/node",
+      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/node_modules/.bin/playwright",
+      "test",
+      "--config=playwright.local-phase.config.ts",
+      "e2e/agent-detail.spec.ts",
+      "--grep",
+      "pending agent writes survive|timed out skill write|dashboard shows every section",
+      "--workers=1"
+    ],
+    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/playwright.local-phase.config.ts",
+    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6E2PCFDQA75F2509XT56WRR/playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6E2PCFDQA75F2509XT56WRR/playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e",
+        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://localhost:3107",
+          "deviceScaleFactor": 1,
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "launchOptions": {
+            "args": [
+              "--font-render-hinting=none",
+              "--disable-font-subpixel-positioning",
+              "--force-color-profile=srgb"
+            ]
+          },
+          "screenshot": "only-on-failure",
+          "trace": "retain-on-failure"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6E2PCFDQA75F2509XT56WRR/targeted-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": {
+      "command": "npm run dev -w @tensquads/web -- --port 3107",
+      "url": "http://localhost:3107",
+      "reuseExistingServer": false,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "agent-detail.spec.ts",
+      "file": "agent-detail.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "the dashboard shows every section for one agent",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 0,
+                  "error": {
+                    "message": "Error: publishable, secret, testDatabase is missing.",
+                    "stack": "Error: publishable, secret, testDatabase is missing.\n    at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts:334:8)\n    at Object.base.extend.workspaceUser.scope (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/workspace.ts:41:20)",
+                    "location": {
+                      "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts",
+                      "column": 8,
+                      "line": 334
+                    },
+                    "snippet": "\u001b[90m   at \u001b[39msupport.ts:334\n\n  332 | \t\treturn secrets;\n  333 | \t}\n> 334 | \tthrow new Error(`${missing.join(\", \")} is missing.`);\n      | \t      ^\n  335 | }\n  336 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts",
+                        "column": 8,
+                        "line": 334
+                      },
+                      "message": "Error: publishable, secret, testDatabase is missing.\n\n   at support.ts:334\n\n  332 | \t\treturn secrets;\n  333 | \t}\n> 334 | \tthrow new Error(`${missing.join(\", \")} is missing.`);\n      | \t      ^\n  335 | }\n  336 |\n    at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts:334:8)\n    at Object.base.extend.workspaceUser.scope (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/workspace.ts:41:20)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T12:37:32.520Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6E2PCFDQA75F2509XT56WRR/playwright/agent-detail-the-dashboard-shows-every-section-for-one-agent/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6E2PCFDQA75F2509XT56WRR/playwright/agent-detail-the-dashboard-shows-every-section-for-one-agent/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts",
+                    "column": 8,
+                    "line": 334
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "9d4610d717bf083f81d0-5dc6d2a66288771db99f",
+          "file": "agent-detail.spec.ts",
+          "line": 45,
+          "column": 1
+        },
+        {
+          "title": "a timed out skill write restores the server value and keeps the queue moving",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 0,
+                  "error": {
+                    "message": "Error: publishable, secret, testDatabase is missing.",
+                    "stack": "Error: publishable, secret, testDatabase is missing.\n    at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts:334:8)\n    at Object.base.extend.workspaceUser.scope (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/workspace.ts:41:20)",
+                    "location": {
+                      "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts",
+                      "column": 8,
+                      "line": 334
+                    },
+                    "snippet": "\u001b[90m   at \u001b[39msupport.ts:334\n\n  332 | \t\treturn secrets;\n  333 | \t}\n> 334 | \tthrow new Error(`${missing.join(\", \")} is missing.`);\n      | \t      ^\n  335 | }\n  336 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts",
+                        "column": 8,
+                        "line": 334
+                      },
+                      "message": "Error: publishable, secret, testDatabase is missing.\n\n   at support.ts:334\n\n  332 | \t\treturn secrets;\n  333 | \t}\n> 334 | \tthrow new Error(`${missing.join(\", \")} is missing.`);\n      | \t      ^\n  335 | }\n  336 |\n    at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts:334:8)\n    at Object.base.extend.workspaceUser.scope (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/workspace.ts:41:20)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T12:37:32.947Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6E2PCFDQA75F2509XT56WRR/playwright/agent-detail-a-timed-out-s-7b4f6--and-keeps-the-queue-moving/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6E2PCFDQA75F2509XT56WRR/playwright/agent-detail-a-timed-out-s-7b4f6--and-keeps-the-queue-moving/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts",
+                    "column": 8,
+                    "line": 334
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "9d4610d717bf083f81d0-87c53545260037b08394",
+          "file": "agent-detail.spec.ts",
+          "line": 224,
+          "column": 1
+        },
+        {
+          "title": "pending agent writes survive leaving and returning to the dashboard",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 0,
+                  "error": {
+                    "message": "Error: publishable, secret, testDatabase is missing.",
+                    "stack": "Error: publishable, secret, testDatabase is missing.\n    at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts:334:8)\n    at Object.base.extend.workspaceUser.scope (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/workspace.ts:41:20)",
+                    "location": {
+                      "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts",
+                      "column": 8,
+                      "line": 334
+                    },
+                    "snippet": "\u001b[90m   at \u001b[39msupport.ts:334\n\n  332 | \t\treturn secrets;\n  333 | \t}\n> 334 | \tthrow new Error(`${missing.join(\", \")} is missing.`);\n      | \t      ^\n  335 | }\n  336 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts",
+                        "column": 8,
+                        "line": 334
+                      },
+                      "message": "Error: publishable, secret, testDatabase is missing.\n\n   at support.ts:334\n\n  332 | \t\treturn secrets;\n  333 | \t}\n> 334 | \tthrow new Error(`${missing.join(\", \")} is missing.`);\n      | \t      ^\n  335 | }\n  336 |\n    at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts:334:8)\n    at Object.base.extend.workspaceUser.scope (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/workspace.ts:41:20)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T12:37:33.364Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6E2PCFDQA75F2509XT56WRR/playwright/agent-detail-pending-agent-85744--returning-to-the-dashboard/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6E2PCFDQA75F2509XT56WRR/playwright/agent-detail-pending-agent-85744--returning-to-the-dashboard/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E2PCFDQA75F2509XT56WRR/e2e/support.ts",
+                    "column": 8,
+                    "line": 334
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "9d4610d717bf083f81d0-cad4222bc065b8a1e82a",
+          "file": "agent-detail.spec.ts",
+          "line": 252,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-02T12:37:28.019Z",
+    "duration": 5386.352,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 3,
+    "flaky": 0
+  }
+}
