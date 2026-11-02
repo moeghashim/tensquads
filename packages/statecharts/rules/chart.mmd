@@ -1,0 +1,55 @@
+---
+title: "Rules and limits"
+---
+stateDiagram-v2
+  direction LR
+  state "At the same time" as all {
+    state "Refund rule" as r0 {
+      s0: On
+      s1: Off
+      [*] --> s0
+      s0 --> s1: you switch the refund rule
+      s1 --> s0: you switch the refund rule
+    }
+    --
+    state "Monday rule" as r1 {
+      s2: Off
+      s3: On
+      [*] --> s2
+      s2 --> s3: you switch the Monday rule
+      s3 --> s2: you switch the Monday rule
+    }
+    --
+    state "Refund limit" as r2 {
+      s4: #36;50
+      s5: #36;0
+      [*] --> s4
+      s4 --> s5: you move the refund limit
+      s5 --> s4: you move the refund limit
+    }
+    --
+    state "Ad cap" as r3 {
+      s6: #36;200
+      s7: #36;0
+      [*] --> s6
+      s6 --> s7: you move the ad cap
+      s7 --> s6: you move the ad cap
+    }
+    --
+    state "Reorder limit" as r4 {
+      s8: #36;500
+      s9: #36;0
+      [*] --> s8
+      s8 --> s9: you move the reorder limit
+      s9 --> s8: you move the reorder limit
+    }
+    --
+    state "New rule" as r5 {
+      s10: Empty action
+      s11: Action typed
+      s12: Added, on
+      [*] --> s10
+      s10 --> s11: you type an action
+      s11 --> s12: you add the rule
+    }
+  }

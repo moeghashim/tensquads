@@ -73,6 +73,15 @@ Ask Moe, in a numbered list. Items 13 and 14 in `tasks/02-frame.md` apply to thi
 
 Also stop and ask for any state the design does not show that this file does not cover.
 
+## Orchestrator decisions
+
+Moe delegated these answers. Each item uses the recommended answer.
+
+1. A limit change writes state directly. It writes no event in version 1. The Cloudflare bus in phase 4 applies decision 16.
+2. The slider updates at once. One write runs at a time for each key. The last value always goes out.
+3. A new account shows the rules card with no rows. The form defaults to the first agent.
+4. The default ad cap is 200, the design seed. `packages/adapters/src/neon/create-workspace.ts` and its test on main already store and expect 200. This task does not edit those files.
+
 ## Do not
 
 - Do not make a rule start a task. The rules in the design change no other state.

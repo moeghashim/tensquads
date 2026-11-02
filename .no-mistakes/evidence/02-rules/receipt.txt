@@ -1,0 +1,36 @@
+Files read, SHA-256:
+
+2e85b8f9298c0e268f6db94242f54dbb5b18a0e923f11ca6140076e3dddc512c  AGENTS.md
+afea3c45c89da2bd0514baf7e2dba2a2f27b17443690fb36eef554efce6a6eac  docs/PLAN.md
+26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
+b7bec39dcac7b93b0e70ef946e8d51b8e2b76ead4508b76e35e91f441e4b259c  tasks/02-rules.md
+7b72581686e9de32b4f63c9354998d4e4b6e02fb062eb3fe4f6c02aba8cdd576  tasks/02-frame.md
+90d43b0458f4d9ec5f15d6b7ca09cb69f4ad9c4b79f268e93e0b30b25d8d6070  design/Rules.dc.html
+376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89  design/Main.dc.html
+61d2cf3bce8016595896872ff3e8aabf173998083b0d0537b935769d08460bbc  design/inventory/Rules.json
+deccce08d6932c707935dd44be6fd089e3a27d9c514e067d576129632117d5ec  design/inventory/Main.json
+6373642d8e8d0a0507dac8927eb5d56452b7354f561c0e3a1651ea1b75ccac09  design/MANIFEST.json
+908b77171516041419df52e593618a985f42028d0482f765b6f96aeac5da78d5  progress.md
+
+node scripts/design-check.mjs
+OK   Accounts.dc.html
+OK   AgentDetail.dc.html
+OK   AgentImages.dc.html
+OK   Agents.dc.html
+OK   Chat.dc.html
+OK   Home.dc.html
+OK   Main.dc.html
+OK   Onboarding.dc.html
+OK   Rules.dc.html
+OK   SignIn.dc.html
+OK   Traffic.dc.html
+OK   canvas.json
+OK   ds/agent-ui/tokens.json
+canvas https://claude.ai/artifact/B7seDz5psECQTerDG6rfy4 version 1793448823-a766, pulled 2026-10-31
+design/ matches the canvas.
+Exit code 0.
+
+Decisions 1 to 32 read. No question.
+
+No unmapped line. The form label Agent, and the brief route /app/rules, are reported differences. They are not questions.
+The hash above is tasks/02-rules.md before the Orchestrator decisions section. That section records the recommended answers.
