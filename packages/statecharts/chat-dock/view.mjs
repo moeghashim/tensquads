@@ -25,7 +25,8 @@ const labels = {
 	SendNoSkill: "you send with no skill on",
 	Finish: "the agent replies",
 	Reload: "you reload and leave the Task",
-    NextMessage: "you can send again",
+	ClientTimeout: "the finish request times out",
+	NextMessage: "you can send again",
 };
 
 export const step = (action) => {
