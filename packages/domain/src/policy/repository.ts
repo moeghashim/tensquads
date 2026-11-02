@@ -25,7 +25,7 @@ export interface PolicyRepository {
 	decide(scope: AccountScope, id: string, ok: boolean): Promise<void>;
 	decideMission(scope: AccountScope, id: string, ok: boolean): Promise<void>;
 	setRuleOn(scope: AccountScope, id: string, on: boolean): Promise<void>;
-	addRule(scope: AccountScope, draft: RuleDraft): Promise<void>;
+	addRule(scope: AccountScope, draft: RuleDraft): Promise<string | null>;
 	setLimit(scope: AccountScope, key: string, value: number): Promise<void>;
 	createMandate(scope: AccountScope, draft: MandateDraft): Promise<Mandate>;
 	mandate(scope: AccountScope, approvalId: string): Promise<Mandate | null>;

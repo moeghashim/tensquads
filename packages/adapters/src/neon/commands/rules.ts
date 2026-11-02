@@ -8,9 +8,12 @@ import {
 	addRule as planRule,
 	setRuleOn as planRuleOn,
 } from "../../../../kernel/src/plugins/policy-rules.ts";
+import { PENDING_TASK_WINDOW_MS } from "../../pending-window.ts";
 import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { rules, stateEntries } from "../schema.ts";
+
+const writeDeadline = { deadlineMs: PENDING_TASK_WINDOW_MS };
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 
@@ -25,9 +28,13 @@ function accountIdOf(scope: AccountScope): string {
 export async function setRuleOn(db: AppDatabase, scope: AccountScope, id: string, on: boolean): Promise<void> {
 	const accountId = accountIdOf(scope);
 	const planned = planRuleOn(on);
-	await workspaceTransaction(db, async (tx) => {
-		await updateRuleOn(tx, accountId, id, planned.on);
-	});
+	await workspaceTransaction(
+		db,
+		async (tx) => {
+			await updateRuleOn(tx, accountId, id, planned.on);
+		},
+		writeDeadline,
+	);
 }
 
 async function updateRuleOn(tx: Tx, accountId: string, id: string, on: boolean): Promise<void> {
@@ -44,30 +51,29 @@ async function updateRuleOn(tx: Tx, accountId: string, id: string, on: boolean):
 		.where(and(eq(rules.accountId, accountId), eq(rules.id, id)));
 }
 
-export async function addRule(db: AppDatabase, scope: AccountScope, draft: RuleDraft): Promise<void> {
+export async function addRule(db: AppDatabase, scope: AccountScope, draft: RuleDraft): Promise<string | null> {
 	const planned = planRule(draft);
 	if (!planned) {
-		return;
+		return null;
 	}
 	const accountId = accountIdOf(scope);
-	await workspaceTransaction(db, async (tx) => {
-		await insertRule(tx, accountId, planned);
-	});
+	return workspaceTransaction(db, async (tx) => insertRule(tx, accountId, planned), writeDeadline);
 }
 
 async function insertRule(
 	tx: Tx,
 	accountId: string,
 	planned: { readonly when: string; readonly agent: string; readonly action: string; readonly approval: string },
-): Promise<void> {
+): Promise<string> {
 	const existing = await tx
 		.select({ id: rules.id, sortOrder: rules.sortOrder })
 		.from(rules)
 		.where(eq(rules.accountId, accountId));
+	const id = nextRuleId(existing.map((row) => row.id));
 	const sortOrder = nextSort(existing.map((row) => row.sortOrder));
 	await tx.insert(rules).values({
 		accountId,
-		id: nextRuleId(existing.map((row) => row.id)),
+		id,
 		ruleWhen: planned.when,
 		agent: planned.agent,
 		action: planned.action,
@@ -75,6 +81,7 @@ async function insertRule(
 		isOn: true,
 		sortOrder,
 	});
+	return id;
 }
 
 export async function setLimit(db: AppDatabase, scope: AccountScope, key: string, value: number): Promise<void> {
@@ -83,9 +90,13 @@ export async function setLimit(db: AppDatabase, scope: AccountScope, key: string
 		throw new Error("The limit is not valid.");
 	}
 	const accountId = accountIdOf(scope);
-	await workspaceTransaction(db, async (tx) => {
-		await writeLimit(tx, accountId, planned.key, planned.value);
-	});
+	await workspaceTransaction(
+		db,
+		async (tx) => {
+			await writeLimit(tx, accountId, planned.key, planned.value);
+		},
+		writeDeadline,
+	);
 }
 
 async function writeLimit(tx: Tx, accountId: string, key: string, value: number): Promise<void> {

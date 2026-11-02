@@ -47,32 +47,42 @@ export const loadRulesPage = createServerFn({ method: "GET" }).handler(async ():
 export const setRuleEnabled = createServerFn({ method: "POST" })
 	.validator(validateRuleOn)
 	.handler(async ({ data }) => {
-		const { requireWorkspace } = await import("./workspace-session.ts");
-		await requireWorkspace(async (scope, db) => {
-			const { createRepositories } = await import("@tensquads/adapters");
-			await createRepositories(db).policy.setRuleOn(scope, data.id, data.on);
-		});
+		await writeThroughKernel((kernel, scope) => kernel.setRuleOn(scope, data.id, data.on));
 	});
 
 export const addWorkspaceRule = createServerFn({ method: "POST" })
 	.validator(validateDraft)
 	.handler(async ({ data }) => {
-		const { requireWorkspace } = await import("./workspace-session.ts");
-		await requireWorkspace(async (scope, db) => {
-			const { createRepositories } = await import("@tensquads/adapters");
-			await createRepositories(db).policy.addRule(scope, data);
-		});
+		const id = await writeThroughKernel((kernel, scope) => kernel.addRule(scope, data));
+		return { id };
 	});
 
 export const setRuleLimit = createServerFn({ method: "POST" })
 	.validator(validateLimit)
 	.handler(async ({ data }) => {
-		const { requireWorkspace } = await import("./workspace-session.ts");
-		await requireWorkspace(async (scope, db) => {
-			const { createRepositories } = await import("@tensquads/adapters");
-			await createRepositories(db).policy.setLimit(scope, data.key, data.value);
-		});
+		await writeThroughKernel((kernel, scope) => kernel.setLimit(scope, data.key, data.value));
 	});
+
+async function writeThroughKernel<T>(
+	work: (
+		kernel: {
+			setRuleOn(scope: { accountId: string; mode: "account" }, id: string, on: boolean): Promise<void>;
+			addRule(
+				scope: { accountId: string; mode: "account" },
+				draft: { when: string; agent: string; action: string; approval: string },
+			): Promise<string | null>;
+			setLimit(scope: { accountId: string; mode: "account" }, key: string, value: number): Promise<void>;
+		},
+		scope: { accountId: string; mode: "account" },
+	) => Promise<T>,
+): Promise<T> {
+	const { requireWorkspace } = await import("./workspace-session.ts");
+	return requireWorkspace(async (scope, db) => {
+		const { createRepositories } = await import("@tensquads/adapters");
+		const { Kernel } = await import("@tensquads/kernel");
+		return work(new Kernel(createRepositories(db)), scope);
+	});
+}
 
 function numberLimit(value: unknown): number {
 	if (typeof value !== "number" || !Number.isFinite(value)) {

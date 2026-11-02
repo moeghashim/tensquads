@@ -218,6 +218,10 @@ for (const refreshResult of ["timeout", "reject"]) {
 		test(`add rule: refresh ${refreshResult} after POST success preserves the cleared draft or newer typing (${newer})`, async () => {
 			await withPage(async (page) => {
 				await page.evaluate(() => {
+					window.send = async (data) => {
+						window.calls.push(data);
+						return { id: "r100" };
+					};
 					window.refresh = () =>
 						new Promise((_resolve, reject) => {
 							window.rejectRefresh = reject;
@@ -237,7 +241,7 @@ for (const refreshResult of ["timeout", "reject"]) {
 						window.rejectRefresh(new Error("Read failed"));
 						await window.flush();
 					});
-				await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(0);
+				await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(1);
 				await expect(action).toHaveValue(newer);
 				if (!newer) await add.click();
 				assert.equal(await page.evaluate(() => window.calls.length), 1);
@@ -372,13 +376,15 @@ for (const outcome of ["failure", "success"]) {
 			await typeSecondDraft(page);
 			await add.click();
 			await page.waitForFunction(() => window.adds.length === 2);
+			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(2);
+			await expect(page.getByText("Draft A", { exact: false })).toHaveCount(1);
 			await expect(action).toHaveValue("");
 			await page.evaluate(async (outcome) => {
 				const first = window.adds[0];
 				if (outcome === "failure") first.reject(new Error("HTTP 500"));
 				else {
 					window.loadRules([{ ...first.data, id: "r100", on: true, when: "a new order arrives" }]);
-					first.resolve();
+					first.resolve({ id: "r100" });
 				}
 				await window.flush();
 			}, outcome);
@@ -409,6 +415,8 @@ test("add rule: editing and clearing an action prevents old draft restoration", 
 		await page.waitForFunction(() => window.adds.length === 1);
 		await action.fill("Draft B");
 		await action.fill("");
+		await expect(action).toHaveValue("");
+		await page.evaluate(() => window.flush());
 		await page.evaluate(async () => {
 			window.adds[0].reject(new Error("HTTP 500"));
 			await window.flush();
@@ -418,7 +426,7 @@ test("add rule: editing and clearing an action prevents old draft restoration", 
 	});
 });
 
-test("add rule: identical submissions keep the newer pending row until its own refresh settles", async () => {
+test("add rule: identical submissions keep each row until its own read confirms it", async () => {
 	await withPage(async (page) => {
 		await holdAdds(page);
 		const action = page.getByLabel("Then", { exact: true });
@@ -430,35 +438,190 @@ test("add rule: identical submissions keep the newer pending row until its own r
 		await action.fill("Same action");
 		await add.click();
 		await page.waitForFunction(() => window.adds.length === 2);
+		await expect(switches).toHaveCount(2);
 		assert.deepEqual(await page.evaluate(() => window.adds.map((submission) => submission.data)), [
 			{ when: "A new order arrives", agent: "orders", action: "Same action", approval: "Ask first" },
 			{ when: "A new order arrives", agent: "orders", action: "Same action", approval: "Ask first" },
 		]);
 		await page.evaluate(async () => {
-			window.savedA = { ...window.adds[0].data, id: "r100", on: true, when: "a new order arrives" };
-			window.loadRules([window.savedA]);
-			window.adds[0].resolve();
+			window.refresh = () => new Promise(() => {});
+			window.adds[0].resolve({ id: "r100" });
 			await window.flush();
 		});
 		await expect(switches).toHaveCount(2);
 		await expect(action).toHaveValue("");
 		assert.equal(await page.evaluate(() => window.adds[1].signal.aborted), false);
 		await page.evaluate(async () => {
-			window.refresh = () =>
-				new Promise((resolve) => {
-					window.releaseOwnRefresh = resolve;
-				});
-			window.loadRules([window.savedA, { ...window.savedA, id: "r101" }]);
-			window.adds[1].resolve();
+			window.savedA = { ...window.adds[0].data, id: "r100", on: true, when: "a new order arrives" };
+			window.loadRules([window.savedA]);
 			await window.flush();
 		});
-		await page.waitForFunction(() => window.releaseOwnRefresh);
-		await expect(switches).toHaveCount(3);
+		await expect(switches).toHaveCount(2);
 		await page.evaluate(async () => {
-			window.releaseOwnRefresh();
+			window.adds[1].resolve({ id: "r101" });
+			await window.flush();
+		});
+		await expect(switches).toHaveCount(2);
+		await page.evaluate(async () => {
+			window.loadRules([window.savedA, { ...window.savedA, id: "r101" }]);
 			await window.flush();
 		});
 		await expect(switches).toHaveCount(2);
 		await expect(action).toHaveValue("");
+	});
+});
+
+test("add rule: a click on a pending row shows at once and waits behind the add", async () => {
+	await withPage(async (page) => {
+		await holdAdds(page);
+		await page.getByLabel("Then", { exact: true }).fill("Handle the order");
+		await page.getByRole("button", { name: "Add rule", exact: true }).click();
+		await page.waitForFunction(() => window.adds.length === 1);
+		const toggle = page.getByRole("button", { name: "Rule enabled" });
+		await expect(toggle).toHaveAttribute("aria-pressed", "true");
+		await toggle.click();
+		await expect(toggle).toHaveAttribute("aria-pressed", "false");
+		await page.evaluate(async () => {
+			window.calls = [];
+			window.send = async (data) => {
+				window.calls.push(data);
+				return { id: "r100" };
+			};
+			window.adds[0].resolve({ id: "r100" });
+			await window.flush();
+		});
+		await expect(toggle).toHaveAttribute("aria-pressed", "false");
+		assert.deepEqual(await page.evaluate(() => window.calls), [{ id: "r100", on: false }]);
+	});
+});
+
+test("add rule: a failed add drops the pending row and its queued clicks", async () => {
+	await withPage(async (page) => {
+		await holdAdds(page);
+		await page.evaluate(async () => {
+			window.loadRules([
+				{
+					id: "r1",
+					when: "a new order arrives",
+					agent: "orders",
+					action: "Seed",
+					approval: "Ask first",
+					on: true,
+				},
+			]);
+			await window.flush();
+		});
+		await page.getByLabel("Then", { exact: true }).fill("Handle the order");
+		await page.getByRole("button", { name: "Add rule", exact: true }).click();
+		await page.waitForFunction(() => window.adds.length === 1);
+		const toggles = page.getByRole("button", { name: "Rule enabled" });
+		await expect(toggles).toHaveCount(2);
+		await toggles.nth(1).click();
+		await expect(toggles.nth(1)).toHaveAttribute("aria-pressed", "false");
+		await page.evaluate(async () => {
+			window.calls = [];
+			window.adds[0].reject(new Error("HTTP 500"));
+			await window.flush();
+		});
+		await expect(toggles).toHaveCount(1);
+		await expect(toggles).toHaveAttribute("aria-pressed", "true");
+		assert.deepEqual(await page.evaluate(() => window.calls), []);
+		await expect(page.getByLabel("Then", { exact: true })).toHaveValue("Handle the order");
+	});
+});
+
+test("add rule: two held adds both stay on the list", async () => {
+	await withPage(async (page) => {
+		await holdAdds(page);
+		await page.evaluate(async () => {
+			window.loadRules(
+				[1, 2, 3, 4, 5].map((index) => ({
+					id: `r${index}`,
+					when: "a new order arrives",
+					agent: "orders",
+					action: `Seed ${index}`,
+					approval: "Ask first",
+					on: true,
+				})),
+			);
+			await window.flush();
+		});
+		const action = page.getByLabel("Then", { exact: true });
+		const add = page.getByRole("button", { name: "Add rule", exact: true });
+		await action.fill("Draft A");
+		await add.click();
+		await page.waitForFunction(() => window.adds.length === 1);
+		await action.fill("Draft B");
+		await add.click();
+		await page.waitForFunction(() => window.adds.length === 2);
+		await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(7);
+		await expect(page.getByText("Draft A", { exact: false })).toHaveCount(1);
+		await expect(page.getByText("Draft B", { exact: false })).toHaveCount(1);
+	});
+});
+
+test("add rule: each failure restores only its own draft when the form is empty", async () => {
+	await withPage(async (page) => {
+		await holdAdds(page);
+		const action = page.getByLabel("Then", { exact: true });
+		const add = page.getByRole("button", { name: "Add rule", exact: true });
+		await action.fill("Draft A");
+		await add.click();
+		await page.waitForFunction(() => window.adds.length === 1);
+		await action.fill("Draft B");
+		await add.click();
+		await page.waitForFunction(() => window.adds.length === 2);
+		await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(2);
+		await page.evaluate(async () => {
+			window.adds[1].reject(new Error("HTTP 500"));
+			await window.flush();
+		});
+		await expect(action).toHaveValue("Draft B");
+		await expect(page.getByText("Draft A", { exact: false })).toHaveCount(1);
+		await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(1);
+		await action.fill("Keep this");
+		await page.evaluate(async () => {
+			window.adds[0].reject(new Error("HTTP 500"));
+			await window.flush();
+		});
+		await expect(action).toHaveValue("Keep this");
+		await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(0);
+	});
+});
+
+test("add rule: a saved row stays while the refresh hangs", async () => {
+	await withPage(async (page) => {
+		await page.evaluate(() => {
+			window.send = async (data) => {
+				window.calls.push(data);
+				return { id: "r100" };
+			};
+			window.refresh = () => new Promise(() => {});
+			window.mount();
+		});
+		await page.getByLabel("Then", { exact: true }).fill("Handle the order");
+		await page.getByRole("button", { name: "Add rule", exact: true }).click();
+		const toggles = page.getByRole("button", { name: "Rule enabled" });
+		await expect(toggles).toHaveCount(1);
+		await page.waitForFunction(() => window.calls.length === 1);
+		await page.evaluate(() => window.flush());
+		await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+		await page.evaluate(() => window.flush());
+		await expect(toggles).toHaveCount(1);
+		await page.evaluate(async () => {
+			window.loadRules([
+				{
+					id: "r100",
+					when: "a new order arrives",
+					agent: "orders",
+					action: "Handle the order",
+					approval: "Ask first",
+					on: true,
+				},
+			]);
+			await window.flush();
+		});
+		await expect(toggles).toHaveCount(1);
+		await expect(page.getByText("Handle the order", { exact: false })).toHaveCount(1);
 	});
 });

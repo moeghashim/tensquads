@@ -3,8 +3,9 @@ import { Context } from "cordis";
 import { type BusCommands, bus } from "./plugins/bus.ts";
 import type { ConversationCommands } from "./plugins/conversation.ts";
 import { conversation } from "./plugins/conversation.ts";
-
 import { plugins } from "./plugins/index.ts";
+import type { PolicyCommands } from "./plugins/policy.ts";
+import { policy } from "./plugins/policy.ts";
 import {
 	DECIDER_MISSING,
 	type Decider,
@@ -43,6 +44,15 @@ export class Kernel {
 				fibers.push(
 					this.context.plugin(bus, { nextEvent: (scope, deadlineAt) => this.advance(scope, deadlineAt) }),
 				);
+			} else if (plugin === policy) {
+				fibers.push(
+					this.context.plugin(policy, {
+						repositories: () => {
+							if (!this.repositories) throw new Error("Repositories are not configured.");
+							return { policy: this.repositories.policy };
+						},
+					}),
+				);
 			} else {
 				fibers.push(this.context.plugin(plugin));
 			}
@@ -77,6 +87,21 @@ export class Kernel {
 			nextEvent(scope: AccountScope, deadlineAt?: number): Promise<void>;
 		};
 		return port.nextEvent(scope, deadlineAt);
+	}
+
+	async setRuleOn(scope: AccountScope, id: string, on: boolean): Promise<void> {
+		await this.ready;
+		return (this.context.get("workspacePolicy") as PolicyCommands).setRuleOn(scope, id, on);
+	}
+
+	async addRule(scope: AccountScope, draft: Parameters<PolicyCommands["addRule"]>[1]): Promise<string | null> {
+		await this.ready;
+		return (this.context.get("workspacePolicy") as PolicyCommands).addRule(scope, draft);
+	}
+
+	async setLimit(scope: AccountScope, key: string, value: number): Promise<void> {
+		await this.ready;
+		return (this.context.get("workspacePolicy") as PolicyCommands).setLimit(scope, key, value);
 	}
 
 	pluginNames(): readonly string[] {

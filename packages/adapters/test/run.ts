@@ -1,7 +1,12 @@
 import { spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 
-const serial = ["test/late-lock.test.ts", "test/mandate.test.ts", "test/reset-lock.test.ts"];
+const serial = [
+	"test/late-lock.test.ts",
+	"test/mandate.test.ts",
+	"test/reset-lock.test.ts",
+	"test/rules-deadline.test.ts",
+];
 const remaining = readdirSync("test")
 	.filter((name) => name.endsWith(".test.ts"))
 	.map((name) => `test/${name}`)

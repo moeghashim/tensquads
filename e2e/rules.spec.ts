@@ -334,7 +334,11 @@ test("the rules page matches the macOS screenshot baselines", async ({ page, wor
 	for (const viewport of viewports) {
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		await waitForScreenFonts(page);
-		await expect(page).toHaveScreenshot(`rules-${viewport.name}.png`, { fullPage: true });
+		await maskSelectArrows(page);
+		await expect(page).toHaveScreenshot(`rules-${viewport.name}.png`, {
+			fullPage: true,
+			mask: [page.locator("[data-screenshot-mask='select-arrow']")],
+		});
 	}
 });
 
@@ -556,8 +560,13 @@ async function designRules(page: Page, width: number, height: number) {
 	const body = await renderDesignMarkup(canvas, readInventory("Main"), { view: "rules", dockOpen: false });
 	const source = readFileSync(new URL("../design/Main.dc.html", import.meta.url), "utf8");
 	const cssText = source.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
+	const fontLink = source.match(/<link href="(https:\/\/fonts\.googleapis\.com\/css2\?[^"]+)" rel="stylesheet">/)?.[1];
+	if (!fontLink) {
+		throw new Error("The design font link is missing.");
+	}
+	expect(fontLink.includes("700")).toBe(false);
 	await canvas.setContent(
-		`<!doctype html><html lang="en"><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"><style>${cssText}x-dc{display:contents}</style></head><body>${body}</body></html>`,
+		`<!doctype html><html lang="en"><head><link rel="stylesheet" href="${fontLink}"><style>${cssText}x-dc{display:contents}</style></head><body>${body}</body></html>`,
 	);
 	await canvas.evaluate(() => {
 		for (const node of document.querySelectorAll("[data-loop], [data-if]")) {
@@ -586,6 +595,7 @@ async function measureRules(page: Page) {
 		const rules = document.querySelector("section[aria-label='Rules']");
 		const rows = rules ? [...rules.querySelectorAll("[data-loop='rules'] > div")] : [];
 		const fresh = document.querySelector("section[aria-label='New rule']");
+		const selects = fresh ? [...fresh.querySelectorAll("select")] : [];
 		const limits = document.querySelector("section[aria-label='Limits']");
 		const freshBox = fresh ? boxOf(fresh) : null;
 		const limitsBox = limits ? boxOf(limits) : null;
@@ -603,6 +613,7 @@ async function measureRules(page: Page) {
 			fresh: freshBox,
 			limits: limitsBox,
 			cardGap,
+			selects: selects.map((select) => boxOf(select)),
 		};
 	});
 }
@@ -627,6 +638,38 @@ function expectRulesBoxes(built: RulesBoxes, design: RulesBoxes, name: string) {
 	expectNear(built.limits?.width ?? 0, design.limits?.width ?? 0, `${name} limits width`);
 	expectNear(built.limits?.x ?? 0, design.limits?.x ?? 0, `${name} limits x`);
 	expectNear(built.cardGap ?? 0, design.cardGap ?? 0, `${name} card gap`);
+	expect(built.selects.length).toBe(design.selects.length);
+	expect(built.selects.length).toBe(3);
+	for (const [index, box] of built.selects.entries()) {
+		const drawn = design.selects[index];
+		expectNear(box?.x ?? 0, drawn?.x ?? 0, `${name} select ${index} x`);
+		expectNear(
+			(box?.y ?? 0) - (built.fresh?.y ?? 0),
+			(drawn?.y ?? 0) - (design.fresh?.y ?? 0),
+			`${name} select ${index} y`,
+		);
+		expectNear(box?.width ?? 0, drawn?.width ?? 0, `${name} select ${index} width`);
+		expectNear(box?.height ?? 0, drawn?.height ?? 0, `${name} select ${index} height`);
+	}
+}
+
+async function maskSelectArrows(page: Page) {
+	await page.evaluate(() => {
+		for (const node of document.querySelectorAll("[data-screenshot-mask='select-arrow']")) {
+			node.remove();
+		}
+		for (const select of document.querySelectorAll("section[aria-label='New rule'] select")) {
+			const box = select.getBoundingClientRect();
+			const mask = document.createElement("div");
+			mask.setAttribute("data-screenshot-mask", "select-arrow");
+			mask.style.position = "absolute";
+			mask.style.left = `${box.right + window.scrollX - 16}px`;
+			mask.style.top = `${box.top + window.scrollY}px`;
+			mask.style.width = "16px";
+			mask.style.height = `${box.height}px`;
+			document.body.append(mask);
+		}
+	});
 }
 
 function expectNear(actual: number, expected: number, label: string) {

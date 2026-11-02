@@ -61,6 +61,12 @@ export interface Repositories {
 	};
 	readonly policy: {
 		inbox(scope: AccountScope): Promise<unknown>;
+		setRuleOn(scope: AccountScope, id: string, on: boolean): Promise<void>;
+		addRule(
+			scope: AccountScope,
+			draft: { readonly when: string; readonly agent: string; readonly action: string; readonly approval: string },
+		): Promise<string | null>;
+		setLimit(scope: AccountScope, key: string, value: number): Promise<void>;
 	};
 	readonly catalog: {
 		listImages(scope: AccountScope): Promise<readonly unknown[]>;

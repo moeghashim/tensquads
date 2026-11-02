@@ -39,19 +39,25 @@ test("a blank action adds no rule and a new rule is on and last", async () => {
 		await replaceDemoAccount(db, scope.accountId, "clerk-rules-add");
 		const policy = createRepositories(db).policy;
 		const before = await policy.listRules(scope);
-		await policy.addRule(scope, {
-			when: "A new order arrives",
-			agent: "orders",
-			action: "   ",
-			approval: "Ask first",
-		});
+		assert.equal(
+			await policy.addRule(scope, {
+				when: "A new order arrives",
+				agent: "orders",
+				action: "   ",
+				approval: "Ask first",
+			}),
+			null,
+		);
 		assert.equal((await policy.listRules(scope)).length, before.length);
-		await policy.addRule(scope, {
-			when: "A new order arrives",
-			agent: "support",
-			action: " email them ",
-			approval: "Auto",
-		});
+		assert.equal(
+			await policy.addRule(scope, {
+				when: "A new order arrives",
+				agent: "support",
+				action: " email them ",
+				approval: "Auto",
+			}),
+			"r100",
+		);
 		const after = await policy.listRules(scope);
 		assert.equal(after.length, before.length + 1);
 		const added = after[after.length - 1];

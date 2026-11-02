@@ -38,12 +38,8 @@ const limitsCard =
 const heading = "margin: 0; font-size: 16px; font-weight: 600; color: #0d0d0d";
 const formGrid = "display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px";
 const fieldLabel = "display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 500; color: #5d5d5d";
-// The system select arrow sits 2px further left on the macOS runner than in the baseline: 18 solid pixels on each of the three arrows, 54 in all. This mark is that arrow. It stays in one place and stays visible.
-const selectChevron =
-	"url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAHCAYAAAAxrNxjAAAAfElEQVR42nXOwQlEIRAD0DQwZXgY0TrFm2BfHhTTTv5hUdj9bI7hkRkAQClFJIWfkFSt9dO31mRmyjlr733x3ls5Z5mZeu8CSbn7xSRF8qLTAQDWWkopycwUY1SMUWamlNLXFQDAnPOCg9Zar7/vcghB7v4fnYwxNOd8oQemymB5D1WdOwAAAABJRU5ErkJggg==')";
 const selectStyle =
-	"height: 32px; border: 0; border-radius: 8px; padding: 0 22px 0 12px; font: inherit; font-size: 13px; color: #0d0d0d; appearance: none; -webkit-appearance: none; background-color: rgba(13,13,13,.08); background-repeat: no-repeat; background-position: right 1px center; background-size: 10px 7px";
-const selectCss = { ...css(selectStyle), backgroundImage: selectChevron };
+	"height: 32px; border: 0; border-radius: 8px; background: rgba(13,13,13,.08); padding: 0 8px; font: inherit; font-size: 13px; color: #0d0d0d";
 const actionStyle =
 	"height: 32px; border: 0; border-radius: 8px; background: rgba(13,13,13,.08); padding: 0 10px; font: inherit; font-size: 13px; color: #0d0d0d";
 const addButton =
@@ -56,19 +52,41 @@ const limitNote = "margin: 0; font-size: 12px; color: #5d5d5d";
 const knob = "width: 16px; height: 16px; border-radius: 999px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2)";
 
 type SetRuleForm = Dispatch<SetStateAction<RuleForm>>;
+type SetPending = Dispatch<SetStateAction<readonly PendingRule[]>>;
 
-const submissions = new WeakMap<SetRuleForm, { readonly id: symbol; actionEdited: boolean }>();
+interface Submission {
+	readonly id: symbol;
+	readonly setForm: SetRuleForm;
+	readonly typed: string;
+	readonly rowId: string;
+	actionEdited: boolean;
+}
 
 interface PendingRule {
 	readonly id: symbol;
+	readonly rowId: string;
+	readonly savedId: string | null;
 	readonly row: RulesRule;
 }
+
+const submissions = new Map<symbol, Submission>();
+const wantedOn = new Map<symbol, boolean>();
+const savedIds = new Map<symbol, string>();
+const pendingShown = new Map<symbol, boolean>();
+const rowOwners = new Map<string, symbol>();
+let pendingSerial = 0;
 
 export function RulesScreen({ page }: { readonly page: RulesPageData }) {
 	useRuleWrites();
 	const workspace = useWorkspace();
-	const [pending, setPending] = useState<PendingRule | null>(null);
-	const rules = pending ? [...page.rules, pending.row] : page.rules;
+	const [pending, setPending] = useState<readonly PendingRule[]>([]);
+	const visiblePending = pending.filter(
+		(item) => item.savedId === null || !page.rules.some((rule) => rule.id === item.savedId),
+	);
+	if (visiblePending.length !== pending.length) {
+		setPending(visiblePending);
+	}
+	const rules = [...page.rules, ...visiblePending.map((item) => item.row)];
 	return (
 		<div data-if="isRules" style={css("display: contents")}>
 			<div style={css(pageColumn)}>
@@ -86,6 +104,7 @@ export function RulesScreen({ page }: { readonly page: RulesPageData }) {
 					switchParts={workspace.helpers.switchParts}
 					loaded={page.rules}
 					refresh={workspace.refresh}
+					setPending={setPending}
 				/>
 				<div style={css(cardRow)}>
 					<NewRule
@@ -109,6 +128,7 @@ function RuleList({
 	switchParts,
 	loaded,
 	refresh,
+	setPending,
 }: {
 	readonly rules: readonly RulesRule[];
 	readonly agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[];
@@ -120,6 +140,7 @@ function RuleList({
 	};
 	readonly loaded: readonly RulesRule[];
 	readonly refresh: () => Promise<void>;
+	readonly setPending: SetPending;
 }) {
 	return (
 		<section aria-label="Rules" style={css(rulesCard)}>
@@ -133,6 +154,7 @@ function RuleList({
 						switchParts={switchParts}
 						loaded={loaded.find((item) => item.id === rule.id)?.on ?? rule.on}
 						refresh={refresh}
+						setPending={setPending}
 					/>
 				))}
 			</div>
@@ -147,6 +169,7 @@ function RuleRow({
 	switchParts,
 	loaded,
 	refresh,
+	setPending,
 }: {
 	readonly rule: RulesRule;
 	readonly agent: { readonly id: string; readonly name: string; readonly tint: string } | undefined;
@@ -158,14 +181,12 @@ function RuleRow({
 	};
 	readonly loaded: boolean;
 	readonly refresh: () => Promise<void>;
+	readonly setPending: SetPending;
 }) {
 	const on = shownOn(rule.id, loaded);
 	const parts = switchParts(on);
 	const toggle = () => {
-		if (rule.id === "pending-rule") {
-			return;
-		}
-		queueRule(rule.id, !shownOn(rule.id, loaded), loaded, refresh);
+		toggleRow(rule, loaded, refresh, setPending);
 	};
 	return (
 		<div style={css(ruleRow)}>
@@ -211,7 +232,7 @@ function NewRule({
 	readonly form: RuleForm;
 	readonly agents: readonly { readonly id: string; readonly name: string }[];
 	readonly setForm: SetRuleForm;
-	readonly setPending: Dispatch<SetStateAction<PendingRule | null>>;
+	readonly setPending: SetPending;
 	readonly refresh: () => Promise<void>;
 }) {
 	return (
@@ -225,7 +246,7 @@ function NewRule({
 						data-handler="onWhen"
 						data-event="onChange"
 						onChange={(event) => setForm({ ...form, when: event.target.value })}
-						style={selectCss}
+						style={css(selectStyle)}
 					>
 						<OptionLoop list="triggerOpts" options={triggerOptions} />
 					</select>
@@ -237,7 +258,7 @@ function NewRule({
 						data-handler="onAgent"
 						data-event="onChange"
 						onChange={(event) => setForm({ ...form, agent: event.target.value })}
-						style={selectCss}
+						style={css(selectStyle)}
 					>
 						<OptionLoop
 							list="agentOpts"
@@ -254,11 +275,13 @@ function NewRule({
 						data-event="onChange"
 						placeholder="What the agent should do"
 						onChange={(event) => {
-							const owner = submissions.get(setForm);
-							if (owner) {
-								owner.actionEdited = true;
+							const action = event.target.value;
+							for (const owner of submissions.values()) {
+								if (owner.setForm === setForm) {
+									owner.actionEdited = true;
+								}
 							}
-							setForm({ ...form, action: event.target.value });
+							setForm((current) => ({ ...current, action }));
 						}}
 						style={css(actionStyle)}
 					/>
@@ -270,7 +293,7 @@ function NewRule({
 						data-handler="onApproval"
 						data-event="onChange"
 						onChange={(event) => setForm({ ...form, approval: event.target.value })}
-						style={selectCss}
+						style={css(selectStyle)}
 					>
 						<OptionLoop list="approvalOpts" options={approvalOptions} />
 					</select>
@@ -311,64 +334,103 @@ function OptionLoop({
 	);
 }
 
-function addRule(
-	form: RuleForm,
-	setForm: SetRuleForm,
-	setPending: Dispatch<SetStateAction<PendingRule | null>>,
-	refresh: () => Promise<void>,
-) {
-	const action = form.action.trim();
+function toggleRow(rule: RulesRule, loaded: boolean, refresh: () => Promise<void>, setPending: SetPending) {
+	const id = rowOwners.get(rule.id);
+	if (!id) {
+		queueRule(rule.id, !shownOn(rule.id, loaded), loaded, refresh);
+		return;
+	}
+	const next = !(pendingShown.get(id) ?? true);
+	pendingShown.set(id, next);
+	wantedOn.set(id, next);
+	setPending((items) => items.map((item) => (item.id === id ? { ...item, row: { ...item.row, on: next } } : item)));
+	const saved = savedIds.get(id);
+	if (saved !== undefined) {
+		queueRule(saved, next, true, refresh);
+	}
+}
+
+function addRule(form: RuleForm, setForm: SetRuleForm, setPending: SetPending, refresh: () => Promise<void>) {
+	const typed = form.action;
+	const action = typed.trim();
 	if (action.length === 0) {
 		return;
 	}
-	const typed = form.action;
 	const id = Symbol();
-	submissions.set(setForm, { id, actionEdited: false });
-	setPending({
-		id,
-		row: {
-			id: "pending-rule",
-			when: form.when.charAt(0).toLowerCase() + form.when.slice(1),
-			agent: form.agent,
-			action,
-			approval: form.approval,
-			on: true,
+	const rowId = `pending-${pendingSerial}`;
+	pendingSerial += 1;
+	const submission: Submission = { id, setForm, typed, rowId, actionEdited: false };
+	submissions.set(id, submission);
+	pendingShown.set(id, true);
+	rowOwners.set(rowId, id);
+	setPending((items) => [
+		...items,
+		{
+			id,
+			rowId,
+			savedId: null,
+			row: {
+				id: rowId,
+				when: form.when.charAt(0).toLowerCase() + form.when.slice(1),
+				agent: form.agent,
+				action,
+				approval: form.approval,
+				on: true,
+			},
 		},
-	});
-	setForm({ ...form, action: "" });
-	void saveRule(form, typed, id, setForm, setPending, refresh);
+	]);
+	setForm((current) => ({ ...current, action: "" }));
+	void saveRule(form, submission, setForm, setPending, refresh);
 }
 
 async function saveRule(
 	form: RuleForm,
-	typed: string,
-	id: symbol,
+	submission: Submission,
 	setForm: SetRuleForm,
-	setPending: Dispatch<SetStateAction<PendingRule | null>>,
+	setPending: SetPending,
 	refresh: () => Promise<void>,
 ) {
+	const { id, typed, rowId } = submission;
+	let result: { readonly id?: string | null } | null | undefined;
 	try {
-		await bounded((signal) =>
+		result = await bounded((signal) =>
 			addWorkspaceRule({
 				data: { when: form.when, agent: form.agent, action: typed, approval: form.approval },
 				signal,
 			}),
 		);
 	} catch {
-		if (submissions.get(setForm)?.id !== id) {
-			return;
-		}
-		setPending((current) => (current?.id === id ? null : current));
+		dropPending(id, rowId, setPending);
+		const owner = submissions.get(id);
+		submissions.delete(id);
 		setForm((current) => {
-			const owner = submissions.get(setForm);
-			return owner?.id === id && !owner.actionEdited && current.action.length === 0
-				? { ...current, action: typed }
-				: current;
+			if (!owner || owner.setForm !== setForm || owner.actionEdited || current.action.length > 0) {
+				return current;
+			}
+			return { ...current, action: owner.typed };
 		});
 		return;
 	}
+	submissions.delete(id);
+	const savedId = typeof result?.id === "string" && result.id.length > 0 ? result.id : null;
+	if (!savedId) {
+		return;
+	}
+	savedIds.set(id, savedId);
+	setPending((items) => items.map((item) => (item.id === id ? { ...item, savedId } : item)));
+	const wanted = wantedOn.get(id);
+	if (wanted !== undefined && wanted !== true) {
+		queueRule(savedId, wanted, true, refresh);
+	}
 	await bounded(() => refresh()).catch(() => undefined);
-	setPending((current) => (current?.id === id ? null : current));
+}
+
+function dropPending(id: symbol, rowId: string, setPending: SetPending) {
+	wantedOn.delete(id);
+	savedIds.delete(id);
+	pendingShown.delete(id);
+	rowOwners.delete(rowId);
+	setPending((items) => items.filter((item) => item.id !== id));
 }
 
 function Limits({ page, refresh }: { readonly page: RulesPageData; readonly refresh: () => Promise<void> }) {
