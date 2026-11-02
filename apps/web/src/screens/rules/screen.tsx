@@ -10,10 +10,12 @@ import {
 	bounded,
 	isRulesRule,
 	markReadFailed,
+	onRulesAccountReset,
 	placeRule,
 	queueLimit,
 	queueRule,
 	readIfNeeded,
+	rulesAccountEpoch,
 	shownLimit,
 	shownOn,
 	useRuleWrites,
@@ -86,11 +88,27 @@ const pendingShown = new Map<symbol, boolean>();
 const rowOwners = new Map<string, symbol>();
 let pendingSerial = 0;
 
+function clearPendingAccount(): void {
+	submissions.clear();
+	wantedOn.clear();
+	pendingShown.clear();
+	rowOwners.clear();
+	pendingSerial = 0;
+}
+
+onRulesAccountReset(clearPendingAccount);
+
 export function RulesScreen({ page }: { readonly page: RulesSnapshotPage }) {
 	useRuleWrites();
+	const epoch = rulesAccountEpoch();
+	const [seenEpoch, setSeenEpoch] = useState(epoch);
+	const [pending, setPending] = useState<readonly PendingRule[]>([]);
+	if (seenEpoch !== epoch) {
+		setSeenEpoch(epoch);
+		setPending([]);
+	}
 	const workspace = useWorkspace();
 	const { snapshot, refresh } = useRulesSnapshot(page, workspace.refresh);
-	const [pending, setPending] = useState<readonly PendingRule[]>([]);
 	const rules = [...snapshot.rules, ...pending.map((item) => item.row)];
 	return (
 		<div data-if="isRules" style={css("display: contents")}>
@@ -391,6 +409,10 @@ function addRule(form: RuleForm, setForm: SetRuleForm, setPending: SetPending, r
 	void saveRule(form, submission, setForm, setPending, refresh);
 }
 
+function leftAccount(epoch: number): boolean {
+	return epoch !== rulesAccountEpoch();
+}
+
 async function saveRule(
 	form: RuleForm,
 	submission: Submission,
@@ -398,6 +420,7 @@ async function saveRule(
 	setPending: SetPending,
 	refresh: () => Promise<void>,
 ) {
+	const epoch = rulesAccountEpoch();
 	const { id, typed, rowId } = submission;
 	let result: RulesRule | null = null;
 	try {
@@ -408,7 +431,8 @@ async function saveRule(
 			}),
 		);
 	} catch {
-		markReadFailed();
+		if (leftAccount(epoch)) return;
+		markReadFailed(epoch);
 		dropPending(id, rowId, setPending);
 		const owner = submissions.get(id);
 		submissions.delete(id);
@@ -421,7 +445,7 @@ async function saveRule(
 		await bounded(() => refresh()).catch(() => undefined);
 		return;
 	}
-	if (!isRulesRule(result)) {
+	if (leftAccount(epoch) || !isRulesRule(result)) {
 		return;
 	}
 	const wanted = wantedOn.get(id);

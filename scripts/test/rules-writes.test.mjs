@@ -1450,8 +1450,11 @@ test("recovery: server reads hold no browser recovery state", async () => {
 	const worker = { readSource: async () => ({ rules: [], limits: [] }) };
 	runInNewContext(server.outputFiles[0].text, worker);
 	worker.queue.markReadFailed();
+	worker.queue.watchSignedInUser("account-a");
+	worker.queue.watchSignedInUser("account-b");
 	assert.equal(worker.queue.readNeeded(), false);
 	assert.equal(worker.queue.rulesRecoveryGeneration(), 0);
+	assert.equal(worker.queue.rulesAccountEpoch(), 0);
 	assert.equal((await worker.loader()).readCounter, 0);
 	worker.readSource = async () => {
 		throw new Error("GET failed");
@@ -1529,3 +1532,104 @@ for (const { first, second, shared } of overlappingRecoveries) {
 		});
 	}
 }
+
+test("signing out and into another account drops rules state and ignores the old response", async () => {
+	await withPage(async (page) => {
+		await seedSnapshot(page);
+		await page.evaluate(() => {
+			window.queue.watchSignedInUser("account-a");
+			window.hold = false;
+			window.held = [];
+			window.send = (data) => {
+				window.calls.push(data);
+				if (window.hold) {
+					return new Promise((resolve, reject) => {
+						window.held.push({ data, resolve, reject });
+					});
+				}
+				if (typeof data.value === "number") return Promise.resolve({ key: data.key, value: data.value });
+				return Promise.resolve(window.ruleRow(data));
+			};
+		});
+		await page.locator("#lim-ads").fill("240");
+		await page.evaluate(() => window.flush());
+		await expect(page.locator("#lim-ads")).toHaveValue("240");
+		await page.getByLabel("Then", { exact: true }).fill("Account A saved");
+		await page.getByRole("button", { name: "Add rule", exact: true }).click();
+		await page.evaluate(() => window.flush());
+		await expect(page.getByText("then Account A saved", { exact: true })).toHaveCount(1);
+		await page.evaluate(() => {
+			window.hold = true;
+		});
+		await page.getByLabel("Then", { exact: true }).fill("Account A pending");
+		await page.getByRole("button", { name: "Add rule", exact: true }).click();
+		await page.locator("#lim-ads").fill("260");
+		await page.waitForFunction(() => window.held.length === 2);
+		await expect(page.getByText("then Account A pending", { exact: true })).toHaveCount(1);
+		await expect(page.locator("#lim-ads")).toHaveValue("260");
+		await page.evaluate(() => {
+			window.queue.markReadFailed();
+			window.staleRead = new Promise((resolve) => {
+				window.finishStale = () => resolve({ rules: [], limits: [] });
+			});
+			window.readSource = () => window.staleRead;
+			window.staleRejected = false;
+			window.staleDone = window.loadRulesSnapshot();
+			void window.staleDone.catch(() => {
+				window.staleRejected = true;
+			});
+		});
+		assert.equal(await page.evaluate(() => window.queue.readNeeded()), true);
+		await page.evaluate(async () => {
+			window.queue.watchSignedInUser("account-a");
+			await window.flush();
+		});
+		await expect(page.getByText("then Account A pending", { exact: true })).toHaveCount(1);
+		assert.equal(await page.evaluate(() => window.queue.readNeeded()), true);
+
+		await page.evaluate(async () => {
+			window.queue.watchSignedInUser(null);
+			await window.flush();
+		});
+		await expect(page.getByText("then Account A pending", { exact: true })).toHaveCount(0);
+		await expect(page.getByText("then Account A saved", { exact: true })).toHaveCount(0);
+		await expect(page.locator("#lim-ads")).toHaveValue("200");
+		assert.equal(await page.evaluate(() => window.queue.readNeeded()), false);
+		assert.equal(await page.evaluate(() => window.queue.rulesWriteCounter()), 0);
+		assert.deepEqual(await page.evaluate(() => window.queue.rulesWrittenSince(0)), { rules: [], limits: [] });
+
+		await page.evaluate(async () => {
+			window.queue.watchSignedInUser("account-b");
+			window.queue.markReadFailed();
+			window.afterSwitch = {
+				needed: window.queue.readNeeded(),
+				counter: window.queue.rulesWriteCounter(),
+				generation: window.queue.rulesRecoveryGeneration(),
+				refreshCalls: window.refreshCalls,
+			};
+			await window.flush();
+		});
+		const afterSwitch = await page.evaluate(() => window.afterSwitch);
+		assert.equal(afterSwitch.needed, true);
+		assert.equal(afterSwitch.counter, 0);
+		await page.evaluate(async () => {
+			const pending = window.held.find((item) => typeof item.data.action === "string");
+			const limit = window.held.find((item) => typeof item.data.value === "number");
+			pending.reject(new Error("Account A failed"));
+			limit.resolve({ key: limit.data.key, value: limit.data.value });
+			window.finishStale();
+			await window.staleDone.catch(() => undefined);
+			await window.flush();
+		});
+		await expect(page.getByLabel("Then", { exact: true })).toHaveValue("");
+		await expect(page.getByText("then Account A pending", { exact: true })).toHaveCount(0);
+		await expect(page.getByText("then Account A saved", { exact: true })).toHaveCount(0);
+		await expect(page.locator("#lim-ads")).toHaveValue("200");
+		assert.equal(await page.evaluate(() => window.staleRejected), true);
+		assert.equal(await page.evaluate(() => window.queue.readNeeded()), true);
+		assert.equal(await page.evaluate(() => window.queue.rulesWriteCounter()), afterSwitch.counter);
+		assert.equal(await page.evaluate(() => window.queue.rulesRecoveryGeneration()), afterSwitch.generation);
+		assert.equal(await page.evaluate(() => window.refreshCalls), afterSwitch.refreshCalls);
+		assert.deepEqual(await page.evaluate(() => window.queue.rulesWrittenSince(0)), { rules: [], limits: [] });
+	});
+});

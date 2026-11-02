@@ -15,6 +15,9 @@ const listeners = new Set<() => void>();
 let version = 0;
 let needsRead = false;
 let recoveryGeneration = 0;
+let accountEpoch = 0;
+let signedInUser: string | null | undefined;
+const accountResets = new Set<() => void>();
 
 export function readNeeded(): boolean {
 	return needsRead;
@@ -25,15 +28,54 @@ export function rulesRecoveryGeneration(): number {
 	return recoveryGeneration;
 }
 
-export function markReadSucceeded(generation: number): void {
+export function rulesAccountEpoch(): number {
+	if (typeof window === "undefined") return 0;
+	return accountEpoch;
+}
+
+export function onRulesAccountReset(reset: () => void): () => void {
+	accountResets.add(reset);
+	return () => {
+		accountResets.delete(reset);
+	};
+}
+
+// The id lives on the module, so a later mount still sees the previous account.
+export function watchSignedInUser(userId: string | null): void {
 	if (typeof window === "undefined") return;
+	if (signedInUser === undefined) {
+		signedInUser = userId;
+		return;
+	}
+	if (signedInUser === userId) return;
+	signedInUser = userId;
+	accountEpoch += 1;
+	ruleFlights.clear();
+	limitFlights.clear();
+	writtenRules.clear();
+	writtenLimits.clear();
+	needsRead = false;
+	recoveryGeneration = 0;
+	writeCounter = 0;
+	for (const reset of accountResets) reset();
+	queueMicrotask(notify);
+}
+
+export function markReadSucceeded(generation: number, epoch = accountEpoch): void {
+	if (typeof window === "undefined") return;
+	if (epoch !== accountEpoch) return;
 	if (generation >= recoveryGeneration) needsRead = false;
 }
 
-export function markReadFailed(): void {
+export function markReadFailed(epoch = accountEpoch): void {
 	if (typeof window === "undefined") return;
+	if (epoch !== accountEpoch) return;
 	recoveryGeneration += 1;
 	needsRead = true;
+}
+
+function sameAccount(epoch: number): boolean {
+	return typeof window === "undefined" || epoch === accountEpoch;
 }
 
 export async function readIfNeeded(refresh: () => Promise<void>): Promise<void> {
@@ -127,8 +169,9 @@ function queueValue<T>(map: Map<string, Flight<T>>, key: string, next: T): Fligh
 }
 
 async function sendRule(id: string, value: boolean, signal: AbortSignal): Promise<boolean | null> {
+	const epoch = accountEpoch;
 	const row = await setRuleEnabled({ data: { id, on: value }, signal });
-	if (signal.aborted || !isRulesRule(row) || row.id !== id) {
+	if (!sameAccount(epoch) || signal.aborted || !isRulesRule(row) || row.id !== id) {
 		return null;
 	}
 	placeRule(row);
@@ -136,8 +179,9 @@ async function sendRule(id: string, value: boolean, signal: AbortSignal): Promis
 }
 
 async function sendLimit(key: string, value: number, signal: AbortSignal): Promise<number | null> {
+	const epoch = accountEpoch;
 	const row = await setRuleLimit({ data: { key, value }, signal });
-	if (signal.aborted || !isLimitValue(row) || row.key !== key) {
+	if (!sameAccount(epoch) || signal.aborted || !isLimitValue(row) || row.key !== key) {
 		return null;
 	}
 	writeCounter += 1;
@@ -153,6 +197,7 @@ async function run<T>(
 	send: (value: T, signal: AbortSignal) => Promise<T | null>,
 	refresh: () => Promise<void>,
 ): Promise<void> {
+	const epoch = accountEpoch;
 	while (map.get(key) === flight) {
 		const sent = flight.queued ?? flight.shown;
 		flight.queued = null;
@@ -164,8 +209,9 @@ async function run<T>(
 		} catch {
 			returned = null;
 		}
+		if (!sameAccount(epoch)) return;
 		if (returned === null) {
-			markReadFailed();
+			markReadFailed(epoch);
 			const newer = takeNewer(flight, sent);
 			if (newer) {
 				continue;

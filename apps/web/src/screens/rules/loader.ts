@@ -5,19 +5,25 @@ import {
 	bounded,
 	markReadFailed,
 	markReadSucceeded,
+	rulesAccountEpoch,
 	rulesRecoveryGeneration,
 	rulesWriteCounter,
 } from "./write-queue.ts";
 
 export async function loadRulesSnapshot(): Promise<RulesSnapshotPage> {
-	const [readCounter, generation] = [rulesWriteCounter(), rulesRecoveryGeneration()];
+	const readCounter = rulesWriteCounter();
+	const generation = rulesRecoveryGeneration();
+	const epoch = rulesAccountEpoch();
 	try {
 		const reading = loadRulesPage();
 		const page = await (typeof window === "undefined" ? reading : bounded(() => reading));
-		markReadSucceeded(generation);
+		if (typeof window !== "undefined" && epoch !== rulesAccountEpoch()) {
+			throw new Error("The signed-in account changed.");
+		}
+		markReadSucceeded(generation, epoch);
 		return { ...page, readCounter };
 	} catch (error) {
-		markReadFailed();
+		markReadFailed(epoch);
 		throw error;
 	}
 }

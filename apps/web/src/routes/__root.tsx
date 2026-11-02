@@ -1,8 +1,9 @@
-import { ClerkProvider } from "@clerk/tanstack-react-start";
+import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 import "#/design/public.css";
+import { watchSignedInUser } from "#/screens/rules/write-queue.ts";
 import { getPublishableKey } from "#/server/publishable-key.ts";
 
 export const Route = createRootRoute({
@@ -32,9 +33,16 @@ function RootApp() {
 	}
 	return (
 		<ClerkProvider publishableKey={publishableKey}>
+			<SignedInAccount />
 			<Outlet />
 		</ClerkProvider>
 	);
+}
+
+function SignedInAccount() {
+	const { isLoaded, userId } = useAuth();
+	if (isLoaded) watchSignedInUser(userId ?? null);
+	return null;
 }
 
 function RootDocument({ children }: { children: ReactNode }) {
