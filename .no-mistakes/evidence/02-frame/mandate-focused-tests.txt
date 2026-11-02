@@ -1,0 +1,17 @@
+✔ a change to a rule after an Approval does not change that Approval's Mandate (643.541458ms)
+✔ SQL UPDATE of any Mandate column is refused and the row is unchanged (432.819209ms)
+✔ direct SQL DELETE of a Mandate is refused and the row stays (412.900625ms)
+✔ a second Mandate for that Approval is refused (404.508625ms)
+✔ removing the whole account removes its Mandate (406.731334ms)
+✔ replaceDemoAccount still works when the account has a Mandate (412.474125ms)
+✔ migration on an empty database and a repeat install the Mandate trigger (408.188583ms)
+✔ the Mandate trigger holds on Postgres (655.931459ms)
+✔ the bundled migration text matches migration.sql (1.899792ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4104.846667

@@ -1,24 +1,45 @@
+Bundled migration equals migration.sql byte for byte.
 
-ENGINE: PGlite
-Repeat migration with existing account and Mandate: trigger count 1
-Existing approvals foreign key upgraded to cascade: [ { confdeltype: 'c' } ]
-UPDATE mandates SET limit_value=999 WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
-UPDATE mandates SET limit_value=limit_value WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
-DELETE FROM mandates WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
-DELETE FROM approvals WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
-INSERT INTO mandates SELECT * FROM mandates WHERE account_id='live-account' ON CONFLICT(account_id,approval_id) DO UPDATE SET limit_value=999 => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
-Repository replacement attempt => An Approval holds exactly one Mandate.
-DELETE account => account, approval and Mandate removed through cascade.
-saveWorkspace(empty disposable snapshot) => account cascade clears Mandate successfully.
+=== PGlite ===
+PGlite: empty migration, legacy FK upgrade and repeat -> one trigger; approvals account FK cascades
+PGlite: repository createMandate -> [{"account_id":"isolated","approval_id":"approved","rule_id":"rule","rule_when":"when","rule_action":"action","rule_approval":"yes","limit_value":40,"policy_version":"v1","said_yes":"tester","said_at":"2026-11-02 12:00:00+00"}]
+PGlite: UPDATE mandates SET account_id='other' WHERE account_id='isolated' -> A Mandate never changes.
+PGlite: UPDATE mandates SET approval_id='other' WHERE account_id='isolated' -> A Mandate never changes.
+PGlite: UPDATE mandates SET rule_id='other' WHERE account_id='isolated' -> A Mandate never changes.
+PGlite: UPDATE mandates SET rule_when='other' WHERE account_id='isolated' -> A Mandate never changes.
+PGlite: UPDATE mandates SET rule_action='other' WHERE account_id='isolated' -> A Mandate never changes.
+PGlite: UPDATE mandates SET rule_approval='other' WHERE account_id='isolated' -> A Mandate never changes.
+PGlite: UPDATE mandates SET limit_value=999 WHERE account_id='isolated' -> A Mandate never changes.
+PGlite: UPDATE mandates SET policy_version='v2' WHERE account_id='isolated' -> A Mandate never changes.
+PGlite: UPDATE mandates SET said_yes='other' WHERE account_id='isolated' -> A Mandate never changes.
+PGlite: UPDATE mandates SET said_at='2020-01-01' WHERE account_id='isolated' -> A Mandate never changes.
+PGlite: UPDATE mandates SET limit_value=limit_value WHERE account_id='isolated' -> A Mandate never changes.
+PGlite: DELETE FROM mandates WHERE account_id='isolated' -> A Mandate never changes.
+PGlite: DELETE FROM approvals WHERE account_id='isolated' -> A Mandate never changes.
+PGlite: replacement Mandate refused; original limit remains 40; approval remains after blocked cascade
+PGlite: DELETE account -> account, approval and mandate removed by cascade
+PGlite: replaceDemoAccount with existing Mandate -> one fresh account; zero old mandates
+PGlite: saveWorkspace(empty disposable snapshot) with Mandate -> all account rows removed through cascade
 
-ENGINE: Postgres via Neon driver
-Repeat migration with existing account and Mandate: trigger count 1
-Existing approvals foreign key upgraded to cascade: [ { confdeltype: 'c' } ]
-UPDATE mandates SET limit_value=999 WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
-UPDATE mandates SET limit_value=limit_value WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
-DELETE FROM mandates WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
-DELETE FROM approvals WHERE account_id='live-account' => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
-INSERT INTO mandates SELECT * FROM mandates WHERE account_id='live-account' ON CONFLICT(account_id,approval_id) DO UPDATE SET limit_value=999 => A Mandate never changes.; persisted: [{"account_id":"live-account","approval_id":"approved","limit_value":40,"policy_version":"policy-1"}]
-Repository replacement attempt => An Approval holds exactly one Mandate.
-DELETE account => account, approval and Mandate removed through cascade.
-saveWorkspace(empty disposable snapshot) => account cascade clears Mandate successfully.
+=== Postgres 18 via Neon serverless driver ===
+Postgres 18 via Neon serverless driver: empty migration, legacy FK upgrade and repeat -> one trigger; approvals account FK cascades
+Postgres 18 via Neon serverless driver: repository createMandate -> [{"account_id":"isolated","approval_id":"approved","rule_id":"rule","rule_when":"when","rule_action":"action","rule_approval":"yes","limit_value":40,"policy_version":"v1","said_yes":"tester","said_at":"2026-11-02 06:00:00-06"}]
+Postgres 18 via Neon serverless driver: UPDATE mandates SET account_id='other' WHERE account_id='isolated' -> A Mandate never changes.
+Postgres 18 via Neon serverless driver: UPDATE mandates SET approval_id='other' WHERE account_id='isolated' -> A Mandate never changes.
+Postgres 18 via Neon serverless driver: UPDATE mandates SET rule_id='other' WHERE account_id='isolated' -> A Mandate never changes.
+Postgres 18 via Neon serverless driver: UPDATE mandates SET rule_when='other' WHERE account_id='isolated' -> A Mandate never changes.
+Postgres 18 via Neon serverless driver: UPDATE mandates SET rule_action='other' WHERE account_id='isolated' -> A Mandate never changes.
+Postgres 18 via Neon serverless driver: UPDATE mandates SET rule_approval='other' WHERE account_id='isolated' -> A Mandate never changes.
+Postgres 18 via Neon serverless driver: UPDATE mandates SET limit_value=999 WHERE account_id='isolated' -> A Mandate never changes.
+Postgres 18 via Neon serverless driver: UPDATE mandates SET policy_version='v2' WHERE account_id='isolated' -> A Mandate never changes.
+Postgres 18 via Neon serverless driver: UPDATE mandates SET said_yes='other' WHERE account_id='isolated' -> A Mandate never changes.
+Postgres 18 via Neon serverless driver: UPDATE mandates SET said_at='2020-01-01' WHERE account_id='isolated' -> A Mandate never changes.
+Postgres 18 via Neon serverless driver: UPDATE mandates SET limit_value=limit_value WHERE account_id='isolated' -> A Mandate never changes.
+Postgres 18 via Neon serverless driver: DELETE FROM mandates WHERE account_id='isolated' -> A Mandate never changes.
+Postgres 18 via Neon serverless driver: DELETE FROM approvals WHERE account_id='isolated' -> A Mandate never changes.
+Postgres 18 via Neon serverless driver: replacement Mandate refused; original limit remains 40; approval remains after blocked cascade
+Postgres 18 via Neon serverless driver: DELETE account -> account, approval and mandate removed by cascade
+Postgres 18 via Neon serverless driver: replaceDemoAccount with existing Mandate -> one fresh account; zero old mandates
+Postgres 18 via Neon serverless driver: saveWorkspace(empty disposable snapshot) with Mandate -> all account rows removed through cascade
+
+All live database scenarios passed. No shared services or production databases used.
