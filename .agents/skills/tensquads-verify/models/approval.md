@@ -10,6 +10,8 @@ Run this check when a change touches any of these:
 
 - `packages/domain/src/policy/decide.ts` (`decideApproval`, `decideMission`, `askRevise`, `inboxCount`, `inboxIsEmpty`, `EMPTY_INBOX`)
 - `packages/domain/test/decide.test.ts`
+- `packages/adapters/src/neon/commands/approvals.ts`
+- `apps/web/src/screens/overview/actions.ts`
 - `packages/statecharts/approval/Approval.tla`
 - `packages/statecharts/approval/Approval.cfg`
 - `packages/statecharts/approval/view.mjs`
@@ -35,18 +37,18 @@ TLC does not read `decide.ts`. A pass of the model does not prove the TypeScript
 
 ## What a failure means
 
-A model failure is a path of Approve, Decline, Approve mission, Decline mission, or Ask to revise. Replay that path in `decideApproval`, `decideMission`, or `askRevise`. If the code can do the path, the code is wrong. If the code cannot do a step, the model is wrong. Say which.
+A model failure is a path of Approve, Decline, Approve mission, Decline mission, or Ask to revise. It can also be a queued click, `WriteFail`, `WriteLate`, `ReadReload`, or `ReadTimeout`. Replay that path in `decideApproval`, `decideMission`, `askRevise`, the approval adapter, and the overview actions. If the code can do the path, the code is wrong. If the code cannot do a step, the model is wrong. Say which.
 
-The chart hides Idle. Idle changes nothing. It exists so a finished inbox is not a deadlock. The chart also draws one "Nothing waiting" state for an approved mission with either an approved spend or a declined spend. The model still keeps those two states apart. `SpendApproved` and `SpendDeclined` check the task count and `last`. `EventRecorded` checks that a spend decision writes one bus event and that a mission decision writes none. `MandateRecorded` checks that only an approved spend has a Mandate.
+The chart hides Idle, ClickApprove, ClickDecline, ClickMission, ClickRevise, WriteFail, WriteLate, ReadReload, and ReadTimeout. Idle changes nothing. It exists so a finished inbox is not a deadlock. The chart also draws one "Nothing waiting" state for an approved mission with either an approved spend or a declined spend. The model still keeps those two states apart. The arrow from Pending to that state is labeled "Approve or Decline" because both spend commits end on the same chart state. `SpendApproved` and `SpendDeclined` check the task count and `last`. `EventRecorded` checks that a spend decision writes one bus event and that a mission decision writes none. `MandateRecorded` checks that only an approved spend has a Mandate. `WaitShape` checks one in-flight decision, at most one queued click, and that the same card is not in both. `WaitEnds` checks that a wait finishes.
 
 ## Keep the check in step
 
 | Check | Covers | Sync commit |
 | --- | --- | --- |
-| `decide.test.ts` | `decideApproval`, `decideMission`, `askRevise`, `inboxCount`, `inboxIsEmpty`, `EMPTY_INBOX` | `22f1d6329f3e19895be3b414964aaa5c3ad027e1` |
-| `/statechart` on `Approval.tla` | The same actions, one approval and one proposal, the bus event, and the Mandate | `22f1d6329f3e19895be3b414964aaa5c3ad027e1` |
+| `decide.test.ts` | `decideApproval`, `decideMission`, `askRevise`, `inboxCount`, `inboxIsEmpty`, `EMPTY_INBOX` | `639389b1934f2bd0f2f694cea9b2c810c4d1f2c2` |
+| `/statechart` on `Approval.tla` | The same actions, one approval and one proposal, the queue, a failed or late write, reload, the bus event, and the Mandate | `639389b1934f2bd0f2f694cea9b2c810c4d1f2c2` |
 
-Both checks passed on `22f1d6329f3e19895be3b414964aaa5c3ad027e1`, the latest commit that changes these files. `decide.test.ts` exited 0. TLC exited 0, reached 12 states and 23 steps, and named no broken rule.
+Both checks passed on `639389b1934f2bd0f2f694cea9b2c810c4d1f2c2`, the latest commit that changes these files. `decide.test.ts` exited 0. TLC exited 0, reached 190 states and 392 steps, and named no broken rule. The chart draws 8 states and 14 arrows.
 
 Move a sync commit forward only after both checks pass and you confirm that the model and the tests still describe the code at the new commit. An intended change updates `decide.ts`, `decide.test.ts`, and `Approval.tla` together.
 
@@ -54,6 +56,6 @@ When covered code changed and this check was not run, use `/maintain-formal-veri
 
 ## Bounds
 
-The model is one spend approval and one mission proposal. Tasks start at 1 and can become 2. Contribution starts at 10 and becomes 0 only when the mission is approved. The empty sentence is the constant `EmptyInbox` in `Approval.cfg`, and it matches `EMPTY_INBOX`. A spend decision writes one bus event. An approved spend sets the Mandate. A declined spend leaves the Mandate false. A mission action and Ask to revise do not change the event count or the Mandate.
+The model is one spend approval and one mission proposal. One write is in flight, and one click can wait behind it. Clicks start at 3 and stay in 0..3. Approve and decline share the spend card, and mission and revise share the mission card, so the same card is not queued twice. Tasks start at 1 and can become 2. Contribution starts at 10 and becomes 0 only when the mission is approved. The empty sentence is the constant `EmptyInbox` in `Approval.cfg`, and it matches `EMPTY_INBOX`. A spend decision writes one bus event. An approved spend sets the Mandate. A declined spend leaves the Mandate false. A mission action and Ask to revise do not change the event count or the Mandate. A failed write and a late write leave the stored Approval and the Mandate unchanged and move the wait from write to read. A reload or a read timeout clears the wait, or starts the queued click. `WaitEnds` is `[](wait # "none" => <>(wait = "none"))`. Fairness is only on the real timers, `WriteLate` and `ReadTimeout`.
 
 The model does not cover a second approval, a second proposal, the target rows, or the other seven machines in `docs/PLAN.md`. The code test checks the em dash in each approved mission target. The model does not.
