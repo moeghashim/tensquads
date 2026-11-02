@@ -5,7 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { readInventory, secretsFor, waitForScreenFonts } from "./support.ts";
-import { expect, installLocalFonts } from "./workspace.ts";
+import { expect, installLocalFonts, openWorkspace, type WorkspaceUser } from "./workspace.ts";
 
 export function scopeFor(accountId: string) {
 	return { accountId, mode: "account" as const };
@@ -336,15 +336,24 @@ export async function stitch(page: Page, design: Buffer, build: Buffer, file: st
 	}
 }
 
-export async function holdServerPosts(page: Page, count = 1) {
+export async function holdServerPosts(page: Page, count = 1, stallReads = false) {
 	const posts: string[] = [];
+	let reads = 0;
 	let release: (send: boolean) => void = () => undefined;
 	const held = new Promise<boolean>((resolve) => {
 		release = resolve;
 	});
 	const pattern = /\/_serverFn\//;
 	const handler = async (route: Route) => {
-		if (route.request().method() !== "POST") return route.continue();
+		if (route.request().method() !== "POST") {
+			if (stallReads && posts.length > 0) {
+				reads += 1;
+				await held;
+				await route.abort().catch(() => undefined);
+				return;
+			}
+			return route.continue();
+		}
 		posts.push(route.request().postData() ?? "");
 		if (posts.length <= count && !(await held)) {
 			await route.abort().catch(() => undefined);
@@ -355,10 +364,82 @@ export async function holdServerPosts(page: Page, count = 1) {
 	await page.route(pattern, handler);
 	return {
 		posts,
+		reads: () => reads,
 		release: () => release(true),
 		async stop() {
 			release(false);
 			await page.unroute(pattern, handler);
+		},
+	};
+}
+
+export function running(page: Page) {
+	return page.locator("header").getByText("Running", { exact: true });
+}
+
+export function paused(page: Page) {
+	return page.locator("header").getByText("Paused", { exact: true });
+}
+
+export function sandbox(page: Page) {
+	return page.locator("section[aria-label='Sandbox']");
+}
+
+export function squadSwitch(page: Page) {
+	return page.getByRole("button", { name: "Squad running" });
+}
+
+export function squadsNav(page: Page) {
+	return page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: "Squads", exact: true });
+}
+
+export function supportDot(page: Page, status: "Running" | "Paused") {
+	return page
+		.getByRole("navigation", { name: "Workspace" })
+		.getByRole("button", { name: `Support ${status}`, exact: true })
+		.getByRole("img", { name: status });
+}
+
+export function skillRow(page: Page, id: string) {
+	return page.locator("[data-loop='sel.skills'] > div").filter({ has: page.getByText(id, { exact: true }) });
+}
+
+export async function reloadAgent(page: Page) {
+	await page.reload();
+	await page.waitForFunction(() => {
+		const nodes = document.querySelectorAll("button, a, input, textarea");
+		return Array.from(nodes).some((node) => Object.keys(node).some((key) => key.startsWith("__reactProps$")));
+	});
+	await expect(page).toHaveTitle("Agent dashboard");
+	await waitForScreenFonts(page);
+}
+
+export async function openAgent(page: Page, user: WorkspaceUser, agentId: string) {
+	await openWorkspace(page, user);
+	await page.goto(`/agents/${agentId}`);
+	await expect(page).toHaveURL(new RegExp(`/agents/${agentId}$`), { timeout: 15_000 });
+	await expect(page).toHaveTitle("Agent dashboard");
+	await waitForScreenFonts(page);
+}
+
+export async function failServerPosts(page: Page) {
+	let seen = false;
+	let failed = false;
+	const pattern = /\/_serverFn\//;
+	await page.route(pattern, async (route) => {
+		const request = route.request();
+		if (request.method() === "POST" && !failed) {
+			failed = true;
+			await route.fulfill({ status: 500, contentType: "text/plain", body: "The write failed." });
+			seen = true;
+			return;
+		}
+		await route.continue();
+	});
+	return {
+		seen: () => seen,
+		async stop() {
+			await page.unroute(pattern);
 		},
 	};
 }

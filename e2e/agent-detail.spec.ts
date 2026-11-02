@@ -1,27 +1,36 @@
 import { mkdirSync } from "node:fs";
-import type { Page } from "@playwright/test";
 import { PENDING_TASK_WINDOW_MS } from "../packages/adapters/src/pending-window.ts";
 import { setAgentOn } from "../packages/adapters/src/neon/commands/agents.ts";
 import {
 	agentDetailSource,
 	expectDetail,
 	expectMatch,
+	failServerPosts,
 	holdServerPosts,
 	measureDetail,
+	openAgent,
 	openDesignDetail,
+	paused,
 	readAgent,
+	reloadAgent,
 	renderedDetail,
+	running,
+	sandbox,
 	scopeFor,
 	sectionInventory,
 	shot,
 	skillFlag,
+	skillRow,
+	squadSwitch,
+	squadsNav,
 	stitch,
+	supportDot,
 	watchedMachine,
 	withDb,
 } from "./agent-detail-support.ts";
 import { accessibilityViolations } from "./accessibility-helper.ts";
 import { expectNoHorizontalScroll, skipUnlessMacScreenshot, waitForScreenFonts } from "./support.ts";
-import { expect, openWorkspace, test, type WorkspaceUser } from "./workspace.ts";
+import { expect, openWorkspace, test } from "./workspace.ts";
 
 const boards = [
 	{ name: "1440", width: 1440, height: 1300 },
@@ -219,7 +228,7 @@ test("a timed out skill write restores the server value and keeps the queue movi
 }) => {
 	test.setTimeout(90_000);
 	await openAgent(page, workspaceUser, "support");
-	const held = await holdServerPosts(page);
+	const held = await holdServerPosts(page, 1, true);
 	try {
 		const control = skillRow(page, "inbox.read").getByRole("button");
 		await control.click();
@@ -229,10 +238,66 @@ test("a timed out skill write restores the server value and keeps the queue movi
 		await expect(next).toHaveAttribute("aria-pressed", "false");
 		await expect(control).toHaveAttribute("aria-pressed", "true", { timeout: PENDING_TASK_WINDOW_MS + 15_000 });
 		await expect(next).toHaveAttribute("aria-pressed", "false");
+		await expect.poll(() => held.reads(), settled).toBeGreaterThan(0);
+		await expect.poll(() => held.posts.length, settled).toBe(2);
 		await expect(page).toHaveURL(/\/agents\/support$/);
 		await expect
 			.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.draft_reply"), settled)
 			.toBe(false);
+	} finally {
+		await held.stop();
+	}
+});
+
+test("pending agent writes survive leaving and returning to the dashboard", async ({
+	page,
+	workspaceUser,
+	accountId,
+}) => {
+	test.setTimeout(90_000);
+	await openAgent(page, workspaceUser, "support");
+	const held = await holdServerPosts(page);
+	try {
+		const skill = skillRow(page, "inbox.read").getByRole("button");
+		const autonomy = page.getByRole("group", { name: "Autonomy" });
+		await skill.click();
+		await expect.poll(() => held.posts.length).toBe(1);
+		await autonomy.getByRole("button", { name: "Ask first", exact: true }).click();
+		await expect(skill).toHaveAttribute("aria-pressed", "false");
+		await expect(autonomy.getByRole("button", { name: "Ask first", exact: true })).toHaveAttribute(
+			"aria-pressed",
+			"true",
+		);
+		await expect(running(page)).toBeVisible();
+		await page.getByRole("button", { name: "All squads", exact: true }).click();
+		await expect(page).toHaveURL(/\/agents$/);
+		await page
+			.getByRole("navigation", { name: "Workspace" })
+			.getByRole("button", { name: "Support Running", exact: true })
+			.click();
+		await expect(page).toHaveURL(/\/agents\/support$/);
+		await expect(skill).toHaveAttribute("aria-pressed", "false");
+		await expect(autonomy.getByRole("button", { name: "Ask first", exact: true })).toHaveAttribute(
+			"aria-pressed",
+			"true",
+		);
+		const latest = autonomy.getByRole("button", { name: "Full auto", exact: true });
+		await latest.click();
+		await expect(latest).toHaveAttribute("aria-pressed", "true");
+		await expect(running(page)).toBeVisible();
+		expect(held.posts).toHaveLength(1);
+		held.release();
+		await expect
+			.poll(async () => {
+				const stored = await readAgent(accountId, "support");
+				return [stored.autonomy, skillFlag(stored, "inbox.read")];
+			}, settled)
+			.toEqual(["Full auto", false]);
+		expect(held.posts).toHaveLength(2);
+		expect(held.posts[0]).toContain("inbox.read");
+		expect(held.posts[1]).toContain("Full auto");
+		expect(held.posts[1]).not.toContain("Ask first");
+		await expect(latest).toHaveAttribute("aria-pressed", "true");
 	} finally {
 		await held.stop();
 	}
@@ -488,75 +553,3 @@ test("the agent detail page passes axe and does not scroll sideways", async ({ p
 		await expectNoHorizontalScroll(page);
 	}
 });
-
-function running(page: Page) {
-	return page.locator("header").getByText("Running", { exact: true });
-}
-
-function paused(page: Page) {
-	return page.locator("header").getByText("Paused", { exact: true });
-}
-
-function sandbox(page: Page) {
-	return page.locator("section[aria-label='Sandbox']");
-}
-
-function squadSwitch(page: Page) {
-	return page.getByRole("button", { name: "Squad running" });
-}
-
-function squadsNav(page: Page) {
-	return page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: "Squads", exact: true });
-}
-
-function supportDot(page: Page, status: "Running" | "Paused") {
-	return page
-		.getByRole("navigation", { name: "Workspace" })
-		.getByRole("button", { name: `Support ${status}`, exact: true })
-		.getByRole("img", { name: status });
-}
-
-function skillRow(page: Page, id: string) {
-	return page.locator("[data-loop='sel.skills'] > div").filter({ has: page.getByText(id, { exact: true }) });
-}
-
-async function reloadAgent(page: Page) {
-	await page.reload();
-	await page.waitForFunction(() => {
-		const nodes = document.querySelectorAll("button, a, input, textarea");
-		return Array.from(nodes).some((node) => Object.keys(node).some((key) => key.startsWith("__reactProps$")));
-	});
-	await expect(page).toHaveTitle("Agent dashboard");
-	await waitForScreenFonts(page);
-}
-
-async function openAgent(page: Page, user: WorkspaceUser, agentId: string) {
-	await openWorkspace(page, user);
-	await page.goto(`/agents/${agentId}`);
-	await expect(page).toHaveURL(new RegExp(`/agents/${agentId}$`), settled);
-	await expect(page).toHaveTitle("Agent dashboard");
-	await waitForScreenFonts(page);
-}
-
-async function failServerPosts(page: Page) {
-	let seen = false;
-	let failed = false;
-	const pattern = /\/_serverFn\//;
-	await page.route(pattern, async (route) => {
-		const request = route.request();
-		if (request.method() === "POST" && !failed) {
-			failed = true;
-			await route.fulfill({ status: 500, contentType: "text/plain", body: "The write failed." });
-			seen = true;
-			return;
-		}
-		await route.continue();
-	});
-	return {
-		seen: () => seen,
-		async stop() {
-			await page.unroute(pattern);
-		},
-	};
-}
-
