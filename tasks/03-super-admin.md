@@ -94,7 +94,7 @@ The design wins for what a screen shows. Do not change the design, the plan or t
 - [ ] A special session gives the target account's scope to a super admin and to nobody else, proved by tests
 - [ ] A row click opens that account's workspace. The test proves no other account's data shows
 - [ ] `packages/statecharts/image-release/chart.mmd` exists and TLC reports no broken rule
-- [ ] The final report exists, and it lists all 28 decisions
+- [ ] The final report exists, and it lists all 32 decisions
 - [ ] The nine seed numbers still pass, including Tasks done 331
 - [ ] Moe's steps in step 2 are done, or listed as open in the pull request
 - [ ] `node scripts/design-check.mjs` returns 0

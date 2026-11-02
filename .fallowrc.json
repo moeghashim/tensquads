@@ -8,7 +8,7 @@
 		"scripts/deploy-cloudflare.mjs",
 		"packages/statecharts/*/view.mjs"
 	],
-	"ignorePatterns": [".agents/skills/**", "design/**", "apps/web/worker-configuration.d.ts"],
+	"ignorePatterns": [".agents/skills/**", "design/**", "apps/web/worker-configuration.d.ts", "apps/landing/**"],
 	"audit": {
 		"gate": "new-only"
 	}
