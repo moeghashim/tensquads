@@ -30,10 +30,14 @@ export async function conversationTransaction<T>(
 	const startedAt = new Date();
 	return workspaceTransaction(
 		db,
-		async (tx) => {
+		async (tx, constrainDeadline) => {
 			await lockCursor(tx, accountId);
+			const pending = await pendingTask(tx, accountId);
+			if (pending?.occurredAt) {
+				constrainDeadline(pending.occurredAt.getTime() + PENDING_TASK_WINDOW_MS);
+			}
 			return work({
-				pendingTask: () => pendingTask(tx, accountId),
+				pendingTask: async () => pending,
 				agent: (id) => readAgent(tx, accountId, id),
 				skills: (id) => readSkills(tx, accountId, id),
 				store: () => readStore(tx, accountId),

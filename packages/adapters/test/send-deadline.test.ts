@@ -29,19 +29,22 @@ function delayStatements(
 	client: PGlite,
 	count: number,
 	eachMs: number,
+	afterQuery?: string,
 ): { delayed: () => number; restore: () => void } {
 	const original = client.transaction;
 	let left = count;
 	let taken = 0;
+	let ready = afterQuery === undefined;
 	const patched = (async (callback) => {
 		return original.call(client, async (tx) => {
 			const query = tx.query.bind(tx);
 			tx.query = (async (text, params, options) => {
-				if (left > 0) {
+				if (ready && left > 0) {
 					left -= 1;
 					taken += 1;
 					await delay(eachMs);
 				}
+				if (afterQuery && text.includes(afterQuery)) ready = true;
 				return query(text, params, options);
 			}) as Transaction["query"];
 			return callback(tx);
@@ -113,7 +116,7 @@ async function counts(db: AppDatabase, accountId: string): Promise<{ messages: n
 	};
 }
 
-async function sendTwoDelayedStatements(db: AppDatabase, client: PGlite, accountId: string): Promise<void> {
+async function beginTwoDelayedStatements(db: AppDatabase, client: PGlite, accountId: string): Promise<string> {
 	const hook = delayStatements(client, 2, statementDelayMs);
 	try {
 		const startedAt = Date.now();
@@ -122,11 +125,38 @@ async function sendTwoDelayedStatements(db: AppDatabase, client: PGlite, account
 		assert.equal(hook.delayed(), 2);
 		assert.ok(elapsed >= statementDelayMs * 2);
 		assert.ok(elapsed < PENDING_TASK_WINDOW_MS);
-		const finished = await finish(db, accountId, taskOf(started));
-		assert.equal(finished.kind, "replied");
+		return taskOf(started);
 	} finally {
 		hook.restore();
 	}
+}
+
+async function completionState(db: AppDatabase, accountId: string) {
+	return {
+		messages: await db.select().from(schema.messages).where(eq(schema.messages.accountId, accountId)),
+		events: await db.select().from(schema.busEvents).where(eq(schema.busEvents.accountId, accountId)),
+		agents: await db.select().from(schema.agents).where(eq(schema.agents.accountId, accountId)),
+		cursor: await db.select().from(schema.busCursors).where(eq(schema.busCursors.accountId, accountId)),
+	};
+}
+
+async function finishPastTaskExpiry(db: AppDatabase, client: PGlite, accountId: string, taskId: string) {
+	const before = await completionState(db, accountId);
+	const hook = delayStatements(client, 2, statementDelayMs, 'from "bus_events"');
+	try {
+		await assert.rejects(
+			() => finish(db, accountId, taskId),
+			(error: unknown) => findUnfinished(error),
+		);
+		assert.equal(hook.delayed(), 2);
+	} finally {
+		hook.restore();
+	}
+	assert.deepEqual(await completionState(db, accountId), before);
+	const started = await begin(db, accountId);
+	const finished = await finish(db, accountId, taskOf(started));
+	assert.equal(finished.kind, "replied");
+	assert.ok((finished.messages ?? []).some((message) => message.text === reply));
 }
 
 async function sendPastTheWindow(db: AppDatabase, client: PGlite, accountId: string): Promise<void> {
@@ -155,7 +185,19 @@ test("two statements delayed 8 seconds each do not commit past the pending windo
 	const opened = await openDatabase();
 	try {
 		await replaceDemoAccount(opened.db, "deadline-two", "clerk-deadline-two");
-		await sendTwoDelayedStatements(opened.db, opened.client, "deadline-two");
+		const taskId = await beginTwoDelayedStatements(opened.db, opened.client, "deadline-two");
+		assert.equal((await finish(opened.db, "deadline-two", taskId)).kind, "replied");
+	} finally {
+		await opened.close();
+	}
+});
+
+test("a finish past its Task expiry rolls back all completion writes", { timeout: 90_000 }, async () => {
+	const opened = await openDatabase();
+	try {
+		await replaceDemoAccount(opened.db, "deadline-finish", "clerk-deadline-finish");
+		const taskId = await beginTwoDelayedStatements(opened.db, opened.client, "deadline-finish");
+		await finishPastTaskExpiry(opened.db, opened.client, "deadline-finish", taskId);
 	} finally {
 		await opened.close();
 	}

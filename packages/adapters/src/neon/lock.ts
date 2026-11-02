@@ -15,13 +15,15 @@ export interface WorkspaceTransactionOptions {
 }
 
 interface SendBound {
-	readonly deadline: number;
+	deadline: number;
 	readonly attemptMs: number;
 }
 
+type WorkspaceWork<T> = (tx: Tx, constrainDeadline: (deadline: number) => void) => Promise<T>;
+
 export async function workspaceTransaction<T>(
 	db: AppDatabase,
-	run: (tx: Tx) => Promise<T>,
+	run: WorkspaceWork<T>,
 	options?: WorkspaceTransactionOptions,
 ): Promise<T> {
 	const bound = sendBound(options);
@@ -57,7 +59,7 @@ function retryFits(bound: SendBound | undefined, attempt: number): boolean {
 
 async function tryAttempt<T>(
 	db: AppDatabase,
-	run: (tx: Tx) => Promise<T>,
+	run: WorkspaceWork<T>,
 	bound: SendBound | undefined,
 	attempt: number,
 ): Promise<{ readonly value: T } | undefined> {
@@ -81,11 +83,13 @@ function rethrowUnlessRetry(error: unknown, attempt: number): void {
 	}
 }
 
-async function runAttempt<T>(db: AppDatabase, run: (tx: Tx) => Promise<T>, bound: SendBound | undefined): Promise<T> {
+async function runAttempt<T>(db: AppDatabase, run: WorkspaceWork<T>, bound: SendBound | undefined): Promise<T> {
 	return db.transaction(async (tx) => {
 		await armSend(tx, bound);
 		await tx.execute(workspaceLock);
-		const value = await run(tx);
+		const value = await run(tx, (deadline) => {
+			if (bound) bound.deadline = Math.min(bound.deadline, deadline);
+		});
 		// Last step before commit. A late send throws, so the task rolls back.
 		assertBeforeDeadline(bound);
 		return value;
