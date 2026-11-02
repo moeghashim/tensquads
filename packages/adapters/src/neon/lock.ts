@@ -27,9 +27,8 @@ function isDeadlock(error: unknown, depth = 0): boolean {
 	if (!error || typeof error !== "object" || depth > 5) {
 		return false;
 	}
-	const record = error as { message?: unknown; code?: unknown; cause?: unknown };
-	const message = typeof record.message === "string" ? record.message : "";
-	if (record.code === "40P01" || message.includes("deadlock detected")) {
+	const record = error as { code?: unknown; cause?: unknown };
+	if (record.code === "40P01") {
 		return true;
 	}
 	return isDeadlock(record.cause, depth + 1);
