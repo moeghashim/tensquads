@@ -5,9 +5,16 @@ import { useSyncExternalStore } from "react";
 import { css } from "#/screens/css.ts";
 import { decideMissionOverview, decideOverview } from "#/server/overview.ts";
 import { missionBits } from "#/workspace/agent-view.ts";
-import { useRefresh } from "#/workspace/context.ts";
+import { useRefresh, useWorkspace } from "#/workspace/context.ts";
 
-import { badgeCount, enqueueDecision, patchSnapshot, subscribeOverviewPage, watchServerCount } from "./actions.ts";
+import {
+	badgeCount,
+	enqueueDecision,
+	patchSnapshot,
+	readDecisionCount,
+	subscribeOverviewPage,
+	watchServerCount,
+} from "./actions.ts";
 import type { OverviewAgentView, OverviewData } from "./types.ts";
 import { type DecisionPatch, presentOverview } from "./view.ts";
 
@@ -97,14 +104,22 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 	const navigate = useNavigate();
 	const refresh = useRefresh();
 	const router = useRouter();
+	const { approvalCount, noteDecision } = useWorkspace();
 	const patches = useSyncExternalStore(subscribeOverviewPage, patchSnapshot, () => emptyPatches);
 	watchServerCount(data.count, data);
 	const shown = presentOverview(data, patches);
 	const accept = (patch: DecisionPatch, work: (signal: AbortSignal) => Promise<unknown>) => {
 		enqueueDecision(
 			patch,
-			data.count,
-			work,
+			approvalCount,
+			async (signal) => {
+				const value = await work(signal);
+				const count = readDecisionCount(value);
+				if (count !== null) {
+					noteDecision(count);
+				}
+				return value;
+			},
 			async () => {
 				await refresh();
 				const match = router.state.matches.find((item) => item.routeId === "/_workspace/overview");
@@ -197,7 +212,7 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 					<section aria-label="Needs you" style={css(inbox)}>
 						<div style={css(inboxHead)}>
 							<h2 style={css(h2)}>Needs your approval</h2>
-							<span style={css(count)}>{badgeCount(shown.count)}</span>
+							<span style={css(count)}>{badgeCount(approvalCount)}</span>
 						</div>
 						<div data-loop="missionProposals" data-loop-as="mp" style={css(contents)}>
 							{shown.proposals.map((item, index) => (

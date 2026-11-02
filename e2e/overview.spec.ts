@@ -229,6 +229,42 @@ test("queued cards and counts survive leaving and returning to overview", async 
 	await secondDone;
 });
 
+test("a held dock begin keeps the server count on traffic", async ({ page, workspaceUser }) => {
+	test.setTimeout(90_000);
+	await openWorkspace(page, workspaceUser);
+	const held = await holdWorkspaceSend(page, "begin");
+	try {
+		await page.getByRole("button", { name: "Ask Master" }).click();
+		await page.locator("#dock-input").fill("How did ads do this week?");
+		await page.getByRole("button", { name: "Send", exact: true }).click();
+		await expect.poll(held.held, { timeout: 20_000 }).toBe(true);
+		await page.getByRole("button", { name: "Close chat" }).click();
+		await approveRefundThenOpenTraffic(page);
+	} finally {
+		held.release();
+		await page.unroute("**/_serverFn/**");
+	}
+});
+
+test("a held chat finish keeps the server count on traffic", async ({ page, workspaceUser }) => {
+	test.setTimeout(90_000);
+	await openWorkspace(page, workspaceUser);
+	await page.getByRole("button", { name: "Chat with the master" }).click();
+	await expect(page).toHaveURL(/\/chat$/);
+	const held = await holdWorkspaceSend(page, "finish");
+	try {
+		await page.locator("#chat-input").fill("How did ads do this week?");
+		await page.getByRole("button", { name: "Send", exact: true }).click();
+		await expect.poll(held.held, { timeout: 20_000 }).toBe(true);
+		await page.getByRole("button", { name: "Overview", exact: true }).click();
+		await expect(page).toHaveURL(/\/overview$/);
+		await approveRefundThenOpenTraffic(page);
+	} finally {
+		held.release();
+		await page.unroute("**/_serverFn/**");
+	}
+});
+
 test("a double click approves once and the badge changes at the click", async ({ page, workspaceUser }) => {
 	const held = await clickHeld(page, workspaceUser, () =>
 		refundCard(page)
@@ -590,6 +626,47 @@ async function gatePosts(page: Page, failFirst: boolean) {
 		await route.continue();
 	});
 	return { bodies, posts: () => bodies.length, release };
+}
+
+async function holdWorkspaceSend(page: Page, step: "begin" | "finish") {
+	const state = { sends: 0, held: false };
+	let release = () => {};
+	const gate = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	const target = step === "begin" ? 1 : 2;
+	await page.route("**/_serverFn/**", async (route) => {
+		const request = route.request();
+		const body = request.postData() ?? "";
+		if (request.method() !== "POST") {
+			await route.continue();
+			return;
+		}
+		if (body.includes("ap1")) {
+			await route.continue();
+			return;
+		}
+		state.sends += 1;
+		if (state.sends === target) {
+			state.held = true;
+			await gate;
+		}
+		await route.continue();
+	});
+	return { release, held: () => state.held };
+}
+
+async function approveRefundThenOpenTraffic(page: Page) {
+	await refundCard(page).getByRole("button", { name: "Approve", exact: true }).click();
+	await expect(
+		page.locator("main [data-loop='kpis'] > div").filter({ hasText: "Tasks done by squads" }),
+	).toContainText("332", settled);
+	await expect(inboxCount(page)).toHaveText("3", settled);
+	await expect(dockBadge(page)).toHaveText("3", settled);
+	await page.locator("main").getByRole("button", { name: "See squad traffic" }).click();
+	await expect(page).toHaveURL(/\/traffic$/);
+	await expect(page.locator("[data-if='isOverview']")).toHaveCount(0);
+	await expect(dockBadge(page)).toHaveText("3");
 }
 
 async function clickHeld(page: Page, user: WorkspaceUser, click: () => Promise<void>) {

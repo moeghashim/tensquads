@@ -171,7 +171,7 @@ describe("overview decisions", { concurrency: false }, () => {
 		]);
 	});
 
-	test("the badge stays on the inbox count when the frame count is held", async () => {
+	test("the badge uses the workspace count, including after the page closes", async () => {
 		resetDecisions();
 		const stop = subscribeOverviewPage(() => undefined);
 		try {
@@ -191,11 +191,13 @@ describe("overview decisions", { concurrency: false }, () => {
 			assert.equal(badgeCount(4), 3);
 			release();
 			await job;
-			assert.equal(badgeCount(4), 3);
-			assert.equal(badgeCount(4), shownApprovalCount(3));
+			assert.equal(badgeCount(3), 3);
+			assert.equal(badgeCount(3), shownApprovalCount(3));
 		} finally {
 			stop();
 		}
+		assert.equal(badgeCount(3), 3);
+		assert.equal(badgeCount(3), shownApprovalCount(3));
 	});
 
 	test("a write keeps the server row and a missed read leaves the card", async () => {

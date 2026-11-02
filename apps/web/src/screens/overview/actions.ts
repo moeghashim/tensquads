@@ -28,9 +28,6 @@ const listeners = new Set<() => void>();
 let running = false;
 let generation = 0;
 let target: number | null = null;
-let published: number | null = null;
-let overviewLive = false;
-let overviewSubs = 0;
 let patches: readonly DecisionPatch[] = [];
 let activeKey: string | null = null;
 let seenServer: object | null = null;
@@ -41,8 +38,6 @@ export function resetDecisions(): void {
 	jobs.length = 0;
 	running = false;
 	target = null;
-	published = null;
-	overviewLive = overviewSubs > 0;
 	patches = [];
 	activeKey = null;
 	seenServer = null;
@@ -60,28 +55,17 @@ export function subscribeDecisions(listener: () => void): () => void {
 	};
 }
 
-// The dock and the inbox both read this. While Overview is open, the published
-// overview count wins over the frame count the provider can hold during a send.
-export function badgeCount(frameCount: number): number {
-	if (overviewLive && published !== null) {
-		return shownApprovalCount(published);
-	}
-	return target === null ? frameCount : target;
+// The dock and the inbox pass the workspace count. A click lowers both.
+export function badgeCount(count: number): number {
+	return shownApprovalCount(count);
 }
 
 export function subscribeOverviewPage(listener: () => void): () => void {
-	overviewSubs += 1;
-	overviewLive = true;
-	const stop = subscribeDecisions(listener);
-	return () => {
-		stop();
-		overviewSubs = Math.max(0, overviewSubs - 1);
-		if (overviewSubs === 0) {
-			overviewLive = false;
-			published = null;
-			notify();
-		}
-	};
+	return subscribeDecisions(listener);
+}
+
+export function readDecisionCount(value: unknown): number | null {
+	return decisionRow(value)?.count ?? null;
 }
 
 export function patchSnapshot(): readonly DecisionPatch[] {
@@ -140,9 +124,7 @@ export function reconcileDecisions(serverCount: number): void {
 		dropped = true;
 	}
 	const nextTarget = next.length === 0 ? null : Math.max(0, serverCount - next.length);
-	const publishedChanged = published !== serverCount;
-	published = serverCount;
-	if (!dropped && nextTarget === target && !publishedChanged) {
+	if (!dropped && nextTarget === target) {
 		return;
 	}
 	patches = next;
@@ -151,17 +133,7 @@ export function reconcileDecisions(serverCount: number): void {
 }
 
 export function watchServerCount(serverCount: number, token: object): void {
-	const publishedChanged = published !== serverCount;
-	published = serverCount;
 	if (token === seenServer) {
-		if (publishedChanged) {
-			const gen = generation;
-			queueMicrotask(() => {
-				if (gen === generation) {
-					notify();
-				}
-			});
-		}
 		return;
 	}
 	seenServer = token;
@@ -171,9 +143,6 @@ export function watchServerCount(serverCount: number, token: object): void {
 			return;
 		}
 		if (patches.every((patch) => liveKeys().has(patch.key))) {
-			if (publishedChanged) {
-				notify();
-			}
 			return;
 		}
 		reconcileDecisions(serverCount);

@@ -36,6 +36,7 @@ export interface WorkspaceValue {
 	readonly pending: boolean;
 	readonly messages: WorkspaceFrameData["messages"];
 	readonly approvalCount: number;
+	readonly noteDecision: (count: number) => void;
 	readonly submit: (text?: string) => void;
 	readonly selEvent: string;
 	readonly setSelEvent: (id: string) => void;
