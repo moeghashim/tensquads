@@ -263,6 +263,7 @@ test("a later change on this screen does not change an existing Mandate", async 
 	expect(await mandateFields(accountId, made.approvalId)).toEqual(made.fields);
 });
 
+// scripts/e2e.mjs runs this test after the other browser tests. The table lock blocks every account read.
 test("a held account read commits no limit", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(120_000);
 	await openRules(page, workspaceUser);
