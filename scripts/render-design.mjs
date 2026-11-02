@@ -42,6 +42,7 @@ export async function renderDesignMarkup(page, design, state = {}, approval = {}
 				new Function(...Object.keys(scope), `return (${expression});`)(...Object.values(scope));
 			const expression = (node, attr) => node.getAttribute(attr).slice(2, -2);
 			const markLoop = (node, result) => {
+				result.style.setProperty("display", "contents");
 				if (marked.has(node)) return;
 				result.dataset.loop = expression(node, "list");
 				result.dataset.loopAs = node.getAttribute("as");
@@ -69,6 +70,7 @@ export async function renderDesignMarkup(page, design, state = {}, approval = {}
 				}
 			};
 			const markCondition = (node, result) => {
+				result.style.setProperty("display", "contents");
 				if (marked.has(node)) return;
 				result.dataset.if = expression(node, "value");
 				marked.add(node);

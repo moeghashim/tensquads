@@ -221,6 +221,25 @@ test("the keyboard reaches the dock, shows the focus ring, and Enter sends", asy
 	expect(await generatedEvents(accountId)).toEqual([]);
 });
 
+test("the message list focus ring is 2 px blue with a 2 px offset", async ({ page, workspaceUser }) => {
+	await openWorkspace(page, workspaceUser);
+	await page.getByRole("button", { name: "Ask Master" }).click();
+	await page.getByRole("button", { name: "Close chat" }).focus();
+	await page.keyboard.press("Tab");
+	const ring = await page.evaluate(() => {
+		const element = document.activeElement;
+		if (!element) return { tag: "", width: "", offset: "", color: "" };
+		const style = getComputedStyle(element);
+		return {
+			tag: element.tagName,
+			width: style.outlineWidth,
+			offset: style.outlineOffset,
+			color: style.outlineColor,
+		};
+	});
+	expect(ring).toEqual({ tag: "DIV", width: "2px", offset: "2px", color: "rgb(1, 105, 204)" });
+});
+
 test("the side-by-side evidence shows the design and the build", async ({ page, workspaceUser, accountId }) => {
 	void accountId;
 	test.skip(
@@ -257,6 +276,8 @@ test("the frame boxes match the rendered design at 1440 and 390", async ({ page,
 			const design = await measureFrame(designPage);
 			const built = await measureFrame(page);
 			expectFrameBoxes(built, design, viewport.name);
+			await expectTagShells(designPage, viewport.name);
+			expectMessageHeights(built, design, viewport.name);
 		} finally {
 			await designPage.close();
 		}
@@ -332,7 +353,8 @@ async function openDesignFrame(page: Page, width: number, height: number, dockOp
 	);
 	await canvas.locator("[data-handler='goAdmin']").evaluate((element) => element.remove());
 	await canvas.locator("main").evaluate((element) => element.replaceChildren());
-	// The evidence renderer turns sc-for and sc-if into divs. The design source gives those elements no box.
+	// The reference renderer sets display:contents on every sc-for and sc-if, including later copies.
+	// Marked nodes get the same display here so a missed wrapper cannot grow a box.
 	await canvas.evaluate(() => {
 		for (const node of document.querySelectorAll("[data-loop], [data-if]")) {
 			if (node instanceof HTMLElement) node.style.setProperty("display", "contents");
@@ -400,6 +422,26 @@ function expectAgentGaps(built: number[], design: number[], name: string) {
 	}
 }
 
+async function expectTagShells(page: Page, name: string) {
+	const displays = await page.evaluate(() =>
+		[...document.querySelectorAll("[data-loop='dockChat'] > div")].flatMap((row) =>
+			[...row.children]
+				.filter((child) => child instanceof HTMLElement && child.querySelector("span"))
+				.map((child) => getComputedStyle(child).display),
+		),
+	);
+	expect(displays.length, `${name} tag shells`).toBeGreaterThan(1);
+	for (const display of displays) expect(display, `${name} tag shell`).toBe("contents");
+}
+
+function expectMessageHeights(built: FrameBoxes, design: FrameBoxes, name: string) {
+	expect(built.messageHeights.length).toBe(design.messageHeights.length);
+	expect(design.messageHeights.length).toBeGreaterThan(1);
+	for (const [index, height] of built.messageHeights.entries()) {
+		expectNear(height, design.messageHeights[index] ?? 0, `${name} message ${index} height`);
+	}
+}
+
 function expectMessageGaps(built: number[], design: number[], name: string) {
 	expect(design.length).toBeGreaterThan(0);
 	expect(built.length).toBeGreaterThan(0);
@@ -420,7 +462,7 @@ async function measureFrame(page: Page) {
 	return page.evaluate(() => {
 		const boxOf = (element) => {
 			const box = element.getBoundingClientRect();
-			return { x: box.x, y: box.y, width: box.width, right: box.right, bottom: box.bottom };
+			return { x: box.x, y: box.y, width: box.width, height: box.height, right: box.right, bottom: box.bottom };
 		};
 		const panelElement = document.querySelector("section[aria-label='Chat with the master']");
 		const panel = panelElement ? boxOf(panelElement) : null;
@@ -440,11 +482,12 @@ async function measureFrame(page: Page) {
 		const loop = document.querySelector("[data-loop='dockChat']");
 		const bubbles = loop ? [...loop.children] : [];
 		const messageGaps = bubbles.slice(1).map((node, index) => boxOf(node).y - boxOf(bubbles[index] ?? node).bottom);
+		const messageHeights = bubbles.map((node) => boxOf(node).height);
 		const suggestions = document.querySelector("[data-loop='dockSuggestions']");
 		const chips = suggestions ? [...suggestions.querySelectorAll("button")] : [];
 		const chipGaps = chips.slice(1).map((chip, index) => boxOf(chip).x - boxOf(chips[index] ?? chip).right);
 		const chipTops = chips.map((chip) => boxOf(chip).y);
-		return { panel, agentRows, agentGaps, messageGaps, chipGaps, chipTops };
+		return { panel, agentRows, agentGaps, messageGaps, messageHeights, chipGaps, chipTops };
 	});
 }
 
