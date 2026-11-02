@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS rules (
 );
 
 CREATE TABLE IF NOT EXISTS approvals (
-  account_id text NOT NULL REFERENCES accounts (id),
+  account_id text NOT NULL REFERENCES accounts (id) ON DELETE CASCADE,
   id text NOT NULL,
   agent text NOT NULL,
   title text NOT NULL,
@@ -281,3 +281,29 @@ CREATE TABLE IF NOT EXISTS mandates (
   PRIMARY KEY (account_id, approval_id),
   FOREIGN KEY (account_id, approval_id) REFERENCES approvals (account_id, id) ON DELETE CASCADE
 );
+
+-- A Mandate never changes. UPDATE always raises. DELETE raises while the account row remains.
+CREATE OR REPLACE FUNCTION mandates_never_change() RETURNS trigger
+LANGUAGE plpgsql
+AS $mandates_never_change$
+BEGIN
+  IF TG_OP = 'UPDATE' THEN
+    RAISE EXCEPTION 'A Mandate never changes.';
+  END IF;
+  IF EXISTS (SELECT 1 FROM accounts WHERE id = OLD.account_id) THEN
+    RAISE EXCEPTION 'A Mandate never changes.';
+  END IF;
+  RETURN OLD;
+END;
+$mandates_never_change$;
+
+DROP TRIGGER IF EXISTS mandates_never_change ON mandates;
+CREATE TRIGGER mandates_never_change
+  BEFORE UPDATE OR DELETE ON mandates
+  FOR EACH ROW
+  EXECUTE FUNCTION mandates_never_change();
+
+ALTER TABLE approvals DROP CONSTRAINT IF EXISTS approvals_account_id_fkey;
+ALTER TABLE approvals
+  ADD CONSTRAINT approvals_account_id_fkey
+  FOREIGN KEY (account_id) REFERENCES accounts (id) ON DELETE CASCADE;

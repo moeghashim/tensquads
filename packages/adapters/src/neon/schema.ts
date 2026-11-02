@@ -182,6 +182,7 @@ export const approvals = pgTable(
 
 // One Mandate per Approval. The row is a copy of the rule at the moment a person says yes.
 // Pending and Declined approvals have no row. The repository has no update.
+// The database trigger rejects UPDATE and a direct DELETE. Account removal cascades the row.
 export const mandates = pgTable(
 	"mandates",
 	{

@@ -17,7 +17,6 @@ const childTables = [
 	"squads",
 	"masters",
 	"rules",
-	"approvals",
 	"mission_proposals",
 	"bus_events",
 	"state_entries",

@@ -48,7 +48,6 @@ export async function saveWorkspace(db: AppDatabase, snapshot: WorkspaceSnapshot
 		await tx.delete(squads);
 		await tx.delete(masters);
 		await tx.delete(rules);
-		await tx.delete(approvals);
 		await tx.delete(missionProposals);
 		await tx.delete(busEvents);
 		await tx.delete(stateEntries);
@@ -358,7 +357,6 @@ export async function writeAccount(db: AppDatabase, entry: AccountSnapshot): Pro
 		await tx.delete(squads).where(eq(squads.accountId, id));
 		await tx.delete(masters).where(eq(masters.accountId, id));
 		await tx.delete(rules).where(eq(rules.accountId, id));
-		await tx.delete(approvals).where(eq(approvals.accountId, id));
 		await tx.delete(missionProposals).where(eq(missionProposals.accountId, id));
 		await tx.delete(busEvents).where(eq(busEvents.accountId, id));
 		await tx.delete(stateEntries).where(eq(stateEntries.accountId, id));

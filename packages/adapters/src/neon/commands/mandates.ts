@@ -8,8 +8,8 @@ import { approvals, mandates, rules } from "../schema.ts";
 // A Mandate never changes after it is made.
 // This file has create and read only. It has no update and no delete.
 // The primary key (account_id, approval_id) lets an Approval hold at most one Mandate.
-// ON DELETE CASCADE lets an account reset remove the row with its Approval.
-// The migration runner splits on semicolons, so this is not a database trigger.
+// BEFORE UPDATE on mandates always raises. BEFORE DELETE raises while the account row remains.
+// Removing the account cascades this row, and that delete is allowed.
 
 export async function createMandate(db: AppDatabase, scope: AccountScope, draft: MandateDraft): Promise<Mandate> {
 	const accountId = accountOf(scope);

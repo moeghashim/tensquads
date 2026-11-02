@@ -5,17 +5,11 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { replaceDemoAccount } from "../../seed/src/demo-account.ts";
 import { listMessages } from "../src/neon/commands/conversation.ts";
 import { migrationSql } from "../src/neon/migration-sql.ts";
+import { migrationStatements } from "../src/neon/postgres.ts";
 import { openPglite } from "./pglite.ts";
 
-function statements(script: string): readonly string[] {
-	return script
-		.split(/;\s*(?:\n|$)/)
-		.map((statement) => statement.trim())
-		.filter((statement) => statement.length > 0);
-}
-
 async function migrateAgain(db: AppDatabase) {
-	for (const statement of statements(migrationSql)) {
+	for (const statement of migrationStatements(migrationSql)) {
 		await db.execute(sql.raw(statement));
 	}
 }

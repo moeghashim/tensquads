@@ -7,11 +7,58 @@ import { schema } from "./schema.ts";
 
 export type AppDatabase = PgliteDatabase<typeof schema> | NeonDatabase<typeof schema>;
 
-function migrationStatements(script: string): readonly string[] {
-	return script
-		.split(/;\s*(?:\n|$)/)
-		.map((statement) => statement.trim())
-		.filter((statement) => statement.length > 0);
+// Semicolons inside dollar quotes belong to the function body. A statement ends at a
+// semicolon that is outside quotes and is followed by a newline or the end of the script.
+export function migrationStatements(script: string): readonly string[] {
+	const statements: string[] = [];
+	let start = 0;
+	let index = 0;
+	let quote: "'" | null = null;
+	let dollar: string | null = null;
+	while (index < script.length) {
+		const rest = script.slice(index);
+		if (dollar) {
+			if (rest.startsWith(dollar)) {
+				index += dollar.length;
+				dollar = null;
+				continue;
+			}
+			index += 1;
+			continue;
+		}
+		if (quote) {
+			if (rest.startsWith("''")) {
+				index += 2;
+				continue;
+			}
+			if (script[index] === "'") quote = null;
+			index += 1;
+			continue;
+		}
+		if (script[index] === "'") {
+			quote = "'";
+			index += 1;
+			continue;
+		}
+		const tag = /^\$[A-Za-z0-9_]*\$/.exec(rest);
+		if (script[index] === "$" && tag) {
+			dollar = tag[0];
+			index += tag[0].length;
+			continue;
+		}
+		const end = /^;\s*(?:\n|$)/.exec(rest);
+		if (end) {
+			const statement = script.slice(start, index).trim();
+			if (statement.length > 0) statements.push(statement);
+			index += end[0].length;
+			start = index;
+			continue;
+		}
+		index += 1;
+	}
+	const tail = script.slice(start).trim();
+	if (tail.length > 0) statements.push(tail);
+	return statements;
 }
 
 async function applyMigration(pool: Pool): Promise<void> {

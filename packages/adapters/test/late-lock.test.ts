@@ -108,7 +108,6 @@ async function removeAccount(db: ReturnType<typeof openPostgres>["db"], accountI
 	await db.delete(schema.squads).where(eq(schema.squads.accountId, accountId));
 	await db.delete(schema.masters).where(eq(schema.masters.accountId, accountId));
 	await db.delete(schema.rules).where(eq(schema.rules.accountId, accountId));
-	await db.delete(schema.approvals).where(eq(schema.approvals.accountId, accountId));
 	await db.delete(schema.missionProposals).where(eq(schema.missionProposals.accountId, accountId));
 	await db.delete(schema.busEvents).where(eq(schema.busEvents.accountId, accountId));
 	await db.delete(schema.stateEntries).where(eq(schema.stateEntries.accountId, accountId));
@@ -127,6 +126,7 @@ test("a lock held past the window does not block the next send", {
 	const suffix = randomBytes(4).toString("hex");
 	const accountId = `late-${suffix}`;
 	const opened = openPostgres(connection);
+	await opened.migrate();
 	const holder = new Pool({ connectionString: connection, max: 1 });
 	const client = await holder.connect();
 	let locked = false;
