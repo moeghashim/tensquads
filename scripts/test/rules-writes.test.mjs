@@ -47,19 +47,21 @@ const bundle = await build({
 	write: false,
 	format: "iife",
 	jsx: "automatic",
-	plugins: [{
-		name: "rules-server-boundary",
-		setup(build) {
-			build.onResolve({ filter: /^#\/server\/rules.ts$/ }, ({ path }) => ({ path, namespace: "boundary" }));
-			build.onLoad({ filter: /.*/, namespace: "boundary" }, () => ({
-				contents: `
+	plugins: [
+		{
+			name: "rules-server-boundary",
+			setup(build) {
+				build.onResolve({ filter: /^#\/server\/rules.ts$/ }, ({ path }) => ({ path, namespace: "boundary" }));
+				build.onLoad({ filter: /.*/, namespace: "boundary" }, () => ({
+					contents: `
 					export const setRuleEnabled = ({data, signal}) => window.send(data, signal);
 					export const setRuleLimit = ({data, signal}) => window.send(data, signal);
 					export const addWorkspaceRule = ({data, signal}) => window.send(data, signal);
 				`,
-			}));
+				}));
+			},
 		},
-	}],
+	],
 });
 
 async function withPage(run) {
@@ -84,9 +86,8 @@ async function configure(page, values) {
 	await page.evaluate((values) => {
 		window.values = values;
 		const { kind } = values;
-		window.write = (value, loaded) => window.queue[kind === "rule" ? "queueRule" : "queueLimit"](
-			"test-key", value, loaded, () => window.refresh(),
-		);
+		window.write = (value, loaded) =>
+			window.queue[kind === "rule" ? "queueRule" : "queueLimit"]("test-key", value, loaded, () => window.refresh());
 		window.shown = (loaded) => window.queue[kind === "rule" ? "shownOn" : "shownLimit"]("test-key", loaded);
 	}, values);
 }
@@ -95,19 +96,28 @@ for (const values of cases) {
 	test(`${values.kind}: a confirmed idle flight yields to later loader reads`, async () => {
 		await withPage(async (page) => {
 			await configure(page, values);
-			assert.equal(await page.evaluate(async () => {
-				const { initial, first } = window.values;
-				window.refresh = () => new Promise((resolve) => { window.releaseRefresh = resolve; });
-				window.write(first, initial);
-				await window.flush();
-				return window.shown(initial);
-			}), values.first);
-			assert.equal(await page.evaluate(async () => {
-				window.shown(window.values.first);
-				window.releaseRefresh();
-				await window.flush();
-				return window.shown(window.values.initial);
-			}), values.first);
+			assert.equal(
+				await page.evaluate(async () => {
+					const { initial, first } = window.values;
+					window.refresh = () =>
+						new Promise((resolve) => {
+							window.releaseRefresh = resolve;
+						});
+					window.write(first, initial);
+					await window.flush();
+					return window.shown(initial);
+				}),
+				values.first,
+			);
+			assert.equal(
+				await page.evaluate(async () => {
+					window.shown(window.values.first);
+					window.releaseRefresh();
+					await window.flush();
+					return window.shown(window.values.initial);
+				}),
+				values.first,
+			);
 			assert.equal(await page.evaluate(() => window.shown(window.values.first)), values.first);
 			assert.equal(await page.evaluate(() => window.shown(window.values.newer)), values.newer);
 			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.initial);
@@ -120,7 +130,10 @@ for (const values of cases) {
 				await configure(page, values);
 				await page.evaluate(async () => {
 					const { initial, first, last } = window.values;
-					window.refresh = () => new Promise((resolve) => { window.releaseRefresh = resolve; });
+					window.refresh = () =>
+						new Promise((resolve) => {
+							window.releaseRefresh = resolve;
+						});
 					window.write(first, initial);
 					await window.flush();
 					window.write(first, initial);
@@ -132,11 +145,27 @@ for (const values of cases) {
 				assert.equal(await page.evaluate(() => window.shown(window.values.first)), values.last);
 				assert.equal(await page.evaluate(() => window.calls.length), 1);
 				if (finish === "timeout") await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
-				else await page.evaluate(async () => { window.releaseRefresh(); await window.flush(); });
-				assert.deepEqual(await page.evaluate(() => window.calls), values.kind === "rule"
-					? [{ id: "test-key", on: values.first }, { id: "test-key", on: values.last }]
-					: [{ key: "test-key", value: values.first }, { key: "test-key", value: values.last }]);
-				await page.evaluate(async () => { window.releaseRefresh(); await window.flush(); });
+				else
+					await page.evaluate(async () => {
+						window.releaseRefresh();
+						await window.flush();
+					});
+				assert.deepEqual(
+					await page.evaluate(() => window.calls),
+					values.kind === "rule"
+						? [
+								{ id: "test-key", on: values.first },
+								{ id: "test-key", on: values.last },
+							]
+						: [
+								{ key: "test-key", value: values.first },
+								{ key: "test-key", value: values.last },
+							],
+				);
+				await page.evaluate(async () => {
+					window.releaseRefresh();
+					await window.flush();
+				});
 				assert.equal(await page.evaluate(() => window.shown(window.values.last)), values.last);
 				assert.equal(await page.evaluate(() => window.shown(window.values.newer)), values.newer);
 			});
@@ -148,7 +177,9 @@ for (const values of cases) {
 			await configure(page, values);
 			await page.evaluate(async () => {
 				window.stored = window.values.initial;
-				window.send = async (data) => { window.stored = data.on ?? data.value; };
+				window.send = async (data) => {
+					window.stored = data.on ?? data.value;
+				};
 				window.refresh = () => new Promise(() => {});
 				window.write(window.values.first, window.values.initial);
 				await window.flush();
@@ -156,7 +187,9 @@ for (const values of cases) {
 			await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
 			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.first);
 			await page.evaluate(async () => {
-				window.send = async () => { throw new Error("Write failed"); };
+				window.send = async () => {
+					throw new Error("Write failed");
+				};
 				window.refresh = async () => {};
 				window.write(window.values.last, window.values.initial);
 				await window.flush();
@@ -185,7 +218,10 @@ for (const refreshResult of ["timeout", "reject"]) {
 		test(`add rule: refresh ${refreshResult} after POST success preserves the cleared draft or newer typing (${newer})`, async () => {
 			await withPage(async (page) => {
 				await page.evaluate(() => {
-					window.refresh = () => new Promise((_resolve, reject) => { window.rejectRefresh = reject; });
+					window.refresh = () =>
+						new Promise((_resolve, reject) => {
+							window.rejectRefresh = reject;
+						});
 					window.mount();
 				});
 				const action = page.getByLabel("Then", { exact: true });
@@ -196,7 +232,11 @@ for (const refreshResult of ["timeout", "reject"]) {
 				await expect(action).toHaveValue("");
 				if (newer) await action.fill(newer);
 				if (refreshResult === "timeout") await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
-				else await page.evaluate(async () => { window.rejectRefresh(new Error("Read failed")); await window.flush(); });
+				else
+					await page.evaluate(async () => {
+						window.rejectRefresh(new Error("Read failed"));
+						await window.flush();
+					});
 				await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(1);
 				await expect(action).toHaveValue(newer);
 				if (!newer) await add.click();
@@ -210,7 +250,10 @@ for (const newer of ["", "A newer action"]) {
 	test(`add rule: POST rejection restores only an unchanged draft (${newer})`, async () => {
 		await withPage(async (page) => {
 			await page.evaluate(() => {
-				window.send = () => new Promise((_resolve, reject) => { window.rejectSend = reject; });
+				window.send = () =>
+					new Promise((_resolve, reject) => {
+						window.rejectSend = reject;
+					});
 				window.mount();
 			});
 			const action = page.getByLabel("Then", { exact: true });
@@ -220,7 +263,10 @@ for (const newer of ["", "A newer action"]) {
 			await expect(action).toHaveValue("");
 			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(1);
 			if (newer) await action.fill(newer);
-			await page.evaluate(async () => { window.rejectSend(new Error("POST failed")); await window.flush(); });
+			await page.evaluate(async () => {
+				window.rejectSend(new Error("POST failed"));
+				await window.flush();
+			});
 			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(0);
 			await expect(action).toHaveValue(newer || "Handle the order");
 		});
@@ -235,12 +281,16 @@ for (const values of cases) {
 				const { initial, first, last } = window.values;
 				window.send = (data) => {
 					window.calls.push(data);
-					return new Promise((_resolve, reject) => { window.rejectSend = reject; });
+					return new Promise((_resolve, reject) => {
+						window.rejectSend = reject;
+					});
 				};
 				window.write(first, initial);
 				await window.flush();
 				window.write(last, initial);
-				window.send = async (data) => { window.calls.push(data); };
+				window.send = async (data) => {
+					window.calls.push(data);
+				};
 				window.rejectSend(new Error("Write failed"));
 				await window.flush();
 			});
@@ -259,18 +309,24 @@ test("add rule: a successful refresh keeps the action cleared", async () => {
 		await page.getByRole("button", { name: "Add rule", exact: true }).click();
 		await page.evaluate(() => window.flush());
 		await expect(action).toHaveValue("");
-		assert.deepEqual(await page.evaluate(() => window.calls), [{
-			when: "A new order arrives", agent: "orders", action: "Handle the order", approval: "Ask first",
-		}]);
+		assert.deepEqual(await page.evaluate(() => window.calls), [
+			{
+				when: "A new order arrives",
+				agent: "orders",
+				action: "Handle the order",
+				approval: "Ask first",
+			},
+		]);
 	});
 });
 
 async function holdAdds(page) {
 	await page.evaluate(() => {
 		window.adds = [];
-		window.send = (data, signal) => new Promise((resolve, reject) => {
-			window.adds.push({ data, signal, resolve, reject });
-		});
+		window.send = (data, signal) =>
+			new Promise((resolve, reject) => {
+				window.adds.push({ data, signal, resolve, reject });
+			});
 		window.mount();
 	});
 }
@@ -293,7 +349,10 @@ test("add rule: an old failure after navigation preserves the current provider d
 		await page.getByRole("button", { name: "Return to rules", exact: true }).click();
 		await typeSecondDraft(page);
 		assert.equal(await page.evaluate(() => window.adds[0].signal.aborted), false);
-		await page.evaluate(async () => { window.adds[0].reject(new Error("HTTP 500")); await window.flush(); });
+		await page.evaluate(async () => {
+			window.adds[0].reject(new Error("HTTP 500"));
+			await window.flush();
+		});
 		await expect(page.getByLabel("Then", { exact: true })).toHaveValue("Draft B");
 		await expect(page.getByLabel("When")).toHaveValue("A refund request comes in");
 		await expect(page.getByLabel("Agent")).toHaveValue("support");
@@ -318,19 +377,23 @@ for (const outcome of ["failure", "success"]) {
 				const first = window.adds[0];
 				if (outcome === "failure") first.reject(new Error("HTTP 500"));
 				else {
-					window.loadRules([{ ...first.data, id: "r100", on: true,
-						when: "a new order arrives" }]);
+					window.loadRules([{ ...first.data, id: "r100", on: true, when: "a new order arrives" }]);
 					first.resolve();
 				}
 				await window.flush();
 			}, outcome);
 			await expect(action).toHaveValue("");
-			await expect(page.locator("section[aria-label='Rules']").getByText("Draft B", { exact: false })).toHaveCount(1);
+			await expect(page.locator("section[aria-label='Rules']").getByText("Draft B", { exact: false })).toHaveCount(
+				1,
+			);
 			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(outcome === "failure" ? 1 : 2);
 			await expect(page.getByLabel("When")).toHaveValue("A refund request comes in");
 			await expect(page.getByLabel("Agent")).toHaveValue("support");
 			await expect(page.getByLabel("Approval")).toHaveValue("Auto");
-			await page.evaluate(async () => { window.adds[1].reject(new Error("HTTP 500")); await window.flush(); });
+			await page.evaluate(async () => {
+				window.adds[1].reject(new Error("HTTP 500"));
+				await window.flush();
+			});
 			await expect(action).toHaveValue("Draft B");
 			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(outcome === "failure" ? 0 : 1);
 		});
@@ -346,7 +409,10 @@ test("add rule: editing and clearing an action prevents old draft restoration", 
 		await page.waitForFunction(() => window.adds.length === 1);
 		await action.fill("Draft B");
 		await action.fill("");
-		await page.evaluate(async () => { window.adds[0].reject(new Error("HTTP 500")); await window.flush(); });
+		await page.evaluate(async () => {
+			window.adds[0].reject(new Error("HTTP 500"));
+			await window.flush();
+		});
 		await expect(action).toHaveValue("");
 		await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(0);
 	});
