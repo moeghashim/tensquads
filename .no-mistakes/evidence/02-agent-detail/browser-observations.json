@@ -1,0 +1,18 @@
+[
+  {
+    "width": 1440,
+    "requested": "/agents/support",
+    "result": "/signin",
+    "heading": [
+      "Sign in to tensquads"
+    ]
+  },
+  {
+    "width": 390,
+    "requested": "/agents/support",
+    "result": "/signin",
+    "heading": [
+      "Sign in to tensquads"
+    ]
+  }
+]
