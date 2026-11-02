@@ -190,11 +190,14 @@ test("stored tiles normalize blank values and deltas and preserve non-empty text
 		for (const blank of ["", " \t\n"]) {
 			const stored = { label, value: blank, delta: blank, deltaColor: "#00692a" };
 			const shown = assembleTiles({ stored: [stored], tasksDone: 0, revenue: [], saved: [] });
-			assert.deepEqual(shown.find((tile) => tile.label === label), {
-				...stored,
-				value: BLANK,
-				delta: "\u00a0",
-			});
+			assert.deepEqual(
+				shown.find((tile) => tile.label === label),
+				{
+					...stored,
+					value: BLANK,
+					delta: "\u00a0",
+				},
+			);
 		}
 	}
 	const stored = { label: "Orders", value: " 186 ", delta: " +8% vs last week ", deltaColor: "#00692a" };

@@ -185,7 +185,9 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 									</div>
 									<div style={css(title)}>{item.title}</div>
 									<div style={css(missionBody)}>
-										{item.mission.trim().length === 0 ? "Mission pending. Your Master will propose one." : item.mission}
+										{item.mission.trim().length === 0
+											? "Mission pending. Your Master will propose one."
+											: item.mission}
 									</div>
 									<div style={css(chips)}>
 										<div
