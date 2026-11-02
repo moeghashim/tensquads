@@ -43,10 +43,10 @@ The chart hides Idle. Idle changes nothing. It exists so a finished inbox is not
 
 | Check | Covers | Sync commit |
 | --- | --- | --- |
-| `decide.test.ts` | `decideApproval`, `decideMission`, `askRevise`, `inboxCount`, `inboxIsEmpty`, `EMPTY_INBOX` | `eeb08dd931e4f5b7e419636b8dd94d392eb35d50` |
-| `/statechart` on `Approval.tla` | The same actions, one approval and one proposal, the bus event, and the Mandate | `eeb08dd931e4f5b7e419636b8dd94d392eb35d50` |
+| `decide.test.ts` | `decideApproval`, `decideMission`, `askRevise`, `inboxCount`, `inboxIsEmpty`, `EMPTY_INBOX` | `8667dc8817e0c1e9d7d39b8cf3303f6bf6128f0e` |
+| `/statechart` on `Approval.tla` | The same actions, one approval and one proposal, the bus event, and the Mandate | `8667dc8817e0c1e9d7d39b8cf3303f6bf6128f0e` |
 
-Both checks passed on `eeb08dd931e4f5b7e419636b8dd94d392eb35d50`, the commit that records the Mandate and the bus event. `decide.test.ts` exited 0. TLC exited 0, reached 12 states and 23 steps, and named no broken rule.
+Both checks passed on `8667dc8817e0c1e9d7d39b8cf3303f6bf6128f0e`, the latest commit that changes these files. `decide.test.ts` exited 0. TLC exited 0, reached 12 states and 23 steps, and named no broken rule.
 
 Move a sync commit forward only after both checks pass and you confirm that the model and the tests still describe the code at the new commit. An intended change updates `decide.ts`, `decide.test.ts`, and `Approval.tla` together.
 

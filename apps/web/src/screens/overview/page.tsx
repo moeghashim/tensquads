@@ -1,14 +1,15 @@
 import { useNavigate } from "@tanstack/react-router";
 import { blankText, revisingLine } from "@tensquads/domain";
-import { useRef } from "react";
+import { useState } from "react";
 
 import { css } from "#/screens/css.ts";
 import { decideMissionOverview, decideOverview } from "#/server/overview.ts";
 import { missionBits } from "#/workspace/agent-view.ts";
 import { useRefresh } from "#/workspace/context.ts";
 
-import { runDecision } from "./actions.ts";
+import { enqueueDecision } from "./actions.ts";
 import type { OverviewAgentView, OverviewData } from "./types.ts";
+import { type DecisionPatch, presentOverview } from "./view.ts";
 
 const column = "display: flex; flex-direction: column; gap: 24px";
 const header = "display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between";
@@ -93,35 +94,50 @@ const contents = "display: contents";
 export function OverviewPage({ data }: { readonly data: OverviewData }) {
 	const navigate = useNavigate();
 	const refresh = useRefresh();
-	const pending = useRef(false);
+	const [patches, setPatches] = useState<readonly DecisionPatch[]>([]);
+	const shown = presentOverview(data, patches);
+	const accept = (patch: DecisionPatch, work: (signal: AbortSignal) => Promise<unknown>) => {
+		const queued = enqueueDecision(patch.key, data.count, work, refresh, (result) => {
+			if (!result.wrote || result.refreshed) {
+				setPatches((current) => current.filter((item) => item.key !== patch.key));
+			}
+		});
+		if (queued) {
+			setPatches((current) => (current.some((item) => item.key === patch.key) ? current : [...current, patch]));
+		}
+	};
 	const decide = (id: string, ok: boolean) => {
-		void runDecision(pending, (signal) => decideOverview({ data: { id, ok }, signal }), refresh);
+		accept({ key: `spend:${id}`, kind: ok ? "spend-approve" : "spend-decline", id }, (signal) =>
+			decideOverview({ data: { id, ok }, signal }),
+		);
 	};
 	const decideMission = (id: string, ok: boolean) => {
-		void runDecision(pending, (signal) => decideMissionOverview({ data: { id, ok }, signal }), refresh);
+		accept({ key: `mission:${id}`, kind: ok ? "mission-approve" : "mission-revise", id }, (signal) =>
+			decideMissionOverview({ data: { id, ok }, signal }),
+		);
 	};
 	return (
 		<div data-if="isOverview" style={css(contents)}>
 			<div style={css(column)}>
 				<header style={css(header)}>
 					<div>
-						<h1 style={css(heading)}>{data.greeting}</h1>
+						<h1 style={css(heading)}>{shown.greeting}</h1>
 						<p style={css(sub)}>Last 7 days across the store and your squads. Figures are demo data.</p>
 						<p style={css(missionPill)}>
 							<span style={css(missionMark)}>Mission</span>
-							{data.mission}
+							{shown.mission}
 						</p>
 					</div>
 					<div style={css(pillRow)}>
 						<span style={css(demoPill)}>Demo data</span>
 						<span data-design-contrast="overview-online-pill" style={css(onlinePill)}>
-							{data.online}
+							{shown.online}
 						</span>
 					</div>
 				</header>
 				<section aria-label="Key numbers" style={css(tiles)}>
 					<div data-loop="kpis" data-loop-as="k" style={css(contents)}>
-						{data.tiles.map((item) => (
+						{shown.tiles.map((item) => (
 							<div key={item.label} style={css(tile)}>
 								<span style={css(tileLabel)}>{item.label}</span>
 								<span style={css(tileValue)}>{item.value}</span>
@@ -138,7 +154,7 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 						</div>
 						<div style={css(track)}>
 							<div data-loop="bars" data-loop-as="b" style={css(contents)}>
-								{data.bars.map((bar) => (
+								{shown.bars.map((bar) => (
 									<div
 										key={bar.title}
 										title={bar.title}
@@ -151,13 +167,13 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 						</div>
 						<div style={css(labels)}>
 							<div data-loop="bars" data-loop-as="b" style={css(contents)}>
-								{data.bars.map((bar) => (
+								{shown.bars.map((bar) => (
 									<span key={bar.title} style={css(dayLabel)}>
 										{bar.label}
 									</span>
 								))}
 							</div>
-							{data.bars.length === 0 ? <span style={css(dayLabel)}>{"\u00a0"}</span> : null}
+							{shown.bars.length === 0 ? <span style={css(dayLabel)}>{"\u00a0"}</span> : null}
 						</div>
 						<div style={css(legend)}>
 							<span style={css(legendItem)}>
@@ -173,10 +189,10 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 					<section aria-label="Needs you" style={css(inbox)}>
 						<div style={css(inboxHead)}>
 							<h2 style={css(h2)}>Needs your approval</h2>
-							<span style={css(count)}>{data.count}</span>
+							<span style={css(count)}>{shown.count}</span>
 						</div>
 						<div data-loop="missionProposals" data-loop-as="mp" style={css(contents)}>
-							{data.proposals.map((item, index) => (
+							{shown.proposals.map((item, index) => (
 								<div key={item.id} style={css(proposal)}>
 									<div style={css(row)}>
 										<span style={css(tint(item.tint))} />
@@ -184,11 +200,7 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 										<span style={css(badge)}>Mission</span>
 									</div>
 									<div style={css(title)}>{item.title}</div>
-									<div style={css(missionBody)}>
-										{item.mission.trim().length === 0
-											? "Mission pending. Your Master will propose one."
-											: item.mission}
-									</div>
+									<div style={css(missionBody)}>{blankText(item.mission)}</div>
 									<div style={css(chips)}>
 										<div
 											data-loop={index === 0 ? "mp.targetChips" : undefined}
@@ -231,7 +243,7 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 										<div data-if="mp.isRevising" style={css(contents)}>
 											<div style={css(revising)}>
 												<span style={css(orangeDot)} />
-												{revisingLine(data.masterName)}
+												{revisingLine(shown.masterName)}
 											</div>
 										</div>
 									) : null}
@@ -239,7 +251,7 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 							))}
 						</div>
 						<div data-loop="approvals" data-loop-as="ap" style={css(contents)}>
-							{data.approvals.map((item) => (
+							{shown.approvals.map((item) => (
 								<div key={item.id} style={css(approval)}>
 									<div style={css(row)}>
 										<span style={css(tint(item.tint))} />
@@ -272,9 +284,9 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 								</div>
 							))}
 						</div>
-						{data.empty ? (
+						{shown.empty ? (
 							<div data-if="noApprovals" style={css(contents)}>
-								<div style={css(empty)}>{data.emptyText}</div>
+								<div style={css(empty)}>{shown.emptyText}</div>
 							</div>
 						) : null}
 					</section>
@@ -295,11 +307,11 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 					</div>
 					<div style={css(grid)}>
 						<div data-loop="agents" data-loop-as="a" style={css(contents)}>
-							{data.agents.map((agent) => (
+							{shown.agents.map((agent) => (
 								<AgentCard
 									key={agent.id}
 									agent={agent}
-									masterName={data.masterName}
+									masterName={shown.masterName}
 									onOpen={() => void navigate({ to: "/agents/$id", params: { id: agent.id } })}
 								/>
 							))}

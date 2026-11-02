@@ -6,8 +6,8 @@ import { and, asc, eq } from "drizzle-orm";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
-import { readInventory, skipUnlessMacScreenshot, viewports, waitForScreenFonts } from "./support.ts";
-import { expect, generatedEvents, installLocalFonts, openWorkspace, test } from "./workspace.ts";
+import { readInventory, secretsFor, skipUnlessMacScreenshot, viewports, waitForScreenFonts } from "./support.ts";
+import { expect, generatedEvents, installLocalFonts, openWorkspace, test, type WorkspaceUser } from "./workspace.ts";
 
 const mission = "Never run out of a top-20 product and keep stock under 30 days of cover.";
 const revisingCopy = 'Master is writing a new proposal. The squad stays on "Mission pending".';
@@ -140,6 +140,110 @@ test("ask for another shows the revising text and lowers the count", async ({ pa
 	await expect(page.locator("main [data-loop='missionProposals'] > div")).toHaveCount(1);
 	await expect(page.locator("[data-if='dockUnread']")).toHaveText("3");
 	await expect(page.locator("main section[aria-label='Needs you'] h2 + span")).toHaveText("3");
+});
+
+test("a held Approve changes the card and the badge at the click", async ({ page, workspaceUser }) => {
+	const held = await clickHeld(page, workspaceUser, () =>
+		refundCard(page).getByRole("button", { name: "Approve", exact: true }).click(),
+	);
+	await expect(refundCard(page)).toHaveCount(0);
+	await expect(dockBadge(page)).toHaveText("3");
+	await expect(inboxCount(page)).toHaveText("3");
+	await expect.poll(held.posts).toBe(1);
+});
+
+test("a held Decline changes the card and the badge at the click", async ({ page, workspaceUser }) => {
+	const held = await clickHeld(page, workspaceUser, () =>
+		printsCard(page).getByRole("button", { name: "Decline", exact: true }).click(),
+	);
+	await expect(printsCard(page)).toHaveCount(0);
+	await expect(dockBadge(page)).toHaveText("3");
+	await expect(inboxCount(page)).toHaveText("3");
+	await expect.poll(held.posts).toBe(1);
+});
+
+test("a held Approve mission changes the card and the badge at the click", async ({ page, workspaceUser }) => {
+	const held = await clickHeld(page, workspaceUser, () =>
+		page.locator("main").getByRole("button", { name: "Approve mission", exact: true }).click(),
+	);
+	await expect(page.locator("main [data-loop='missionProposals'] > div")).toHaveCount(0);
+	await expect(page.locator("main [data-loop='agents'] > button").filter({ hasText: "Inventory" })).toContainText(
+		mission,
+	);
+	await expect(dockBadge(page)).toHaveText("3");
+	await expect.poll(held.posts).toBe(1);
+});
+
+test("a held Ask for another changes the card and the badge at the click", async ({ page, workspaceUser }) => {
+	const held = await clickHeld(page, workspaceUser, () =>
+		page.locator("main").getByRole("button", { name: "Ask for another", exact: true }).click(),
+	);
+	await expect(page.locator("main")).toContainText("Revised mission on its way");
+	await expect(page.locator("main")).toContainText(revisingCopy);
+	await expect(dockBadge(page)).toHaveText("3");
+	await expect.poll(held.posts).toBe(1);
+});
+
+test("a second card is sent after the first, in click order", async ({ page, workspaceUser }) => {
+	await openWorkspace(page, workspaceUser);
+	const held = await gatePosts(page, false);
+	await refundCard(page).getByRole("button", { name: "Approve", exact: true }).click();
+	await printsCard(page).getByRole("button", { name: "Decline", exact: true }).click();
+	await expect(refundCard(page)).toHaveCount(0);
+	await expect(printsCard(page)).toHaveCount(0);
+	await expect(dockBadge(page)).toHaveText("2");
+	await expect.poll(held.posts).toBe(1);
+	held.release();
+	await expect.poll(held.posts).toBe(2);
+	expect(held.bodies[0]).toContain("ap1");
+	expect(held.bodies[1]).toContain("ap2");
+});
+
+test("a double click approves once and the badge changes at the click", async ({ page, workspaceUser }) => {
+	const held = await clickHeld(page, workspaceUser, () =>
+		refundCard(page)
+			.getByRole("button", { name: "Approve", exact: true })
+			.evaluate((button) => {
+				button.click();
+				button.click();
+			}),
+	);
+	await expect(refundCard(page)).toHaveCount(0);
+	await expect(dockBadge(page)).toHaveText("3");
+	await expect.poll(held.posts).toBe(1);
+});
+
+test("a failed write restores the server and the queued card still sends", async ({ page, workspaceUser }) => {
+	await openWorkspace(page, workspaceUser);
+	const held = await gatePosts(page, true);
+	await refundCard(page).getByRole("button", { name: "Approve", exact: true }).click();
+	await printsCard(page).getByRole("button", { name: "Decline", exact: true }).click();
+	await expect(refundCard(page)).toHaveCount(0);
+	await expect(printsCard(page)).toHaveCount(0);
+	await expect(dockBadge(page)).toHaveText("2");
+	await expect.poll(held.posts).toBe(1);
+	held.release();
+	await expect(refundCard(page)).toHaveCount(1, settled);
+	await expect(printsCard(page)).toHaveCount(0);
+	await expect.poll(held.posts).toBe(2);
+	await expect(dockBadge(page)).toHaveText("3", settled);
+	expect(held.bodies[0]).toContain("ap1");
+	expect(held.bodies[1]).toContain("ap2");
+});
+
+test("an empty proposal mission shows an em dash", async ({ page, workspaceUser, accountId }) => {
+	const postgres = openPostgres(secretsFor(["testDatabase"]).testDatabase);
+	try {
+		await postgres.db
+			.update(schema.missionProposals)
+			.set({ mission: "" })
+			.where(eq(schema.missionProposals.accountId, accountId));
+	} finally {
+		await postgres.close();
+	}
+	await openWorkspace(page, workspaceUser);
+	await expect(page.locator("main [data-loop='missionProposals']")).toContainText("—");
+	await expect(page.locator("main")).not.toContainText("Your Master will propose one.");
 });
 
 test("see squad traffic and each card open their pages", async ({ page, workspaceUser }) => {
@@ -393,6 +497,55 @@ async function stitch(page: Page, design: Buffer, build: Buffer, file: string) {
 	} finally {
 		await board.close();
 	}
+}
+
+function refundCard(page: Page) {
+	return page.locator("main [data-loop='approvals'] > div").filter({ hasText: "Refund $42" });
+}
+
+function printsCard(page: Page) {
+	return page.locator("main [data-loop='approvals'] > div").filter({ hasText: "Raise prints" });
+}
+
+function dockBadge(page: Page) {
+	return page.locator("[data-if='dockUnread']");
+}
+
+function inboxCount(page: Page) {
+	return page.locator("main section[aria-label='Needs you'] h2 + span");
+}
+
+async function gatePosts(page: Page, failFirst: boolean) {
+	const bodies: string[] = [];
+	let release = () => {};
+	const gate = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	await page.route("**/*", async (route) => {
+		const request = route.request();
+		if (request.method() !== "POST" || !request.url().startsWith("http://localhost:3000")) {
+			await route.continue();
+			return;
+		}
+		bodies.push(request.postData() ?? "");
+		if (failFirst && bodies.length === 1) {
+			await gate;
+			await route.fulfill({ status: 500, contentType: "text/plain", body: "no" });
+			return;
+		}
+		if (!failFirst) {
+			await gate;
+		}
+		await route.continue();
+	});
+	return { bodies, posts: () => bodies.length, release };
+}
+
+async function clickHeld(page: Page, user: WorkspaceUser, click: () => Promise<void>) {
+	await openWorkspace(page, user);
+	const held = await gatePosts(page, false);
+	await click();
+	return held;
 }
 
 async function mandateFor(accountId: string, approvalId: string) {
