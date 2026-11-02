@@ -7,50 +7,52 @@ import { schema } from "./schema.ts";
 
 export type AppDatabase = PgliteDatabase<typeof schema> | NeonDatabase<typeof schema>;
 
+function singleQuoteEnd(script: string, index: number): number {
+	index += 1;
+	while (index < script.length) {
+		if (script.startsWith("''", index)) {
+			index += 2;
+			continue;
+		}
+		if (script[index] === "'") return index + 1;
+		index += 1;
+	}
+	return index;
+}
+
+function dollarQuoteEnd(script: string, index: number): number | null {
+	const tag = /^\$[A-Za-z0-9_]*\$/.exec(script.slice(index));
+	if (!tag) return null;
+	const end = script.indexOf(tag[0], index + tag[0].length);
+	return end === -1 ? script.length : end + tag[0].length;
+}
+
+function statementEnd(script: string, index: number): number | null {
+	const end = /^;\s*(?:\n|$)/.exec(script.slice(index));
+	return end ? index + end[0].length : null;
+}
+
 // Semicolons inside dollar quotes belong to the function body. A statement ends at a
 // semicolon that is outside quotes and is followed by a newline or the end of the script.
 export function migrationStatements(script: string): readonly string[] {
 	const statements: string[] = [];
 	let start = 0;
 	let index = 0;
-	let quote: "'" | null = null;
-	let dollar: string | null = null;
 	while (index < script.length) {
-		const rest = script.slice(index);
-		if (dollar) {
-			if (rest.startsWith(dollar)) {
-				index += dollar.length;
-				dollar = null;
-				continue;
-			}
-			index += 1;
-			continue;
-		}
-		if (quote) {
-			if (rest.startsWith("''")) {
-				index += 2;
-				continue;
-			}
-			if (script[index] === "'") quote = null;
-			index += 1;
-			continue;
-		}
 		if (script[index] === "'") {
-			quote = "'";
-			index += 1;
+			index = singleQuoteEnd(script, index);
 			continue;
 		}
-		const tag = /^\$[A-Za-z0-9_]*\$/.exec(rest);
-		if (script[index] === "$" && tag) {
-			dollar = tag[0];
-			index += tag[0].length;
+		const dollarEnd = dollarQuoteEnd(script, index);
+		if (dollarEnd !== null) {
+			index = dollarEnd;
 			continue;
 		}
-		const end = /^;\s*(?:\n|$)/.exec(rest);
-		if (end) {
+		const end = statementEnd(script, index);
+		if (end !== null) {
 			const statement = script.slice(start, index).trim();
 			if (statement.length > 0) statements.push(statement);
-			index += end[0].length;
+			index = end;
 			start = index;
 			continue;
 		}
