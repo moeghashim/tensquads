@@ -1,0 +1,11 @@
+CLI missing file: exit 1; stderr: CLOUDFLARE_WORKERS_API_TOKEN is absent.; no child started despite conflicting shell credentials.
+CLI missing key: exit 1; stderr: CLOUDFLARE_WORKERS_API_TOKEN is absent.; no child started despite conflicting shell credentials.
+CLI empty: exit 1; stderr: CLOUDFLARE_WORKERS_API_TOKEN is absent.; no child started despite conflicting shell credentials.
+CLI spaces: exit 1; stderr: CLOUDFLARE_WORKERS_API_TOKEN is absent.; no child started despite conflicting shell credentials.
+CLI double-quoted spaces: exit 1; stderr: CLOUDFLARE_WORKERS_API_TOKEN is absent.; no child started despite conflicting shell credentials.
+CLI single-quoted whitespace: exit 1; stderr: CLOUDFLARE_WORKERS_API_TOKEN is absent.; no child started despite conflicting shell credentials.
+Controlled child boundary: node -> wrangler.js deploy; cwd apps/web; project .env token selected; all nine conflicting aliases removed; CI=true; no token printed. This is boundary evidence, not a live Cloudflare deploy.
+Controlled child failure: wrapper preserves child exit status 17.
+Normalized Wrangler config: account_id=678c5a795f40f7e9f33b8a71248cc829; worker=tensquads.
+Controlled npm entry: deploy:cloudflare -> cf:deploy -> vite build -> deploy wrapper -> child recorder.
+Controlled npm build failure: nonzero status; deploy child never starts.
