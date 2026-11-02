@@ -291,7 +291,8 @@ test("a later frame shows a server on change after an accepted off write", async
 }) => {
 	await openAgent(page, workspaceUser, "support");
 	await squadSwitch(page).click();
-	await expect(supportDot(page, "Paused")).toBeVisible();
+	await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(false);
+	await expect(supportDot(page, "Paused")).toBeVisible(settled);
 	await page
 		.getByRole("navigation", { name: "Workspace" })
 		.getByRole("button", { name: "Squad traffic", exact: true })
