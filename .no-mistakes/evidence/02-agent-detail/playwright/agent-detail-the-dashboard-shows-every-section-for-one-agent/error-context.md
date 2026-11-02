@@ -7,7 +7,7 @@
 # Test info
 
 - Name: agent-detail.spec.ts >> the dashboard shows every section for one agent
-- Location: e2e/agent-detail.spec.ts:45:1
+- Location: e2e/agent-detail.spec.ts:53:1
 
 # Error details
 

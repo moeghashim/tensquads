@@ -1,0 +1,6 @@
+Local Vite product started on http://localhost:3000.
+Headless Chromium navigation to /agents/support returned HTTP 200 after redirect to /signin. Screenshot: agent-detail-access-blocked.png
+Targeted Playwright dashboard test stopped in workspaceUser setup: publishable, secret, testDatabase is missing.
+localSecrets presence check: Clerk publishable=false, Clerk secret=false, testDatabase=false.
+Docker CLI is available, but its daemon is unavailable. Local initdb is available; a local database cannot supply a Clerk session. No authentication bypass was used.
+Provide disposable Clerk development credentials (CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY) and an isolated TEST_DATABASE_URL to rerun the real dashboard tests.
