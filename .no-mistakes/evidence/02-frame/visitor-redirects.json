@@ -1,37 +1,37 @@
 [
   {
     "requested": "/overview",
-    "final": "/signin",
+    "reached": "/signin",
     "status": 200,
     "title": "Sign in"
   },
   {
     "requested": "/chat",
-    "final": "/signin",
+    "reached": "/signin",
     "status": 200,
     "title": "Sign in"
   },
   {
     "requested": "/agents",
-    "final": "/signin",
+    "reached": "/signin",
     "status": 200,
     "title": "Sign in"
   },
   {
     "requested": "/agents/support",
-    "final": "/signin",
+    "reached": "/signin",
     "status": 200,
     "title": "Sign in"
   },
   {
     "requested": "/traffic",
-    "final": "/signin",
+    "reached": "/signin",
     "status": 200,
     "title": "Sign in"
   },
   {
     "requested": "/rules",
-    "final": "/signin",
+    "reached": "/signin",
     "status": 200,
     "title": "Sign in"
   }
