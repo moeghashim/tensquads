@@ -1,3 +1,6 @@
+import { eq } from "drizzle-orm";
+
+import { workspaceTransaction } from "./lock.ts";
 import type { AppDatabase } from "./postgres.ts";
 import {
 	accounts,
@@ -5,6 +8,7 @@ import {
 	agents,
 	approvals,
 	bugs,
+	busCursors,
 	busEvents,
 	dailyRevenue,
 	featureRequests,
@@ -44,13 +48,13 @@ export async function saveWorkspace(db: AppDatabase, snapshot: WorkspaceSnapshot
 		await tx.delete(squads);
 		await tx.delete(masters);
 		await tx.delete(rules);
-		await tx.delete(approvals);
 		await tx.delete(missionProposals);
 		await tx.delete(busEvents);
 		await tx.delete(stateEntries);
 		await tx.delete(dailyRevenue);
 		await tx.delete(overviewTiles);
 		await tx.delete(subscriptions);
+		await tx.delete(busCursors);
 		await tx.delete(accounts);
 		await tx.delete(bugs);
 		await tx.delete(featureRequests);
@@ -129,6 +133,7 @@ async function insertAccount(
 		name: account.name,
 		owner: account.owner,
 		email: account.email,
+		clerkUserId: entry.clerkUserId ?? null,
 		tint: account.tint,
 		agents: account.agents,
 		online: account.online,
@@ -158,6 +163,12 @@ async function insertAccount(
 		);
 	}
 	await db.insert(masters).values({ accountId: account.id, name: entry.masterName, sortOrder: accountIndex });
+	await db.insert(busCursors).values({
+		accountId: account.id,
+		seq: 100,
+		clock: 11 * 60 + 2,
+		scriptIndex: 0,
+	});
 
 	await insertAgents(db, entry, accountIndex);
 	await insertActivity(db, entry, accountIndex);
@@ -333,6 +344,29 @@ async function insertMetrics(
 			tiles: entry.tiles,
 		});
 	}
+}
+
+export async function writeAccount(db: AppDatabase, entry: AccountSnapshot): Promise<void> {
+	const id = entry.account.id;
+	await workspaceTransaction(db, async (tx) => {
+		await tx.delete(messages).where(eq(messages.accountId, id));
+		await tx.delete(threads).where(eq(threads.accountId, id));
+		await tx.delete(skills).where(eq(skills.accountId, id));
+		await tx.delete(machines).where(eq(machines.accountId, id));
+		await tx.delete(agents).where(eq(agents.accountId, id));
+		await tx.delete(squads).where(eq(squads.accountId, id));
+		await tx.delete(masters).where(eq(masters.accountId, id));
+		await tx.delete(rules).where(eq(rules.accountId, id));
+		await tx.delete(missionProposals).where(eq(missionProposals.accountId, id));
+		await tx.delete(busEvents).where(eq(busEvents.accountId, id));
+		await tx.delete(stateEntries).where(eq(stateEntries.accountId, id));
+		await tx.delete(dailyRevenue).where(eq(dailyRevenue.accountId, id));
+		await tx.delete(overviewTiles).where(eq(overviewTiles.accountId, id));
+		await tx.delete(subscriptions).where(eq(subscriptions.accountId, id));
+		await tx.delete(busCursors).where(eq(busCursors.accountId, id));
+		await tx.delete(accounts).where(eq(accounts.id, id));
+		await insertAccount(tx, entry, 0);
+	});
 }
 
 async function insertMessages(

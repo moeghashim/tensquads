@@ -15,8 +15,12 @@ const designContrastFaults = [
 	"signup-terms",
 ] as const;
 
-export async function accessibilityViolations(page: Page) {
-	const full = await new AxeBuilder({ page }).analyze();
+export async function accessibilityViolations(page: Page, disabledRules: readonly string[] = []) {
+	const scan = new AxeBuilder({ page });
+	if (disabledRules.length > 0) {
+		scan.disableRules([...disabledRules]);
+	}
+	const full = await scan.analyze();
 	const contrast = new AxeBuilder({ page }).withRules(["color-contrast"]);
 	for (const name of designContrastFaults) {
 		contrast.exclude(`[data-design-contrast="${name}"]`);

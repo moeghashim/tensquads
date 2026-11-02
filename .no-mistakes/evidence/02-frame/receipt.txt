@@ -1,0 +1,51 @@
+Task 02-frame receipt
+Branch: 02-frame
+Base: 4272d456a32f6e581d2cddf225bbd49cbae1abdb
+
+Files read, SHA-256:
+
+08bc149b95c08cf2c725f1f9fd1aed63200f903a39e9346c6ed622ae4dd16e38  AGENTS.md
+08bc149b95c08cf2c725f1f9fd1aed63200f903a39e9346c6ed622ae4dd16e38  CLAUDE.md
+e572ba0ce506896949484f630d495c3377b5e958c47ddaee2bb0a03426cc694d  docs/PLAN.md
+26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
+e9b98fb05d8c2c6e07879eb53d94ce79e9fa1115d719ef02b4c5cadc58840290  docs/foundation.md
+376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89  design/Main.dc.html
+deccce08d6932c707935dd44be6fd089e3a27d9c514e067d576129632117d5ec  design/inventory/Main.json
+318f8cf0d42396656424f2c40df8a2f67601130b83801f5c30aa5a47e8837e6b  apps/web/src/design/OVERRIDES.md
+8b1be29de89540c0c4bc55df50221380154ac5919a425537fcc6c4cc86a19168  e2e/support.ts
+e5bfc5924dc6091b2683342a8d33e58187456c20f838f47144a1af52cc2ce3b6  e2e/session.spec.ts
+3ec17378286eec22c628aab78d88ce669fc502a0ad8ef709e22e47ae8b5d3201  apps/web/src/server/session.ts
+f37fcee921ee0b6ef1e066f7b11158a8c2e1d0dd276dee414673005cceaaa50f  apps/web/src/server/create-account.ts
+0df8aaba24ce4aa7264701887d83c097d89993237736612cb835036117ef36b8  packages/adapters/src/neon/create-workspace.ts
+ffab4eab11e7ac7bc14852768e4cda2a89e200de72614f63ab52e87c4d1b2143  tasks/02-frame.md
+1bf4d4106e0c716f12c118462a2fd5a903ec39f804c9e9f21089bf46a9a594a3  tasks/02-overview.md
+dfa46241022a43e52a760cf3f326f88ce916f702a85d8f480bff33d54416cd51  tasks/02-chat.md
+b41eaddefc83bbdbf6ac128055892f5891bac3ea52e1197cbc62a7845eaaeff6  tasks/02-agents.md
+1e338667967a84034ac250f315719511f1dc32eed74d5e9187ae3c550641dded  tasks/02-agent-detail.md
+65ccf4b8c789d786fdad82327a95e4664cb96831f3301ffda818b66a94bde7ba  tasks/02-traffic.md
+b7bec39dcac7b93b0e70ef946e8d51b8e2b76ead4508b76e35e91f441e4b259c  tasks/02-rules.md
+0231a0b6d202a50cbcfd6635c464dd0c8a48228bf6eacebdfa1236dfd1a84894  tasks/03-super-admin.md
+aeedd5bb20054e45199e5f4a63fdb99d83242106767f9addf863869fcb887a2e  tasks/04-machine-trial.md
+ca27a616c64f6107b7465e0520181c14f23c41e3e9ef54bb07d27334d384fc4f  docs/handoffs/poc-squad-repos.md
+
+node scripts/design-check.mjs
+OK   Accounts.dc.html
+OK   AgentDetail.dc.html
+OK   AgentImages.dc.html
+OK   Agents.dc.html
+OK   Chat.dc.html
+OK   Home.dc.html
+OK   Main.dc.html
+OK   Onboarding.dc.html
+OK   Rules.dc.html
+OK   SignIn.dc.html
+OK   Traffic.dc.html
+OK   canvas.json
+OK   ds/agent-ui/tokens.json
+canvas https://claude.ai/artifact/B7seDz5psECQTerDG6rfy4 version 1793448823-a766, pulled 2026-10-31
+design/ matches the canvas.
+exit 0
+
+Decisions 1 to 28 read. No question.
+
+Unmapped brief or design lines: none. The frame task covers the sidebar, the agent rows, the user footer, and the chat dock. Screen content stays in the screen tasks. Phase 3 covers the admin sidebar and "All companies". Phase 4 covers the Durable Object bus.

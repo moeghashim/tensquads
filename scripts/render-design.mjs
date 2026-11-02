@@ -11,6 +11,11 @@ const linkMap = {
 };
 
 export async function renderDesign(page, design, state = {}, approval = {}) {
+	const html = await renderDesignMarkup(page, design, state, approval);
+	return inventoryHtml(html);
+}
+
+export async function renderDesignMarkup(page, design, state = {}, approval = {}) {
 	const source = readFileSync(new URL(`../design/${design.file}`, import.meta.url), "utf8");
 	assert.deepEqual(designInventory(design.file, source), design);
 	const html = await page.evaluate(
@@ -37,6 +42,7 @@ export async function renderDesign(page, design, state = {}, approval = {}) {
 				new Function(...Object.keys(scope), `return (${expression});`)(...Object.values(scope));
 			const expression = (node, attr) => node.getAttribute(attr).slice(2, -2);
 			const markLoop = (node, result) => {
+				result.style.setProperty("display", "contents");
 				if (marked.has(node)) return;
 				result.dataset.loop = expression(node, "list");
 				result.dataset.loopAs = node.getAttribute("as");
@@ -64,6 +70,7 @@ export async function renderDesign(page, design, state = {}, approval = {}) {
 				}
 			};
 			const markCondition = (node, result) => {
+				result.style.setProperty("display", "contents");
 				if (marked.has(node)) return;
 				result.dataset.if = expression(node, "value");
 				marked.add(node);
@@ -123,5 +130,5 @@ export async function renderDesign(page, design, state = {}, approval = {}) {
 			approval,
 		},
 	);
-	return inventoryHtml(html);
+	return html;
 }

@@ -40,6 +40,7 @@ The build brief had 11 open questions. Moe answered all of them on 31 October 20
 | 26 | Where the site preview appears | A link in the chat only. No new screen or panel |
 | 27 | Tints for the two new agents | Market researcher #fde2f3, Website builder #e5e9f0. Added to the token list |
 | 28 | Proof of concept: the business type | Restaurants or grocers. For a restaurant, the Website builder makes a menu page: top design and UX, with a cultural touch when the restaurant is cultural. For a grocer, it makes a one-page list of the items |
+| 32 | Borrowed from dsh-superagent | Four things from github.com/deepseek-ai/dsh-superagent-prototype, decided on 2 November 2026. (1) Inbound events use the names Source, Trigger and Eval; Eval is a code gate plus a Decider judgement. (2) Each Approval records a Mandate: the rule it matched, the limit at that time, the policy version and who said yes. (3) The Agent loop state model gains Waiting, Blocked and Dropped. (4) The plan keeps a Rejected concepts table |
 
 No question is open. Moe answered items 13 to 15 on 31 October 2026. The web framework changed from Next.js to TanStack Start the same day. TanStack Start reached version 1.0 on 13 October 2026. Its server build is a plain fetch handler, so it runs on a Worker with no adapter. Cloudflare is an official hosting partner. Clerk has an official SDK for it.&#32;
 
@@ -151,6 +152,28 @@ Every task carries a check that code can run, for example "order A-1007 has a tr
 | No check possible | The task needs a yes from the owner before it starts. It goes to the inbox as an Approval | The Approve and Decline buttons |
 
 The `success` number on the agent dashboard is the ratio of passed checks. The system computes it; it does not store it.
+
+**Borrowed from dsh-superagent (decision 32).** DeepSeek's dsh-superagent prototype is a coding agent for one repository, built on cordis, with a main session and one executor per work item. Four of its ideas go into tensquads:
+
+- Source, Trigger, Eval. An inbound event (a monitor alert, a webhook from a store, a message) is a Trigger from a Source. Eval decides whether it starts work: first a code gate (who may ask, which rule allows it), then a Decider judgement. The user's chat message is a Source too, with a gate that always passes for the account owner.
+- Mandate. Every Approval records: the rule it matched, the limit at that time, the policy version, and who said yes. A Mandate is immutable. A later change to a rule never changes a Mandate. This makes "an update never changes limits" (decision 18) a rule TLC can prove against history.
+- Report states. The Agent loop gains Waiting (nothing to do now, keep the machine), Blocked (a person must act; the machine slot is free) and Dropped (nothing to do at all; ends with no message unless a rule asks for one).
+- Rejected concepts. The table below. An agent that proposes one of these must cite the row and say why the reason no longer holds.
+
+Rejected concepts:
+
+| Rejected | Reason |
+| --- | --- |
+| A customer may pin an agent version | Decision 18: everyone moves to Stable |
+| The master runs on a boat.dev machine | Decision 17: boat.dev publishes no uptime promise. The master core runs on Cloudflare |
+| Agents write to Neon | Decision 16: the Durable Object is the only writer |
+| The agent grades its own result | Decision 20: the master runs a check that code runs |
+| A second database in version 1 (ClickHouse, D1) | Decision 31: Neon answers every version 1 question |
+| Next.js on Workers through an adapter | Decision 1: TanStack Start runs on a Worker with no adapter |
+| A hosted Clerk sign-in page | Decision 13: Clerk elements with the design tokens |
+| A screen, state or copy the design does not show | The brief: ask, never design |
+| A "person" entity in the domain | A person is who sent a Trigger; an allowed list is part of the Policy. Clerk holds the account, not the domain |
+| The builder invents a dish, an item or a price | Decision 28: the user's list is the only source |
 
 ## Repository and tools
 
@@ -268,7 +291,7 @@ The system has eight state machines. We write a TLA+ model for each one before w
 | Sign-up | Type, Details, Squad, Created | New pre-selects Marketing, Orders, Support. Existing pre-selects Orders, Support, Finance, Inventory. Zero agents blocks Create. Back goes one step. Create makes one account, one squad, N agents, one master and default limits | 2 |
 | Chat and dock | Idle, Working, Replied | `send()` shows the user bubble, then the working line, then the master reply, then one bus event. The dock and the page share one thread and one draft. The dock is hidden on the chat page and on admin pages | 4, dock |
 | Image release | Draft, Beta, Stable, Needs attention | The attention badge equals the count of "Needs attention" images. "On latest" shows onLatest of deployed, or "Not deployed yet". "Roll out" does nothing in version 1. Later: an update never changes limits, rules, autonomy or keys. A rollout stops after two failed health checks. Every Stable account runs the same version | 10 |
-| Agent loop | Waiting, Planning, Running skill, Checking, Done, Sent back, Escalated | A task reaches Done only through Checking with a pass. A second fail always reaches Escalated. A skill with gate Ask first never runs before an Approval. The agent holds no task state outside the bus | 6, 7 |
+| Agent loop | Waiting, Planning, Running skill, Checking, Done, Sent back, Blocked, Escalated, Dropped | A task reaches Done only through Checking with a pass. A second fail always reaches Escalated. Blocked means the agent waits for a person and holds no machine slot. Dropped means there was nothing to do, and it ends with no message unless a rule asks for one. A skill with gate Ask first never runs before an Approval. An Approval always carries a Mandate. The agent holds no task state outside the bus | 6, 7 |
 
 Each chart uses the words from the design, for example "Paused" and "Nothing waiting". A reader sees the product, not the code. When TLC finds a path that breaks a rule, the builder agent first writes a Playwright test for that path. If the test cannot show the bug, the model is wrong. Correct the model first.
 

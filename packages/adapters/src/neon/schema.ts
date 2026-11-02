@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
+import { boolean, foreignKey, integer, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 
 // Column names that cannot be the design field: is_on (on), last_text (last), description (desc),
 // time_text (time), from_agent (from), to_agent (to), body (text), from_role (from), rule_when (when).
@@ -110,12 +110,22 @@ export const skills = pgTable(
 	(table) => [primaryKey({ columns: [table.accountId, table.agentId, table.id] })],
 );
 
+export const busCursors = pgTable("bus_cursors", {
+	accountId: text("account_id")
+		.primaryKey()
+		.references(() => accounts.id),
+	seq: integer("seq").notNull(),
+	clock: integer("clock").notNull(),
+	scriptIndex: integer("script_index").notNull(),
+});
+
 export const busEvents = pgTable(
 	"bus_events",
 	{
 		accountId: text("account_id").notNull(),
 		id: text("id").notNull(),
 		timeText: text("time_text").notNull(),
+		occurredAt: timestamp("occurred_at", { withTimezone: true }),
 		fromAgent: text("from_agent").notNull(),
 		toAgent: text("to_agent").notNull(),
 		kind: text("kind").notNull(),
@@ -168,6 +178,34 @@ export const approvals = pgTable(
 		sortOrder: integer("sort_order").notNull(),
 	},
 	(table) => [primaryKey({ columns: [table.accountId, table.id] })],
+);
+
+// One Mandate per Approval. The row is a copy of the rule at the moment a person says yes.
+// Pending and Declined approvals have no row. The repository has no update.
+// The database trigger rejects UPDATE and a direct DELETE. Account removal cascades the row.
+export const mandates = pgTable(
+	"mandates",
+	{
+		accountId: text("account_id")
+			.notNull()
+			.references(() => accounts.id, { onDelete: "cascade" }),
+		approvalId: text("approval_id").notNull(),
+		ruleId: text("rule_id").notNull(),
+		ruleWhen: text("rule_when").notNull(),
+		ruleAction: text("rule_action").notNull(),
+		ruleApproval: text("rule_approval").notNull(),
+		limitValue: integer("limit_value").notNull(),
+		policyVersion: text("policy_version").notNull(),
+		saidYes: text("said_yes").notNull(),
+		saidAt: timestamp("said_at", { withTimezone: true }).notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.accountId, table.approvalId] }),
+		foreignKey({
+			columns: [table.accountId, table.approvalId],
+			foreignColumns: [approvals.accountId, approvals.id],
+		}).onDelete("cascade"),
+	],
 );
 
 export const missionProposals = pgTable(
@@ -270,10 +308,12 @@ export const schema = {
 	agents,
 	machines,
 	skills,
+	busCursors,
 	busEvents,
 	stateEntries,
 	rules,
 	approvals,
+	mandates,
 	missionProposals,
 	dailyRevenue,
 	overviewTiles,

@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS rules (
 );
 
 CREATE TABLE IF NOT EXISTS approvals (
-  account_id text NOT NULL REFERENCES accounts (id),
+  account_id text NOT NULL REFERENCES accounts (id) ON DELETE CASCADE,
   id text NOT NULL,
   agent text NOT NULL,
   title text NOT NULL,
@@ -230,6 +230,7 @@ ALTER TABLE masters ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT
 ALTER TABLE agents ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
 ALTER TABLE machines ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
 ALTER TABLE skills ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
+ALTER TABLE bus_events ADD COLUMN IF NOT EXISTS occurred_at timestamptz;
 ALTER TABLE bus_events ADD COLUMN IF NOT EXISTS seq integer NOT NULL DEFAULT 0;
 ALTER TABLE state_entries ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
 ALTER TABLE state_entries ALTER COLUMN value TYPE text USING value::text;
@@ -244,4 +245,67 @@ ALTER TABLE bugs ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
 ALTER TABLE feature_requests ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
 ALTER TABLE accounts ADD COLUMN IF NOT EXISTS clerk_user_id text;
 CREATE UNIQUE INDEX IF NOT EXISTS accounts_clerk_user_id_key ON accounts (clerk_user_id);
+
+CREATE TABLE IF NOT EXISTS bus_cursors (
+  account_id text PRIMARY KEY REFERENCES accounts (id),
+  seq integer NOT NULL,
+  clock integer NOT NULL,
+  script_index integer NOT NULL
+);
+
+INSERT INTO threads (account_id, id, sort_order)
+SELECT account_id, 'dock', 0 FROM (
+  SELECT account_id FROM threads WHERE id = 'main'
+  UNION
+  SELECT account_id FROM messages WHERE thread_id = 'main'
+) AS main_rows
+WHERE NOT EXISTS (
+  SELECT 1 FROM threads AS existing
+  WHERE existing.account_id = main_rows.account_id AND existing.id = 'dock'
+);
+
+UPDATE messages SET thread_id = 'dock' WHERE thread_id = 'main';
+
+DELETE FROM threads WHERE id = 'main';
+
+CREATE TABLE IF NOT EXISTS mandates (
+  account_id text NOT NULL REFERENCES accounts (id) ON DELETE CASCADE,
+  approval_id text NOT NULL,
+  rule_id text NOT NULL,
+  rule_when text NOT NULL,
+  rule_action text NOT NULL,
+  rule_approval text NOT NULL,
+  limit_value integer NOT NULL,
+  policy_version text NOT NULL,
+  said_yes text NOT NULL,
+  said_at timestamptz NOT NULL,
+  PRIMARY KEY (account_id, approval_id),
+  FOREIGN KEY (account_id, approval_id) REFERENCES approvals (account_id, id) ON DELETE CASCADE
+);
+
+-- A Mandate never changes. UPDATE always raises. DELETE raises while the account row remains.
+CREATE OR REPLACE FUNCTION mandates_never_change() RETURNS trigger
+LANGUAGE plpgsql
+AS $mandates_never_change$
+BEGIN
+  IF TG_OP = 'UPDATE' THEN
+    RAISE EXCEPTION 'A Mandate never changes.';
+  END IF;
+  IF EXISTS (SELECT 1 FROM accounts WHERE id = OLD.account_id) THEN
+    RAISE EXCEPTION 'A Mandate never changes.';
+  END IF;
+  RETURN OLD;
+END;
+$mandates_never_change$;
+
+DROP TRIGGER IF EXISTS mandates_never_change ON mandates;
+CREATE TRIGGER mandates_never_change
+  BEFORE UPDATE OR DELETE ON mandates
+  FOR EACH ROW
+  EXECUTE FUNCTION mandates_never_change();
+
+ALTER TABLE approvals DROP CONSTRAINT IF EXISTS approvals_account_id_fkey;
+ALTER TABLE approvals
+  ADD CONSTRAINT approvals_account_id_fkey
+  FOREIGN KEY (account_id) REFERENCES accounts (id) ON DELETE CASCADE;
 `;

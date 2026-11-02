@@ -1,3 +1,5 @@
+import type { ConversationRepository } from "@tensquads/domain";
+
 // The five ports. Step 6 supplies every adapter except Decider.
 // Decider stays without an adapter in version 1.
 
@@ -63,9 +65,7 @@ export interface Repositories {
 	readonly catalog: {
 		listImages(scope: AccountScope): Promise<readonly unknown[]>;
 	};
-	readonly conversation: {
-		thread(scope: AccountScope): Promise<unknown>;
-	};
+	readonly conversation: ConversationRepository;
 }
 
 export interface Decision {

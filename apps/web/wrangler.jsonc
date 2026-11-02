@@ -1,6 +1,8 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "tensquads",
+	// Project account. Deploy only through scripts/deploy-cloudflare.mjs.
+	"account_id": "678c5a795f40f7e9f33b8a71248cc829",
 	"compatibility_date": "2026-10-23",
 	"compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env"],
 	"main": "@tanstack/react-start/server-entry",

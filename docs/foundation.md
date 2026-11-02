@@ -8,7 +8,7 @@ Use Node 24 from `.nvmrc` and npm 11.19.1 from `package.json`. Run `npm ci` from
 
 `npm run dev -w @tensquads/web` serves `http://localhost:3000`. The only route is `/`, with an empty `main` element and the document title `tensquads`. It does not import tokens or icons, call the kernel, or use service credentials. Clerk is provisioned in `.projects/state.json`; its SDK and sign-in flow are not implemented.
 
-Use `npm run build:cloudflare` to build, `npm run preview:cloudflare` to build and run Wrangler locally, and `npm run deploy:cloudflare` to build and deploy from an authenticated local session. `apps/web/wrangler.jsonc` defines one Worker with `nodejs_compat` and observability enabled. It has no Durable Object or Queue binding. Use `npm run typegen:cloudflare` after binding changes. CI builds but does not deploy.
+Use `npm run build:cloudflare` to build and `npm run preview:cloudflare` to build and run Wrangler locally. Deploy only through `npm run deploy:cloudflare`. That command runs `scripts/deploy-cloudflare.mjs`. The script reads `CLOUDFLARE_WORKERS_API_TOKEN` from `.env` and sets `CLOUDFLARE_API_TOKEN` for that one command. It stops when the token is absent. It then migrates against `NEON_POSTGRES_CONNECTION_STRING` and stops if that migration fails. It deploys only after the migration finishes. It does not print the connection string. It does not use a Wrangler OAuth login. `apps/web/wrangler.jsonc` pins `account_id` and defines one Worker with `nodejs_compat` and observability enabled. It has no Durable Object or Queue binding. Use `npm run typegen:cloudflare` after binding changes. CI builds but does not deploy.
 
 For existing service access, run `stripe projects env --pull` from the repository root with the Stripe Projects CLI. The service slugs are `cloudflare/workers`, `neon/postgres`, and `clerk/auth`. `.projects/state.json` is committed. `.env`, `.env.*` (except `.env.example`), `.projects/vault`, and local Projects state are ignored. There is no committed `.env.example`. Local tests do not need these services.
 
@@ -37,7 +37,7 @@ The four package workspaces export TypeScript source through their package names
 
 `openPostgres(connectionString)` uses Drizzle with the Neon serverless driver (`@neondatabase/serverless` 1.2.0) and a pool of one connection. It returns `{ db, migrate, close }`. `migrate()` runs every statement in `packages/adapters/src/neon/migration-sql.ts`. That module is the same text as `migration.sql`, and the Worker bundle includes the text. The package entry does not read the filesystem and does not import PGlite. Call `migrate()` before the seed and close the connection when finished. `openPglite()` is `packages/adapters/test/pglite.ts`. Tests import that file. It is not exported from `@tensquads/adapters`. It creates an in-memory database, applies the same SQL, and returns `{ db, close }`. PGlite is not the Neon seed driver. The schema is `packages/adapters/src/neon/schema.ts`. The migration creates a missing table and adds `sort_order`, or `seq` on `bus_events`, when the table already exists. `state_entries.value` is text. Each stored value is `JSON.stringify` of the design value, and `readStore` uses `JSON.parse`, so a string, a number, a boolean, an array, and an object come back as that same type. The design value `'["Black hoodie M","A3 frame"]'` stays a string.
 
-`createRepositories(db)` returns six read repositories. Every call requires an `AccountScope`:
+`createRepositories(db)` returns six repositories, including the Conversation transaction used by the send path. Every repository call requires an `AccountScope`:
 
 ```ts
 import { createRepositories } from '@tensquads/adapters';
@@ -62,7 +62,11 @@ Plans, agent images, bugs, and feature requests are shared platform data. They h
 | `catalog` | `listImages`, `counts` |
 | `conversation` | `thread` |
 
-`overviewTiles` returns `null` for platform scope or an account without tiles. `master` and `thread` return `null` for platform scope or a missing row. Every list read sorts by `sort_order` ascending. `listEvents` sorts by `seq`, the sequence number, not by time. `saveWorkspace` assigns those numbers from the design array index, so the read order is the design order. `overviewTiles` is one jsonb array, so its order is the array order. `listApprovals` and `listMissionProposals` include decided rows; `inbox` filters them for display. These repositories do not persist domain decisions.
+`overviewTiles` returns `null` for platform scope or an account without tiles. `master` and `thread` return `null` for platform scope or a missing row. Every list read sorts by `sort_order` ascending. `listEvents` sorts by `seq`, the sequence number, not by time. `saveWorkspace` assigns those numbers from the design array index, so the read order is the design order. `overviewTiles` is one jsonb array, so its order is the array order. `listApprovals` and `listMissionProposals` include decided rows; `inbox` filters them for display. These read methods do not persist domain decisions.
+
+Workspace writes use `workspaceTransaction` in `packages/adapters/src/neon/lock.ts`. Every caller takes the advisory lock. Only the send path passes `deadlineMs: PENDING_TASK_WINDOW_MS`. Its deadline starts at the first attempt and is shared by retries. Each attempt sets local lock and statement timeouts to `floor((deadlineMs - 1) / 3)` milliseconds. A statement timeout limits one statement; the final transaction check limits the whole attempt, including all its statements. Only SQLSTATE `40P01` permits a retry, with at most three attempts. A retry cannot start with less than one attempt budget left. SQLSTATE `55P03` and `57014` are not retried. Seeding, resets, and other callers omit the options, so the helper sets no timeouts or deadline for them.
+
+The send adapter captures the Task instant before waiting for the lock. Completion reads the pending Task inside its transaction and tightens the shared deadline to that Task's expiry when it is earlier. The final check runs after the work and before commit. An expired deadline throws `The workspace write did not finish.` and rolls back every write in that transaction. A Task already expired when completion reads it still gives the existing ignored result. The pending-window contract is in [frame decision 17](../tasks/02-frame.md#orchestrator-decisions). Regression coverage is in `packages/adapters/test/send-deadline.test.ts`, `lock.test.ts`, and `reset-lock.test.ts`.
 
 Account `agents`, `online`, and `tasks` are per-account design fields. Platform Agents 66 is the sum of `Account.agents`, not the number of agent rows. Squads 17 is the number of squad rows. Account objects join `plan`, `status`, `mrr`, `ltv`, and `started` from subscriptions, where those values are stored once. Platform MRR and all-time value sum the subscription values. Tasks done sums agent rows. Catalog counts include all shared images, bugs, and feature requests even with account scope.
 
@@ -130,8 +134,8 @@ GitHub Actions runs `make verify` on Linux and macOS and a separate Cloudflare b
 | `make verify` | Run all five checks above in order |
 | `npm run build:cloudflare` | Build the Worker |
 | `npm run preview:cloudflare` | Build and run the Worker locally with Wrangler |
-| `npm run deploy:cloudflare` | Build and deploy through an authenticated local Wrangler session |
+| `npm run deploy:cloudflare` | Migrate against `NEON_POSTGRES_CONNECTION_STRING`, stop if that fails, then build and deploy through `scripts/deploy-cloudflare.mjs` |
 | `npm run typegen:cloudflare` | Regenerate Worker types after binding changes |
 | `npm run seed` | Migrate and replace the database contents with the design seed |
 
-Install Playwright Chromium with `npx playwright install chromium` before the first e2e run. CI runs verification and a Cloudflare build. Deployment is local.
+Install Playwright Chromium with `npx playwright install chromium` before the first e2e run. CI runs verification and a Cloudflare build. Deployment is local and only through `scripts/deploy-cloudflare.mjs`. That script migrates before it deploys and does not deploy when the migration fails.

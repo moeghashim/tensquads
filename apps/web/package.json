@@ -12,10 +12,10 @@
 		"check": "tsc --noEmit",
 		"cf:build": "vite build",
 		"cf:preview": "vite build && wrangler dev",
-		"cf:deploy": "vite build && wrangler deploy",
+		"cf:deploy": "vite build && node ../../scripts/deploy-cloudflare.mjs",
 		"cf:typegen": "wrangler types",
 		"deploy": "npm run cf:deploy",
-		"test": "node --experimental-strip-types --test src/screens/signup/machine.test.ts",
+		"test": "node --experimental-strip-types --test src/screens/signup/machine.test.ts src/workspace/agent-view.test.ts",
 		"dev": "node ../../scripts/write-dev-vars.mjs && vite dev --port 3000"
 	},
 	"dependencies": {
@@ -23,6 +23,7 @@
 		"@tanstack/react-router": "1.170.46",
 		"@tanstack/react-start": "1.169.4",
 		"@tensquads/adapters": "*",
+		"@tensquads/kernel": "*",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.0"
 	},

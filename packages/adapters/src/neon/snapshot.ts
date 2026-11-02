@@ -24,6 +24,7 @@ export interface AccountSnapshot {
 	readonly tiles: readonly OverviewTile[] | null;
 	readonly messages: readonly Message[];
 	readonly masterName: string;
+	readonly clerkUserId?: string;
 }
 
 export interface WorkspaceSnapshot {

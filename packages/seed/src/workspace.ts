@@ -29,7 +29,7 @@ export function workspaceFromDesign(): WorkspaceSnapshot {
 	};
 }
 
-function demoData() {
+export function demoData() {
 	return {
 		agents: design.seed.agents,
 		events: design.seed.bus,

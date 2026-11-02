@@ -25,6 +25,21 @@ export interface Approval {
 	readonly status: ApprovalStatus;
 }
 
+// A Mandate is made when a person says yes.
+// A Pending or Declined Approval has none. An Approved Approval has exactly one.
+// A Mandate never changes after it is made.
+export interface Mandate {
+	readonly approvalId: string;
+	readonly ruleId: string;
+	readonly ruleWhen: string;
+	readonly ruleAction: string;
+	readonly ruleApproval: string;
+	readonly limitValue: number;
+	readonly policyVersion: string;
+	readonly saidYes: string;
+	readonly at: Date;
+}
+
 export type MissionProposalStatus = "Proposed" | "Revising" | "Approved";
 
 export interface MissionProposal {
