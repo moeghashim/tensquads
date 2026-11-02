@@ -16,6 +16,10 @@ const hidden = new Set([
 	"LeaveAdmin",
 	"OpenDock",
 	"CloseDock",
+	"StartBegin",
+	"BeginTimeout",
+	"Refresh",
+	"RefreshTimeout",
 ]);
 
 const labels = {
