@@ -1,9 +1,4 @@
-import type {
-	AccountScope,
-	AppendedChatEvent,
-	ChatEventDraft,
-	ConversationTransaction,
-} from "@tensquads/domain";
+import type { AccountScope, AppendedChatEvent, ChatEventDraft, ConversationTransaction } from "@tensquads/domain";
 
 export interface BusCommands {
 	append(commands: ConversationTransaction, draft: ChatEventDraft): Promise<AppendedChatEvent>;
