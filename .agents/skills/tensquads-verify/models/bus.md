@@ -46,7 +46,7 @@ A model failure is a path of Send next event, a live tick, a wait that ends, a q
 
 | Check | Covers | Result |
 | --- | --- | --- |
-| `traffic.test.ts` | one row, all writes, one transaction, a repeat id | run with the command |
+| `traffic.test.ts` | one row, all writes, one transaction, a repeat id | exit 0 |
 | `/statechart` on `Bus.tla` | one step, the inspector, a repeat id, one escalation, the 30 second wait | TLC reached 44 states and 115 steps |
 
 The checks name no commit, so a later head does not make this note stale. TLC named no broken rule. The rules are TypeOK, WritesMatch, AppendsWithWrites, OneEscalation, FilterKeepsInspector, RepeatHolds, NoDeadlock, and WaitEnds. The chart draws 8 states and 13 arrows. The view hides 82 steps.

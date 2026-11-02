@@ -1,6 +1,6 @@
 import type { AccountScope, SendResult } from "@tensquads/domain";
 import { Context } from "cordis";
-import type { BusCommands } from "./plugins/bus.ts";
+import { type BusCommands, bus } from "./plugins/bus.ts";
 import type { ConversationCommands } from "./plugins/conversation.ts";
 import { conversation } from "./plugins/conversation.ts";
 
@@ -39,6 +39,8 @@ export class Kernel {
 						bus: () => this.context.get("workspaceBus") as BusCommands,
 					}),
 				);
+			} else if (plugin === bus) {
+				fibers.push(this.context.plugin(bus, { nextEvent: (scope) => this.advance(scope) }));
 			} else {
 				fibers.push(this.context.plugin(plugin));
 			}
@@ -59,6 +61,18 @@ export class Kernel {
 	async finishSend(scope: AccountScope, taskId: string): Promise<SendResult> {
 		await this.ready;
 		return (this.context.get("workspaceConversation") as ConversationCommands).finishSend(scope, taskId);
+	}
+
+	async nextEvent(scope: AccountScope): Promise<void> {
+		await this.ready;
+		return (this.context.get("workspaceBus") as BusCommands).nextEvent(scope);
+	}
+
+	// ports.ts lists no nextEvent. The repository bag has it. The cast stays on this call.
+	private advance(scope: AccountScope): Promise<void> {
+		if (!this.repositories) throw new Error("Repositories are not configured.");
+		const port = this.repositories.bus as unknown as { nextEvent(scope: AccountScope): Promise<void> };
+		return port.nextEvent(scope);
 	}
 
 	pluginNames(): readonly string[] {
