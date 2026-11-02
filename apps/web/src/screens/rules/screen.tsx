@@ -12,6 +12,7 @@ import {
 	placeRule,
 	queueLimit,
 	queueRule,
+	readIfNeeded,
 	shownLimit,
 	shownOn,
 	useRuleWrites,
@@ -427,7 +428,9 @@ async function saveRule(
 	dropPending(id, rowId, setPending);
 	if (wanted !== undefined && wanted !== result.on) {
 		queueRule(result.id, wanted, refresh);
+		return;
 	}
+	await readIfNeeded(refresh);
 }
 
 function dropPending(id: symbol, rowId: string, setPending: SetPending) {

@@ -52,40 +52,56 @@ export interface RulesLimitValue {
 export const setRuleEnabled = createServerFn({ method: "POST" })
 	.validator(validateRuleOn)
 	.handler(async ({ data }): Promise<RulesRule> => {
-		return writeThroughKernel((kernel, scope) => kernel.setRuleOn(scope, data.id, data.on));
+		return writeThroughKernel((kernel, scope, deadlineAt) => kernel.setRuleOn(scope, data.id, data.on, deadlineAt));
 	});
 
 export const addWorkspaceRule = createServerFn({ method: "POST" })
 	.validator(validateDraft)
 	.handler(async ({ data }): Promise<RulesRule | null> => {
-		return writeThroughKernel((kernel, scope) => kernel.addRule(scope, data));
+		return writeThroughKernel((kernel, scope, deadlineAt) => kernel.addRule(scope, data, deadlineAt));
 	});
 
 export const setRuleLimit = createServerFn({ method: "POST" })
 	.validator(validateLimit)
 	.handler(async ({ data }): Promise<RulesLimitValue> => {
-		return writeThroughKernel((kernel, scope) => kernel.setLimit(scope, data.key, data.value));
+		return writeThroughKernel((kernel, scope, deadlineAt) =>
+			kernel.setLimit(scope, data.key, data.value, deadlineAt),
+		);
 	});
 
 async function writeThroughKernel<T>(
 	work: (
 		kernel: {
-			setRuleOn(scope: { accountId: string; mode: "account" }, id: string, on: boolean): Promise<RulesRule>;
+			setRuleOn(
+				scope: { accountId: string; mode: "account" },
+				id: string,
+				on: boolean,
+				deadlineAt: number,
+			): Promise<RulesRule>;
 			addRule(
 				scope: { accountId: string; mode: "account" },
 				draft: { when: string; agent: string; action: string; approval: string },
+				deadlineAt: number,
 			): Promise<RulesRule | null>;
-			setLimit(scope: { accountId: string; mode: "account" }, key: string, value: number): Promise<RulesLimitValue>;
+			setLimit(
+				scope: { accountId: string; mode: "account" },
+				key: string,
+				value: number,
+				deadlineAt: number,
+			): Promise<RulesLimitValue>;
 		},
 		scope: { accountId: string; mode: "account" },
+		deadlineAt: number,
 	) => Promise<T>,
 ): Promise<T> {
+	const startedAt = Date.now();
 	const { requireWorkspace } = await import("./workspace-session.ts");
+	const { PENDING_TASK_WINDOW_MS } = await import("@tensquads/adapters/pending-window");
 	return requireWorkspace(async (scope, db) => {
 		const { createRepositories } = await import("@tensquads/adapters");
 		const { Kernel } = await import("@tensquads/kernel");
-		return work(new Kernel(createRepositories(db)), scope);
-	});
+		return work(new Kernel(createRepositories(db)), scope, startedAt + PENDING_TASK_WINDOW_MS);
+	}, startedAt);
 }
 
 function numberLimit(value: unknown): number {

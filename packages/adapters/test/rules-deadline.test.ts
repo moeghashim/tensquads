@@ -126,3 +126,44 @@ test("a late ad-cap write commits nothing after the deadline", {
 		await opened.close();
 	}
 });
+
+test("a deadline that already passed commits no rule, switch, or limit", async () => {
+	if (connection.length === 0) return;
+	refuseProduction();
+	const suffix = randomBytes(4).toString("hex");
+	const accountId = `rules-past-${suffix}`;
+	const opened = openPostgres(connection);
+	await opened.migrate();
+	try {
+		await retryLockWait(() => replaceDemoAccount(opened.db, accountId, `clerk-${suffix}`));
+		const scope = { accountId, mode: "account" as const };
+		const repositories = createRepositories(opened.db);
+		const kernel = new Kernel(repositories);
+		const late = Date.now() - 1;
+		const before = await repositories.policy.listRules(scope);
+		const first = before[0];
+		if (!first) throw new Error("the seed has no rule");
+		await assert.rejects(() => kernel.setLimit(scope, adCap, 260, late), {
+			message: "The workspace write did not finish.",
+		});
+		await assert.rejects(() => kernel.setRuleOn(scope, first.id, !first.on, late), {
+			message: "The workspace write did not finish.",
+		});
+		await assert.rejects(
+			() =>
+				kernel.addRule(
+					scope,
+					{ when: "A new order arrives", agent: "orders", action: "Late rule", approval: "Ask first" },
+					late,
+				),
+			{ message: "The workspace write did not finish." },
+		);
+		assert.equal((await repositories.bus.readStore(scope))[adCap], 200);
+		const after = await repositories.policy.listRules(scope);
+		assert.equal(after.length, before.length);
+		assert.equal(after.find((rule) => rule.id === first.id)?.on, first.on);
+	} finally {
+		await removeAccount(opened.db, accountId);
+		await opened.close();
+	}
+});

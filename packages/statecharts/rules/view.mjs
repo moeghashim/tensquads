@@ -17,23 +17,29 @@ const saved = {
 	adding: "Adding",
 	saving: "Saving a limit",
 	reading: "Waiting for one read",
+	toggling: "Switching a rule",
 };
 
+const saveName = (v) => (v.needsRead ? `${saved[v.save]}, read again` : saved[v.save]);
+
 export const state = (v) => ({
-	"Refund rule": rule(v.ruleA),
+	"Refund rule": rule(v.save === "toggling" ? !v.ruleA : v.ruleA),
 	"Monday rule": rule(v.ruleB),
 	"Refund limit": money(v.refund, "$50"),
 	"Ad cap": money(v.ads, "$200"),
 	"Reorder limit": money(v.reorder, "$500"),
 	"New rule": added(v),
-	Save: saved[v.save],
+	Save: saveName(v),
 });
 
 const hidden = new Set(["AddBlank"]);
 
 const labels = {
-	ToggleA: "you switch the refund rule",
-	ToggleB: "you switch the Monday rule",
+	StartToggle: "you switch the refund rule",
+	CommitToggle: "the refund rule is saved",
+	FailToggle: "the refund rule fails",
+	LateToggle: "the refund rule is late",
+	Reload: "you open the screen again",
 	StartRefund: "you move the refund limit",
 	StartAds: "you move the ad cap",
 	CommitRefund: "the refund limit is saved",

@@ -2,7 +2,7 @@
 
 A rule switch changes only that rule. A slider writes one `policy.*` key. The slider and the traffic table read that same key, so they show the same value. A limit change writes the state row and writes no event. A blank action adds no rule. A new rule is on, it is last, and only the action field clears. A later change to a rule or a limit does not change an existing Mandate. The rule text stored on the Mandate stays the text copied when the person said yes.
 
-The chart hides AddBlank. AddBlank is a blank action. It changes nothing. A person can type an action after an add. The screen shows the snapshot plus a pending row. The snapshot changes only when a write response or a read arrives. A write response returns the row and replaces it. A failed or late write commits nothing, leaves the queue, and one read refreshes the snapshot. A failed read stops the wait. The next action reads again. The add clears the action. A second edit can type it again. One wait runs at a time, and that wait ends. The reorder limit stays at the design value so the chart stays within 500 states. The refund limit and the ad cap use the same write.
+The chart hides AddBlank. AddBlank is a blank action. It changes nothing. A person can type an action after an add. The screen shows the snapshot plus a pending row. The snapshot changes only when a write response or a read arrives. A write response returns the row and replaces it. A failed or late write commits nothing, leaves the queue, and one read refreshes the snapshot. A failed read sets one flag and stops the wait. The next write ends in one read, or the screen loads again. A read that succeeds clears the flag. The add clears the action. A second edit can type it again. One wait runs at a time, and that wait ends. One rule switch waits. The screen shows the next value, and the stored value waits for the response. The Monday rule stays off, and the reorder limit stays at the design value, so the chart stays within 500 states. The refund limit and the ad cap use the same write.
 
 ## When this applies
 
@@ -13,6 +13,7 @@ Run this check when a change touches any of these:
 - `packages/kernel/src/plugins/policy-rules.ts`
 - `apps/web/src/server/rules.ts`
 - `apps/web/src/screens/rules/screen.tsx`
+- `apps/web/src/screens/rules/snapshot.ts`
 - `apps/web/src/screens/rules/write-queue.ts`
 - `packages/adapters/test/rules.test.ts`
 - `packages/statecharts/rules/Rules.tla`
@@ -47,9 +48,9 @@ A model failure is a path of a rule switch, a limit move, a typed action, a blan
 | Check | Covers | Result |
 | --- | --- | --- |
 | `rules.test.ts` | one rule, one limit key, a blank add, a new rule, and a Mandate that stays | exit 0 |
-| `/statechart` on `Rules.tla` | one policy value, a pending write, a Mandate that stays, and no limit event | TLC reached 352 states and 1920 steps |
+| `/statechart` on `Rules.tla` | one policy value, a pending write, a Mandate that stays, and no limit event | TLC reached 432 states and 1640 steps |
 
-The checks name no commit, so a later head does not make this note stale. TLC named no broken rule. The rules are TypeOK, ShownLimit, BoundedWait, MandateFrozen, NoLimitEvent, NewRuleOn, NoRuleYet, AddClearsAction, RuleText, NoDeadlock, and WaitEnds. The chart draws 19 states and 25 arrows. The chart does not draw 32 steps that stay in one chart state. The view hides 144 steps.
+The checks name no commit, so a later head does not make this note stale. TLC named no broken rule. The rules are TypeOK, ShownLimit, BoundedWait, MandateFrozen, NoLimitEvent, NewRuleOn, NoRuleYet, AddClearsAction, RuleText, NoDeadlock, and WaitEnds. The chart draws 24 states and 46 arrows. The chart does not draw 32 steps that stay in one chart state. The view hides 176 steps.
 
 Update this note when the model or the rule commands change. Record the TLC counts from that run. Do not name a commit. An intended change updates `commands/rules.ts`, `rules.test.ts`, and `Rules.tla` together.
 
@@ -57,4 +58,4 @@ Update this note when the model or the rule commands change. Record the TLC coun
 
 Each limit is the design value or zero. The model has two rules and one new rule. The screen has the seed rules and the design minimum, maximum, and step. The browser check covers a switch, a slider, a blank action, a new rule, reload, and a Mandate read after those writes.
 
-TLC reached 352 states and 1920 steps with no broken rule. The generated chart has 19 states and 25 arrows. The chart does not draw 32 steps that stay in one chart state. The view hides 144 steps.
+TLC reached 432 states and 1640 steps with no broken rule. The generated chart has 24 states and 46 arrows. The chart does not draw 32 steps that stay in one chart state. The view hides 176 steps.

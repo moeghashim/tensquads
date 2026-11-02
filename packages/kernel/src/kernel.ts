@@ -89,19 +89,23 @@ export class Kernel {
 		return port.nextEvent(scope, deadlineAt);
 	}
 
-	async setRuleOn(scope: AccountScope, id: string, on: boolean): Promise<Rule> {
+	async setRuleOn(scope: AccountScope, id: string, on: boolean, deadlineAt?: number): Promise<Rule> {
 		await this.ready;
-		return (this.context.get("workspacePolicy") as PolicyCommands).setRuleOn(scope, id, on);
+		return (this.context.get("workspacePolicy") as PolicyCommands).setRuleOn(scope, id, on, deadlineAt);
 	}
 
-	async addRule(scope: AccountScope, draft: Parameters<PolicyCommands["addRule"]>[1]): Promise<Rule | null> {
+	async addRule(
+		scope: AccountScope,
+		draft: Parameters<PolicyCommands["addRule"]>[1],
+		deadlineAt?: number,
+	): Promise<Rule | null> {
 		await this.ready;
-		return (this.context.get("workspacePolicy") as PolicyCommands).addRule(scope, draft);
+		return (this.context.get("workspacePolicy") as PolicyCommands).addRule(scope, draft, deadlineAt);
 	}
 
-	async setLimit(scope: AccountScope, key: string, value: number): Promise<StoredLimit> {
+	async setLimit(scope: AccountScope, key: string, value: number, deadlineAt?: number): Promise<StoredLimit> {
 		await this.ready;
-		return (this.context.get("workspacePolicy") as PolicyCommands).setLimit(scope, key, value);
+		return (this.context.get("workspacePolicy") as PolicyCommands).setLimit(scope, key, value, deadlineAt);
 	}
 
 	pluginNames(): readonly string[] {

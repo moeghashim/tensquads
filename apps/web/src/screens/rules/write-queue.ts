@@ -18,6 +18,25 @@ const ruleFlights = new Map<string, Flight<boolean>>();
 const limitFlights = new Map<string, Flight<number>>();
 const listeners = new Set<() => void>();
 let version = 0;
+let needsRead = false;
+
+export function readNeeded(): boolean {
+	return needsRead;
+}
+
+export function markReadSucceeded(): void {
+	needsRead = false;
+}
+
+export function markReadFailed(): void {
+	needsRead = true;
+}
+
+export async function readIfNeeded(refresh: () => Promise<void>): Promise<void> {
+	if (!needsRead) return;
+	await bounded(() => refresh()).catch(() => undefined);
+}
+
 let replaceRule = (_rule: RulesRule): void => undefined;
 let replaceLimit = (_row: LimitValue): void => undefined;
 
@@ -146,6 +165,7 @@ async function run<T>(
 		if (!newer) {
 			map.delete(key);
 			notify();
+			await readIfNeeded(refresh);
 			return;
 		}
 	}

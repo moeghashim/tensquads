@@ -928,8 +928,9 @@ test("snapshot: a held failure read preserves newer write responses", async () =
 			window.loadLimits([{ ...window.adLimit, value: 200 }]);
 			await window.flush();
 		});
-		await expect(switches.first()).toHaveAttribute("aria-pressed", "true");
-		await expect(slider).toHaveValue("200");
+		await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve())));
+		await expect(switches.first()).toHaveAttribute("aria-pressed", "false");
+		await expect(slider).toHaveValue("260");
 	});
 });
 
@@ -975,5 +976,123 @@ test("snapshot: reversed add responses keep numeric rule order before pending ro
 			await expect(rows.nth(index)).toContainText(text);
 		}
 		assert.equal(await page.evaluate(() => window.refreshCalls), 0);
+	});
+});
+
+test("snapshot: a refresh that started earlier does not replace a newer write", async () => {
+	await withPage(async (page) => {
+		await page.evaluate(() => window.mount());
+		await page.evaluate(async () => {
+			window.loadRules([window.ruleRow({ id: "r1", action: "Seed", on: true })]);
+			window.loadLimits([
+				{
+					id: "lim-ads",
+					key: "policy.daily_ad_cap",
+					label: "Total ad spend per day",
+					min: 0,
+					max: 1000,
+					step: 10,
+					value: 200,
+				},
+			]);
+			window.held = new Promise((resolve) => {
+				window.releaseRefresh = resolve;
+			});
+			window.refresh = () => window.held;
+			window.failNext = false;
+			window.send = (data) => {
+				window.calls.push(data);
+				if (window.failNext) {
+					window.failNext = false;
+					return Promise.reject(new Error("fail"));
+				}
+				if (typeof data.value === "number") return Promise.resolve({ key: data.key, value: data.value });
+				return Promise.resolve(window.ruleRow(data));
+			};
+			await window.flush();
+		});
+		const slider = page.getByRole("slider");
+		await page.evaluate(() => {
+			window.failNext = true;
+		});
+		await slider.fill("210");
+		await page.evaluate(() => window.flush());
+		await slider.fill("260");
+		await expect(slider).toHaveValue("260");
+		const rule = page.getByRole("button", { name: "Rule enabled" });
+		await rule.click();
+		await expect(rule).toHaveAttribute("aria-pressed", "false");
+		await page.evaluate(async () => {
+			window.releaseRefresh();
+			await window.flush();
+			window.loadRules([window.ruleRow({ id: "r1", action: "Seed", on: true })]);
+			window.loadLimits([
+				{
+					id: "lim-ads",
+					key: "policy.daily_ad_cap",
+					label: "Total ad spend per day",
+					min: 0,
+					max: 1000,
+					step: 10,
+					value: 200,
+				},
+			]);
+			await window.flush();
+		});
+		await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve())));
+		await expect(slider).toHaveValue("260");
+		await expect(rule).toHaveAttribute("aria-pressed", "false");
+	});
+});
+
+test("a failed recovery read makes the next write and the next loader read once", async () => {
+	await withPage(async (page) => {
+		await page.evaluate(() => window.mount());
+		await page.evaluate(async () => {
+			window.loadLimits([
+				{
+					id: "lim-ads",
+					key: "policy.daily_ad_cap",
+					label: "Total ad spend per day",
+					min: 0,
+					max: 1000,
+					step: 10,
+					value: 200,
+				},
+			]);
+			window.refreshCalls = 0;
+			window.refresh = async () => {
+				window.refreshCalls += 1;
+				throw new Error("refresh failed");
+			};
+			window.failNext = false;
+			window.send = (data) => {
+				window.calls.push(data);
+				if (window.failNext) {
+					window.failNext = false;
+					return Promise.reject(new Error("fail"));
+				}
+				if (typeof data.value === "number") return Promise.resolve({ key: data.key, value: data.value });
+				return Promise.resolve(window.ruleRow(data));
+			};
+			await window.flush();
+		});
+		const slider = page.getByRole("slider");
+		await page.evaluate(() => {
+			window.failNext = true;
+		});
+		await slider.fill("210");
+		await page.waitForFunction(() => window.refreshCalls === 1);
+		await page.evaluate(() => window.flush());
+		assert.equal(await page.evaluate(() => window.refreshCalls), 1);
+		await slider.fill("260");
+		await page.waitForFunction(() => window.refreshCalls === 2);
+		await page.evaluate(() => window.flush());
+		assert.equal(await page.evaluate(() => window.refreshCalls), 2);
+		await page.getByRole("button", { name: "Leave rules" }).click();
+		await page.getByRole("button", { name: "Return to rules" }).click();
+		await page.waitForFunction(() => window.refreshCalls === 3);
+		await page.evaluate(() => window.flush());
+		assert.equal(await page.evaluate(() => window.refreshCalls), 3);
 	});
 });

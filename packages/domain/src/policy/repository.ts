@@ -24,9 +24,9 @@ export interface PolicyRepository {
 	inbox(scope: AccountScope): Promise<Inbox>;
 	decide(scope: AccountScope, id: string, ok: boolean): Promise<void>;
 	decideMission(scope: AccountScope, id: string, ok: boolean): Promise<void>;
-	setRuleOn(scope: AccountScope, id: string, on: boolean): Promise<Rule>;
-	addRule(scope: AccountScope, draft: RuleDraft): Promise<Rule | null>;
-	setLimit(scope: AccountScope, key: string, value: number): Promise<StoredLimit>;
+	setRuleOn(scope: AccountScope, id: string, on: boolean, deadlineAt?: number): Promise<Rule>;
+	addRule(scope: AccountScope, draft: RuleDraft, deadlineAt?: number): Promise<Rule | null>;
+	setLimit(scope: AccountScope, key: string, value: number, deadlineAt?: number): Promise<StoredLimit>;
 	createMandate(scope: AccountScope, draft: MandateDraft): Promise<Mandate>;
 	mandate(scope: AccountScope, approvalId: string): Promise<Mandate | null>;
 }

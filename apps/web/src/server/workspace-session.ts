@@ -1,7 +1,10 @@
 import { redirect } from "@tanstack/react-router";
+import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 
 import { requireClerkUser } from "./session.ts";
 import { workerEnv } from "./worker-env.ts";
+
+const unfinished = "The workspace write did not finish.";
 
 interface AccountScope {
 	readonly accountId: string;
@@ -16,7 +19,10 @@ async function databaseUrl(): Promise<string> {
 	return workerEnv("NEON_POSTGRES_CONNECTION_STRING");
 }
 
-export async function requireWorkspace<T>(work: (scope: AccountScope, db: WorkspaceDb) => Promise<T>): Promise<T> {
+export async function requireWorkspace<T>(
+	work: (scope: AccountScope, db: WorkspaceDb) => Promise<T>,
+	startedAt?: number,
+): Promise<T> {
 	const userId = await requireClerkUser();
 	const connection = await databaseUrl();
 	if (connection.length === 0) {
@@ -28,6 +34,9 @@ export async function requireWorkspace<T>(work: (scope: AccountScope, db: Worksp
 		const account = await accountForClerkUser(database.db, userId);
 		if (!account) {
 			throw redirect({ to: "/signup" });
+		}
+		if (startedAt !== undefined && Date.now() >= startedAt + PENDING_TASK_WINDOW_MS) {
+			throw new Error(unfinished);
 		}
 		return await work({ accountId: account.id, mode: "account" }, database.db);
 	} finally {

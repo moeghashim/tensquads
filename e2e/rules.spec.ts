@@ -1,4 +1,5 @@
 import { mkdirSync, readFileSync } from "node:fs";
+import { Pool } from "@neondatabase/serverless";
 import type { Page, Route } from "@playwright/test";
 import { createRepositories, openPostgres, schema } from "@tensquads/adapters";
 import { eq } from "drizzle-orm";
@@ -6,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
+import { pinnedFontStylesheet } from "./fonts.ts";
 import {
 	expectLabeledInputs,
 	expectNamedButtons,
@@ -259,6 +261,37 @@ test("a later change on this screen does not change an existing Mandate", async 
 	await setSlider(page, "#lim-refund", "45");
 	await expectStored(accountId, "policy.refund_auto_limit", 45);
 	expect(await mandateFields(accountId, made.approvalId)).toEqual(made.fields);
+});
+
+test("a held account read commits no limit", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(120_000);
+	await openRules(page, workspaceUser);
+	await expect(page.locator("#lim-ads")).toHaveValue("200");
+	const pool = new Pool({ connectionString: databaseUrl(), max: 1 });
+	const holder = await pool.connect();
+	try {
+		await holder.query("BEGIN");
+		await holder.query("LOCK TABLE accounts IN ACCESS EXCLUSIVE MODE");
+		const sent = page.waitForRequest(
+			(request) => request.method() === "POST" && (request.postData() ?? "").includes("policy.daily_ad_cap"),
+		);
+		await page.locator("#lim-ads").fill("240");
+		await sent;
+		await delay(32_000);
+		await holder.query("ROLLBACK");
+		await delay(6_000);
+		const result = await holder.query("SELECT value FROM state_entries WHERE account_id = $1 AND key = $2", [
+			accountId,
+			"policy.daily_ad_cap",
+		]);
+		const stored = result.rows[0]?.value;
+		if (typeof stored !== "string") throw new Error("The ad cap row is missing.");
+		expect(JSON.parse(stored)).toBe(200);
+	} finally {
+		await holder.query("ROLLBACK").catch(() => undefined);
+		holder.release();
+		await pool.end();
+	}
 });
 
 test("the rules inventory matches the rendered design", async ({ page, workspaceUser }) => {
@@ -533,6 +566,12 @@ function databaseUrl() {
 	return secretsFor(["testDatabase"]).testDatabase;
 }
 
+function delay(ms: number): Promise<void> {
+	return new Promise((resolve) => {
+		setTimeout(resolve, ms);
+	});
+}
+
 async function sectionInventory(page: Page, selector: string) {
 	const html = await page.locator(selector).evaluate((element) => element.outerHTML);
 	return inventoryHtml(html);
@@ -571,6 +610,9 @@ function identities(handlers: { tag: string; event: string; handler: string }[])
 async function designRules(page: Page, width: number, height: number) {
 	const canvas = await page.context().newPage();
 	await installLocalFonts(canvas);
+	await canvas.route("https://fonts.googleapis.com/css2**", (route) =>
+		route.fulfill({ contentType: "text/css", body: pinnedFontStylesheet(route.request().url()) }),
+	);
 	await canvas.setViewportSize({ width, height });
 	const body = await renderDesignMarkup(canvas, readInventory("Main"), { view: "rules", dockOpen: false });
 	const source = readFileSync(new URL("../design/Main.dc.html", import.meta.url), "utf8");
@@ -582,13 +624,16 @@ async function designRules(page: Page, width: number, height: number) {
 	await canvas.setContent(
 		`<!doctype html><html lang="en"><head><link rel="stylesheet" href="${fontLink}"><style>${cssText}x-dc{display:contents}</style></head><body>${body}</body></html>`,
 	);
-	const fontFamilies = await canvas
-		.locator('link[rel="stylesheet"]')
-		.evaluateAll((links) =>
-			links.flatMap((link) => new URL((link as HTMLLinkElement).href).searchParams.getAll("family")),
-		);
-	expect(fontFamilies).toEqual(["Inter:wght@400;500;600", "JetBrains Mono:wght@400;500"]);
-	expect(fontFamilies.every((family) => !family.includes("700"))).toBe(true);
+	const loadedInter = await canvas.evaluate(async () => {
+		await document.fonts.ready;
+		const weights = new Set<string>();
+		for (const face of document.fonts) {
+			if (face.family.replaceAll('"', "") !== "Inter") continue;
+			weights.add(String(face.weight));
+		}
+		return [...weights].sort();
+	});
+	expect(loadedInter).toEqual(["400", "500", "600"]);
 	await canvas.evaluate(() => {
 		for (const node of document.querySelectorAll("[data-loop], [data-if]")) {
 			if (node instanceof HTMLElement) {

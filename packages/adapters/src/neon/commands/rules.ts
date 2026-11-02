@@ -13,9 +13,33 @@ import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { rules, stateEntries } from "../schema.ts";
 
-const writeDeadline = { deadlineMs: PENDING_TASK_WINDOW_MS };
+const unfinished = "The workspace write did not finish.";
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
+
+function remainingWindow(deadlineAt: number | undefined): { readonly absolute: number; readonly deadlineMs: number } {
+	const absolute = deadlineAt ?? Date.now() + PENDING_TASK_WINDOW_MS;
+	const deadlineMs = absolute - Date.now();
+	// A lock_timeout of 0 waits forever, so a few milliseconds left is already late.
+	if (deadlineMs < 4) throw new Error(unfinished);
+	return { absolute, deadlineMs };
+}
+
+async function writeWithin<T>(
+	db: AppDatabase,
+	deadlineAt: number | undefined,
+	work: (tx: Tx) => Promise<T>,
+): Promise<T> {
+	const window = remainingWindow(deadlineAt);
+	return workspaceTransaction(
+		db,
+		async (tx, constrainDeadline) => {
+			constrainDeadline(window.absolute);
+			return work(tx);
+		},
+		{ deadlineMs: window.deadlineMs },
+	);
+}
 
 function accountIdOf(scope: AccountScope): string {
 	const checked = requireScope(scope);
@@ -25,17 +49,19 @@ function accountIdOf(scope: AccountScope): string {
 	return checked.accountId;
 }
 
-export async function setRuleOn(db: AppDatabase, scope: AccountScope, id: string, on: boolean): Promise<Rule> {
+export async function setRuleOn(
+	db: AppDatabase,
+	scope: AccountScope,
+	id: string,
+	on: boolean,
+	deadlineAt?: number,
+): Promise<Rule> {
 	const accountId = accountIdOf(scope);
 	const planned = planRuleOn(on);
-	return workspaceTransaction(
-		db,
-		async (tx) => {
-			await updateRuleOn(tx, accountId, id, planned.on);
-			return readRule(tx, accountId, id);
-		},
-		writeDeadline,
-	);
+	return writeWithin(db, deadlineAt, async (tx) => {
+		await updateRuleOn(tx, accountId, id, planned.on);
+		return readRule(tx, accountId, id);
+	});
 }
 
 async function updateRuleOn(tx: Tx, accountId: string, id: string, on: boolean): Promise<void> {
@@ -52,20 +78,21 @@ async function updateRuleOn(tx: Tx, accountId: string, id: string, on: boolean):
 		.where(and(eq(rules.accountId, accountId), eq(rules.id, id)));
 }
 
-export async function addRule(db: AppDatabase, scope: AccountScope, draft: RuleDraft): Promise<Rule | null> {
+export async function addRule(
+	db: AppDatabase,
+	scope: AccountScope,
+	draft: RuleDraft,
+	deadlineAt?: number,
+): Promise<Rule | null> {
 	const planned = planRule(draft);
 	if (!planned) {
 		return null;
 	}
 	const accountId = accountIdOf(scope);
-	return workspaceTransaction(
-		db,
-		async (tx) => {
-			const id = await insertRule(tx, accountId, planned);
-			return readRule(tx, accountId, id);
-		},
-		writeDeadline,
-	);
+	return writeWithin(db, deadlineAt, async (tx) => {
+		const id = await insertRule(tx, accountId, planned);
+		return readRule(tx, accountId, id);
+	});
 }
 
 async function insertRule(
@@ -92,20 +119,22 @@ async function insertRule(
 	return id;
 }
 
-export async function setLimit(db: AppDatabase, scope: AccountScope, key: string, value: number): Promise<StoredLimit> {
+export async function setLimit(
+	db: AppDatabase,
+	scope: AccountScope,
+	key: string,
+	value: number,
+	deadlineAt?: number,
+): Promise<StoredLimit> {
 	const planned = planLimit(key, value);
 	if (!planned) {
 		throw new Error("The limit is not valid.");
 	}
 	const accountId = accountIdOf(scope);
-	return workspaceTransaction(
-		db,
-		async (tx) => {
-			await writeLimit(tx, accountId, planned.key, planned.value);
-			return readLimit(tx, accountId, planned.key);
-		},
-		writeDeadline,
-	);
+	return writeWithin(db, deadlineAt, async (tx) => {
+		await writeLimit(tx, accountId, planned.key, planned.value);
+		return readLimit(tx, accountId, planned.key);
+	});
 }
 
 async function writeLimit(tx: Tx, accountId: string, key: string, value: number): Promise<void> {
