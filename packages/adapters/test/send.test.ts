@@ -115,6 +115,15 @@ test("a marketing send writes the task, and the reply writes the result without 
 		assert.equal(task.kind, "Task");
 		assert.equal(task.skill, "meta_ads.report");
 		assert.equal(task.body, ads);
+		assert.equal(started.taskId, "e102");
+		assert.deepEqual(started.task, {
+			id: "e102",
+			time: "11:03",
+			from: "master",
+			to: "marketing",
+			kind: "Task",
+			text: ads,
+		});
 		assert.deepEqual(task.payload, {
 			intent: "user_request",
 			user_text: ads,

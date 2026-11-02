@@ -65,7 +65,7 @@ async function send(
 	}
 	const skill = skillFor(await commands.skills(agent.id));
 	await commands.message("master", workingReply(agent.name));
-	const taskId = await bus.append(commands, {
+	const written = await bus.append(commands, {
 		from: "master",
 		to: agent.id,
 		kind: "Task",
@@ -75,7 +75,8 @@ async function send(
 	});
 	return {
 		kind: "working",
-		taskId,
+		taskId: written.id,
+		task: { id: written.id, time: written.time, from: "master", to: agent.id, kind: "Task", text: value },
 		agentId: agent.id,
 		agentName: agent.name,
 		skill,

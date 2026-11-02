@@ -14,7 +14,7 @@ import {
 import { beginWorkspaceSend, finishWorkspaceSend } from "#/server/workspace.ts";
 
 import { missionBits } from "./agent-view.ts";
-import { useRefresh, useWorkspace, WorkspaceContext } from "./context.ts";
+import { type StartedTask, useRefresh, useWorkspace, WorkspaceContext } from "./context.ts";
 import { decorate, useInspect } from "./event-view.ts";
 import { runLiveTick } from "./live.ts";
 import { gateStyle, kindStyle, navStyle, pill, switchParts } from "./styles.ts";
@@ -34,6 +34,7 @@ export function WorkspaceProvider({
 	const [dockOpen, setDockOpen] = useState(false);
 	const [thinking, setThinking] = useState(false);
 	const [thinkingAgent, setThinkingAgent] = useState("");
+	const [startedTask, setStartedTask] = useState<StartedTask | null>(null);
 	const [pending, setPending] = useState(false);
 	const { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive, ruleForm, setRuleForm } =
 		useWorkspaceControls(frame);
@@ -51,6 +52,7 @@ export function WorkspaceProvider({
 		setMessages,
 		setThinking,
 		setThinkingAgent,
+		setStartedTask,
 		setPending,
 		refreshFrame,
 		sending,
@@ -66,6 +68,7 @@ export function WorkspaceProvider({
 			toggleDock: () => setDockOpen((open) => !open),
 			thinking,
 			thinkingAgent,
+			startedTask,
 			pending,
 			messages,
 			approvalCount,
@@ -98,6 +101,7 @@ export function WorkspaceProvider({
 			setLive,
 			setRuleForm,
 			setSelEvent,
+			startedTask,
 			submit,
 			thinking,
 			thinkingAgent,
@@ -234,6 +238,7 @@ interface SendHooks {
 	readonly setMessages: (messages: WorkspaceFrameData["messages"]) => void;
 	readonly setThinking: (value: boolean) => void;
 	readonly setThinkingAgent: (value: string) => void;
+	readonly setStartedTask: (task: StartedTask | null) => void;
 	readonly setPending: (value: boolean) => void;
 	readonly refreshFrame: () => Promise<WorkspaceFrameData>;
 	readonly sending: { current: boolean };
@@ -304,6 +309,7 @@ async function finishWorkingSend(
 ) {
 	hooks.setThinking(true);
 	hooks.setThinkingAgent(started.agentName);
+	hooks.setStartedTask(started.task);
 	await delay(replyWaitMs);
 	if (!hooks.mounted.current) {
 		return;

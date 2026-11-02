@@ -150,6 +150,47 @@ test("a Task hand-off is visible while the reply is still working", async ({ pag
 	await expect(buttons).toHaveCount(6);
 });
 
+test("the Task is in the panel while finish and the bus read are held", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(120_000);
+	await openChat(page, workspaceUser);
+	let posts = 0;
+	const held: { abort: () => Promise<void> }[] = [];
+	await page.route("**/_serverFn/**", async (route) => {
+		const method = route.request().method();
+		if (method === "POST" && ++posts === 2) {
+			held.push(route);
+			return;
+		}
+		if (method === "GET") {
+			held.push(route);
+			return;
+		}
+		await route.continue();
+	});
+	const question = "How did ads do this week?";
+	await page.locator("#chat-input").fill(question);
+	await page.getByRole("button", { name: "Send", exact: true }).click();
+	await expect(page.getByText("Marketing agent is working on it…")).toBeVisible({ timeout: replyTimeout });
+	await expect.poll(() => posts).toBe(2);
+	const buttons = page.locator("[data-loop='chatBus'] button");
+	const first = buttons.first();
+	try {
+		await expect(first).toContainText("Task", { timeout: 2_000 });
+		await expect(first).toContainText(question);
+		await expect(buttons).toHaveCount(6);
+		await expect(buttons.filter({ hasText: question })).toHaveCount(1);
+	} finally {
+		for (const route of held) await route.abort();
+		await page.unroute("**/_serverFn/**");
+	}
+	await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0, { timeout: 35_000 });
+	const newest = await newestBusEvent(accountId);
+	await expect(first).toContainText(newest.kind);
+	await expect(first).toContainText(newest.body);
+	await expect(buttons.filter({ hasText: question })).toHaveCount(1);
+	await expect(buttons).toHaveCount(6);
+});
+
 test("enter sends the draft and clears the input", async ({ page, workspaceUser }) => {
 	test.setTimeout(120_000);
 	await openChat(page, workspaceUser);

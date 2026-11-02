@@ -5,6 +5,15 @@ import type { decorate } from "./event-view.ts";
 import type { gateStyle, kindStyle, navStyle, pill, switchParts } from "./styles.ts";
 import type { RuleForm, WorkspaceFrameData } from "./types.ts";
 
+export interface StartedTask {
+	readonly id: string;
+	readonly time: string;
+	readonly from: string;
+	readonly to: string;
+	readonly kind: string;
+	readonly text: string;
+}
+
 export interface WorkspaceHelpers {
 	readonly pill: typeof pill;
 	readonly kindStyle: typeof kindStyle;
@@ -23,6 +32,7 @@ export interface WorkspaceValue {
 	readonly toggleDock: () => void;
 	readonly thinking: boolean;
 	readonly thinkingAgent: string;
+	readonly startedTask: StartedTask | null;
 	readonly pending: boolean;
 	readonly messages: WorkspaceFrameData["messages"];
 	readonly approvalCount: number;
