@@ -1,0 +1,370 @@
+{
+  "config": {
+    "argv": [
+      "/opt/homebrew/Cellar/node@24/24.21.0/bin/node",
+      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      ".local-test/playwright.config.ts",
+      "--grep",
+      "late accepted frame restores rejected mission|a held dock begin|a held chat finish|macOS screenshot baselines|overview boxes"
+    ],
+    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/.local-test/playwright.config.ts",
+    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6F1EAV133WFHMQDB37XPJD5/playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "live-overview.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6F1EAV133WFHMQDB37XPJD5/playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e",
+        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e",
+        "testIgnore": [],
+        "testMatch": "live-overview.spec.ts",
+        "timeout": 60000,
+        "use": {
+          "baseURL": "http://localhost:3000",
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "trace": "retain-on-failure",
+          "launchOptions": {
+            "args": [
+              "--font-render-hinting=none",
+              "--disable-font-subpixel-positioning",
+              "--force-color-profile=srgb"
+            ]
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6F1EAV133WFHMQDB37XPJD5/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "live-overview.spec.ts",
+      "file": "live-overview.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "a held dock begin keeps the server count on traffic",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3332,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "wait for the released send and its frame refresh",
+                      "duration": 1655
+                    }
+                  ],
+                  "startTime": "2026-11-02T21:27:21.209Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "74cbecf00666825e7698-f461a8b9b0ec76e7b645",
+          "file": "live-overview.spec.ts",
+          "line": 366,
+          "column": 1
+        },
+        {
+          "title": "a held chat finish keeps the server count on traffic",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4466,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "wait for the released send and its frame refresh",
+                      "duration": 181
+                    }
+                  ],
+                  "startTime": "2026-11-02T21:27:24.606Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "74cbecf00666825e7698-7fde82b79cadbaddacd4",
+          "file": "live-overview.spec.ts",
+          "line": 382,
+          "column": 1
+        },
+        {
+          "title": "the overview boxes match the rendered design at 1440 and 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 927,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T21:27:29.081Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "74cbecf00666825e7698-511bdb1c5ba5493d4033",
+          "file": "live-overview.spec.ts",
+          "line": 485,
+          "column": 1
+        },
+        {
+          "title": "the overview matches the macOS screenshot baselines",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 1925,
+                  "error": {
+                    "message": "Error: A snapshot doesn't exist at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/live-overview.spec.ts-snapshots/overview-1440-darwin.png, writing actual.",
+                    "stack": "Error: A snapshot doesn't exist at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/live-overview.spec.ts-snapshots/overview-1440-darwin.png, writing actual.\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/live-overview.spec.ts:518:3",
+                    "location": {
+                      "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/live-overview.spec.ts",
+                      "column": 3,
+                      "line": 518
+                    },
+                    "snippet": "  516 | \t\tawait page.setViewportSize({ width: viewport.width, height: viewport.height });\n  517 | \t\tawait waitForScreenFonts(page);\n> 518 | \t\tawait expect(page).toHaveScreenshot(`overview-${viewport.name}.png`, { fullPage: true });\n      | \t\t^\n  519 | \t}\n  520 | });\n  521 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/live-overview.spec.ts",
+                        "column": 3,
+                        "line": 518
+                      },
+                      "message": "Error: A snapshot doesn't exist at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/live-overview.spec.ts-snapshots/overview-1440-darwin.png, writing actual.\n\n  516 | \t\tawait page.setViewportSize({ width: viewport.width, height: viewport.height });\n  517 | \t\tawait waitForScreenFonts(page);\n> 518 | \t\tawait expect(page).toHaveScreenshot(`overview-${viewport.name}.png`, { fullPage: true });\n      | \t\t^\n  519 | \t}\n  520 | });\n  521 |\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/live-overview.spec.ts:518:3"
+                    },
+                    {
+                      "location": {
+                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/live-overview.spec.ts",
+                        "column": 3,
+                        "line": 518
+                      },
+                      "message": "Error: A snapshot doesn't exist at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/live-overview.spec.ts-snapshots/overview-390-darwin.png, writing actual.\n\n  516 | \t\tawait page.setViewportSize({ width: viewport.width, height: viewport.height });\n  517 | \t\tawait waitForScreenFonts(page);\n> 518 | \t\tawait expect(page).toHaveScreenshot(`overview-${viewport.name}.png`, { fullPage: true });\n      | \t\t^\n  519 | \t}\n  520 | });\n  521 |\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/live-overview.spec.ts:518:3"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T21:27:30.013Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "overview-1440-expected.png",
+                      "contentType": "image/png",
+                      "path": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/live-overview.spec.ts-snapshots/overview-1440-darwin.png"
+                    },
+                    {
+                      "name": "overview-1440-actual.png",
+                      "contentType": "image/png",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6F1EAV133WFHMQDB37XPJD5/playwright/live-overview-the-overview-e0788--macOS-screenshot-baselines/overview-1440-actual.png"
+                    },
+                    {
+                      "name": "overview-390-expected.png",
+                      "contentType": "image/png",
+                      "path": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/live-overview.spec.ts-snapshots/overview-390-darwin.png"
+                    },
+                    {
+                      "name": "overview-390-actual.png",
+                      "contentType": "image/png",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6F1EAV133WFHMQDB37XPJD5/playwright/live-overview-the-overview-e0788--macOS-screenshot-baselines/overview-390-actual.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6F1EAV133WFHMQDB37XPJD5/playwright/live-overview-the-overview-e0788--macOS-screenshot-baselines/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6F1EAV133WFHMQDB37XPJD5/playwright/live-overview-the-overview-e0788--macOS-screenshot-baselines/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/live-overview.spec.ts",
+                    "column": 3,
+                    "line": 518
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "74cbecf00666825e7698-336b041eec3089204bc0",
+          "file": "live-overview.spec.ts",
+          "line": 512,
+          "column": 1
+        },
+        {
+          "title": "late accepted frame restores rejected mission after leaving overview",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 32497,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T21:27:32.408Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "74cbecf00666825e7698-59970ad675764e214419",
+          "file": "live-overview.spec.ts",
+          "line": 939,
+          "column": 2
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-02T21:27:20.479Z",
+    "duration": 44520.379,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

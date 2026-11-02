@@ -1,0 +1,7 @@
+Target f3cc65c32218f795e3cd72cf466c5df2445b7bc7.
+Real TanStack Start application served by Vite on localhost:3000, driven with headless Playwright Chromium.
+No Clerk, Neon, or other shared-service credentials were present or used.
+Disposable Vite transform supplied a fixed local session and a local PGlite database through the existing adapter test helper. The unchanged design seed initialized account local-validation. The actual route loaders, React provider, decision queue, server functions, kernel, repositories, and transactions ran. Each scenario reset the isolated database. No response counts or screen markup were mocked.
+Browser routes held real send requests, rejected selected decision requests without committing, or delayed real frame responses for over 30 seconds. The late recovery cases ran on Traffic after Overview unmounted. The second case kept a real mission POST held while releasing the delayed frame.
+Existing overview browser tests were copied temporarily with only the workspace authentication/database fixture replaced. Additional temporary recovery tests exercised late frame acceptance. All temporary harness files and generated app caches were removed after testing.
+The two-tab navigation test failed with inbox count 4 after the refund card disappeared. This matches declined round 3 R1; no fix was made or requested again.

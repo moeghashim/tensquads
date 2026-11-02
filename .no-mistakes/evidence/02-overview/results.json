@@ -2,15 +2,15 @@
   "config": {
     "argv": [
       "/opt/homebrew/Cellar/node@24/24.21.0/bin/node",
-      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/node_modules/.bin/playwright",
+      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/node_modules/.bin/playwright",
       "test",
       "--config",
-      "playwright.local-test.config.ts",
+      ".local-test/playwright.config.ts",
       "--grep",
-      "write timeout|missing policy|keyboard reaches|frame matches the macOS"
+      "macOS screenshot baselines"
     ],
-    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/playwright.local-test.config.ts",
-    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e",
+    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/.local-test/playwright.config.ts",
+    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e",
     "failOnFlakyTests": false,
     "forbidOnly": false,
     "fullyParallel": false,
@@ -26,7 +26,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/browser",
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6F1EAV133WFHMQDB37XPJD5/playwright",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -34,11 +34,10 @@
         },
         "id": "",
         "name": "",
-        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e",
         "testIgnore": [],
         "testMatch": [
-          "local-overview.spec.ts",
-          "local-frame.spec.ts"
+          "live-overview.spec.ts"
         ],
         "timeout": 60000
       }
@@ -47,20 +46,17 @@
       {
         "grep": {},
         "grepInvert": null,
-        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/browser",
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6F1EAV133WFHMQDB37XPJD5/playwright",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
           "actualWorkers": 1
         },
         "name": "",
-        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e",
-        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e",
+        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e",
         "testIgnore": [],
-        "testMatch": [
-          "local-overview.spec.ts",
-          "local-frame.spec.ts"
-        ],
+        "testMatch": "live-overview.spec.ts",
         "timeout": 60000,
         "use": {
           "baseURL": "http://localhost:3000",
@@ -68,8 +64,7 @@
             "width": 1440,
             "height": 900
           },
-          "deviceScaleFactor": 1,
-          "screenshot": "on",
+          "trace": "retain-on-failure",
           "launchOptions": {
             "args": [
               "--font-render-hinting=none",
@@ -86,13 +81,13 @@
     "quiet": false,
     "reporter": [
       [
-        "line",
+        "list",
         null
       ],
       [
         "json",
         {
-          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/results.json"
+          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6F1EAV133WFHMQDB37XPJD5/results.json"
         }
       ]
     ],
@@ -110,54 +105,14 @@
   },
   "suites": [
     {
-      "title": "local-frame.spec.ts",
-      "file": "local-frame.spec.ts",
+      "title": "live-overview.spec.ts",
+      "file": "live-overview.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [
         {
-          "title": "the keyboard reaches the dock, shows the focus ring, and Enter sends",
+          "title": "the overview matches the macOS screenshot baselines",
           "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 90000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 786,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T17:16:14.445Z",
-                  "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/browser/local-frame-the-keyboard-r-85a1d--focus-ring-and-Enter-sends/test-finished-1.png"
-                    }
-                  ]
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "98e9824bbf9953f71a50-0ee6605c5964aeebc642",
-          "file": "local-frame.spec.ts",
-          "line": 202,
-          "column": 1
-        },
-        {
-          "title": "the frame matches the macOS screenshot baselines",
-          "ok": false,
           "tags": [],
           "tests": [
             {
@@ -170,250 +125,23 @@
                 {
                   "workerIndex": 0,
                   "parallelIndex": 0,
-                  "status": "failed",
-                  "duration": 3569,
-                  "error": {
-                    "message": "Error: A snapshot doesn't exist at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/frame-spec-ts-snapshots-frame-closed-1440.png, writing actual.",
-                    "stack": "Error: A snapshot doesn't exist at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/frame-spec-ts-snapshots-frame-closed-1440.png, writing actual.\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/local-frame.spec.ts:296:3",
-                    "location": {
-                      "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/local-frame.spec.ts",
-                      "column": 3,
-                      "line": 296
-                    },
-                    "snippet": "  294 | \t\tawait page.setViewportSize({ width: viewport.width, height: viewport.height });\n  295 | \t\tawait waitForScreenFonts(page);\n> 296 | \t\tawait expect(page).toHaveScreenshot(`frame.spec.ts-snapshots/frame-closed-${viewport.name}.png`, { fullPage: true });\n      | \t\t^\n  297 | \t\tawait page.getByRole(\"button\", { name: \"Ask Master\" }).click();\n  298 | \t\tawait waitForScreenFonts(page);\n  299 | \t\tawait expect(page).toHaveScreenshot(`frame.spec.ts-snapshots/frame-open-${viewport.name}.png`, { fullPage: true });"
-                  },
-                  "errors": [
-                    {
-                      "location": {
-                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/local-frame.spec.ts",
-                        "column": 3,
-                        "line": 296
-                      },
-                      "message": "Error: A snapshot doesn't exist at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/frame-spec-ts-snapshots-frame-closed-1440.png, writing actual.\n\n  294 | \t\tawait page.setViewportSize({ width: viewport.width, height: viewport.height });\n  295 | \t\tawait waitForScreenFonts(page);\n> 296 | \t\tawait expect(page).toHaveScreenshot(`frame.spec.ts-snapshots/frame-closed-${viewport.name}.png`, { fullPage: true });\n      | \t\t^\n  297 | \t\tawait page.getByRole(\"button\", { name: \"Ask Master\" }).click();\n  298 | \t\tawait waitForScreenFonts(page);\n  299 | \t\tawait expect(page).toHaveScreenshot(`frame.spec.ts-snapshots/frame-open-${viewport.name}.png`, { fullPage: true });\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/local-frame.spec.ts:296:3"
-                    },
-                    {
-                      "location": {
-                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/local-frame.spec.ts",
-                        "column": 3,
-                        "line": 299
-                      },
-                      "message": "Error: A snapshot doesn't exist at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/frame-spec-ts-snapshots-frame-open-1440.png, writing actual.\n\n  297 | \t\tawait page.getByRole(\"button\", { name: \"Ask Master\" }).click();\n  298 | \t\tawait waitForScreenFonts(page);\n> 299 | \t\tawait expect(page).toHaveScreenshot(`frame.spec.ts-snapshots/frame-open-${viewport.name}.png`, { fullPage: true });\n      | \t\t^\n  300 | \t\tawait page.getByRole(\"button\", { name: \"Hide chat\" }).click();\n  301 | \t}\n  302 | });\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/local-frame.spec.ts:299:3"
-                    },
-                    {
-                      "location": {
-                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/local-frame.spec.ts",
-                        "column": 3,
-                        "line": 296
-                      },
-                      "message": "Error: A snapshot doesn't exist at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/frame-spec-ts-snapshots-frame-closed-390.png, writing actual.\n\n  294 | \t\tawait page.setViewportSize({ width: viewport.width, height: viewport.height });\n  295 | \t\tawait waitForScreenFonts(page);\n> 296 | \t\tawait expect(page).toHaveScreenshot(`frame.spec.ts-snapshots/frame-closed-${viewport.name}.png`, { fullPage: true });\n      | \t\t^\n  297 | \t\tawait page.getByRole(\"button\", { name: \"Ask Master\" }).click();\n  298 | \t\tawait waitForScreenFonts(page);\n  299 | \t\tawait expect(page).toHaveScreenshot(`frame.spec.ts-snapshots/frame-open-${viewport.name}.png`, { fullPage: true });\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/local-frame.spec.ts:296:3"
-                    },
-                    {
-                      "location": {
-                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/local-frame.spec.ts",
-                        "column": 3,
-                        "line": 299
-                      },
-                      "message": "Error: A snapshot doesn't exist at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/frame-spec-ts-snapshots-frame-open-390.png, writing actual.\n\n  297 | \t\tawait page.getByRole(\"button\", { name: \"Ask Master\" }).click();\n  298 | \t\tawait waitForScreenFonts(page);\n> 299 | \t\tawait expect(page).toHaveScreenshot(`frame.spec.ts-snapshots/frame-open-${viewport.name}.png`, { fullPage: true });\n      | \t\t^\n  300 | \t\tawait page.getByRole(\"button\", { name: \"Hide chat\" }).click();\n  301 | \t}\n  302 | });\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/local-frame.spec.ts:299:3"
-                    }
-                  ],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T17:16:15.297Z",
-                  "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "frame-spec-ts-snapshots-frame-closed-1440-expected.png",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/frame-spec-ts-snapshots-frame-closed-1440.png"
-                    },
-                    {
-                      "name": "frame-spec-ts-snapshots-frame-closed-1440-actual.png",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/browser/local-frame-the-frame-matches-the-macOS-screenshot-baselines/frame-spec-ts-snapshots-frame-closed-1440-actual.png"
-                    },
-                    {
-                      "name": "frame-spec-ts-snapshots-frame-open-1440-expected.png",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/frame-spec-ts-snapshots-frame-open-1440.png"
-                    },
-                    {
-                      "name": "frame-spec-ts-snapshots-frame-open-1440-actual.png",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/browser/local-frame-the-frame-matches-the-macOS-screenshot-baselines/frame-spec-ts-snapshots-frame-open-1440-actual.png"
-                    },
-                    {
-                      "name": "frame-spec-ts-snapshots-frame-closed-390-expected.png",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/frame-spec-ts-snapshots-frame-closed-390.png"
-                    },
-                    {
-                      "name": "frame-spec-ts-snapshots-frame-closed-390-actual.png",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/browser/local-frame-the-frame-matches-the-macOS-screenshot-baselines/frame-spec-ts-snapshots-frame-closed-390-actual.png"
-                    },
-                    {
-                      "name": "frame-spec-ts-snapshots-frame-open-390-expected.png",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/frame-spec-ts-snapshots-frame-open-390.png"
-                    },
-                    {
-                      "name": "frame-spec-ts-snapshots-frame-open-390-actual.png",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/browser/local-frame-the-frame-matches-the-macOS-screenshot-baselines/frame-spec-ts-snapshots-frame-open-390-actual.png"
-                    },
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/browser/local-frame-the-frame-matches-the-macOS-screenshot-baselines/test-failed-1.png"
-                    },
-                    {
-                      "name": "error-context",
-                      "contentType": "text/markdown",
-                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/browser/local-frame-the-frame-matches-the-macOS-screenshot-baselines/error-context.md"
-                    }
-                  ],
-                  "errorLocation": {
-                    "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e/local-frame.spec.ts",
-                    "column": 3,
-                    "line": 296
-                  }
-                }
-              ],
-              "status": "unexpected"
-            }
-          ],
-          "id": "98e9824bbf9953f71a50-23364194fba49f8b26a7",
-          "file": "local-frame.spec.ts",
-          "line": 289,
-          "column": 1
-        }
-      ]
-    },
-    {
-      "title": "local-overview.spec.ts",
-      "file": "local-overview.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [
-        {
-          "title": "a write timeout aborts its request and releases the next queued decision",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 75000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 1,
-                  "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 31688,
+                  "duration": 1157,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-02T17:16:19.291Z",
+                  "startTime": "2026-11-02T21:28:08.981Z",
                   "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/browser/local-overview-a-write-tim-0a43a-es-the-next-queued-decision/test-finished-1.png"
-                    }
-                  ]
+                  "attachments": []
                 }
               ],
               "status": "expected"
             }
           ],
-          "id": "03a372c2d30f03b9d8b9-13567a359e0a81da106c",
-          "file": "local-overview.spec.ts",
-          "line": 649,
-          "column": 1
-        },
-        {
-          "title": "missing policy rule rolls back spend approval and restores card and badge",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 1,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 930,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T17:16:51.039Z",
-                  "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/browser/local-overview-missing-pol-aa9ff-and-restores-card-and-badge/test-finished-1.png"
-                    }
-                  ]
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "03a372c2d30f03b9d8b9-703ebe0075cfe5acce10",
-          "file": "local-overview.spec.ts",
-          "line": 665,
-          "column": 1
-        },
-        {
-          "title": "keyboard reaches every visible control and mobile page has no horizontal overflow",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 1,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 520,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T17:16:51.978Z",
-                  "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/browser/local-overview-keyboard-re-2b916--has-no-horizontal-overflow/test-finished-1.png"
-                    }
-                  ]
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "03a372c2d30f03b9d8b9-b05e17ddf12ca513f640",
-          "file": "local-overview.spec.ts",
-          "line": 676,
+          "id": "74cbecf00666825e7698-336b041eec3089204bc0",
+          "file": "live-overview.spec.ts",
+          "line": 512,
           "column": 1
         }
       ]
@@ -421,11 +149,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-11-02T17:16:13.723Z",
-    "duration": 38807.988,
-    "expected": 4,
+    "startTime": "2026-11-02T21:28:08.359Z",
+    "duration": 1891.92,
+    "expected": 1,
     "skipped": 0,
-    "unexpected": 1,
+    "unexpected": 0,
     "flaky": 0
   }
 }

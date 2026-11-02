@@ -1,0 +1,63 @@
+
+Running 9 tests using 1 worker
+
+(node:96989) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/9] e2e/.local-overview.spec.ts:24:1 › the overview shows the greeting, six tiles, fourteen bars, the inbox and five cards
+[2/9] e2e/.local-overview.spec.ts:42:1 › the tile shows the computed 331 and the pill shows 4 of 5 squads online
+[3/9] e2e/.local-overview.spec.ts:204:1 › a second card is sent after the first, in click order
+[4/9] e2e/.local-overview.spec.ts:221:1 › queued cards and counts survive leaving and returning to overview
+[5/9] e2e/.local-overview.spec.ts:239:1 › a rejected decision restores the badge after leaving overview
+[6/9] e2e/.local-overview.spec.ts:311:1 › navigation frame reads update the count after another tab decides
+  1) e2e/.local-overview.spec.ts:311:1 › navigation frame reads update the count after another tab decides 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  locator('main section[aria-label=\'Needs you\'] h2 + span')
+    Expected: "3"
+    Received: "4"
+    Timeout:  15000ms
+
+    Call log:
+      - Expect "toHaveText" locator('main section[aria-label=\'Needs you\'] h2 + span') with timeout 15000ms
+      - waiting for locator('main section[aria-label=\'Needs you\'] h2 + span')
+        34 × locator resolved to <span>4</span>
+           - unexpected value "4"
+
+
+      323 | 		await page.getByRole("button", { name: "Overview", exact: true }).click();
+      324 | 		await expect(refundCard(page)).toHaveCount(0, settled);
+    > 325 | 		await expect(inboxCount(page)).toHaveText("3", settled);
+          | 		                               ^
+      326 | 		await expect(dockBadge(page)).toHaveText("3", settled);
+      327 | 	} finally {
+      328 | 		await other.close();
+        at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F1EAV133WFHMQDB37XPJD5/e2e/.local-overview.spec.ts:325:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../evidence/01M6F1EAV133WFHMQDB37XPJD5/playwright/.local-overview-navigation-f4434-t-after-another-tab-decides/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../evidence/01M6F1EAV133WFHMQDB37XPJD5/playwright/.local-overview-navigation-f4434-t-after-another-tab-decides/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../evidence/01M6F1EAV133WFHMQDB37XPJD5/playwright/.local-overview-navigation-f4434-t-after-another-tab-decides/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../evidence/01M6F1EAV133WFHMQDB37XPJD5/playwright/.local-overview-navigation-f4434-t-after-another-tab-decides/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+(node:97212) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[7/9] e2e/.local-overview.spec.ts:332:1 › a held dock begin keeps the server count on traffic
+[8/9] e2e/.local-overview.spec.ts:348:1 › a held chat finish keeps the server count on traffic
+[9/9] e2e/.local-overview.spec.ts:366:1 › a double click approves once and the badge changes at the click
+  1 failed
+    e2e/.local-overview.spec.ts:311:1 › navigation frame reads update the count after another tab decides 
+  8 passed (32.1s)

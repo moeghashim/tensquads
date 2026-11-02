@@ -1,0 +1,15 @@
+
+Running 7 tests using 1 worker
+
+(node:98190) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/7] e2e/.local-overview.spec.ts:99:1 › an empty inbox shows the nothing waiting text and no badge
+[2/7] e2e/.local-overview.spec.ts:149:1 › ask for another shows the revising text and lowers the count
+[3/7] e2e/.local-overview.spec.ts:332:1 › a held dock begin keeps the server count on traffic
+[4/7] e2e/.local-overview.spec.ts:348:1 › a held chat finish keeps the server count on traffic
+[5/7] e2e/.local-overview.spec.ts:380:1 › a failed write restores the server and the queued card still sends
+[6/7] e2e/.local-overview.spec.ts:430:1 › the overview matches the rendered design inventory
+[7/7] e2e/.local-overview.spec.ts:451:1 › the overview boxes match the rendered design at 1440 and 390
+  7 passed (13.9s)

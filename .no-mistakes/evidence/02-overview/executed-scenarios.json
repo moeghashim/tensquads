@@ -1,0 +1,127 @@
+[
+  {
+    "run": "initial-results.json",
+    "title": "the overview shows the greeting, six tiles, fourteen bars, the inbox and five cards",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "the tile shows the computed 331 and the pill shows 4 of 5 squads online",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "an empty inbox shows the nothing waiting text and no badge",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "ask for another shows the revising text and lowers the count",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "a held Approve changes the card and the badge at the click",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "a held Decline changes the card and the badge at the click",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "a held Approve mission changes the card and the badge at the click",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "a held Ask for another changes the card and the badge at the click",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "a second card is sent after the first, in click order",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "queued cards and counts survive leaving and returning to overview",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "navigation frame reads update the count after another tab decides",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "a rejected decision restores the badge after leaving overview",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "navigation frame reads update the count after another tab declines",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "a held dock begin keeps the server count on traffic",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "a held chat finish keeps the server count on traffic",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "a double click approves once and the badge changes at the click",
+    "status": "passed"
+  },
+  {
+    "run": "initial-results.json",
+    "title": "a failed write restores the server and the queued card still sends",
+    "status": "passed"
+  },
+  {
+    "run": "late-frame-results.json",
+    "title": "late accepted frame restores rejected refund after leaving overview",
+    "status": "passed"
+  },
+  {
+    "run": "late-frame-results.json",
+    "title": "late accepted frame restores rejected refund and keeps the in-flight second card",
+    "status": "passed"
+  },
+  {
+    "run": "held-send-and-mission-results.json",
+    "title": "a held dock begin keeps the server count on traffic",
+    "status": "passed"
+  },
+  {
+    "run": "held-send-and-mission-results.json",
+    "title": "a held chat finish keeps the server count on traffic",
+    "status": "passed"
+  },
+  {
+    "run": "held-send-and-mission-results.json",
+    "title": "the overview boxes match the rendered design at 1440 and 390",
+    "status": "passed"
+  },
+  {
+    "run": "held-send-and-mission-results.json",
+    "title": "the overview matches the macOS screenshot baselines",
+    "status": "failed"
+  },
+  {
+    "run": "held-send-and-mission-results.json",
+    "title": "late accepted frame restores rejected mission after leaving overview",
+    "status": "passed"
+  },
+  {
+    "run": "visual-results.json",
+    "title": "the overview matches the macOS screenshot baselines",
+    "status": "passed"
+  }
+]

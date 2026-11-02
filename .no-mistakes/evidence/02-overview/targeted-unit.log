@@ -1,0 +1,31 @@
+▶ overview decisions
+  ✔ a finished decision refreshes and clears the guard (0.708167ms)
+  ✔ a failed write still refreshes, restores the count, and clears the guard (0.575083ms)
+  ✔ a failed refresh keeps the card until a server read (0.473375ms)
+  ✔ three queued jobs run in click order behind the held job (0.318542ms)
+  ✔ the badge uses the workspace count, including after the page closes (0.149541ms)
+  ✔ a write keeps the server row and a missed read leaves the card (0.12725ms)
+  ✔ two cards queue in click order and a double click sends one write (0.133208ms)
+  ✔ a failed write lets the queued card run (0.127833ms)
+  ✔ a lost response reconciles the server count before the next write (0.158875ms)
+  ✔ a failed read keeps the optimistic count and patches until a successful read (0.165125ms)
+  ✔ a timed-out refresh keeps the card until a server read and a second click sends nothing (0.399334ms)
+  ✔ an accepted frame recovers a timed-out refund (0.166417ms)
+  ✔ an accepted frame recovers a timed-out refund and keeps an in-flight job (0.103959ms)
+  ✔ a hung write aborts, refreshes, and the queue goes on (0.121209ms)
+✔ overview decisions (4.443ms)
+▶ approval count clock
+  ✔ a frame read replaces the seed when no decision has answered (0.2585ms)
+  ✔ a frame read that started before the decision does not replace it (0.049208ms)
+  ✔ a frame read that starts as the decision answers does not replace it (0.03775ms)
+  ✔ a frame read that started after the decision replaces it (0.045083ms)
+  ✔ an earlier decision does not replace a later one (0.0425ms)
+✔ approval count clock (0.898583ms)
+ℹ tests 19
+ℹ suites 2
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 79.380292

@@ -1,0 +1,16 @@
+
+Running 2 tests using 1 worker
+
+(node:97543) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/2] e2e/.local-recovery.spec.ts:4:36 › late accepted frame restores rejected refund on Traffic
+e2e/.local-recovery.spec.ts:4:36 › late accepted frame restores rejected refund on Traffic
+After refresh exceeded 30s: Traffic badge recovered to 4; refund posts=1; mission held=false
+
+[2/2] e2e/.local-recovery.spec.ts:4:36 › late accepted frame restores rejected refund on Traffic while mission stays in flight
+e2e/.local-recovery.spec.ts:4:36 › late accepted frame restores rejected refund on Traffic while mission stays in flight
+After refresh exceeded 30s: Traffic badge recovered to 3; refund posts=1; mission held=true
+
+  2 passed (1.1m)
