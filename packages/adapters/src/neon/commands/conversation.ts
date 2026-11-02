@@ -12,7 +12,7 @@ export { PENDING_TASK_WINDOW_MS };
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 
-const MAIN_THREAD = "main";
+const DOCK_THREAD = "dock";
 
 function messageRank(id: string, sortOrder: number): number {
 	const match = /^c(\d+)$/.exec(id);
@@ -67,7 +67,7 @@ async function insertMessage(
 	const seq = cursor.seq;
 	await tx.insert(messages).values({
 		accountId,
-		threadId: MAIN_THREAD,
+		threadId: DOCK_THREAD,
 		id: `c${seq}`,
 		fromRole: from,
 		agent,
@@ -81,11 +81,11 @@ async function ensureThread(tx: Tx, accountId: string): Promise<void> {
 	const rows = await tx
 		.select({ id: threads.id })
 		.from(threads)
-		.where(and(eq(threads.accountId, accountId), eq(threads.id, MAIN_THREAD)));
+		.where(and(eq(threads.accountId, accountId), eq(threads.id, DOCK_THREAD)));
 	if (rows.length > 0) {
 		return;
 	}
-	await tx.insert(threads).values({ accountId, id: MAIN_THREAD, sortOrder: 0 });
+	await tx.insert(threads).values({ accountId, id: DOCK_THREAD, sortOrder: 0 });
 }
 
 async function readAgent(tx: Tx, accountId: string, agentId: string) {

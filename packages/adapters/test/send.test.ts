@@ -56,6 +56,32 @@ async function storeText(db: AppDatabase, accountId: string, key: string) {
 	return rows[0]?.value;
 }
 
+for (const seeded of [true, false]) {
+	test(`a send uses one dock thread ${seeded ? "with seeded messages" : "when no thread exists"}`, async () => {
+		await withCopy(`thread-${seeded}`, async (db, accountId) => {
+			if (!seeded) {
+				await db.delete(schema.messages).where(eq(schema.messages.accountId, accountId));
+				await db.delete(schema.threads).where(eq(schema.threads.accountId, accountId));
+			}
+			const before = await db.select().from(schema.messages).where(eq(schema.messages.accountId, accountId));
+			if (seeded) assert.ok(before.length > 0);
+			for (const message of before) assert.equal(message.threadId, "dock");
+			const started = await beginSend(db, scope(accountId), ads);
+			assert.equal(started.kind, "working");
+			if (started.kind !== "working") return;
+			assert.equal((await finishSend(db, scope(accountId), started.taskId)).kind, "replied");
+			const after = await db.select().from(schema.messages).where(eq(schema.messages.accountId, accountId));
+			assert.equal(after.length, before.length + 3);
+			for (const message of after) assert.equal(message.threadId, "dock");
+			for (const message of before) {
+				assert.deepEqual(after.find((row) => row.id === message.id), message);
+			}
+			const storedThreads = await db.select().from(schema.threads).where(eq(schema.threads.accountId, accountId));
+			assert.deepEqual(storedThreads.map((thread) => thread.id), ["dock"]);
+		});
+	});
+}
+
 test("a marketing send writes the task, and the reply writes the result without changing the store", async () => {
 	await withCopy("marketing", async (db, accountId) => {
 		const before = await storeText(db, accountId, "marketing.roas_7d");
