@@ -1,0 +1,914 @@
+[
+  {
+    "actions": [
+      "Resume",
+      "LiveStart",
+      "SendWhileWaiting",
+      "LiveCommit",
+      "QueuedDrain"
+    ],
+    "path": [
+      {
+        "action": "Init",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Paused",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "Resume",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "LiveStart",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "waiting",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "SendWhileWaiting",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "waiting",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "LiveCommit",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": true,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 1,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "QueuedDrain",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": true,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 1,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      }
+    ]
+  },
+  {
+    "actions": [
+      "Resume",
+      "LiveStart",
+      "SendWhileWaiting",
+      "LiveCommit",
+      "Repeat",
+      "QueuedDrain"
+    ],
+    "path": [
+      {
+        "action": "Init",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Paused",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "Resume",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "LiveStart",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "waiting",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "SendWhileWaiting",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "waiting",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "LiveCommit",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": true,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 1,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "Repeat",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": true,
+          "snapCount": 1,
+          "appended": true,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": true,
+          "count": 1,
+          "snapDelivery": "acknowledged",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "QueuedDrain",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": true,
+          "snapCount": 1,
+          "appended": true,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": true,
+          "count": 1,
+          "snapDelivery": "acknowledged",
+          "escalation": 0
+        }
+      }
+    ]
+  },
+  {
+    "actions": [
+      "Resume",
+      "LiveStart",
+      "SendWhileWaiting",
+      "LiveCommit",
+      "Filter",
+      "QueuedDrain"
+    ],
+    "path": [
+      {
+        "action": "Init",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Paused",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "Resume",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "LiveStart",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "waiting",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "SendWhileWaiting",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "waiting",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "LiveCommit",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": true,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 1,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "Filter",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": true,
+          "hidden": true,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 1,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "QueuedDrain",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": true,
+          "hidden": true,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 1,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      }
+    ]
+  },
+  {
+    "actions": [
+      "Resume",
+      "LiveStart",
+      "SendWhileWaiting",
+      "LiveCommit",
+      "Repeat",
+      "Filter",
+      "QueuedDrain"
+    ],
+    "path": [
+      {
+        "action": "Init",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Paused",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "Resume",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "LiveStart",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "waiting",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "SendWhileWaiting",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "waiting",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "LiveCommit",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": true,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 1,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "Repeat",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": true,
+          "snapCount": 1,
+          "appended": true,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": true,
+          "count": 1,
+          "snapDelivery": "acknowledged",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "Filter",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": true,
+          "snapCount": 1,
+          "appended": true,
+          "hidden": true,
+          "guard": "idle",
+          "snapApplied": true,
+          "count": 1,
+          "snapDelivery": "acknowledged",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "QueuedDrain",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": true,
+          "snapCount": 1,
+          "appended": true,
+          "hidden": true,
+          "guard": "idle",
+          "snapApplied": true,
+          "count": 1,
+          "snapDelivery": "acknowledged",
+          "escalation": 0
+        }
+      }
+    ]
+  },
+  {
+    "actions": [
+      "Resume",
+      "LiveStart",
+      "SendWhileWaiting",
+      "LiveCommit",
+      "Filter",
+      "Repeat",
+      "QueuedDrain"
+    ],
+    "path": [
+      {
+        "action": "Init",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Paused",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "Resume",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "LiveStart",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "waiting",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "SendWhileWaiting",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "waiting",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "LiveCommit",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": true,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 1,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "Filter",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": true,
+          "hidden": true,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 1,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "Repeat",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": true,
+          "snapCount": 1,
+          "appended": true,
+          "hidden": true,
+          "guard": "idle",
+          "snapApplied": true,
+          "count": 1,
+          "snapDelivery": "acknowledged",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "QueuedDrain",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": true,
+          "snapCount": 1,
+          "appended": true,
+          "hidden": true,
+          "guard": "idle",
+          "snapApplied": true,
+          "count": 1,
+          "snapDelivery": "acknowledged",
+          "escalation": 0
+        }
+      }
+    ]
+  },
+  {
+    "actions": [
+      "Resume",
+      "LiveStart",
+      "SendWhileWaiting",
+      "LiveExpire",
+      "QueuedSend"
+    ],
+    "path": [
+      {
+        "action": "Init",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Paused",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "Resume",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "LiveStart",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "waiting",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "SendWhileWaiting",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "waiting",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "LiveExpire",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 1,
+          "playback": "Live",
+          "selected": "none",
+          "delivery": "ready",
+          "applied": false,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": false,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 0,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      },
+      {
+        "action": "QueuedSend",
+        "state": {
+          "snapEscalation": 0,
+          "manual": 0,
+          "playback": "Live",
+          "selected": "held",
+          "delivery": "acknowledged",
+          "applied": true,
+          "repeat": false,
+          "snapCount": 0,
+          "appended": true,
+          "hidden": false,
+          "guard": "idle",
+          "snapApplied": false,
+          "count": 1,
+          "snapDelivery": "ready",
+          "escalation": 0
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,218 @@
+stateDiagram-v2
+  state "Legend" as legend {
+    lg0: Path to the AllClicksDrain bug
+    lg1: Repeats forever, so AllClicksDrain breaks
+  }
+  class lg0 bugPath
+  class lg1 repeats
+  s0: snapEscalation=0 manual=0 playback="Paused" selected="none" delivery="ready" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="idle" snapApplied=FALSE count=0 snapDelivery="ready" escalation=0
+  s1: snapEscalation=0 manual=0 playback="Live" selected="none" delivery="ready" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="idle" snapApplied=FALSE count=0 snapDelivery="ready" escalation=0
+  s2: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="acknowledged" applied=TRUE repeat=FALSE snapCount=0 appended=TRUE hidden=FALSE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s3: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="queued" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s4: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="acknowledged" applied=TRUE repeat=FALSE snapCount=0 appended=TRUE hidden=FALSE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s5: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="queued" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s6: snapEscalation=0 manual=0 playback="Live" selected="none" delivery="ready" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="waiting" snapApplied=FALSE count=0 snapDelivery="ready" escalation=0
+  s7: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="acknowledged" applied=TRUE repeat=FALSE snapCount=0 appended=TRUE hidden=TRUE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s8: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="acknowledged" applied=TRUE repeat=TRUE snapCount=1 appended=TRUE hidden=FALSE guard="idle" snapApplied=TRUE count=1 snapDelivery="acknowledged" escalation=0
+  s9: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="dead" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=1
+  s10: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="delivered" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s11: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="acknowledged" applied=TRUE repeat=FALSE snapCount=0 appended=TRUE hidden=FALSE guard="waiting" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s12: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="acknowledged" applied=TRUE repeat=FALSE snapCount=0 appended=TRUE hidden=TRUE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s13: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="acknowledged" applied=TRUE repeat=TRUE snapCount=1 appended=TRUE hidden=FALSE guard="idle" snapApplied=TRUE count=1 snapDelivery="acknowledged" escalation=0
+  s14: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="dead" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=1
+  s15: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="delivered" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s16: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="queued" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="waiting" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s17: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="acknowledged" applied=TRUE repeat=TRUE snapCount=1 appended=TRUE hidden=TRUE guard="idle" snapApplied=TRUE count=1 snapDelivery="acknowledged" escalation=0
+  s18: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="dead" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=TRUE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=1
+  s19: snapEscalation=0 manual=0 playback="Paused" selected="none" delivery="ready" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="waiting" snapApplied=FALSE count=0 snapDelivery="ready" escalation=0
+  s20: snapEscalation=0 manual=1 playback="Live" selected="none" delivery="ready" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="waiting" snapApplied=FALSE count=0 snapDelivery="ready" escalation=0
+  s21: snapEscalation=1 manual=0 playback="Paused" selected="held" delivery="dead" applied=FALSE repeat=TRUE snapCount=1 appended=FALSE hidden=FALSE guard="idle" snapApplied=FALSE count=1 snapDelivery="dead" escalation=1
+  s22: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="acknowledged" applied=TRUE repeat=FALSE snapCount=0 appended=TRUE hidden=TRUE guard="waiting" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s23: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="acknowledged" applied=TRUE repeat=TRUE snapCount=1 appended=TRUE hidden=FALSE guard="waiting" snapApplied=TRUE count=1 snapDelivery="acknowledged" escalation=0
+  s24: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="acknowledged" applied=TRUE repeat=TRUE snapCount=1 appended=TRUE hidden=TRUE guard="idle" snapApplied=TRUE count=1 snapDelivery="acknowledged" escalation=0
+  s25: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="dead" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="waiting" snapApplied=FALSE count=1 snapDelivery="ready" escalation=1
+  s26: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="dead" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=TRUE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=1
+  s27: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="delivered" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="waiting" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s28: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="acknowledged" applied=TRUE repeat=FALSE snapCount=0 appended=TRUE hidden=FALSE guard="waiting" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s29: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="queued" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="waiting" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s30: snapEscalation=0 manual=1 playback="Live" selected="held" delivery="acknowledged" applied=TRUE repeat=FALSE snapCount=0 appended=TRUE hidden=FALSE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s31: snapEscalation=0 manual=1 playback="Live" selected="none" delivery="ready" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="idle" snapApplied=FALSE count=0 snapDelivery="ready" escalation=0
+  s32: snapEscalation=0 manual=1 playback="Paused" selected="none" delivery="ready" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="waiting" snapApplied=FALSE count=0 snapDelivery="ready" escalation=0
+  s33: snapEscalation=1 manual=0 playback="Live" selected="held" delivery="dead" applied=FALSE repeat=TRUE snapCount=1 appended=FALSE hidden=FALSE guard="idle" snapApplied=FALSE count=1 snapDelivery="dead" escalation=1
+  s34: snapEscalation=1 manual=0 playback="Paused" selected="held" delivery="dead" applied=FALSE repeat=TRUE snapCount=1 appended=FALSE hidden=TRUE guard="idle" snapApplied=FALSE count=1 snapDelivery="dead" escalation=1
+  s35: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="acknowledged" applied=TRUE repeat=TRUE snapCount=1 appended=TRUE hidden=TRUE guard="waiting" snapApplied=TRUE count=1 snapDelivery="acknowledged" escalation=0
+  s36: snapEscalation=0 manual=0 playback="Live" selected="held" delivery="dead" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=TRUE guard="waiting" snapApplied=FALSE count=1 snapDelivery="ready" escalation=1
+  s37: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="acknowledged" applied=TRUE repeat=FALSE snapCount=0 appended=TRUE hidden=TRUE guard="waiting" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s38: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="acknowledged" applied=TRUE repeat=TRUE snapCount=1 appended=TRUE hidden=FALSE guard="waiting" snapApplied=TRUE count=1 snapDelivery="acknowledged" escalation=0
+  s39: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="dead" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="waiting" snapApplied=FALSE count=1 snapDelivery="ready" escalation=1
+  s40: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="delivered" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="waiting" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s41: snapEscalation=0 manual=1 playback="Live" selected="held" delivery="acknowledged" applied=TRUE repeat=FALSE snapCount=0 appended=TRUE hidden=TRUE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s42: snapEscalation=0 manual=1 playback="Live" selected="held" delivery="acknowledged" applied=TRUE repeat=TRUE snapCount=1 appended=TRUE hidden=FALSE guard="idle" snapApplied=TRUE count=1 snapDelivery="acknowledged" escalation=0
+  s43: snapEscalation=0 manual=1 playback="Paused" selected="held" delivery="acknowledged" applied=TRUE repeat=FALSE snapCount=0 appended=TRUE hidden=FALSE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s44: snapEscalation=0 manual=1 playback="Paused" selected="none" delivery="ready" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=FALSE guard="idle" snapApplied=FALSE count=0 snapDelivery="ready" escalation=0
+  s45: snapEscalation=1 manual=0 playback="Live" selected="held" delivery="dead" applied=FALSE repeat=TRUE snapCount=1 appended=FALSE hidden=FALSE guard="waiting" snapApplied=FALSE count=1 snapDelivery="dead" escalation=1
+  s46: snapEscalation=1 manual=0 playback="Live" selected="held" delivery="dead" applied=FALSE repeat=TRUE snapCount=1 appended=FALSE hidden=TRUE guard="idle" snapApplied=FALSE count=1 snapDelivery="dead" escalation=1
+  s47: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="acknowledged" applied=TRUE repeat=TRUE snapCount=1 appended=TRUE hidden=TRUE guard="waiting" snapApplied=TRUE count=1 snapDelivery="acknowledged" escalation=0
+  s48: snapEscalation=0 manual=0 playback="Paused" selected="held" delivery="dead" applied=FALSE repeat=FALSE snapCount=0 appended=FALSE hidden=TRUE guard="waiting" snapApplied=FALSE count=1 snapDelivery="ready" escalation=1
+  s49: snapEscalation=0 manual=1 playback="Live" selected="held" delivery="acknowledged" applied=TRUE repeat=TRUE snapCount=1 appended=TRUE hidden=TRUE guard="idle" snapApplied=TRUE count=1 snapDelivery="acknowledged" escalation=0
+  s50: snapEscalation=0 manual=1 playback="Paused" selected="held" delivery="acknowledged" applied=TRUE repeat=FALSE snapCount=0 appended=TRUE hidden=TRUE guard="idle" snapApplied=FALSE count=1 snapDelivery="ready" escalation=0
+  s51: snapEscalation=0 manual=1 playback="Paused" selected="held" delivery="acknowledged" applied=TRUE repeat=TRUE snapCount=1 appended=TRUE hidden=FALSE guard="idle" snapApplied=TRUE count=1 snapDelivery="acknowledged" escalation=0
+  s52: snapEscalation=1 manual=0 playback="Live" selected="held" delivery="dead" applied=FALSE repeat=TRUE snapCount=1 appended=FALSE hidden=TRUE guard="waiting" snapApplied=FALSE count=1 snapDelivery="dead" escalation=1
+  s53: snapEscalation=1 manual=0 playback="Paused" selected="held" delivery="dead" applied=FALSE repeat=TRUE snapCount=1 appended=FALSE hidden=FALSE guard="waiting" snapApplied=FALSE count=1 snapDelivery="dead" escalation=1
+  s54: snapEscalation=0 manual=1 playback="Paused" selected="held" delivery="acknowledged" applied=TRUE repeat=TRUE snapCount=1 appended=TRUE hidden=TRUE guard="idle" snapApplied=TRUE count=1 snapDelivery="acknowledged" escalation=0
+  s55: snapEscalation=1 manual=0 playback="Paused" selected="held" delivery="dead" applied=FALSE repeat=TRUE snapCount=1 appended=FALSE hidden=TRUE guard="waiting" snapApplied=FALSE count=1 snapDelivery="dead" escalation=1
+  [*] --> s0
+  s0 --> s1: Resume
+  s0 --> s2: SendNext
+  s0 --> s3: Stage
+  s1 --> s0: Pause
+  s1 --> s4: SendNext
+  s1 --> s5: Stage
+  s1 --> s6: LiveStart
+  s2 --> s4: Resume
+  s2 --> s7: Filter
+  s2 --> s8: Repeat
+  s3 --> s5: Resume
+  s3 --> s9: Dead
+  s3 --> s10: Deliver
+  s4 --> s2: Pause
+  s4 --> s11: LiveStart
+  s4 --> s12: Filter
+  s4 --> s13: Repeat
+  s5 --> s3: Pause
+  s5 --> s14: Dead
+  s5 --> s15: Deliver
+  s5 --> s16: LiveStart
+  s6 --> s1: LiveExpire
+  s6 --> s4: LiveCommit
+  s6 --> s19: Pause
+  s6 --> s20: SendWhileWaiting
+  s7 --> s2: Clear
+  s7 --> s12: Resume
+  s7 --> s17: Repeat
+  s8 --> s13: Resume
+  s8 --> s17: Filter
+  s9 --> s14: Resume
+  s9 --> s18: Filter
+  s9 --> s21: Repeat
+  s10 --> s2: Ack
+  s10 --> s9: Dead
+  s10 --> s15: Resume
+  s11 --> s4: LiveExpire
+  s11 --> s28: Pause
+  s12 --> s4: Clear
+  s12 --> s7: Pause
+  s12 --> s22: LiveStart
+  s12 --> s24: Repeat
+  s13 --> s8: Pause
+  s13 --> s23: LiveStart
+  s13 --> s24: Filter
+  s14 --> s9: Pause
+  s14 --> s25: LiveStart
+  s14 --> s26: Filter
+  s14 --> s33: Repeat
+  s15 --> s4: Ack
+  s15 --> s10: Pause
+  s15 --> s14: Dead
+  s15 --> s27: LiveStart
+  s16 --> s5: LiveExpire
+  s16 --> s29: Pause
+  s17 --> s8: Clear
+  s17 --> s24: Resume
+  s18 --> s9: Clear
+  s18 --> s26: Resume
+  s18 --> s34: Repeat
+  s19 --> s0: LiveExpire
+  s19 --> s2: LiveCommit
+  s19 --> s6: Resume
+  s19 --> s32: SendWhileWaiting
+  s20 --> s30: LiveCommit
+  s20 --> s31: LiveExpire
+  s20 --> s32: Pause
+  s21 --> s33: Resume
+  s21 --> s34: Filter
+  s22 --> s12: LiveExpire
+  s22 --> s37: Pause
+  s23 --> s13: LiveExpire
+  s23 --> s38: Pause
+  s24 --> s13: Clear
+  s24 --> s17: Pause
+  s24 --> s35: LiveStart
+  s25 --> s14: LiveExpire
+  s25 --> s39: Pause
+  s26 --> s14: Clear
+  s26 --> s18: Pause
+  s26 --> s36: LiveStart
+  s26 --> s46: Repeat
+  s27 --> s15: LiveExpire
+  s27 --> s40: Pause
+  s28 --> s2: LiveExpire
+  s28 --> s11: Resume
+  s29 --> s3: LiveExpire
+  s29 --> s16: Resume
+  s30 --> s41: Filter
+  s30 --> s42: Repeat
+  s30 --> s43: Pause
+  s31 --> s4: QueuedSend
+  s31 --> s44: Pause
+  s32 --> s20: Resume
+  s32 --> s43: LiveCommit
+  s32 --> s44: LiveExpire
+  s33 --> s21: Pause
+  s33 --> s45: LiveStart
+  s33 --> s46: Filter
+  s34 --> s21: Clear
+  s34 --> s46: Resume
+  s35 --> s24: LiveExpire
+  s35 --> s47: Pause
+  s36 --> s26: LiveExpire
+  s36 --> s48: Pause
+  s37 --> s7: LiveExpire
+  s37 --> s22: Resume
+  s38 --> s8: LiveExpire
+  s38 --> s23: Resume
+  s39 --> s9: LiveExpire
+  s39 --> s25: Resume
+  s40 --> s10: LiveExpire
+  s40 --> s27: Resume
+  s41 --> s30: Clear
+  s41 --> s49: Repeat
+  s41 --> s50: Pause
+  s42 --> s49: Filter
+  s42 --> s51: Pause
+  s43 --> s30: Resume
+  s43 --> s50: Filter
+  s43 --> s51: Repeat
+  s44 --> s2: QueuedSend
+  s44 --> s31: Resume
+  s45 --> s33: LiveExpire
+  s45 --> s53: Pause
+  s46 --> s33: Clear
+  s46 --> s34: Pause
+  s46 --> s52: LiveStart
+  s47 --> s17: LiveExpire
+  s47 --> s35: Resume
+  s48 --> s18: LiveExpire
+  s48 --> s36: Resume
+  s49 --> s42: Clear
+  s49 --> s54: Pause
+  s50 --> s41: Resume
+  s50 --> s43: Clear
+  s50 --> s54: Repeat
+  s51 --> s42: Resume
+  s51 --> s54: Filter
+  s52 --> s46: LiveExpire
+  s52 --> s55: Pause
+  s53 --> s21: LiveExpire
+  s53 --> s45: Resume
+  s54 --> s49: Resume
+  s54 --> s51: Clear
+  s55 --> s34: LiveExpire
+  s55 --> s52: Resume
+  class s0 bugPath
+  class s1 bugPath
+  class s6 bugPath
+  class s20 bugPath
+  class s30 bugPath
+  class s42 bugPath
+  class s49 repeats
