@@ -251,6 +251,38 @@ test("the sidebar dot follows a successful off write", async ({ page, workspaceU
 	await expect(supportDot(page, "Running")).toHaveCount(0);
 });
 
+test("a frame read started before off cannot restore the Running sidebar dot", async ({
+	page,
+	workspaceUser,
+	accountId,
+}) => {
+	await openAgent(page, workspaceUser, "support");
+	const held = await holdAgentReads(page, true);
+	try {
+		await page.evaluate(() => {
+			const router = (window as unknown as { __TSR_ROUTER__?: { invalidate: () => Promise<void> } })
+				.__TSR_ROUTER__;
+			if (!router) throw new Error("The router is missing.");
+			void router.invalidate();
+		});
+		await expect.poll(() => held.count(), settled).toBe(2);
+		await squadSwitch(page).click();
+		await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(false);
+		await expect(supportDot(page, "Paused")).toBeVisible();
+		held.release();
+		await page.waitForFunction(() => {
+			const router = (window as unknown as { __TSR_ROUTER__?: { state: { isLoading: boolean } } })
+				.__TSR_ROUTER__;
+			return router?.state.isLoading === false;
+		});
+		await expect(supportDot(page, "Paused")).toBeVisible();
+		await expect(supportDot(page, "Running")).toHaveCount(0);
+		await expect(paused(page)).toBeVisible();
+	} finally {
+		await held.stop();
+	}
+});
+
 test("an old recovery read does not hide a later lost response", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(90_000);
 	await openAgent(page, workspaceUser, "support");

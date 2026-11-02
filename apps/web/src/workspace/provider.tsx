@@ -230,17 +230,7 @@ function useFrameAndCount(frame: WorkspaceFrameData & { readonly writeAt: number
 
 function useShownAgents(frame: WorkspaceFrameData): WorkspaceFrameData {
 	const published = useSyncExternalStore(subscribeAgentOn, agentOnSnapshot, agentOnSnapshot);
-	const [seenFrame, setSeenFrame] = useState(frame);
-	const [agents, setAgents] = useState(frame.agents);
-	const [applied, setApplied] = useState(published);
-	if (frame !== seenFrame) {
-		setSeenFrame(frame);
-		setAgents(frame.agents);
-		setApplied(published);
-	} else if (published !== applied) {
-		setApplied(published);
-		setAgents(applyAgentOn(frame.agents, published));
-	}
+	const agents = applyAgentOn(frame.agents, published);
 	return agents === frame.agents ? frame : { ...frame, agents };
 }
 

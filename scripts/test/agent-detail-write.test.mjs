@@ -395,3 +395,25 @@ test("a recovery read started before a later lost response does not satisfy that
 	assert.equal(h.render().view.skills[0].onStr, "false");
 	assert.equal(h.reads.length, 0);
 });
+
+test("a pre-write loader started after queued skill and autonomy clicks cannot replace their responses", async () => {
+	const h = harness();
+	const control = h.render();
+	control.toggleSkill("inbox.read", false);
+	control.pickAutonomy("Full auto");
+	const readAt = stampAgentRead("support");
+	const old = structuredClone(h.server);
+	await settle();
+	assert.equal(h.posts.length, 1);
+	h.posts.shift().answer();
+	await settle();
+	assert.equal(h.posts[0].key, "autonomy");
+	h.posts.shift().answer();
+	await settle();
+	h.newLoader(old, "success", readAt);
+	const view = h.render().view;
+	assert.equal(view.skills[0].onStr, "false");
+	assert.equal(view.autonomyOpts[1].onStr, "true");
+	sameControls(view, h.server);
+	assert.equal(h.reads.length, 0);
+});

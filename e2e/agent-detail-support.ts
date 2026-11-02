@@ -438,8 +438,8 @@ export async function openAgent(page: Page, user: WorkspaceUser, agentId: string
 	await waitForScreenFonts(page);
 }
 
-export async function holdAgentReads(page: Page) {
-	let held = false;
+export async function holdAgentReads(page: Page, includeFrame = false) {
+	let held = 0;
 	let releaseGate: () => void = () => undefined;
 	const gate = new Promise<void>((resolve) => {
 		releaseGate = resolve;
@@ -447,9 +447,9 @@ export async function holdAgentReads(page: Page) {
 	const pattern = /\/_serverFn\//;
 	const handler = async (route: Route) => {
 		const request = route.request();
-		if (request.method() === "GET" && decodeURIComponent(request.url()).includes('"support"')) {
+		if (request.method() === "GET" && (includeFrame || decodeURIComponent(request.url()).includes('"support"'))) {
 			const response = await route.fetch();
-			held = true;
+			held += 1;
 			await gate;
 			await route.fulfill({ response }).catch(() => undefined);
 			return;
@@ -458,7 +458,8 @@ export async function holdAgentReads(page: Page) {
 	};
 	await page.route(pattern, handler);
 	return {
-		held: () => held,
+		held: () => held > 0,
+		count: () => held,
 		release: () => releaseGate(),
 		async stop() {
 			releaseGate();

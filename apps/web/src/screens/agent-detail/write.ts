@@ -108,6 +108,7 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 			while (write) {
 				try {
 					const view = await bounded(write.work);
+					noteWrite(agentId);
 					accept(
 						view,
 						state.pending.filter((value) => value !== write),
