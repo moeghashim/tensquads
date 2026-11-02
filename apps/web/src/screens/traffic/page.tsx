@@ -1,4 +1,4 @@
-import { createElement, Fragment, useRef } from "react";
+import { createElement, Fragment, useEffect, useRef } from "react";
 
 import { css } from "#/screens/css.ts";
 import { useRefresh, useWorkspace } from "#/workspace/context.ts";
@@ -360,20 +360,22 @@ function useTrafficSelection(
 	setSelEvent: (id: string) => void,
 ) {
 	const seen = useRef<string | null>(null);
-	const idKey = events.map((event) => event.id).join("\n");
-	if (seen.current === null) {
-		seen.current = idKey;
-		const queued = consumeQueuedEvent();
-		if (queued.length > 0 && events.some((event) => event.id === queued) && queued !== selEvent) {
-			setSelEvent(queued);
+	useEffect(() => {
+		const idKey = events.map((event) => event.id).join("\n");
+		if (seen.current === null) {
+			seen.current = idKey;
+			const queued = consumeQueuedEvent();
+			if (queued.length > 0 && events.some((event) => event.id === queued) && queued !== selEvent) {
+				setSelEvent(queued);
+			}
+			return;
 		}
-		return;
-	}
-	if (seen.current === idKey) return;
-	const previous = new Set(seen.current.split("\n").filter((id) => id.length > 0));
-	const added = events.filter((event) => !previous.has(event.id));
-	seen.current = idKey;
-	consumeQueuedEvent();
-	const newest = added.at(-1);
-	if (newest && newest.id !== selEvent) setSelEvent(newest.id);
+		if (seen.current === idKey) return;
+		const previous = new Set(seen.current.split("\n").filter((id) => id.length > 0));
+		const added = events.filter((event) => !previous.has(event.id));
+		seen.current = idKey;
+		consumeQueuedEvent();
+		const newest = added.at(-1);
+		if (newest && newest.id !== selEvent) setSelEvent(newest.id);
+	}, [events, selEvent, setSelEvent]);
 }

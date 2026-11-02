@@ -89,6 +89,11 @@ test("an event click fills the inspector", async ({ page, workspaceUser }) => {
 
 test("live adds one event every 3.5 seconds, on any page, until paused", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(180_000);
+	const errors: string[] = [];
+	page.on("console", (message) => {
+		if (message.type() === "error") errors.push(message.text());
+	});
+	page.on("pageerror", (error) => errors.push(error.message));
 	await openWorkspace(page, workspaceUser);
 	await page.clock.install();
 	await page.reload();
@@ -101,6 +106,7 @@ test("live adds one event every 3.5 seconds, on any page, until paused", async (
 	await expect.poll(async () => (await generatedEvents(accountId)).length, { timeout: 20_000 }).toBe(1);
 	await page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: "Squad traffic" }).click();
 	await expect(page).toHaveURL(/\/traffic$/);
+	await expect(page.getByRole("complementary", { name: "Message details" })).toContainText(daily);
 	await page.getByRole("button", { name: "Live", exact: true }).click();
 	const posts = { count: 0 };
 	const onRequest = (request: { method: () => string; headers: () => Record<string, string> }) => {
@@ -114,6 +120,7 @@ test("live adds one event every 3.5 seconds, on any page, until paused", async (
 	expect(posts.count).toBe(beforePosts);
 	expect((await generatedEvents(accountId)).length).toBe(beforeEvents);
 	page.off("request", onRequest);
+	expect(errors).toEqual([]);
 });
 
 test("send next event adds the event, selects it and updates the state table", async ({
@@ -122,6 +129,11 @@ test("send next event adds the event, selects it and updates the state table", a
 	accountId,
 }) => {
 	test.setTimeout(180_000);
+	const errors: string[] = [];
+	page.on("console", (message) => {
+		if (message.type() === "error") errors.push(message.text());
+	});
+	page.on("pageerror", (error) => errors.push(error.message));
 	await openTraffic(page, workspaceUser);
 	await page.getByRole("button", { name: "Send next event" }).click();
 	await expect(page.locator("[data-event-id='e100']")).toContainText(daily);
@@ -139,6 +151,7 @@ test("send next event adds the event, selects it and updates the state table", a
 	await expect(page.getByRole("complementary", { name: "Message details" })).toContainText(stockText);
 	await expect(page.getByText(stockValue)).toBeVisible();
 	await expect(page.getByText("before-write")).toHaveCount(0);
+	expect(errors).toEqual([]);
 });
 
 test("a filter chip filters the list and All agents clears it", async ({ page, workspaceUser }) => {
