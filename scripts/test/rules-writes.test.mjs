@@ -7,7 +7,7 @@ import { PENDING_TASK_WINDOW_MS } from "../../packages/adapters/src/pending-wind
 const bundle = await build({
 	stdin: {
 		contents: `
-			import React, { useState } from "react";
+			import React, { useMemo, useState } from "react";
 			import { createRoot } from "react-dom/client";
 			import { WorkspaceContext } from "./apps/web/src/workspace/context.ts";
 			import { gateStyle, switchParts } from "./apps/web/src/workspace/styles.ts";
@@ -36,6 +36,7 @@ const bundle = await build({
 				const [showRules, setShowRules] = useState(true);
 				const [rules, setRules] = useState([]);
 				const [limits, setLimits] = useState([]);
+				const page = useMemo(() => ({ rules, limits }), [rules, limits]);
 				window.loadRules = setRules;
 				window.loadLimits = setLimits;
 				const [ruleForm, setRuleForm] = useState({
@@ -48,7 +49,7 @@ const bundle = await build({
 				}}>
 					<button onClick={() => setShowRules(false)}>Leave rules</button>
 					<button onClick={() => setShowRules(true)}>Return to rules</button>
-					{showRules && <RulesScreen page={{ rules, limits }} />}
+					{showRules && <RulesScreen page={page} />}
 				</WorkspaceContext.Provider>;
 			}
 			window.mount = () => {
@@ -839,3 +840,124 @@ for (const refreshResult of ["success", "reject", "timeout"]) {
 		});
 	});
 }
+
+test("snapshot: a held failure read preserves newer write responses", async () => {
+	await withPage(async (page) => {
+		await holdAdds(page);
+		await page.evaluate(async () => {
+			window.seedRules = [1, 2, 3, 4, 5].map((id) =>
+				window.ruleRow({ id: `r${id}`, action: `Seed ${id}`, on: true }),
+			);
+			window.adLimit = {
+				id: "lim-ads", key: "policy.daily_ad_cap", label: "Total ad spend per day",
+				min: 0, max: 1000, step: 10, value: 200,
+			};
+			window.loadRules(window.seedRules);
+			window.loadLimits([window.adLimit]);
+			window.send = (data, signal) => {
+				if (typeof data.value === "number") return Promise.resolve({ key: data.key, value: data.value + 10 });
+				if (typeof data.on === "boolean") return Promise.resolve(window.ruleRow(data));
+				return new Promise((resolve, reject) => window.adds.push({ data, signal, resolve, reject }));
+			};
+			window.refreshCalls = 0;
+			window.refresh = () => {
+				window.refreshCalls += 1;
+				return new Promise(() => {});
+			};
+			await window.flush();
+		});
+		const slider = page.getByRole("slider");
+		await slider.fill("230");
+		await expect(slider).toHaveValue("240");
+		const action = page.getByLabel("Then", { exact: true });
+		const add = page.getByRole("button", { name: "Add rule", exact: true });
+		await action.fill("Draft A");
+		await add.click();
+		await action.fill("Draft B");
+		await add.click();
+		await page.waitForFunction(() => window.adds.length === 2);
+		await page.evaluate(async () => {
+			window.adds[0].reject(new Error("Add failed"));
+			await window.flush();
+		});
+		await page.waitForFunction(() => window.refreshCalls === 1);
+		await page.evaluate(async () => {
+			window.adds[1].resolve(window.ruleRow({ ...window.adds[1].data, id: "r100" }));
+			await window.flush();
+		});
+		const switches = page.getByRole("button", { name: "Rule enabled" });
+		await expect(switches).toHaveCount(6);
+		await expect(slider).toHaveValue("240");
+		await page.evaluate(async () => {
+			window.loadRules([...window.seedRules]);
+			window.loadLimits([{ ...window.adLimit, value: 240 }]);
+			await window.flush();
+		});
+		await expect(switches).toHaveCount(6);
+		await expect(page.getByText("then Draft B", { exact: true })).toHaveCount(1);
+		await expect(slider).toHaveValue("240");
+		assert.equal(await page.evaluate(() => window.refreshCalls), 1);
+
+		await action.fill("Draft C");
+		await add.click();
+		await page.waitForFunction(() => window.adds.length === 3);
+		await page.evaluate(async () => {
+			window.adds[2].reject(new Error("Add failed"));
+			await window.flush();
+		});
+		await page.waitForFunction(() => window.refreshCalls === 2);
+		await switches.first().click();
+		await expect(switches.first()).toHaveAttribute("aria-pressed", "false");
+		await slider.fill("250");
+		await expect(slider).toHaveValue("260");
+		await page.evaluate(async () => {
+			window.loadRules([...window.seedRules]);
+			window.loadLimits([{ ...window.adLimit, value: 240 }]);
+			await window.flush();
+		});
+		await expect(switches).toHaveCount(5);
+		await expect(switches.first()).toHaveAttribute("aria-pressed", "false");
+		await expect(slider).toHaveValue("260");
+		await page.evaluate(async () => {
+			window.loadRules([...window.seedRules]);
+			window.loadLimits([{ ...window.adLimit, value: 200 }]);
+			await window.flush();
+		});
+		await expect(switches.first()).toHaveAttribute("aria-pressed", "true");
+		await expect(slider).toHaveValue("200");
+	});
+});
+
+test("snapshot: reversed add responses keep numeric rule order before pending rows", async () => {
+	await withPage(async (page) => {
+		await holdAdds(page);
+		await page.evaluate(async () => {
+			window.loadRules([window.ruleRow({ id: "r1", action: "First seed" }), window.ruleRow({ id: "r2", action: "Second seed" })]);
+			window.refreshCalls = 0;
+			window.refresh = async () => { window.refreshCalls += 1; };
+			await window.flush();
+		});
+		const action = page.getByLabel("Then", { exact: true });
+		const add = page.getByRole("button", { name: "Add rule", exact: true });
+		for (const draft of ["Earlier saved", "Later saved", "Still pending"]) {
+			await action.fill(draft);
+			await add.click();
+		}
+		await page.waitForFunction(() => window.adds.length === 3);
+		await page.evaluate(async () => {
+			window.adds[1].resolve(window.ruleRow({ ...window.adds[1].data, id: "r101" }));
+			await window.flush();
+		});
+		await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(5);
+		await page.evaluate(async () => {
+			window.adds[0].resolve(window.ruleRow({ ...window.adds[0].data, id: "r100" }));
+			await window.flush();
+		});
+		const rows = page.locator('section[aria-label="Rules"] [data-loop="rules"] > div');
+		await expect(rows).toHaveCount(5);
+		for (const [index, text] of ["First seed", "Second seed", "Earlier saved", "Later saved", "Still pending"].entries()) {
+			await expect(rows.nth(index)).toContainText(text);
+		}
+		assert.equal(await page.evaluate(() => window.refreshCalls), 0);
+	});
+});

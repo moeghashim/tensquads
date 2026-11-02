@@ -5,8 +5,8 @@ import { addWorkspaceRule, type RulesPageData, type RulesRule } from "#/server/r
 import { useWorkspace } from "#/workspace/context.ts";
 import type { RuleForm } from "#/workspace/types.ts";
 
+import { useRulesSnapshot } from "./snapshot.ts";
 import {
-	bindRuleWrites,
 	bounded,
 	isRulesRule,
 	placeRule,
@@ -87,17 +87,7 @@ let pendingSerial = 0;
 export function RulesScreen({ page }: { readonly page: RulesPageData }) {
 	useRuleWrites();
 	const workspace = useWorkspace();
-	const [snapshot, setSnapshot] = useState(page);
-	const [seenPage, setSeenPage] = useState(stamp(page));
-	const incoming = stamp(page);
-	if (incoming !== seenPage) {
-		setSeenPage(incoming);
-		setSnapshot(page);
-	}
-	bindRuleWrites({
-		rule: (rule) => setSnapshot((current) => withRule(current, rule)),
-		limit: (row) => setSnapshot((current) => withLimit(current, row)),
-	});
+	const { snapshot, refresh } = useRulesSnapshot(page, workspace.refresh);
 	const [pending, setPending] = useState<readonly PendingRule[]>([]);
 	const rules = [...snapshot.rules, ...pending.map((item) => item.row)];
 	return (
@@ -116,7 +106,7 @@ export function RulesScreen({ page }: { readonly page: RulesPageData }) {
 					gateStyle={workspace.helpers.gateStyle}
 					switchParts={workspace.helpers.switchParts}
 					loaded={snapshot.rules}
-					refresh={workspace.refresh}
+					refresh={refresh}
 					setPending={setPending}
 				/>
 				<div style={css(cardRow)}>
@@ -125,9 +115,9 @@ export function RulesScreen({ page }: { readonly page: RulesPageData }) {
 						agents={workspace.frame.agents}
 						setForm={workspace.setRuleForm}
 						setPending={setPending}
-						refresh={workspace.refresh}
+						refresh={refresh}
 					/>
-					<Limits limits={snapshot.limits} refresh={workspace.refresh} />
+					<Limits limits={snapshot.limits} refresh={refresh} />
 				</div>
 			</div>
 		</div>
@@ -489,20 +479,3 @@ function Limits({
 	);
 }
 
-function stamp(page: RulesPageData): string {
-	return JSON.stringify({ rules: page.rules, limits: page.limits });
-}
-
-function withRule(page: RulesPageData, rule: RulesRule): RulesPageData {
-	const index = page.rules.findIndex((item) => item.id === rule.id);
-	const rules =
-		index < 0 ? [...page.rules, rule] : page.rules.map((item, position) => (position === index ? rule : item));
-	return { ...page, rules };
-}
-
-function withLimit(page: RulesPageData, row: { readonly key: string; readonly value: number }): RulesPageData {
-	return {
-		...page,
-		limits: page.limits.map((limit) => (limit.key === row.key ? { ...limit, value: row.value } : limit)),
-	};
-}
