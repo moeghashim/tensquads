@@ -355,7 +355,7 @@ async function saveRule(
 				signal,
 			}),
 		);
-		await refresh();
+		await bounded(() => refresh());
 	} catch {
 		setPending(null);
 		if (formRef.current.action.length === 0) {

@@ -78,7 +78,7 @@ async function run<T>(
 	flight.sending = true;
 	notify();
 	await sendUntilQuiet(flight, send);
-	await refresh().catch(() => undefined);
+	await bounded(() => refresh()).catch(() => undefined);
 	const next = flight.queued;
 	flight.queued = null;
 	if (next === null) {
@@ -137,6 +137,7 @@ function shownValue<T>(map: Map<string, Flight<T>>, key: string, loaded: T): T {
 	if (flight.confirmed !== loaded) {
 		return flight.confirmed;
 	}
+	map.delete(key);
 	return loaded;
 }
 
