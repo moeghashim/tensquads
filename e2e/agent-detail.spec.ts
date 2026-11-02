@@ -283,6 +283,35 @@ test("a frame read started before off cannot restore the Running sidebar dot", a
 	}
 });
 
+test("a later frame shows a server on change after an accepted off write", async ({
+	page,
+	workspaceUser,
+	accountId,
+}) => {
+	await openAgent(page, workspaceUser, "support");
+	await squadSwitch(page).click();
+	await expect(supportDot(page, "Paused")).toBeVisible();
+	await page
+		.getByRole("navigation", { name: "Workspace" })
+		.getByRole("button", { name: "Squad traffic", exact: true })
+		.click();
+	await expect(page).toHaveURL(/\/traffic$/);
+	await withDb(async (db) => {
+		await setAgentOn(db, scopeFor(accountId), "support", true, watchedMachine([], false));
+	});
+	await page.evaluate(async () => {
+		const router = (
+			window as unknown as {
+				__TSR_ROUTER__?: { invalidate: (options: { sync: boolean }) => Promise<void> };
+			}
+		).__TSR_ROUTER__;
+		if (!router) throw new Error("The router is missing.");
+		await router.invalidate({ sync: true });
+	});
+	await expect(supportDot(page, "Running")).toBeVisible();
+	await expect(supportDot(page, "Paused")).toHaveCount(0);
+});
+
 test("an old recovery read does not hide a later lost response", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(90_000);
 	await openAgent(page, workspaceUser, "support");

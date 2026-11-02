@@ -41,9 +41,11 @@ const replyWaitMs = 1400;
 
 export function WorkspaceProvider({
 	frame,
+	readAt,
 	children,
 }: {
 	readonly frame: WorkspaceFrameData & { readonly writeAt: number };
+	readonly readAt: Readonly<Record<string, number>>;
 	readonly children: ReactNode;
 }) {
 	const router = useRouter();
@@ -67,6 +69,7 @@ export function WorkspaceProvider({
 	const sending = useRef(false);
 	const { messages, setMessages, applyFrame, approvalCount, noteDecision, shownFrame } = useFrameAndCount(
 		frame,
+		readAt,
 		sending,
 	);
 
@@ -205,7 +208,7 @@ function useFrameRefresh(router: ReturnType<typeof useRouter>, refresh: () => Pr
 		await bounded(() => refresh());
 		const match = router.state.matches.find((item) => item.routeId === "/_workspace");
 		if (match?.status !== "success" || !match.loaderData) throw new Error("The workspace frame did not load.");
-		return match.loaderData;
+		return match.loaderData.frame;
 	}, [refresh, router]);
 }
 
@@ -217,20 +220,24 @@ function draftValue(text: string | undefined, draft: string): string {
 	return (text ?? draft).trim();
 }
 
-function useFrameAndCount(frame: WorkspaceFrameData & { readonly writeAt: number }, sending: { current: boolean }) {
+function useFrameAndCount(
+	frame: WorkspaceFrameData & { readonly writeAt: number },
+	readAt: Readonly<Record<string, number>>,
+	sending: { current: boolean },
+) {
 	useEffect(() => {
 		rememberFrame(frame);
 	}, [frame]);
-	const shownFrame = useShownAgents(frame);
+	const shownFrame = useShownAgents(frame, readAt);
 	const messages = useFrameMessages(frame, sending);
 	const count = useApprovalCount(frame);
 	useAccountBoundary();
 	return { ...messages, ...count, shownFrame };
 }
 
-function useShownAgents(frame: WorkspaceFrameData): WorkspaceFrameData {
+function useShownAgents(frame: WorkspaceFrameData, readAt: Readonly<Record<string, number>>): WorkspaceFrameData {
 	const published = useSyncExternalStore(subscribeAgentOn, agentOnSnapshot, agentOnSnapshot);
-	const agents = applyAgentOn(frame.agents, published);
+	const agents = applyAgentOn(frame.agents, published, readAt);
 	return agents === frame.agents ? frame : { ...frame, agents };
 }
 

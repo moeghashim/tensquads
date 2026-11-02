@@ -9,20 +9,10 @@ import {
 	setAgentRunning,
 	setSkillEnabled,
 } from "#/server/agent-detail.ts";
-import { publishAgentOn } from "#/workspace/agent-on.ts";
+import { noteAgentWrite, publishAgentOn, stampAgentRead } from "#/workspace/agent-on.ts";
 import { agentStatus } from "#/workspace/agent-view.ts";
 import { switchParts } from "#/workspace/styles.ts";
 import { type AgentDetailView, autonomyStyle, blank } from "./model.ts";
-
-const epochs = new Map<string, number>();
-
-export function stampAgentRead(agentId: string): number {
-	return epochs.get(agentId) ?? 0;
-}
-
-function noteWrite(agentId: string): void {
-	epochs.set(agentId, stampAgentRead(agentId) + 1);
-}
 
 function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
 	const controller = new AbortController();
@@ -108,12 +98,13 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 			while (write) {
 				try {
 					const view = await bounded(write.work);
-					noteWrite(agentId);
+					noteAgentWrite(agentId);
 					accept(
 						view,
 						state.pending.filter((value) => value !== write),
 					);
 				} catch {
+					noteAgentWrite(agentId);
 					publish({ ...state, pending: state.pending.filter((value) => value !== write) });
 					void read();
 				}
@@ -138,7 +129,7 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 			};
 		},
 		enqueue(write: Write) {
-			noteWrite(agentId);
+			noteAgentWrite(agentId);
 			const index = queue.findIndex((value) => value.key === write.key);
 			if (index === -1) {
 				queue.push(write);

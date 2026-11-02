@@ -37,7 +37,10 @@ registerHooks({
 const moduleUrl = process.env.AGENT_WRITE_TEST_MODULE
 	? pathToFileURL(process.env.AGENT_WRITE_TEST_MODULE)
 	: new URL("../../apps/web/src/screens/agent-detail/write.ts", import.meta.url);
-const { stampAgentRead, useAgentWrites } = await import(moduleUrl.href);
+const { useAgentWrites } = await import(moduleUrl.href);
+const { stampAgentRead, stampAgentReads, applyAgentOn, agentOnSnapshot } = await import(
+	"../../apps/web/src/workspace/agent-on.ts"
+);
 
 function harness() {
 	const reads = [];
@@ -417,3 +420,51 @@ test("a pre-write loader started after queued skill and autonomy clicks cannot r
 	sameControls(view, h.server);
 	assert.equal(h.reads.length, 0);
 });
+
+for (const action of ["running", "skill", "autonomy"]) {
+	for (const outcome of ["lost response", "timeout"]) {
+		test(`an old ${action} loader cannot undo recovery after a ${outcome}`, async (t) => {
+			t.mock.timers.enable({ apis: ["setTimeout"] });
+			const h = harness();
+			const control = h.render();
+			if (action === "running") control.toggleAgent(false);
+			if (action === "skill") control.toggleSkill("inbox.read", false);
+			if (action === "autonomy") control.pickAutonomy("Full auto");
+			const readAt = stampAgentRead("support");
+			const old = structuredClone(h.server);
+			await settle();
+			if (outcome === "timeout") t.mock.timers.tick(30_001);
+			else h.posts[0].lose();
+			await settle();
+			assert.equal(h.reads.length, 1);
+			h.reads.shift().answer();
+			await settle();
+			sameControls(h.render().view, h.server);
+			h.newLoader(old, "success", readAt);
+			sameControls(h.render().view, h.server);
+			assert.equal(h.reads.length, 0);
+		});
+	}
+}
+
+for (const on of [false, true]) {
+	test(`an older frame keeps accepted ${on} and a later frame accepts server ${!on}`, async () => {
+		const h = harness();
+		h.server.on = !on;
+		h.newLoader(h.server);
+		h.render();
+		const readAt = stampAgentReads();
+		const old = [{ id: "support", on: !on }, { id: "inventory", on: false }];
+		h.render().toggleAgent(on);
+		await settle();
+		h.posts.shift().answer();
+		await settle();
+		assert.deepEqual(applyAgentOn(old, agentOnSnapshot(), readAt), [
+			{ id: "support", on },
+			{ id: "inventory", on: false },
+		]);
+		const laterReadAt = stampAgentReads();
+		const later = [{ id: "support", on: !on }, { id: "inventory", on: true }];
+		assert.equal(applyAgentOn(later, agentOnSnapshot(), laterReadAt), later);
+	});
+}

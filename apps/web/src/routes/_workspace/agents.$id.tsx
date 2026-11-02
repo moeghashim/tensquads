@@ -2,8 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { AgentDetailPage } from "#/screens/agent-detail/AgentDetailPage.tsx";
 import type { AgentDetailView } from "#/screens/agent-detail/model.ts";
-import { stampAgentRead, useAgentWrites } from "#/screens/agent-detail/write.ts";
+import { useAgentWrites } from "#/screens/agent-detail/write.ts";
 import { loadAgentDetail } from "#/server/agent-detail.ts";
+import { stampAgentRead } from "#/workspace/agent-on.ts";
 import { useInspect } from "#/workspace/event-view.ts";
 
 import { captureWrites } from "#/workspace/approval-count.ts";
