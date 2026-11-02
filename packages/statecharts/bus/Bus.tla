@@ -6,7 +6,8 @@
 \* A dead letter makes one Escalation.
 \* appendEvents writes the row and the store together. A repeat does not write.
 \* A click during a wait is queued. The next idle step runs that one click.
-\* A live tick does not queue. The code queues every click. This model keeps one.
+\* A live tick does not queue. After a live commit the queued click still drains.
+\* The code queues every click. This model keeps one click and one event.
 \* # model: packages/domain/src/bus/traffic-commands.ts
 \* # model: packages/adapters/src/neon/commands/traffic.ts
 \* # model: packages/adapters/src/memory-bus.ts
@@ -132,7 +133,7 @@ SendWhileWaiting ==
     /\ manual' = 1
     /\ UNCHANGED <<delivery, playback, selected, hidden, count, applied, appended, repeat, escalation, guard, snapCount, snapApplied, snapDelivery, snapEscalation>>
 
-\* The queued click runs once the guard is idle and the one event can still be added.
+\* The queued click adds the one event once the guard is idle and that event is still free.
 QueuedSend ==
     /\ manual = 1
     /\ guard = "idle"
@@ -141,6 +142,15 @@ QueuedSend ==
     /\ repeat = FALSE
     /\ Added
     /\ manual' = 0
+
+\* A live commit already stored the one event. The queued click still runs.
+\* A failed advance of that click clears it. This model keeps one row, so both leave the row.
+QueuedDrain ==
+    /\ manual = 1
+    /\ guard = "idle"
+    /\ count = 1
+    /\ manual' = 0
+    /\ UNCHANGED <<delivery, playback, selected, hidden, count, applied, appended, repeat, escalation, guard, snapCount, snapApplied, snapDelivery, snapEscalation>>
 
 LiveCommit ==
     /\ WaitingAdd
@@ -224,6 +234,7 @@ Next ==
     \/ LiveStart
     \/ SendWhileWaiting
     \/ QueuedSend
+    \/ QueuedDrain
     \/ LiveCommit
     \/ LiveExpire
     \/ Stage
@@ -243,5 +254,9 @@ QueuedClickRuns ==
     [](manual = 1 /\ guard = "idle" /\ count = 0 /\ delivery = "ready" /\ repeat = FALSE
         => <>(manual = 0 /\ count = 1 /\ delivery = "acknowledged"))
 
-Spec == Init /\ [][Next]_vars /\ WF_vars(LiveExpire) /\ WF_vars(QueuedSend)
+\* Every queued click runs, or a failed advance clears it.
+\* This does not ask count = 0. A click queued behind a live commit still drains.
+AllClicksDrain == [](manual = 1 => <>(manual = 0))
+
+Spec == Init /\ [][Next]_vars /\ WF_vars(LiveExpire) /\ WF_vars(QueuedSend) /\ WF_vars(QueuedDrain)
 ====

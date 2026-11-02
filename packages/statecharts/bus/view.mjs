@@ -15,7 +15,7 @@ export const state = (v) => {
 	return name;
 };
 
-const hidden = new Set(["Pause", "Resume", "Repeat", "SendWhileWaiting"]);
+const hidden = new Set(["Pause", "Resume", "Repeat", "SendWhileWaiting", "QueuedDrain"]);
 
 const labels = {
 	SendNext: "the next event",
