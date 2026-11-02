@@ -74,10 +74,16 @@ for (const seeded of [true, false]) {
 			assert.equal(after.length, before.length + 3);
 			for (const message of after) assert.equal(message.threadId, "dock");
 			for (const message of before) {
-				assert.deepEqual(after.find((row) => row.id === message.id), message);
+				assert.deepEqual(
+					after.find((row) => row.id === message.id),
+					message,
+				);
 			}
 			const storedThreads = await db.select().from(schema.threads).where(eq(schema.threads.accountId, accountId));
-			assert.deepEqual(storedThreads.map((thread) => thread.id), ["dock"]);
+			assert.deepEqual(
+				storedThreads.map((thread) => thread.id),
+				["dock"],
+			);
 		});
 	});
 }
