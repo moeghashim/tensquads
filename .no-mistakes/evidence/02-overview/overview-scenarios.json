@@ -1,0 +1,1365 @@
+{
+  "setup": "Real TanStack routes, server functions, React UI, repositories and Kernel; disposable PGlite database and test-only workspace identity boundary. Clerk authentication and Cloudflare runtime are excluded.",
+  "results": [
+    {
+      "name": "Seeded overview at 1440 and 390 matches design layout and computed figures",
+      "result": "pass",
+      "detail": {
+        "computed": [
+          {
+            "delta": "+12% vs last week",
+            "label": "Revenue",
+            "value": "$8,420",
+            "deltaColor": "#00692a"
+          },
+          {
+            "delta": "+8% vs last week",
+            "label": "Orders",
+            "value": "186",
+            "deltaColor": "#00692a"
+          },
+          {
+            "delta": "+4% vs last week",
+            "label": "Average order",
+            "value": "$45.27",
+            "deltaColor": "#00692a"
+          },
+          {
+            "delta": "−1 pt vs last week",
+            "label": "Profit margin",
+            "value": "31%",
+            "deltaColor": "#911e1b"
+          },
+          {
+            "label": "Tasks done by squads",
+            "value": "331",
+            "delta": "This week",
+            "deltaColor": "#5d5d5d"
+          },
+          {
+            "delta": "This week",
+            "label": "Hours saved",
+            "value": "34h",
+            "deltaColor": "#5d5d5d"
+          }
+        ],
+        "online": "4 of 5 squads online",
+        "pill": {
+          "color": "rgb(0, 134, 53)",
+          "background": "rgba(4, 184, 76, 0.08)"
+        },
+        "measurements": [
+          {
+            "width": 1440,
+            "built": [
+              {
+                "x": 285.625,
+                "y": 163,
+                "width": 175.5625,
+                "height": 114
+              },
+              {
+                "x": 473.1875,
+                "y": 163,
+                "width": 175.5625,
+                "height": 114
+              },
+              {
+                "x": 660.75,
+                "y": 163,
+                "width": 175.5625,
+                "height": 114
+              },
+              {
+                "x": 848.3125,
+                "y": 163,
+                "width": 175.5625,
+                "height": 114
+              },
+              {
+                "x": 1035.875,
+                "y": 163,
+                "width": 175.5625,
+                "height": 114
+              },
+              {
+                "x": 1223.4375,
+                "y": 163,
+                "width": 175.5625,
+                "height": 114
+              },
+              {
+                "x": 285.625,
+                "y": 1157,
+                "width": 269.34375,
+                "height": 181
+              },
+              {
+                "x": 566.96875,
+                "y": 1157,
+                "width": 269.34375,
+                "height": 181
+              },
+              {
+                "x": 848.3125,
+                "y": 1157,
+                "width": 269.34375,
+                "height": 181
+              },
+              {
+                "x": 1129.65625,
+                "y": 1157,
+                "width": 269.34375,
+                "height": 181
+              },
+              {
+                "x": 285.625,
+                "y": 1350,
+                "width": 269.34375,
+                "height": 165
+              }
+            ],
+            "design": [
+              {
+                "x": 285.625,
+                "y": 163,
+                "width": 175.5625,
+                "height": 114
+              },
+              {
+                "x": 473.1875,
+                "y": 163,
+                "width": 175.5625,
+                "height": 114
+              },
+              {
+                "x": 660.75,
+                "y": 163,
+                "width": 175.5625,
+                "height": 114
+              },
+              {
+                "x": 848.3125,
+                "y": 163,
+                "width": 175.5625,
+                "height": 114
+              },
+              {
+                "x": 1035.875,
+                "y": 163,
+                "width": 175.5625,
+                "height": 114
+              },
+              {
+                "x": 1223.4375,
+                "y": 163,
+                "width": 175.5625,
+                "height": 114
+              },
+              {
+                "x": 285.625,
+                "y": 1157,
+                "width": 269.34375,
+                "height": 181
+              },
+              {
+                "x": 566.96875,
+                "y": 1157,
+                "width": 269.34375,
+                "height": 181
+              },
+              {
+                "x": 848.3125,
+                "y": 1157,
+                "width": 269.34375,
+                "height": 181
+              },
+              {
+                "x": 1129.65625,
+                "y": 1157,
+                "width": 269.34375,
+                "height": 181
+              },
+              {
+                "x": 285.625,
+                "y": 1350,
+                "width": 269.34375,
+                "height": 165
+              }
+            ]
+          },
+          {
+            "width": 390,
+            "built": [
+              {
+                "x": 41,
+                "y": 881,
+                "width": 308,
+                "height": 114
+              },
+              {
+                "x": 41,
+                "y": 1007,
+                "width": 308,
+                "height": 114
+              },
+              {
+                "x": 41,
+                "y": 1133,
+                "width": 308,
+                "height": 114
+              },
+              {
+                "x": 41,
+                "y": 1259,
+                "width": 308,
+                "height": 114
+              },
+              {
+                "x": 41,
+                "y": 1385,
+                "width": 308,
+                "height": 114
+              },
+              {
+                "x": 41,
+                "y": 1511,
+                "width": 308,
+                "height": 114
+              },
+              {
+                "x": 41,
+                "y": 2946,
+                "width": 308,
+                "height": 165
+              },
+              {
+                "x": 41,
+                "y": 3123,
+                "width": 308,
+                "height": 181
+              },
+              {
+                "x": 41,
+                "y": 3316,
+                "width": 308,
+                "height": 165
+              },
+              {
+                "x": 41,
+                "y": 3493,
+                "width": 308,
+                "height": 165
+              },
+              {
+                "x": 41,
+                "y": 3670,
+                "width": 308,
+                "height": 165
+              }
+            ],
+            "design": [
+              {
+                "x": 41,
+                "y": 881,
+                "width": 308,
+                "height": 114
+              },
+              {
+                "x": 41,
+                "y": 1007,
+                "width": 308,
+                "height": 114
+              },
+              {
+                "x": 41,
+                "y": 1133,
+                "width": 308,
+                "height": 114
+              },
+              {
+                "x": 41,
+                "y": 1259,
+                "width": 308,
+                "height": 114
+              },
+              {
+                "x": 41,
+                "y": 1385,
+                "width": 308,
+                "height": 114
+              },
+              {
+                "x": 41,
+                "y": 1511,
+                "width": 308,
+                "height": 114
+              },
+              {
+                "x": 41,
+                "y": 2946,
+                "width": 308,
+                "height": 165
+              },
+              {
+                "x": 41,
+                "y": 3123,
+                "width": 308,
+                "height": 181
+              },
+              {
+                "x": 41,
+                "y": 3316,
+                "width": 308,
+                "height": 165
+              },
+              {
+                "x": 41,
+                "y": 3493,
+                "width": 308,
+                "height": 165
+              },
+              {
+                "x": 41,
+                "y": 3670,
+                "width": 308,
+                "height": 165
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Approve refreshes tasks, card and badge and records exactly one Mandate and event",
+      "result": "pass",
+      "detail": {
+        "mandate": [
+          {
+            "accountId": "demo",
+            "approvalId": "ap1",
+            "ruleId": "r1",
+            "ruleWhen": "a refund request comes in",
+            "ruleAction": "refund it if it is under the refund limit, otherwise ask me",
+            "ruleApproval": "Auto under limit",
+            "limitValue": 50,
+            "policyVersion": "policy-138ba18b",
+            "saidYes": "Moe",
+            "saidAt": "2026-11-02T14:10:28.137Z"
+          }
+        ],
+        "events": [
+          {
+            "accountId": "demo",
+            "id": "e100",
+            "timeText": "11:03",
+            "occurredAt": "2026-11-02T14:10:28.137Z",
+            "fromAgent": "master",
+            "toAgent": "support",
+            "kind": "Approval",
+            "skill": "-",
+            "body": "Approved: Refund $42 on #A-1012",
+            "payload": {
+              "by": "Moe",
+              "approved": true,
+              "approval_id": "ap1"
+            },
+            "writes": [
+              "approvals.ap1"
+            ],
+            "trace": "tr_0cac87",
+            "seq": 100
+          }
+        ],
+        "support": {
+          "accountId": "demo",
+          "id": "support",
+          "name": "Support",
+          "role": "Customer inbox and refunds",
+          "tint": "#def5ee",
+          "isOn": true,
+          "autonomy": "Auto under limit",
+          "mission": "Answer every customer within an hour and keep satisfaction above 4.5.",
+          "contribution": 81,
+          "tasks": 97,
+          "success": "94%",
+          "saved": "9h",
+          "lastText": "Refund $42 on #A-1012 (approved)",
+          "targets": [
+            [
+              "First reply",
+              "4 min",
+              "60 min"
+            ],
+            [
+              "Satisfaction",
+              "4.7 / 5",
+              "4.5 / 5"
+            ],
+            [
+              "Open tickets",
+              "5",
+              "under 10"
+            ]
+          ],
+          "kpis": [
+            [
+              "Tickets closed",
+              "96"
+            ],
+            [
+              "First reply",
+              "4 min"
+            ],
+            [
+              "Satisfaction",
+              "4.7 / 5"
+            ],
+            [
+              "Open now",
+              "5"
+            ]
+          ],
+          "sortOrder": 1
+        }
+      }
+    },
+    {
+      "name": "Decline by keyboard removes the item without changing the agent or creating a Mandate",
+      "result": "pass",
+      "detail": {
+        "events": [
+          {
+            "accountId": "demo",
+            "id": "e100",
+            "timeText": "11:03",
+            "occurredAt": "2026-11-02T14:10:29.305Z",
+            "fromAgent": "master",
+            "toAgent": "marketing",
+            "kind": "Declined",
+            "skill": "-",
+            "body": "Declined: Raise prints ad set to $60 a day",
+            "payload": {
+              "by": "Moe",
+              "approved": false,
+              "approval_id": "ap2"
+            },
+            "writes": [
+              "approvals.ap2"
+            ],
+            "trace": "tr_0cac87",
+            "seq": 100
+          }
+        ],
+        "marketing": {
+          "accountId": "demo",
+          "id": "marketing",
+          "name": "Marketing",
+          "role": "Ads, social and email",
+          "tint": "#ece3ff",
+          "isOn": true,
+          "autonomy": "Ask first",
+          "mission": "Bring in repeat customers at a return above 3× on every dollar spent.",
+          "contribution": 64,
+          "tasks": 38,
+          "success": "91%",
+          "saved": "6h",
+          "lastText": "Asked to raise the prints ad set to $60 a day",
+          "targets": [
+            [
+              "ROAS",
+              "3.4",
+              "3.0"
+            ],
+            [
+              "Email open rate",
+              "41%",
+              "40%"
+            ],
+            [
+              "Repeat buyers",
+              "18%",
+              "30%"
+            ]
+          ],
+          "kpis": [
+            [
+              "Ad spend (7d)",
+              "$262"
+            ],
+            [
+              "ROAS",
+              "3.4"
+            ],
+            [
+              "Posts scheduled",
+              "12"
+            ],
+            [
+              "Email open rate",
+              "41%"
+            ]
+          ],
+          "sortOrder": 2
+        }
+      }
+    },
+    {
+      "name": "Approve mission then clear remaining approvals shows the empty inbox with no badge",
+      "result": "pass",
+      "detail": {
+        "mission": {
+          "accountId": "demo",
+          "id": "inventory",
+          "name": "Inventory",
+          "role": "Stock and suppliers",
+          "tint": "#fee7c2",
+          "isOn": false,
+          "autonomy": "Ask first",
+          "mission": "Never run out of a top-20 product and keep stock under 30 days of cover.",
+          "contribution": 0,
+          "tasks": 31,
+          "success": "97%",
+          "saved": "3.5h",
+          "lastText": "Drafted a reorder of 50 blank hoodies",
+          "targets": [
+            [
+              "Stock-outs",
+              "—",
+              "0"
+            ],
+            [
+              "Days of stock",
+              "—",
+              "under 30"
+            ],
+            [
+              "Reorders approved in time",
+              "—",
+              "100%"
+            ]
+          ],
+          "kpis": [
+            [
+              "Products tracked",
+              "64"
+            ],
+            [
+              "Low stock",
+              "2"
+            ],
+            [
+              "Reorders drafted",
+              "5"
+            ],
+            [
+              "Days of stock",
+              "23"
+            ]
+          ],
+          "sortOrder": 4
+        },
+        "final": {
+          "greeting": "Good morning, Moe",
+          "mission": "Reach $1M in annual sales with repeat customers by the end of 2027.",
+          "online": "4 of 5 squads online",
+          "tiles": [
+            {
+              "delta": "+12% vs last week",
+              "label": "Revenue",
+              "value": "$8,420",
+              "deltaColor": "#00692a"
+            },
+            {
+              "delta": "+8% vs last week",
+              "label": "Orders",
+              "value": "186",
+              "deltaColor": "#00692a"
+            },
+            {
+              "delta": "+4% vs last week",
+              "label": "Average order",
+              "value": "$45.27",
+              "deltaColor": "#00692a"
+            },
+            {
+              "delta": "−1 pt vs last week",
+              "label": "Profit margin",
+              "value": "31%",
+              "deltaColor": "#911e1b"
+            },
+            {
+              "label": "Tasks done by squads",
+              "value": "331",
+              "delta": "This week",
+              "deltaColor": "#5d5d5d"
+            },
+            {
+              "delta": "This week",
+              "label": "Hours saved",
+              "value": "34h",
+              "deltaColor": "#5d5d5d"
+            }
+          ],
+          "bars": [
+            {
+              "h": 65,
+              "fill": "#c9c9c9",
+              "label": "14",
+              "title": "Oct 14: $980"
+            },
+            {
+              "h": 69,
+              "fill": "#c9c9c9",
+              "label": "15",
+              "title": "Oct 15: $1,040"
+            },
+            {
+              "h": 68,
+              "fill": "#c9c9c9",
+              "label": "16",
+              "title": "Oct 16: $1,020"
+            },
+            {
+              "h": 74,
+              "fill": "#c9c9c9",
+              "label": "17",
+              "title": "Oct 17: $1,110"
+            },
+            {
+              "h": 71,
+              "fill": "#c9c9c9",
+              "label": "18",
+              "title": "Oct 18: $1,060"
+            },
+            {
+              "h": 77,
+              "fill": "#c9c9c9",
+              "label": "19",
+              "title": "Oct 19: $1,150"
+            },
+            {
+              "h": 77,
+              "fill": "#c9c9c9",
+              "label": "20",
+              "title": "Oct 20: $1,160"
+            },
+            {
+              "h": 67,
+              "fill": "#181818",
+              "label": "21",
+              "title": "Oct 21: $1,010"
+            },
+            {
+              "h": 75,
+              "fill": "#181818",
+              "label": "22",
+              "title": "Oct 22: $1,120"
+            },
+            {
+              "h": 73,
+              "fill": "#181818",
+              "label": "23",
+              "title": "Oct 23: $1,090"
+            },
+            {
+              "h": 83,
+              "fill": "#181818",
+              "label": "24",
+              "title": "Oct 24: $1,250"
+            },
+            {
+              "h": 79,
+              "fill": "#181818",
+              "label": "25",
+              "title": "Oct 25: $1,180"
+            },
+            {
+              "h": 89,
+              "fill": "#181818",
+              "label": "26",
+              "title": "Oct 26: $1,330"
+            },
+            {
+              "h": 96,
+              "fill": "#181818",
+              "label": "27",
+              "title": "Oct 27: $1,440"
+            }
+          ],
+          "count": 0,
+          "empty": true,
+          "emptyText": "Nothing waiting. Your squads are working inside their limits.",
+          "proposals": [],
+          "approvals": [],
+          "agents": [
+            {
+              "id": "orders",
+              "name": "Orders",
+              "role": "Fulfilment and tracking",
+              "tint": "#e7efff",
+              "last": "Added tracking LI400083615LT to #A-1007",
+              "tasks": 142,
+              "success": "98%",
+              "saved": "11.5h",
+              "mission": "Ship every order within 24 hours and keep the customer informed.",
+              "contribution": 72
+            },
+            {
+              "id": "support",
+              "name": "Support",
+              "role": "Customer inbox and refunds",
+              "tint": "#def5ee",
+              "last": "Asked for tracking on #A-1007 for a customer",
+              "tasks": 96,
+              "success": "94%",
+              "saved": "9h",
+              "mission": "Answer every customer within an hour and keep satisfaction above 4.5.",
+              "contribution": 81
+            },
+            {
+              "id": "marketing",
+              "name": "Marketing",
+              "role": "Ads, social and email",
+              "tint": "#ece3ff",
+              "last": "Asked to raise the prints ad set to $60 a day",
+              "tasks": 38,
+              "success": "91%",
+              "saved": "6h",
+              "mission": "Bring in repeat customers at a return above 3× on every dollar spent.",
+              "contribution": 64
+            },
+            {
+              "id": "finance",
+              "name": "Finance",
+              "role": "Payouts, costs and profit",
+              "tint": "#ffefa4",
+              "last": "Sent the weekly profit summary",
+              "tasks": 24,
+              "success": "100%",
+              "saved": "4h",
+              "mission": "Keep profit margin above 30% and every bill matched within a week.",
+              "contribution": 90
+            },
+            {
+              "id": "inventory",
+              "name": "Inventory",
+              "role": "Stock and suppliers",
+              "tint": "#fee7c2",
+              "last": "Drafted a reorder of 50 blank hoodies",
+              "tasks": 31,
+              "success": "97%",
+              "saved": "3.5h",
+              "mission": "Never run out of a top-20 product and keep stock under 30 days of cover.",
+              "contribution": 0
+            }
+          ],
+          "masterName": "Master"
+        }
+      }
+    },
+    {
+      "name": "Request revision leaves its card even after all decisions are cleared",
+      "result": "pass",
+      "detail": {
+        "greeting": "Good morning, Moe",
+        "mission": "Reach $1M in annual sales with repeat customers by the end of 2027.",
+        "online": "4 of 5 squads online",
+        "tiles": [
+          {
+            "delta": "+12% vs last week",
+            "label": "Revenue",
+            "value": "$8,420",
+            "deltaColor": "#00692a"
+          },
+          {
+            "delta": "+8% vs last week",
+            "label": "Orders",
+            "value": "186",
+            "deltaColor": "#00692a"
+          },
+          {
+            "delta": "+4% vs last week",
+            "label": "Average order",
+            "value": "$45.27",
+            "deltaColor": "#00692a"
+          },
+          {
+            "delta": "−1 pt vs last week",
+            "label": "Profit margin",
+            "value": "31%",
+            "deltaColor": "#911e1b"
+          },
+          {
+            "label": "Tasks done by squads",
+            "value": "331",
+            "delta": "This week",
+            "deltaColor": "#5d5d5d"
+          },
+          {
+            "delta": "This week",
+            "label": "Hours saved",
+            "value": "34h",
+            "deltaColor": "#5d5d5d"
+          }
+        ],
+        "bars": [
+          {
+            "h": 65,
+            "fill": "#c9c9c9",
+            "label": "14",
+            "title": "Oct 14: $980"
+          },
+          {
+            "h": 69,
+            "fill": "#c9c9c9",
+            "label": "15",
+            "title": "Oct 15: $1,040"
+          },
+          {
+            "h": 68,
+            "fill": "#c9c9c9",
+            "label": "16",
+            "title": "Oct 16: $1,020"
+          },
+          {
+            "h": 74,
+            "fill": "#c9c9c9",
+            "label": "17",
+            "title": "Oct 17: $1,110"
+          },
+          {
+            "h": 71,
+            "fill": "#c9c9c9",
+            "label": "18",
+            "title": "Oct 18: $1,060"
+          },
+          {
+            "h": 77,
+            "fill": "#c9c9c9",
+            "label": "19",
+            "title": "Oct 19: $1,150"
+          },
+          {
+            "h": 77,
+            "fill": "#c9c9c9",
+            "label": "20",
+            "title": "Oct 20: $1,160"
+          },
+          {
+            "h": 67,
+            "fill": "#181818",
+            "label": "21",
+            "title": "Oct 21: $1,010"
+          },
+          {
+            "h": 75,
+            "fill": "#181818",
+            "label": "22",
+            "title": "Oct 22: $1,120"
+          },
+          {
+            "h": 73,
+            "fill": "#181818",
+            "label": "23",
+            "title": "Oct 23: $1,090"
+          },
+          {
+            "h": 83,
+            "fill": "#181818",
+            "label": "24",
+            "title": "Oct 24: $1,250"
+          },
+          {
+            "h": 79,
+            "fill": "#181818",
+            "label": "25",
+            "title": "Oct 25: $1,180"
+          },
+          {
+            "h": 89,
+            "fill": "#181818",
+            "label": "26",
+            "title": "Oct 26: $1,330"
+          },
+          {
+            "h": 96,
+            "fill": "#181818",
+            "label": "27",
+            "title": "Oct 27: $1,440"
+          }
+        ],
+        "count": 0,
+        "empty": false,
+        "emptyText": "",
+        "proposals": [
+          {
+            "id": "mp-inventory",
+            "agentName": "Inventory",
+            "tint": "#fee7c2",
+            "title": "Revised mission on its way",
+            "mission": "Never run out of a top-20 product and keep stock under 30 days of cover.",
+            "chips": [
+              "Stock-outs: 0",
+              "Days of stock: under 30",
+              "Reorders approved in time: 100%"
+            ],
+            "proposed": false,
+            "revising": true
+          }
+        ],
+        "approvals": [],
+        "agents": [
+          {
+            "id": "orders",
+            "name": "Orders",
+            "role": "Fulfilment and tracking",
+            "tint": "#e7efff",
+            "last": "Added tracking LI400083615LT to #A-1007",
+            "tasks": 142,
+            "success": "98%",
+            "saved": "11.5h",
+            "mission": "Ship every order within 24 hours and keep the customer informed.",
+            "contribution": 72
+          },
+          {
+            "id": "support",
+            "name": "Support",
+            "role": "Customer inbox and refunds",
+            "tint": "#def5ee",
+            "last": "Asked for tracking on #A-1007 for a customer",
+            "tasks": 96,
+            "success": "94%",
+            "saved": "9h",
+            "mission": "Answer every customer within an hour and keep satisfaction above 4.5.",
+            "contribution": 81
+          },
+          {
+            "id": "marketing",
+            "name": "Marketing",
+            "role": "Ads, social and email",
+            "tint": "#ece3ff",
+            "last": "Asked to raise the prints ad set to $60 a day",
+            "tasks": 38,
+            "success": "91%",
+            "saved": "6h",
+            "mission": "Bring in repeat customers at a return above 3× on every dollar spent.",
+            "contribution": 64
+          },
+          {
+            "id": "finance",
+            "name": "Finance",
+            "role": "Payouts, costs and profit",
+            "tint": "#ffefa4",
+            "last": "Sent the weekly profit summary",
+            "tasks": 24,
+            "success": "100%",
+            "saved": "4h",
+            "mission": "Keep profit margin above 30% and every bill matched within a week.",
+            "contribution": 90
+          },
+          {
+            "id": "inventory",
+            "name": "Inventory",
+            "role": "Stock and suppliers",
+            "tint": "#fee7c2",
+            "last": "Drafted a reorder of 50 blank hoodies",
+            "tasks": 31,
+            "success": "97%",
+            "saved": "3.5h",
+            "mission": "",
+            "contribution": 0
+          }
+        ],
+        "masterName": "Master"
+      }
+    },
+    {
+      "name": "No-store and blank records retain empty layout, dashes, delta height and pending mission copy",
+      "result": "pass",
+      "detail": {
+        "noStore": {
+          "greeting": "Good morning, Sara",
+          "mission": "Make Leen the first name in premium dates across the Gulf and the UK.",
+          "online": "0 of 0 squads online",
+          "tiles": [
+            {
+              "label": "Revenue",
+              "value": "—",
+              "delta": " ",
+              "deltaColor": "#5d5d5d"
+            },
+            {
+              "label": "Orders",
+              "value": "—",
+              "delta": " ",
+              "deltaColor": "#5d5d5d"
+            },
+            {
+              "label": "Average order",
+              "value": "—",
+              "delta": " ",
+              "deltaColor": "#5d5d5d"
+            },
+            {
+              "label": "Profit margin",
+              "value": "—",
+              "delta": " ",
+              "deltaColor": "#5d5d5d"
+            },
+            {
+              "label": "Tasks done by squads",
+              "value": "0",
+              "delta": "This week",
+              "deltaColor": "#5d5d5d"
+            },
+            {
+              "label": "Hours saved",
+              "value": "—",
+              "delta": " ",
+              "deltaColor": "#5d5d5d"
+            }
+          ],
+          "bars": [],
+          "count": 0,
+          "empty": true,
+          "emptyText": "Nothing waiting. Your squads are working inside their limits.",
+          "proposals": [],
+          "approvals": [],
+          "agents": [],
+          "masterName": "Master"
+        },
+        "blank": {
+          "greeting": "Good morning, —",
+          "mission": "—",
+          "online": "4 of 5 squads online",
+          "tiles": [
+            {
+              "delta": "+12% vs last week",
+              "label": "Revenue",
+              "value": "$8,420",
+              "deltaColor": "#00692a"
+            },
+            {
+              "delta": " ",
+              "label": "Orders",
+              "value": "—",
+              "deltaColor": "#00692a"
+            },
+            {
+              "delta": "+4% vs last week",
+              "label": "Average order",
+              "value": "$45.27",
+              "deltaColor": "#00692a"
+            },
+            {
+              "delta": "−1 pt vs last week",
+              "label": "Profit margin",
+              "value": "31%",
+              "deltaColor": "#911e1b"
+            },
+            {
+              "label": "Tasks done by squads",
+              "value": "331",
+              "delta": "This week",
+              "deltaColor": "#5d5d5d"
+            },
+            {
+              "delta": "This week",
+              "label": "Hours saved",
+              "value": "—",
+              "deltaColor": "#5d5d5d"
+            }
+          ],
+          "bars": [
+            {
+              "h": 65,
+              "fill": "#c9c9c9",
+              "label": "14",
+              "title": "Oct 14: $980"
+            },
+            {
+              "h": 69,
+              "fill": "#c9c9c9",
+              "label": "15",
+              "title": "Oct 15: $1,040"
+            },
+            {
+              "h": 68,
+              "fill": "#c9c9c9",
+              "label": "16",
+              "title": "Oct 16: $1,020"
+            },
+            {
+              "h": 74,
+              "fill": "#c9c9c9",
+              "label": "17",
+              "title": "Oct 17: $1,110"
+            },
+            {
+              "h": 71,
+              "fill": "#c9c9c9",
+              "label": "18",
+              "title": "Oct 18: $1,060"
+            },
+            {
+              "h": 77,
+              "fill": "#c9c9c9",
+              "label": "19",
+              "title": "Oct 19: $1,150"
+            },
+            {
+              "h": 77,
+              "fill": "#c9c9c9",
+              "label": "20",
+              "title": "Oct 20: $1,160"
+            },
+            {
+              "h": 67,
+              "fill": "#181818",
+              "label": "21",
+              "title": "Oct 21: $1,010"
+            },
+            {
+              "h": 75,
+              "fill": "#181818",
+              "label": "22",
+              "title": "Oct 22: $1,120"
+            },
+            {
+              "h": 73,
+              "fill": "#181818",
+              "label": "23",
+              "title": "Oct 23: $1,090"
+            },
+            {
+              "h": 83,
+              "fill": "#181818",
+              "label": "24",
+              "title": "Oct 24: $1,250"
+            },
+            {
+              "h": 79,
+              "fill": "#181818",
+              "label": "25",
+              "title": "Oct 25: $1,180"
+            },
+            {
+              "h": 89,
+              "fill": "#181818",
+              "label": "26",
+              "title": "Oct 26: $1,330"
+            },
+            {
+              "h": 96,
+              "fill": "#181818",
+              "label": "27",
+              "title": "Oct 27: $1,440"
+            }
+          ],
+          "count": 4,
+          "empty": false,
+          "emptyText": "",
+          "proposals": [
+            {
+              "id": "mp-inventory",
+              "agentName": " ",
+              "tint": "#fee7c2",
+              "title": "Proposed mission",
+              "mission": " ",
+              "chips": [
+                "—",
+                "Stock-outs: 0",
+                "Label: ",
+                ": Goal"
+              ],
+              "proposed": true,
+              "revising": false
+            }
+          ],
+          "approvals": [
+            {
+              "id": "ap1",
+              "agentName": "Support",
+              "tint": "#def5ee",
+              "amount": "$42",
+              "title": "Refund $42 on #A-1012",
+              "detail": "Print arrived creased; photo attached. Second refund for this customer this month."
+            },
+            {
+              "id": "ap2",
+              "agentName": "Marketing",
+              "tint": "#ece3ff",
+              "amount": "+$20/day",
+              "title": "Raise prints ad set to $60 a day",
+              "detail": "Return on ad spend has been 3.4 for 7 days. Adds about $140 a week."
+            },
+            {
+              "id": "ap3",
+              "agentName": " ",
+              "tint": "#fee7c2",
+              "amount": " ",
+              "title": " ",
+              "detail": " "
+            }
+          ],
+          "agents": [
+            {
+              "id": "orders",
+              "name": "Orders",
+              "role": "Fulfilment and tracking",
+              "tint": "#e7efff",
+              "last": "Added tracking LI400083615LT to #A-1007",
+              "tasks": 142,
+              "success": "98%",
+              "saved": "11.5h",
+              "mission": "Ship every order within 24 hours and keep the customer informed.",
+              "contribution": 72
+            },
+            {
+              "id": "support",
+              "name": "Support",
+              "role": "Customer inbox and refunds",
+              "tint": "#def5ee",
+              "last": "Asked for tracking on #A-1007 for a customer",
+              "tasks": 96,
+              "success": "94%",
+              "saved": "9h",
+              "mission": "Answer every customer within an hour and keep satisfaction above 4.5.",
+              "contribution": 81
+            },
+            {
+              "id": "marketing",
+              "name": "Marketing",
+              "role": "Ads, social and email",
+              "tint": "#ece3ff",
+              "last": "Asked to raise the prints ad set to $60 a day",
+              "tasks": 38,
+              "success": "91%",
+              "saved": "6h",
+              "mission": "Bring in repeat customers at a return above 3× on every dollar spent.",
+              "contribution": 64
+            },
+            {
+              "id": "finance",
+              "name": "Finance",
+              "role": "Payouts, costs and profit",
+              "tint": "#ffefa4",
+              "last": "Sent the weekly profit summary",
+              "tasks": 24,
+              "success": "100%",
+              "saved": "4h",
+              "mission": "Keep profit margin above 30% and every bill matched within a week.",
+              "contribution": 90
+            },
+            {
+              "id": "inventory",
+              "name": " ",
+              "role": " ",
+              "tint": "#fee7c2",
+              "last": " ",
+              "tasks": 31,
+              "success": " ",
+              "saved": " ",
+              "mission": "",
+              "contribution": 0
+            }
+          ],
+          "masterName": "Master"
+        },
+        "trackHeight": 201
+      }
+    },
+    {
+      "name": "Traffic and all five agent cards navigate to their real routes",
+      "result": "pass",
+      "detail": [
+        "/traffic",
+        "/agents/orders",
+        "/agents/support",
+        "/agents/marketing",
+        "/agents/finance",
+        "/agents/inventory"
+      ]
+    },
+    {
+      "name": "Missing policy rule or limit rolls back and refreshes silently; a later click still works",
+      "result": "pass",
+      "detail": [
+        {
+          "action": "missing-rule",
+          "rolledBack": [
+            {
+              "accountId": "demo",
+              "id": "ap2",
+              "agent": "marketing",
+              "title": "Raise prints ad set to $60 a day",
+              "detail": "Return on ad spend has been 3.4 for 7 days. Adds about $140 a week.",
+              "amount": "+$20/day",
+              "status": "Pending",
+              "sortOrder": 1
+            },
+            {
+              "accountId": "demo",
+              "id": "ap3",
+              "agent": "inventory",
+              "title": "Reorder 50 blank hoodies",
+              "detail": "Black hoodie M is down to 6. Usual supplier, 5-day delivery.",
+              "amount": "$610",
+              "status": "Pending",
+              "sortOrder": 2
+            },
+            {
+              "accountId": "demo",
+              "id": "ap1",
+              "agent": "support",
+              "title": "Refund $42 on #A-1012",
+              "detail": "Print arrived creased; photo attached. Second refund for this customer this month.",
+              "amount": "$42",
+              "status": "Pending",
+              "sortOrder": 0
+            }
+          ],
+          "after": 3
+        },
+        {
+          "action": "missing-limit",
+          "rolledBack": [
+            {
+              "accountId": "demo",
+              "id": "ap1",
+              "agent": "support",
+              "title": "Refund $42 on #A-1012",
+              "detail": "Print arrived creased; photo attached. Second refund for this customer this month.",
+              "amount": "$42",
+              "status": "Pending",
+              "sortOrder": 0
+            },
+            {
+              "accountId": "demo",
+              "id": "ap2",
+              "agent": "marketing",
+              "title": "Raise prints ad set to $60 a day",
+              "detail": "Return on ad spend has been 3.4 for 7 days. Adds about $140 a week.",
+              "amount": "+$20/day",
+              "status": "Pending",
+              "sortOrder": 1
+            },
+            {
+              "accountId": "demo",
+              "id": "ap3",
+              "agent": "inventory",
+              "title": "Reorder 50 blank hoodies",
+              "detail": "Black hoodie M is down to 6. Usual supplier, 5-day delivery.",
+              "amount": "$610",
+              "status": "Pending",
+              "sortOrder": 2
+            }
+          ],
+          "after": 3
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

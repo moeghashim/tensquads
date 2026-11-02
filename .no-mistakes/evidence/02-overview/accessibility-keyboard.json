@@ -1,0 +1,224 @@
+{
+  "checks": [
+    {
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "width": 390,
+      "violations": []
+    }
+  ],
+  "buttons": 25,
+  "reached": 25,
+  "focus": [
+    {
+      "index": 0,
+      "tag": "BUTTON",
+      "name": "Overview",
+      "handler": "goOverview",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 1,
+      "tag": "BUTTON",
+      "name": "Chat with the master",
+      "handler": "goChat",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 2,
+      "tag": "BUTTON",
+      "name": "Squads",
+      "handler": "goAgents",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 3,
+      "tag": "BUTTON",
+      "name": "Squad traffic",
+      "handler": "goFlow",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 4,
+      "tag": "BUTTON",
+      "name": "Rules and limits",
+      "handler": "goRules",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 5,
+      "tag": "BUTTON",
+      "name": "Orders",
+      "handler": "a.open",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 6,
+      "tag": "BUTTON",
+      "name": "Support",
+      "handler": "a.open",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 7,
+      "tag": "BUTTON",
+      "name": "Marketing",
+      "handler": "a.open",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 8,
+      "tag": "BUTTON",
+      "name": "Finance",
+      "handler": "a.open",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 9,
+      "tag": "BUTTON",
+      "name": "Inventory",
+      "handler": "a.open",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 10,
+      "tag": "BUTTON",
+      "name": "Approve mission",
+      "handler": "mp.approve",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 11,
+      "tag": "BUTTON",
+      "name": "Ask for another",
+      "handler": "mp.decline",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 12,
+      "tag": "BUTTON",
+      "name": "Approve",
+      "handler": "ap.approve",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 13,
+      "tag": "BUTTON",
+      "name": "Decline",
+      "handler": "ap.decline",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 14,
+      "tag": "BUTTON",
+      "name": "Approve",
+      "handler": "ap.approve",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 15,
+      "tag": "BUTTON",
+      "name": "Decline",
+      "handler": "ap.decline",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 16,
+      "tag": "BUTTON",
+      "name": "Approve",
+      "handler": "ap.approve",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 17,
+      "tag": "BUTTON",
+      "name": "Decline",
+      "handler": "ap.decline",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 18,
+      "tag": "BUTTON",
+      "name": "See squad traffic",
+      "handler": "goFlow",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 19,
+      "tag": "BUTTON",
+      "name": "Orders\nFulfilment and tracking\nAdded tracking LI400083615LT to #A-1007\nShip every order within 24 hours and keep the customer informed.\n72% done\n142 tasks\n98% success\n11.5h saved",
+      "handler": "a.open",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 20,
+      "tag": "BUTTON",
+      "name": "Support\nCustomer inbox and refunds\nAsked for tracking on #A-1007 for a customer\nAnswer every customer within an hour and keep satisfaction above 4.5.\n81% done\n96 tasks\n94% success\n9h saved",
+      "handler": "a.open",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 21,
+      "tag": "BUTTON",
+      "name": "Marketing\nAds, social and email\nAsked to raise the prints ad set to $60 a day\nBring in repeat customers at a return above 3× on every dollar spent.\n64% done\n38 tasks\n91% success\n6h saved",
+      "handler": "a.open",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 22,
+      "tag": "BUTTON",
+      "name": "Finance\nPayouts, costs and profit\nSent the weekly profit summary\nKeep profit margin above 30% and every bill matched within a week.\n90% done\n24 tasks\n100% success\n4h saved",
+      "handler": "a.open",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 23,
+      "tag": "BUTTON",
+      "name": "Inventory\nStock and suppliers\nDrafted a reorder of 50 blank hoodies\nMission pending. Master has proposed one; approve it in the inbox.\nPending\n31 tasks\n97% success\n3.5h saved",
+      "handler": "a.open",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 24,
+      "tag": "BUTTON",
+      "name": "M\nAsk Master\n4",
+      "handler": "toggleDock",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    },
+    {
+      "index": 0,
+      "tag": "BUTTON",
+      "name": "Overview",
+      "handler": "goOverview",
+      "outline": "rgb(1, 105, 204) solid 2px",
+      "offset": "2px"
+    }
+  ]
+}
