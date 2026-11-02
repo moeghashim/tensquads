@@ -128,8 +128,7 @@ async function pendingTask(tx: Tx, accountId: string) {
 	const generated = rows.filter((row) => /^e\d+$/.test(row.id)).sort((left, right) => right.seq - left.seq);
 	const latest = generated[0];
 	if (
-		!latest ||
-		latest.kind !== "Task" ||
+		latest?.kind !== "Task" ||
 		!isChatPayload(latest.payload) ||
 		!latest.occurredAt ||
 		Date.now() - latest.occurredAt.getTime() >= PENDING_TASK_WINDOW_MS

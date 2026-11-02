@@ -119,35 +119,34 @@ async function removeAccount(db: ReturnType<typeof openPostgres>["db"], accountI
 	await db.delete(schema.accounts).where(eq(schema.accounts.id, accountId));
 }
 
-test(
-	"a lock held past the window does not block the next send",
-	{ timeout: 180_000, skip: connection.length === 0 },
-	async () => {
-		refuseProduction();
-		const suffix = randomBytes(4).toString("hex");
-		const accountId = `late-${suffix}`;
-		const opened = openPostgres(connection);
-		const holder = new Pool({ connectionString: connection, max: 1 });
-		const client = await holder.connect();
-		let locked = false;
-		try {
-			await retryLockWait(() => replaceDemoAccount(opened.db, accountId, `clerk-${suffix}`));
-			const scope = { accountId, mode: "account" as const };
-			const kernel = new Kernel(createRepositories(opened.db));
-			await holdLock(client);
-			locked = true;
-			const late = await abandonedBegin(kernel, scope);
-			assert.notEqual(late.kind, "working");
-			assert.notEqual(late.kind, "pending");
-			await client.query(unlockKey);
-			locked = false;
-			await replyAfter(kernel, scope);
-		} finally {
-			if (locked) await client.query(unlockKey).catch(() => undefined);
-			client.release();
-			await holder.end();
-			await removeAccount(opened.db, accountId);
-			await opened.close();
-		}
-	},
-);
+test("a lock held past the window does not block the next send", {
+	timeout: 180_000,
+	skip: connection.length === 0,
+}, async () => {
+	refuseProduction();
+	const suffix = randomBytes(4).toString("hex");
+	const accountId = `late-${suffix}`;
+	const opened = openPostgres(connection);
+	const holder = new Pool({ connectionString: connection, max: 1 });
+	const client = await holder.connect();
+	let locked = false;
+	try {
+		await retryLockWait(() => replaceDemoAccount(opened.db, accountId, `clerk-${suffix}`));
+		const scope = { accountId, mode: "account" as const };
+		const kernel = new Kernel(createRepositories(opened.db));
+		await holdLock(client);
+		locked = true;
+		const late = await abandonedBegin(kernel, scope);
+		assert.notEqual(late.kind, "working");
+		assert.notEqual(late.kind, "pending");
+		await client.query(unlockKey);
+		locked = false;
+		await replyAfter(kernel, scope);
+	} finally {
+		if (locked) await client.query(unlockKey).catch(() => undefined);
+		client.release();
+		await holder.end();
+		await removeAccount(opened.db, accountId);
+		await opened.close();
+	}
+});

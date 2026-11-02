@@ -278,69 +278,65 @@ test("saved bubbles stay while invalidation completes before the loader frame is
 	});
 });
 
-test(
-	"a finish request that never settles releases the guard and accepts another send",
-	{ timeout: 90_000 },
-	async (t) => {
-		await withDock(t, async ({ page }) => {
-			await page.clock.install();
-			await page.evaluate(() => {
-				const read = window.readFrame;
-				window.reads = 0;
-				window.readFrame = async () => {
-					window.reads += 1;
-					return read();
-				};
-				window.holdFinish = true;
-				window.finishHeld = false;
-			});
-			await send(page);
-			await advanceReply(page);
-			await expect(page.locator("#pending")).toHaveText("true");
-			await expect.poll(() => page.evaluate(() => window.finishHeld)).toBe(true);
-			const readsBefore = await page.evaluate(() => window.reads);
-			await page.clock.fastForward(PENDING_TASK_WINDOW_MS);
-			await expect(page.locator("#pending")).toHaveText("false");
-			await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0);
-			const readsAfter = await page.evaluate(() => window.reads);
-			assert.ok(readsAfter > readsBefore);
-			t.mock.timers.tick(PENDING_TASK_WINDOW_MS + 1);
-			await page.evaluate(() => {
-				window.holdFinish = false;
-			});
-			await send(page);
-			await advanceReply(page);
-			await expect(page.getByText(reply, { exact: true })).toBeVisible();
-			await expect(page.locator("#pending")).toHaveText("false");
+test("a finish request that never settles releases the guard and accepts another send", {
+	timeout: 90_000,
+}, async (t) => {
+	await withDock(t, async ({ page }) => {
+		await page.clock.install();
+		await page.evaluate(() => {
+			const read = window.readFrame;
+			window.reads = 0;
+			window.readFrame = async () => {
+				window.reads += 1;
+				return read();
+			};
+			window.holdFinish = true;
+			window.finishHeld = false;
 		});
-	},
-);
+		await send(page);
+		await advanceReply(page);
+		await expect(page.locator("#pending")).toHaveText("true");
+		await expect.poll(() => page.evaluate(() => window.finishHeld)).toBe(true);
+		const readsBefore = await page.evaluate(() => window.reads);
+		await page.clock.fastForward(PENDING_TASK_WINDOW_MS);
+		await expect(page.locator("#pending")).toHaveText("false");
+		await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0);
+		const readsAfter = await page.evaluate(() => window.reads);
+		assert.ok(readsAfter > readsBefore);
+		t.mock.timers.tick(PENDING_TASK_WINDOW_MS + 1);
+		await page.evaluate(() => {
+			window.holdFinish = false;
+		});
+		await send(page);
+		await advanceReply(page);
+		await expect(page.getByText(reply, { exact: true })).toBeVisible();
+		await expect(page.locator("#pending")).toHaveText("false");
+	});
+});
 
-test(
-	"a begin request that never settles releases the guard and accepts another send",
-	{ timeout: 90_000 },
-	async (t) => {
-		await withDock(t, async ({ page }) => {
-			await page.clock.install();
-			await page.evaluate(() => {
-				window.realBegin = window.beginSend;
-				window.beginSend = () => new Promise(() => {});
-			});
-			await send(page);
-			await expect(page.locator("#pending")).toHaveText("true");
-			await page.clock.fastForward(PENDING_TASK_WINDOW_MS);
-			await expect(page.locator("#pending")).toHaveText("false");
-			await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0);
-			await page.evaluate(() => {
-				window.beginSend = window.realBegin;
-			});
-			await send(page);
-			await advanceReply(page);
-			await expect(page.getByText(reply, { exact: true })).toBeVisible();
-			await expect(page.locator("#pending")).toHaveText("false");
+test("a begin request that never settles releases the guard and accepts another send", {
+	timeout: 90_000,
+}, async (t) => {
+	await withDock(t, async ({ page }) => {
+		await page.clock.install();
+		await page.evaluate(() => {
+			window.realBegin = window.beginSend;
+			window.beginSend = () => new Promise(() => {});
 		});
-	},
-);
+		await send(page);
+		await expect(page.locator("#pending")).toHaveText("true");
+		await page.clock.fastForward(PENDING_TASK_WINDOW_MS);
+		await expect(page.locator("#pending")).toHaveText("false");
+		await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0);
+		await page.evaluate(() => {
+			window.beginSend = window.realBegin;
+		});
+		await send(page);
+		await advanceReply(page);
+		await expect(page.getByText(reply, { exact: true })).toBeVisible();
+		await expect(page.locator("#pending")).toHaveText("false");
+	});
+});
 
 test("a refresh that never settles releases the guard and accepts another send", { timeout: 90_000 }, async (t) => {
 	await withDock(t, async ({ page }) => {

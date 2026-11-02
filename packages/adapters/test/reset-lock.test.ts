@@ -141,34 +141,33 @@ async function removeAccount(db: ReturnType<typeof openPostgres>["db"], accountI
 	await db.delete(schema.accounts).where(eq(schema.accounts.id, accountId));
 }
 
-test(
-	"a reset waiting on the advisory lock longer than the send timeout succeeds",
-	{ timeout: 180_000, skip: connection.length === 0 },
-	async () => {
-		refuseProduction();
-		const suffix = randomBytes(4).toString("hex");
-		const accountId = `reset-${suffix}`;
-		const opened = openPostgres(connection);
-		const holder = new Pool({ connectionString: connection, max: 1 });
-		const client = await holder.connect();
-		let locked = false;
-		try {
-			await holdLock(client);
-			locked = true;
-			const pending = watch(replaceDemoAccount(opened.db, accountId, `clerk-${suffix}`));
-			await delay(holdLongerThanSendTimeout());
-			assert.equal(pending.settled(), false);
-			await client.query(unlockKey);
-			locked = false;
-			await finishReset(pending.done);
-			const rows = await opened.db.select().from(schema.accounts).where(eq(schema.accounts.id, accountId));
-			assert.equal(rows.length, 1);
-		} finally {
-			await release(client, locked);
-			client.release();
-			await holder.end();
-			await removeAccount(opened.db, accountId);
-			await opened.close();
-		}
-	},
-);
+test("a reset waiting on the advisory lock longer than the send timeout succeeds", {
+	timeout: 180_000,
+	skip: connection.length === 0,
+}, async () => {
+	refuseProduction();
+	const suffix = randomBytes(4).toString("hex");
+	const accountId = `reset-${suffix}`;
+	const opened = openPostgres(connection);
+	const holder = new Pool({ connectionString: connection, max: 1 });
+	const client = await holder.connect();
+	let locked = false;
+	try {
+		await holdLock(client);
+		locked = true;
+		const pending = watch(replaceDemoAccount(opened.db, accountId, `clerk-${suffix}`));
+		await delay(holdLongerThanSendTimeout());
+		assert.equal(pending.settled(), false);
+		await client.query(unlockKey);
+		locked = false;
+		await finishReset(pending.done);
+		const rows = await opened.db.select().from(schema.accounts).where(eq(schema.accounts.id, accountId));
+		assert.equal(rows.length, 1);
+	} finally {
+		await release(client, locked);
+		client.release();
+		await holder.end();
+		await removeAccount(opened.db, accountId);
+		await opened.close();
+	}
+});

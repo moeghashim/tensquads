@@ -144,8 +144,7 @@ function useFrameRefresh(router: ReturnType<typeof useRouter>, refresh: () => Pr
 	return useCallback(async (): Promise<WorkspaceFrameData> => {
 		await bounded(() => refresh());
 		const match = router.state.matches.find((item) => item.routeId === "/_workspace");
-		if (!match || match.status !== "success" || !match.loaderData)
-			throw new Error("The workspace frame did not load.");
+		if (match?.status !== "success" || !match.loaderData) throw new Error("The workspace frame did not load.");
 		return match.loaderData;
 	}, [refresh, router]);
 }
