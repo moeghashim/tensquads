@@ -5,6 +5,7 @@
 		"scripts/progress-log.mjs",
 		"scripts/design-check.mjs",
 		"scripts/commit-with-progress.mjs",
+		"scripts/deploy-cloudflare.mjs",
 		"packages/statecharts/*/view.mjs"
 	],
 	"ignorePatterns": [".agents/skills/**", "design/**", "apps/web/worker-configuration.d.ts"],

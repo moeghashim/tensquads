@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 
-function parseEnv(text) {
+export function parseEnv(text) {
 	const entries = new Map();
 	for (const line of text.split("\n")) {
 		const trimmed = line.trim();

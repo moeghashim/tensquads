@@ -8,7 +8,7 @@ Use Node 24 from `.nvmrc` and npm 11.19.1 from `package.json`. Run `npm ci` from
 
 `npm run dev -w @tensquads/web` serves `http://localhost:3000`. The only route is `/`, with an empty `main` element and the document title `tensquads`. It does not import tokens or icons, call the kernel, or use service credentials. Clerk is provisioned in `.projects/state.json`; its SDK and sign-in flow are not implemented.
 
-Use `npm run build:cloudflare` to build, `npm run preview:cloudflare` to build and run Wrangler locally, and `npm run deploy:cloudflare` to build and deploy from an authenticated local session. `apps/web/wrangler.jsonc` defines one Worker with `nodejs_compat` and observability enabled. It has no Durable Object or Queue binding. Use `npm run typegen:cloudflare` after binding changes. CI builds but does not deploy.
+Use `npm run build:cloudflare` to build and `npm run preview:cloudflare` to build and run Wrangler locally. Deploy only through `npm run deploy:cloudflare`. That command runs `scripts/deploy-cloudflare.mjs`. The script reads `CLOUDFLARE_WORKERS_API_TOKEN` from `.env` and sets `CLOUDFLARE_API_TOKEN` for that one command. It stops when the token is absent. It does not use a Wrangler OAuth login. `apps/web/wrangler.jsonc` pins `account_id` and defines one Worker with `nodejs_compat` and observability enabled. It has no Durable Object or Queue binding. Use `npm run typegen:cloudflare` after binding changes. CI builds but does not deploy.
 
 For existing service access, run `stripe projects env --pull` from the repository root with the Stripe Projects CLI. The service slugs are `cloudflare/workers`, `neon/postgres`, and `clerk/auth`. `.projects/state.json` is committed. `.env`, `.env.*` (except `.env.example`), `.projects/vault`, and local Projects state are ignored. There is no committed `.env.example`. Local tests do not need these services.
 
@@ -130,8 +130,8 @@ GitHub Actions runs `make verify` on Linux and macOS and a separate Cloudflare b
 | `make verify` | Run all five checks above in order |
 | `npm run build:cloudflare` | Build the Worker |
 | `npm run preview:cloudflare` | Build and run the Worker locally with Wrangler |
-| `npm run deploy:cloudflare` | Build and deploy through an authenticated local Wrangler session |
+| `npm run deploy:cloudflare` | Build and deploy only through `scripts/deploy-cloudflare.mjs` |
 | `npm run typegen:cloudflare` | Regenerate Worker types after binding changes |
 | `npm run seed` | Migrate and replace the database contents with the design seed |
 
-Install Playwright Chromium with `npx playwright install chromium` before the first e2e run. CI runs verification and a Cloudflare build. Deployment is local.
+Install Playwright Chromium with `npx playwright install chromium` before the first e2e run. CI runs verification and a Cloudflare build. Deployment is local and only through `scripts/deploy-cloudflare.mjs`.

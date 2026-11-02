@@ -12,7 +12,7 @@
 		"check": "tsc --noEmit",
 		"cf:build": "vite build",
 		"cf:preview": "vite build && wrangler dev",
-		"cf:deploy": "vite build && wrangler deploy",
+		"cf:deploy": "vite build && node ../../scripts/deploy-cloudflare.mjs",
 		"cf:typegen": "wrangler types",
 		"deploy": "npm run cf:deploy",
 		"test": "node --experimental-strip-types --test src/screens/signup/machine.test.ts",

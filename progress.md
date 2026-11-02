@@ -532,3 +532,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-01 01-public-screens: The evidence commit adds the six screen pairs and the CI make verify logs. No app file, test, or check changed.
 - 2026-11-01 02-frame: The workspace shares one sidebar and one chat dock. A send and a test reset take the same lock, so a full browser run waits longer than one send. The frame read is six queries. TLC reached 40 states and 172 steps with no broken rule.
 - 2026-11-01 02-frame: A Task blocks a second send for 30 seconds and then stays without a Result. TLC reached 80 states and 392 steps with no broken rule, including SendAgain. The chart draws 3 states and 5 arrows.
+- 2026-11-01 02-frame: Cloudflare deploy uses the project account. The account id is pinned, and the deploy script sends only the project API token.
