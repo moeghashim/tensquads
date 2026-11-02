@@ -7,7 +7,7 @@
 # Test info
 
 - Name: chat.spec.ts >> the Task is in the panel while finish and the bus read are held
-- Location: e2e/chat.spec.ts:153:1
+- Location: e2e/chat.spec.ts:154:1
 
 # Error details
 
