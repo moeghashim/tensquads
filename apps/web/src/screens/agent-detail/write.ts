@@ -67,8 +67,8 @@ function createQueue(refresh: () => Promise<void>) {
 					write = queue.shift();
 					continue;
 				}
-				await read();
-				clear(write);
+				const sent = write;
+				void read().then(() => clear(sent));
 				write = queue.shift();
 			}
 		} finally {
