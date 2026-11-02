@@ -11,6 +11,7 @@ import {
 	useSyncExternalStore,
 } from "react";
 
+import { watchServerCount } from "#/screens/overview/actions.ts";
 import { refreshTraffic } from "#/screens/traffic/refresh.ts";
 import { beginWorkspaceSend, finishWorkspaceSend } from "#/server/workspace.ts";
 
@@ -226,7 +227,9 @@ function useApprovalCount(frame: WorkspaceFrameData & { readonly readStartedAt: 
 	}, []);
 	if (frame !== seenFrame) {
 		setSeenFrame(frame);
-		setClock((current) => noteFrameCount(current, frame.approvalCount, frame.readStartedAt));
+		const next = noteFrameCount(clock, frame.approvalCount, frame.readStartedAt);
+		setClock(next);
+		if (next !== clock) watchServerCount(next.value, frame);
 	}
 	return { approvalCount: clock.value, noteDecision };
 }

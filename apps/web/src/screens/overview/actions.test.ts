@@ -10,6 +10,7 @@ import {
 	resetDecisions,
 	shownApprovalCount,
 	subscribeOverviewPage,
+	watchServerCount,
 } from "./actions.ts";
 
 describe("overview decisions", { concurrency: false }, () => {
@@ -444,6 +445,61 @@ describe("overview decisions", { concurrency: false }, () => {
 		assert.deepEqual(patchSnapshot(), []);
 		assert.equal(shownApprovalCount(3), 3);
 	});
+
+	for (const withSibling of [false, true]) {
+		test(`an accepted frame recovers a timed-out refund${withSibling ? " and keeps an in-flight job" : ""}`, async (t) => {
+			t.mock.timers.enable({ apis: ["setTimeout"] });
+			resetDecisions();
+			let refreshStarted = () => {};
+			const started = new Promise<void>((resolve) => {
+				refreshStarted = resolve;
+			});
+			const first = settled(
+				"refund",
+				4,
+				async () => {
+					throw new Error("The write failed.");
+				},
+				() => {
+					refreshStarted();
+					return new Promise(() => undefined);
+				},
+			);
+			await started;
+			t.mock.timers.tick(30_000);
+			await first;
+			assert.deepEqual(patchSnapshot().map((item) => item.key), ["refund"]);
+			assert.equal(badgeCount(4), 3);
+			let sent = 0;
+			assert.equal(
+				enqueueDecision(
+					patch("refund"),
+					4,
+					async () => {
+						sent += 1;
+					},
+					async () => 4,
+					() => undefined,
+				),
+				false,
+			);
+			assert.equal(sent, 0);
+			let release = () => {};
+			const gate = new Promise<void>((resolve) => {
+				release = resolve;
+			});
+			const second = withSibling ? settled("marketing", 4, () => gate, async () => 4) : null;
+			await Promise.resolve();
+			const frame = { approvalCount: 4 };
+			watchServerCount(frame.approvalCount, frame);
+			assert.equal(patchSnapshot().some((item) => item.key === "refund"), true);
+			await Promise.resolve();
+			assert.deepEqual(patchSnapshot().map((item) => item.key), withSibling ? ["marketing"] : []);
+			assert.equal(badgeCount(4), withSibling ? 3 : 4);
+			release();
+			await second;
+		});
+	}
 
 	test("a hung write aborts, refreshes, and the queue goes on", async (t) => {
 		t.mock.timers.enable({ apis: ["setTimeout"] });

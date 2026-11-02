@@ -13,7 +13,6 @@ import {
 	patchSnapshot,
 	readDecisionCount,
 	subscribeOverviewPage,
-	watchServerCount,
 } from "./actions.ts";
 import type { OverviewAgentView, OverviewData } from "./types.ts";
 import { type DecisionPatch, presentOverview } from "./view.ts";
@@ -106,7 +105,6 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 	const router = useRouter();
 	const { approvalCount, noteDecision } = useWorkspace();
 	const patches = useSyncExternalStore(subscribeOverviewPage, patchSnapshot, () => emptyPatches);
-	watchServerCount(data.count, data);
 	const shown = presentOverview(data, patches);
 	const accept = (patch: DecisionPatch, work: (signal: AbortSignal) => Promise<unknown>) => {
 		enqueueDecision(
