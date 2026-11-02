@@ -148,9 +148,10 @@ for (const newerDraft of ["", "A newer question"]) {
 	test(`an ignored send ${newerDraft ? "keeps newer typing" : "restores the submitted draft"}`, async (t) => {
 		await withDock(t, async ({ page }) => {
 			await page.evaluate(() => {
-				window.beginSend = () => new Promise((resolve) => {
-					window.releaseBegin = () => resolve({ kind: "ignored" });
-				});
+				window.beginSend = () =>
+					new Promise((resolve) => {
+						window.releaseBegin = () => resolve({ kind: "ignored" });
+					});
 			});
 			await send(page);
 			await page.waitForFunction(() => window.releaseBegin);
