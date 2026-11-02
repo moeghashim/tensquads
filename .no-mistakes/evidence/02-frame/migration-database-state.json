@@ -1,0 +1,430 @@
+{
+  "engine": "PGlite PostgreSQL; disposable in-memory database",
+  "before": {
+    "messages": [
+      {
+        "account_id": "phase-dock",
+        "id": "c1",
+        "thread_id": "dock",
+        "body": "Did the tracking for #A-1007 go through?",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-dock",
+        "id": "c2",
+        "thread_id": "dock",
+        "body": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.",
+        "sort_order": 1
+      },
+      {
+        "account_id": "phase-dock",
+        "id": "c3",
+        "thread_id": "dock",
+        "body": "Print ETA is 3 November. I will add its tracking automatically.",
+        "sort_order": 2
+      },
+      {
+        "account_id": "phase-dock",
+        "id": "c4",
+        "thread_id": "dock",
+        "body": "Good job. What needs me today?",
+        "sort_order": 3
+      },
+      {
+        "account_id": "phase-dock",
+        "id": "c5",
+        "thread_id": "dock",
+        "body": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.",
+        "sort_order": 4
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c1",
+        "thread_id": "main",
+        "body": "Did the tracking for #A-1007 go through?",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c2",
+        "thread_id": "main",
+        "body": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.",
+        "sort_order": 1
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c3",
+        "thread_id": "main",
+        "body": "Print ETA is 3 November. I will add its tracking automatically.",
+        "sort_order": 2
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c4",
+        "thread_id": "main",
+        "body": "Good job. What needs me today?",
+        "sort_order": 3
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c5",
+        "thread_id": "main",
+        "body": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.",
+        "sort_order": 4
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c1",
+        "thread_id": "main",
+        "body": "Did the tracking for #A-1007 go through?",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c2",
+        "thread_id": "main",
+        "body": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.",
+        "sort_order": 1
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c3",
+        "thread_id": "main",
+        "body": "Print ETA is 3 November. I will add its tracking automatically.",
+        "sort_order": 2
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c4",
+        "thread_id": "dock",
+        "body": "Good job. What needs me today?",
+        "sort_order": 3
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c5",
+        "thread_id": "dock",
+        "body": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.",
+        "sort_order": 4
+      }
+    ],
+    "threads": [
+      {
+        "account_id": "phase-dock",
+        "id": "dock",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-main",
+        "id": "main",
+        "sort_order": 1
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "dock",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "main",
+        "sort_order": 1
+      }
+    ],
+    "squads": [
+      {
+        "account_id": "phase-dock",
+        "id": "store-ops"
+      },
+      {
+        "account_id": "phase-main",
+        "id": "store-ops"
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "store-ops"
+      }
+    ]
+  },
+  "after": {
+    "messages": [
+      {
+        "account_id": "phase-dock",
+        "id": "c1",
+        "thread_id": "dock",
+        "body": "Did the tracking for #A-1007 go through?",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-dock",
+        "id": "c2",
+        "thread_id": "dock",
+        "body": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.",
+        "sort_order": 1
+      },
+      {
+        "account_id": "phase-dock",
+        "id": "c3",
+        "thread_id": "dock",
+        "body": "Print ETA is 3 November. I will add its tracking automatically.",
+        "sort_order": 2
+      },
+      {
+        "account_id": "phase-dock",
+        "id": "c4",
+        "thread_id": "dock",
+        "body": "Good job. What needs me today?",
+        "sort_order": 3
+      },
+      {
+        "account_id": "phase-dock",
+        "id": "c5",
+        "thread_id": "dock",
+        "body": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.",
+        "sort_order": 4
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c1",
+        "thread_id": "dock",
+        "body": "Did the tracking for #A-1007 go through?",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c2",
+        "thread_id": "dock",
+        "body": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.",
+        "sort_order": 1
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c3",
+        "thread_id": "dock",
+        "body": "Print ETA is 3 November. I will add its tracking automatically.",
+        "sort_order": 2
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c4",
+        "thread_id": "dock",
+        "body": "Good job. What needs me today?",
+        "sort_order": 3
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c5",
+        "thread_id": "dock",
+        "body": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.",
+        "sort_order": 4
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c1",
+        "thread_id": "dock",
+        "body": "Did the tracking for #A-1007 go through?",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c2",
+        "thread_id": "dock",
+        "body": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.",
+        "sort_order": 1
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c3",
+        "thread_id": "dock",
+        "body": "Print ETA is 3 November. I will add its tracking automatically.",
+        "sort_order": 2
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c4",
+        "thread_id": "dock",
+        "body": "Good job. What needs me today?",
+        "sort_order": 3
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c5",
+        "thread_id": "dock",
+        "body": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.",
+        "sort_order": 4
+      }
+    ],
+    "threads": [
+      {
+        "account_id": "phase-dock",
+        "id": "dock",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-main",
+        "id": "dock",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "dock",
+        "sort_order": 0
+      }
+    ],
+    "squads": [
+      {
+        "account_id": "phase-dock",
+        "id": "store-ops"
+      },
+      {
+        "account_id": "phase-main",
+        "id": "store-ops"
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "store-ops"
+      }
+    ]
+  },
+  "repeated": {
+    "messages": [
+      {
+        "account_id": "phase-dock",
+        "id": "c1",
+        "thread_id": "dock",
+        "body": "Did the tracking for #A-1007 go through?",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-dock",
+        "id": "c2",
+        "thread_id": "dock",
+        "body": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.",
+        "sort_order": 1
+      },
+      {
+        "account_id": "phase-dock",
+        "id": "c3",
+        "thread_id": "dock",
+        "body": "Print ETA is 3 November. I will add its tracking automatically.",
+        "sort_order": 2
+      },
+      {
+        "account_id": "phase-dock",
+        "id": "c4",
+        "thread_id": "dock",
+        "body": "Good job. What needs me today?",
+        "sort_order": 3
+      },
+      {
+        "account_id": "phase-dock",
+        "id": "c5",
+        "thread_id": "dock",
+        "body": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.",
+        "sort_order": 4
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c1",
+        "thread_id": "dock",
+        "body": "Did the tracking for #A-1007 go through?",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c2",
+        "thread_id": "dock",
+        "body": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.",
+        "sort_order": 1
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c3",
+        "thread_id": "dock",
+        "body": "Print ETA is 3 November. I will add its tracking automatically.",
+        "sort_order": 2
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c4",
+        "thread_id": "dock",
+        "body": "Good job. What needs me today?",
+        "sort_order": 3
+      },
+      {
+        "account_id": "phase-main",
+        "id": "c5",
+        "thread_id": "dock",
+        "body": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.",
+        "sort_order": 4
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c1",
+        "thread_id": "dock",
+        "body": "Did the tracking for #A-1007 go through?",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c2",
+        "thread_id": "dock",
+        "body": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.",
+        "sort_order": 1
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c3",
+        "thread_id": "dock",
+        "body": "Print ETA is 3 November. I will add its tracking automatically.",
+        "sort_order": 2
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c4",
+        "thread_id": "dock",
+        "body": "Good job. What needs me today?",
+        "sort_order": 3
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "c5",
+        "thread_id": "dock",
+        "body": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.",
+        "sort_order": 4
+      }
+    ],
+    "threads": [
+      {
+        "account_id": "phase-dock",
+        "id": "dock",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-main",
+        "id": "dock",
+        "sort_order": 0
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "dock",
+        "sort_order": 0
+      }
+    ],
+    "squads": [
+      {
+        "account_id": "phase-dock",
+        "id": "store-ops"
+      },
+      {
+        "account_id": "phase-main",
+        "id": "store-ops"
+      },
+      {
+        "account_id": "phase-mixed",
+        "id": "store-ops"
+      }
+    ]
+  },
+  "idsAndOrderPreserved": true,
+  "squadsUnchanged": true
+}

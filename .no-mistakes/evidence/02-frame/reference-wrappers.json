@@ -1,0 +1,38 @@
+[
+  {
+    "width": 1440,
+    "tagShells": [
+      {
+        "display": "contents",
+        "marked": true
+      },
+      {
+        "display": "contents",
+        "marked": false
+      },
+      {
+        "display": "contents",
+        "marked": false
+      }
+    ],
+    "inventoryMarksUnique": true
+  },
+  {
+    "width": 390,
+    "tagShells": [
+      {
+        "display": "contents",
+        "marked": true
+      },
+      {
+        "display": "contents",
+        "marked": false
+      },
+      {
+        "display": "contents",
+        "marked": false
+      }
+    ],
+    "inventoryMarksUnique": true
+  }
+]

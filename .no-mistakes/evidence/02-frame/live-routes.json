@@ -1,0 +1,38 @@
+[
+  {
+    "route": "/overview",
+    "status": 200,
+    "destination": "/signin",
+    "signInVisible": true
+  },
+  {
+    "route": "/chat",
+    "status": 200,
+    "destination": "/signin",
+    "signInVisible": true
+  },
+  {
+    "route": "/agents",
+    "status": 200,
+    "destination": "/signin",
+    "signInVisible": true
+  },
+  {
+    "route": "/agents/support",
+    "status": 200,
+    "destination": "/signin",
+    "signInVisible": true
+  },
+  {
+    "route": "/traffic",
+    "status": 200,
+    "destination": "/signin",
+    "signInVisible": true
+  },
+  {
+    "route": "/rules",
+    "status": 200,
+    "destination": "/signin",
+    "signInVisible": true
+  }
+]
