@@ -1,0 +1,77 @@
+Good morning, new
+
+Last 7 days across the store and your squads. Figures are demo data.
+
+Mission
+—
+
+Demo data
+4 of 5 squads online
+Revenue
+—
+ 
+Orders
+—
+ 
+Average order
+—
+ 
+Profit margin
+—
+ 
+Tasks done by squads
+0
+This week
+Hours saved
+—
+ 
+Revenue, last 14 days
+Hover a bar for the day's total
+ 
+Previous week
+This week
+Needs your approval
+0
+Nothing waiting. Your squads are working inside their limits.
+Squads and their missions
+See squad traffic
+Orders
+Fulfilment and tracking
+—
+Mission pending. Master has proposed one; approve it in the inbox.
+Pending
+0 tasks
+— success
+— saved
+Support
+Customer inbox and refunds
+—
+Mission pending. Master has proposed one; approve it in the inbox.
+Pending
+0 tasks
+— success
+— saved
+Marketing
+Ads, social and email
+—
+Mission pending. Master has proposed one; approve it in the inbox.
+Pending
+0 tasks
+— success
+— saved
+Finance
+Payouts, costs and profit
+—
+Mission pending. Master has proposed one; approve it in the inbox.
+Pending
+0 tasks
+— success
+— saved
+Inventory
+Stock and suppliers
+—
+Mission pending. Master has proposed one; approve it in the inbox.
+Pending
+0 tasks
+— success
+— saved

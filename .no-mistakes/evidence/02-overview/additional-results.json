@@ -1,0 +1,291 @@
+{
+  "config": {
+    "argv": [
+      "/opt/homebrew/Cellar/node@24/24.21.0/bin/node",
+      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      ".local-test/additional.config.ts",
+      "--grep",
+      "freezes frame|late approval|four rapid|late mission"
+    ],
+    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/.local-test/additional.config.ts",
+    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          ".local-adversarial.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
+        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
+        "testIgnore": [],
+        "testMatch": ".local-adversarial.spec.ts",
+        "timeout": 60000,
+        "use": {
+          "baseURL": "http://localhost:3000",
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "deviceScaleFactor": 1,
+          "launchOptions": {
+            "args": [
+              "--font-render-hinting=none",
+              "--disable-font-subpixel-positioning",
+              "--force-color-profile=srgb"
+            ]
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/additional-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": ".local-adversarial.spec.ts",
+      "file": ".local-adversarial.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "overview inbox and dock agree while a chat send freezes frame count",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 4132,
+                  "error": {
+                    "message": "Error: locator.click: Error: strict mode violation: locator('button[data-handler=\\'toggleDock\\']') resolved to 2 elements:\n    1) <button type=\"button\" class=\"soft-btn\" data-event=\"onClick\" aria-label=\"Close chat\" data-handler=\"toggleDock\">…</button> aka getByRole('button', { name: 'Close chat' })\n    2) <button type=\"button\" data-event=\"onClick\" aria-expanded=\"true\" data-handler=\"toggleDock\">…</button> aka getByRole('button', { name: 'M Hide chat' })\n\nCall log:\n\u001b[2m  - waiting for locator('button[data-handler=\\'toggleDock\\']')\u001b[22m\n",
+                    "stack": "Error: locator.click: Error: strict mode violation: locator('button[data-handler=\\'toggleDock\\']') resolved to 2 elements:\n    1) <button type=\"button\" class=\"soft-btn\" data-event=\"onClick\" aria-label=\"Close chat\" data-handler=\"toggleDock\">…</button> aka getByRole('button', { name: 'Close chat' })\n    2) <button type=\"button\" data-event=\"onClick\" aria-expanded=\"true\" data-handler=\"toggleDock\">…</button> aka getByRole('button', { name: 'M Hide chat' })\n\nCall log:\n\u001b[2m  - waiting for locator('button[data-handler=\\'toggleDock\\']')\u001b[22m\n\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e/.local-adversarial.spec.ts:42:102",
+                    "location": {
+                      "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e/.local-adversarial.spec.ts",
+                      "column": 102,
+                      "line": 42
+                    },
+                    "snippet": "  40 |  await page.route('**/_serverFn/**',async route=>{if(fn(route.request()).startsWith('finishWorkspaceSend')){finishing=true;await finish.promise;}await route.continue();});\n  41 |  await page.locator(\"button[data-handler='toggleDock']\").click();await page.locator('#dock-input').fill('Any refunds waiting?');await page.locator('#dock-input').press('Enter');\n> 42 |  await expect.poll(()=>finishing).toBe(true);await page.locator(\"button[data-handler='toggleDock']\").click();\n     |                                                                                                      ^\n  43 |  await refund(page).getByRole('button',{name:'Approve',exact:true}).click();\n  44 |  await expect.poll(async()=>((await state()).approvals.find(x=>x.id==='ap1').status)).toBe('Approved');\n  45 |  await expect(count(page)).toHaveText('3');await expect(badge(page)).toHaveText('3');"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e/.local-adversarial.spec.ts",
+                        "column": 102,
+                        "line": 42
+                      },
+                      "message": "Error: locator.click: Error: strict mode violation: locator('button[data-handler=\\'toggleDock\\']') resolved to 2 elements:\n    1) <button type=\"button\" class=\"soft-btn\" data-event=\"onClick\" aria-label=\"Close chat\" data-handler=\"toggleDock\">…</button> aka getByRole('button', { name: 'Close chat' })\n    2) <button type=\"button\" data-event=\"onClick\" aria-expanded=\"true\" data-handler=\"toggleDock\">…</button> aka getByRole('button', { name: 'M Hide chat' })\n\nCall log:\n\u001b[2m  - waiting for locator('button[data-handler=\\'toggleDock\\']')\u001b[22m\n\n\n  40 |  await page.route('**/_serverFn/**',async route=>{if(fn(route.request()).startsWith('finishWorkspaceSend')){finishing=true;await finish.promise;}await route.continue();});\n  41 |  await page.locator(\"button[data-handler='toggleDock']\").click();await page.locator('#dock-input').fill('Any refunds waiting?');await page.locator('#dock-input').press('Enter');\n> 42 |  await expect.poll(()=>finishing).toBe(true);await page.locator(\"button[data-handler='toggleDock']\").click();\n     |                                                                                                      ^\n  43 |  await refund(page).getByRole('button',{name:'Approve',exact:true}).click();\n  44 |  await expect.poll(async()=>((await state()).approvals.find(x=>x.id==='ap1').status)).toBe('Approved');\n  45 |  await expect(count(page)).toHaveText('3');await expect(badge(page)).toHaveText('3');\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e/.local-adversarial.spec.ts:42:102"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T18:56:16.214Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/playwright/.local-adversarial-overvie-a8a61-at-send-freezes-frame-count/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e/.local-adversarial.spec.ts",
+                    "column": 102,
+                    "line": 42
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "1aad13a75e3404ca339d-4c74f95bca5765e8bd4c",
+          "file": ".local-adversarial.spec.ts",
+          "line": 38,
+          "column": 1
+        },
+        {
+          "title": "late approval rolls back its row task event and Mandate then recovers after reload",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 31600,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T18:56:20.806Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1aad13a75e3404ca339d-a86304d56d914b544c8a",
+          "file": ".local-adversarial.spec.ts",
+          "line": 50,
+          "column": 1
+        },
+        {
+          "title": "four rapid card decisions run with three waiting jobs in click order",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1631,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T18:56:52.467Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1aad13a75e3404ca339d-ce9528e70dc314fd45de",
+          "file": ".local-adversarial.spec.ts",
+          "line": 58,
+          "column": 1
+        },
+        {
+          "title": "late mission decision rolls back the proposal and agent",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 32030,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T18:56:54.103Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1aad13a75e3404ca339d-118152d7d8cdc007f25f",
+          "file": ".local-adversarial.spec.ts",
+          "line": 73,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-02T18:56:15.626Z",
+    "duration": 70543.99799999999,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

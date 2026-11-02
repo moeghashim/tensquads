@@ -1,0 +1,570 @@
+{
+  "approvals": [
+    {
+      "account_id": "local-test-account",
+      "id": "ap1",
+      "agent": "support",
+      "title": "Refund $42 on #A-1012",
+      "detail": "Print arrived creased; photo attached. Second refund for this customer this month.",
+      "amount": "$42",
+      "status": "Pending",
+      "sort_order": 0
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "ap2",
+      "agent": "marketing",
+      "title": "Raise prints ad set to $60 a day",
+      "detail": "Return on ad spend has been 3.4 for 7 days. Adds about $140 a week.",
+      "amount": "+$20/day",
+      "status": "Pending",
+      "sort_order": 1
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "ap3",
+      "agent": "inventory",
+      "title": "Reorder 50 blank hoodies",
+      "detail": "Black hoodie M is down to 6. Usual supplier, 5-day delivery.",
+      "amount": "$610",
+      "status": "Pending",
+      "sort_order": 2
+    }
+  ],
+  "mandates": [],
+  "bus_events": [
+    {
+      "account_id": "local-test-account",
+      "id": "e1041masterorders",
+      "time_text": "10:41",
+      "from_agent": "master",
+      "to_agent": "orders",
+      "kind": "Task",
+      "skill": "printify.get_shipment",
+      "body": "Check shipping for #A-1007",
+      "payload": {
+        "items": [
+          "Sweatshirt · L",
+          "Tafakkar print · A3"
+        ],
+        "order": "A-1007",
+        "intent": "sync_tracking",
+        "state_in": {
+          "order.A-1007.status": "paid"
+        }
+      },
+      "writes": [],
+      "trace": "tr_7c9f58",
+      "seq": 0,
+      "occurred_at": null
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "e1042ordersmaster",
+      "time_text": "10:42",
+      "from_agent": "orders",
+      "to_agent": "master",
+      "kind": "Result",
+      "skill": "shopify.add_tracking",
+      "body": "Sweatshirt shipped, tracking added. Print still in production.",
+      "payload": {
+        "order": "A-1007",
+        "pending": [
+          "Tafakkar print · A3"
+        ],
+        "shipped": [
+          "Sweatshirt · L"
+        ],
+        "tracking": "LI400083615LT",
+        "customer_notified": true
+      },
+      "writes": [
+        "order.A-1007.tracking",
+        "order.A-1007.print_status"
+      ],
+      "trace": "tr_f90cf4",
+      "seq": 1,
+      "occurred_at": null
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "e1043masterorders",
+      "time_text": "10:43",
+      "from_agent": "master",
+      "to_agent": "orders",
+      "kind": "Relay",
+      "skill": "printify.get_shipment",
+      "body": "Support needs the print status for #A-1007",
+      "payload": {
+        "order": "A-1007",
+        "fields": [
+          "print_status",
+          "eta"
+        ],
+        "relay_for": "support"
+      },
+      "writes": [],
+      "trace": "tr_6bdf03",
+      "seq": 3,
+      "occurred_at": null
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "e1043supportmaster",
+      "time_text": "10:43",
+      "from_agent": "support",
+      "to_agent": "master",
+      "kind": "Request",
+      "skill": "orders.lookup",
+      "body": "Customer on #A-1007 asks where the print is",
+      "payload": {
+        "need": "shipping_status",
+        "order": "A-1007",
+        "ticket": "T-2291",
+        "from_customer": "Where is my print?"
+      },
+      "writes": [],
+      "trace": "tr_08d893",
+      "seq": 2,
+      "occurred_at": null
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "e1044mastersupport",
+      "time_text": "10:44",
+      "from_agent": "master",
+      "to_agent": "support",
+      "kind": "Relay",
+      "skill": "inbox.draft_reply",
+      "body": "Here is the print status for T-2291",
+      "payload": {
+        "ticket": "T-2291",
+        "state_in": {
+          "order.A-1007.eta": "2026-11-03",
+          "order.A-1007.tracking": "LI400083615LT"
+        }
+      },
+      "writes": [],
+      "trace": "tr_a390cf",
+      "seq": 5,
+      "occurred_at": null
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "e1044ordersmaster",
+      "time_text": "10:44",
+      "from_agent": "orders",
+      "to_agent": "master",
+      "kind": "Result",
+      "skill": "printify.get_shipment",
+      "body": "Print ships in 2 days, ETA 3 Nov",
+      "payload": {
+        "eta": "2026-11-03",
+        "order": "A-1007",
+        "print_status": "in_production"
+      },
+      "writes": [
+        "order.A-1007.eta"
+      ],
+      "trace": "tr_b00ba9",
+      "seq": 4,
+      "occurred_at": null
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "e1050marketingmaster",
+      "time_text": "10:50",
+      "from_agent": "marketing",
+      "to_agent": "master",
+      "kind": "Escalation",
+      "skill": "meta_ads.set_budget",
+      "body": "Wants to raise the prints ad set to $60 a day",
+      "payload": {
+        "ad_set": "Prints · lookalike",
+        "reason": "Return above 3 for 7 days",
+        "roas_7d": 3.4,
+        "budget_new": 60,
+        "budget_now": 40
+      },
+      "writes": [
+        "marketing.roas_7d"
+      ],
+      "trace": "tr_64fb3a",
+      "seq": 6,
+      "occurred_at": null
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "e1055supportmaster",
+      "time_text": "10:55",
+      "from_agent": "support",
+      "to_agent": "master",
+      "kind": "Escalation",
+      "skill": "shopify.refund",
+      "body": "Refund $42 on #A-1012 is under the limit but the customer is flagged",
+      "payload": {
+        "flag": "second_refund_this_month",
+        "order": "A-1012",
+        "photo": true,
+        "amount": 42,
+        "reason": "Print arrived creased"
+      },
+      "writes": [],
+      "trace": "tr_efb944",
+      "seq": 7,
+      "occurred_at": null
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "e1056financemaster",
+      "time_text": "10:56",
+      "from_agent": "finance",
+      "to_agent": "master",
+      "kind": "Result",
+      "skill": "quickbooks.pnl",
+      "body": "Last 7 days: $8,420 revenue, $2,610 profit",
+      "payload": {
+        "cogs": 4120,
+        "fees": 1428,
+        "margin": 0.31,
+        "profit": 2610,
+        "revenue": 8420,
+        "ad_spend": 262
+      },
+      "writes": [
+        "finance.revenue_7d",
+        "finance.profit_7d"
+      ],
+      "trace": "tr_faa0ac",
+      "seq": 8,
+      "occurred_at": null
+    }
+  ],
+  "agents": [
+    {
+      "account_id": "local-test-account",
+      "id": "finance",
+      "name": "Finance",
+      "role": "Payouts, costs and profit",
+      "tint": "#ffefa4",
+      "is_on": true,
+      "autonomy": "Full auto",
+      "mission": "Keep profit margin above 30% and every bill matched within a week.",
+      "contribution": 90,
+      "tasks": 24,
+      "success": "100%",
+      "saved": "4h",
+      "last_text": "Sent the weekly profit summary",
+      "targets": [
+        [
+          "Margin",
+          "31%",
+          "30%"
+        ],
+        [
+          "Unmatched bills",
+          "0",
+          "0"
+        ],
+        [
+          "Unpaid invoices",
+          "0",
+          "0"
+        ]
+      ],
+      "kpis": [
+        [
+          "Revenue (7d)",
+          "$8,420"
+        ],
+        [
+          "Profit (7d)",
+          "$2,610"
+        ],
+        [
+          "Margin",
+          "31%"
+        ],
+        [
+          "Unpaid invoices",
+          "0"
+        ]
+      ],
+      "sort_order": 3
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "inventory",
+      "name": "Inventory",
+      "role": "Stock and suppliers",
+      "tint": "#fee7c2",
+      "is_on": false,
+      "autonomy": "Ask first",
+      "mission": "",
+      "contribution": 0,
+      "tasks": 31,
+      "success": "97%",
+      "saved": "3.5h",
+      "last_text": "Drafted a reorder of 50 blank hoodies",
+      "targets": [],
+      "kpis": [
+        [
+          "Products tracked",
+          "64"
+        ],
+        [
+          "Low stock",
+          "2"
+        ],
+        [
+          "Reorders drafted",
+          "5"
+        ],
+        [
+          "Days of stock",
+          "23"
+        ]
+      ],
+      "sort_order": 4
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "marketing",
+      "name": "Marketing",
+      "role": "Ads, social and email",
+      "tint": "#ece3ff",
+      "is_on": true,
+      "autonomy": "Ask first",
+      "mission": "Bring in repeat customers at a return above 3× on every dollar spent.",
+      "contribution": 64,
+      "tasks": 38,
+      "success": "91%",
+      "saved": "6h",
+      "last_text": "Asked to raise the prints ad set to $60 a day",
+      "targets": [
+        [
+          "ROAS",
+          "3.4",
+          "3.0"
+        ],
+        [
+          "Email open rate",
+          "41%",
+          "40%"
+        ],
+        [
+          "Repeat buyers",
+          "18%",
+          "30%"
+        ]
+      ],
+      "kpis": [
+        [
+          "Ad spend (7d)",
+          "$262"
+        ],
+        [
+          "ROAS",
+          "3.4"
+        ],
+        [
+          "Posts scheduled",
+          "12"
+        ],
+        [
+          "Email open rate",
+          "41%"
+        ]
+      ],
+      "sort_order": 2
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "orders",
+      "name": "Orders",
+      "role": "Fulfilment and tracking",
+      "tint": "#e7efff",
+      "is_on": true,
+      "autonomy": "Full auto",
+      "mission": "Ship every order within 24 hours and keep the customer informed.",
+      "contribution": 72,
+      "tasks": 142,
+      "success": "98%",
+      "saved": "11.5h",
+      "last_text": "Added tracking LI400083615LT to #A-1007",
+      "targets": [
+        [
+          "Fulfilment time",
+          "2.1 days",
+          "1 day"
+        ],
+        [
+          "Tracking synced",
+          "100%",
+          "100%"
+        ],
+        [
+          "Waiting on maker",
+          "3",
+          "0"
+        ]
+      ],
+      "kpis": [
+        [
+          "Orders handled",
+          "142"
+        ],
+        [
+          "Avg ship time",
+          "2.1 days"
+        ],
+        [
+          "Tracking synced",
+          "100%"
+        ],
+        [
+          "Waiting on maker",
+          "3"
+        ]
+      ],
+      "sort_order": 0
+    },
+    {
+      "account_id": "local-test-account",
+      "id": "support",
+      "name": "Support",
+      "role": "Customer inbox and refunds",
+      "tint": "#def5ee",
+      "is_on": true,
+      "autonomy": "Auto under limit",
+      "mission": "Answer every customer within an hour and keep satisfaction above 4.5.",
+      "contribution": 81,
+      "tasks": 96,
+      "success": "94%",
+      "saved": "9h",
+      "last_text": "Asked for tracking on #A-1007 for a customer",
+      "targets": [
+        [
+          "First reply",
+          "4 min",
+          "60 min"
+        ],
+        [
+          "Satisfaction",
+          "4.7 / 5",
+          "4.5 / 5"
+        ],
+        [
+          "Open tickets",
+          "5",
+          "under 10"
+        ]
+      ],
+      "kpis": [
+        [
+          "Tickets closed",
+          "96"
+        ],
+        [
+          "First reply",
+          "4 min"
+        ],
+        [
+          "Satisfaction",
+          "4.7 / 5"
+        ],
+        [
+          "Open now",
+          "5"
+        ]
+      ],
+      "sort_order": 1
+    }
+  ],
+  "state_entries": [
+    {
+      "account_id": "local-test-account",
+      "key": "order.A-1007.tracking",
+      "value": "\"LI400083615LT\"",
+      "sort_order": 0
+    },
+    {
+      "account_id": "local-test-account",
+      "key": "order.A-1007.print_status",
+      "value": "\"in_production\"",
+      "sort_order": 1
+    },
+    {
+      "account_id": "local-test-account",
+      "key": "order.A-1007.eta",
+      "value": "\"2026-11-03\"",
+      "sort_order": 2
+    },
+    {
+      "account_id": "local-test-account",
+      "key": "policy.refund_auto_limit",
+      "value": "50",
+      "sort_order": 3
+    },
+    {
+      "account_id": "local-test-account",
+      "key": "policy.daily_ad_cap",
+      "value": "200",
+      "sort_order": 4
+    },
+    {
+      "account_id": "local-test-account",
+      "key": "policy.reorder_limit",
+      "value": "500",
+      "sort_order": 5
+    },
+    {
+      "account_id": "local-test-account",
+      "key": "marketing.roas_7d",
+      "value": "3.4",
+      "sort_order": 6
+    },
+    {
+      "account_id": "local-test-account",
+      "key": "finance.revenue_7d",
+      "value": "8420",
+      "sort_order": 7
+    },
+    {
+      "account_id": "local-test-account",
+      "key": "finance.profit_7d",
+      "value": "2610",
+      "sort_order": 8
+    },
+    {
+      "account_id": "local-test-account",
+      "key": "inventory.low_stock",
+      "value": "\"[\\\"Black hoodie M\\\",\\\"A3 frame\\\"]\"",
+      "sort_order": 9
+    }
+  ],
+  "mission_proposals": [
+    {
+      "account_id": "local-test-account",
+      "id": "mp-inventory",
+      "agent": "inventory",
+      "mission": "Never run out of a top-20 product and keep stock under 30 days of cover.",
+      "targets": [
+        [
+          "Stock-outs",
+          "0"
+        ],
+        [
+          "Days of stock",
+          "under 30"
+        ],
+        [
+          "Reorders approved in time",
+          "100%"
+        ]
+      ],
+      "status": "Proposed",
+      "sort_order": 0
+    }
+  ]
+}

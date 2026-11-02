@@ -1,0 +1,311 @@
+{
+  "config": {
+    "argv": [
+      "/opt/homebrew/Cellar/node@24/24.21.0/bin/node",
+      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      ".local-test/adversarial.config.ts"
+    ],
+    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/.local-test/adversarial.config.ts",
+    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          ".local-adversarial.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
+        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
+        "testIgnore": [],
+        "testMatch": ".local-adversarial.spec.ts",
+        "timeout": 60000,
+        "use": {
+          "baseURL": "http://localhost:3000",
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "deviceScaleFactor": 1,
+          "launchOptions": {
+            "args": [
+              "--font-render-hinting=none",
+              "--disable-font-subpixel-positioning",
+              "--force-color-profile=srgb"
+            ]
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/adversarial-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": ".local-adversarial.spec.ts",
+      "file": ".local-adversarial.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "lost response reconciles to committed server state while next card remains pending",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1579,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T18:53:33.975Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1aad13a75e3404ca339d-e2944bb7630ade149d33",
+          "file": ".local-adversarial.spec.ts",
+          "line": 13,
+          "column": 1
+        },
+        {
+          "title": "timed out refresh later restores failed card and preserves second in flight card",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 32115,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T18:53:35.621Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1aad13a75e3404ca339d-99ae2fb29c6f86ed95e7",
+          "file": ".local-adversarial.spec.ts",
+          "line": 25,
+          "column": 1
+        },
+        {
+          "title": "overview inbox and dock agree while a chat send freezes frame count",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "timedOut",
+                  "duration": 60218,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m",
+                    "stack": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e/.local-adversarial.spec.ts",
+                        "column": 64,
+                        "line": 41
+                      },
+                      "message": "Error: locator.click: Test timeout of 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Ask Master', exact: true })\u001b[22m\n\n\n  39 |  await openWorkspace(page,workspaceUser);const finish=gate();let finishing=false;\n  40 |  await page.route('**/_serverFn/**',async route=>{if(fn(route.request()).startsWith('finishWorkspaceSend')){finishing=true;await finish.promise;}await route.continue();});\n> 41 |  await page.getByRole('button',{name:'Ask Master',exact:true}).click();await page.locator('#dock-input').fill('Any refunds waiting?');await page.locator('#dock-input').press('Enter');\n     |                                                                ^\n  42 |  await expect.poll(()=>finishing).toBe(true);await page.getByRole('button',{name:'Hide chat',exact:true}).click();\n  43 |  await refund(page).getByRole('button',{name:'Approve',exact:true}).click();\n  44 |  await expect.poll(async()=>((await state()).approvals.find(x=>x.id==='ap1').status)).toBe('Approved');\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e/.local-adversarial.spec.ts:41:64"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T18:54:07.741Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/playwright/.local-adversarial-overvie-a8a61-at-send-freezes-frame-count/error-context.md"
+                    }
+                  ]
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "1aad13a75e3404ca339d-4c74f95bca5765e8bd4c",
+          "file": ".local-adversarial.spec.ts",
+          "line": 38,
+          "column": 1
+        },
+        {
+          "title": "late approval rolls back its row task event and Mandate then recovers after reload",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 45673,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('main [data-loop=\\'approvals\\'] > div').filter({ hasText: 'Refund $42' })\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m\nTimeout:  45000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" locator('main [data-loop=\\'approvals\\'] > div').filter({ hasText: 'Refund $42' }) with timeout 45000ms\u001b[22m\n\u001b[2m  - waiting for locator('main [data-loop=\\'approvals\\'] > div').filter({ hasText: 'Refund $42' })\u001b[22m\n\u001b[2m    93 × locator resolved to 0 elements\u001b[22m\n\u001b[2m       - unexpected value \"0\"\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('main [data-loop=\\'approvals\\'] > div').filter({ hasText: 'Refund $42' })\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m\nTimeout:  45000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" locator('main [data-loop=\\'approvals\\'] > div').filter({ hasText: 'Refund $42' }) with timeout 45000ms\u001b[22m\n\u001b[2m  - waiting for locator('main [data-loop=\\'approvals\\'] > div').filter({ hasText: 'Refund $42' })\u001b[22m\n\u001b[2m    93 × locator resolved to 0 elements\u001b[22m\n\u001b[2m       - unexpected value \"0\"\u001b[22m\n\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e/.local-adversarial.spec.ts:53:29",
+                    "location": {
+                      "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e/.local-adversarial.spec.ts",
+                      "column": 29,
+                      "line": 53
+                    },
+                    "snippet": "  51 |  test.setTimeout(60000);await openWorkspace(page,workspaceUser);await fetch('http://127.0.0.1:3000/__test/delay-next');\n  52 |  await refund(page).getByRole('button',{name:'Approve',exact:true}).click();await expect(badge(page)).toHaveText('3');\n> 53 |  await expect(refund(page)).toHaveCount(1,{timeout:45000});await expect(badge(page)).toHaveText('4');\n     |                             ^\n  54 |  const rows=await state();expect(rows.approvals.find(x=>x.id==='ap1').status).toBe('Pending');expect(rows.mandates).toHaveLength(0);expect(rows.agents.find(x=>x.id==='support').tasks).toBe(96);expect(rows.bus_events.filter(x=>x.kind==='Approval')).toHaveLength(0);\n  55 |  writeFileSync(dir+'/late-approval-rollback-state.json',JSON.stringify(rows,null,2));await page.reload();await expect(refund(page)).toHaveCount(1);await expect(count(page)).toHaveText('4');await expect(badge(page)).toHaveText('4');\n  56 | });"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e/.local-adversarial.spec.ts",
+                        "column": 29,
+                        "line": 53
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('main [data-loop=\\'approvals\\'] > div').filter({ hasText: 'Refund $42' })\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m\nTimeout:  45000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" locator('main [data-loop=\\'approvals\\'] > div').filter({ hasText: 'Refund $42' }) with timeout 45000ms\u001b[22m\n\u001b[2m  - waiting for locator('main [data-loop=\\'approvals\\'] > div').filter({ hasText: 'Refund $42' })\u001b[22m\n\u001b[2m    93 × locator resolved to 0 elements\u001b[22m\n\u001b[2m       - unexpected value \"0\"\u001b[22m\n\n\n  51 |  test.setTimeout(60000);await openWorkspace(page,workspaceUser);await fetch('http://127.0.0.1:3000/__test/delay-next');\n  52 |  await refund(page).getByRole('button',{name:'Approve',exact:true}).click();await expect(badge(page)).toHaveText('3');\n> 53 |  await expect(refund(page)).toHaveCount(1,{timeout:45000});await expect(badge(page)).toHaveText('4');\n     |                             ^\n  54 |  const rows=await state();expect(rows.approvals.find(x=>x.id==='ap1').status).toBe('Pending');expect(rows.mandates).toHaveLength(0);expect(rows.agents.find(x=>x.id==='support').tasks).toBe(96);expect(rows.bus_events.filter(x=>x.kind==='Approval')).toHaveLength(0);\n  55 |  writeFileSync(dir+'/late-approval-rollback-state.json',JSON.stringify(rows,null,2));await page.reload();await expect(refund(page)).toHaveCount(1);await expect(count(page)).toHaveText('4');await expect(badge(page)).toHaveText('4');\n  56 | });\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e/.local-adversarial.spec.ts:53:29"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T18:55:08.345Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/playwright/.local-adversarial-late-ap-a76d5--then-recovers-after-reload/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e/.local-adversarial.spec.ts",
+                    "column": 29,
+                    "line": 53
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "1aad13a75e3404ca339d-a86304d56d914b544c8a",
+          "file": ".local-adversarial.spec.ts",
+          "line": 50,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-02T18:53:33.401Z",
+    "duration": 140707.482,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

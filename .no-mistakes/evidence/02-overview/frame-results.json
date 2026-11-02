@@ -2,15 +2,15 @@
   "config": {
     "argv": [
       "/opt/homebrew/Cellar/node@24/24.21.0/bin/node",
-      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/node_modules/.bin/playwright",
+      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/node_modules/.bin/playwright",
       "test",
       "--config",
-      "playwright.local-frame.config.ts",
+      ".local-test/frame.config.ts",
       "--grep",
-      "frame matches the macOS"
+      "macOS screenshot baselines|names its controls|keyboard reaches|message list focus"
     ],
-    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/playwright.local-frame.config.ts",
-    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e",
+    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/.local-test/frame.config.ts",
+    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
     "failOnFlakyTests": false,
     "forbidOnly": false,
     "fullyParallel": false,
@@ -26,7 +26,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/frame-browser",
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/playwright",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -34,11 +34,10 @@
         },
         "id": "",
         "name": "",
-        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
         "testIgnore": [],
         "testMatch": [
-          "local-overview.spec.ts",
-          "local-frame.spec.ts"
+          ".local-frame.spec.ts"
         ],
         "timeout": 60000
       }
@@ -47,20 +46,17 @@
       {
         "grep": {},
         "grepInvert": null,
-        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/frame-browser",
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/playwright",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
           "actualWorkers": 1
         },
         "name": "",
-        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e",
-        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6EKR5EE3AQFM23MF7PE72ZF/e2e",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
+        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
         "testIgnore": [],
-        "testMatch": [
-          "local-overview.spec.ts",
-          "local-frame.spec.ts"
-        ],
+        "testMatch": ".local-frame.spec.ts",
         "timeout": 60000,
         "use": {
           "baseURL": "http://localhost:3000",
@@ -69,7 +65,6 @@
             "height": 900
           },
           "deviceScaleFactor": 1,
-          "screenshot": "on",
           "launchOptions": {
             "args": [
               "--font-render-hinting=none",
@@ -92,7 +87,7 @@
       [
         "json",
         {
-          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/frame-results.json"
+          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/frame-results.json"
         }
       ]
     ],
@@ -110,11 +105,113 @@
   },
   "suites": [
     {
-      "title": "local-frame.spec.ts",
-      "file": "local-frame.spec.ts",
+      "title": ".local-frame.spec.ts",
+      "file": ".local-frame.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [
+        {
+          "title": "the frame names its controls and fits the width",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1103,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T18:52:42.740Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bbd5a4180b63bb97d270-f7351cf3a08c01e74b56",
+          "file": ".local-frame.spec.ts",
+          "line": 187,
+          "column": 1
+        },
+        {
+          "title": "the keyboard reaches the dock, shows the focus ring, and Enter sends",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 642,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T18:52:43.904Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bbd5a4180b63bb97d270-4d94ac87a309dc64dfab",
+          "file": ".local-frame.spec.ts",
+          "line": 202,
+          "column": 1
+        },
+        {
+          "title": "the message list focus ring is 2 px blue with a 2 px offset",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 905,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T18:52:44.551Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bbd5a4180b63bb97d270-8f1d608a93d5f5538206",
+          "file": ".local-frame.spec.ts",
+          "line": 226,
+          "column": 1
+        },
         {
           "title": "the frame matches the macOS screenshot baselines",
           "ok": true,
@@ -131,27 +228,21 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 2115,
+                  "duration": 2531,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-02T17:16:59.339Z",
+                  "startTime": "2026-11-02T18:52:45.463Z",
                   "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6EKR5EE3AQFM23MF7PE72ZF/frame-browser/local-frame-the-frame-matches-the-macOS-screenshot-baselines/test-finished-1.png"
-                    }
-                  ]
+                  "attachments": []
                 }
               ],
               "status": "expected"
             }
           ],
-          "id": "98e9824bbf9953f71a50-23364194fba49f8b26a7",
-          "file": "local-frame.spec.ts",
+          "id": "bbd5a4180b63bb97d270-d427a2cffc6985cbae0a",
+          "file": ".local-frame.spec.ts",
           "line": 289,
           "column": 1
         }
@@ -160,9 +251,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-11-02T17:16:58.665Z",
-    "duration": 2884.877,
-    "expected": 1,
+    "startTime": "2026-11-02T18:52:42.088Z",
+    "duration": 5949.713000000001,
+    "expected": 4,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

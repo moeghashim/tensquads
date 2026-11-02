@@ -1,0 +1,11 @@
+2e85b8f9298c0e268f6db94242f54dbb5b18a0e923f11ca6140076e3dddc512c  AGENTS.md
+1fc58b0cd33d82880ca67d45cc940f326ca062fb6c00911eb6edb3c1d9dec8fc  docs/PLAN.md
+9b1d6e43d384e75a35f37f63322fb9cb8c9edfe1b88cb8adc61551ac10594162  tasks/02-overview.md
+376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89  design/Main.dc.html
+deccce08d6932c707935dd44be6fd089e3a27d9c514e067d576129632117d5ec  design/inventory/Main.json
+26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
+7b72581686e9de32b4f63c9354998d4e4b6e02fb062eb3fe4f6c02aba8cdd576  tasks/02-frame.md
+cf7d1bcdc4b6e7010291803cc2cb5890bdd823bbfab0064279018636e7366513  progress.md
+Decisions 1 to 32 read. No question.
+design-check: all 13 files OK; design/ matches the canvas.
+No new unmapped requirement. Test phase authorized by current request.
