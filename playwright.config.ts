@@ -9,6 +9,17 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	retries: 0,
 	reporter: "line",
+	projects: [
+		{
+			name: "parallel",
+			grepInvert: /a read held past the deadline cannot commit the queued writes/,
+		},
+		{
+			name: "account-lock",
+			grep: /a read held past the deadline cannot commit the queued writes/,
+			dependencies: ["parallel"],
+		},
+	],
 	snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
 	expect: {
 		toHaveScreenshot: {
