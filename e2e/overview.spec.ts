@@ -1,5 +1,5 @@
 import { mkdirSync, readFileSync } from "node:fs";
-import type { Page, Request } from "@playwright/test";
+import type { Page, Request, Route } from "@playwright/test";
 import { openPostgres, schema } from "@tensquads/adapters";
 import { policyVersion } from "@tensquads/domain";
 import { and, asc, eq } from "drizzle-orm";
@@ -234,6 +234,78 @@ test("queued cards and counts survive leaving and returning to overview", async 
 	const secondDone = decisionDone(page, "ap2");
 	held.release();
 	await secondDone;
+});
+
+test("a rejected decision restores the badge after leaving overview", async ({ page, workspaceUser }) => {
+	test.setTimeout(90_000);
+	await openWorkspace(page, workspaceUser);
+	await expect(dockBadge(page)).toHaveText("4");
+	let release = () => {};
+	const gate = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	let held = false;
+	const rejectRefund = async (route: Route) => {
+		const request = route.request();
+		if (request.method() !== "POST" || !(request.postData() ?? "").includes("ap1")) {
+			await route.continue();
+			return;
+		}
+		held = true;
+		await gate;
+		await route.fulfill({ status: 500, contentType: "text/plain", body: "no" });
+	};
+	await page.route("**/_serverFn/**", rejectRefund);
+	try {
+		await refundCard(page).getByRole("button", { name: "Approve", exact: true }).click();
+		await expect.poll(() => held).toBe(true);
+		await expect(dockBadge(page)).toHaveText("3");
+		await page.locator("main").getByRole("button", { name: "See squad traffic" }).click();
+		await expect(page).toHaveURL(/\/traffic$/);
+		await expect(page.locator("[data-if='isOverview']")).toHaveCount(0);
+		await expect(dockBadge(page)).toHaveText("3");
+	} finally {
+		try {
+			await test.step(
+				"release the rejected refund and wait for its frame read",
+				async () => {
+					const releasedAt = Date.now();
+					const rejected = page.waitForResponse(
+						(response) => {
+							const request = response.request();
+							return (
+								request.method() === "POST" &&
+								(request.postData() ?? "").includes("ap1") &&
+								response.status() === 500
+							);
+						},
+						{ timeout: 30_000 },
+					);
+					const refreshed = page.waitForResponse(
+						async (response) => {
+							const request = response.request();
+							return (
+								request.method() === "GET" &&
+								request.url().includes("/_serverFn/") &&
+								request.timing().startTime >= releasedAt &&
+								response.ok() &&
+								(await response.text()).includes('"approvalCount"')
+							);
+						},
+						{ timeout: 30_000 },
+					);
+					release();
+					const responses = await Promise.all([rejected, refreshed]);
+					for (const response of responses) expect(await response.finished()).toBeNull();
+				},
+				{ timeout: 30_000 },
+			);
+		} finally {
+			release();
+			await page.unroute("**/_serverFn/**", rejectRefund);
+		}
+	}
+	await expect(dockBadge(page)).toHaveText("4", settled);
 });
 
 test("navigation frame reads update the count after another tab decides", async ({ page, workspaceUser }) => {

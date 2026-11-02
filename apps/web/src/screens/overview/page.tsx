@@ -123,8 +123,10 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 			async () => {
 				await refresh();
 				const match = router.state.matches.find((item) => item.routeId === "/_workspace/overview");
-				if (match?.status !== "success" || !match.loaderData) throw new Error("The overview did not load.");
-				return match.loaderData.count;
+				if (match?.status === "success" && match.loaderData) return match.loaderData.count;
+				const frame = router.state.matches.find((item) => item.routeId === "/_workspace");
+				if (frame?.status === "success" && frame.loaderData) return frame.loaderData.approvalCount;
+				throw new Error("The overview did not load.");
 			},
 			() => undefined,
 		);
