@@ -252,4 +252,19 @@ CREATE TABLE IF NOT EXISTS bus_cursors (
   clock integer NOT NULL,
   script_index integer NOT NULL
 );
+
+INSERT INTO threads (account_id, id, sort_order)
+SELECT account_id, 'dock', 0 FROM (
+  SELECT account_id FROM threads WHERE id = 'main'
+  UNION
+  SELECT account_id FROM messages WHERE thread_id = 'main'
+) AS main_rows
+WHERE NOT EXISTS (
+  SELECT 1 FROM threads AS existing
+  WHERE existing.account_id = main_rows.account_id AND existing.id = 'dock'
+);
+
+UPDATE messages SET thread_id = 'dock' WHERE thread_id = 'main';
+
+DELETE FROM threads WHERE id = 'main';
 `;
