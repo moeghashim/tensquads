@@ -355,13 +355,14 @@ async function saveRule(
 				signal,
 			}),
 		);
-		await bounded(() => refresh());
 	} catch {
 		setPending(null);
 		if (formRef.current.action.length === 0) {
 			setForm({ ...formRef.current, action: typed });
 		}
+		return;
 	}
+	await bounded(() => refresh()).catch(() => undefined);
 }
 
 function Limits({ page, refresh }: { readonly page: RulesPageData; readonly refresh: () => Promise<void> }) {

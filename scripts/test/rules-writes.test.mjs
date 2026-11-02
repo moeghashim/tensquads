@@ -103,6 +103,7 @@ for (const values of cases) {
 			}), values.first);
 			assert.equal(await page.evaluate(() => window.shown(window.values.first)), values.first);
 			assert.equal(await page.evaluate(() => window.shown(window.values.newer)), values.newer);
+			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.initial);
 		});
 	});
 
@@ -135,39 +136,86 @@ for (const values of cases) {
 		});
 	}
 
-	test(`${values.kind}: a failed write rolls back to the last successful value`, async () => {
+	test(`${values.kind}: a failed write after refresh timeout preserves confirmed storage`, async () => {
 		await withPage(async (page) => {
 			await configure(page, values);
-			assert.equal(await page.evaluate(async () => {
-				const { initial, first, last } = window.values;
-				window.write(first, initial);
+			await page.evaluate(async () => {
+				window.stored = window.values.initial;
+				window.send = async (data) => { window.stored = data.on ?? data.value; };
+				window.refresh = () => new Promise(() => {});
+				window.write(window.values.first, window.values.initial);
 				await window.flush();
+			});
+			await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.first);
+			await page.evaluate(async () => {
 				window.send = async () => { throw new Error("Write failed"); };
-				window.write(last, first);
+				window.refresh = async () => {};
+				window.write(window.values.last, window.values.initial);
 				await window.flush();
-				return window.shown(initial);
-			}), values.first);
+			});
+			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.first);
+			assert.equal(await page.evaluate(() => window.stored), values.first);
 		});
 	});
 }
 
+test("limit: a newer read reconciles without first observing the confirmed value", async () => {
+	await withPage(async (page) => {
+		await configure(page, cases[0]);
+		await page.evaluate(async () => {
+			window.write(70, 50);
+			await window.flush();
+		});
+		assert.equal(await page.evaluate(() => window.shown(50)), 70);
+		assert.equal(await page.evaluate(() => window.shown(80)), 80);
+		assert.equal(await page.evaluate(() => window.shown(50)), 50);
+	});
+});
+
+for (const refreshResult of ["timeout", "reject"]) {
+	for (const newer of ["", "A newer action"]) {
+		test(`add rule: refresh ${refreshResult} after POST success preserves the cleared draft or newer typing (${newer})`, async () => {
+			await withPage(async (page) => {
+				await page.evaluate(() => {
+					window.refresh = () => new Promise((_resolve, reject) => { window.rejectRefresh = reject; });
+					window.mount();
+				});
+				const action = page.getByLabel("Then", { exact: true });
+				await action.fill("Handle the order");
+				const add = page.getByRole("button", { name: "Add rule", exact: true });
+				await add.click();
+				await page.waitForFunction(() => window.rejectRefresh);
+				await expect(action).toHaveValue("");
+				if (newer) await action.fill(newer);
+				if (refreshResult === "timeout") await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+				else await page.evaluate(async () => { window.rejectRefresh(new Error("Read failed")); await window.flush(); });
+				await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(1);
+				await expect(action).toHaveValue(newer);
+				if (!newer) await add.click();
+				assert.equal(await page.evaluate(() => window.calls.length), 1);
+			});
+		});
+	}
+}
+
 for (const newer of ["", "A newer action"]) {
-	test(`add rule: a hung refresh clears the pending row and ${newer ? "keeps newer typing" : "restores the draft"}`, async () => {
+	test(`add rule: POST rejection restores only an unchanged draft (${newer})`, async () => {
 		await withPage(async (page) => {
 			await page.evaluate(() => {
-				window.refresh = () => new Promise(() => {});
+				window.send = () => new Promise((_resolve, reject) => { window.rejectSend = reject; });
 				window.mount();
 			});
 			const action = page.getByLabel("Then", { exact: true });
 			await action.fill("Handle the order");
 			await page.getByRole("button", { name: "Add rule", exact: true }).click();
+			await page.waitForFunction(() => window.rejectSend);
 			await expect(action).toHaveValue("");
 			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(1);
 			if (newer) await action.fill(newer);
-			await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+			await page.evaluate(async () => { window.rejectSend(new Error("POST failed")); await window.flush(); });
 			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(0);
 			await expect(action).toHaveValue(newer || "Handle the order");
-			assert.equal(await page.evaluate(() => window.calls.length), 1);
 		});
 	});
 }

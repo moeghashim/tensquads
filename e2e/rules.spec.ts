@@ -222,7 +222,7 @@ test("a hung limit write clears the guard", async ({ page, workspaceUser, accoun
 	await page.waitForTimeout(5_000);
 	await expect(page.locator("#lim-ads")).toHaveValue("240");
 	await expect(page.locator("#lim-ads")).toHaveValue("200", { timeout: 40_000 });
-	await held[0]?.abort().catch(() => undefined);
+	await held[0]?.fulfill({ status: 500, contentType: "text/plain", body: "The limit change failed." });
 	await page.unroute("**/*");
 	await setSlider(page, "#lim-ads", "230");
 	await expectStored(accountId, "policy.daily_ad_cap", 230);

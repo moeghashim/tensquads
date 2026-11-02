@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
 
 interface Flight<T> {
+	readonly baseline: T;
 	shown: T;
 	confirmed: T;
 	sending: boolean;
@@ -58,14 +59,13 @@ function queueValue<T>(map: Map<string, Flight<T>>, key: string, next: T, loaded
 		notify();
 		return null;
 	}
-	flight.confirmed = loaded;
 	flight.shown = next;
 	flight.queued = null;
 	return flight;
 }
 
 function createFlight<T>(map: Map<string, Flight<T>>, key: string, next: T, loaded: T): Flight<T> {
-	const flight = { shown: next, confirmed: loaded, sending: false, queued: null };
+	const flight = { baseline: loaded, shown: next, confirmed: loaded, sending: false, queued: null };
 	map.set(key, flight);
 	return flight;
 }
@@ -134,7 +134,7 @@ function shownValue<T>(map: Map<string, Flight<T>>, key: string, loaded: T): T {
 	if (flight.sending || flight.queued !== null) {
 		return flight.shown;
 	}
-	if (flight.confirmed !== loaded) {
+	if (loaded !== flight.confirmed && loaded === flight.baseline) {
 		return flight.confirmed;
 	}
 	map.delete(key);

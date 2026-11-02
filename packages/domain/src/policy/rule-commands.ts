@@ -95,7 +95,3 @@ export function limitWrite(key: string, value: number): { readonly key: string; 
 	}
 	return { key, value };
 }
-
-export function limitDisplay(value: number): string {
-	return `$${value}`;
-}
