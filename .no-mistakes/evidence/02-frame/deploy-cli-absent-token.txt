@@ -1,0 +1,7 @@
+missing file: exit=1; output=CLOUDFLARE_WORKERS_API_TOKEN is absent.
+empty file: exit=1; output=CLOUDFLARE_WORKERS_API_TOKEN is absent.
+empty token: exit=1; output=CLOUDFLARE_WORKERS_API_TOKEN is absent.
+unquoted whitespace: exit=1; output=CLOUDFLARE_WORKERS_API_TOKEN is absent.
+double-quoted whitespace: exit=1; output=CLOUDFLARE_WORKERS_API_TOKEN is absent.
+single-quoted whitespace: exit=1; output=CLOUDFLARE_WORKERS_API_TOKEN is absent.
+Actual deploy CLI executed from isolated copy of unchanged scripts. Shell credentials did not bypass missing or blank .env tokens. No Wrangler child or network deploy was reached.
