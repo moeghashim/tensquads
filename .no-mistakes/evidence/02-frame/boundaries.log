@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Retry budget respects an earlier Task expiry",
+    "attempts": 1,
+    "error": "The workspace write did not finish."
+  },
+  {
+    "name": "An advisory lock held past 30 seconds rejects the abandoned send and a fresh send replies",
+    "heldMs": 31138,
+    "abandoned": {
+      "code": "57014"
+    },
+    "nextBegin": "working",
+    "nextFinish": "replied",
+    "reply": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike."
+  }
+]

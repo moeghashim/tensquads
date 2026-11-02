@@ -1,0 +1,73 @@
+[
+  {
+    "name": "Two 8-second statements commit inside the window and the send replies",
+    "result": "pass",
+    "elapsedMs": 16224,
+    "begin": "working",
+    "finish": "replied",
+    "reply": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.",
+    "taskOccurredAt": "2026-11-02T07:22:10.314Z",
+    "requestStartedAt": "2026-11-02T07:22:10.314Z",
+    "threadIds": [
+      "dock"
+    ]
+  },
+  {
+    "name": "Late begin throws, rolls back all writes, and the next send replies",
+    "result": "pass",
+    "elapsedMs": 32304,
+    "error": "The workspace write did not finish.",
+    "delayedStatements": 4,
+    "rollbackStateUnchanged": true,
+    "nextFinish": "replied",
+    "reply": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike."
+  },
+  {
+    "name": "Late finish uses original Task expiry and rolls back completion writes",
+    "result": "pass",
+    "elapsedMs": 32321,
+    "error": "The workspace write did not finish.",
+    "completionStateUnchanged": true,
+    "expiredFinish": "ignored",
+    "nextFinish": "replied",
+    "reply": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike."
+  },
+  {
+    "name": "Reset waits beyond send timeout and retains default timeout settings",
+    "result": "pass",
+    "elapsedMs": 12138,
+    "waitMs": 12117,
+    "accountPersisted": true,
+    "settings": [
+      {
+        "lock_timeout": "0",
+        "statement_timeout": "0"
+      }
+    ]
+  },
+  {
+    "name": "Real SQLSTATE errors retry only deadlocks, within the original budget",
+    "result": "pass",
+    "elapsedMs": 21026,
+    "outcomes": [
+      {
+        "sqlstate": "40P01",
+        "attempts": 3
+      },
+      {
+        "sqlstate": "55P03",
+        "attempts": 1
+      },
+      {
+        "sqlstate": "57014",
+        "attempts": 1
+      },
+      {
+        "sqlstate": "23505",
+        "attempts": 1
+      }
+    ],
+    "insufficientBudgetAttempts": 1,
+    "error": "The workspace write did not finish."
+  }
+]

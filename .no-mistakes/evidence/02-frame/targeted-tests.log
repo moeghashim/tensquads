@@ -1,0 +1,28 @@
+✔ a unique violation whose text says deadlock detected is not retried (0.790208ms)
+✔ a deadlock code retries the whole transaction three times (0.1195ms)
+✔ a deadlock code on a cause retries, and the words alone do not (0.156125ms)
+✔ deadlock retries set timeouts that stay inside the pending window (0.292958ms)
+✔ a transaction without send options does not set timeouts (0.119708ms)
+✔ a send past the deadline rolls back before commit (32.736625ms)
+✔ a deadlock retry does not start when the time left is below its budget (42.741ms)
+✔ a deadlock retry must fit the earlier Task deadline (40.355875ms)
+✔ a later constraint cannot extend the request deadline (32.6335ms)
+✔ two statements delayed 8 seconds each do not commit past the pending window (17127.471625ms)
+✔ a finish past its Task expiry rolls back all completion writes (32538.828166ms)
+✔ a send that passes the pending window rolls back and the next send replies (32497.433041ms)
+✔ a send uses one dock thread with seeded messages (1043.612334ms)
+✔ a send uses one dock thread when no thread exists (489.098ms)
+✔ a marketing send writes the task, and the reply writes the result without changing the store (478.322917ms)
+✔ a message with no agent or a paused agent writes no event and does not move the clock (815.46725ms)
+✔ an empty message, a blank message, or a second send changes nothing (416.7195ms)
+✔ a pending task stays when the reply is not finished (442.353ms)
+✔ a marketing send with no skill on records a dash (458.242792ms)
+✔ an abandoned Task expires at 30 seconds and a later send gets its own reply (427.208542ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 82486.419917

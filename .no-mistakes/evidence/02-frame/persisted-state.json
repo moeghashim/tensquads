@@ -1,0 +1,516 @@
+{
+    "events": [
+        {
+            "id": "e102",
+            "seq": 102,
+            "body": "How did ads do this week?",
+            "kind": "Task",
+            "skill": "meta_ads.report",
+            "trace": "tr_5789f6",
+            "writes": [
+            ],
+            "payload": {
+                "from": "chat",
+                "intent": "user_request",
+                "limits": {
+                    "daily_ad_cap": 200,
+                    "refund_auto_limit": 50
+                },
+                "user_text": "How did ads do this week?"
+            },
+            "to_agent": "marketing",
+            "time_text": "11:03",
+            "account_id": "live-fast",
+            "from_agent": "master",
+            "occurred_at": "2026-11-02T01:22:10.314-06:00"
+        },
+        {
+            "id": "e104",
+            "seq": 104,
+            "body": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.",
+            "kind": "Result",
+            "skill": "meta_ads.report",
+            "trace": "tr_110d6d",
+            "writes": [
+                "marketing.roas_7d"
+            ],
+            "payload": {
+                "best": "Prints · lookalike",
+                "roas_7d": 3.4,
+                "spend_7d": 262
+            },
+            "to_agent": "master",
+            "time_text": "11:04",
+            "account_id": "live-fast",
+            "from_agent": "marketing",
+            "occurred_at": "2026-11-02T01:22:26.397-06:00"
+        },
+        {
+            "id": "e102",
+            "seq": 102,
+            "body": "How did ads do this week?",
+            "kind": "Task",
+            "skill": "meta_ads.report",
+            "trace": "tr_5789f6",
+            "writes": [
+            ],
+            "payload": {
+                "from": "chat",
+                "intent": "user_request",
+                "limits": {
+                    "daily_ad_cap": 200,
+                    "refund_auto_limit": 50
+                },
+                "user_text": "How did ads do this week?"
+            },
+            "to_agent": "marketing",
+            "time_text": "11:03",
+            "account_id": "live-late",
+            "from_agent": "master",
+            "occurred_at": "2026-11-02T01:22:58.666-06:00"
+        },
+        {
+            "id": "e104",
+            "seq": 104,
+            "body": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.",
+            "kind": "Result",
+            "skill": "meta_ads.report",
+            "trace": "tr_110d6d",
+            "writes": [
+                "marketing.roas_7d"
+            ],
+            "payload": {
+                "best": "Prints · lookalike",
+                "roas_7d": 3.4,
+                "spend_7d": 262
+            },
+            "to_agent": "master",
+            "time_text": "11:04",
+            "account_id": "live-late",
+            "from_agent": "marketing",
+            "occurred_at": "2026-11-02T01:22:58.722-06:00"
+        },
+        {
+            "id": "e102",
+            "seq": 102,
+            "body": "How did ads do this week?",
+            "kind": "Task",
+            "skill": "meta_ads.report",
+            "trace": "tr_5789f6",
+            "writes": [
+            ],
+            "payload": {
+                "from": "chat",
+                "intent": "user_request",
+                "limits": {
+                    "daily_ad_cap": 200,
+                    "refund_auto_limit": 50
+                },
+                "user_text": "How did ads do this week?"
+            },
+            "to_agent": "marketing",
+            "time_text": "11:03",
+            "account_id": "live-finish",
+            "from_agent": "master",
+            "occurred_at": "2026-11-02T01:22:58.856-06:00"
+        },
+        {
+            "id": "e105",
+            "seq": 105,
+            "body": "How did ads do this week?",
+            "kind": "Task",
+            "skill": "meta_ads.report",
+            "trace": "tr_de8392",
+            "writes": [
+            ],
+            "payload": {
+                "from": "chat",
+                "intent": "user_request",
+                "limits": {
+                    "daily_ad_cap": 200,
+                    "refund_auto_limit": 50
+                },
+                "user_text": "How did ads do this week?"
+            },
+            "to_agent": "marketing",
+            "time_text": "11:04",
+            "account_id": "live-finish",
+            "from_agent": "master",
+            "occurred_at": "2026-11-02T01:23:30.993-06:00"
+        },
+        {
+            "id": "e107",
+            "seq": 107,
+            "body": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.",
+            "kind": "Result",
+            "skill": "meta_ads.report",
+            "trace": "tr_ce8443",
+            "writes": [
+                "marketing.roas_7d"
+            ],
+            "payload": {
+                "best": "Prints · lookalike",
+                "roas_7d": 3.4,
+                "spend_7d": 262
+            },
+            "to_agent": "master",
+            "time_text": "11:05",
+            "account_id": "live-finish",
+            "from_agent": "marketing",
+            "occurred_at": "2026-11-02T01:23:31.045-06:00"
+        },
+        {
+            "id": "e107",
+            "seq": 107,
+            "body": "How did ads do this week?",
+            "kind": "Task",
+            "skill": "meta_ads.report",
+            "trace": "tr_ce8443",
+            "writes": [
+            ],
+            "payload": {
+                "from": "chat",
+                "intent": "user_request",
+                "limits": {
+                    "daily_ad_cap": 200,
+                    "refund_auto_limit": 50
+                },
+                "user_text": "How did ads do this week?"
+            },
+            "to_agent": "marketing",
+            "time_text": "11:05",
+            "account_id": "live-fast",
+            "from_agent": "master",
+            "occurred_at": "2026-11-02T01:24:44.954-06:00"
+        },
+        {
+            "id": "e109",
+            "seq": 109,
+            "body": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.",
+            "kind": "Result",
+            "skill": "meta_ads.report",
+            "trace": "tr_de3965",
+            "writes": [
+                "marketing.roas_7d"
+            ],
+            "payload": {
+                "best": "Prints · lookalike",
+                "roas_7d": 3.4,
+                "spend_7d": 262
+            },
+            "to_agent": "master",
+            "time_text": "11:06",
+            "account_id": "live-fast",
+            "from_agent": "marketing",
+            "occurred_at": "2026-11-02T01:24:45.044-06:00"
+        }
+    ],
+    "messages": [
+        {
+            "id": "c1",
+            "body": "Did the tracking for #A-1007 go through?",
+            "agent": null,
+            "from_role": "user",
+            "thread_id": "dock",
+            "account_id": "live-fast",
+            "sort_order": 0
+        },
+        {
+            "id": "c2",
+            "body": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.",
+            "agent": null,
+            "from_role": "master",
+            "thread_id": "dock",
+            "account_id": "live-fast",
+            "sort_order": 1
+        },
+        {
+            "id": "c3",
+            "body": "Print ETA is 3 November. I will add its tracking automatically.",
+            "agent": "orders",
+            "from_role": "agent",
+            "thread_id": "dock",
+            "account_id": "live-fast",
+            "sort_order": 2
+        },
+        {
+            "id": "c4",
+            "body": "Good job. What needs me today?",
+            "agent": null,
+            "from_role": "user",
+            "thread_id": "dock",
+            "account_id": "live-fast",
+            "sort_order": 3
+        },
+        {
+            "id": "c5",
+            "body": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.",
+            "agent": null,
+            "from_role": "master",
+            "thread_id": "dock",
+            "account_id": "live-fast",
+            "sort_order": 4
+        },
+        {
+            "id": "c100",
+            "body": "How did ads do this week?",
+            "agent": null,
+            "from_role": "user",
+            "thread_id": "dock",
+            "account_id": "live-fast",
+            "sort_order": 100
+        },
+        {
+            "id": "c101",
+            "body": "Passing this to the Marketing agent. I will report back here.",
+            "agent": null,
+            "from_role": "master",
+            "thread_id": "dock",
+            "account_id": "live-fast",
+            "sort_order": 101
+        },
+        {
+            "id": "c103",
+            "body": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.",
+            "agent": "marketing",
+            "from_role": "agent",
+            "thread_id": "dock",
+            "account_id": "live-fast",
+            "sort_order": 103
+        },
+        {
+            "id": "c1",
+            "body": "Did the tracking for #A-1007 go through?",
+            "agent": null,
+            "from_role": "user",
+            "thread_id": "dock",
+            "account_id": "live-late",
+            "sort_order": 0
+        },
+        {
+            "id": "c2",
+            "body": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.",
+            "agent": null,
+            "from_role": "master",
+            "thread_id": "dock",
+            "account_id": "live-late",
+            "sort_order": 1
+        },
+        {
+            "id": "c3",
+            "body": "Print ETA is 3 November. I will add its tracking automatically.",
+            "agent": "orders",
+            "from_role": "agent",
+            "thread_id": "dock",
+            "account_id": "live-late",
+            "sort_order": 2
+        },
+        {
+            "id": "c4",
+            "body": "Good job. What needs me today?",
+            "agent": null,
+            "from_role": "user",
+            "thread_id": "dock",
+            "account_id": "live-late",
+            "sort_order": 3
+        },
+        {
+            "id": "c5",
+            "body": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.",
+            "agent": null,
+            "from_role": "master",
+            "thread_id": "dock",
+            "account_id": "live-late",
+            "sort_order": 4
+        },
+        {
+            "id": "c100",
+            "body": "How did ads do this week?",
+            "agent": null,
+            "from_role": "user",
+            "thread_id": "dock",
+            "account_id": "live-late",
+            "sort_order": 100
+        },
+        {
+            "id": "c101",
+            "body": "Passing this to the Marketing agent. I will report back here.",
+            "agent": null,
+            "from_role": "master",
+            "thread_id": "dock",
+            "account_id": "live-late",
+            "sort_order": 101
+        },
+        {
+            "id": "c103",
+            "body": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.",
+            "agent": "marketing",
+            "from_role": "agent",
+            "thread_id": "dock",
+            "account_id": "live-late",
+            "sort_order": 103
+        },
+        {
+            "id": "c1",
+            "body": "Did the tracking for #A-1007 go through?",
+            "agent": null,
+            "from_role": "user",
+            "thread_id": "dock",
+            "account_id": "live-finish",
+            "sort_order": 0
+        },
+        {
+            "id": "c2",
+            "body": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.",
+            "agent": null,
+            "from_role": "master",
+            "thread_id": "dock",
+            "account_id": "live-finish",
+            "sort_order": 1
+        },
+        {
+            "id": "c3",
+            "body": "Print ETA is 3 November. I will add its tracking automatically.",
+            "agent": "orders",
+            "from_role": "agent",
+            "thread_id": "dock",
+            "account_id": "live-finish",
+            "sort_order": 2
+        },
+        {
+            "id": "c4",
+            "body": "Good job. What needs me today?",
+            "agent": null,
+            "from_role": "user",
+            "thread_id": "dock",
+            "account_id": "live-finish",
+            "sort_order": 3
+        },
+        {
+            "id": "c5",
+            "body": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.",
+            "agent": null,
+            "from_role": "master",
+            "thread_id": "dock",
+            "account_id": "live-finish",
+            "sort_order": 4
+        },
+        {
+            "id": "c100",
+            "body": "How did ads do this week?",
+            "agent": null,
+            "from_role": "user",
+            "thread_id": "dock",
+            "account_id": "live-finish",
+            "sort_order": 100
+        },
+        {
+            "id": "c101",
+            "body": "Passing this to the Marketing agent. I will report back here.",
+            "agent": null,
+            "from_role": "master",
+            "thread_id": "dock",
+            "account_id": "live-finish",
+            "sort_order": 101
+        },
+        {
+            "id": "c103",
+            "body": "How did ads do this week?",
+            "agent": null,
+            "from_role": "user",
+            "thread_id": "dock",
+            "account_id": "live-finish",
+            "sort_order": 103
+        },
+        {
+            "id": "c104",
+            "body": "Passing this to the Marketing agent. I will report back here.",
+            "agent": null,
+            "from_role": "master",
+            "thread_id": "dock",
+            "account_id": "live-finish",
+            "sort_order": 104
+        },
+        {
+            "id": "c106",
+            "body": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.",
+            "agent": "marketing",
+            "from_role": "agent",
+            "thread_id": "dock",
+            "account_id": "live-finish",
+            "sort_order": 106
+        },
+        {
+            "id": "c1",
+            "body": "Did the tracking for #A-1007 go through?",
+            "agent": null,
+            "from_role": "user",
+            "thread_id": "dock",
+            "account_id": "live-reset",
+            "sort_order": 0
+        },
+        {
+            "id": "c2",
+            "body": "I asked the Orders agent. The sweatshirt is marked as shipped with tracking LI400083615LT and the customer has the link. The print is still being made and will get its own tracking when it ships.",
+            "agent": null,
+            "from_role": "master",
+            "thread_id": "dock",
+            "account_id": "live-reset",
+            "sort_order": 1
+        },
+        {
+            "id": "c3",
+            "body": "Print ETA is 3 November. I will add its tracking automatically.",
+            "agent": "orders",
+            "from_role": "agent",
+            "thread_id": "dock",
+            "account_id": "live-reset",
+            "sort_order": 2
+        },
+        {
+            "id": "c4",
+            "body": "Good job. What needs me today?",
+            "agent": null,
+            "from_role": "user",
+            "thread_id": "dock",
+            "account_id": "live-reset",
+            "sort_order": 3
+        },
+        {
+            "id": "c5",
+            "body": "Three approvals: a $42 refund, a $20 a day ad budget increase, and a $610 hoodie reorder. They are on your Overview.",
+            "agent": null,
+            "from_role": "master",
+            "thread_id": "dock",
+            "account_id": "live-reset",
+            "sort_order": 4
+        },
+        {
+            "id": "c105",
+            "body": "How did ads do this week?",
+            "agent": null,
+            "from_role": "user",
+            "thread_id": "dock",
+            "account_id": "live-fast",
+            "sort_order": 105
+        },
+        {
+            "id": "c106",
+            "body": "Passing this to the Marketing agent. I will report back here.",
+            "agent": null,
+            "from_role": "master",
+            "thread_id": "dock",
+            "account_id": "live-fast",
+            "sort_order": 106
+        },
+        {
+            "id": "c108",
+            "body": "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.",
+            "agent": "marketing",
+            "from_role": "agent",
+            "thread_id": "dock",
+            "account_id": "live-fast",
+            "sort_order": 108
+        }
+    ]
+}
