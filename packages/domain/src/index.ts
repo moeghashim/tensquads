@@ -16,6 +16,8 @@ export type {
 export type { ConversationEvent, MessageSent } from "./conversation/events.ts";
 export type { ChatEventDraft, ConversationRepository, ConversationTransaction } from "./conversation/repository.ts";
 export type { Message, MessageFrom, SendResult, Thread } from "./conversation/types.ts";
+export type { Eval, Source, Trigger } from "./inbound.ts";
+export { chatSource, chatTrigger, evalChatTrigger } from "./inbound.ts";
 export type { AccountOpened, PlatformEvent } from "./platform/events.ts";
 export type { PlatformRepository } from "./platform/repository.ts";
 export type {
@@ -34,13 +36,14 @@ export type {
 export type { DecideCommand, DecideMissionCommand } from "./policy/approval-commands.ts";
 export { askRevise, decideApproval, decideMission, EMPTY_INBOX, inboxCount, inboxIsEmpty } from "./policy/decide.ts";
 export type { ApprovalDecided, MissionDecided, PolicyEvent } from "./policy/events.ts";
-export type { PolicyRepository, RuleDraft } from "./policy/repository.ts";
+export type { MandateDraft, PolicyRepository, RuleDraft } from "./policy/repository.ts";
 export type { AddRuleCommand, SetLimitCommand, SetRuleOnCommand } from "./policy/rule-commands.ts";
 export type {
 	Approval,
 	ApprovalStatus,
 	Inbox,
 	Limit,
+	Mandate,
 	MissionProposal,
 	MissionProposalStatus,
 	Rule,

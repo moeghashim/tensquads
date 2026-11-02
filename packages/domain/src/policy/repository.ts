@@ -1,5 +1,14 @@
 import type { AccountScope } from "../scope.ts";
-import type { Approval, Inbox, MissionProposal, Rule } from "./types.ts";
+import type { Approval, Inbox, Mandate, MissionProposal, Rule } from "./types.ts";
+
+export interface MandateDraft {
+	readonly approvalId: string;
+	readonly ruleId: string;
+	readonly limitValue: number;
+	readonly policyVersion: string;
+	readonly saidYes: string;
+	readonly at: Date;
+}
 
 export interface RuleDraft {
 	readonly when: string;
@@ -18,4 +27,6 @@ export interface PolicyRepository {
 	setRuleOn(scope: AccountScope, id: string, on: boolean): Promise<void>;
 	addRule(scope: AccountScope, draft: RuleDraft): Promise<void>;
 	setLimit(scope: AccountScope, key: string, value: number): Promise<void>;
+	createMandate(scope: AccountScope, draft: MandateDraft): Promise<Mandate>;
+	mandate(scope: AccountScope, approvalId: string): Promise<Mandate | null>;
 }

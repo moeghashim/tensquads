@@ -1,5 +1,5 @@
 import type { AccountScope, ConversationTransaction, SendResult } from "@tensquads/domain";
-import { requireScope } from "@tensquads/domain";
+import { chatSource, chatTrigger, evalChatTrigger, requireScope } from "@tensquads/domain";
 import type { Repositories } from "../ports.ts";
 import type { BusCommands } from "./bus.ts";
 
@@ -17,6 +17,10 @@ export function conversation(
 			const checked = requireScope(scope);
 			const value = text.trim();
 			if (checked.mode !== "account" || value.length === 0) return { kind: "ignored" };
+			const trigger = chatTrigger(checked.accountId, value);
+			// Decision 19: the Decider has no adapter in version 1, so a chat Trigger has no judgement step.
+			const evaluation = evalChatTrigger(trigger, checked.accountId);
+			if (trigger.source.name !== chatSource.name || !evaluation.gate) return { kind: "ignored" };
 			return config.repositories().conversation.transaction(checked, async (commands) => {
 				if (await commands.pendingTask()) return { kind: "ignored" };
 				return send(commands, value, route(value), config.bus());
@@ -55,7 +59,7 @@ async function send(
 ): Promise<SendResult> {
 	const agent = agentId ? await commands.agent(agentId) : null;
 	await commands.message("user", value);
-	if (!agent || !agent.isOn) {
+	if (!agent?.isOn) {
 		await commands.message("master", agent ? pausedReply(agent.name) : noAgentReply());
 		return { kind: "answered", messages: await commands.messages() };
 	}

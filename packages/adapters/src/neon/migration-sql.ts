@@ -267,4 +267,19 @@ WHERE NOT EXISTS (
 UPDATE messages SET thread_id = 'dock' WHERE thread_id = 'main';
 
 DELETE FROM threads WHERE id = 'main';
+
+CREATE TABLE IF NOT EXISTS mandates (
+  account_id text NOT NULL REFERENCES accounts (id) ON DELETE CASCADE,
+  approval_id text NOT NULL,
+  rule_id text NOT NULL,
+  rule_when text NOT NULL,
+  rule_action text NOT NULL,
+  rule_approval text NOT NULL,
+  limit_value integer NOT NULL,
+  policy_version text NOT NULL,
+  said_yes text NOT NULL,
+  said_at timestamptz NOT NULL,
+  PRIMARY KEY (account_id, approval_id),
+  FOREIGN KEY (account_id, approval_id) REFERENCES approvals (account_id, id) ON DELETE CASCADE
+);
 `;

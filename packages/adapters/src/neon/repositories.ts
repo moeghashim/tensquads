@@ -39,6 +39,7 @@ import { asc, eq } from "drizzle-orm";
 import { askRevise, setAgentOn, setAutonomy, setSkillOn } from "./commands/agents.ts";
 import { decide, decideMission } from "./commands/approvals.ts";
 import { conversationTransaction } from "./commands/conversation.ts";
+import { createMandate, mandate } from "./commands/mandates.ts";
 import { addRule, setLimit, setRuleOn } from "./commands/rules.ts";
 import { nextEvent } from "./commands/traffic.ts";
 import { createWorkspace } from "./create-workspace.ts";
@@ -103,6 +104,8 @@ export function createRepositories(db: AppDatabase): RepositoryBag {
 			setRuleOn: (scope, id, on) => setRuleOn(db, scope, id, on),
 			addRule: (scope, draft) => addRule(db, scope, draft),
 			setLimit: (scope, key, value) => setLimit(db, scope, key, value),
+			createMandate: (scope, draft) => createMandate(db, scope, draft),
+			mandate: (scope, approvalId) => mandate(db, scope, approvalId),
 		},
 		catalog: {
 			listImages: (scope) => listImages(db, scope),
