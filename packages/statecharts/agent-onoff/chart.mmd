@@ -1,0 +1,33 @@
+---
+title: "Agent on and off"
+---
+stateDiagram-v2
+  state "Legend" as legend {
+    lg0: Off
+    lg1: Starting
+    lg2: On
+    lg3: Stopping
+    lg4: Paused
+  }
+  class lg0 tan
+  class lg1 orange
+  class lg2 teal
+  class lg3 yellow
+  class lg4 blue
+  s0: Off
+  s1: On
+  s2: Starting
+  s3: Stopping
+  s4: Paused
+  [*] --> s0
+  [*] --> s1
+  s0 --> s2: you switch it on
+  s1 --> s3: you switch it off
+  s2 --> s1: it starts
+  s3 --> s4: it stops
+  s4 --> s2: you switch it on
+  class s0 tan
+  class s1 teal
+  class s2 orange
+  class s3 yellow
+  class s4 blue
