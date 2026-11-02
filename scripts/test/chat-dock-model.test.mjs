@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { inspect } from "node:util";
@@ -45,6 +47,39 @@ function walk(steps, varsOf, start, actions) {
 	}
 	return reached;
 }
+
+test("a chat wait reaches none", async () => {
+	configureTools();
+	const result = await check(
+		"packages/statecharts/chat-dock/ChatDock.tla",
+		"packages/statecharts/chat-dock/ChatDock.cfg",
+	);
+	const waitEnds = result.properties.find((item) => item.rule.name === "WaitEnds");
+	assert.ok(waitEnds, "WaitEnds is missing");
+	assert.equal(waitEnds.outcome, "holds", inspect(waitEnds.bug, { depth: 4 }));
+});
+
+test("removing a timeout action breaks the wait", async () => {
+	configureTools();
+	const specPath = "packages/statecharts/chat-dock/ChatDock.tla";
+	const spec = readFileSync(specPath, "utf8");
+	const mutant = spec.replace("\n    \\/ RefreshTimeout", "").replace(" /\\ WF_vars(RefreshTimeout)", "");
+	assert.notEqual(mutant, spec);
+	assert.equal(mutant.includes("\\/ RefreshTimeout"), false);
+	assert.equal(mutant.includes("WF_vars(RefreshTimeout)"), false);
+	const dir = mkdtempSync(join(tmpdir(), "wait-mutant-"));
+	try {
+		const specFile = join(dir, "ChatDock.tla");
+		writeFileSync(specFile, mutant);
+		writeFileSync(join(dir, "ChatDock.cfg"), readFileSync("packages/statecharts/chat-dock/ChatDock.cfg"));
+		const result = await check(specFile, join(dir, "ChatDock.cfg"));
+		const waitEnds = result.properties.find((item) => item.rule.name === "WaitEnds");
+		assert.ok(waitEnds, "WaitEnds is missing");
+		assert.equal(waitEnds.outcome, "broken");
+	} finally {
+		rmSync(dir, { recursive: true, force: true });
+	}
+});
 
 test("a real dock run stays open across Chat, types while Working, and times out the finish", async () => {
 	configureTools();

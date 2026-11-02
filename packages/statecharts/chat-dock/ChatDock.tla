@@ -369,8 +369,11 @@ Next ==
 
 Resolve == Finish \/ Reload
 SendAgain == []<>(phase = "idle" /\ ~abandoned /\ sent = "no")
+\* A begin, a finish, and a refresh each end. Page moves do not postpone the deadline.
+WaitEnds == [](wait # "none" => <>(wait = "none"))
 
 Spec == Init /\ [][Next]_vars
     /\ WF_vars(Resolve) /\ WF_vars(Timeout) /\ WF_vars(NextMessage)
+    /\ WF_vars(BeginTimeout) /\ WF_vars(ClientTimeout) /\ WF_vars(RefreshTimeout)
 
 ====
