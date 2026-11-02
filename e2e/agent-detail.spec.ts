@@ -1,19 +1,27 @@
-import { mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { type AppDatabase, createTestMachine, type MachineRecord, openPostgres, schema } from "@tensquads/adapters";
-import { and, eq } from "drizzle-orm";
+import { PENDING_TASK_WINDOW_MS } from "../packages/adapters/src/pending-window.ts";
 import { setAgentOn } from "../packages/adapters/src/neon/commands/agents.ts";
-import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
-import { renderDesignMarkup } from "../scripts/render-design.mjs";
-import { accessibilityViolations } from "./accessibility-helper.ts";
 import {
-	expectNoHorizontalScroll,
-	readInventory,
-	secretsFor,
-	skipUnlessMacScreenshot,
-	waitForScreenFonts,
-} from "./support.ts";
-import { expect, installLocalFonts, openWorkspace, test, type WorkspaceUser } from "./workspace.ts";
+	agentDetailSource,
+	expectDetail,
+	expectMatch,
+	holdServerPosts,
+	measureDetail,
+	openDesignDetail,
+	readAgent,
+	renderedDetail,
+	scopeFor,
+	sectionInventory,
+	shot,
+	skillFlag,
+	stitch,
+	watchedMachine,
+	withDb,
+} from "./agent-detail-support.ts";
+import { accessibilityViolations } from "./accessibility-helper.ts";
+import { expectNoHorizontalScroll, skipUnlessMacScreenshot, waitForScreenFonts } from "./support.ts";
+import { expect, openWorkspace, test, type WorkspaceUser } from "./workspace.ts";
 
 const boards = [
 	{ name: "1440", width: 1440, height: 1300 },
@@ -77,7 +85,6 @@ test("the switch turns an agent off and shows 0 percent and Paused", async ({ pa
 	await expect(running(page)).toBeVisible();
 	await expect(sandbox(page).getByText("22%", { exact: true })).toBeVisible();
 
-	const posts = countServerPosts(page);
 	const gate = await failServerPosts(page);
 	try {
 		await squadSwitch(page).click();
@@ -89,7 +96,8 @@ test("the switch turns an agent off and shows 0 percent and Paused", async ({ pa
 		await gate.stop();
 	}
 
-	await clickWhenTheGuardClears(page, posts);
+	await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "true", settled);
+	await squadSwitch(page).click();
 	await expect(paused(page)).toBeVisible(settled);
 	await expect(running(page)).toHaveCount(0);
 	await expect(sandbox(page).getByText("0%", { exact: true })).toBeVisible();
@@ -136,6 +144,9 @@ test("a skill switch changes only that skill", async ({ page, workspaceUser, acc
 		);
 	}
 	await expect(running(page)).toBeVisible();
+	await expect
+		.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.read"), settled)
+		.toBe(false);
 	const stored = await readAgent(accountId, "support");
 	expect(stored.isOn).toBe(true);
 	expect(skillFlag(stored, "inbox.read")).toBe(false);
@@ -163,9 +174,129 @@ test("the autonomy picker changes autonomy and not on or off", async ({ page, wo
 		"false",
 	);
 	await expect(running(page)).toBeVisible();
+	await expect.poll(async () => (await readAgent(accountId, "support")).autonomy, settled).toBe("Ask first");
 	const stored = await readAgent(accountId, "support");
 	expect(stored.autonomy).toBe("Ask first");
 	expect(stored.isOn).toBe(true);
+});
+
+test("pending skill writes show at once and reach the server in click order", async ({
+	page,
+	workspaceUser,
+	accountId,
+}) => {
+	test.setTimeout(90_000);
+	await openAgent(page, workspaceUser, "support");
+	const held = await holdServerPosts(page);
+	try {
+		for (const id of ["inbox.read", "inbox.draft_reply"]) {
+			const control = skillRow(page, id).getByRole("button");
+			await control.click();
+			await expect(control).toHaveAttribute("aria-pressed", "false");
+			await expect(control).toHaveCSS("justify-content", "flex-start");
+		}
+		await expect.poll(() => held.posts.length).toBe(1);
+		expect(skillFlag(await readAgent(accountId, "support"), "inbox.read")).toBe(true);
+		held.release();
+		await expect.poll(() => held.posts.length, settled).toBe(2);
+		expect(held.posts[0]).toContain("inbox.read");
+		expect(held.posts[1]).toContain("inbox.draft_reply");
+		await expect
+			.poll(async () => {
+				const stored = await readAgent(accountId, "support");
+				return [skillFlag(stored, "inbox.read"), skillFlag(stored, "inbox.draft_reply")];
+			}, settled)
+			.toEqual([false, false]);
+	} finally {
+		await held.stop();
+	}
+});
+
+test("a timed out skill write restores the server value and keeps the queue moving", async ({
+	page,
+	workspaceUser,
+	accountId,
+}) => {
+	test.setTimeout(90_000);
+	await openAgent(page, workspaceUser, "support");
+	const held = await holdServerPosts(page);
+	try {
+		const control = skillRow(page, "inbox.read").getByRole("button");
+		await control.click();
+		await expect(control).toHaveAttribute("aria-pressed", "false");
+		const next = skillRow(page, "inbox.draft_reply").getByRole("button");
+		await next.click();
+		await expect(next).toHaveAttribute("aria-pressed", "false");
+		await expect(control).toHaveAttribute("aria-pressed", "true", { timeout: PENDING_TASK_WINDOW_MS + 15_000 });
+		await expect(next).toHaveAttribute("aria-pressed", "false");
+		await expect(page).toHaveURL(/\/agents\/support$/);
+		await expect
+			.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.draft_reply"), settled)
+			.toBe(false);
+	} finally {
+		await held.stop();
+	}
+});
+
+test("revise opens overview while its write and a skill write are held", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(60_000);
+	await openAgent(page, workspaceUser, "support");
+	const held = await holdServerPosts(page, 2);
+	try {
+		await skillRow(page, "inbox.read").getByRole("button").click();
+		await expect.poll(() => held.posts.length).toBe(1);
+		await page.getByRole("button", { name: "Ask Master to revise" }).click();
+		await expect(page).toHaveURL(/\/overview$/);
+		await expect.poll(() => held.posts.length).toBe(2);
+		expect((await readAgent(accountId, "support")).proposals).toEqual([]);
+		held.release();
+		await expect.poll(async () => (await readAgent(accountId, "support")).proposals.length, settled).toBe(1);
+	} finally {
+		await held.stop();
+	}
+});
+
+test("queued switches and autonomy coalesce to their latest values", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(90_000);
+	await openAgent(page, workspaceUser, "support");
+	const held = await holdServerPosts(page);
+	try {
+		const skill = skillRow(page, "inbox.read").getByRole("button");
+		await skill.click();
+		await expect.poll(() => held.posts.length).toBe(1);
+		for (const on of [true, false, true]) {
+			await skill.click();
+			await expect(skill).toHaveAttribute("aria-pressed", String(on));
+		}
+		for (const on of [false, true, false]) {
+			await squadSwitch(page).click();
+			await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", String(on));
+			await expect(squadSwitch(page)).toHaveCSS("justify-content", on ? "flex-end" : "flex-start");
+		}
+		const group = page.getByRole("group", { name: "Autonomy" });
+		for (const label of ["Ask first", "Full auto", "Ask first"]) {
+			const option = group.getByRole("button", { name: label, exact: true });
+			await option.click();
+			await expect(option).toHaveAttribute("aria-pressed", "true");
+			await expect(option).toHaveCSS("background-color", "rgb(255, 255, 255)");
+		}
+		await expect(running(page)).toBeVisible();
+		await expect(sandbox(page).getByText("22%", { exact: true })).toBeVisible();
+		await expect(sandbox(page).getByText("18 days", { exact: true })).toBeVisible();
+		held.release();
+		await expect
+			.poll(async () => {
+				const stored = await readAgent(accountId, "support");
+				return [stored.isOn, stored.autonomy, skillFlag(stored, "inbox.read")];
+			}, settled)
+			.toEqual([false, "Ask first", true]);
+		expect(held.posts).toHaveLength(4);
+		await expect(paused(page)).toBeVisible(settled);
+		await reloadAgent(page);
+		await expect(skill).toHaveAttribute("aria-pressed", "true");
+	} finally {
+		await held.stop();
+	}
 });
 
 test("turning on a stopped agent shows Just started", async ({ page, workspaceUser, accountId }) => {
@@ -213,6 +344,7 @@ test("ask to revise adds one proposal and opens overview, and a repeat adds none
 	await page.getByRole("button", { name: "Ask Master to revise" }).click();
 	await expect(page).toHaveURL(/\/overview$/, settled);
 	await expect(page).toHaveTitle("tensquads workspace");
+	await expect.poll(async () => (await readAgent(accountId, "support")).proposals.length, settled).toBe(1);
 	const created = (await readAgent(accountId, "support")).proposals;
 	expect(created).toHaveLength(1);
 	expect(created[0]?.status).toBe("Revising");
@@ -406,119 +538,6 @@ async function openAgent(page: Page, user: WorkspaceUser, agentId: string) {
 	await waitForScreenFonts(page);
 }
 
-function scopeFor(accountId: string) {
-	return { accountId, mode: "account" as const };
-}
-
-function watchedMachine(calls: string[], failStop: boolean) {
-	return (rows: readonly MachineRecord[]) => {
-		const machine = createTestMachine(rows);
-		return {
-			...machine,
-			start(agentId: string) {
-				calls.push(`start:${agentId}`);
-				machine.start(agentId);
-			},
-			stop(agentId: string) {
-				calls.push(`stop:${agentId}`);
-				if (failStop) {
-					throw new Error("The machine did not stop.");
-				}
-				machine.stop(agentId);
-			},
-		};
-	};
-}
-
-async function withDb<T>(work: (db: AppDatabase) => Promise<T>): Promise<T> {
-	const postgres = openPostgres(secretsFor(["testDatabase"]).testDatabase);
-	try {
-		return await work(postgres.db);
-	} finally {
-		await postgres.close();
-	}
-}
-
-interface StoredAgent {
-	readonly isOn: boolean;
-	readonly autonomy: string;
-	readonly cpu: string;
-	readonly uptime: string;
-	readonly skills: readonly { readonly id: string; readonly isOn: boolean }[];
-	readonly proposals: readonly { readonly id: string; readonly status: string; readonly mission: string }[];
-}
-
-async function readAgent(accountId: string, agentId: string): Promise<StoredAgent> {
-	return withDb(async (db) => {
-		const agentRows = await db
-			.select()
-			.from(schema.agents)
-			.where(and(eq(schema.agents.accountId, accountId), eq(schema.agents.id, agentId)));
-		const agent = agentRows[0];
-		if (!agent) {
-			throw new Error(`No agent ${agentId}.`);
-		}
-		const machineRows = await db
-			.select()
-			.from(schema.machines)
-			.where(and(eq(schema.machines.accountId, accountId), eq(schema.machines.agentId, agentId)));
-		const machine = machineRows[0];
-		if (!machine) {
-			throw new Error(`No machine for ${agentId}.`);
-		}
-		const skillRows = await db
-			.select()
-			.from(schema.skills)
-			.where(and(eq(schema.skills.accountId, accountId), eq(schema.skills.agentId, agentId)));
-		const proposalRows = await db
-			.select()
-			.from(schema.missionProposals)
-			.where(eq(schema.missionProposals.accountId, accountId));
-		return {
-			isOn: agent.isOn,
-			autonomy: agent.autonomy,
-			cpu: machine.cpu,
-			uptime: machine.uptime,
-			skills: skillRows.map((row) => ({ id: row.id, isOn: row.isOn })),
-			proposals: proposalRows
-				.filter((row) => row.agent === agentId)
-				.map((row) => ({ id: row.id, status: row.status, mission: row.mission })),
-		};
-	});
-}
-
-function skillFlag(stored: StoredAgent, id: string) {
-	const skill = stored.skills.find((row) => row.id === id);
-	if (!skill) {
-		throw new Error(`No skill ${id}.`);
-	}
-	return skill.isOn;
-}
-
-function countServerPosts(page: Page) {
-	const posts = { count: 0 };
-	page.on("request", (request) => {
-		if (request.method() === "POST" && request.url().includes("/_serverFn/")) {
-			posts.count += 1;
-		}
-	});
-	return posts;
-}
-
-async function clickWhenTheGuardClears(page: Page, posts: { count: number }) {
-	await expect
-		.poll(async () => {
-			const mark = posts.count;
-			await squadSwitch(page).click();
-			const deadline = Date.now() + 1_000;
-			while (posts.count === mark && Date.now() < deadline) {
-				await new Promise((resolve) => setTimeout(resolve, 50));
-			}
-			return posts.count > mark;
-		}, settled)
-		.toBe(true);
-}
-
 async function failServerPosts(page: Page) {
 	let seen = false;
 	let failed = false;
@@ -541,242 +560,3 @@ async function failServerPosts(page: Page) {
 	};
 }
 
-function agentDetailSource() {
-	const source = readFileSync(new URL("../design/Main.dc.html", import.meta.url), "utf8");
-	const start = source.indexOf("<!-- ============ AGENT DETAIL ============ -->");
-	const end = source.indexOf("<!-- ============ TRAFFIC ============ -->");
-	if (start < 0 || end < start) {
-		throw new Error("The agent detail section is missing.");
-	}
-	return designInventory("Main.dc.html", `<x-dc>${source.slice(start, end)}</x-dc>`);
-}
-
-function expectMatch(
-	design: {
-		texts: string[];
-		handlers: { tag: string; event: string; handler: string }[];
-		loops: unknown[];
-		links: unknown[];
-	},
-	built: {
-		texts: string[];
-		handlers: { tag: string; event: string; handler: string }[];
-		loops: unknown[];
-		links: unknown[];
-	},
-) {
-	const diff = compareInventory(design, built);
-	expect(diff.extraTexts).toEqual([]);
-	expect(diff.missingTexts).toEqual([]);
-	expect(diff.extraHandlers).toEqual([]);
-	expect(diff.missingHandlers).toEqual([]);
-	expect(diff.extraLoops).toEqual([]);
-	expect(diff.missingLoops).toEqual([]);
-	expect(diff.extraLinks).toEqual([]);
-	expect(diff.missingLinks).toEqual([]);
-	expect(identities(built.handlers)).toEqual(identities(design.handlers));
-}
-
-function identities(handlers: { tag: string; event: string; handler: string }[]) {
-	return handlers.map((handler) => `${handler.tag}|${handler.event}|${handler.handler}`).sort();
-}
-
-async function sectionInventory(page: Page, selector: string) {
-	const html = await page.locator(selector).evaluate((element) => element.outerHTML);
-	return inventoryHtml(html);
-}
-
-async function renderedDetail(page: Page) {
-	const canvas = await page.context().newPage();
-	try {
-		const html = await renderDesignMarkup(canvas, readInventory("Main"), {
-			view: "agents",
-			agentId: "support",
-			dockOpen: false,
-		});
-		await canvas.setContent(html);
-		await canvas.locator("[data-handler='goAdmin']").evaluate((element) => element.remove());
-		return await sectionInventory(canvas, "[data-if='isAgentDetail']");
-	} finally {
-		await canvas.close();
-	}
-}
-
-async function openDesignDetail(page: Page, width: number, height: number) {
-	const canvas = await page.context().newPage();
-	await installLocalFonts(canvas);
-	await canvas.setViewportSize({ width, height });
-	const body = await renderDesignMarkup(canvas, readInventory("Main"), {
-		view: "agents",
-		agentId: "support",
-		dockOpen: false,
-	});
-	const source = readFileSync(new URL("../design/Main.dc.html", import.meta.url), "utf8");
-	const css = source.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
-	await canvas.setContent(
-		`<!doctype html><html lang="en"><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"><style>${css}x-dc{display:contents}</style></head><body>${body}</body></html>`,
-	);
-	await canvas.locator("[data-handler='goAdmin']").evaluate((element) => element.remove());
-	await canvas.evaluate(() => {
-		for (const node of document.querySelectorAll("[data-loop], [data-if]")) {
-			if (node instanceof HTMLElement) node.style.setProperty("display", "contents");
-		}
-	});
-	await waitForScreenFonts(canvas);
-	return canvas;
-}
-
-interface Box {
-	readonly x: number;
-	readonly y: number;
-	readonly width: number;
-	readonly height: number;
-	readonly right: number;
-	readonly bottom: number;
-}
-
-interface DetailBoxes {
-	readonly column: Box | null;
-	readonly childGaps: readonly number[];
-	readonly kpiBoxes: readonly Box[];
-	readonly kpiGaps: readonly number[];
-	readonly skills: Box | null;
-	readonly sandbox: Box | null;
-	readonly squadSwitch: Box | null;
-	readonly skillSwitch: Box | null;
-}
-
-function expectNear(actual: number, expected: number, label: string) {
-	expect(Math.abs(actual - expected), `${label}: build ${actual}, design ${expected}`).toBeLessThanOrEqual(0.5);
-}
-
-function expectDetail(built: DetailBoxes, design: DetailBoxes, name: string) {
-	expect(design.column, `${name} design column`).not.toBeNull();
-	expect(built.column, `${name} build column`).not.toBeNull();
-	expect(design.column?.width ?? 0).toBeGreaterThan(0);
-	expectNear(built.column?.width ?? 0, design.column?.width ?? 0, `${name} column width`);
-	expectNear(built.column?.x ?? 0, design.column?.x ?? 0, `${name} column x`);
-	expect(design.childGaps.length).toBeGreaterThan(0);
-	expect(built.childGaps.length).toBe(design.childGaps.length);
-	for (const [index, gap] of built.childGaps.entries()) {
-		expect(design.childGaps[index] ?? 0).toBeGreaterThan(0);
-		expectNear(gap, design.childGaps[index] ?? 0, `${name} column gap ${index}`);
-	}
-	expect(design.kpiBoxes.length).toBeGreaterThan(1);
-	expect(built.kpiBoxes.length).toBe(design.kpiBoxes.length);
-	for (const [index, box] of built.kpiBoxes.entries()) {
-		const target = design.kpiBoxes[index];
-		expect(target?.width ?? 0).toBeGreaterThan(0);
-		expectNear(box.x, target?.x ?? 0, `${name} kpi ${index} x`);
-		expectNear(box.y, target?.y ?? 0, `${name} kpi ${index} y`);
-		expectNear(box.width, target?.width ?? 0, `${name} kpi ${index} width`);
-	}
-	expect(built.kpiGaps.length).toBe(design.kpiGaps.length);
-	expect(design.kpiGaps[0] ?? 0).toBeGreaterThan(0);
-	for (const [index, gap] of built.kpiGaps.entries()) {
-		expectNear(gap, design.kpiGaps[index] ?? 0, `${name} kpi gap ${index}`);
-	}
-	expectBox(built.skills, design.skills, `${name} skills`);
-	expectBox(built.sandbox, design.sandbox, `${name} sandbox`);
-	const designGap = pairGap(design.skills, design.sandbox);
-	expect(designGap).toBeGreaterThan(0);
-	expectNear(pairGap(built.skills, built.sandbox), designGap, `${name} skills sandbox gap`);
-	if (name === "1440") {
-		expect(design.sandbox?.x ?? 0).toBeGreaterThan(design.skills?.right ?? 0);
-	}
-	if (name === "390") {
-		expect(design.sandbox?.y ?? 0).toBeGreaterThan(design.skills?.bottom ?? 0);
-	}
-	expect(design.skillSwitch?.width ?? 0).toBeGreaterThan(0);
-	expect(design.squadSwitch?.width ?? 0).toBeGreaterThan(design.skillSwitch?.width ?? 0);
-	expect(design.squadSwitch?.height ?? 0).toBeGreaterThan(0);
-	expectNear(built.squadSwitch?.width ?? 0, design.squadSwitch?.width ?? 0, `${name} squad switch width`);
-	expectNear(built.squadSwitch?.height ?? 0, design.squadSwitch?.height ?? 0, `${name} squad switch height`);
-	expectNear(built.skillSwitch?.width ?? 0, design.skillSwitch?.width ?? 0, `${name} skill switch width`);
-	expectNear(built.skillSwitch?.height ?? 0, design.skillSwitch?.height ?? 0, `${name} skill switch height`);
-}
-
-function expectBox(built: Box | null, design: Box | null, label: string) {
-	expect(design, `${label} design`).not.toBeNull();
-	expect(built, `${label} build`).not.toBeNull();
-	expect(design?.width ?? 0).toBeGreaterThan(0);
-	expectNear(built?.x ?? 0, design?.x ?? 0, `${label} x`);
-	expectNear(built?.y ?? 0, design?.y ?? 0, `${label} y`);
-	expectNear(built?.width ?? 0, design?.width ?? 0, `${label} width`);
-	expectNear(built?.height ?? 0, design?.height ?? 0, `${label} height`);
-}
-
-function pairGap(skills: Box | null, sandbox: Box | null) {
-	const left = skills ?? { x: 0, y: 0, width: 0, height: 0, right: 0, bottom: 0 };
-	const right = sandbox ?? { x: 0, y: 0, width: 0, height: 0, right: 0, bottom: 0 };
-	if (right.x >= left.right - 1) {
-		return right.x - left.right;
-	}
-	return right.y - left.bottom;
-}
-
-async function measureDetail(page: Page): Promise<DetailBoxes> {
-	return page.evaluate(() => {
-		const boxOf = (element: Element) => {
-			const box = element.getBoundingClientRect();
-			return { x: box.x, y: box.y, width: box.width, height: box.height, right: box.right, bottom: box.bottom };
-		};
-		const findBox = (selector: string) => {
-			const element = document.querySelector(selector);
-			return element ? boxOf(element) : null;
-		};
-		const column = document.querySelector("[data-if='isAgentDetail'] > div");
-		const kids = column ? [...column.children] : [];
-		const childGaps = kids.slice(1).map((node, index) => boxOf(node).y - boxOf(kids[index] ?? node).bottom);
-		const cells = [...document.querySelectorAll("section[aria-label='Squad numbers'] [data-loop='sel.kpis'] > div")];
-		const kpiGaps = cells.slice(1).map((cell, index) => {
-			const previous = boxOf(cells[index] ?? cell);
-			const next = boxOf(cell);
-			const sameRow = Math.abs(next.y - previous.y) < 1;
-			return sameRow ? next.x - previous.right : next.y - previous.bottom;
-		});
-		return {
-			column: column ? boxOf(column) : null,
-			childGaps,
-			kpiBoxes: cells.map((cell) => boxOf(cell)),
-			kpiGaps,
-			skills: findBox("section[aria-label='Skills']"),
-			sandbox: findBox("section[aria-label='Sandbox']"),
-			squadSwitch: findBox("button[aria-label='Squad running']"),
-			skillSwitch: findBox("button[aria-label='Skill enabled']"),
-		};
-	});
-}
-
-async function shot(page: Page) {
-	return page.screenshot({ fullPage: true, animations: "disabled", caret: "hide", scale: "css" });
-}
-
-function pngSize(image: Buffer) {
-	return { width: image.readUInt32BE(16), height: image.readUInt32BE(20) };
-}
-
-async function stitch(page: Page, design: Buffer, build: Buffer, file: string) {
-	const board = await page.context().newPage();
-	const left = pngSize(design);
-	const right = pngSize(build);
-	try {
-		await board.route("https://evidence.local/design.png", (route) =>
-			route.fulfill({ contentType: "image/png", body: design }),
-		);
-		await board.route("https://evidence.local/build.png", (route) =>
-			route.fulfill({ contentType: "image/png", body: build }),
-		);
-		await board.setViewportSize({
-			width: left.width + right.width,
-			height: Math.max(left.height, right.height),
-		});
-		await board.setContent(
-			'<!doctype html><html><body style="margin:0;display:flex;background:#fff"><img alt="Design" src="https://evidence.local/design.png"><img alt="Build" src="https://evidence.local/build.png"></body></html>',
-		);
-		await board.locator("img").nth(1).waitFor();
-		await board.screenshot({ path: file, fullPage: true, animations: "disabled", caret: "hide", scale: "css" });
-	} finally {
-		await board.close();
-	}
-}

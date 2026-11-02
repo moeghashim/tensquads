@@ -110,7 +110,7 @@ export interface AgentDetailView {
 	}[];
 }
 
-function autonomyStyle(on: boolean): string {
+export function autonomyStyle(on: boolean): string {
 	const color = on ? "#0d0d0d" : "#5d5d5d";
 	const background = on ? "#fff" : "transparent";
 	const shadow = on ? "0 1px 2px rgba(0,0,0,.12)" : "none";
