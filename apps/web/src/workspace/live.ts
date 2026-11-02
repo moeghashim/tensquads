@@ -17,6 +17,14 @@ export function registerTrafficAdvance(fn: Advance) {
 let pending = false;
 let queuedEventId = "";
 
+interface QueuedClick {
+	readonly refresh: () => void | Promise<void>;
+	readonly resolve: () => void;
+	readonly reject: (error: unknown) => void;
+}
+
+const clicks: QueuedClick[] = [];
+
 function noteSelection(id: string) {
 	if (id.length > 0) queuedEventId = id;
 }
@@ -27,7 +35,7 @@ export function consumeQueuedEvent(): string {
 	return id;
 }
 
-// The provider keeps bounded() private. This race is the same 30 second window.
+// Advance and refresh each wait up to 30 seconds, so one step can take 60.
 function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
 	const controller = new AbortController();
 	let timer: ReturnType<typeof setTimeout> | undefined;
@@ -64,21 +72,42 @@ async function step(refresh: () => void | Promise<void>): Promise<void> {
 	}
 }
 
-async function runStep(refresh: () => void | Promise<void>): Promise<void> {
+function pump(): void {
+	if (pending) return;
+	const next = clicks.shift();
+	if (!next) return;
 	pending = true;
+	void runOwned(next.refresh, next);
+}
+
+async function runOwned(refresh: () => void | Promise<void>, done: QueuedClick | null): Promise<void> {
 	try {
 		await step(refresh);
+		done?.resolve();
+	} catch (error) {
+		if (done) {
+			done.reject(error);
+			return;
+		}
+		throw error;
 	} finally {
 		pending = false;
+		// Resolve the click before the next advance notes its id.
+		queueMicrotask(() => {
+			pump();
+		});
 	}
 }
 
 export async function runLiveTick(tick: LiveTick): Promise<void> {
-	if (!tick.live || pending) return;
-	await runStep(tick.refresh);
+	if (!tick.live || pending || clicks.length > 0) return;
+	pending = true;
+	await runOwned(tick.refresh, null);
 }
 
-export async function sendNextEvent(refresh: () => void | Promise<void>): Promise<void> {
-	if (pending) return;
-	await runStep(refresh);
+export function sendNextEvent(refresh: () => void | Promise<void>): Promise<void> {
+	return new Promise((resolve, reject) => {
+		clicks.push({ refresh, resolve, reject });
+		pump();
+	});
 }

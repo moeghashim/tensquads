@@ -15,10 +15,11 @@ export const state = (v) => {
 	return name;
 };
 
-const hidden = new Set(["Pause", "Resume", "Repeat"]);
+const hidden = new Set(["Pause", "Resume", "Repeat", "SendWhileWaiting"]);
 
 const labels = {
 	SendNext: "the next event",
+	QueuedSend: "the next event",
 	LiveCommit: "the next event",
 	LiveStart: "the live tick starts",
 	LiveExpire: "the wait ends",

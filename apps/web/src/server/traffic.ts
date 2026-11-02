@@ -54,14 +54,10 @@ export const loadTraffic = createServerFn({ method: "GET" }).handler(async (): P
 });
 
 export const advanceTraffic = createServerFn({ method: "POST" }).handler(async (): Promise<string> => {
+	const startedAt = Date.now();
 	const { requireWorkspace } = await import("./workspace-session.ts");
 	return requireWorkspace(async (scope, db) => {
-		const { createRepositories } = await import("@tensquads/adapters");
-		const { Kernel } = await import("@tensquads/kernel");
-		const repositories = createRepositories(db);
-		const before = new Set((await repositories.bus.listEvents(scope)).map((event) => event.id));
-		await new Kernel(repositories).nextEvent(scope);
-		const after = await repositories.bus.listEvents(scope);
-		return after.filter((event) => !before.has(event.id)).at(-1)?.id ?? "";
+		const { advanceTrafficAccount } = await import("./traffic-step.ts");
+		return advanceTrafficAccount(db, scope, startedAt);
 	});
 });

@@ -40,7 +40,9 @@ export class Kernel {
 					}),
 				);
 			} else if (plugin === bus) {
-				fibers.push(this.context.plugin(bus, { nextEvent: (scope) => this.advance(scope) }));
+				fibers.push(
+					this.context.plugin(bus, { nextEvent: (scope, deadlineAt) => this.advance(scope, deadlineAt) }),
+				);
 			} else {
 				fibers.push(this.context.plugin(plugin));
 			}
@@ -63,16 +65,18 @@ export class Kernel {
 		return (this.context.get("workspaceConversation") as ConversationCommands).finishSend(scope, taskId);
 	}
 
-	async nextEvent(scope: AccountScope): Promise<void> {
+	async nextEvent(scope: AccountScope, deadlineAt?: number): Promise<void> {
 		await this.ready;
-		return (this.context.get("workspaceBus") as BusCommands).nextEvent(scope);
+		return (this.context.get("workspaceBus") as BusCommands).nextEvent(scope, deadlineAt);
 	}
 
 	// ports.ts lists no nextEvent. The repository bag has it. The cast stays on this call.
-	private advance(scope: AccountScope): Promise<void> {
+	private advance(scope: AccountScope, deadlineAt?: number): Promise<void> {
 		if (!this.repositories) throw new Error("Repositories are not configured.");
-		const port = this.repositories.bus as unknown as { nextEvent(scope: AccountScope): Promise<void> };
-		return port.nextEvent(scope);
+		const port = this.repositories.bus as unknown as {
+			nextEvent(scope: AccountScope, deadlineAt?: number): Promise<void>;
+		};
+		return port.nextEvent(scope, deadlineAt);
 	}
 
 	pluginNames(): readonly string[] {

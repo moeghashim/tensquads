@@ -101,14 +101,21 @@ async function writeNextEvent(tx: Tx, accountId: string): Promise<void> {
 	await saveCursor(tx, accountId, memory.cursor());
 }
 
-export async function nextEvent(db: AppDatabase, scope: AccountScope): Promise<void> {
+const unfinished = "The workspace write did not finish.";
+
+export async function nextEvent(db: AppDatabase, scope: AccountScope, deadlineAt?: number): Promise<void> {
 	const checked = requireScope(scope);
 	if (checked.mode !== "account") return;
+	const absolute = deadlineAt ?? Date.now() + PENDING_TASK_WINDOW_MS;
+	const remaining = absolute - Date.now();
+	// A lock_timeout of 0 waits forever, so a few milliseconds left is already late.
+	if (remaining < 4) throw new Error(unfinished);
 	await workspaceTransaction(
 		db,
-		async (tx) => {
+		async (tx, constrainDeadline) => {
+			constrainDeadline(absolute);
 			await writeNextEvent(tx, checked.accountId);
 		},
-		{ deadlineMs: PENDING_TASK_WINDOW_MS },
+		{ deadlineMs: remaining },
 	);
 }

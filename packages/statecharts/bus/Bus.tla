@@ -5,6 +5,8 @@
 \* An id seen before changes nothing.
 \* A dead letter makes one Escalation.
 \* appendEvents writes the row and the store together. A repeat does not write.
+\* A click during a wait is queued. The next idle step runs that one click.
+\* A live tick does not queue. The code queues every click. This model keeps one.
 \* # model: packages/domain/src/bus/traffic-commands.ts
 \* # model: packages/adapters/src/neon/commands/traffic.ts
 \* # model: packages/adapters/src/memory-bus.ts
@@ -17,11 +19,11 @@ EXTENDS Integers
 
 VARIABLES
     delivery, playback, selected, hidden, count, applied, appended,
-    repeat, escalation, guard,
+    repeat, escalation, guard, manual,
     snapCount, snapApplied, snapDelivery, snapEscalation
 vars == <<
     delivery, playback, selected, hidden, count, applied, appended,
-    repeat, escalation, guard,
+    repeat, escalation, guard, manual,
     snapCount, snapApplied, snapDelivery, snapEscalation
 >>
 
@@ -31,7 +33,7 @@ Selections == {"none", "held"}
 Bits == {0, 1}
 Guards == {"idle", "waiting"}
 
-CanAdd == repeat = FALSE /\ count = 0 /\ delivery = "ready" /\ guard = "idle"
+CanAdd == repeat = FALSE /\ count = 0 /\ delivery = "ready" /\ guard = "idle" /\ manual = 0
 WaitingAdd == repeat = FALSE /\ count = 0 /\ delivery = "ready" /\ guard = "waiting"
 
 TypeOK ==
@@ -45,6 +47,7 @@ TypeOK ==
     /\ repeat \in BOOLEAN
     /\ escalation \in Bits
     /\ guard \in Guards
+    /\ manual \in Bits
     /\ snapCount \in Bits
     /\ snapApplied \in BOOLEAN
     /\ snapDelivery \in Deliveries
@@ -91,6 +94,7 @@ Init ==
     /\ repeat = FALSE
     /\ escalation = 0
     /\ guard = "idle"
+    /\ manual = 0
     /\ snapCount = 0
     /\ snapApplied = FALSE
     /\ snapDelivery = "ready"
@@ -109,35 +113,58 @@ Added ==
 SendNext ==
     /\ CanAdd
     /\ Added
+    /\ manual' = 0
 
 LiveStart ==
     /\ playback = "Live"
     /\ guard = "idle"
+    /\ manual = 0
     /\ guard' = "waiting"
-    /\ UNCHANGED <<delivery, playback, selected, hidden, count, applied, appended, repeat, escalation, snapCount, snapApplied, snapDelivery, snapEscalation>>
+    /\ UNCHANGED <<delivery, playback, selected, hidden, count, applied, appended, repeat, escalation, manual, snapCount, snapApplied, snapDelivery, snapEscalation>>
+
+\* A click during an open request waits. It does not start a second request.
+SendWhileWaiting ==
+    /\ guard = "waiting"
+    /\ manual = 0
+    /\ count = 0
+    /\ delivery = "ready"
+    /\ repeat = FALSE
+    /\ manual' = 1
+    /\ UNCHANGED <<delivery, playback, selected, hidden, count, applied, appended, repeat, escalation, guard, snapCount, snapApplied, snapDelivery, snapEscalation>>
+
+\* The queued click runs once the guard is idle and the one event can still be added.
+QueuedSend ==
+    /\ manual = 1
+    /\ guard = "idle"
+    /\ count = 0
+    /\ delivery = "ready"
+    /\ repeat = FALSE
+    /\ Added
+    /\ manual' = 0
 
 LiveCommit ==
     /\ WaitingAdd
     /\ Added
+    /\ UNCHANGED <<manual>>
 
 LiveExpire ==
     /\ guard = "waiting"
     /\ guard' = "idle"
-    /\ UNCHANGED <<delivery, playback, selected, hidden, count, applied, appended, repeat, escalation, snapCount, snapApplied, snapDelivery, snapEscalation>>
+    /\ UNCHANGED <<delivery, playback, selected, hidden, count, applied, appended, repeat, escalation, manual, snapCount, snapApplied, snapDelivery, snapEscalation>>
 
 Stage ==
     /\ CanAdd
     /\ delivery' = "queued"
     /\ selected' = "held"
     /\ count' = 1
-    /\ UNCHANGED <<playback, hidden, applied, appended, repeat, escalation, guard, snapCount, snapApplied, snapDelivery, snapEscalation>>
+    /\ UNCHANGED <<playback, hidden, applied, appended, repeat, escalation, guard, manual, snapCount, snapApplied, snapDelivery, snapEscalation>>
 
 Deliver ==
     /\ delivery = "queued"
     /\ repeat = FALSE
     /\ guard = "idle"
     /\ delivery' = "delivered"
-    /\ UNCHANGED <<playback, selected, hidden, count, applied, appended, repeat, escalation, guard, snapCount, snapApplied, snapDelivery, snapEscalation>>
+    /\ UNCHANGED <<playback, selected, hidden, count, applied, appended, repeat, escalation, guard, manual, snapCount, snapApplied, snapDelivery, snapEscalation>>
 
 Ack ==
     /\ delivery = "delivered"
@@ -146,7 +173,7 @@ Ack ==
     /\ delivery' = "acknowledged"
     /\ applied' = TRUE
     /\ appended' = TRUE
-    /\ UNCHANGED <<playback, selected, hidden, count, repeat, escalation, guard, snapCount, snapApplied, snapDelivery, snapEscalation>>
+    /\ UNCHANGED <<playback, selected, hidden, count, repeat, escalation, guard, manual, snapCount, snapApplied, snapDelivery, snapEscalation>>
 
 Dead ==
     /\ delivery \in {"queued", "delivered"}
@@ -154,7 +181,7 @@ Dead ==
     /\ guard = "idle"
     /\ delivery' = "dead"
     /\ escalation' = 1
-    /\ UNCHANGED <<playback, selected, hidden, count, applied, appended, repeat, guard, snapCount, snapApplied, snapDelivery, snapEscalation>>
+    /\ UNCHANGED <<playback, selected, hidden, count, applied, appended, repeat, guard, manual, snapCount, snapApplied, snapDelivery, snapEscalation>>
 
 Filter ==
     /\ selected = "held"
@@ -162,13 +189,13 @@ Filter ==
     /\ guard = "idle"
     /\ delivery \in {"acknowledged", "dead"}
     /\ hidden' = TRUE
-    /\ UNCHANGED <<delivery, playback, selected, count, applied, appended, repeat, escalation, guard, snapCount, snapApplied, snapDelivery, snapEscalation>>
+    /\ UNCHANGED <<delivery, playback, selected, count, applied, appended, repeat, escalation, guard, manual, snapCount, snapApplied, snapDelivery, snapEscalation>>
 
 Clear ==
     /\ hidden = TRUE
     /\ guard = "idle"
     /\ hidden' = FALSE
-    /\ UNCHANGED <<delivery, playback, selected, count, applied, appended, repeat, escalation, guard, snapCount, snapApplied, snapDelivery, snapEscalation>>
+    /\ UNCHANGED <<delivery, playback, selected, count, applied, appended, repeat, escalation, guard, manual, snapCount, snapApplied, snapDelivery, snapEscalation>>
 
 Repeat ==
     /\ repeat = FALSE
@@ -180,21 +207,23 @@ Repeat ==
     /\ snapApplied' = applied
     /\ snapDelivery' = delivery
     /\ snapEscalation' = escalation
-    /\ UNCHANGED <<delivery, playback, selected, hidden, count, applied, appended, escalation, guard>>
+    /\ UNCHANGED <<delivery, playback, selected, hidden, count, applied, appended, escalation, guard, manual>>
 
 Pause ==
     /\ playback = "Live"
     /\ playback' = "Paused"
-    /\ UNCHANGED <<delivery, selected, hidden, count, applied, appended, repeat, escalation, guard, snapCount, snapApplied, snapDelivery, snapEscalation>>
+    /\ UNCHANGED <<delivery, selected, hidden, count, applied, appended, repeat, escalation, guard, manual, snapCount, snapApplied, snapDelivery, snapEscalation>>
 
 Resume ==
     /\ playback = "Paused"
     /\ playback' = "Live"
-    /\ UNCHANGED <<delivery, selected, hidden, count, applied, appended, repeat, escalation, guard, snapCount, snapApplied, snapDelivery, snapEscalation>>
+    /\ UNCHANGED <<delivery, selected, hidden, count, applied, appended, repeat, escalation, guard, manual, snapCount, snapApplied, snapDelivery, snapEscalation>>
 
 Next ==
     \/ SendNext
     \/ LiveStart
+    \/ SendWhileWaiting
+    \/ QueuedSend
     \/ LiveCommit
     \/ LiveExpire
     \/ Stage
@@ -209,5 +238,10 @@ Next ==
 
 WaitEnds == [](guard = "waiting" => <>(guard = "idle"))
 
-Spec == Init /\ [][Next]_vars /\ WF_vars(LiveExpire)
+\* A queued click runs once the guard is idle and the one event can still be added.
+QueuedClickRuns ==
+    [](manual = 1 /\ guard = "idle" /\ count = 0 /\ delivery = "ready" /\ repeat = FALSE
+        => <>(manual = 0 /\ count = 1 /\ delivery = "acknowledged"))
+
+Spec == Init /\ [][Next]_vars /\ WF_vars(LiveExpire) /\ WF_vars(QueuedSend)
 ====

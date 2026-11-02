@@ -1,11 +1,6 @@
 export type { BusAppended, BusDomainEvent } from "./bus/events.ts";
 export type { BusRepository } from "./bus/repository.ts";
-export {
-	type NextEventCommand,
-	planNextEvent,
-	type TrafficCursor,
-	type TrafficScriptStep,
-} from "./bus/traffic-commands.ts";
+export { type NextEventCommand, planNextEvent, type TrafficCursor } from "./bus/traffic-commands.ts";
 export type { BusEvent, BusKind, StateEntry } from "./bus/types.ts";
 export type { CatalogEvent, ImageSelected } from "./catalog/events.ts";
 export type { CatalogRepository } from "./catalog/repository.ts";

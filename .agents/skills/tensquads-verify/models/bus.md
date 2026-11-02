@@ -1,6 +1,6 @@
 # Bus event and shared state
 
-`nextEvent()` adds one event and applies all of its writes in one step. Live and Send next event take that same step. A filter can remove the selected row from the list. The inspector keeps the event. An id seen before changes nothing. A dead letter makes one Escalation. `appendEvents` writes the row and the store together. A repeat id does not write. The test adapter passes from Queued to Acknowledged in one step. Queued, Delivered, and Dead letter are in the model. The screen does not show them. The in-memory bus does not dead-letter. A live tick waits at most 30 seconds, then the guard clears. The wait is weakly fair, so the tick cannot stay waiting.
+`nextEvent()` adds one event and applies all of its writes in one step. Live and Send next event take that same step. A filter can remove the selected row from the list. The inspector keeps the event. An id seen before changes nothing. A dead letter makes one Escalation. `appendEvents` writes the row and the store together. A repeat id does not write. The test adapter passes from Queued to Acknowledged in one step. Queued, Delivered, and Dead letter are in the model. The screen does not show them. The in-memory bus does not dead-letter. A click during an open request is queued. Each click runs one advance, in order, one at a time. A live tick does not queue: a tick while a request is open is skipped, so ticks never pile up. Advance and refresh each wait at most 30 seconds, in sequence, so the guard clears within about 60 seconds in the worst case. The wait is weakly fair, so a queued click or a timed-out tick cannot stay waiting.
 
 The chart hides Pause, Resume, and Repeat. It also hides a live tick that starts away from Ready, a wait that ends away from Ready, and a filter on a delivery the screen does not show. Pause and Resume keep the playback. Repeat records the current event and changes nothing.
 
@@ -40,19 +40,19 @@ TLC does not read `traffic.ts`. A pass of the model does not prove the TypeScrip
 
 ## What a failure means
 
-A model failure is a path of Send next event, a live tick, a wait that ends, a queue, a delivery, an acknowledgement, a dead letter, a filter, or a repeat. Replay that path in `nextEvent` and `runLiveTick`. If the code can do the path, the code is wrong. If the code cannot do a step, the model is wrong. Say which. A fault in `appendEvents` stops the work. Its signature does not change.
+A model failure is a path of Send next event, a queued click, a live tick, a wait that ends, a queue, a delivery, an acknowledgement, a dead letter, a filter, or a repeat. Replay that path in `nextEvent` and `runLiveTick`. If the code can do the path, the code is wrong. If the code cannot do a step, the model is wrong. Say which. A fault in `appendEvents` stops the work. Its signature does not change.
 
 ## Keep the check in step
 
 | Check | Covers | Result |
 | --- | --- | --- |
 | `traffic.test.ts` | one row, all writes, one transaction, a repeat id | exit 0 |
-| `/statechart` on `Bus.tla` | one step, the inspector, a repeat id, one escalation, the 30 second wait | TLC reached 44 states and 115 steps |
+| `/statechart` on `Bus.tla` | one step, the inspector, a repeat id, one escalation, one queued click, the 60 second guard | TLC reached 56 states and 147 steps |
 
-The checks name no commit, so a later head does not make this note stale. TLC named no broken rule. The rules are TypeOK, WritesMatch, AppendsWithWrites, OneEscalation, FilterKeepsInspector, RepeatHolds, NoDeadlock, and WaitEnds. The chart draws 8 states and 13 arrows. The view hides 82 steps.
+The checks name no commit, so a later head does not make this note stale. TLC named no broken rule. The rules are TypeOK, WritesMatch, AppendsWithWrites, OneEscalation, FilterKeepsInspector, RepeatHolds, NoDeadlock, WaitEnds, and QueuedClickRuns. The chart draws 8 states and 13 arrows. The view hides 100 steps.
 
 Update this note when the model or the bus rules change. Record the TLC counts from that run. Do not name a commit.
 
 ## Bounds
 
-The model tracks one event. `count` is 0 or 1. A repeat does not add a second row. The code test walks the eight-event script and the wrap. The clock, the event ids, and the store values are in the code test. The model does not count the hub, the chips, or the artboard. The browser check covers Live on another page, Send next event, a hung request, and the empty bus.
+The model tracks one event. `count` is 0 or 1. A repeat does not add a second row. The model keeps one queued Send. The code queues every click. A live tick does not queue. The second row after a live commit is outside the one-event bound. The model does not model the pre-transaction server read, real elapsed time, or every queued click. The code test walks the eight-event script and the wrap. The clock, the event ids, and the store values are in the code test. The model does not count the hub, the chips, or the artboard. The browser check covers Live on another page, Send next event, a hung request, and the empty bus.
