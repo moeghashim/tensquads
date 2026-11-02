@@ -849,8 +849,13 @@ test("snapshot: a held failure read preserves newer write responses", async () =
 				window.ruleRow({ id: `r${id}`, action: `Seed ${id}`, on: true }),
 			);
 			window.adLimit = {
-				id: "lim-ads", key: "policy.daily_ad_cap", label: "Total ad spend per day",
-				min: 0, max: 1000, step: 10, value: 200,
+				id: "lim-ads",
+				key: "policy.daily_ad_cap",
+				label: "Total ad spend per day",
+				min: 0,
+				max: 1000,
+				step: 10,
+				value: 200,
 			};
 			window.loadRules(window.seedRules);
 			window.loadLimits([window.adLimit]);
@@ -932,9 +937,14 @@ test("snapshot: reversed add responses keep numeric rule order before pending ro
 	await withPage(async (page) => {
 		await holdAdds(page);
 		await page.evaluate(async () => {
-			window.loadRules([window.ruleRow({ id: "r1", action: "First seed" }), window.ruleRow({ id: "r2", action: "Second seed" })]);
+			window.loadRules([
+				window.ruleRow({ id: "r1", action: "First seed" }),
+				window.ruleRow({ id: "r2", action: "Second seed" }),
+			]);
 			window.refreshCalls = 0;
-			window.refresh = async () => { window.refreshCalls += 1; };
+			window.refresh = async () => {
+				window.refreshCalls += 1;
+			};
 			await window.flush();
 		});
 		const action = page.getByLabel("Then", { exact: true });
@@ -955,7 +965,13 @@ test("snapshot: reversed add responses keep numeric rule order before pending ro
 		});
 		const rows = page.locator('section[aria-label="Rules"] [data-loop="rules"] > div');
 		await expect(rows).toHaveCount(5);
-		for (const [index, text] of ["First seed", "Second seed", "Earlier saved", "Later saved", "Still pending"].entries()) {
+		for (const [index, text] of [
+			"First seed",
+			"Second seed",
+			"Earlier saved",
+			"Later saved",
+			"Still pending",
+		].entries()) {
 			await expect(rows.nth(index)).toContainText(text);
 		}
 		assert.equal(await page.evaluate(() => window.refreshCalls), 0);
