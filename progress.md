@@ -538,3 +538,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-02 landing-holding: The holding Worker stays as deployed. Biome and Fallow skip apps/landing only. Customer sites use <slug>.10squads.com.
 - 2026-11-02 02-agents: The Squads page shows one card per agent, and a card opens that agent's dashboard. The frame test clicks the sidebar Inventory row. The agents read is a second request besides the frame's six queries.
 - 2026-11-02 02-chat: The chat page and the dock share thread dock and one draft. The page shows the thread, four chips, the input, and the last six bus events. A page send uses the frame send path. One marketing message moves the Tasks done sum from 331 to 332. The chat-dock model has no changes.
+- 2026-11-02 02-traffic: Squad traffic shows the hub, the event list, the inspector, and the shared state. nextEvent adds one event and its writes in one step. TLC reached 44 states and 115 steps with no broken rule.

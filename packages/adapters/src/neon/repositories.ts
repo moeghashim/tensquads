@@ -92,7 +92,7 @@ export function createRepositories(db: AppDatabase): RepositoryBag {
 		bus: {
 			listEvents: (scope) => listEvents(db, scope),
 			readStore: (scope) => readStore(db, scope),
-			nextEvent: (scope) => nextEvent(db, scope),
+			nextEvent: (scope, deadlineAt) => nextEvent(db, scope, deadlineAt),
 		},
 		policy: {
 			listRules: (scope) => listRules(db, scope),

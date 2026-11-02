@@ -35,6 +35,7 @@ Dark theme values are not copied. `transparent` and `none` are CSS keywords and 
 | `rgba(13,13,13,.15)` | `--color-rgba-13-13-13-15` | Onboarding.dc.html |
 | `rgba(13,13,13,.16)` | `--color-rgba-13-13-13-16` | Main.dc.html |
 | `rgba(13,13,13,.18)` | `--color-rgba-13-13-13-18` | Home.dc.html |
+| `rgba(13,13,13,.2)` | `--color-rgba-13-13-13-2` | Home.dc.html, Main.dc.html |
 | `rgba(13,13,13,.24)` | `--color-rgba-13-13-13-24` | Main.dc.html |
 | `rgba(252,252,252,.9)` | `--color-rgba-252-252-252-9` | Home.dc.html |
 | `rgba(255,255,255,.12)` | `--color-rgba-255-255-255-12` | Home.dc.html |

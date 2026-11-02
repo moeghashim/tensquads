@@ -8,10 +8,13 @@ interface QueryLogger {
 	logQuery(query: string, params: unknown[]): void;
 }
 
-export async function openPglite(logger?: QueryLogger): Promise<{ db: AppDatabase; close: () => Promise<void> }> {
+export async function openPglite(
+	logger?: QueryLogger,
+): Promise<{ client: PGlite; db: AppDatabase; close: () => Promise<void> }> {
 	const client = new PGlite();
 	await client.exec(migrationSql);
 	return {
+		client,
 		db: drizzlePglite(client, { schema, logger }),
 		close: async () => {
 			await client.close();

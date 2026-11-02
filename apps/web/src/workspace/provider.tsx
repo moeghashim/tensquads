@@ -11,6 +11,7 @@ import {
 	useSyncExternalStore,
 } from "react";
 
+import { refreshTraffic } from "#/screens/traffic/refresh.ts";
 import { beginWorkspaceSend, finishWorkspaceSend } from "#/server/workspace.ts";
 
 import { missionBits } from "./agent-view.ts";
@@ -228,9 +229,9 @@ function InspectBridge({ children }: { readonly children: ReactNode }) {
 }
 
 function LiveTimer() {
-	const live = useWorkspace().live;
+	const { live, setSelEvent } = useWorkspace();
 	const refresh = useRefresh();
-	useLiveClock(live, refresh);
+	useLiveClock(live, refreshTraffic(refresh, setSelEvent));
 	return null;
 }
 

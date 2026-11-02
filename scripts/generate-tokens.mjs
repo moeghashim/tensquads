@@ -342,10 +342,12 @@ function inlineColorRows(files, colorNames) {
 	const colors = collectColors(files);
 	const colorRows = [];
 	for (const [key, entry] of colors) {
-		if (colorNames.has(key)) {
+		const value = chooseSpelling(entry);
+		// --alpha-20 is #0d0d0d33. That is the same colour as rgba(13,13,13,.2).
+		// The traffic design writes the rgba spelling, so the override list keeps that name.
+		if (colorNames.has(key) && value !== "rgba(13,13,13,.2)") {
 			continue;
 		}
-		const value = chooseSpelling(entry);
 		const name = `color-${slug(value)}`;
 		colorRows.push({ value, name, files: [...entry.files].sort() });
 	}

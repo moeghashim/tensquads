@@ -6,6 +6,19 @@ Branch: `02-traffic`. One pull request. One builder agent. Starts only when 02-f
 
 `/traffic` shows the messaging rules, the hub of master and agents, the filter chips, the event list, the inspector with payload and state writes, the shared state table, the Live toggle and "Send next event". `nextEvent()` runs in the Bus plug-in. It adds one event and applies its writes in one step. It matches the design at 1440 px and 390 px. `make verify` returns 0.
 
+## Orchestrator decisions
+
+Moe delegated these build questions. Each item uses the recommended answer. These decisions are final for this screen.
+
+1. Add `--color-rgba-13-13-13-2` and one `OVERRIDES.md` row for `rgba(13,13,13,.2)`.
+2. A filter may hide the selected row. The inspector keeps the event. The model rule covers the inspector, not the row.
+3. An empty bus shows both inspector cards, with headings, blank values, and "None", and no list rows. The kind pill is omitted. The mission delta is "None".
+4. The script runs as written. A missing name shows its id. Only real agents get a hub node. Hub counts use the full bus.
+5. `nextEvent()` is a replay. It runs a skill while that agent is off.
+6. The model covers Queued, Delivered, Acknowledged, and Dead letter. The test adapter passes Queued to Acknowledged in one step. The screen does not show those four names.
+
+Frame items 2, 13, 14, and 16 also apply. The traffic command writes to Neon in one transaction. The memory bus for that request is built from the Neon rows. There is no loading state. A failed write reads the data again and shows no new text. Item 3 above replaces the frame's "—" rule for the empty traffic inspector.
+
 ## Read
 
 - `docs/PLAN.md`: Decisions (4, 16, 17 and all others), Architecture ("How agents send messages"), State models (Bus event and shared state, Rules and limits), Phases (phase 2)
