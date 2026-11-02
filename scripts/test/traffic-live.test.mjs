@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
-import { setImmediate } from "node:timers/promises";
 import test from "node:test";
-import { PENDING_TASK_WINDOW_MS } from "../../packages/adapters/src/pending-window.ts";
+import { setImmediate } from "node:timers/promises";
 import {
 	consumeQueuedEvent,
 	registerTrafficAdvance,
 	runLiveTick,
 	sendNextEvent,
 } from "../../apps/web/src/workspace/live.ts";
+import { PENDING_TASK_WINDOW_MS } from "../../packages/adapters/src/pending-window.ts";
 
 const actions = {
 	send: sendNextEvent,
