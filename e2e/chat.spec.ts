@@ -191,10 +191,7 @@ test("the Task is in the panel while finish and the bus read are held", async ({
 	await expect(buttons).toHaveCount(6);
 });
 
-test("an acknowledged Task stays retired after newer loader lists and navigation", async ({
-	page,
-	workspaceUser,
-}) => {
+test("an acknowledged Task stays retired after newer loader lists and navigation", async ({ page, workspaceUser }) => {
 	test.setTimeout(180_000);
 	await openChat(page, workspaceUser);
 	const question = "How did ads do this week?";
