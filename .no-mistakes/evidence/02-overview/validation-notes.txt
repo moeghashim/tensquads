@@ -1,0 +1,18 @@
+Overview local product validation, target 9b9251bc50c65964599d564d2e5e4527152f3064.
+Baseline supplied by outer executor: npm ci && npm test succeeded. It was not repeated.
+No Clerk or database credentials were available. A temporary Vite config ran the actual app with a substitute workspace-session boundary. It provided a demo account and real migrated PGlite PostgreSQL database. No operator data or shared services were accessed. Actual page components, routes, server functions, readers, Kernel, repository commands, transactions, and optimistic queue were executed. This does not validate Clerk authentication or hosted Neon transport.
+
+Initial targeted browser run:
+OVERVIEW_EVIDENCE=1 node_modules/.bin/playwright test --config playwright.local-test.config.ts
+22 passed in 20.6s. Existing overview assertions were copied to a disposable driver; authentication and database-inspection fixture helpers were adapted to the local account. Actual product code remained unchanged. The side-by-side evidence output was redirected to this evidence directory.
+Covered greeting, six tiles, fourteen bars, five agent cards; computed 331/$8,420/34h and online 4 of 5; approve adds task and stores Mandate; decline; empty inbox; mission approve and revise; all four immediate card/badge changes under held requests; queue order; route remount; double-click; failed write and subsequent queued write; empty proposal dash; navigation; rendered inventory; geometry; accessibility; macOS screenshots; side-by-side visual evidence.
+
+Additional browser cases: lost successful response; refresh timeout and later fresh read with another write pending; write timeout; missing-rule transactional rollback; every control reachable by Tab with 2px #0169cc focus and 2px offset; no horizontal overflow at 1440/390; empty-store display; unchanged full frame snapshots at both widths, dock open/closed.
+The initial write-timeout driver used a 15-second response waiter for a deliberate 30-second hold. After increasing only that waiter, the case passed. The first frame driver used an incorrect baseline path. After fixing only that path, all four existing frame baseline checks passed. Neither issue was a product failure. No baseline was updated.
+
+Focused executable checks:
+node --experimental-strip-types --test apps/web/src/screens/overview/actions.test.ts apps/web/src/screens/overview/view.test.ts apps/web/src/server/overview-read.test.ts packages/adapters/test/approvals.test.ts packages/domain/test/decide.test.ts
+41 passed. Includes retained-patch duplicate guard, timeout abort/recovery, outstanding patch retention, query count 12, Mandate transaction rollback, and approval idempotency.
+
+Visual inspection: new design/build side-by-side images at 1440 and 390 were opened and inspected. Both match in layout, copy, and values. Snapshot assertions passed without baseline changes.
+Temporary driver setup, PGlite database, and Vite server are torn down after validation. Driver copies here document the isolation setup.
