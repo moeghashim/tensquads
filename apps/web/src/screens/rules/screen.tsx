@@ -38,8 +38,12 @@ const limitsCard =
 const heading = "margin: 0; font-size: 16px; font-weight: 600; color: #0d0d0d";
 const formGrid = "display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px";
 const fieldLabel = "display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 500; color: #5d5d5d";
+// The system select arrow sits 2px further left on the macOS runner than in the baseline: 18 solid pixels on each of the three arrows, 54 in all. This mark is that arrow. It stays in one place and stays visible.
+const selectChevron =
+	"url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAHCAYAAAAxrNxjAAAAfElEQVR42nXOwQlEIRAD0DQwZXgY0TrFm2BfHhTTTv5hUdj9bI7hkRkAQClFJIWfkFSt9dO31mRmyjlr733x3ls5Z5mZeu8CSbn7xSRF8qLTAQDWWkopycwUY1SMUWamlNLXFQDAnPOCg9Zar7/vcghB7v4fnYwxNOd8oQemymB5D1WdOwAAAABJRU5ErkJggg==')";
 const selectStyle =
-	"height: 32px; border: 0; border-radius: 8px; background: rgba(13,13,13,.08); padding: 0 8px; font: inherit; font-size: 13px; color: #0d0d0d";
+	"height: 32px; border: 0; border-radius: 8px; padding: 0 22px 0 12px; font: inherit; font-size: 13px; color: #0d0d0d; appearance: none; -webkit-appearance: none; background-color: rgba(13,13,13,.08); background-repeat: no-repeat; background-position: right 1px center; background-size: 10px 7px";
+const selectCss = { ...css(selectStyle), backgroundImage: selectChevron };
 const actionStyle =
 	"height: 32px; border: 0; border-radius: 8px; background: rgba(13,13,13,.08); padding: 0 10px; font: inherit; font-size: 13px; color: #0d0d0d";
 const addButton =
@@ -221,7 +225,7 @@ function NewRule({
 						data-handler="onWhen"
 						data-event="onChange"
 						onChange={(event) => setForm({ ...form, when: event.target.value })}
-						style={css(selectStyle)}
+						style={selectCss}
 					>
 						<OptionLoop list="triggerOpts" options={triggerOptions} />
 					</select>
@@ -233,7 +237,7 @@ function NewRule({
 						data-handler="onAgent"
 						data-event="onChange"
 						onChange={(event) => setForm({ ...form, agent: event.target.value })}
-						style={css(selectStyle)}
+						style={selectCss}
 					>
 						<OptionLoop
 							list="agentOpts"
@@ -266,7 +270,7 @@ function NewRule({
 						data-handler="onApproval"
 						data-event="onChange"
 						onChange={(event) => setForm({ ...form, approval: event.target.value })}
-						style={css(selectStyle)}
+						style={selectCss}
 					>
 						<OptionLoop list="approvalOpts" options={approvalOptions} />
 					</select>
