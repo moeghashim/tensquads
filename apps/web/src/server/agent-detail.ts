@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import type { AppDatabase } from "@tensquads/adapters";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import type { AccountScope, Agent, Autonomy, BusEvent } from "@tensquads/domain";
-import type { Kernel } from "@tensquads/kernel";
+import { Kernel } from "@tensquads/kernel";
 
 import {
 	type AgentDetailSource,
@@ -91,8 +91,7 @@ async function writeThroughKernel(
 			throw new Error(unfinished);
 		}
 		const { createRepositories } = await import("@tensquads/adapters");
-		const { Kernel: WorkspaceKernel } = await import("@tensquads/kernel");
-		await run(new WorkspaceKernel(createRepositories(db)), scope, deadlineAt);
+		await run(new Kernel(createRepositories(db)), scope, deadlineAt);
 		if (Date.now() >= deadlineAt) {
 			throw new Error(unfinished);
 		}

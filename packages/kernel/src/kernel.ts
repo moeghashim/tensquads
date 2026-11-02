@@ -95,11 +95,13 @@ export class Kernel {
 		return (this.context.get("workspaceConversation") as ConversationCommands).finishSend(scope, taskId);
 	}
 
+	// fallow-ignore-next-line unused-class-member
 	async setAgentOn(scope: AccountScope, agentId: string, on: boolean, deadlineAt: number): Promise<void> {
 		await this.ready;
 		return (this.context.get("workspaceSquads") as SquadCommands).setAgentOn(scope, agentId, on, deadlineAt);
 	}
 
+	// fallow-ignore-next-line unused-class-member
 	async setSkillOn(
 		scope: AccountScope,
 		agentId: string,
@@ -111,11 +113,13 @@ export class Kernel {
 		return (this.context.get("workspaceSquads") as SquadCommands).setSkillOn(scope, agentId, skillId, on, deadlineAt);
 	}
 
+	// fallow-ignore-next-line unused-class-member
 	async setAutonomy(scope: AccountScope, agentId: string, autonomy: Autonomy, deadlineAt: number): Promise<void> {
 		await this.ready;
 		return (this.context.get("workspaceSquads") as SquadCommands).setAutonomy(scope, agentId, autonomy, deadlineAt);
 	}
 
+	// fallow-ignore-next-line unused-class-member
 	async askRevise(scope: AccountScope, agentId: string, deadlineAt: number): Promise<void> {
 		await this.ready;
 		return (this.context.get("workspaceSquads") as SquadCommands).askRevise(scope, agentId, deadlineAt);
