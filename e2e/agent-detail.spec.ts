@@ -101,23 +101,23 @@ test("the switch turns an agent off and shows 0 percent and Paused", async ({ pa
 		await expect(running(page)).toBeVisible();
 		await expect(paused(page)).toHaveCount(0);
 		expect((await readAgent(accountId, "support")).isOn).toBe(true);
+
+		await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "true", settled);
+		await squadSwitch(page).click();
+		await expect(paused(page)).toBeVisible(settled);
+		await expect(running(page)).toHaveCount(0);
+		await expect(sandbox(page).getByText("0%", { exact: true })).toBeVisible();
+		await expect(sandbox(page).getByText("Paused", { exact: true })).toBeVisible();
+		await expect(sandbox(page).getByText("22%", { exact: true })).toHaveCount(0);
+		await expect(sandbox(page).getByText("18 days", { exact: true })).toHaveCount(0);
+		await expect(supportDot(page, "Paused")).toBeVisible();
+		const off = await readAgent(accountId, "support");
+		expect(off.isOn).toBe(false);
+		expect(off.cpu).toBe("22%");
+		expect(off.uptime).toBe("18 days");
 	} finally {
 		await gate.stop();
 	}
-
-	await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "true", settled);
-	await squadSwitch(page).click();
-	await expect(paused(page)).toBeVisible(settled);
-	await expect(running(page)).toHaveCount(0);
-	await expect(sandbox(page).getByText("0%", { exact: true })).toBeVisible();
-	await expect(sandbox(page).getByText("Paused", { exact: true })).toBeVisible();
-	await expect(sandbox(page).getByText("22%", { exact: true })).toHaveCount(0);
-	await expect(sandbox(page).getByText("18 days", { exact: true })).toHaveCount(0);
-	await expect(supportDot(page, "Paused")).toBeVisible();
-	const off = await readAgent(accountId, "support");
-	expect(off.isOn).toBe(false);
-	expect(off.cpu).toBe("22%");
-	expect(off.uptime).toBe("18 days");
 
 	await reloadAgent(page);
 	await expect(paused(page)).toBeVisible();
