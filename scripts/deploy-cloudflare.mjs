@@ -28,7 +28,7 @@ const absentMessage = "CLOUDFLARE_WORKERS_API_TOKEN is absent.";
 
 function workersToken(envText) {
 	const value = parseEnv(envText).get("CLOUDFLARE_WORKERS_API_TOKEN");
-	if (typeof value !== "string" || value.length === 0) {
+	if (typeof value !== "string" || value.trim().length === 0) {
 		return undefined;
 	}
 	return value;

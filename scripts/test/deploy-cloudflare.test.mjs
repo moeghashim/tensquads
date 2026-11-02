@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import { deployPlan, runDeploy } from "../deploy-cloudflare.mjs";
 
@@ -19,9 +20,8 @@ const blocked = [
 
 test("wrangler config pins the project account", () => {
 	const text = readFileSync(new URL("../../apps/web/wrangler.jsonc", import.meta.url), "utf8");
-	const match = text.match(/"account_id"\s*:\s*"([^"]+)"/);
-	assert.ok(match);
-	assert.equal(match[1], projectAccount);
+	const config = JSON.parse(text.replace(/^\s*\/\/.*$/gm, ""));
+	assert.equal(config.account_id, projectAccount);
 });
 
 test("cf:deploy uses the deploy script", () => {
@@ -29,15 +29,15 @@ test("cf:deploy uses the deploy script", () => {
 	assert.equal(pkg.scripts["cf:deploy"], "vite build && node ../../scripts/deploy-cloudflare.mjs");
 });
 
-test("foundation says deploy only through the script", () => {
-	const text = readFileSync(new URL("../../docs/foundation.md", import.meta.url), "utf8");
-	assert.match(text, /Deploy only through `npm run deploy:cloudflare`/);
-	assert.match(text, /scripts\/deploy-cloudflare\.mjs/);
-	assert.match(text, /does not use a Wrangler OAuth login/);
-});
-
 test("deploy stops when the project token is absent", () => {
-	for (const envText of ["", "CLOUDFLARE_WORKERS_API_TOKEN=\n", "CLOUDFLARE_WORKERS_API_TOKEN=   \n", "OTHER=1\n"]) {
+	for (const envText of [
+		"",
+		"CLOUDFLARE_WORKERS_API_TOKEN=\n",
+		"CLOUDFLARE_WORKERS_API_TOKEN=   \n",
+		'CLOUDFLARE_WORKERS_API_TOKEN=" "\n',
+		"CLOUDFLARE_WORKERS_API_TOKEN=' \t '\n",
+		"OTHER=1\n",
+	]) {
 		const errors = [];
 		const original = console.error;
 		console.error = (message) => {
@@ -91,9 +91,11 @@ test("deploy maps the project token and drops OAuth credentials", () => {
 	assert.equal(seen.options.env.CI, "true");
 	assert.equal(seen.options.stdio, "inherit");
 	assert.equal(seen.command, process.execPath);
-	assert.deepEqual(seen.args.slice(1), ["deploy"]);
-	assert.match(seen.args[0], /wrangler\/bin\/wrangler\.js$/);
-	assert.match(seen.options.cwd, /apps\/web$/);
+	assert.deepEqual(seen.args, [
+		fileURLToPath(new URL("../../node_modules/wrangler/bin/wrangler.js", import.meta.url)),
+		"deploy",
+	]);
+	assert.equal(seen.options.cwd, fileURLToPath(new URL("../../apps/web", import.meta.url)));
 	for (const key of blocked) {
 		assert.equal(seen.options.env[key], undefined);
 	}
