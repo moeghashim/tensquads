@@ -139,9 +139,21 @@ jobs:
             npx playwright install chromium
           fi
 
+      # Each OS job gets its own database. The script uses the non-pooled host.
+      # Dependabot has no secret, so the script skips. Any other missing secret fails.
+      - name: Create a private test database
+        env:
+          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+        run: node scripts/ci-test-database.mjs create
+
       - name: Verify
         env:
           CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         run: make verify
+
+      - name: Drop the private test database
+        if: always()
+        env:
+          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+        run: node scripts/ci-test-database.mjs drop

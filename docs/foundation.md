@@ -12,6 +12,8 @@ Use `npm run build:cloudflare` to build and `npm run preview:cloudflare` to buil
 
 For existing service access, run `stripe projects env --pull` from the repository root with the Stripe Projects CLI. The service slugs are `cloudflare/workers`, `neon/postgres`, and `clerk/auth`. `.projects/state.json` is committed. `.env`, `.env.*` (except `.env.example`), `.projects/vault`, and local Projects state are ignored. There is no committed `.env.example`. Local tests do not need these services.
 
+Each required-checks job gets its own database. `scripts/ci-test-database.mjs` creates that database from `TEST_DATABASE_URL` on the non-pooled host. The name starts with `ci_` and uses the run id, the attempt, and the OS. The job drops that database at the end. The script does not use the database named by `NEON_POSTGRES_CONNECTION_STRING`, and it refuses a database named `neondb`.
+
 ## Packages and ports
 
 The four package workspaces export TypeScript source through their package names:
