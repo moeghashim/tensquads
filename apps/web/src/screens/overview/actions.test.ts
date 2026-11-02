@@ -468,7 +468,10 @@ describe("overview decisions", { concurrency: false }, () => {
 			await started;
 			t.mock.timers.tick(30_000);
 			await first;
-			assert.deepEqual(patchSnapshot().map((item) => item.key), ["refund"]);
+			assert.deepEqual(
+				patchSnapshot().map((item) => item.key),
+				["refund"],
+			);
 			assert.equal(badgeCount(4), 3);
 			let sent = 0;
 			assert.equal(
@@ -488,13 +491,26 @@ describe("overview decisions", { concurrency: false }, () => {
 			const gate = new Promise<void>((resolve) => {
 				release = resolve;
 			});
-			const second = withSibling ? settled("marketing", 4, () => gate, async () => 4) : null;
+			const second = withSibling
+				? settled(
+						"marketing",
+						4,
+						() => gate,
+						async () => 4,
+					)
+				: null;
 			await Promise.resolve();
 			const frame = { approvalCount: 4 };
 			watchServerCount(frame.approvalCount, frame);
-			assert.equal(patchSnapshot().some((item) => item.key === "refund"), true);
+			assert.equal(
+				patchSnapshot().some((item) => item.key === "refund"),
+				true,
+			);
 			await Promise.resolve();
-			assert.deepEqual(patchSnapshot().map((item) => item.key), withSibling ? ["marketing"] : []);
+			assert.deepEqual(
+				patchSnapshot().map((item) => item.key),
+				withSibling ? ["marketing"] : [],
+			);
 			assert.equal(badgeCount(4), withSibling ? 3 : 4);
 			release();
 			await second;
