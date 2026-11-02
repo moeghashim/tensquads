@@ -1,8 +1,11 @@
+import { randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { Pool } from "@neondatabase/serverless";
-import type { Route } from "@playwright/test";
+import type { Page, Route } from "@playwright/test";
+import { openPostgres } from "@tensquads/adapters";
 import { setAgentOn } from "../packages/adapters/src/neon/commands/agents.ts";
 import { PENDING_TASK_WINDOW_MS } from "../packages/adapters/src/pending-window.ts";
+import { replaceDemoAccount } from "../packages/seed/src/demo-account.ts";
 import { accessibilityViolations } from "./accessibility-helper.ts";
 import {
 	agentDetailSource,
@@ -23,6 +26,7 @@ import {
 	sandbox,
 	scopeFor,
 	sectionInventory,
+	serverFnExport,
 	shot,
 	skillFlag,
 	skillRow,
@@ -34,7 +38,7 @@ import {
 	withDb,
 } from "./agent-detail-support.ts";
 import { expectNoHorizontalScroll, secretsFor, skipUnlessMacScreenshot, waitForScreenFonts } from "./support.ts";
-import { expect, openWorkspace, test } from "./workspace.ts";
+import { deleteWorkspaceAccount, expect, openWorkspace, test, type WorkspaceUser } from "./workspace.ts";
 
 const boards = [
 	{ name: "1440", width: 1440, height: 1300 },
@@ -1020,3 +1024,212 @@ test("the agent detail page passes axe and does not scroll sideways", async ({ p
 		await expectNoHorizontalScroll(page);
 	}
 });
+
+test("another account in the same tab does not keep the previous account's controls", async ({
+	page,
+	workspaceUser,
+	accountId,
+}) => {
+	test.setTimeout(120_000);
+	const other = await temporaryAccount();
+	let release = () => undefined;
+	const gate = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	let held = 0;
+	let delivered = 0;
+	const pattern = /\/_serverFn\//;
+	const handler = async (route: Route) => {
+		const request = route.request();
+		if (request.method() === "POST" && serverFnExport(request.url()).startsWith("setSkillEnabled")) {
+			const response = await route.fetch();
+			held += 1;
+			await gate;
+			await route.fulfill({ response }).catch(() => undefined);
+			delivered += 1;
+			return;
+		}
+		await route.continue();
+	};
+	try {
+		await openAgent(page, workspaceUser, "support");
+		await page.evaluate(() => {
+			(window as unknown as { __agentMark?: string }).__agentMark = "same-document";
+		});
+		await squadSwitch(page).click();
+		await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(false);
+		await expect(supportDot(page, "Paused")).toBeVisible(settled);
+		await page.route(pattern, handler);
+		const skill = skillRow(page, "inbox.read").getByRole("button");
+		await skill.click();
+		await expect.poll(() => held, settled).toBe(1);
+		await expect(skill).toHaveAttribute("aria-pressed", "false");
+		await signOutToSignIn(page);
+		await signInOnPage(page, other);
+		await page
+			.getByRole("navigation", { name: "Workspace" })
+			.getByRole("button", { name: /Support/ })
+			.click();
+		await expect(page).toHaveURL(/\/agents\/support$/);
+		expect(await page.evaluate(() => (window as unknown as { __agentMark?: string }).__agentMark)).toBe(
+			"same-document",
+		);
+		await expect(supportDot(page, "Running")).toBeVisible(settled);
+		await expect(supportDot(page, "Paused")).toHaveCount(0);
+		await expect(running(page)).toBeVisible();
+		await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "true");
+		await expect(skillRow(page, "inbox.read").getByRole("button")).toHaveAttribute("aria-pressed", "true");
+		const beforeRelease = await readAgent(other.accountId, "support");
+		expect(beforeRelease.isOn).toBe(true);
+		expect(skillFlag(beforeRelease, "inbox.read")).toBe(true);
+		release();
+		await expect.poll(() => delivered, settled).toBe(1);
+		await expect(supportDot(page, "Running")).toBeVisible(settled);
+		await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "true");
+		await expect(skillRow(page, "inbox.read").getByRole("button")).toHaveAttribute("aria-pressed", "true", settled);
+		const afterRelease = await readAgent(other.accountId, "support");
+		expect(afterRelease.isOn).toBe(true);
+		expect(skillFlag(afterRelease, "inbox.read")).toBe(true);
+		const first = await readAgent(accountId, "support");
+		expect(first.isOn).toBe(false);
+		expect(skillFlag(first, "inbox.read")).toBe(false);
+	} finally {
+		release();
+		await page.unroute(pattern, handler).catch(() => undefined);
+		await deleteClerkUser(other.userId);
+		await deleteWorkspaceAccount(other.accountId);
+	}
+});
+
+test("a held chat send and a held agent write both keep their results", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(120_000);
+	const reply = "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.";
+	const ownReply =
+		"That one I can answer myself, no agent needed. Ask me about orders, refunds, ads, profit or stock and I will hand it to the right agent.";
+	await openAgent(page, workspaceUser, "support");
+	await page.getByRole("button", { name: "M Ask Master" }).click();
+	let posts = 0;
+	let finishContinued = 0;
+	let releaseFinish = () => undefined;
+	const finishGate = new Promise<void>((resolve) => {
+		releaseFinish = resolve;
+	});
+	const pattern = /\/_serverFn\//;
+	const holdFinish = async (route: Route) => {
+		if (route.request().method() === "POST" && ++posts === 2) {
+			await finishGate;
+			await route.continue();
+			finishContinued += 1;
+			return;
+		}
+		await route.continue();
+	};
+	await page.route(pattern, holdFinish);
+	try {
+		await page.locator("#dock-input").fill("How did ads do this week?");
+		await page.getByRole("button", { name: "Send" }).click();
+		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible(settled);
+		await expect.poll(() => posts, settled).toBe(2);
+		await squadSwitch(page).click();
+		await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(false);
+		await expect(supportDot(page, "Paused")).toBeVisible(settled);
+	} finally {
+		releaseFinish();
+		await expect.poll(() => finishContinued, settled).toBe(1);
+		await page.unroute(pattern, holdFinish);
+	}
+	await expect(page.getByText(reply)).toBeVisible(settled);
+	await expect(supportDot(page, "Paused")).toBeVisible();
+	expect(await readAgent(accountId, "support")).toMatchObject({ isOn: false });
+
+	let releaseAgent = () => undefined;
+	const agentGate = new Promise<void>((resolve) => {
+		releaseAgent = resolve;
+	});
+	let heldAgent = false;
+	let agentContinued = 0;
+	const holdAgent = async (route: Route) => {
+		if (route.request().method() === "POST" && !heldAgent) {
+			heldAgent = true;
+			await agentGate;
+			await route.continue();
+			agentContinued += 1;
+			return;
+		}
+		await route.continue();
+	};
+	await page.route(pattern, holdAgent);
+	try {
+		await squadSwitch(page).click();
+		await expect.poll(() => heldAgent, settled).toBe(true);
+		await page.locator("#dock-input").fill("Hello there");
+		await page.getByRole("button", { name: "Send" }).click();
+		await expect(page.getByText(ownReply)).toBeVisible(settled);
+		expect((await readAgent(accountId, "support")).isOn).toBe(false);
+	} finally {
+		releaseAgent();
+		await expect.poll(() => agentContinued, settled).toBe(1);
+		await page.unroute(pattern, holdAgent);
+	}
+	await expect(page.getByText(ownReply)).toBeVisible();
+	await expect(page.getByText(reply)).toBeVisible();
+	await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(true);
+	await expect(supportDot(page, "Running")).toBeVisible(settled);
+});
+
+async function signOutToSignIn(page: Page) {
+	await page.evaluate(async () => {
+		const browserWindow = window as unknown as {
+			Clerk?: { signOut: (done?: () => void) => Promise<void> };
+			__TSR_ROUTER__?: { navigate: (opts: { to: string }) => Promise<void> };
+		};
+		const clerk = browserWindow.Clerk;
+		const router = browserWindow.__TSR_ROUTER__;
+		if (!clerk || !router) throw new Error("The session is missing.");
+		await clerk.signOut(() => {
+			void router.navigate({ to: "/signin" });
+		});
+	});
+	await page.waitForURL("**/signin");
+}
+
+async function signInOnPage(page: Page, user: WorkspaceUser) {
+	await page.getByLabel("Email").fill(user.email);
+	await page.getByLabel("Password").fill(user.password);
+	await page.getByRole("button", { name: "Sign in" }).click();
+	await expect(page).toHaveURL(/\/overview$/, { timeout: 20_000 });
+}
+
+async function temporaryAccount(): Promise<WorkspaceUser> {
+	const secrets = secretsFor(["secret", "testDatabase"]);
+	const email = `sq-${randomUUID().slice(0, 8)}@example.com`;
+	const password = `Ts${randomUUID().replaceAll("-", "")}Zq7`;
+	const response = await fetch("https://api.clerk.com/v1/users", {
+		method: "POST",
+		headers: { Authorization: `Bearer ${secrets.secret}`, "Content-Type": "application/json" },
+		body: JSON.stringify({ email_address: [email], password, skip_password_checks: true }),
+	});
+	if (!response.ok) throw new Error(`Clerk create user failed with status ${response.status}.`);
+	const body = (await response.json()) as { id?: string };
+	if (!body.id) throw new Error("Clerk create user returned no id.");
+	const accountId = `frame-b-${randomUUID().slice(0, 8)}`;
+	const postgres = openPostgres(secrets.testDatabase);
+	try {
+		await replaceDemoAccount(postgres.db, accountId, body.id);
+	} finally {
+		await postgres.close();
+	}
+	return { email, password, userId: body.id, accountId };
+}
+
+async function deleteClerkUser(userId: string) {
+	if (userId.length === 0) return;
+	const secrets = secretsFor(["secret"]);
+	const response = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
+		method: "DELETE",
+		headers: { Authorization: `Bearer ${secrets.secret}` },
+	});
+	if (!response.ok && response.status !== 404) {
+		throw new Error(`Clerk delete user failed with status ${response.status}.`);
+	}
+}

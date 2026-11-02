@@ -9,7 +9,14 @@ import {
 	setAgentRunning,
 	setSkillEnabled,
 } from "#/server/agent-detail.ts";
-import { noteAgentWrite, publishAgentOn, stampAgentRead } from "#/workspace/agent-on.ts";
+import {
+	agentSession,
+	noteAgentWrite,
+	onAgentClientReset,
+	publishAgentOn,
+	stampAgentRead,
+	subscribeAgentSession,
+} from "#/workspace/agent-on.ts";
 import { agentStatus } from "#/workspace/agent-view.ts";
 import { switchParts } from "#/workspace/styles.ts";
 import { type AgentDetailView, autonomyStyle, blank } from "./model.ts";
@@ -51,9 +58,14 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 	let busy = false;
 	let reading = false;
 	let again = false;
+	let bound = agentSession();
 	let state: Snapshot = { view: initialView, pending: [] };
 	let loaderView = initialView;
 	const listeners = new Set<() => void>();
+
+	function current(): boolean {
+		return bound === agentSession();
+	}
 
 	function publish(next: Snapshot) {
 		state = next;
@@ -66,24 +78,27 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 	}
 
 	async function read() {
+		if (!current()) return;
 		if (reading) {
 			again = true;
 			return;
 		}
 		reading = true;
+		const startedSession = agentSession();
 		try {
 			const started = stampAgentRead(agentId);
 			const previous = state.view;
 			try {
 				const view = await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
 				// A read keeps the version from when it started. A newer write wins.
+				if (startedSession !== agentSession()) return;
 				if (started === stampAgentRead(agentId) && state.view === previous) accept(view, state.pending);
 			} catch {
 				// A failed or timed-out read stops. It does not retry.
 			}
 		} finally {
 			reading = false;
-			if (again) {
+			if (startedSession === agentSession() && again) {
 				again = false;
 				void read();
 			}
@@ -91,19 +106,22 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 	}
 
 	async function drain() {
-		if (busy) return;
+		if (busy || !current()) return;
 		busy = true;
 		try {
 			let write = queue.shift();
 			while (write) {
+				const startedSession = agentSession();
 				try {
 					const view = await bounded(write.work);
+					if (startedSession !== agentSession()) return;
 					noteAgentWrite(agentId);
 					accept(
 						view,
 						state.pending.filter((value) => value !== write),
 					);
 				} catch {
+					if (startedSession !== agentSession()) return;
 					noteAgentWrite(agentId);
 					publish({ ...state, pending: state.pending.filter((value) => value !== write) });
 					void read();
@@ -116,8 +134,17 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 	}
 
 	return {
+		session: () => bound,
+		abandon() {
+			queue.length = 0;
+			reading = false;
+			again = false;
+			bound = -1;
+			if (state.pending.length > 0) publish({ view: state.view, pending: [] });
+		},
 		snapshot: () => state,
 		load(view: AgentDetailView, readAt: number) {
+			if (!current()) return;
 			if (readAt !== stampAgentRead(agentId) || view === loaderView) return;
 			loaderView = view;
 			accept(view, state.pending);
@@ -129,6 +156,7 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 			};
 		},
 		enqueue(write: Write) {
+			if (!current()) return;
 			noteAgentWrite(agentId);
 			const index = queue.findIndex((value) => value.key === write.key);
 			if (index === -1) {
@@ -159,28 +187,38 @@ function runningFace(view: AgentDetailView, on: boolean): AgentDetailView {
 	};
 }
 
-const queues = new WeakMap<object, Map<string, ReturnType<typeof createQueue>>>();
+const queues = new Map<object, Map<string, ReturnType<typeof createQueue>>>();
+const liveQueues = new Set<ReturnType<typeof createQueue>>();
 
-function agentQueue(owner: object, agentId: string, initialView: AgentDetailView) {
+onAgentClientReset(() => {
+	const open = [...liveQueues];
+	liveQueues.clear();
+	queues.clear();
+	for (const queue of open) queue.abandon();
+});
+
+function agentQueue(owner: object, agentId: string, initialView: AgentDetailView, session: number) {
 	let agents = queues.get(owner);
 	if (!agents) {
 		agents = new Map();
 		queues.set(owner, agents);
 	}
 	let queue = agents.get(agentId);
-	if (!queue) {
+	if (!queue || queue.session() !== session) {
 		queue = createQueue(agentId, initialView);
 		agents.set(agentId, queue);
+		liveQueues.add(queue);
 	}
 	return queue;
 }
 
 export function useAgentWrites(serverView: AgentDetailView, readAt = stampAgentRead(serverView.id)) {
 	const agentId = serverView.id;
+	const session = useSyncExternalStore(subscribeAgentSession, agentSession, agentSession);
 	const router = useRouter();
 	const navigate = useNavigate();
 	const match = useMatch({ from: "/_workspace/agents/$id" });
-	const { enqueue, snapshot, subscribe, load } = agentQueue(router, agentId, serverView);
+	const { enqueue, snapshot, subscribe, load } = agentQueue(router, agentId, serverView, session);
 	if (match.status === "success") load(serverView, readAt);
 	const state = useSyncExternalStore(subscribe, snapshot, snapshot);
 

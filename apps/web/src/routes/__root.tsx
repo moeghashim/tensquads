@@ -1,10 +1,11 @@
-import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
+import { ClerkProvider, useAuth, useUser } from "@clerk/tanstack-react-start";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { type ReactNode, useRef } from "react";
 
 import "#/design/public.css";
 import { watchSignedInUser } from "#/screens/rules/write-queue.ts";
 import { getPublishableKey } from "#/server/publishable-key.ts";
+import { resetAgentClientState } from "#/workspace/agent-on.ts";
 
 export const Route = createRootRoute({
 	loader: () => getPublishableKey(),
@@ -33,8 +34,9 @@ function RootApp() {
 	}
 	return (
 		<ClerkProvider publishableKey={publishableKey}>
-			<SignedInAccount />
+			<ClerkAccountReset />
 			<Outlet />
+			<SignedInAccount />
 		</ClerkProvider>
 	);
 }
@@ -42,6 +44,18 @@ function RootApp() {
 function SignedInAccount() {
 	const { isLoaded, userId } = useAuth();
 	if (isLoaded) watchSignedInUser(userId ?? null);
+	return null;
+}
+
+function ClerkAccountReset() {
+	const { isLoaded, user } = useUser();
+	const seen = useRef<string | null | undefined>(undefined);
+	const next = isLoaded ? (user?.id ?? null) : undefined;
+	if (next !== undefined && seen.current !== next) {
+		const previous = seen.current;
+		seen.current = next;
+		if (previous !== undefined) queueMicrotask(resetAgentClientState);
+	}
 	return null;
 }
 

@@ -1,6 +1,35 @@
 type AgentOn = { readonly id: string; readonly on: boolean };
 
 const epochs = new Map<string, number>();
+const listeners = new Set<() => void>();
+const sessionListeners = new Set<() => void>();
+const resets = new Set<() => void>();
+let published: ReadonlyMap<string, boolean> = new Map();
+let session = 0;
+
+export function agentSession(): number {
+	return session;
+}
+
+export function subscribeAgentSession(listener: () => void): () => void {
+	sessionListeners.add(listener);
+	return () => {
+		sessionListeners.delete(listener);
+	};
+}
+
+export function onAgentClientReset(reset: () => void): void {
+	resets.add(reset);
+}
+
+export function resetAgentClientState(): void {
+	session += 1;
+	epochs.clear();
+	published = new Map();
+	for (const reset of resets) reset();
+	for (const listener of listeners) listener();
+	for (const listener of sessionListeners) listener();
+}
 
 export function stampAgentRead(agentId: string): number {
 	return epochs.get(agentId) ?? 0;
@@ -13,9 +42,6 @@ export function stampAgentReads(): Readonly<Record<string, number>> {
 export function noteAgentWrite(agentId: string): void {
 	epochs.set(agentId, stampAgentRead(agentId) + 1);
 }
-
-const listeners = new Set<() => void>();
-let published: ReadonlyMap<string, boolean> = new Map();
 
 export function publishAgentOn(id: string, on: boolean): void {
 	const next = new Map(published);

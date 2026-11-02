@@ -438,7 +438,7 @@ export async function openAgent(page: Page, user: WorkspaceUser, agentId: string
 	await waitForScreenFonts(page);
 }
 
-function serverFnExport(url: string): string {
+export function serverFnExport(url: string): string {
 	const id = new URL(url).pathname.split("/").pop() ?? "";
 	try {
 		const parsed: unknown = JSON.parse(Buffer.from(id, "base64url").toString("utf8"));

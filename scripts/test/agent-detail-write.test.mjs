@@ -38,7 +38,7 @@ const moduleUrl = process.env.AGENT_WRITE_TEST_MODULE
 	? pathToFileURL(process.env.AGENT_WRITE_TEST_MODULE)
 	: new URL("../../apps/web/src/screens/agent-detail/write.ts", import.meta.url);
 const { useAgentWrites } = await import(moduleUrl.href);
-const { stampAgentRead, stampAgentReads, applyAgentOn, agentOnSnapshot } = await import(
+const { stampAgentRead, stampAgentReads, applyAgentOn, agentOnSnapshot, resetAgentClientState } = await import(
 	"../../apps/web/src/workspace/agent-on.ts"
 );
 
@@ -474,3 +474,31 @@ for (const on of [false, true]) {
 		assert.equal(applyAgentOn(later, agentOnSnapshot(), laterReadAt), later);
 	});
 }
+
+test("a reset drops published and pending state, and a late response cannot publish it", async () => {
+	const h = harness();
+	h.render().toggleAgent(false);
+	await settle();
+	h.posts.shift().answer();
+	await settle();
+	assert.equal(agentOnSnapshot().get("support"), false);
+	h.render().toggleSkill("inbox.read", false);
+	await settle();
+	assert.equal(h.render().view.skills[0].onStr, "false");
+	const late = h.posts[0];
+	resetAgentClientState();
+	assert.equal(agentOnSnapshot().size, 0);
+	const next = harness();
+	next.newLoader(next.server, "success", 0);
+	assert.equal(next.render().view.on, true);
+	assert.equal(next.render().view.skills[0].onStr, "true");
+	late.answer();
+	await settle();
+	assert.equal(next.render().view.on, true);
+	assert.equal(next.render().view.skills[0].onStr, "true");
+	assert.equal(agentOnSnapshot().has("support"), false);
+	assert.equal(h.server.on, false);
+	assert.equal(h.server.skills[0].onStr, "false");
+	assert.equal(next.server.on, true);
+	assert.equal(next.server.skills[0].onStr, "true");
+});
