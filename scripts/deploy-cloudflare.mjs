@@ -25,6 +25,8 @@ const blockedEnvironment = [
 ];
 
 const absentMessage = "CLOUDFLARE_WORKERS_API_TOKEN is absent.";
+const migrationMessage = "The database migration did not finish.";
+const databaseMessage = "The database is not configured.";
 
 function workersToken(envText) {
 	const value = parseEnv(envText).get("CLOUDFLARE_WORKERS_API_TOKEN");
@@ -70,12 +72,43 @@ function childStatus(result) {
 	return result.status ?? 1;
 }
 
-export function runDeploy(options) {
-	const plan = deployPlan(options.envText, options.parentEnv);
-	if (!plan.ok) {
-		console.error(plan.message);
-		return 1;
+function configuredDatabase(envText, parentEnv) {
+	const fromFile = parseEnv(envText).get("NEON_POSTGRES_CONNECTION_STRING");
+	const fromParent = parentEnv?.NEON_POSTGRES_CONNECTION_STRING;
+	const value = [fromParent, fromFile].find((item) => typeof item === "string" && item.trim().length > 0);
+	return typeof value === "string" ? value.trim() : undefined;
+}
+
+async function migrateDatabase(connection) {
+	const { openPostgres } = await import("../packages/adapters/src/neon/postgres.ts");
+	const opened = openPostgres(connection);
+	try {
+		await opened.migrate();
+	} finally {
+		await opened.close();
 	}
+}
+
+function stopDeploy(message) {
+	console.error(message);
+	return 1;
+}
+
+async function migrationFinished(options, connection) {
+	try {
+		await (options.migrate ?? migrateDatabase)(connection);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+export async function runDeploy(options) {
+	const plan = deployPlan(options.envText, options.parentEnv);
+	if (!plan.ok) return stopDeploy(plan.message);
+	const connection = configuredDatabase(options.envText, options.parentEnv);
+	if (connection === undefined) return stopDeploy(databaseMessage);
+	if (!(await migrationFinished(options, connection))) return stopDeploy(migrationMessage);
 	return childStatus(
 		options.spawn(plan.command, plan.args, {
 			cwd: plan.cwd,
@@ -107,7 +140,7 @@ function isDirectRun() {
 
 if (isDirectRun()) {
 	process.exit(
-		runDeploy({
+		await runDeploy({
 			envText: readEnvFile(),
 			parentEnv: process.env,
 			spawn: (command, args, options) => spawnSync(command, args, options),

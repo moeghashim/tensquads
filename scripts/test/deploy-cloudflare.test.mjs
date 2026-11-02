@@ -29,7 +29,7 @@ test("cf:deploy uses the deploy script", () => {
 	assert.equal(pkg.scripts["cf:deploy"], "vite build && node ../../scripts/deploy-cloudflare.mjs");
 });
 
-test("deploy stops when the project token is absent", () => {
+test("deploy stops when the project token is absent", async () => {
 	for (const envText of [
 		"",
 		"CLOUDFLARE_WORKERS_API_TOKEN=\n",
@@ -45,7 +45,7 @@ test("deploy stops when the project token is absent", () => {
 		};
 		try {
 			let spawned = false;
-			const code = runDeploy({
+			const code = await runDeploy({
 				envText,
 				parentEnv: { CLOUDFLARE_API_TOKEN: "personal-token" },
 				spawn() {
@@ -62,7 +62,7 @@ test("deploy stops when the project token is absent", () => {
 	}
 });
 
-test("deploy maps the project token and drops OAuth credentials", () => {
+test("deploy maps the project token and drops OAuth credentials", async () => {
 	const parentEnv = {
 		PATH: "/usr/bin",
 		CLOUDFLARE_API_TOKEN: "personal-token",
@@ -78,9 +78,11 @@ test("deploy maps the project token and drops OAuth credentials", () => {
 		CI: "",
 	};
 	let seen;
-	const code = runDeploy({
-		envText: 'CLOUDFLARE_WORKERS_API_TOKEN="project-token"\nCLOUDFLARE_API_TOKEN=ignored\n',
+	const code = await runDeploy({
+		envText:
+			'CLOUDFLARE_WORKERS_API_TOKEN="project-token"\nCLOUDFLARE_API_TOKEN=ignored\nNEON_POSTGRES_CONNECTION_STRING="postgres://migrate-stub/db"\n',
 		parentEnv,
+		async migrate() {},
 		spawn(command, args, options) {
 			seen = { command, args, options };
 			return { status: 0 };
@@ -101,4 +103,49 @@ test("deploy maps the project token and drops OAuth credentials", () => {
 	}
 	assert.equal(parentEnv.CLOUDFLARE_API_TOKEN, "personal-token");
 	assert.equal(deployPlan("", parentEnv).ok, false);
+});
+
+test("deploy migrates before it deploys and stops when migration fails", async () => {
+	const envText =
+		'CLOUDFLARE_WORKERS_API_TOKEN="project-token"\nNEON_POSTGRES_CONNECTION_STRING="postgres://migrate-stub/db"\n';
+	const parentEnv = { PATH: "/usr/bin" };
+	const order = [];
+	const code = await runDeploy({
+		envText,
+		parentEnv,
+		async migrate(connection) {
+			order.push(connection);
+		},
+		spawn() {
+			order.push("deploy");
+			return { status: 0 };
+		},
+	});
+	assert.equal(code, 0);
+	assert.deepEqual(order, ["postgres://migrate-stub/db", "deploy"]);
+
+	let spawned = false;
+	const errors = [];
+	const original = console.error;
+	console.error = (message) => {
+		errors.push(message);
+	};
+	try {
+		const failed = await runDeploy({
+			envText,
+			parentEnv,
+			async migrate() {
+				throw new Error("migration failed");
+			},
+			spawn() {
+				spawned = true;
+				return { status: 0 };
+			},
+		});
+		assert.equal(failed, 1);
+		assert.equal(spawned, false);
+		assert.deepEqual(errors, ["The database migration did not finish."]);
+	} finally {
+		console.error = original;
+	}
 });
