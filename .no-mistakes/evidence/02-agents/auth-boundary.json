@@ -1,0 +1,11 @@
+{
+  "requested": "/agents",
+  "finalUrl": "http://localhost:3000/signin",
+  "status": 200,
+  "title": "Sign in",
+  "heading": [
+    "Sign in to tensquads"
+  ],
+  "agentCards": 0,
+  "visibleText": "tensquads\nNew here?\nStart free\nSign in to tensquads\n\nYour squads kept working while you were away.\n\nEmail\nPassword\nForgot password?\nSign in\nor\nEmail me a sign-in link\n\nBy signing in you agree to the [TERMS] and [PRIVACY POLICY]."
+}
