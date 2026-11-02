@@ -135,7 +135,7 @@ What to look for:
 | `site.build` | The model | Auto |
 | `site.critique` | impeccable | Auto |
 | `site.preview` | Preview host | Auto |
-| `site.publish` | Cloudflare Pages at `<slug>.tensquads.co` | Ask first |
+| `site.publish` | Cloudflare Pages at `<slug>.10squads.com` | Ask first |
 
 What to build:
 
@@ -161,7 +161,7 @@ The master checks the page:
 - `npx impeccable detect` reports no P0 or P1 finding.
 - At 390 px there is no horizontal scroll.
 
-After publishing, `https://<slug>.tensquads.co` must return 200 and the same content as the preview.
+After publishing, `https://<slug>.10squads.com` must return 200 and the same content as the preview.
 
 ## What stays in `moeghashim/tensquads`
 

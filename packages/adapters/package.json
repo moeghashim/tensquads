@@ -8,7 +8,7 @@
 	},
 	"scripts": {
 		"check": "tsc --noEmit",
-		"test": "node --experimental-strip-types --test test/*.test.ts"
+		"test": "node --experimental-strip-types test/run.ts"
 	},
 	"dependencies": {
 		"@electric-sql/pglite": "0.5.14",

@@ -33,7 +33,7 @@ The build brief had 11 open questions. Moe answered all of them on 31 October 20
 | 19 | Small typed decisions (TypeSafe Jev) | Not used in version 1. A Decider interface goes into the core in phase 0 with no adapter. Later, the first adapter uses the main model with structured output. A Jev adapter may replace it for routing, the autonomy gate and guardrails, when the service is open and a test shows it is faster and as correct |
 | 20 | The agent loop and verified outcomes | Each agent runs one loop: take a task, plan, run skills through their gates, collect evidence, send a Result. Every task carries a check that code runs. The master core runs the check. A task is done only when the check passes. The agent never grades its own work |
 | 21 | Proof of concept: order | Phase 5, after the machines and bus adapters. Three squads: master, Market researcher, Website builder. Confirmed by Moe on 31 October 2026 |
-| 22 | Proof of concept: the website | One landing page on \<slug>.tensquads.co, published through Cloudflare Pages |
+| 22 | Proof of concept: the website | One landing page on \<slug>.10squads.com, published through Cloudflare Pages |
 | 23 | Proof of concept: the research | Web search to find competitors, the Scrapling service on boat.dev to read their pages, the model to analyse offer, price, positioning and gaps |
 | 24 | Proof of concept: the model | OpenAI, with an API key from Moe, kept in the boat.dev key proxy. Design updated on 31 October 2026: Market researcher and Website builder added to the homepage cards and sign-up step 3 |
 | 25 | Overview tiles for an account with no store | The Revenue and Orders tiles show "—". The layout does not move |
@@ -364,7 +364,7 @@ The first real agents are three squads: the master, a Market researcher and a We
 | # | Question | Answer |
 | --- | --- | --- |
 | 21 | Order | Phase 5, after phase 4. The chat, the inbox, the traffic screen and the real adapters must exist first. Confirmed |
-| 22 | The website | One landing page on `<slug>.tensquads.co`, published through Cloudflare Pages |
+| 22 | The website | One landing page on `<slug>.10squads.com`, published through Cloudflare Pages |
 | 23 | The research | Web search to find the competitors. The Scrapling service on boat.dev to read their pages. The model to analyse them: offer, price, positioning, strengths and gaps |
 | 24 | The model | OpenAI, with an API key from Moe. The key goes into the boat.dev key proxy. It never enters a machine. A Decider adapter can use the same key for the typed decisions later |
 
@@ -387,7 +387,7 @@ The menu or the item list comes from the user. In step 1 the user pastes the ite
 
 **What the screens show.** The proof of concept changes the data, not the screens. The seed gets one proof-of-concept account with the two squads, their skills and their events. The homepage and sign-up step 3 show the two new agents (design updated on 31 October 2026). The two agents' images appear on the Agent images screen as version 0.1.0, Beta. Two things the design does not show, decided on 31 October 2026: the Revenue and Orders tiles on Overview show "—" for an account with no store (decision 25); the site preview is a link in the chat only (decision 26).
 
-**Done when:** one run passes both checks and both approvals on a real boat.dev machine, the page is live at `<slug>.tensquads.co`, all thirteen events show on the traffic screen in order, and `make verify` returns 0.
+**Done when:** one run passes both checks and both approvals on a real boat.dev machine, the page is live at `<slug>.10squads.com`, all thirteen events show on the traffic screen in order, and `make verify` returns 0.
 
 ## Risks and open items
 

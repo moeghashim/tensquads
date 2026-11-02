@@ -29,6 +29,7 @@
 			"apps/**/*.tsx",
 			"apps/**/*.js",
 			"apps/**/*.mjs",
+			"!apps/landing",
 			"!apps/**/worker-configuration.d.ts",
 			"!apps/**/routeTree.gen.ts",
 			"packages/*/src/**/*.ts",
