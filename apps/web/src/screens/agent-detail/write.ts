@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import type { Autonomy } from "@tensquads/domain";
 import { useSyncExternalStore } from "react";
@@ -10,7 +10,6 @@ import {
 	setSkillEnabled,
 } from "#/server/agent-detail.ts";
 import { agentStatus } from "#/workspace/agent-view.ts";
-import { useRefresh } from "#/workspace/context.ts";
 import { switchParts } from "#/workspace/styles.ts";
 import { type AgentDetailView, autonomyStyle } from "./model.ts";
 
@@ -42,31 +41,53 @@ interface Write {
 	readonly matches: (view: AgentDetailView) => boolean;
 }
 
-function createQueue(refresh: () => Promise<void>, agentId: string) {
+interface Snapshot {
+	readonly base: AgentDetailView | null;
+	readonly pending: readonly Write[];
+}
+
+const emptySnapshot: Snapshot = { base: null, pending: [] };
+
+function createQueue(agentId: string) {
 	const queue: Write[] = [];
 	let busy = false;
-	let pending: readonly Write[] = [];
+	let state = emptySnapshot;
+	let readNumber = 0;
+	let storedRead = 0;
 	const listeners = new Set<() => void>();
 
-	function publish(values: readonly Write[]) {
-		pending = values;
+	function publish(next: Snapshot) {
+		state = next;
 		for (const listener of listeners) listener();
 	}
 
 	function clear(write: Write) {
-		publish(pending.filter((value) => value !== write));
+		publish({ ...state, pending: state.pending.filter((value) => value !== write) });
 	}
 
 	function stillPending(write: Write) {
-		return pending.includes(write);
+		return state.pending.includes(write);
+	}
+
+	async function load() {
+		const number = ++readNumber;
+		const view = await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
+		return { number, view };
+	}
+
+	function store(result: { readonly number: number; readonly view: AgentDetailView }) {
+		if (result.number > storedRead) {
+			storedRead = result.number;
+			publish({ ...state, base: result.view });
+		}
 	}
 
 	async function read() {
 		try {
-			await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
-			await bounded(() => refresh());
+			store(await load());
 		} catch {
-			return;
+			await pause(PENDING_TASK_WINDOW_MS);
+			void read();
 		}
 	}
 
@@ -75,13 +96,19 @@ function createQueue(refresh: () => Promise<void>, agentId: string) {
 			return;
 		}
 		try {
-			const view = await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
-			if (!write.matches(view)) {
+			const result = await load();
+			if (!stillPending(write)) return;
+			if (!write.matches(result.view)) {
 				await pause(PENDING_TASK_WINDOW_MS);
 				void confirm(write);
 				return;
 			}
-			await bounded(() => refresh());
+			store(result);
+			if (!state.base || !write.matches(state.base)) {
+				await pause(PENDING_TASK_WINDOW_MS);
+				void confirm(write);
+				return;
+			}
 		} catch {
 			await pause(PENDING_TASK_WINDOW_MS);
 			void confirm(write);
@@ -114,7 +141,7 @@ function createQueue(refresh: () => Promise<void>, agentId: string) {
 	}
 
 	return {
-		snapshot: () => pending,
+		snapshot: () => state,
 		subscribe(listener: () => void) {
 			listeners.add(listener);
 			return () => {
@@ -122,7 +149,7 @@ function createQueue(refresh: () => Promise<void>, agentId: string) {
 			};
 		},
 		enqueue(write: Write) {
-			publish([...pending.filter((value) => value.key !== write.key), write]);
+			publish({ ...state, pending: [...state.pending.filter((value) => value.key !== write.key), write] });
 			const index = queue.findIndex((value) => value.key === write.key);
 			if (index === -1) queue.push(write);
 			else queue[index] = write;
@@ -152,19 +179,18 @@ function runningFace(view: AgentDetailView, on: boolean): AgentDetailView {
 	};
 }
 
-const queues = new WeakMap<() => Promise<void>, Map<string, ReturnType<typeof createQueue>>>();
-const noPending: readonly Write[] = [];
-const serverSnapshot = () => noPending;
+const queues = new WeakMap<object, Map<string, ReturnType<typeof createQueue>>>();
+const serverSnapshot = () => emptySnapshot;
 
-function agentQueue(refresh: () => Promise<void>, agentId: string) {
-	let agents = queues.get(refresh);
+function agentQueue(owner: object, agentId: string) {
+	let agents = queues.get(owner);
 	if (!agents) {
 		agents = new Map();
-		queues.set(refresh, agents);
+		queues.set(owner, agents);
 	}
 	let queue = agents.get(agentId);
 	if (!queue) {
-		queue = createQueue(refresh, agentId);
+		queue = createQueue(agentId);
 		agents.set(agentId, queue);
 	}
 	return queue;
@@ -172,13 +198,13 @@ function agentQueue(refresh: () => Promise<void>, agentId: string) {
 
 export function useAgentWrites(serverView: AgentDetailView) {
 	const agentId = serverView.id;
-	const refresh = useRefresh();
+	const router = useRouter();
 	const navigate = useNavigate();
-	const { enqueue, snapshot, subscribe } = agentQueue(refresh, agentId);
-	const pending = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
+	const { enqueue, snapshot, subscribe } = agentQueue(router, agentId);
+	const state = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
 
 	return {
-		view: pending.reduce((view, write) => write.apply(view), serverView),
+		view: state.pending.reduce((view, write) => write.apply(view), state.base ?? serverView),
 		toggleAgent(on: boolean) {
 			enqueue({
 				key: "running",

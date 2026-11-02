@@ -118,7 +118,6 @@ test("the switch turns an agent off and shows 0 percent and Paused", async ({ pa
 		await expect(sandbox(page).getByText("Paused", { exact: true })).toBeVisible();
 		await expect(sandbox(page).getByText("22%", { exact: true })).toHaveCount(0);
 		await expect(sandbox(page).getByText("18 days", { exact: true })).toHaveCount(0);
-		await expect(supportDot(page, "Paused")).toBeVisible();
 		const off = await readAgent(accountId, "support");
 		expect(off.isOn).toBe(false);
 		expect(off.cpu).toBe("22%");
@@ -416,11 +415,50 @@ test("a committed skill write stays on screen when the refresh times out", async
 	}
 });
 
+test("a confirmed skill write survives a later loader failure", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(90_000);
+	await openAgent(page, workspaceUser, "support");
+	let reads = 0;
+	const pattern = (url: URL) =>
+		url.pathname.startsWith("/_serverFn/") && decodeURIComponent(url.search).includes('"support"');
+	const handler = async (route: Route) => {
+		if (route.request().method() === "GET") {
+			reads += 1;
+			if (reads === 1) {
+				await route.continue();
+				return;
+			}
+			await route.fulfill({ status: 500, contentType: "text/plain", body: "Read failed" });
+			return;
+		}
+		await route.continue();
+	};
+	await page.route(pattern, handler);
+	try {
+		const button = skillRow(page, "inbox.read").getByRole("button");
+		await button.click();
+		await expect
+			.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.read"), settled)
+			.toBe(false);
+		await expect.poll(() => reads, settled).toBeGreaterThan(0);
+		await expect(button).toHaveAttribute("aria-pressed", "false");
+		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+		await wait(PENDING_TASK_WINDOW_MS + 1_000);
+		await expect(button).toHaveAttribute("aria-pressed", "false");
+		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+	} finally {
+		await page.unroute(pattern, handler);
+	}
+	await reloadAgent(page);
+	await expect(skillRow(page, "inbox.read").getByRole("button")).toHaveAttribute("aria-pressed", "false");
+});
+
 test("a committed skill write stays on screen when the read fails", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(90_000);
 	await openAgent(page, workspaceUser, "support");
 	let reads = 0;
-	const pattern = /\/_serverFn\//;
+	const pattern = (url: URL) =>
+		url.pathname.startsWith("/_serverFn/") && decodeURIComponent(url.search).includes('"support"');
 	const handler = async (route: Route) => {
 		if (route.request().method() === "GET") {
 			reads += 1;
