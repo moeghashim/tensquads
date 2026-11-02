@@ -1,0 +1,26 @@
+02-agents receipt. The orchestrator answered every Stop and ask item. Work continues.
+
+Files read, SHA-256:
+- AGENTS.md 2e85b8f9298c0e268f6db94242f54dbb5b18a0e923f11ca6140076e3dddc512c
+- docs/PLAN.md afea3c45c89da2bd0514baf7e2dba2a2f27b17443690fb36eef554efce6a6eac
+- tasks/02-agents.md af4ddff4b3a60e479cb09554ebc2f2bda8f3a84a1b535a5f0eb6b0530c443908
+- design/Main.dc.html 376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89
+- design/Agents.dc.html ee479cd67e3f16f5e0b11af6d5c246a5e76b3bf36141964c67b95303a5b65c4f
+- design/inventory/Agents.json b9e5600c3a9792c6ed53d328da0fee5aaea16a501253a7ef08714d0fe8d69919
+- design/inventory/Main.json deccce08d6932c707935dd44be6fd089e3a27d9c514e067d576129632117d5ec
+- docs/BRIEF.md 26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d
+- progress.md 908b77171516041419df52e593618a985f42028d0482f765b6f96aeac5da78d5
+- tasks/02-frame.md 7b72581686e9de32b4f63c9354998d4e4b6e02fb062eb3fe4f6c02aba8cdd576
+
+node scripts/design-check.mjs returned 0. The design matches the canvas.
+
+Decisions 1 to 28 and 32 read. Decisions 29, 30 and 31 are not in the table. No question at the first read.
+
+Decision 6 came later. The frame test clicks the sidebar Inventory row: `page.locator("nav").getByRole("button", { name: "Inventory" })`. The card has no `aria-label`.
+
+Lines that this task does not build:
+- docs/BRIEF.md:69 and :75 name /app/agents and /app/agents/:id. The frame uses /agents and /agents/$id.
+- docs/BRIEF.md:167 names an agent on/off switch. The agents list has no switch. 02-agent-detail owns that model.
+- docs/BRIEF.md:162 names "Tasks done by agents". That tile is on Overview. This screen shows each card's tasks. The seed tasks sum to 331.
+- docs/PLAN.md decision 14 says cloudflare/worker. The live slug is cloudflare/workers. This task does not edit the plan.
+- A heartbeat state "Restarting" is not on this screen.

@@ -53,6 +53,17 @@ Each row is one test in `e2e/agents.spec.ts`.
 - [ ] `node scripts/design-check.mjs` returns 0
 - [ ] `make verify` returns 0 on the branch and in CI
 
+## Orchestrator decisions
+
+Moe delegated these answers. Each one uses the recommended answer.
+
+1. **Pending line with no proposal.** Keep the line word for word in phase 2: "Mission pending. Master has proposed one; approve it in the inbox."
+2. **Stored percentages.** Keep stored `success` and `contribution`. They stay out of phase 2.
+3. **Loading and errors.** Item 13 in `tasks/02-frame.md`. The loader runs on the server. This screen shows no loading state. It makes no write. A failed read uses the default router error page.
+4. **New account fields.** Item 14 in `tasks/02-frame.md`. A blank `success`, `host`, or `region` shows "—" (U+2014, the same mark as `ownerText`). An empty list shows the heading and no cards. An empty mission keeps the pending line. The host line stays `{host} · {region}`, so two blanks read `— · —`. A task count of 0 stays 0. Empty skills show no chips and no extra text.
+5. **Card fields.** The frame loader returns `id`, `name`, `tint`, and `on`. The cards also need role, mission, contribution, host, region, skills, tasks, success, and autonomy. This screen reads those rows through `requireWorkspace` and `listAgents` in `apps/web/src/server/agents.ts`. That read is a second request besides the frame's six queries. It makes no write. The import of the database code stays inside the handler. The frame, the indexes, and the schema stay unchanged. `e2e/workspace.ts` accepts only `Sidebar` and `CHAT DOCK`, and 02-frame owns that file, so the agents test cuts the `AGENTS LIST` section with the same inventory rules and compares the rendered section both ways. The geometry helper in `e2e/frame.spec.ts` is not exported, and 02-frame owns that file. The agents spec measures boxes with `getBoundingClientRect` and a 0.5 px tolerance.
+6. **Sidebar Inventory click.** Each card is one button, and its accessible name includes the agent name. On `/agents`, `getByRole("button", { name: "Inventory" })` matches the sidebar row and the Inventory card. The frame test means the sidebar row. Line 59 of `e2e/frame.spec.ts` is `page.locator("nav").getByRole("button", { name: "Inventory" }).click()`. The card has no `aria-label`.
+
 ## Stop and ask
 
 Ask Moe, in a numbered list. Items 13 and 14 in `tasks/02-frame.md` apply to this screen.

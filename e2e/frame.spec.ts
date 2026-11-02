@@ -56,7 +56,7 @@ test("the sidebar marks the current page and the agent rows show status and open
 	await expect(page).toHaveURL(/\/agents$/);
 	await expect(page).toHaveTitle("Agents");
 	await expect(page.getByRole("button", { name: "Squads" })).toHaveCSS("font-weight", "600");
-	await page.getByRole("button", { name: "Inventory" }).click();
+	await page.locator("nav").getByRole("button", { name: "Inventory" }).click();
 	await expect(page).toHaveURL(/\/agents\/inventory$/);
 	await expect(page).toHaveTitle("Agent dashboard");
 	await expect(page.getByRole("button", { name: "Squads" })).toHaveCSS("font-weight", "600");
