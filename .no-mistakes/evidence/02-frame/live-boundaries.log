@@ -1,0 +1,8 @@
+{"scenario":"Task records request start before advisory lock release","waitMs":1502,"stampOffsetMs":0,"begin":"working"}
+{"scenario":"Next finish returns marketing reply","kind":"replied","reply":"Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike."}
+{"scenario":"Real transaction timeout settings","lock_timeout":"9999ms","statement_timeout":"9999ms"}
+{"scenario":"Statement timeout returns without retry","code":"57014","elapsedMs":10136}
+CLOUDFLARE_WORKERS_API_TOKEN is absent.
+{"scenario":"Missing token rejects before database access","exit":1}
+The database migration did not finish.
+{"scenario":"Real migration failure prevents deploy; stderr omits connection","exit":1}

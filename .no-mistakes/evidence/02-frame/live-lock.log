@@ -1,0 +1,11 @@
+Disposable PostgreSQL migrated; running real lock-held-beyond-window send check.
+✔ a lock held past the window does not block the next send (31295.069833ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 31557.959417
+Lock check finished: abandoned begin settled without working; next begin and finish returned the marketing reply.

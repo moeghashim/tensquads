@@ -1,0 +1,421 @@
+
+--- 2026-11-02T05:09:28.034Z debug
+🪵  Writing logs to "/Users/moeghashim/.no-mistakes/evidence/01M6D9W4BEQCXDH816P6NM095P/wrangler.log"
+---
+
+--- 2026-11-02T05:09:28.034Z debug
+.env file not found at "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/apps/web/.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-11-02T05:09:28.034Z debug
+.env file not found at "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/apps/web/.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-11-02T05:09:28.138Z log
+
+ ⛅️ wrangler 4.156.0
+────────────────────
+---
+
+--- 2026-11-02T05:09:28.140Z info
+Using redirected Wrangler configuration.
+ - Configuration being used: "dist/server/wrangler.json"
+ - Original user's configuration: "wrangler.jsonc"
+ - Deploy configuration file: ".wrangler/deploy/config.json"
+---
+
+--- 2026-11-02T05:09:28.149Z debug
+Running autoconfig detection in /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/apps/web...
+---
+
+--- 2026-11-02T05:09:28.149Z debug
+Metrics dispatcher: Dispatching disabled - would have sent {"deviceId":"d92976f1-c8de-4f1c-9369-0eb07f87ff77","event":"wrangler command started","timestamp":1793596168149,"properties":{"amplitude_session_id":1793596168143,"amplitude_event_id":0,"wranglerVersion":"4.156.0","wranglerMajorVersion":4,"wranglerMinorVersion":156,"wranglerPatchVersion":0,"osPlatform":"Mac OS","osVersion":"Darwin Kernel Version 25.6.0: Fri Jul 31 19:11:03 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T8132","nodeVersion":24,"isFirstUsage":true,"configFileType":"json","isCI":true,"isPagesCI":false,"isWorkersCI":false,"isInteractive":false,"hasAssets":true,"agent":null,"argsUsed":["dryRun","outdir"],"argsCombination":"dryRun, outdir","sanitizedCommand":"deploy","sanitizedArgs":{"dryRun":true,"path":null},"currentAgentSkillsInstalled":null}}.
+---
+
+--- 2026-11-02T05:09:28.149Z debug
+Metrics dispatcher: Dispatching disabled - would have sent {"deviceId":"d92976f1-c8de-4f1c-9369-0eb07f87ff77","event":"autoconfig_process_started","timestamp":1793596168149,"properties":{"amplitude_session_id":1793596168148,"amplitude_event_id":0,"wranglerVersion":"4.156.0","wranglerMajorVersion":4,"wranglerMinorVersion":156,"wranglerPatchVersion":0,"osPlatform":"Mac OS","osVersion":"Darwin Kernel Version 25.6.0: Fri Jul 31 19:11:03 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T8132","nodeVersion":24,"isFirstUsage":true,"configFileType":"none","isCI":true,"isPagesCI":false,"isWorkersCI":false,"isInteractive":false,"hasAssets":false,"agent":null,"category":"Workers","os":"darwin:arm64","autoConfigId":"0d6eeb88-e795-4a2e-bc8d-f5ed3d8439d2","command":"wrangler deploy","dryRun":true,"currentAgentSkillsInstalled":null}}.
+---
+
+--- 2026-11-02T05:09:28.149Z debug
+Metrics dispatcher: Dispatching disabled - would have sent {"deviceId":"d92976f1-c8de-4f1c-9369-0eb07f87ff77","event":"autoconfig_detection_started","timestamp":1793596168149,"properties":{"amplitude_session_id":1793596168149,"amplitude_event_id":0,"wranglerVersion":"4.156.0","wranglerMajorVersion":4,"wranglerMinorVersion":156,"wranglerPatchVersion":0,"osPlatform":"Mac OS","osVersion":"Darwin Kernel Version 25.6.0: Fri Jul 31 19:11:03 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T8132","nodeVersion":24,"isFirstUsage":true,"configFileType":"none","isCI":true,"isPagesCI":false,"isWorkersCI":false,"isInteractive":false,"hasAssets":false,"agent":null,"category":"Workers","os":"darwin:arm64","autoConfigId":"0d6eeb88-e795-4a2e-bc8d-f5ed3d8439d2","command":"wrangler deploy","currentAgentSkillsInstalled":null}}.
+---
+
+--- 2026-11-02T05:09:28.149Z debug
+Metrics dispatcher: Dispatching disabled - would have sent {"deviceId":"d92976f1-c8de-4f1c-9369-0eb07f87ff77","event":"autoconfig_detection_completed","timestamp":1793596168149,"properties":{"amplitude_session_id":1793596168149,"amplitude_event_id":0,"wranglerVersion":"4.156.0","wranglerMajorVersion":4,"wranglerMinorVersion":156,"wranglerPatchVersion":0,"osPlatform":"Mac OS","osVersion":"Darwin Kernel Version 25.6.0: Fri Jul 31 19:11:03 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T8132","nodeVersion":24,"isFirstUsage":true,"configFileType":"none","isCI":true,"isPagesCI":false,"isWorkersCI":false,"isInteractive":false,"hasAssets":false,"agent":null,"category":"Workers","os":"darwin:arm64","autoConfigId":"0d6eeb88-e795-4a2e-bc8d-f5ed3d8439d2","configured":true,"success":true,"currentAgentSkillsInstalled":null}}.
+---
+
+--- 2026-11-02T05:09:28.149Z debug
+Metrics dispatcher: Dispatching disabled - would have sent {"deviceId":"d92976f1-c8de-4f1c-9369-0eb07f87ff77","event":"autoconfig_process_ended","timestamp":1793596168149,"properties":{"amplitude_session_id":1793596168149,"amplitude_event_id":0,"wranglerVersion":"4.156.0","wranglerMajorVersion":4,"wranglerMinorVersion":156,"wranglerPatchVersion":0,"osPlatform":"Mac OS","osVersion":"Darwin Kernel Version 25.6.0: Fri Jul 31 19:11:03 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T8132","nodeVersion":24,"isFirstUsage":true,"configFileType":"none","isCI":true,"isPagesCI":false,"isWorkersCI":false,"isInteractive":false,"hasAssets":false,"agent":null,"category":"Workers","os":"darwin:arm64","autoConfigId":"0d6eeb88-e795-4a2e-bc8d-f5ed3d8439d2","command":"wrangler deploy","dryRun":true,"success":true,"currentAgentSkillsInstalled":null}}.
+---
+
+--- 2026-11-02T05:09:28.187Z info
+Attaching additional modules:
+---
+
+--- 2026-11-02T05:09:28.191Z log
+┌──────────────────────────────────────────────────────────┬──────┬─────────────┐
+│ Name                                                     │ Type │ Size        │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/__23tanstack-start-server-fn-resolver-DTwUQdrt.js │ esm  │ 130.82 KiB  │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/__root-DWXBPKiQ.js                                │ esm  │ 313.11 KiB  │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/_tanstack-start-manifest_v-D2cxZThe.js            │ esm  │ 3.25 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/_workspace-BM5hj_nb.js                            │ esm  │ 33.95 KiB   │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/_workspace-CcvG8A0l.js                            │ esm  │ 3.30 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/agents._id-BN9lWPVL.js                            │ esm  │ 0.18 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/agents.index-DTA8Fmeg.js                          │ esm  │ 0.18 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/async-local-storage-BCf_psWi.js                   │ esm  │ 0.84 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/catalog-Bd2W_vwE.js                               │ esm  │ 2.93 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/chat-C_RHl5ey.js                                  │ esm  │ 0.16 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/create-account-EN2h866o.js                        │ esm  │ 3.08 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/createCsrfMiddleware-qNTY461U.js                  │ esm  │ 3.54 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/createServerFn-BGW7URGJ.js                        │ esm  │ 14.06 KiB   │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/createServerRpc-NI8wvRQm.js                       │ esm  │ 0.43 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/createSsrRpc-DMb-zQcd.js                          │ esm  │ 17.16 KiB   │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/css-C1d3ovvV.js                                   │ esm  │ 0.61 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/deprecated-o9KMpeDt.js                            │ esm  │ 41.62 KiB   │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/empty-plugin-adapters-Butv5p6u.js                 │ esm  │ 0.26 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/jsx-runtime-BDTLGmtd.js                           │ esm  │ 18.74 KiB   │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/machine-h5dw9LLi.js                               │ esm  │ 536.65 KiB  │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/marks-vRucBokO.js                                 │ esm  │ 1.50 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/overview-DxVgKQVE.js                              │ esm  │ 0.18 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/pending-window-cq7SlOaJ.js                        │ esm  │ 0.17 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/publishable-key-CBBwSUh4.js                       │ esm  │ 0.88 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/react-dom-C2Lexqzc.js                             │ esm  │ 8.81 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/redirect-BDIu7O1P.js                              │ esm  │ 1.70 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/router-V5V6UdNC.js                                │ esm  │ 10.21 KiB   │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/routes-CGTp35Qr.js                                │ esm  │ 45.76 KiB   │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/rules-DdSMeTgt.js                                 │ esm  │ 0.17 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/scope-B-tnxAHi.js                                 │ esm  │ 0.51 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/server-Dna2Hobs.js                                │ esm  │ 284.49 KiB  │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/signin-C0qch8MP.js                                │ esm  │ 9.75 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/signup-do5IYXft.js                                │ esm  │ 37.60 KiB   │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/src-760PheRy.js                                   │ esm  │ 57.68 KiB   │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/src-BFQYQdlc.js                                   │ esm  │ 395.04 KiB  │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/start-CEFu6VxF.js                                 │ esm  │ 9.33 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/traffic-BH5mlmC3.js                               │ esm  │ 0.18 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/utils-DqfMutt2.js                                 │ esm  │ 8.02 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/utils-ok1DnVNG.js                                 │ esm  │ 0.50 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/worker-env-CFRidzpS.js                            │ esm  │ 0.51 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/workspace-DB2kbvR8.js                             │ esm  │ 2.08 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ assets/workspace-session-D8256zVJ.js                     │ esm  │ 1.75 KiB    │
+├──────────────────────────────────────────────────────────┼──────┼─────────────┤
+│ Total (42 modules)                                       │      │ 2001.70 KiB │
+└──────────────────────────────────────────────────────────┴──────┴─────────────┘
+---
+
+--- 2026-11-02T05:09:28.191Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/__23tanstack-start-server-fn-resolver-DTwUQdrt.js
+---
+
+--- 2026-11-02T05:09:28.191Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/__root-DWXBPKiQ.js
+---
+
+--- 2026-11-02T05:09:28.191Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/_tanstack-start-manifest_v-D2cxZThe.js
+---
+
+--- 2026-11-02T05:09:28.191Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/_workspace-BM5hj_nb.js
+---
+
+--- 2026-11-02T05:09:28.191Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/_workspace-CcvG8A0l.js
+---
+
+--- 2026-11-02T05:09:28.192Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/agents._id-BN9lWPVL.js
+---
+
+--- 2026-11-02T05:09:28.192Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/agents.index-DTA8Fmeg.js
+---
+
+--- 2026-11-02T05:09:28.192Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/async-local-storage-BCf_psWi.js
+---
+
+--- 2026-11-02T05:09:28.192Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/catalog-Bd2W_vwE.js
+---
+
+--- 2026-11-02T05:09:28.192Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/chat-C_RHl5ey.js
+---
+
+--- 2026-11-02T05:09:28.192Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/create-account-EN2h866o.js
+---
+
+--- 2026-11-02T05:09:28.192Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/createCsrfMiddleware-qNTY461U.js
+---
+
+--- 2026-11-02T05:09:28.192Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/createServerFn-BGW7URGJ.js
+---
+
+--- 2026-11-02T05:09:28.193Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/createServerRpc-NI8wvRQm.js
+---
+
+--- 2026-11-02T05:09:28.193Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/createSsrRpc-DMb-zQcd.js
+---
+
+--- 2026-11-02T05:09:28.193Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/css-C1d3ovvV.js
+---
+
+--- 2026-11-02T05:09:28.193Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/deprecated-o9KMpeDt.js
+---
+
+--- 2026-11-02T05:09:28.193Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/empty-plugin-adapters-Butv5p6u.js
+---
+
+--- 2026-11-02T05:09:28.193Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/jsx-runtime-BDTLGmtd.js
+---
+
+--- 2026-11-02T05:09:28.193Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/machine-h5dw9LLi.js
+---
+
+--- 2026-11-02T05:09:28.194Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/marks-vRucBokO.js
+---
+
+--- 2026-11-02T05:09:28.194Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/overview-DxVgKQVE.js
+---
+
+--- 2026-11-02T05:09:28.194Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/pending-window-cq7SlOaJ.js
+---
+
+--- 2026-11-02T05:09:28.194Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/publishable-key-CBBwSUh4.js
+---
+
+--- 2026-11-02T05:09:28.194Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/react-dom-C2Lexqzc.js
+---
+
+--- 2026-11-02T05:09:28.194Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/redirect-BDIu7O1P.js
+---
+
+--- 2026-11-02T05:09:28.194Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/router-V5V6UdNC.js
+---
+
+--- 2026-11-02T05:09:28.195Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/routes-CGTp35Qr.js
+---
+
+--- 2026-11-02T05:09:28.195Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/rules-DdSMeTgt.js
+---
+
+--- 2026-11-02T05:09:28.195Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/scope-B-tnxAHi.js
+---
+
+--- 2026-11-02T05:09:28.195Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/server-Dna2Hobs.js
+---
+
+--- 2026-11-02T05:09:28.195Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/signin-C0qch8MP.js
+---
+
+--- 2026-11-02T05:09:28.195Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/signup-do5IYXft.js
+---
+
+--- 2026-11-02T05:09:28.196Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/src-760PheRy.js
+---
+
+--- 2026-11-02T05:09:28.196Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/src-BFQYQdlc.js
+---
+
+--- 2026-11-02T05:09:28.196Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/start-CEFu6VxF.js
+---
+
+--- 2026-11-02T05:09:28.196Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/traffic-BH5mlmC3.js
+---
+
+--- 2026-11-02T05:09:28.196Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/utils-DqfMutt2.js
+---
+
+--- 2026-11-02T05:09:28.196Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/utils-ok1DnVNG.js
+---
+
+--- 2026-11-02T05:09:28.196Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/worker-env-CFRidzpS.js
+---
+
+--- 2026-11-02T05:09:28.197Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/workspace-DB2kbvR8.js
+---
+
+--- 2026-11-02T05:09:28.197Z debug
+Writing additional module to output /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/.local-test/dry-run/assets/workspace-session-D8256zVJ.js
+---
+
+--- 2026-11-02T05:09:28.227Z info
+✨ Read 20 files from the assets directory /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6D9W4BEQCXDH816P6NM095P/apps/web/dist/client
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/.assetsignore
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/_workspace-CACsNX_1.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/_workspace-D3PBbU9O.css
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/agents._id-CAIeH5mq.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/agents.index-CAIeH5mq.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/chat-CAIeH5mq.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/createServerFn-CPcVimT3.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/css-Bt2VLpnh.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/index-CpoCEyAF.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/index-YAZqwzyt.css
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/jsx-runtime-DyZJNswf.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/machine-6ufro0Mv.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/marks-BmbuL2g7.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/overview-CAIeH5mq.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/routes-CYmuYOBw.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/rules-CAIeH5mq.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/signin-N-eki7TP.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/signup-CDCfNDTV.js
+---
+
+--- 2026-11-02T05:09:28.227Z debug
+/assets/traffic-CAIeH5mq.js
+---
+
+--- 2026-11-02T05:09:28.228Z debug
+Ignoring asset: .assetsignore
+---
+
+--- 2026-11-02T05:09:28.285Z log
+Total Upload: 2711.69 KiB / gzip: 585.32 KiB
+---
+
+--- 2026-11-02T05:09:28.294Z log
+No bindings found.
+---
+
+--- 2026-11-02T05:09:28.294Z log
+--dry-run: exiting now.
+---
+
+--- 2026-11-02T05:09:28.295Z debug
+Metrics dispatcher: Dispatching disabled - would have sent {"deviceId":"d92976f1-c8de-4f1c-9369-0eb07f87ff77","event":"deploy worker script","timestamp":1793596168295,"properties":{"amplitude_session_id":1793596168295,"amplitude_event_id":0,"wranglerVersion":"4.156.0","wranglerMajorVersion":4,"wranglerMinorVersion":156,"wranglerPatchVersion":0,"osPlatform":"Mac OS","osVersion":"Darwin Kernel Version 25.6.0: Fri Jul 31 19:11:03 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T8132","nodeVersion":24,"isFirstUsage":true,"configFileType":"none","isCI":true,"isPagesCI":false,"isWorkersCI":false,"isInteractive":false,"hasAssets":false,"agent":null,"category":"Workers","os":"darwin:arm64","usesTypeScript":false,"durationMs":117,"currentAgentSkillsInstalled":null}}.
+---
+
+--- 2026-11-02T05:09:28.295Z debug
+Metrics dispatcher: Dispatching disabled - would have sent {"deviceId":"d92976f1-c8de-4f1c-9369-0eb07f87ff77","event":"wrangler command completed","timestamp":1793596168295,"properties":{"amplitude_session_id":1793596168143,"amplitude_event_id":1,"wranglerVersion":"4.156.0","wranglerMajorVersion":4,"wranglerMinorVersion":156,"wranglerPatchVersion":0,"osPlatform":"Mac OS","osVersion":"Darwin Kernel Version 25.6.0: Fri Jul 31 19:11:03 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T8132","nodeVersion":24,"isFirstUsage":true,"configFileType":"json","isCI":true,"isPagesCI":false,"isWorkersCI":false,"isInteractive":false,"hasAssets":true,"agent":null,"argsUsed":["dryRun","outdir"],"argsCombination":"dryRun, outdir","sanitizedCommand":"deploy","sanitizedArgs":{"dryRun":true,"path":null},"durationMs":260,"currentAgentSkillsInstalled":null}}.
+---

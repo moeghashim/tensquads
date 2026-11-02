@@ -1,0 +1,24 @@
+stateDiagram-v2
+  state "Legend" as legend {
+    lg0: Path to the WaitEnds bug
+    lg1: Repeats forever, so WaitEnds breaks
+  }
+  class lg0 bugPath
+  class lg1 repeats
+  s0: none
+  s1: begin
+  s2: refresh
+  s3: finish
+  [*] --> s0
+  s0 --> s0: Type
+  s0 --> s1: StartBegin
+  s1 --> s2: BeginTimeout or SendNone or SendPaused
+  s1 --> s1: Type
+  s1 --> s3: SendNoSkill or SendOn
+  s2 --> s0: Refresh
+  s3 --> s2: ClientTimeout or Finish
+  s3 --> s0: Reload
+  s2 --> s2: OpenAdmin or LeaveAdmin
+  class s0 bugPath
+  class s1 bugPath
+  class s2 repeats

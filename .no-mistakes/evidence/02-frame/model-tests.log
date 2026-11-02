@@ -1,0 +1,11 @@
+✔ a chat wait reaches none (1559.109042ms)
+✔ removing a timeout action breaks the wait (2906.36ms)
+✔ a real dock run stays open across Chat, types while Working, and times out the finish (1628.355333ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6189.591

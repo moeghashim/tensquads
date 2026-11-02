@@ -1,0 +1,1 @@
+{"scenario":"Real PostgreSQL lock rejection is not retried","code":"55P03","attempts":1}
