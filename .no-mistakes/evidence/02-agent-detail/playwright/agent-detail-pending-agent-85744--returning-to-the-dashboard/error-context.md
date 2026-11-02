@@ -7,7 +7,7 @@
 # Test info
 
 - Name: agent-detail.spec.ts >> pending agent writes survive leaving and returning to the dashboard
-- Location: e2e/agent-detail.spec.ts:252:1
+- Location: e2e/agent-detail.spec.ts:250:1
 
 # Error details
 

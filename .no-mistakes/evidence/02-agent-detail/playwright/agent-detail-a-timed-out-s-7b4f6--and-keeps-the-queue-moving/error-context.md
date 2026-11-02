@@ -7,7 +7,7 @@
 # Test info
 
 - Name: agent-detail.spec.ts >> a timed out skill write restores the server value and keeps the queue moving
-- Location: e2e/agent-detail.spec.ts:224:1
+- Location: e2e/agent-detail.spec.ts:222:1
 
 # Error details
 
