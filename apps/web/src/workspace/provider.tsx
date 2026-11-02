@@ -1,6 +1,15 @@
 import { useRouter } from "@tanstack/react-router";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
-import { type ReactNode, useCallback, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import {
+	type Dispatch,
+	type ReactNode,
+	type SetStateAction,
+	useCallback,
+	useMemo,
+	useRef,
+	useState,
+	useSyncExternalStore,
+} from "react";
 
 import { beginWorkspaceSend, finishWorkspaceSend } from "#/server/workspace.ts";
 
@@ -36,8 +45,9 @@ export function WorkspaceProvider({
 	const refreshFrame = useFrameRefresh(router, refresh);
 	useMountedFlag(mounted);
 
-	const submit = useSubmit(draft, thinking, setDraft, {
+	const submit = useSubmit(draft, thinking, {
 		mounted,
+		setDraft,
 		setMessages,
 		setThinking,
 		setThinkingAgent,
@@ -114,8 +124,8 @@ function useWorkspaceControls(frame: WorkspaceFrameData) {
 	return { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive, ruleForm, setRuleForm };
 }
 
-function useSubmit(draft: string, thinking: boolean, setDraft: (value: string) => void, hooks: SendHooks) {
-	const { sending, setPending } = hooks;
+function useSubmit(draft: string, thinking: boolean, hooks: SendHooks) {
+	const { sending, setPending, setDraft } = hooks;
 	return useCallback(
 		(text?: string) => {
 			if (sendBlocked(sending.current, thinking)) return;
@@ -221,6 +231,7 @@ function useLiveClock(live: boolean, refresh: () => Promise<void>) {
 
 interface SendHooks {
 	readonly mounted: { current: boolean };
+	readonly setDraft: Dispatch<SetStateAction<string>>;
 	readonly setMessages: (messages: WorkspaceFrameData["messages"]) => void;
 	readonly setThinking: (value: boolean) => void;
 	readonly setThinkingAgent: (value: string) => void;
@@ -243,6 +254,10 @@ async function sendDraft(value: string, hooks: SendHooks) {
 async function performSend(value: string, hooks: SendHooks) {
 	const started = await beginWorkspaceSend({ data: value });
 	if (!hooks.mounted.current) {
+		return;
+	}
+	if (started.kind === "ignored") {
+		hooks.setDraft((draft) => (draft.length === 0 ? value : draft));
 		return;
 	}
 	showStartedMessages(started, hooks);

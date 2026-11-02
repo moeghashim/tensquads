@@ -144,6 +144,27 @@ async function advanceReply(page) {
 	await page.clock.fastForward(1400);
 }
 
+for (const newerDraft of ["", "A newer question"]) {
+	test(`an ignored send ${newerDraft ? "keeps newer typing" : "restores the submitted draft"}`, async (t) => {
+		await withDock(t, async ({ page }) => {
+			await page.evaluate(() => {
+				window.beginSend = () => new Promise((resolve) => {
+					window.releaseBegin = () => resolve({ kind: "ignored" });
+				});
+			});
+			await send(page);
+			await page.waitForFunction(() => window.releaseBegin);
+			await expect(page.locator("#dock-input")).toHaveValue("");
+			await expect(page.locator("#pending")).toHaveText("true");
+			if (newerDraft) await page.locator("#dock-input").fill(newerDraft);
+			await page.evaluate(() => window.releaseBegin());
+			await expect(page.locator("#pending")).toHaveText("false");
+			await expect(page.locator("#dock-input")).toHaveValue(newerDraft || question);
+			await expect(page.locator("[data-loop='dockChat']").getByText(question, { exact: true })).toHaveCount(0);
+		});
+	});
+}
+
 test("reload during Working retains the first Task and a later send replies", async (t) => {
 	await withDock(t, async ({ page, db, scope, mount }) => {
 		await page.clock.install();
