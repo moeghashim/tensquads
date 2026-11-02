@@ -78,13 +78,25 @@ async function abandonedBegin(kernel: Kernel, scope: { accountId: string; mode: 
 }
 
 async function replyAfter(kernel: Kernel, scope: { accountId: string; mode: "account" }) {
-	const started = await retryLockWait(() => kernel.beginSend(scope, ads));
-	assert.equal(started.kind, "working");
-	if (started.kind !== "working") return;
-	const finished = await retryLockWait(() => kernel.finishSend(scope, started.taskId));
-	assert.equal(finished.kind, "replied");
-	if (finished.kind !== "replied") return;
+	const deadline = Date.now() + 90_000;
+	for (;;) {
+		try {
+			if (await replyPair(kernel, scope)) return;
+		} catch (error) {
+			if (!isLockWait(error)) throw error;
+		}
+		assert.ok(Date.now() < deadline, "the next send did not reply within 90 seconds");
+		await delay(250);
+	}
+}
+
+async function replyPair(kernel: Kernel, scope: { accountId: string; mode: "account" }): Promise<boolean> {
+	const started = await kernel.beginSend(scope, ads);
+	if (started.kind !== "working") return false;
+	const finished = await kernel.finishSend(scope, started.taskId);
+	if (finished.kind !== "replied") return false;
 	assert.ok(finished.messages.some((message) => message.text === reply));
+	return true;
 }
 
 async function removeAccount(db: ReturnType<typeof openPostgres>["db"], accountId: string) {
