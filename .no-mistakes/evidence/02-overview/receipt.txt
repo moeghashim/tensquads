@@ -1,0 +1,10 @@
+2e85b8f9298c0e268f6db94242f54dbb5b18a0e923f11ca6140076e3dddc512c  AGENTS.md
+afea3c45c89da2bd0514baf7e2dba2a2f27b17443690fb36eef554efce6a6eac  docs/PLAN.md
+5ebf4ed3bd994fb2471f7a36ad0a465b6e546bd7309618aab684c1a4322e53a3  tasks/02-overview.md
+376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89  design/Main.dc.html
+deccce08d6932c707935dd44be6fd089e3a27d9c514e067d576129632117d5ec  design/inventory/Main.json
+26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
+5f922c968a6c5e81f2cc1e618885c49d0a6861f080d70a3dd2835709bf450d57  progress.md
+Decisions 1 to 32 read. No question.
+Design check: all 13 manifest entries OK; design/ matches canvas version 1793448823-a766.
+Overview requirements map to tasks/02-overview.md. Other screens are out of this phase.

@@ -1,0 +1,51 @@
+{
+  "greeting": "Good morning, Sara",
+  "mission": "Make Leen the first name in premium dates across the Gulf and the UK.",
+  "online": "0 of 0 squads online",
+  "tiles": [
+    {
+      "label": "Revenue",
+      "value": "—",
+      "delta": " ",
+      "deltaColor": "#5d5d5d"
+    },
+    {
+      "label": "Orders",
+      "value": "—",
+      "delta": " ",
+      "deltaColor": "#5d5d5d"
+    },
+    {
+      "label": "Average order",
+      "value": "—",
+      "delta": " ",
+      "deltaColor": "#5d5d5d"
+    },
+    {
+      "label": "Profit margin",
+      "value": "—",
+      "delta": " ",
+      "deltaColor": "#5d5d5d"
+    },
+    {
+      "label": "Tasks done by squads",
+      "value": "0",
+      "delta": "This week",
+      "deltaColor": "#5d5d5d"
+    },
+    {
+      "label": "Hours saved",
+      "value": "—",
+      "delta": " ",
+      "deltaColor": "#5d5d5d"
+    }
+  ],
+  "bars": [],
+  "count": 0,
+  "empty": true,
+  "emptyText": "Nothing waiting. Your squads are working inside their limits.",
+  "proposals": [],
+  "approvals": [],
+  "agents": [],
+  "masterName": "Master"
+}

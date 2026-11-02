@@ -1,0 +1,98 @@
+[
+  {
+    "name": "overview-seed",
+    "width": 1440,
+    "scroll": 1440,
+    "chart": 201,
+    "assertions": "passed",
+    "surface": "isolated SSR render of actual components; not authenticated E2E"
+  },
+  {
+    "name": "overview-seed",
+    "width": 390,
+    "scroll": 390,
+    "chart": 201,
+    "assertions": "passed",
+    "surface": "isolated SSR render of actual components; not authenticated E2E"
+  },
+  {
+    "name": "overview-no-store",
+    "width": 1440,
+    "scroll": 1440,
+    "chart": 201,
+    "assertions": "passed",
+    "surface": "isolated SSR render of actual components; not authenticated E2E"
+  },
+  {
+    "name": "overview-no-store",
+    "width": 390,
+    "scroll": 390,
+    "chart": 201,
+    "assertions": "passed",
+    "surface": "isolated SSR render of actual components; not authenticated E2E"
+  },
+  {
+    "name": "overview-blanks",
+    "width": 1440,
+    "scroll": 1440,
+    "chart": 201,
+    "assertions": "passed",
+    "surface": "isolated SSR render of actual components; not authenticated E2E"
+  },
+  {
+    "name": "overview-blanks",
+    "width": 390,
+    "scroll": 390,
+    "chart": 201,
+    "assertions": "passed",
+    "surface": "isolated SSR render of actual components; not authenticated E2E"
+  },
+  {
+    "name": "overview-email",
+    "width": 1440,
+    "scroll": 1440,
+    "chart": 201,
+    "assertions": "passed",
+    "surface": "isolated SSR render of actual components; not authenticated E2E"
+  },
+  {
+    "name": "overview-email",
+    "width": 390,
+    "scroll": 390,
+    "chart": 201,
+    "assertions": "passed",
+    "surface": "isolated SSR render of actual components; not authenticated E2E"
+  },
+  {
+    "name": "overview-approved",
+    "width": 1440,
+    "scroll": 1440,
+    "chart": 201,
+    "assertions": "passed",
+    "surface": "isolated SSR render of actual components; not authenticated E2E"
+  },
+  {
+    "name": "overview-approved",
+    "width": 390,
+    "scroll": 390,
+    "chart": 201,
+    "assertions": "passed",
+    "surface": "isolated SSR render of actual components; not authenticated E2E"
+  },
+  {
+    "name": "overview-revising",
+    "width": 1440,
+    "scroll": 1440,
+    "chart": 201,
+    "assertions": "passed",
+    "surface": "isolated SSR render of actual components; not authenticated E2E"
+  },
+  {
+    "name": "overview-revising",
+    "width": 390,
+    "scroll": 390,
+    "chart": 201,
+    "assertions": "passed",
+    "surface": "isolated SSR render of actual components; not authenticated E2E"
+  }
+]

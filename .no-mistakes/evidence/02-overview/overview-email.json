@@ -1,0 +1,237 @@
+{
+  "greeting": "Good morning, owner",
+  "mission": "—",
+  "online": "4 of 5 squads online",
+  "tiles": [
+    {
+      "delta": "+12% vs last week",
+      "label": "Revenue",
+      "value": "$8,420",
+      "deltaColor": "#00692a"
+    },
+    {
+      "delta": " ",
+      "label": "Orders",
+      "value": "—",
+      "deltaColor": "#00692a"
+    },
+    {
+      "delta": "+4% vs last week",
+      "label": "Average order",
+      "value": "$45.27",
+      "deltaColor": "#00692a"
+    },
+    {
+      "delta": "−1 pt vs last week",
+      "label": "Profit margin",
+      "value": "31%",
+      "deltaColor": "#911e1b"
+    },
+    {
+      "label": "Tasks done by squads",
+      "value": "331",
+      "delta": "This week",
+      "deltaColor": "#5d5d5d"
+    },
+    {
+      "delta": "This week",
+      "label": "Hours saved",
+      "value": "—",
+      "deltaColor": "#5d5d5d"
+    }
+  ],
+  "bars": [
+    {
+      "h": 65,
+      "fill": "#c9c9c9",
+      "label": "14",
+      "title": "Oct 14: $980"
+    },
+    {
+      "h": 69,
+      "fill": "#c9c9c9",
+      "label": "15",
+      "title": "Oct 15: $1,040"
+    },
+    {
+      "h": 68,
+      "fill": "#c9c9c9",
+      "label": "16",
+      "title": "Oct 16: $1,020"
+    },
+    {
+      "h": 74,
+      "fill": "#c9c9c9",
+      "label": "17",
+      "title": "Oct 17: $1,110"
+    },
+    {
+      "h": 71,
+      "fill": "#c9c9c9",
+      "label": "18",
+      "title": "Oct 18: $1,060"
+    },
+    {
+      "h": 77,
+      "fill": "#c9c9c9",
+      "label": "19",
+      "title": "Oct 19: $1,150"
+    },
+    {
+      "h": 77,
+      "fill": "#c9c9c9",
+      "label": "20",
+      "title": "Oct 20: $1,160"
+    },
+    {
+      "h": 67,
+      "fill": "#181818",
+      "label": "21",
+      "title": "Oct 21: $1,010"
+    },
+    {
+      "h": 75,
+      "fill": "#181818",
+      "label": "22",
+      "title": "Oct 22: $1,120"
+    },
+    {
+      "h": 73,
+      "fill": "#181818",
+      "label": "23",
+      "title": "Oct 23: $1,090"
+    },
+    {
+      "h": 83,
+      "fill": "#181818",
+      "label": "24",
+      "title": "Oct 24: $1,250"
+    },
+    {
+      "h": 79,
+      "fill": "#181818",
+      "label": "25",
+      "title": "Oct 25: $1,180"
+    },
+    {
+      "h": 89,
+      "fill": "#181818",
+      "label": "26",
+      "title": "Oct 26: $1,330"
+    },
+    {
+      "h": 96,
+      "fill": "#181818",
+      "label": "27",
+      "title": "Oct 27: $1,440"
+    }
+  ],
+  "count": 4,
+  "empty": false,
+  "emptyText": "",
+  "proposals": [
+    {
+      "id": "mp-inventory",
+      "agentName": " ",
+      "tint": "#fee7c2",
+      "title": "Proposed mission",
+      "mission": "",
+      "chips": [
+        "—",
+        "—",
+        "Stock-outs: 0"
+      ],
+      "proposed": true,
+      "revising": false
+    }
+  ],
+  "approvals": [
+    {
+      "id": "ap1",
+      "agentName": "Support",
+      "tint": "#def5ee",
+      "amount": "$42",
+      "title": "Refund $42 on #A-1012",
+      "detail": "Print arrived creased; photo attached. Second refund for this customer this month."
+    },
+    {
+      "id": "ap2",
+      "agentName": "Marketing",
+      "tint": "#ece3ff",
+      "amount": "+$20/day",
+      "title": "Raise prints ad set to $60 a day",
+      "detail": "Return on ad spend has been 3.4 for 7 days. Adds about $140 a week."
+    },
+    {
+      "id": "ap3",
+      "agentName": " ",
+      "tint": "#fee7c2",
+      "amount": " ",
+      "title": "",
+      "detail": "\t"
+    }
+  ],
+  "agents": [
+    {
+      "id": "orders",
+      "name": "Orders",
+      "role": "Fulfilment and tracking",
+      "tint": "#e7efff",
+      "last": "Added tracking LI400083615LT to #A-1007",
+      "tasks": 142,
+      "success": "98%",
+      "saved": "11.5h",
+      "mission": "Ship every order within 24 hours and keep the customer informed.",
+      "contribution": 72
+    },
+    {
+      "id": "support",
+      "name": "Support",
+      "role": "Customer inbox and refunds",
+      "tint": "#def5ee",
+      "last": "Asked for tracking on #A-1007 for a customer",
+      "tasks": 96,
+      "success": "94%",
+      "saved": "9h",
+      "mission": "Answer every customer within an hour and keep satisfaction above 4.5.",
+      "contribution": 81
+    },
+    {
+      "id": "marketing",
+      "name": "Marketing",
+      "role": "Ads, social and email",
+      "tint": "#ece3ff",
+      "last": "Asked to raise the prints ad set to $60 a day",
+      "tasks": 38,
+      "success": "91%",
+      "saved": "6h",
+      "mission": "Bring in repeat customers at a return above 3× on every dollar spent.",
+      "contribution": 64
+    },
+    {
+      "id": "finance",
+      "name": "Finance",
+      "role": "Payouts, costs and profit",
+      "tint": "#ffefa4",
+      "last": "Sent the weekly profit summary",
+      "tasks": 24,
+      "success": "100%",
+      "saved": "4h",
+      "mission": "Keep profit margin above 30% and every bill matched within a week.",
+      "contribution": 90
+    },
+    {
+      "id": "inventory",
+      "name": " ",
+      "role": "",
+      "tint": "#fee7c2",
+      "last": "",
+      "tasks": 31,
+      "success": "",
+      "saved": "",
+      "mission": "",
+      "contribution": 0
+    }
+  ],
+  "masterName": "Master"
+}

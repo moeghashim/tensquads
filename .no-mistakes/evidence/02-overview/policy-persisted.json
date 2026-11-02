@@ -1,0 +1,289 @@
+{
+  "mandates": [
+    {
+      "accountId": "demo",
+      "approvalId": "ap1",
+      "ruleId": "r1",
+      "ruleWhen": "a refund request comes in",
+      "ruleAction": "refund it if it is under the refund limit, otherwise ask me",
+      "ruleApproval": "Auto under limit",
+      "limitValue": 50,
+      "policyVersion": "policy-138ba18b",
+      "saidYes": "Moe",
+      "saidAt": "2026-11-02T12:09:50.007Z"
+    }
+  ],
+  "approvals": [
+    {
+      "accountId": "demo",
+      "id": "ap1",
+      "agent": "support",
+      "title": "Refund $42 on #A-1012",
+      "detail": "Print arrived creased; photo attached. Second refund for this customer this month.",
+      "amount": "$42",
+      "status": "Approved",
+      "sortOrder": 0
+    },
+    {
+      "accountId": "demo",
+      "id": "ap2",
+      "agent": "marketing",
+      "title": "Raise prints ad set to $60 a day",
+      "detail": "Return on ad spend has been 3.4 for 7 days. Adds about $140 a week.",
+      "amount": "+$20/day",
+      "status": "Declined",
+      "sortOrder": 1
+    },
+    {
+      "accountId": "demo",
+      "id": "ap3",
+      "agent": "inventory",
+      "title": "Reorder 50 blank hoodies",
+      "detail": "Black hoodie M is down to 6. Usual supplier, 5-day delivery.",
+      "amount": "$610",
+      "status": "Declined",
+      "sortOrder": 2
+    }
+  ],
+  "agents": [
+    {
+      "accountId": "demo",
+      "id": "finance",
+      "name": "Finance",
+      "role": "Payouts, costs and profit",
+      "tint": "#ffefa4",
+      "isOn": true,
+      "autonomy": "Full auto",
+      "mission": "Keep profit margin above 30% and every bill matched within a week.",
+      "contribution": 90,
+      "tasks": 24,
+      "success": "100%",
+      "saved": "4h",
+      "lastText": "Sent the weekly profit summary",
+      "targets": [
+        [
+          "Margin",
+          "31%",
+          "30%"
+        ],
+        [
+          "Unmatched bills",
+          "0",
+          "0"
+        ],
+        [
+          "Unpaid invoices",
+          "0",
+          "0"
+        ]
+      ],
+      "kpis": [
+        [
+          "Revenue (7d)",
+          "$8,420"
+        ],
+        [
+          "Profit (7d)",
+          "$2,610"
+        ],
+        [
+          "Margin",
+          "31%"
+        ],
+        [
+          "Unpaid invoices",
+          "0"
+        ]
+      ],
+      "sortOrder": 3
+    },
+    {
+      "accountId": "demo",
+      "id": "inventory",
+      "name": "Inventory",
+      "role": "Stock and suppliers",
+      "tint": "#fee7c2",
+      "isOn": false,
+      "autonomy": "Ask first",
+      "mission": "",
+      "contribution": 0,
+      "tasks": 31,
+      "success": "97%",
+      "saved": "3.5h",
+      "lastText": "Drafted a reorder of 50 blank hoodies",
+      "targets": [],
+      "kpis": [
+        [
+          "Products tracked",
+          "64"
+        ],
+        [
+          "Low stock",
+          "2"
+        ],
+        [
+          "Reorders drafted",
+          "5"
+        ],
+        [
+          "Days of stock",
+          "23"
+        ]
+      ],
+      "sortOrder": 4
+    },
+    {
+      "accountId": "demo",
+      "id": "marketing",
+      "name": "Marketing",
+      "role": "Ads, social and email",
+      "tint": "#ece3ff",
+      "isOn": true,
+      "autonomy": "Ask first",
+      "mission": "Bring in repeat customers at a return above 3× on every dollar spent.",
+      "contribution": 64,
+      "tasks": 38,
+      "success": "91%",
+      "saved": "6h",
+      "lastText": "Asked to raise the prints ad set to $60 a day",
+      "targets": [
+        [
+          "ROAS",
+          "3.4",
+          "3.0"
+        ],
+        [
+          "Email open rate",
+          "41%",
+          "40%"
+        ],
+        [
+          "Repeat buyers",
+          "18%",
+          "30%"
+        ]
+      ],
+      "kpis": [
+        [
+          "Ad spend (7d)",
+          "$262"
+        ],
+        [
+          "ROAS",
+          "3.4"
+        ],
+        [
+          "Posts scheduled",
+          "12"
+        ],
+        [
+          "Email open rate",
+          "41%"
+        ]
+      ],
+      "sortOrder": 2
+    },
+    {
+      "accountId": "demo",
+      "id": "orders",
+      "name": "Orders",
+      "role": "Fulfilment and tracking",
+      "tint": "#e7efff",
+      "isOn": true,
+      "autonomy": "Full auto",
+      "mission": "Ship every order within 24 hours and keep the customer informed.",
+      "contribution": 72,
+      "tasks": 142,
+      "success": "98%",
+      "saved": "11.5h",
+      "lastText": "Added tracking LI400083615LT to #A-1007",
+      "targets": [
+        [
+          "Fulfilment time",
+          "2.1 days",
+          "1 day"
+        ],
+        [
+          "Tracking synced",
+          "100%",
+          "100%"
+        ],
+        [
+          "Waiting on maker",
+          "3",
+          "0"
+        ]
+      ],
+      "kpis": [
+        [
+          "Orders handled",
+          "142"
+        ],
+        [
+          "Avg ship time",
+          "2.1 days"
+        ],
+        [
+          "Tracking synced",
+          "100%"
+        ],
+        [
+          "Waiting on maker",
+          "3"
+        ]
+      ],
+      "sortOrder": 0
+    },
+    {
+      "accountId": "demo",
+      "id": "support",
+      "name": "Support",
+      "role": "Customer inbox and refunds",
+      "tint": "#def5ee",
+      "isOn": true,
+      "autonomy": "Auto under limit",
+      "mission": "Answer every customer within an hour and keep satisfaction above 4.5.",
+      "contribution": 81,
+      "tasks": 97,
+      "success": "94%",
+      "saved": "9h",
+      "lastText": "Refund $42 on #A-1012 (approved)",
+      "targets": [
+        [
+          "First reply",
+          "4 min",
+          "60 min"
+        ],
+        [
+          "Satisfaction",
+          "4.7 / 5",
+          "4.5 / 5"
+        ],
+        [
+          "Open tickets",
+          "5",
+          "under 10"
+        ]
+      ],
+      "kpis": [
+        [
+          "Tickets closed",
+          "96"
+        ],
+        [
+          "First reply",
+          "4 min"
+        ],
+        [
+          "Satisfaction",
+          "4.7 / 5"
+        ],
+        [
+          "Open now",
+          "5"
+        ]
+      ],
+      "sortOrder": 1
+    }
+  ]
+}
