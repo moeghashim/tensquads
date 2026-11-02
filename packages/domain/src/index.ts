@@ -39,7 +39,30 @@ export type {
 	WorkspaceDraft,
 } from "./platform/types.ts";
 export type { DecideCommand, DecideMissionCommand } from "./policy/approval-commands.ts";
-export { askRevise, decideApproval, decideMission, EMPTY_INBOX, inboxCount, inboxIsEmpty } from "./policy/decide.ts";
+export {
+	askRevise,
+	assembleTiles,
+	BLANK,
+	blankText,
+	chipText,
+	decideApproval,
+	decideMission,
+	EMPTY_INBOX,
+	greetingLine,
+	greetingName,
+	inboxCount,
+	inboxIsEmpty,
+	limitKeyFor,
+	matchedRule,
+	onlineLine,
+	policyVersion,
+	proposalTitle,
+	type RevenueBar,
+	revenueBars,
+	revisingLine,
+	TASKS_DONE_LABEL,
+	type TileInput,
+} from "./policy/decide.ts";
 export type { ApprovalDecided, MissionDecided, PolicyEvent } from "./policy/events.ts";
 export type { MandateDraft, PolicyRepository, RuleDraft } from "./policy/repository.ts";
 export type { AddRuleCommand, SetLimitCommand, SetRuleOnCommand } from "./policy/rule-commands.ts";

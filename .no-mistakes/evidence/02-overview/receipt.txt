@@ -1,0 +1,36 @@
+Files read, SHA-256:
+
+2e85b8f9298c0e268f6db94242f54dbb5b18a0e923f11ca6140076e3dddc512c  AGENTS.md
+afea3c45c89da2bd0514baf7e2dba2a2f27b17443690fb36eef554efce6a6eac  docs/PLAN.md
+1bf4d4106e0c716f12c118462a2fd5a903ec39f804c9e9f21089bf46a9a594a3  tasks/02-overview.md
+7b72581686e9de32b4f63c9354998d4e4b6e02fb062eb3fe4f6c02aba8cdd576  tasks/02-frame.md
+376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89  design/Main.dc.html
+deccce08d6932c707935dd44be6fd089e3a27d9c514e067d576129632117d5ec  design/inventory/Main.json
+26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
+908b77171516041419df52e593618a985f42028d0482f765b6f96aeac5da78d5  progress.md
+4b9116f91bc226b3235ccad0c161fa2eb4dc087ea11bd4a66c6fc5439e10ed45  packages/domain/src/policy/decide.ts
+c3b68bd3542169d2d4a56bda01df03cd143edfe1b280b55da17a7e4d61f99a87  packages/domain/test/decide.test.ts
+a178f965293636f23097adab2f15506e93e2df2450882c962e4766bd19607b05  packages/statecharts/approval/Approval.tla
+57ed53a5539a785fed555c76d7ee7aea9acb9035c4f117025156660c144299a8  packages/statecharts/approval/Approval.cfg
+e45368dbf71d38d4b8347e03a00ed75f0db50fd213f799280e1ccc188de0ab71  packages/statecharts/approval/view.mjs
+e0b3f3aeb3a74bbd331bcfc00195f515903a118a1a99b6bff068edbb013e8318  packages/statecharts/approval/chart.mmd
+d9b758a342f83af604dd37ab89fe60298fe6c8ff37c945004438dedc49d8c30f  .agents/skills/tensquads-verify/SKILL.md
+
+node scripts/design-check.mjs
+OK for every canvas file. design/ matches the canvas.
+Exit code 0.
+
+Decisions 1 to 32 read. No question.
+
+The orchestrator answered every Stop and ask item. This build uses the recommended answer for items 1 to 8 in tasks/02-overview.md and for items 13 and 14 in tasks/02-frame.md. The Mandate is written in the same transaction as Approve.
+
+Lines the task does not map one-to-one:
+
+- design/Main.dc.html:365 fixes the greeting as "Good morning, Moe". Item 4 computes it from the owner. The seed owner still shows "Good morning, Moe".
+- design/Main.dc.html:371 fixes "of 5 squads". Item 5 uses the agent count. The seed still shows "4 of 5 squads online".
+- design/Main.dc.html:1167 fixes by to "Moe". Item 6 uses the greeting name. The seed owner still writes "Moe".
+- design/Main.dc.html:1230 stores Revenue, Tasks done, and Hours saved as text. Item 3 computes Revenue, Tasks done, and Hours saved. Orders, Average order, Profit margin, and the deltas stay stored.
+- docs/BRIEF.md says "Tasks done by agents". The design says "Tasks done by squads". The design wins. The pull request reports it.
+- docs/PLAN.md says cloudflare/worker. The live slug is cloudflare/workers. The pull request reports it. PLAN.md stays as it is.
+- The design inbox count span stays on the page when the count is 0. The dock badge hides at 0. The empty-inbox test treats "no badge" as the dock badge.
+- A button click is not a new Source. Source, Trigger, and Eval stay the chat names from decision 32.

@@ -4,19 +4,22 @@
 \* Main.dc.html:1165 approves a spend. Main.dc.html:1175 approves a mission.
 \* Main.dc.html:1186 asks to revise when that agent has no proposal left.
 \* Main.dc.html:1429 counts Pending approvals plus Proposed proposals.
+\* Approve and Decline each add one bus event and one approvals.<id> state key.
+\* Approve also records one Mandate. Decline and a mission action record none.
 
 EXTENDS Integers
 
 CONSTANT EmptyInbox
 
-VARIABLES approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval
-vars == <<approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval>>
+VARIABLES approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate
+vars == <<approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate>>
 
 InitialTasks == 1
 InitialContribution == 10
 
 ApprovalStates == {"Pending", "Approved", "Declined"}
 ProposalStates == {"Proposed", "Revising", "Approved"}
+StateKeys == {"", "approved", "declined"}
 
 Count(a, p) ==
     (IF a = "Pending" THEN 1 ELSE 0) + (IF p = "Proposed" THEN 1 ELSE 0)
@@ -35,6 +38,9 @@ TypeOK ==
     /\ badge \in 0..2
     /\ banner \in {"", EmptyInbox}
     /\ fromApproval \in BOOLEAN
+    /\ events \in 0..1
+    /\ stateKey \in StateKeys
+    /\ mandate \in BOOLEAN
 
 Init ==
     /\ approval = "Pending"
@@ -44,6 +50,9 @@ Init ==
     /\ mission = "old"
     /\ contribution = InitialContribution
     /\ fromApproval = FALSE
+    /\ events = 0
+    /\ stateKey = ""
+    /\ mandate = FALSE
     /\ badge = Count(approval, proposal)
     /\ banner = BannerFor(approval, proposal)
 
@@ -74,11 +83,21 @@ RevisingNotCounted ==
 
 EmptyCopy == Empty(approval, proposal) <=> banner = EmptyInbox
 
+EventRecorded ==
+    /\ (approval = "Pending" => events = 0 /\ stateKey = "")
+    /\ (approval = "Approved" => events = 1 /\ stateKey = "approved")
+    /\ (approval = "Declined" => events = 1 /\ stateKey = "declined")
+
+MandateRecorded == (mandate = TRUE) <=> (approval = "Approved")
+
 ApproveSpend ==
     /\ approval = "Pending"
     /\ approval' = "Approved"
     /\ tasks' = tasks + 1
     /\ last' = "title (approved)"
+    /\ events' = events + 1
+    /\ stateKey' = "approved"
+    /\ mandate' = TRUE
     /\ UNCHANGED <<proposal, mission, contribution, fromApproval>>
     /\ badge' = Count(approval', proposal)
     /\ banner' = BannerFor(approval', proposal)
@@ -86,7 +105,9 @@ ApproveSpend ==
 DeclineSpend ==
     /\ approval = "Pending"
     /\ approval' = "Declined"
-    /\ UNCHANGED <<tasks, last, proposal, mission, contribution, fromApproval>>
+    /\ events' = events + 1
+    /\ stateKey' = "declined"
+    /\ UNCHANGED <<tasks, last, proposal, mission, contribution, fromApproval, mandate>>
     /\ badge' = Count(approval', proposal)
     /\ banner' = BannerFor(approval', proposal)
 
@@ -96,7 +117,7 @@ ApproveMission ==
     /\ mission' = "new"
     /\ contribution' = 0
     /\ fromApproval' = FALSE
-    /\ UNCHANGED <<approval, tasks, last>>
+    /\ UNCHANGED <<approval, tasks, last, events, stateKey, mandate>>
     /\ badge' = Count(approval, proposal')
     /\ banner' = BannerFor(approval, proposal')
 
@@ -104,7 +125,7 @@ DeclineMission ==
     /\ proposal = "Proposed"
     /\ proposal' = "Revising"
     /\ fromApproval' = FALSE
-    /\ UNCHANGED <<approval, tasks, last, mission, contribution>>
+    /\ UNCHANGED <<approval, tasks, last, mission, contribution, events, stateKey, mandate>>
     /\ badge' = Count(approval, proposal')
     /\ banner' = BannerFor(approval, proposal')
 
@@ -112,7 +133,7 @@ AskRevise ==
     /\ proposal = "Approved"
     /\ proposal' = "Revising"
     /\ fromApproval' = TRUE
-    /\ UNCHANGED <<approval, tasks, last, mission, contribution>>
+    /\ UNCHANGED <<approval, tasks, last, mission, contribution, events, stateKey, mandate>>
     /\ badge' = Count(approval, proposal')
     /\ banner' = BannerFor(approval, proposal')
 

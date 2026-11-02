@@ -77,7 +77,7 @@ test("a new user makes one account and reaches overview", async ({ page }) => {
 			);
 		}
 		await expect(page).toHaveTitle("tensquads workspace");
-		await expect(page.locator("main")).toHaveText("");
+		await expect(page.getByRole("heading", { name: /Good morning,/ })).toBeVisible();
 		await expect(page.getByText("Runs 3 squads · Harbor Test")).toBeVisible();
 		await expect(page.getByText("SQ", { exact: true })).toBeVisible();
 		await expect(page.locator("[data-if='dockUnread']")).toHaveCount(0);

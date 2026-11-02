@@ -39,7 +39,7 @@ test("the sidebar marks the current page and the agent rows show status and open
 }) => {
 	await openWorkspace(page, workspaceUser);
 	await expect(page).toHaveTitle("tensquads workspace");
-	await expect(page.locator("main")).toHaveText("");
+	await expect(page.getByRole("heading", { name: "Good morning, Moe" })).toBeVisible();
 	await expect(page.getByText("Runs 5 squads · Demo store")).toBeVisible();
 	await expect(page.getByText("Moe Ghashim")).toBeVisible();
 	const overview = page.getByRole("button", { name: "Overview" });

@@ -78,6 +78,22 @@ Ask Moe, in a numbered list. Items 13 and 14 in `tasks/02-frame.md` apply to thi
 
 Also stop and ask for any state the design does not show that this file does not cover.
 
+## Orchestrator decisions
+
+Moe delegated these answers. Each item uses the recommended answer.
+
+1. Tiles with no store show "—" for Average order, Profit margin, and Hours saved. An empty delta keeps its height. Tasks done is computed and shows 0.
+2. A revenue panel with no store keeps the panel, the heading, and the legend. It has no bars and no labels. The panel keeps the same height.
+3. Revenue is the sum of the last seven `daily_revenue` rows. Hours saved is the sum of the agents' `saved` values. There is no schema change. Orders, Average order, Profit margin, and the deltas stay stored.
+4. The greeting is always "Good morning", then the first word of `owner`. An email owner uses the text before `@`. An empty name shows "—", so the line is "Good morning, —".
+5. The online pill uses the agent count: `${online} of ${total} squads online`.
+6. The event field `by` and the Mandate field `saidYes` use the greeting name.
+7. Revising has no exit. The card stays. The inbox does not become empty while a Revising proposal remains.
+8. The "Demo data" pill and "Figures are demo data." stay on every account in version 1.
+9. Frame item 13. The loader runs on the server. The screen has no loading state. A write shows at once. A failed write reads the page again and shows no new text. A failed read uses the default router error page.
+10. Frame item 14. A blank value shows "—". An empty list shows its heading and no rows. The design already writes a sentence for an empty mission, so that sentence stays.
+11. Decision 32. Approve writes the Mandate in the same transaction as the Approval. The Mandate records the first On rule for that agent whose approval is not "Auto", the limit value at that time, the policy version, the greeting name, and the time. The limit key is `policy.refund_auto_limit` for support, `policy.daily_ad_cap` for marketing, and `policy.reorder_limit` for inventory. The policy version is a stable FNV-1a hash of the current rules, prefixed with `policy-`. A later rule change does not rewrite a stored Mandate. Pending and Declined have no Mandate. A missing rule or a missing limit rolls the transaction back.
+
 ## Do not
 
 - Do not store the Tasks done value. Do not read `accounts.tasks` for this tile. That column stays for phase 3.
