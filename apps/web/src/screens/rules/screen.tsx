@@ -9,6 +9,7 @@ import { type RulesSnapshotPage, useRulesSnapshot } from "./snapshot.ts";
 import {
 	bounded,
 	isRulesRule,
+	markReadFailed,
 	placeRule,
 	queueLimit,
 	queueRule,
@@ -407,6 +408,7 @@ async function saveRule(
 			}),
 		);
 	} catch {
+		markReadFailed();
 		dropPending(id, rowId, setPending);
 		const owner = submissions.get(id);
 		submissions.delete(id);

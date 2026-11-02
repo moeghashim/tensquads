@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
 import { chromium, expect } from "@playwright/test";
 import { build } from "esbuild";
 import { PENDING_TASK_WINDOW_MS } from "../../packages/adapters/src/pending-window.ts";
@@ -13,8 +14,10 @@ const bundle = await build({
 			import { gateStyle, switchParts } from "./apps/web/src/workspace/styles.ts";
 			import { RulesScreen } from "./apps/web/src/screens/rules/screen.tsx";
 			import { rulesWriteCounter } from "./apps/web/src/screens/rules/write-queue.ts";
+			import { loadRulesSnapshot } from "./apps/web/src/screens/rules/loader.ts";
 			import * as queue from "./apps/web/src/screens/rules/write-queue.ts";
 			window.queue = queue;
+			window.loadRulesSnapshot = loadRulesSnapshot;
 			window.calls = [];
 			window.ruleRow = (data, id = "r100") => ({
 				id: data.id || id,
@@ -41,9 +44,17 @@ const bundle = await build({
 				const page = useMemo(() => ({ rules, limits, readCounter }), [rules, limits, readCounter]);
 				window.beginRulesRead = () => {
 					const counter = rulesWriteCounter();
+					let resolve, reject;
+					const reading = new Promise((ok, fail) => { resolve = ok; reject = fail; });
+					window.readSource = () => reading;
+					const done = loadRulesSnapshot();
+					void done.catch(() => undefined);
 					const reader = {
-						loadRules: (rows) => { setReadCounter(counter); setRules(rows); },
-						loadLimits: (rows) => { setReadCounter(counter); setLimits(rows); },
+						done,
+						finish: () => resolve({ rules, limits }),
+						fail: () => reject(new Error("Read failed")),
+						loadRules: (rows) => { setReadCounter(counter); setRules(rows); resolve({ rules: rows, limits }); },
+						loadLimits: (rows) => { setReadCounter(counter); setLimits(rows); resolve({ rules, limits: rows }); },
 					};
 					Object.assign(window, reader);
 					return reader;
@@ -81,6 +92,7 @@ const bundle = await build({
 				build.onResolve({ filter: /^#\/server\/rules.ts$/ }, ({ path }) => ({ path, namespace: "boundary" }));
 				build.onLoad({ filter: /.*/, namespace: "boundary" }, () => ({
 					contents: `
+					export const loadRulesPage = () => window.readSource();
 					export const setRuleEnabled = ({data, signal}) => window.send(data, signal);
 					export const setRuleLimit = ({data, signal}) => window.send(data, signal);
 					export const addWorkspaceRule = ({data, signal}) => window.send(data, signal);
@@ -224,7 +236,7 @@ for (const values of cases) {
 			});
 			assert.equal(await page.evaluate(() => window.calls.length), 2);
 			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.initial);
-			assert.equal(await page.evaluate(() => window.refreshCalls), 0);
+			assert.equal(await page.evaluate(() => window.refreshCalls), 1);
 		});
 	});
 
@@ -256,7 +268,7 @@ for (const values of cases) {
 				sentRow(values.kind, values.first),
 				sentRow(values.kind, values.last),
 			]);
-			assert.equal(await page.evaluate(() => window.refreshCalls), 0);
+			assert.equal(await page.evaluate(() => window.refreshCalls), 1);
 			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.initial);
 			assert.equal(await page.evaluate(() => window.shown(window.values.last)), values.last);
 		});
@@ -802,7 +814,10 @@ for (const refreshResult of ["success", "reject", "timeout"]) {
 				window.refreshCalls = 0;
 				window.refresh = async () => {
 					window.refreshCalls += 1;
-					if (outcome === "reject") throw new Error("Read failed");
+					if (outcome === "reject") {
+						window.fail();
+						return;
+					}
 					if (outcome === "timeout") return new Promise(() => {});
 					window.loadRules([
 						{
@@ -1074,7 +1089,7 @@ test("a failed recovery read makes the next write and the next loader read once"
 			window.refreshCalls = 0;
 			window.refresh = async () => {
 				window.refreshCalls += 1;
-				throw new Error("refresh failed");
+				window.fail();
 			};
 			window.failNext = false;
 			window.send = (data) => {
@@ -1190,7 +1205,10 @@ for (const axis of snapshotAxes) {
 				};
 				window.refresh = () => {
 					window.refreshCalls += 1;
-					if (window.refreshCalls === 1) return Promise.reject(new Error("Read failed"));
+					if (window.refreshCalls === 1) {
+						window.fail();
+						return Promise.resolve();
+					}
 					window.recoveryRead = { loadRules: window.loadRules, loadLimits: window.loadLimits };
 					return new Promise(() => {});
 				};
@@ -1269,3 +1287,176 @@ for (const axis of [...snapshotAxes, { kind: "add" }]) {
 		});
 	});
 }
+
+async function actOnRecoveryAxis(page, axis) {
+	if (axis.kind === "add") {
+		await page.getByLabel("Then", { exact: true }).fill("Recovery draft");
+		await page.getByRole("button", { name: "Add rule", exact: true }).click();
+	} else if (axis.kind === "rule") {
+		await page.getByRole("button", { name: "Rule enabled" }).first().click();
+	} else {
+		await page.locator(`#${axis.id}`).fill(String(axis.saved));
+	}
+	await page.evaluate(() => window.flush());
+}
+
+for (const axis of [...snapshotAxes, { kind: "add" }]) {
+	const name = axis.id ?? axis.kind;
+
+	test(`recovery ${name}: failed GET stays flagged until the next action reads once`, async () => {
+		await withPage(async (page) => {
+			await seedSnapshot(page);
+			await page.evaluate(() => {
+				window.send = () => Promise.reject(new Error("POST failed"));
+				window.refresh = async () => {
+					window.refreshCalls += 1;
+					window.fail();
+				};
+			});
+			await actOnRecoveryAxis(page, axis);
+			await page.waitForFunction(() => window.refreshCalls === 1);
+			assert.equal(await page.evaluate(() => window.queue.readNeeded()), true);
+			await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+			assert.equal(await page.evaluate(() => window.refreshCalls), 1);
+			await page.evaluate(() => {
+				window.send = async (data) =>
+					typeof data.value === "number" ? { key: data.key, value: data.value } : window.ruleRow(data);
+				window.refresh = async () => {
+					window.refreshCalls += 1;
+					window.finish();
+				};
+			});
+			await actOnRecoveryAxis(page, axis);
+			await page.waitForFunction(() => window.refreshCalls === 2 && !window.queue.readNeeded());
+			await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+			assert.equal(await page.evaluate(() => window.refreshCalls), 2);
+		});
+	});
+
+	test(`recovery ${name}: navigation satisfies a timed-out write without another GET`, async () => {
+		await withPage(async (page) => {
+			await seedSnapshot(page);
+			await page.evaluate(() => {
+				window.send = () => new Promise(() => {});
+				window.refresh = async () => {
+					window.refreshCalls += 1;
+					window.fail();
+				};
+			});
+			await actOnRecoveryAxis(page, axis);
+			await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+			await page.waitForFunction(() => window.refreshCalls === 1 && window.queue.readNeeded());
+			await page.getByRole("button", { name: "Leave rules" }).click();
+			await page.evaluate(async () => {
+				const navigation = window.beginRulesRead();
+				navigation.finish();
+				await navigation.done;
+			});
+			assert.equal(await page.evaluate(() => window.queue.readNeeded()), false);
+			await page.getByRole("button", { name: "Return to rules" }).click();
+			await page.evaluate(() => window.flush());
+			assert.equal(await page.evaluate(() => window.refreshCalls), 1);
+		});
+	});
+
+	test(`recovery ${name}: an older GET cannot clear a later failure`, async () => {
+		await withPage(async (page) => {
+			await seedSnapshot(page);
+			await page.evaluate(() => {
+				window.oldRead = window.beginRulesRead();
+				window.counterBeforeFailure = window.queue.rulesWriteCounter();
+				window.send = () => Promise.reject(new Error("POST failed"));
+				window.refresh = async () => {
+					window.refreshCalls += 1;
+					window.fail();
+				};
+			});
+			await actOnRecoveryAxis(page, axis);
+			await page.waitForFunction(() => window.refreshCalls === 1);
+			await page.evaluate(async () => {
+				window.oldRead.finish();
+				await window.oldRead.done;
+			});
+			assert.equal(await page.evaluate(() => window.queue.readNeeded()), true);
+			assert.equal(
+				await page.evaluate(() => window.queue.rulesWriteCounter() === window.counterBeforeFailure),
+				true,
+			);
+			assert.equal(await page.evaluate(() => window.refreshCalls), 1);
+			await page.evaluate(async () => {
+				const dock = window.beginRulesRead();
+				dock.finish();
+				await dock.done;
+			});
+			assert.equal(await page.evaluate(() => window.queue.readNeeded()), false);
+		});
+	});
+}
+
+test("recovery: a timed-out GET records a failure and rejects without retrying", async () => {
+	await withPage(async (page) => {
+		await seedSnapshot(page);
+		await page.evaluate(() => {
+			window.beforeRead = window.queue.rulesRecoveryGeneration();
+			window.timedRead = window.beginRulesRead();
+			window.readRejected = false;
+			void window.timedRead.done.catch(() => {
+				window.readRejected = true;
+			});
+		});
+		await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+		assert.equal(await page.evaluate(() => window.readRejected && window.queue.readNeeded()), true);
+		assert.equal(await page.evaluate(() => window.queue.rulesRecoveryGeneration() > window.beforeRead), true);
+		await page.evaluate(async () => {
+			window.timedRead.finish();
+			await window.flush();
+		});
+		assert.equal(await page.evaluate(() => window.queue.readNeeded()), true);
+		assert.equal(await page.evaluate(() => window.refreshCalls), 0);
+	});
+});
+
+test("recovery: server reads hold no browser recovery state", async () => {
+	const server = await build({
+		stdin: {
+			contents: `
+				import { loadRulesSnapshot } from "./apps/web/src/screens/rules/loader.ts";
+				import * as queue from "./apps/web/src/screens/rules/write-queue.ts";
+				globalThis.loader = loadRulesSnapshot;
+				globalThis.queue = queue;
+			`,
+			resolveDir: process.cwd(),
+			loader: "ts",
+		},
+		bundle: true,
+		write: false,
+		format: "iife",
+		plugins: [
+			{
+				name: "server-read-boundary",
+				setup(build) {
+					build.onResolve({ filter: /^#\/server\/rules.ts$/ }, ({ path }) => ({ path, namespace: "boundary" }));
+					build.onLoad({ filter: /.*/, namespace: "boundary" }, () => ({
+						contents: `
+					export const loadRulesPage = () => globalThis.readSource();
+					export const setRuleEnabled = () => {};
+					export const setRuleLimit = () => {};
+				`,
+					}));
+				},
+			},
+		],
+	});
+	const worker = { readSource: async () => ({ rules: [], limits: [] }) };
+	runInNewContext(server.outputFiles[0].text, worker);
+	worker.queue.markReadFailed();
+	assert.equal(worker.queue.readNeeded(), false);
+	assert.equal(worker.queue.rulesRecoveryGeneration(), 0);
+	assert.equal((await worker.loader()).readCounter, 0);
+	worker.readSource = async () => {
+		throw new Error("GET failed");
+	};
+	await assert.rejects(worker.loader(), /GET failed/);
+	assert.equal(worker.queue.readNeeded(), false);
+	assert.equal(worker.queue.rulesRecoveryGeneration(), 0);
+});

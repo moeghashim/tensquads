@@ -1,15 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { loadRulesSnapshot } from "#/screens/rules/loader.ts";
 import { RulesScreen } from "#/screens/rules/screen.tsx";
-import { rulesWriteCounter } from "#/screens/rules/write-queue.ts";
-import { loadRulesPage } from "#/server/rules.ts";
 
 export const Route = createFileRoute("/_workspace/rules")({
-	loader: async () => {
-		const readCounter = rulesWriteCounter();
-		const page = await loadRulesPage();
-		return { ...page, readCounter };
-	},
+	loader: loadRulesSnapshot,
 	head: () => ({
 		meta: [{ title: "Rules and limits" }],
 	}),

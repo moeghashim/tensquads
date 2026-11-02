@@ -43,62 +43,69 @@ stateDiagram-v2
     state "New rule" as r5 {
       s8: Empty action
       s9: Action typed
-      s10: Adding
-      s11: One read
+      s10: One read
+      s11: Adding
       s12: Added, on
       s13: Added, typed again
       [*] --> s8
       s8 --> s9: you type an action
-      s9 --> s10: you add the rule [when Save is one of Idle, Idle, read again]
-      s8 --> s11: the refund limit fails or the refund limit is late or the ad cap fails or the ad cap is late [when Save is one of Saving a limit, Saving a limit, read again]
-      s8 --> s11: the refund rule fails or the refund rule is late [when Save is one of Switching a rule, Switching a rule, read again]
-      s10 --> s11: the add fails or the add is late
-      s10 --> s12: the add returns the row
-      s11 --> s8: the read returns the snapshot or the read fails and the wait stops
-      s9 --> s11: the refund limit fails or the refund limit is late or the ad cap fails or the ad cap is late [when Save is one of Saving a limit, Saving a limit, read again]
-      s9 --> s11: the refund rule fails or the refund rule is late [when Save is one of Switching a rule, Switching a rule, read again]
-      s10 --> s13: the add returns the row
-      s8 --> s11: you open the screen again [when Save is Idle, read again]
-      s11 --> s9: the read returns the snapshot or the read fails and the wait stops
+      s8 --> s10: you navigate to the screen [when Save is one of Idle, Idle, read again]
+      s9 --> s11: you add the rule [when Save is one of Idle, Idle, read again]
+      s9 --> s10: you navigate to the screen [when Save is one of Idle, Idle, read again]
+      s10 --> s8: the read returns the snapshot or the read fails and the wait stops
+      s8 --> s10: the refund limit fails or the refund limit is late or the ad cap fails or the ad cap is late [when Save is one of Saving a limit, Saving a limit, read again]
+      s8 --> s10: the refund rule fails or the refund rule is late [when Save is one of Switching a rule, Switching a rule, read again]
+      s11 --> s10: the add fails or the add is late
+      s11 --> s12: the add returns the row
+      s8 --> s10: you open the screen again [when Save is Idle, read again]
+      s10 --> s9: the read returns the snapshot or the read fails and the wait stops
+      s9 --> s10: the refund limit fails or the refund limit is late or the ad cap fails or the ad cap is late [when Save is one of Saving a limit, Saving a limit, read again]
+      s9 --> s10: the refund rule fails or the refund rule is late [when Save is one of Switching a rule, Switching a rule, read again]
+      s11 --> s13: the add returns the row
+      s9 --> s10: you open the screen again [when Save is Idle, read again]
+      s8 --> s10: the refund limit is saved or the ad cap is saved [when Save is Saving a limit, read again]
+      s8 --> s10: the refund rule is saved [when Save is Switching a rule, read again]
       s12 --> s13: you type an action
-      s9 --> s11: you open the screen again [when Save is Idle, read again]
-      s8 --> s11: the refund limit is saved or the ad cap is saved [when Save is Saving a limit, read again]
-      s8 --> s11: the refund rule is saved [when Save is Switching a rule, read again]
-      s9 --> s11: the refund limit is saved or the ad cap is saved [when Save is Saving a limit, read again]
-      s9 --> s11: the refund rule is saved [when Save is Switching a rule, read again]
+      s9 --> s10: the refund limit is saved or the ad cap is saved [when Save is Saving a limit, read again]
+      s9 --> s10: the refund rule is saved [when Save is Switching a rule, read again]
     }
     --
     state "Save" as r6 {
       s14: Idle
-      s15: Saving a limit
-      s16: Switching a rule
-      s17: Adding
-      s18: Waiting for one read
+      s15: Waiting for one read
+      s16: Saving a limit
+      s17: Switching a rule
+      s18: Adding
       s19: Idle, read again
       s20: Waiting for one read, read again
-      s21: Saving a limit, read again
-      s22: Switching a rule, read again
-      s23: Adding, read again
+      s21: Waiting for an older read, read again
+      s22: Saving a limit, read again
+      s23: Switching a rule, read again
+      s24: Adding, read again
       [*] --> s14
-      s14 --> s15: you move the refund limit or you move the ad cap
-      s14 --> s16: you switch the refund rule
-      s14 --> s17: you add the rule [when New rule is Action typed]
-      s15 --> s14: the refund limit is saved or the ad cap is saved
-      s15 --> s18: the refund limit fails or the refund limit is late or the ad cap fails or the ad cap is late
-      s16 --> s14: the refund rule is saved
-      s16 --> s18: the refund rule fails or the refund rule is late
-      s17 --> s18: the add fails or the add is late
-      s17 --> s14: the add returns the row
-      s18 --> s14: the read returns the snapshot
-      s18 --> s19: the read fails and the wait stops
-      s19 --> s20: you open the screen again
-      s19 --> s21: you move the refund limit or you move the ad cap
-      s19 --> s22: you switch the refund rule
-      s19 --> s23: you add the rule [when New rule is Action typed]
+      s14 --> s15: you navigate to the screen
+      s14 --> s16: you move the refund limit or you move the ad cap
+      s14 --> s17: you switch the refund rule
+      s14 --> s18: you add the rule [when New rule is Action typed]
+      s15 --> s14: the read returns the snapshot
+      s15 --> s19: the read fails and the wait stops
+      s15 --> s21: a later write or read fails
+      s16 --> s14: the refund limit is saved or the ad cap is saved
+      s16 --> s20: the refund limit fails or the refund limit is late or the ad cap fails or the ad cap is late
+      s17 --> s14: the refund rule is saved
+      s17 --> s20: the refund rule fails or the refund rule is late
+      s18 --> s20: the add fails or the add is late
+      s18 --> s14: the add returns the row
+      s19 --> s20: you navigate to the screen or you open the screen again
+      s19 --> s22: you move the refund limit or you move the ad cap
+      s19 --> s23: you switch the refund rule
       s20 --> s14: the read returns the snapshot
       s20 --> s19: the read fails and the wait stops
-      s21 --> s20: the refund limit fails or the refund limit is late or the refund limit is saved or the ad cap fails or the ad cap is late or the ad cap is saved
-      s22 --> s20: the refund rule fails or the refund rule is late or the refund rule is saved
-      s23 --> s20: the add fails or the add is late or the add returns the row
+      s20 --> s21: a later write or read fails
+      s21 --> s19: the read fails and the wait stops or the read returns the snapshot
+      s19 --> s24: you add the rule [when New rule is Action typed]
+      s22 --> s20: the refund limit fails or the refund limit is late or the refund limit is saved or the ad cap fails or the ad cap is late or the ad cap is saved
+      s23 --> s20: the refund rule fails or the refund rule is late or the refund rule is saved
+      s24 --> s20: the add fails or the add is late or the add returns the row
     }
   }

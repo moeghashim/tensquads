@@ -29,7 +29,7 @@ VARIABLES
     refundSlider, adsSlider, reorderSlider,
     refundTable, adsTable, reorderTable,
     action, edited, added, newOn, pending,
-    save, wait, which, needsRead,
+    save, wait, which, needsRead, readStale,
     mandate, events,
     textA, textB
 
@@ -39,7 +39,7 @@ vars == <<
     refundSlider, adsSlider, reorderSlider,
     refundTable, adsTable, reorderTable,
     action, edited, added, newOn, pending,
-    save, wait, which, needsRead,
+    save, wait, which, needsRead, readStale,
     mandate, events,
     textA, textB
 >>
@@ -58,7 +58,8 @@ TypeOK ==
     /\ action \in ActionText /\ edited \in BOOLEAN
     /\ added \in Bits /\ newOn \in BOOLEAN /\ pending \in Bits
     /\ save \in Saves /\ wait \in Waits /\ which \in Limits
-    /\ needsRead \in BOOLEAN
+    /\ needsRead \in BOOLEAN /\ readStale \in BOOLEAN
+    /\ readStale => needsRead /\ wait = "refresh"
     /\ mandate = "frozen" /\ events = 0
     /\ textA = "refund" /\ textB = "monday"
 
@@ -98,7 +99,7 @@ limits == <<
     refundTable, adsTable, reorderTable
 >>
 form == <<action, edited, added, newOn, pending>>
-memory == <<needsRead>>
+memory == <<needsRead, readStale>>
 frozen == <<mandate, events, textA, textB>>
 
 Init ==
@@ -109,6 +110,7 @@ Init ==
     /\ action = "blank" /\ edited = FALSE
     /\ added = 0 /\ newOn = FALSE /\ pending = 0
     /\ save = "idle" /\ wait = "none" /\ which = "none" /\ needsRead = FALSE
+    /\ readStale = FALSE
     /\ mandate = "frozen" /\ events = 0
     /\ textA = "refund" /\ textB = "monday"
 
@@ -130,12 +132,14 @@ CommitToggle ==
 FailToggle ==
     /\ save = "toggling" /\ wait = "toggle"
     /\ save' = "reading" /\ wait' = "refresh"
-    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, memory>>
+    /\ needsRead' = TRUE
+    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, readStale>>
 
 LateToggle ==
     /\ save = "toggling" /\ wait = "toggle"
     /\ save' = "reading" /\ wait' = "refresh"
-    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, memory>>
+    /\ needsRead' = TRUE
+    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, readStale>>
 
 \* The Monday rule stays off. A second switch path passes 500 states.
 
@@ -176,25 +180,29 @@ FailRefund ==
     /\ save = "saving" /\ wait = "limit" /\ which = "refund"
     /\ which' = "none" /\ wait' = "refresh" /\ save' = "reading"
     /\ refundSlider' = refund /\ adsSlider' = ads
-    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, memory>>
+    /\ needsRead' = TRUE
+    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, readStale>>
 
 LateRefund ==
     /\ save = "saving" /\ wait = "limit" /\ which = "refund"
     /\ which' = "none" /\ wait' = "refresh" /\ save' = "reading"
     /\ refundSlider' = refund /\ adsSlider' = ads
-    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, memory>>
+    /\ needsRead' = TRUE
+    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, readStale>>
 
 FailAds ==
     /\ save = "saving" /\ wait = "limit" /\ which = "ads"
     /\ which' = "none" /\ wait' = "refresh" /\ save' = "reading"
     /\ refundSlider' = refund /\ adsSlider' = ads
-    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, memory>>
+    /\ needsRead' = TRUE
+    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, readStale>>
 
 LateAds ==
     /\ save = "saving" /\ wait = "limit" /\ which = "ads"
     /\ which' = "none" /\ wait' = "refresh" /\ save' = "reading"
     /\ refundSlider' = refund /\ adsSlider' = ads
-    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, memory>>
+    /\ needsRead' = TRUE
+    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, readStale>>
 
 \* Typing is allowed after the add, and while a write waits.
 TypeAction ==
@@ -223,31 +231,35 @@ CommitAdd ==
 FailAdd ==
     /\ save = "adding" /\ wait = "add"
     /\ pending' = 0 /\ newOn' = FALSE /\ save' = "reading" /\ wait' = "refresh"
+    /\ needsRead' = TRUE
     /\ IF edited = FALSE /\ action = "blank"
        THEN /\ action' = "text"
             /\ UNCHANGED edited
        ELSE UNCHANGED <<action, edited>>
-    /\ UNCHANGED <<ruleA, ruleB, limits, added, which, frozen, memory>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, added, which, frozen, readStale>>
 
 LateAdd ==
     /\ save = "adding" /\ wait = "add"
     /\ pending' = 0 /\ newOn' = FALSE /\ save' = "reading" /\ wait' = "refresh"
+    /\ needsRead' = TRUE
     /\ IF edited = FALSE /\ action = "blank"
        THEN /\ action' = "text"
             /\ UNCHANGED edited
        ELSE UNCHANGED <<action, edited>>
-    /\ UNCHANGED <<ruleA, ruleB, limits, added, which, frozen, memory>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, added, which, frozen, readStale>>
 
 \* The read returns the store. The flag clears. The snapshot stays.
 ReadOk ==
     /\ save = "reading" /\ wait = "refresh"
-    /\ save' = "idle" /\ wait' = "none" /\ needsRead' = FALSE
+    /\ save' = "idle" /\ wait' = "none" /\ needsRead' = (needsRead /\ readStale)
+    /\ readStale' = FALSE
     /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen>>
 
 \* The read fails. The flag is set. The wait stops. The snapshot stays.
 ReadFail ==
     /\ save = "reading" /\ wait = "refresh"
     /\ save' = "idle" /\ wait' = "none" /\ needsRead' = TRUE
+    /\ readStale' = FALSE
     /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen>>
 
 \* The screen loads again. One read starts. This is not a timer.
@@ -255,6 +267,16 @@ Reload ==
     /\ save = "idle" /\ wait = "none" /\ needsRead = TRUE /\ pending = 0
     /\ save' = "reading" /\ wait' = "refresh"
     /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, memory>>
+
+Navigate ==
+    /\ save = "idle" /\ wait = "none"
+    /\ save' = "reading" /\ wait' = "refresh"
+    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, memory>>
+
+FailureDuringRead ==
+    /\ save = "reading" /\ wait = "refresh" /\ ~readStale
+    /\ needsRead' = TRUE /\ readStale' = TRUE
+    /\ UNCHANGED <<ruleA, ruleB, limits, form, save, wait, which, frozen>>
 
 \* A blank action does nothing.
 AddBlank ==
@@ -282,6 +304,8 @@ Next ==
     \/ ReadOk
     \/ ReadFail
     \/ Reload
+    \/ Navigate
+    \/ FailureDuringRead
     \/ AddBlank
 
 \* A begin, a limit, a switch, and a read each end.

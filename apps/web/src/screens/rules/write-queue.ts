@@ -14,16 +14,25 @@ const limitFlights = new Map<string, Flight<number>>();
 const listeners = new Set<() => void>();
 let version = 0;
 let needsRead = false;
+let recoveryGeneration = 0;
 
 export function readNeeded(): boolean {
 	return needsRead;
 }
 
-export function markReadSucceeded(): void {
-	needsRead = false;
+export function rulesRecoveryGeneration(): number {
+	if (typeof window === "undefined") return 0;
+	return recoveryGeneration;
+}
+
+export function markReadSucceeded(generation: number): void {
+	if (typeof window === "undefined") return;
+	if (generation >= recoveryGeneration) needsRead = false;
 }
 
 export function markReadFailed(): void {
+	if (typeof window === "undefined") return;
+	recoveryGeneration += 1;
 	needsRead = true;
 }
 
@@ -37,6 +46,7 @@ const writtenRules = new Map<string, { row: RulesRule; stamp: number }>();
 const writtenLimits = new Map<string, { row: RulesLimitValue; stamp: number }>();
 
 export function rulesWriteCounter(): number {
+	if (typeof window === "undefined") return 0;
 	return writeCounter;
 }
 
@@ -155,6 +165,7 @@ async function run<T>(
 			returned = null;
 		}
 		if (returned === null) {
+			markReadFailed();
 			const newer = takeNewer(flight, sent);
 			if (newer) {
 				continue;

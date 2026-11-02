@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 
 import type { RulesPageData } from "#/server/rules.ts";
 
-import { bounded, markReadFailed, markReadSucceeded, readNeeded, rulesWrittenSince } from "./write-queue.ts";
+import { bounded, readNeeded, rulesWrittenSince } from "./write-queue.ts";
 
 export interface RulesSnapshotPage extends RulesPageData {
 	readonly readCounter: number;
@@ -32,20 +32,9 @@ export function useRulesSnapshot(page: RulesSnapshotPage, read: () => Promise<vo
 		});
 		const next: Refresh = { finish, done: Promise.resolve() };
 		waiting.current = next;
-		const reading = read().then(
-			() => "ok" as const,
-			() => "fail" as const,
-		);
-		next.done = bounded(() => Promise.race([reading, arrived.then(() => "page" as const)]))
-			.then(
-				(result) => {
-					if (result === "fail") markReadFailed();
-					else markReadSucceeded();
-				},
-				() => {
-					markReadFailed();
-				},
-			)
+		const reading = read().catch(() => undefined);
+		next.done = bounded(() => Promise.race([reading, arrived]))
+			.catch(() => undefined)
 			.finally(() => {
 				if (waiting.current === next) waiting.current = null;
 			});

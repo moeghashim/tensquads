@@ -20,7 +20,10 @@ const saved = {
 	toggling: "Switching a rule",
 };
 
-const saveName = (v) => (v.needsRead ? `${saved[v.save]}, read again` : saved[v.save]);
+const saveName = (v) => {
+	const label = v.readStale ? "Waiting for an older read" : saved[v.save];
+	return v.needsRead ? `${label}, read again` : label;
+};
 
 export const state = (v) => ({
 	"Refund rule": rule(v.save === "toggling" ? !v.ruleA : v.ruleA),
@@ -40,6 +43,8 @@ const labels = {
 	FailToggle: "the refund rule fails",
 	LateToggle: "the refund rule is late",
 	Reload: "you open the screen again",
+	Navigate: "you navigate to the screen",
+	FailureDuringRead: "a later write or read fails",
 	StartRefund: "you move the refund limit",
 	StartAds: "you move the ad cap",
 	CommitRefund: "the refund limit is saved",
