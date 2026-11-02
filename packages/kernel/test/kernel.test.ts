@@ -23,6 +23,18 @@ test("the decider has no adapter in version 1", () => {
 	});
 });
 
+test("rule writes require configured repositories", async () => {
+	const kernel = new Kernel();
+	const scope = { accountId: "account-1", mode: "account" } as const;
+	await assert.rejects(kernel.setRuleOn(scope, "r1", false), {
+		message: "Repositories are not configured.",
+	});
+	await assert.rejects(
+		kernel.addRule(scope, { when: "Always", agent: "orders", action: "Check stock", approval: "Ask first" }),
+		{ message: "Repositories are not configured." },
+	);
+});
+
 test("only kernel.ts imports cordis", () => {
 	const root = join(import.meta.dirname, "..", "..", "..");
 	const hits: string[] = [];

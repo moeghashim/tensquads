@@ -644,7 +644,9 @@ for (const clickBeforeSave of [false, true]) {
 			await page.evaluate(async () => {
 				window.send = (data) => {
 					window.calls.push(data);
-					return new Promise((_resolve, reject) => { window.rejectToggle = reject; });
+					return new Promise((_resolve, reject) => {
+						window.rejectToggle = reject;
+					});
 				};
 				window.adds[0].resolve({ id: "r100" });
 				await window.flush();
@@ -658,7 +660,11 @@ for (const clickBeforeSave of [false, true]) {
 			});
 			await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
 			await expect(toggle).toHaveAttribute("aria-pressed", "true");
-			await page.evaluate(() => { window.send = async (data) => { window.calls.push(data); }; });
+			await page.evaluate(() => {
+				window.send = async (data) => {
+					window.calls.push(data);
+				};
+			});
 			await toggle.click();
 			await expect(toggle).toHaveAttribute("aria-pressed", "false");
 			await page.evaluate(() => window.flush());
@@ -667,7 +673,9 @@ for (const clickBeforeSave of [false, true]) {
 			await toggle.click();
 			await expect(toggle).toHaveAttribute("aria-pressed", "true");
 			assert.deepEqual(await page.evaluate(() => window.calls), [
-				{ id: "r100", on: false }, { id: "r100", on: false }, { id: "r100", on: true },
+				{ id: "r100", on: false },
+				{ id: "r100", on: false },
+				{ id: "r100", on: true },
 			]);
 		});
 	});
@@ -683,7 +691,16 @@ for (const refreshResult of ["success", "reject", "timeout"]) {
 					window.refreshCalls += 1;
 					if (outcome === "reject") throw new Error("Read failed");
 					if (outcome === "timeout") return new Promise(() => {});
-					window.loadRules([{ id: "r1", when: "a new order arrives", agent: "orders", action: "Server row", approval: "Ask first", on: true }]);
+					window.loadRules([
+						{
+							id: "r1",
+							when: "a new order arrives",
+							agent: "orders",
+							action: "Server row",
+							approval: "Ask first",
+							on: true,
+						},
+					]);
 				};
 			}, refreshResult);
 			const action = page.getByLabel("Then", { exact: true });
@@ -709,9 +726,13 @@ for (const refreshResult of ["success", "reject", "timeout"]) {
 				await page.waitForFunction(() => window.refreshCalls === 2);
 				await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
 			}
-			await expect(page.locator("section[aria-label='Rules']").getByText("Draft B", { exact: false })).toHaveCount(1);
+			await expect(page.locator("section[aria-label='Rules']").getByText("Draft B", { exact: false })).toHaveCount(
+				1,
+			);
 			await expect(action).toHaveValue("");
-			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(refreshResult === "success" ? 2 : 1);
+			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(
+				refreshResult === "success" ? 2 : 1,
+			);
 			if (refreshResult === "success") await expect(page.getByText("Server row", { exact: false })).toHaveCount(1);
 			assert.deepEqual(await page.evaluate(() => window.calls), []);
 		});

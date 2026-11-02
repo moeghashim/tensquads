@@ -567,9 +567,11 @@ async function designRules(page: Page, width: number, height: number) {
 	await canvas.setContent(
 		`<!doctype html><html lang="en"><head><link rel="stylesheet" href="${fontLink}"><style>${cssText}x-dc{display:contents}</style></head><body>${body}</body></html>`,
 	);
-	const fontFamilies = await canvas.locator('link[rel="stylesheet"]').evaluateAll((links) =>
-		links.flatMap((link) => new URL((link as HTMLLinkElement).href).searchParams.getAll("family")),
-	);
+	const fontFamilies = await canvas
+		.locator('link[rel="stylesheet"]')
+		.evaluateAll((links) =>
+			links.flatMap((link) => new URL((link as HTMLLinkElement).href).searchParams.getAll("family")),
+		);
 	expect(fontFamilies).toEqual(["Inter:wght@400;500;600", "JetBrains Mono:wght@400;500"]);
 	expect(fontFamilies.every((family) => !family.includes("700"))).toBe(true);
 	await canvas.evaluate(() => {
