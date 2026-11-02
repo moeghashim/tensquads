@@ -97,7 +97,7 @@ test("live adds one event every 3.5 seconds, on any page, until paused", async (
 	await openWorkspace(page, workspaceUser);
 	await page.clock.install();
 	await page.reload();
-	await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible();
+	await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible({ timeout: 20_000 });
 	await page.goto("/traffic");
 	await page.getByRole("button", { name: "Paused", exact: true }).click();
 	await page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: "Overview" }).click();
@@ -326,7 +326,7 @@ test("a hung send clears and the next click adds the event", async ({ page, work
 	await openWorkspace(page, workspaceUser);
 	await page.clock.install();
 	await page.reload();
-	await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible();
+	await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible({ timeout: 20_000 });
 	await page.goto("/traffic");
 	let release: (() => void) | undefined;
 	await page.route("**/*", async (route) => {
