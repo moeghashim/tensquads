@@ -183,7 +183,7 @@ function RuleRow({
 	readonly refresh: () => Promise<void>;
 	readonly setPending: SetPending;
 }) {
-	const on = shownOn(rule.id, loaded);
+	const on = shownRuleOn(rule, loaded);
 	const parts = switchParts(on);
 	const toggle = () => {
 		toggleRow(rule, loaded, refresh, setPending);
@@ -334,20 +334,27 @@ function OptionLoop({
 	);
 }
 
+function shownRuleOn(rule: RulesRule, loaded: boolean): boolean {
+	const owner = rowOwners.get(rule.id);
+	const saved = owner === undefined ? undefined : savedIds.get(owner);
+	return shownOn(saved ?? rule.id, saved === undefined ? loaded : true);
+}
+
 function toggleRow(rule: RulesRule, loaded: boolean, refresh: () => Promise<void>, setPending: SetPending) {
 	const id = rowOwners.get(rule.id);
 	if (!id) {
 		queueRule(rule.id, !shownOn(rule.id, loaded), loaded, refresh);
 		return;
 	}
+	const saved = savedIds.get(id);
+	if (saved !== undefined) {
+		queueRule(saved, !shownRuleOn(rule, loaded), true, refresh);
+		return;
+	}
 	const next = !(pendingShown.get(id) ?? true);
 	pendingShown.set(id, next);
 	wantedOn.set(id, next);
 	setPending((items) => items.map((item) => (item.id === id ? { ...item, row: { ...item.row, on: next } } : item)));
-	const saved = savedIds.get(id);
-	if (saved !== undefined) {
-		queueRule(saved, next, true, refresh);
-	}
 }
 
 function addRule(form: RuleForm, setForm: SetRuleForm, setPending: SetPending, refresh: () => Promise<void>) {
@@ -409,6 +416,7 @@ async function saveRule(
 			}
 			return { ...current, action: owner.typed };
 		});
+		await bounded(() => refresh()).catch(() => undefined);
 		return;
 	}
 	submissions.delete(id);

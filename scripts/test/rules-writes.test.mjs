@@ -625,3 +625,87 @@ test("add rule: a saved row stays while the refresh hangs", async () => {
 		await expect(page.getByText("Handle the order", { exact: false })).toHaveCount(1);
 	});
 });
+
+for (const clickBeforeSave of [false, true]) {
+	test(`add rule: saved row recovers a failed toggle (queued: ${clickBeforeSave})`, async () => {
+		await withPage(async (page) => {
+			await holdAdds(page);
+			await page.evaluate(() => {
+				window.refresh = () => new Promise(() => {});
+			});
+			await page.getByLabel("Then", { exact: true }).fill("Handle the order");
+			await page.getByRole("button", { name: "Add rule", exact: true }).click();
+			await page.waitForFunction(() => window.adds.length === 1);
+			const toggle = page.getByRole("button", { name: "Rule enabled" });
+			if (clickBeforeSave) {
+				await toggle.click();
+				await expect(toggle).toHaveAttribute("aria-pressed", "false");
+			}
+			await page.evaluate(async () => {
+				window.send = (data) => {
+					window.calls.push(data);
+					return new Promise((_resolve, reject) => { window.rejectToggle = reject; });
+				};
+				window.adds[0].resolve({ id: "r100" });
+				await window.flush();
+			});
+			if (!clickBeforeSave) await toggle.click();
+			await expect(toggle).toHaveAttribute("aria-pressed", "false");
+			await page.waitForFunction(() => window.rejectToggle);
+			await page.evaluate(async () => {
+				window.rejectToggle(new Error("Toggle failed"));
+				await window.flush();
+			});
+			await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+			await expect(toggle).toHaveAttribute("aria-pressed", "true");
+			await page.evaluate(() => { window.send = async (data) => { window.calls.push(data); }; });
+			await toggle.click();
+			await expect(toggle).toHaveAttribute("aria-pressed", "false");
+			await page.evaluate(() => window.flush());
+			await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+			await expect(toggle).toHaveAttribute("aria-pressed", "false");
+			await toggle.click();
+			await expect(toggle).toHaveAttribute("aria-pressed", "true");
+			assert.deepEqual(await page.evaluate(() => window.calls), [
+				{ id: "r100", on: false }, { id: "r100", on: false }, { id: "r100", on: true },
+			]);
+		});
+	});
+}
+
+for (const refreshResult of ["success", "reject", "timeout"]) {
+	test(`add rule: failure reads server state with bounded refresh (${refreshResult})`, async () => {
+		await withPage(async (page) => {
+			await holdAdds(page);
+			await page.evaluate((outcome) => {
+				window.refreshCalls = 0;
+				window.refresh = async () => {
+					window.refreshCalls += 1;
+					if (outcome === "reject") throw new Error("Read failed");
+					if (outcome === "timeout") return new Promise(() => {});
+					window.loadRules([{ id: "r1", when: "a new order arrives", agent: "orders", action: "Server row", approval: "Ask first", on: true }]);
+				};
+			}, refreshResult);
+			const action = page.getByLabel("Then", { exact: true });
+			const add = page.getByRole("button", { name: "Add rule", exact: true });
+			await action.fill("Draft A");
+			await add.click();
+			await page.waitForFunction(() => window.adds.length === 1);
+			await action.fill("Draft B");
+			await add.click();
+			await page.waitForFunction(() => window.adds.length === 2);
+			await page.getByRole("button", { name: "Rule enabled" }).first().click();
+			await page.evaluate(async () => {
+				window.adds[0].reject(new Error("HTTP 500"));
+				await window.flush();
+			});
+			await page.waitForFunction(() => window.refreshCalls === 1);
+			if (refreshResult === "timeout") await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+			await expect(page.locator("section[aria-label='Rules']").getByText("Draft B", { exact: false })).toHaveCount(1);
+			await expect(action).toHaveValue("");
+			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(refreshResult === "success" ? 2 : 1);
+			if (refreshResult === "success") await expect(page.getByText("Server row", { exact: false })).toHaveCount(1);
+			assert.deepEqual(await page.evaluate(() => window.calls), []);
+		});
+	});
+}

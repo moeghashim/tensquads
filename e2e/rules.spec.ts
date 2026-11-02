@@ -564,10 +564,13 @@ async function designRules(page: Page, width: number, height: number) {
 	if (!fontLink) {
 		throw new Error("The design font link is missing.");
 	}
-	expect(fontLink.includes("700")).toBe(false);
 	await canvas.setContent(
 		`<!doctype html><html lang="en"><head><link rel="stylesheet" href="${fontLink}"><style>${cssText}x-dc{display:contents}</style></head><body>${body}</body></html>`,
 	);
+	const fontFamilies = await canvas.locator('link[rel="stylesheet"]').evaluateAll((links) =>
+		links.flatMap((link) => new URL((link as HTMLLinkElement).href).searchParams.getAll("family")),
+	);
+	expect(fontFamilies).toEqual(["Inter:wght@400;500;600", "JetBrains+Mono:wght@400;500"]);
 	await canvas.evaluate(() => {
 		for (const node of document.querySelectorAll("[data-loop], [data-if]")) {
 			if (node instanceof HTMLElement) {
