@@ -191,6 +191,39 @@ test("the Task is in the panel while finish and the bus read are held", async ({
 	await expect(buttons).toHaveCount(6);
 });
 
+test("an acknowledged Task stays retired after newer loader lists and navigation", async ({
+	page,
+	workspaceUser,
+}) => {
+	test.setTimeout(180_000);
+	await openChat(page, workspaceUser);
+	const question = "How did ads do this week?";
+	await sendAndSee(page, question, marketingResult);
+	const buttons = page.locator("[data-loop='chatBus'] button");
+	await expect(buttons.first()).toContainText(marketingResult);
+	await expect(buttons.filter({ hasText: question })).toHaveCount(1);
+	const other = await page.context().newPage();
+	try {
+		await other.goto("/chat");
+		const newerButtons = other.locator("[data-loop='chatBus'] button");
+		for (const [text, reply] of [scriptedRoutes[0], scriptedRoutes[1], scriptedRoutes[3]]) {
+			await sendAndSee(other, text, reply);
+			await expect(newerButtons.first()).toContainText(reply);
+		}
+		await expect(newerButtons.filter({ hasText: question })).toHaveCount(0);
+		const expected = await newerButtons.allTextContents();
+		await page.getByRole("button", { name: "Overview", exact: true }).click();
+		await expect(page).toHaveURL(/\/overview$/);
+		await page.getByRole("button", { name: "Chat with the master", exact: true }).click();
+		await expect(page).toHaveURL(/\/chat$/);
+		await expect(buttons).toHaveCount(6);
+		await expect(buttons.filter({ hasText: question })).toHaveCount(0);
+		await expect(buttons).toHaveText(expected);
+	} finally {
+		await other.close();
+	}
+});
+
 test("enter sends the draft and clears the input", async ({ page, workspaceUser }) => {
 	test.setTimeout(120_000);
 	await openChat(page, workspaceUser);

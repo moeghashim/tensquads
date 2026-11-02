@@ -1,4 +1,4 @@
-import { useRouter } from "@tanstack/react-router";
+import { useRouter, useRouterState } from "@tanstack/react-router";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import {
 	type Dispatch,
@@ -35,6 +35,16 @@ export function WorkspaceProvider({
 	const [thinking, setThinking] = useState(false);
 	const [thinkingAgent, setThinkingAgent] = useState("");
 	const [startedTask, setStartedTask] = useState<StartedTask | null>(null);
+	const taskAcknowledged = useRouterState({
+		select: (state) =>
+			state.matches.some(
+				(match) =>
+					match.routeId === "/_workspace/chat" &&
+					match.status === "success" &&
+					match.loaderData?.events.some((event) => event.id === startedTask?.id),
+			),
+	});
+	if (startedTask !== null && taskAcknowledged) setStartedTask(null);
 	const [pending, setPending] = useState(false);
 	const { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive, ruleForm, setRuleForm } =
 		useWorkspaceControls(frame);
