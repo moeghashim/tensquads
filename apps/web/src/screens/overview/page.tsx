@@ -7,13 +7,7 @@ import { decideMissionOverview, decideOverview } from "#/server/overview.ts";
 import { missionBits } from "#/workspace/agent-view.ts";
 import { useRefresh, useWorkspace } from "#/workspace/context.ts";
 
-import {
-	badgeCount,
-	enqueueDecision,
-	patchSnapshot,
-	readDecisionCount,
-	subscribeOverviewPage,
-} from "./actions.ts";
+import { badgeCount, enqueueDecision, patchSnapshot, readDecisionCount, subscribeOverviewPage } from "./actions.ts";
 import type { OverviewAgentView, OverviewData } from "./types.ts";
 import { type DecisionPatch, presentOverview } from "./view.ts";
 

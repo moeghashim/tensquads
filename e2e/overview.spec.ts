@@ -236,11 +236,7 @@ test("queued cards and counts survive leaving and returning to overview", async 
 	await secondDone;
 });
 
-test("navigation frame reads update the count after another tab decides", async ({
-	page,
-	browser,
-	workspaceUser,
-}) => {
+test("navigation frame reads update the count after another tab decides", async ({ page, browser, workspaceUser }) => {
 	await openWorkspace(page, workspaceUser);
 	await expect(inboxCount(page)).toHaveText("4");
 	await expect(dockBadge(page)).toHaveText("4");
@@ -795,14 +791,20 @@ async function holdWorkspaceSend(page: Page, step: "begin" | "finish") {
 			});
 			release();
 			try {
-				await test.step("wait for the released send and its frame refresh", async () => {
-					const response = await finished;
-					expect(response.ok()).toBe(true);
-					expect(await response.finished()).toBeNull();
-					const closedDock = page.locator("button[data-handler='toggleDock'][aria-expanded='false']");
-					if (await closedDock.count()) await closedDock.click();
-					await expect(page.getByRole("button", { name: "Send", exact: true })).toBeEnabled({ timeout: 30_000 });
-				}, { timeout: 30_000 });
+				await test.step(
+					"wait for the released send and its frame refresh",
+					async () => {
+						const response = await finished;
+						expect(response.ok()).toBe(true);
+						expect(await response.finished()).toBeNull();
+						const closedDock = page.locator("button[data-handler='toggleDock'][aria-expanded='false']");
+						if (await closedDock.count()) await closedDock.click();
+						await expect(page.getByRole("button", { name: "Send", exact: true })).toBeEnabled({
+							timeout: 30_000,
+						});
+					},
+					{ timeout: 30_000 },
+				);
 			} finally {
 				await page.unroute("**/_serverFn/**");
 			}
