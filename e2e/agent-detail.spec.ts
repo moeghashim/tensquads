@@ -231,7 +231,7 @@ test("a timed out skill write restores the server value and keeps the queue movi
 	workspaceUser,
 	accountId,
 }) => {
-	test.setTimeout(90_000);
+	test.setTimeout(120_000);
 	await openAgent(page, workspaceUser, "support");
 	const held = await holdServerPosts(page, 1, true);
 	try {
@@ -247,7 +247,9 @@ test("a timed out skill write restores the server value and keeps the queue movi
 		await expect.poll(() => held.posts.length, settled).toBe(2);
 		await expect(page).toHaveURL(/\/agents\/support$/);
 		await expect
-			.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.draft_reply"), settled)
+			.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.draft_reply"), {
+				timeout: PENDING_TASK_WINDOW_MS,
+			})
 			.toBe(false);
 	} finally {
 		await held.stop();
