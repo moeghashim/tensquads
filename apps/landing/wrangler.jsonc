@@ -1,0 +1,12 @@
+{
+	// The holding page for 10squads.com. The zone is in this account, not the
+	// product account, so this Worker deploys on its own. See README.md here.
+	"name": "tensquads-landing",
+	"account_id": "ef8383237903d4d6a01ab5ad529a9282",
+	"main": "src/index.js",
+	"compatibility_date": "2026-10-01",
+	"routes": [
+		{ "pattern": "10squads.com", "custom_domain": true },
+		{ "pattern": "www.10squads.com", "custom_domain": true }
+	]
+}
