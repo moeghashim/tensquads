@@ -1,14 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { PGlite } from "@electric-sql/pglite";
 import { createRepositories, schema } from "@tensquads/adapters";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import { Kernel } from "@tensquads/kernel";
 import { eq } from "drizzle-orm";
-import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
 
 import { advanceTrafficAccount } from "../../apps/web/src/server/traffic-step.ts";
-import { migrationSql } from "../../packages/adapters/src/neon/migration-sql.ts";
+import { openPglite } from "../../packages/adapters/test/pglite.ts";
 import { replaceDemoAccount } from "../../packages/seed/src/demo-account.ts";
 
 const unfinished = "The workspace write did not finish.";
@@ -17,16 +15,6 @@ function isUnfinished(error, depth = 0) {
 	if (!error || typeof error !== "object" || depth > 5) return false;
 	if (error.message === unfinished) return true;
 	return isUnfinished(error.cause, depth + 1);
-}
-
-async function openDatabase() {
-	const client = new PGlite();
-	await client.exec(migrationSql);
-	return {
-		client,
-		db: drizzlePglite(client, { schema }),
-		close: () => client.close(),
-	};
 }
 
 function watchBusReads(client, onSelect) {
@@ -61,7 +49,7 @@ async function generatedCount(db, accountId) {
 }
 
 async function withAccount(name, run) {
-	const opened = await openDatabase();
+	const opened = await openPglite();
 	const accountId = `traffic-deadline-${name}`;
 	try {
 		await replaceDemoAccount(opened.db, accountId, `clerk-${name}`);

@@ -1,7 +1,7 @@
 import type { AppDatabase } from "@tensquads/adapters";
 import { createRepositories } from "@tensquads/adapters";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
-import type { AccountScope } from "@tensquads/domain";
+import type { AccountScope } from "@tensquads/kernel";
 import { Kernel } from "@tensquads/kernel";
 
 const unfinished = "The workspace write did not finish.";
