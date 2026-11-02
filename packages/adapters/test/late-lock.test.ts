@@ -65,13 +65,17 @@ async function holdLock(client: PoolClient): Promise<void> {
 type Begin = { kind: string; taskId?: string; messages?: readonly { text: string }[] };
 
 async function abandonedBegin(kernel: Kernel, scope: { accountId: string; mode: "account" }): Promise<Begin> {
-	return Promise.race([
-		kernel.beginSend(scope, ads).then(
-			(value) => value,
-			() => ({ kind: "failed" }),
-		),
-		delay(PENDING_TASK_WINDOW_MS + 1_000).then(() => ({ kind: "pending" })),
+	const [outcome] = await Promise.all([
+		Promise.race([
+			kernel.beginSend(scope, ads).then(
+				(value) => value,
+				() => ({ kind: "failed" }),
+			),
+			delay(PENDING_TASK_WINDOW_MS + 1_000).then(() => ({ kind: "pending" })),
+		]),
+		delay(PENDING_TASK_WINDOW_MS + 1_000),
 	]);
+	return outcome;
 }
 
 async function replyAfter(kernel: Kernel, scope: { accountId: string; mode: "account" }) {
@@ -122,10 +126,10 @@ test(
 			await holdLock(client);
 			locked = true;
 			const late = await abandonedBegin(kernel, scope);
-			await client.query(unlockKey);
-			locked = false;
 			assert.notEqual(late.kind, "working");
 			assert.notEqual(late.kind, "pending");
+			await client.query(unlockKey);
+			locked = false;
 			await replyAfter(kernel, scope);
 		} finally {
 			if (locked) await client.query(unlockKey).catch(() => undefined);
