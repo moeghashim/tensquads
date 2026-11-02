@@ -1,0 +1,399 @@
+{
+  "config": {
+    "argv": [
+      "/opt/homebrew/Cellar/node@24/24.21.0/bin/node",
+      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      ".local-test/playwright.config.ts",
+      "--grep",
+      "frame arriving|empty inbox|ask for another shows|overview boxes|accessibility violations|macOS screenshot"
+    ],
+    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test/playwright.config.ts",
+    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6F4GJE3SR01RB3YBD6W8K1W/browser-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test",
+        "testIgnore": [],
+        "testMatch": [
+          "overview.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6F4GJE3SR01RB3YBD6W8K1W/browser-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test",
+        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test",
+        "testIgnore": [],
+        "testMatch": "overview.spec.ts",
+        "timeout": 60000,
+        "use": {
+          "baseURL": "http://127.0.0.1:3107",
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "deviceScaleFactor": 1,
+          "trace": "retain-on-failure",
+          "launchOptions": {
+            "args": [
+              "--font-render-hinting=none",
+              "--disable-font-subpixel-positioning",
+              "--force-color-profile=srgb"
+            ]
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6F4GJE3SR01RB3YBD6W8K1W/recovery-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "overview.spec.ts",
+      "file": "overview.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "an empty inbox shows the nothing waiting text and no badge",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2240,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T22:09:15.826Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-0f1a4087291a3301ec83",
+          "file": "overview.spec.ts",
+          "line": 99,
+          "column": 1
+        },
+        {
+          "title": "ask for another shows the revising text and lowers the count",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 972,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T22:09:18.126Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-e95dbd245e70d57cfa92",
+          "file": "overview.spec.ts",
+          "line": 149,
+          "column": 1
+        },
+        {
+          "title": "the overview boxes match the rendered design at 1440 and 390",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 635,
+                  "error": {
+                    "message": "Error: ENOENT: no such file or directory, open '/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test/fonts/google-fonts.css'",
+                    "stack": "Error: ENOENT: no such file or directory, open '/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test/fonts/google-fonts.css'\n    at openDesignOverview (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test/overview.spec.ts:568:16)\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test/overview.spec.ts:486:22",
+                    "location": {
+                      "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test/overview.spec.ts",
+                      "column": 16,
+                      "line": 568
+                    },
+                    "snippet": "  566 | \tconst canvas = await page.context().newPage();\n  567 | \tawait installLocalFonts(canvas);\n> 568 | \tconst fonts = readFileSync(new URL(\"./fonts/google-fonts.css\", import.meta.url), \"utf8\").replace(\n      | \t              ^\n  569 | \t\t/@font-face\\s*\\{[^}]*font-weight:\\s*700;[^}]*\\}/g,\n  570 | \t\t\"\",\n  571 | \t);"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test/overview.spec.ts",
+                        "column": 16,
+                        "line": 568
+                      },
+                      "message": "Error: ENOENT: no such file or directory, open '/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test/fonts/google-fonts.css'\n\n  566 | \tconst canvas = await page.context().newPage();\n  567 | \tawait installLocalFonts(canvas);\n> 568 | \tconst fonts = readFileSync(new URL(\"./fonts/google-fonts.css\", import.meta.url), \"utf8\").replace(\n      | \t              ^\n  569 | \t\t/@font-face\\s*\\{[^}]*font-weight:\\s*700;[^}]*\\}/g,\n  570 | \t\t\"\",\n  571 | \t);\n    at openDesignOverview (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test/overview.spec.ts:568:16)\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test/overview.spec.ts:486:22"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T22:09:19.103Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6F4GJE3SR01RB3YBD6W8K1W/browser-output/overview-the-overview-boxe-21ada-ered-design-at-1440-and-390/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6F4GJE3SR01RB3YBD6W8K1W/browser-output/overview-the-overview-boxe-21ada-ered-design-at-1440-and-390/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test/overview.spec.ts",
+                    "column": 16,
+                    "line": 568
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-cc5f5b3440973b79cfa4",
+          "file": "overview.spec.ts",
+          "line": 481,
+          "column": 1
+        },
+        {
+          "title": "the overview has no accessibility violations",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1845,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T22:09:20.202Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-79f6879a99b124b07d4c",
+          "file": "overview.spec.ts",
+          "line": 500,
+          "column": 1
+        },
+        {
+          "title": "the overview matches the macOS screenshot baselines",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1088,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T22:09:22.215Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-64d9e6ccc6b2756fd74a",
+          "file": "overview.spec.ts",
+          "line": 508,
+          "column": 1
+        },
+        {
+          "title": "a frame arriving after the 30 second refresh bound restores Traffic",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 32670,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T22:09:23.308Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-e0310a2687e7a0feb9d5",
+          "file": "overview.spec.ts",
+          "line": 888,
+          "column": 2
+        },
+        {
+          "title": "a frame arriving after the 30 second refresh bound restores Traffic and preserves another in-flight card",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 33147,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T22:09:55.982Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-c3296c588c090d0058d5",
+          "file": "overview.spec.ts",
+          "line": 888,
+          "column": 2
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-02T22:09:15.155Z",
+    "duration": 74012.232,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

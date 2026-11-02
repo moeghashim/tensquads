@@ -2,13 +2,15 @@
   "config": {
     "argv": [
       "/opt/homebrew/Cellar/node@24/24.21.0/bin/node",
-      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/node_modules/.bin/playwright",
+      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/node_modules/.bin/playwright",
       "test",
       "--config",
-      ".local-test/playwright.config.ts"
+      ".local-test/playwright.config.ts",
+      "--grep",
+      "overview shows|tile shows|held dock|held chat|navigation frame|rejected decision|second card|queued cards|double click|failed write|held Approve|held Decline|held Ask"
     ],
-    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/.local-test/playwright.config.ts",
-    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
+    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test/playwright.config.ts",
+    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test",
     "failOnFlakyTests": false,
     "forbidOnly": false,
     "fullyParallel": false,
@@ -24,7 +26,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/playwright",
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6F4GJE3SR01RB3YBD6W8K1W/browser-output",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -32,10 +34,10 @@
         },
         "id": "",
         "name": "",
-        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test",
         "testIgnore": [],
         "testMatch": [
-          ".local-overview.spec.ts"
+          "overview.spec.ts"
         ],
         "timeout": 60000
       }
@@ -44,25 +46,26 @@
       {
         "grep": {},
         "grepInvert": null,
-        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/playwright",
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6F4GJE3SR01RB3YBD6W8K1W/browser-output",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
           "actualWorkers": 1
         },
         "name": "",
-        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
-        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6ES7TDTX6YVPWJTWJ0XP5ZC/e2e",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test",
+        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6F4GJE3SR01RB3YBD6W8K1W/.local-test",
         "testIgnore": [],
-        "testMatch": ".local-overview.spec.ts",
+        "testMatch": "overview.spec.ts",
         "timeout": 60000,
         "use": {
-          "baseURL": "http://localhost:3000",
+          "baseURL": "http://127.0.0.1:3107",
           "viewport": {
             "width": 1440,
             "height": 900
           },
           "deviceScaleFactor": 1,
+          "trace": "retain-on-failure",
           "launchOptions": {
             "args": [
               "--font-render-hinting=none",
@@ -85,7 +88,7 @@
       [
         "json",
         {
-          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6ES7TDTX6YVPWJTWJ0XP5ZC/browser-results.json"
+          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6F4GJE3SR01RB3YBD6W8K1W/browser-results.json"
         }
       ]
     ],
@@ -103,8 +106,8 @@
   },
   "suites": [
     {
-      "title": ".local-overview.spec.ts",
-      "file": ".local-overview.spec.ts",
+      "title": "overview.spec.ts",
+      "file": "overview.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [
@@ -124,12 +127,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1936,
+                  "duration": 2167,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-02T18:52:06.221Z",
+                  "startTime": "2026-11-02T22:08:12.912Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -137,9 +140,9 @@
               "status": "expected"
             }
           ],
-          "id": "4285f6f68e520d270c29-0653aa93af79eb95287c",
-          "file": ".local-overview.spec.ts",
-          "line": 17,
+          "id": "6e2f4ad74dab265ac116-204bf730d594c00f48a9",
+          "file": "overview.spec.ts",
+          "line": 24,
           "column": 1
         },
         {
@@ -158,12 +161,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 709,
+                  "duration": 611,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-02T18:52:08.219Z",
+                  "startTime": "2026-11-02T22:08:15.148Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -171,179 +174,9 @@
               "status": "expected"
             }
           ],
-          "id": "4285f6f68e520d270c29-a65d849ea2b2a0d20da0",
-          "file": ".local-overview.spec.ts",
-          "line": 35,
-          "column": 1
-        },
-        {
-          "title": "approve adds one task, sets the last line, and writes the Mandate",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 847,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T18:52:08.933Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "4285f6f68e520d270c29-fab2707577f36b1e9c5b",
-          "file": ".local-overview.spec.ts",
-          "line": 45,
-          "column": 1
-        },
-        {
-          "title": "decline removes the approval and changes no agent",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 795,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T18:52:09.785Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "4285f6f68e520d270c29-216a969797fc45ce285a",
-          "file": ".local-overview.spec.ts",
-          "line": 72,
-          "column": 1
-        },
-        {
-          "title": "an empty inbox shows the nothing waiting text and no badge",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 90000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 1625,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T18:52:10.585Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "4285f6f68e520d270c29-c34df9114b16e50dd525",
-          "file": ".local-overview.spec.ts",
-          "line": 92,
-          "column": 1
-        },
-        {
-          "title": "approve mission sets the mission, the targets and zero contribution",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 798,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T18:52:12.215Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "4285f6f68e520d270c29-f6663958b0373e3a83d8",
-          "file": ".local-overview.spec.ts",
-          "line": 115,
-          "column": 1
-        },
-        {
-          "title": "ask for another shows the revising text and lowers the count",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 819,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T18:52:13.018Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "4285f6f68e520d270c29-36569e63cb8f889b74c8",
-          "file": ".local-overview.spec.ts",
-          "line": 142,
+          "id": "6e2f4ad74dab265ac116-c2d002bea4eb12091a9c",
+          "file": "overview.spec.ts",
+          "line": 42,
           "column": 1
         },
         {
@@ -362,12 +195,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 637,
+                  "duration": 1036,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-02T18:52:13.842Z",
+                  "startTime": "2026-11-02T22:08:15.763Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -375,9 +208,9 @@
               "status": "expected"
             }
           ],
-          "id": "4285f6f68e520d270c29-bae9b9766727541aa66b",
-          "file": ".local-overview.spec.ts",
-          "line": 155,
+          "id": "6e2f4ad74dab265ac116-743198f88d58a87c4477",
+          "file": "overview.spec.ts",
+          "line": 162,
           "column": 1
         },
         {
@@ -396,12 +229,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 738,
+                  "duration": 635,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-02T18:52:14.484Z",
+                  "startTime": "2026-11-02T22:08:16.804Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -409,9 +242,9 @@
               "status": "expected"
             }
           ],
-          "id": "4285f6f68e520d270c29-87d3fec5011516556a5e",
-          "file": ".local-overview.spec.ts",
-          "line": 165,
+          "id": "6e2f4ad74dab265ac116-5f1fc3fbfac0ef88c1a2",
+          "file": "overview.spec.ts",
+          "line": 172,
           "column": 1
         },
         {
@@ -430,12 +263,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 495,
+                  "duration": 919,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-02T18:52:15.226Z",
+                  "startTime": "2026-11-02T22:08:17.444Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -443,9 +276,9 @@
               "status": "expected"
             }
           ],
-          "id": "4285f6f68e520d270c29-69d7ad45919b6de86d3f",
-          "file": ".local-overview.spec.ts",
-          "line": 175,
+          "id": "6e2f4ad74dab265ac116-dcff3be159936b272166",
+          "file": "overview.spec.ts",
+          "line": 182,
           "column": 1
         },
         {
@@ -464,12 +297,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 777,
+                  "duration": 928,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-02T18:52:15.726Z",
+                  "startTime": "2026-11-02T22:08:18.368Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -477,9 +310,9 @@
               "status": "expected"
             }
           ],
-          "id": "4285f6f68e520d270c29-a19280e60d24f69f2204",
-          "file": ".local-overview.spec.ts",
-          "line": 187,
+          "id": "6e2f4ad74dab265ac116-c3851cd5c5f69e7d49c7",
+          "file": "overview.spec.ts",
+          "line": 194,
           "column": 1
         },
         {
@@ -498,12 +331,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1220,
+                  "duration": 1055,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-02T18:52:16.508Z",
+                  "startTime": "2026-11-02T22:08:19.300Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -511,9 +344,9 @@
               "status": "expected"
             }
           ],
-          "id": "4285f6f68e520d270c29-d24154d3cc11d28dfc40",
-          "file": ".local-overview.spec.ts",
-          "line": 197,
+          "id": "6e2f4ad74dab265ac116-4f7bc298660593f8b258",
+          "file": "overview.spec.ts",
+          "line": 204,
           "column": 1
         },
         {
@@ -532,12 +365,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1311,
+                  "duration": 1374,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-02T18:52:17.735Z",
+                  "startTime": "2026-11-02T22:08:20.360Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -545,9 +378,197 @@
               "status": "expected"
             }
           ],
-          "id": "4285f6f68e520d270c29-1176bbad99800903204a",
-          "file": ".local-overview.spec.ts",
-          "line": 214,
+          "id": "6e2f4ad74dab265ac116-45f166be021329b0bb2a",
+          "file": "overview.spec.ts",
+          "line": 221,
+          "column": 1
+        },
+        {
+          "title": "navigation frame reads update the count after another tab decides",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1906,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T22:08:21.738Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-7a4ef82cc28171d6e6e8",
+          "file": "overview.spec.ts",
+          "line": 239,
+          "column": 1
+        },
+        {
+          "title": "a rejected decision restores the badge after leaving overview",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 977,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "release the rejected refund and wait for its frame read",
+                      "duration": 11
+                    }
+                  ],
+                  "startTime": "2026-11-02T22:08:23.649Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-28cdf9b3c4818a87a332",
+          "file": "overview.spec.ts",
+          "line": 269,
+          "column": 1
+        },
+        {
+          "title": "navigation frame reads update the count after another tab declines",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1920,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T22:08:24.631Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-751f922e88ccea50d4d6",
+          "file": "overview.spec.ts",
+          "line": 341,
+          "column": 1
+        },
+        {
+          "title": "a held dock begin keeps the server count on traffic",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3663,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "wait for the released send and its frame refresh",
+                      "duration": 1726
+                    }
+                  ],
+                  "startTime": "2026-11-02T22:08:26.556Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-0a52ede53c91c516e955",
+          "file": "overview.spec.ts",
+          "line": 362,
+          "column": 1
+        },
+        {
+          "title": "a held chat finish keeps the server count on traffic",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4413,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "wait for the released send and its frame refresh",
+                      "duration": 288
+                    }
+                  ],
+                  "startTime": "2026-11-02T22:08:30.223Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6e2f4ad74dab265ac116-0b69a069155d7b4530cb",
+          "file": "overview.spec.ts",
+          "line": 378,
           "column": 1
         },
         {
@@ -566,12 +587,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 649,
+                  "duration": 660,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-02T18:52:19.050Z",
+                  "startTime": "2026-11-02T22:08:34.640Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -579,9 +600,9 @@
               "status": "expected"
             }
           ],
-          "id": "4285f6f68e520d270c29-5183a5ad4f2c6ce3cbb0",
-          "file": ".local-overview.spec.ts",
-          "line": 232,
+          "id": "6e2f4ad74dab265ac116-1370671b500e576eea14",
+          "file": "overview.spec.ts",
+          "line": 396,
           "column": 1
         },
         {
@@ -600,12 +621,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1090,
+                  "duration": 970,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-02T18:52:19.704Z",
+                  "startTime": "2026-11-02T22:08:35.304Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -613,247 +634,9 @@
               "status": "expected"
             }
           ],
-          "id": "4285f6f68e520d270c29-66cc67afb8d899d1332b",
-          "file": ".local-overview.spec.ts",
-          "line": 246,
-          "column": 1
-        },
-        {
-          "title": "an empty proposal mission shows an em dash",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 471,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T18:52:20.798Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "4285f6f68e520d270c29-4d9905d9e19dadc17f69",
-          "file": ".local-overview.spec.ts",
-          "line": 266,
-          "column": 1
-        },
-        {
-          "title": "see squad traffic and each card open their pages",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 3635,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T18:52:21.274Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "4285f6f68e520d270c29-c636322a5577bf35e530",
-          "file": ".local-overview.spec.ts",
-          "line": 273,
-          "column": 1
-        },
-        {
-          "title": "the overview matches the rendered design inventory",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 722,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T18:52:24.914Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "4285f6f68e520d270c29-bdb8191f5fca9140bdd2",
-          "file": ".local-overview.spec.ts",
-          "line": 288,
-          "column": 1
-        },
-        {
-          "title": "the overview boxes match the rendered design at 1440 and 390",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 748,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T18:52:25.641Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "4285f6f68e520d270c29-9e329c787050a64f3d5b",
-          "file": ".local-overview.spec.ts",
-          "line": 309,
-          "column": 1
-        },
-        {
-          "title": "the overview has no accessibility violations",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 1478,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T18:52:26.393Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "4285f6f68e520d270c29-a3a9a0ba882f517bdf27",
-          "file": ".local-overview.spec.ts",
-          "line": 328,
-          "column": 1
-        },
-        {
-          "title": "the overview matches the macOS screenshot baselines",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 1135,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T18:52:27.876Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "4285f6f68e520d270c29-137bdc0ef9871a21a35d",
-          "file": ".local-overview.spec.ts",
-          "line": 336,
-          "column": 1
-        },
-        {
-          "title": "the side-by-side evidence shows the design and the build",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "",
-              "projectName": "",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 1674,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-11-02T18:52:29.015Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "4285f6f68e520d270c29-1d3fc2ee3efef992c4c6",
-          "file": ".local-overview.spec.ts",
-          "line": 346,
+          "id": "6e2f4ad74dab265ac116-bd3a9862f1c6c88be3aa",
+          "file": "overview.spec.ts",
+          "line": 410,
           "column": 1
         }
       ]
@@ -861,9 +644,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-11-02T18:52:05.455Z",
-    "duration": 25265.826999999997,
-    "expected": 22,
+    "startTime": "2026-11-02T22:08:12.242Z",
+    "duration": 24084.056,
+    "expected": 15,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
