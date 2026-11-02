@@ -34,20 +34,19 @@ export function WorkspaceProvider({
 	const [dockOpen, setDockOpen] = useState(false);
 	const [thinking, setThinking] = useState(false);
 	const [thinkingAgent, setThinkingAgent] = useState("");
-	const [startedTask, setStartedTask] = useState<StartedTask | null>(null);
-	const taskAcknowledged = useRouterState({
-		select: (state) =>
-			state.matches.some(
-				(match) =>
-					match.routeId === "/_workspace/chat" &&
-					match.status === "success" &&
-					match.loaderData?.events.some((event) => event.id === startedTask?.id),
-			),
-	});
-	if (startedTask !== null && taskAcknowledged) setStartedTask(null);
 	const [pending, setPending] = useState(false);
-	const { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive, ruleForm, setRuleForm } =
-		useWorkspaceControls(frame);
+	const {
+		selEvent,
+		setSelEvent,
+		busFilter,
+		setBusFilter,
+		live,
+		setLive,
+		ruleForm,
+		setRuleForm,
+		startedTask,
+		setStartedTask,
+	} = useWorkspaceControls(frame);
 	const sending = useRef(false);
 	const { messages, setMessages, approvalCount, applyFrame } = useFrameMessages(frame, sending);
 
@@ -125,7 +124,21 @@ export function WorkspaceProvider({
 	);
 }
 
+function taskAcknowledged(state: ReturnType<typeof useRouter>["state"], startedTask: StartedTask | null) {
+	return state.matches.some(
+		(match) =>
+			match.routeId === "/_workspace/chat" &&
+			match.status === "success" &&
+			match.loaderData?.events.some((event) => event.id === startedTask?.id),
+	);
+}
+
 function useWorkspaceControls(frame: WorkspaceFrameData) {
+	const [startedTask, setStartedTask] = useState<StartedTask | null>(null);
+	const acknowledged = useRouterState({
+		select: (state) => taskAcknowledged(state, startedTask),
+	});
+	if (startedTask !== null && acknowledged) setStartedTask(null);
 	const [selEvent, setSelEvent] = useState("");
 	const [busFilter, setBusFilter] = useState("all");
 	const [live, setLive] = useState(false);
@@ -135,7 +148,18 @@ function useWorkspaceControls(frame: WorkspaceFrameData) {
 		action: "",
 		approval: "Ask first",
 	});
-	return { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive, ruleForm, setRuleForm };
+	return {
+		selEvent,
+		setSelEvent,
+		busFilter,
+		setBusFilter,
+		live,
+		setLive,
+		ruleForm,
+		setRuleForm,
+		startedTask,
+		setStartedTask,
+	};
 }
 
 function useSubmit(draft: string, thinking: boolean, hooks: SendHooks) {
