@@ -118,8 +118,8 @@ test("the switch turns an agent off and shows 0 percent and Paused", async ({ pa
 		await expect(sandbox(page).getByText("Paused", { exact: true })).toBeVisible();
 		await expect(sandbox(page).getByText("22%", { exact: true })).toHaveCount(0);
 		await expect(sandbox(page).getByText("18 days", { exact: true })).toHaveCount(0);
+		await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(false);
 		const off = await readAgent(accountId, "support");
-		expect(off.isOn).toBe(false);
 		expect(off.cpu).toBe("22%");
 		expect(off.uptime).toBe("18 days");
 	} finally {
