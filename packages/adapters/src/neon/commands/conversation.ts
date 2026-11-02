@@ -28,35 +28,36 @@ export async function conversationTransaction<T>(
 	if (checked.mode !== "account") throw new Error("A send needs an account.");
 	const accountId = checked.accountId;
 	const startedAt = new Date();
-	return workspaceTransaction(db, async (tx) => {
-		if (Date.now() - startedAt.getTime() >= PENDING_TASK_WINDOW_MS) {
-			return { kind: "ignored" } as T;
-		}
-		await lockCursor(tx, accountId);
-		return work({
-			pendingTask: () => pendingTask(tx, accountId),
-			agent: (id) => readAgent(tx, accountId, id),
-			skills: (id) => readSkills(tx, accountId, id),
-			store: () => readStore(tx, accountId),
-			async message(from, text, agent) {
-				const cursor = await lockCursor(tx, accountId);
-				const written = await insertMessage(tx, accountId, cursor, from, text, agent ?? null);
-				await saveCursor(tx, accountId, written.cursor);
-			},
-			messages: () => listMessages(tx, accountId),
-			async appendEvent(draft) {
-				const [event] = await appendEvents(tx, accountId, [draft], startedAt);
-				if (!event) throw new Error("The event was not saved.");
-				return event.id;
-			},
-			async completeAgent(id, text) {
-				await tx
-					.update(agents)
-					.set({ tasks: sql`${agents.tasks} + 1`, lastText: text })
-					.where(and(eq(agents.accountId, accountId), eq(agents.id, id)));
-			},
-		});
-	});
+	return workspaceTransaction(
+		db,
+		async (tx) => {
+			await lockCursor(tx, accountId);
+			return work({
+				pendingTask: () => pendingTask(tx, accountId),
+				agent: (id) => readAgent(tx, accountId, id),
+				skills: (id) => readSkills(tx, accountId, id),
+				store: () => readStore(tx, accountId),
+				async message(from, text, agent) {
+					const cursor = await lockCursor(tx, accountId);
+					const written = await insertMessage(tx, accountId, cursor, from, text, agent ?? null);
+					await saveCursor(tx, accountId, written.cursor);
+				},
+				messages: () => listMessages(tx, accountId),
+				async appendEvent(draft) {
+					const [event] = await appendEvents(tx, accountId, [draft], startedAt);
+					if (!event) throw new Error("The event was not saved.");
+					return event.id;
+				},
+				async completeAgent(id, text) {
+					await tx
+						.update(agents)
+						.set({ tasks: sql`${agents.tasks} + 1`, lastText: text })
+						.where(and(eq(agents.accountId, accountId), eq(agents.id, id)));
+				},
+			});
+		},
+		{ deadlineMs: PENDING_TASK_WINDOW_MS },
+	);
 }
 
 async function insertMessage(

@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
 
-import { PENDING_TASK_WINDOW_MS } from "../pending-window.ts";
 import type { AppDatabase } from "./postgres.ts";
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
@@ -8,28 +7,106 @@ type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 // The migration takes this lock. A test reset waits for it, so the two cannot deadlock.
 const workspaceLock = sql`SELECT pg_advisory_xact_lock(1952804467, 1)`;
 
-// Three deadlock attempts must end before the client abandons the send.
 const sendAttempts = 3;
-const sendAttemptMs = Math.floor((PENDING_TASK_WINDOW_MS - 1) / sendAttempts);
-const lockTimeout = sql.raw(`SET LOCAL lock_timeout = '${sendAttemptMs}ms'`);
-const statementTimeout = sql.raw(`SET LOCAL statement_timeout = '${sendAttemptMs}ms'`);
+const unfinished = "The workspace write did not finish.";
 
-export async function workspaceTransaction<T>(db: AppDatabase, run: (tx: Tx) => Promise<T>): Promise<T> {
+export interface WorkspaceTransactionOptions {
+	readonly deadlineMs: number;
+}
+
+interface SendBound {
+	readonly deadline: number;
+	readonly attemptMs: number;
+}
+
+export async function workspaceTransaction<T>(
+	db: AppDatabase,
+	run: (tx: Tx) => Promise<T>,
+	options?: WorkspaceTransactionOptions,
+): Promise<T> {
+	const bound = sendBound(options);
 	for (let attempt = 1; attempt <= sendAttempts; attempt++) {
-		try {
-			return await db.transaction(async (tx) => {
-				await tx.execute(lockTimeout);
-				await tx.execute(statementTimeout);
-				await tx.execute(workspaceLock);
-				return await run(tx);
-			});
-		} catch (error) {
-			if (attempt === sendAttempts || !isDeadlock(error)) {
-				throw error;
-			}
+		const finished = await tryAttempt(db, run, bound, attempt);
+		if (finished) {
+			return finished.value;
 		}
 	}
-	throw new Error("The workspace write did not finish.");
+	throw new Error(unfinished);
+}
+
+function sendBound(options: WorkspaceTransactionOptions | undefined): SendBound | undefined {
+	if (!options) {
+		return undefined;
+	}
+	return {
+		deadline: Date.now() + options.deadlineMs,
+		attemptMs: Math.floor((options.deadlineMs - 1) / sendAttempts),
+	};
+}
+
+// The deadline starts once, with the first attempt, and every retry shares it.
+function retryFits(bound: SendBound | undefined, attempt: number): boolean {
+	if (attempt === 1) {
+		return true;
+	}
+	if (!bound) {
+		return true;
+	}
+	return bound.deadline - Date.now() >= bound.attemptMs;
+}
+
+async function tryAttempt<T>(
+	db: AppDatabase,
+	run: (tx: Tx) => Promise<T>,
+	bound: SendBound | undefined,
+	attempt: number,
+): Promise<{ readonly value: T } | undefined> {
+	if (!retryFits(bound, attempt)) {
+		throw new Error(unfinished);
+	}
+	try {
+		return { value: await runAttempt(db, run, bound) };
+	} catch (error) {
+		rethrowUnlessRetry(error, attempt);
+		return undefined;
+	}
+}
+
+function rethrowUnlessRetry(error: unknown, attempt: number): void {
+	if (attempt === sendAttempts) {
+		throw error;
+	}
+	if (!isDeadlock(error)) {
+		throw error;
+	}
+}
+
+async function runAttempt<T>(db: AppDatabase, run: (tx: Tx) => Promise<T>, bound: SendBound | undefined): Promise<T> {
+	return db.transaction(async (tx) => {
+		await armSend(tx, bound);
+		await tx.execute(workspaceLock);
+		const value = await run(tx);
+		// Last step before commit. A late send throws, so the task rolls back.
+		assertBeforeDeadline(bound);
+		return value;
+	});
+}
+
+async function armSend(tx: Tx, bound: SendBound | undefined): Promise<void> {
+	if (!bound) {
+		return;
+	}
+	await tx.execute(sql.raw(`SET LOCAL lock_timeout = '${bound.attemptMs}ms'`));
+	await tx.execute(sql.raw(`SET LOCAL statement_timeout = '${bound.attemptMs}ms'`));
+}
+
+function assertBeforeDeadline(bound: SendBound | undefined): void {
+	if (!bound) {
+		return;
+	}
+	if (Date.now() >= bound.deadline) {
+		throw new Error(unfinished);
+	}
 }
 
 function isDeadlock(error: unknown, depth = 0): boolean {
