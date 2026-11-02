@@ -76,7 +76,7 @@ jobs:
         run: npm ci
 
       - name: Audit changed code
-        uses: fallow-rs/fallow@3f6d4a5f817525d322365d64953940ff47175bf2 # v3.9.1
+        uses: fallow-rs/fallow@85fa32733e951df85966842f2bb6a3f2720a940c # v3.37.0
         with:
           command: audit
           gate: new-only
