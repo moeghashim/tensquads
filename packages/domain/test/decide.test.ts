@@ -172,6 +172,24 @@ test("tiles compute tasks, revenue, and hours, and a stored tasks tile is ignore
 	assert.equal(short[5]?.value, BLANK);
 });
 
+test("stored tiles normalize blank values and deltas and preserve non-empty text and colors", () => {
+	for (const label of ["Revenue", "Orders", "Average order", "Profit margin", "Hours saved"]) {
+		for (const blank of ["", " \t\n"]) {
+			const stored = { label, value: blank, delta: blank, deltaColor: "#00692a" };
+			const shown = assembleTiles({ stored: [stored], tasksDone: 0, revenue: [], saved: [] });
+			assert.deepEqual(shown.find((tile) => tile.label === label), {
+				...stored,
+				value: BLANK,
+				delta: "\u00a0",
+			});
+		}
+	}
+	const stored = { label: "Orders", value: " 186 ", delta: " +8% vs last week ", deltaColor: "#00692a" };
+	const shown = assembleTiles({ stored: [stored], tasksDone: 0, revenue: [], saved: [] });
+	assert.deepEqual(shown[1], stored);
+	assert.deepEqual(shown[2], { label: "Average order", value: BLANK, delta: "\u00a0", deltaColor: "#5d5d5d" });
+});
+
 test("fourteen revenue rows use the design height, fill, and day label", () => {
 	const rows = [
 		{ day: "2026-10-14", amount: 980 },

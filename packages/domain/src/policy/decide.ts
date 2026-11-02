@@ -211,7 +211,13 @@ function blankTile(label: string): OverviewTile {
 }
 
 function findTile(stored: readonly OverviewTile[], label: string): OverviewTile {
-	return stored.find((tile) => tile.label === label) ?? blankTile(label);
+	const tile = stored.find((tile) => tile.label === label);
+	if (!tile) return blankTile(label);
+	return {
+		...tile,
+		value: blankText(tile.value),
+		delta: tile.delta.trim().length === 0 ? emptyDelta : tile.delta,
+	};
 }
 
 function revenueTile(stored: OverviewTile, amounts: readonly number[]): OverviewTile {

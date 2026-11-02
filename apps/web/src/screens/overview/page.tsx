@@ -180,11 +180,13 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 								<div key={item.id} style={css(proposal)}>
 									<div style={css(row)}>
 										<span style={css(tint(item.tint))} />
-										<span style={css(squad)}>{item.agentName} squad</span>
+										<span style={css(squad)}>{blankText(item.agentName)} squad</span>
 										<span style={css(badge)}>Mission</span>
 									</div>
 									<div style={css(title)}>{item.title}</div>
-									<div style={css(missionBody)}>{item.mission}</div>
+									<div style={css(missionBody)}>
+										{item.mission.trim().length === 0 ? "Mission pending. Your Master will propose one." : item.mission}
+									</div>
 									<div style={css(chips)}>
 										<div
 											data-loop={index === 0 ? "mp.targetChips" : undefined}
@@ -193,7 +195,7 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 										>
 											{item.chips.map((chipText) => (
 												<span key={chipText} style={css(chip)}>
-													{chipText}
+													{blankText(chipText)}
 												</span>
 											))}
 										</div>
@@ -239,11 +241,11 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 								<div key={item.id} style={css(approval)}>
 									<div style={css(row)}>
 										<span style={css(tint(item.tint))} />
-										<span style={css(squad)}>{item.agentName} squad</span>
-										<span style={css(amount)}>{item.amount}</span>
+										<span style={css(squad)}>{blankText(item.agentName)} squad</span>
+										<span style={css(amount)}>{blankText(item.amount)}</span>
 									</div>
-									<div style={css(title)}>{item.title}</div>
-									<div style={css(detail)}>{item.detail}</div>
+									<div style={css(title)}>{blankText(item.title)}</div>
+									<div style={css(detail)}>{blankText(item.detail)}</div>
 									<div style={css(actions)}>
 										<button
 											type="button"
@@ -324,8 +326,8 @@ function AgentCard({
 					<AgentIcon />
 				</span>
 				<div style={css(nameCol)}>
-					<span style={css(nameStyle)}>{agent.name}</span>
-					<span style={css(roleStyle)}>{agent.role}</span>
+					<span style={css(nameStyle)}>{blankText(agent.name)}</span>
+					<span style={css(roleStyle)}>{blankText(agent.role)}</span>
 				</div>
 			</div>
 			<div style={css(lastStyle)}>{blankText(agent.last)}</div>
