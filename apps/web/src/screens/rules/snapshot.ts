@@ -1,14 +1,8 @@
 import { useRef, useState } from "react";
 
-import type { RulesLimit, RulesLimitValue, RulesPageData, RulesRule } from "#/server/rules.ts";
+import type { RulesPageData } from "#/server/rules.ts";
 
-import { bindRuleWrites, bounded, markReadFailed, markReadSucceeded, readNeeded } from "./write-queue.ts";
-
-let writeCounter = 0;
-
-export function rulesWriteCounter(): number {
-	return writeCounter;
-}
+import { bounded, markReadFailed, markReadSucceeded, readNeeded, rulesWrittenSince } from "./write-queue.ts";
 
 export interface RulesSnapshotPage extends RulesPageData {
 	readonly readCounter: number;
@@ -21,29 +15,14 @@ interface Refresh {
 
 // A read keeps the number it started with, so a later page cannot replace a newer write.
 export function useRulesSnapshot(page: RulesSnapshotPage, read: () => Promise<void>) {
-	const [snapshot, setSnapshot] = useState(page);
+	const snapshot = mergePage(page);
 	const [seenPage, setSeenPage] = useState(page);
-	const ruleStamps = useRef(new Map<string, number>());
-	const limitStamps = useRef(new Map<string, number>());
 	const waiting = useRef<Refresh | null>(null);
 	const recovered = useRef(false);
 	if (page !== seenPage) {
 		setSeenPage(page);
-		setSnapshot(mergePage(snapshot, page, page.readCounter, ruleStamps.current, limitStamps.current));
 		waiting.current?.finish();
 	}
-	bindRuleWrites({
-		rule: (rule) => {
-			writeCounter += 1;
-			ruleStamps.current.set(rule.id, writeCounter);
-			setSnapshot((current) => withRule(current, rule));
-		},
-		limit: (row) => {
-			writeCounter += 1;
-			limitStamps.current.set(row.key, writeCounter);
-			setSnapshot((current) => withLimit(current, row));
-		},
-	});
 	const refresh = (): Promise<void> => {
 		const current = waiting.current;
 		if (current) return current.done;
@@ -79,53 +58,16 @@ export function useRulesSnapshot(page: RulesSnapshotPage, read: () => Promise<vo
 	return { snapshot, refresh };
 }
 
-function mergePage(
-	current: RulesSnapshotPage,
-	page: RulesSnapshotPage,
-	started: number,
-	ruleStamps: ReadonlyMap<string, number>,
-	limitStamps: ReadonlyMap<string, number>,
-): RulesSnapshotPage {
-	return {
-		...page,
-		rules: mergeRules(current.rules, page.rules, started, ruleStamps),
-		limits: page.limits.map((limit) => keptLimit(current.limits, limit, started, limitStamps)),
-	};
-}
-
-function mergeRules(
-	current: readonly RulesRule[],
-	pageRules: readonly RulesRule[],
-	started: number,
-	stamps: ReadonlyMap<string, number>,
-): RulesRule[] {
-	const kept = current.filter((rule) => (stamps.get(rule.id) ?? 0) > started);
-	const keptIds = new Set(kept.map((rule) => rule.id));
-	const merged = [...pageRules.filter((rule) => !keptIds.has(rule.id)), ...kept];
-	return merged.sort((left, right) => Number(left.id.slice(1)) - Number(right.id.slice(1)));
-}
-
-function keptLimit(
-	current: readonly RulesLimit[],
-	limit: RulesLimit,
-	started: number,
-	stamps: ReadonlyMap<string, number>,
-): RulesLimit {
-	if ((stamps.get(limit.key) ?? 0) <= started) return limit;
-	const saved = current.find((item) => item.key === limit.key);
-	return saved ? { ...limit, value: saved.value } : limit;
-}
-
-function withRule(page: RulesSnapshotPage, rule: RulesRule): RulesSnapshotPage {
-	const rules = [...page.rules.filter((item) => item.id !== rule.id), rule].sort(
+function mergePage(page: RulesSnapshotPage): RulesSnapshotPage {
+	const written = rulesWrittenSince(page.readCounter);
+	const ruleIds = new Set(written.rules.map((rule) => rule.id));
+	const rules = [...page.rules.filter((rule) => !ruleIds.has(rule.id)), ...written.rules].sort(
 		(left, right) => Number(left.id.slice(1)) - Number(right.id.slice(1)),
 	);
-	return { ...page, rules };
-}
-
-function withLimit(page: RulesSnapshotPage, row: RulesLimitValue): RulesSnapshotPage {
+	const limits = new Map(written.limits.map((row) => [row.key, row.value]));
 	return {
 		...page,
-		limits: page.limits.map((limit) => (limit.key === row.key ? { ...limit, value: row.value } : limit)),
+		rules,
+		limits: page.limits.map((limit) => ({ ...limit, value: limits.get(limit.key) ?? limit.value })),
 	};
 }

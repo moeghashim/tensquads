@@ -1,17 +1,12 @@
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import { useSyncExternalStore } from "react";
 
-import { type RulesRule, setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
+import { type RulesLimitValue, type RulesRule, setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
 
 interface Flight<T> {
 	shown: T;
 	sending: boolean;
 	queued: T | null;
-}
-
-interface LimitValue {
-	readonly key: string;
-	readonly value: number;
 }
 
 const ruleFlights = new Map<string, Flight<boolean>>();
@@ -37,15 +32,19 @@ export async function readIfNeeded(refresh: () => Promise<void>): Promise<void> 
 	await bounded(() => refresh()).catch(() => undefined);
 }
 
-let replaceRule = (_rule: RulesRule): void => undefined;
-let replaceLimit = (_row: LimitValue): void => undefined;
+let writeCounter = 0;
+const writtenRules = new Map<string, { row: RulesRule; stamp: number }>();
+const writtenLimits = new Map<string, { row: RulesLimitValue; stamp: number }>();
 
-export function bindRuleWrites(apply: {
-	readonly rule: (rule: RulesRule) => void;
-	readonly limit: (row: LimitValue) => void;
-}): void {
-	replaceRule = apply.rule;
-	replaceLimit = apply.limit;
+export function rulesWriteCounter(): number {
+	return writeCounter;
+}
+
+export function rulesWrittenSince(counter: number) {
+	return {
+		rules: [...writtenRules.values()].filter(({ stamp }) => stamp > counter).map(({ row }) => row),
+		limits: [...writtenLimits.values()].filter(({ stamp }) => stamp > counter).map(({ row }) => row),
+	};
 }
 
 export function useRuleWrites(): number {
@@ -84,7 +83,9 @@ export function queueLimit(key: string, next: number, refresh: () => Promise<voi
 }
 
 export function placeRule(rule: RulesRule): void {
-	replaceRule(rule);
+	writeCounter += 1;
+	writtenRules.set(rule.id, { row: rule, stamp: writeCounter });
+	notify();
 }
 
 export function isRulesRule(value: unknown): value is RulesRule {
@@ -120,7 +121,7 @@ async function sendRule(id: string, value: boolean, signal: AbortSignal): Promis
 	if (signal.aborted || !isRulesRule(row) || row.id !== id) {
 		return null;
 	}
-	replaceRule(row);
+	placeRule(row);
 	return row.on;
 }
 
@@ -129,7 +130,9 @@ async function sendLimit(key: string, value: number, signal: AbortSignal): Promi
 	if (signal.aborted || !isLimitValue(row) || row.key !== key) {
 		return null;
 	}
-	replaceLimit(row);
+	writeCounter += 1;
+	writtenLimits.set(row.key, { row, stamp: writeCounter });
+	notify();
 	return row.value;
 }
 
@@ -195,7 +198,7 @@ function shownValue<T>(map: Map<string, Flight<T>>, key: string, loaded: T): T {
 	return loaded;
 }
 
-function isLimitValue(value: unknown): value is LimitValue {
+function isLimitValue(value: unknown): value is RulesLimitValue {
 	return isRecord(value) && typeof value.key === "string" && value.key.length > 0 && typeof value.value === "number";
 }
 

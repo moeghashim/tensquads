@@ -12,7 +12,7 @@ const bundle = await build({
 			import { WorkspaceContext } from "./apps/web/src/workspace/context.ts";
 			import { gateStyle, switchParts } from "./apps/web/src/workspace/styles.ts";
 			import { RulesScreen } from "./apps/web/src/screens/rules/screen.tsx";
-			import { rulesWriteCounter } from "./apps/web/src/screens/rules/snapshot.ts";
+			import { rulesWriteCounter } from "./apps/web/src/screens/rules/write-queue.ts";
 			import * as queue from "./apps/web/src/screens/rules/write-queue.ts";
 			window.queue = queue;
 			window.calls = [];
@@ -571,6 +571,7 @@ test("add rule: each success puts its own row in the snapshot", async () => {
 		await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
 		await expect(switches).toHaveCount(2);
 		await page.evaluate(async () => {
+			window.beginRulesRead();
 			window.loadRules([window.ruleRow({ ...window.adds[0].data, id: "r100", on: true })]);
 			await window.flush();
 		});
@@ -1126,7 +1127,9 @@ async function seedSnapshot(page) {
 		window.loadRules(window.seedRules);
 		window.loadLimits(window.seedLimits);
 		window.refreshCalls = 0;
-		window.refresh = async () => { window.refreshCalls += 1; };
+		window.refresh = async () => {
+			window.refreshCalls += 1;
+		};
 		await window.flush();
 	});
 	await expect(page.getByRole("slider")).toHaveCount(3);
@@ -1148,7 +1151,9 @@ for (const axis of snapshotAxes) {
 	test(`snapshot: a held dock read preserves a saved ${name}`, async () => {
 		await withPage(async (page) => {
 			await seedSnapshot(page);
-			await page.evaluate(() => { window.dockRead = window.beginRulesRead(); });
+			await page.evaluate(() => {
+				window.dockRead = window.beginRulesRead();
+			});
 			await saveSnapshotAxis(page, axis);
 			if (axis.kind === "rule") {
 				await page.getByLabel("Then", { exact: true }).fill("Saved new rule");
@@ -1162,7 +1167,10 @@ for (const axis of snapshotAxes) {
 				await window.flush();
 			});
 			if (axis.kind === "rule") {
-				await expect(page.getByRole("button", { name: "Rule enabled" }).first()).toHaveAttribute("aria-pressed", "false");
+				await expect(page.getByRole("button", { name: "Rule enabled" }).first()).toHaveAttribute(
+					"aria-pressed",
+					"false",
+				);
 				await expect(page.getByText("then Saved new rule", { exact: true })).toHaveCount(1);
 			} else {
 				await expect(page.locator(`#${axis.id}`)).toHaveValue(String(axis.saved));
@@ -1195,16 +1203,69 @@ for (const axis of snapshotAxes) {
 			await page.waitForFunction(() => window.refreshCalls === 2);
 			await page.evaluate(async (axis) => {
 				window.recoveryRead.loadRules([...window.seedRules, window.ruleRow({ id: "r9", action: "Server rule" })]);
-				window.recoveryRead.loadLimits(window.seedLimits.map((row) => row.id === axis.id ? { ...row, value: axis.later } : { ...row }));
+				window.recoveryRead.loadLimits(
+					window.seedLimits.map((row) => (row.id === axis.id ? { ...row, value: axis.later } : { ...row })),
+				);
 				await window.flush();
 			}, axis);
 			if (axis.kind === "rule") {
-				await expect(page.getByRole("button", { name: "Rule enabled" }).first()).toHaveAttribute("aria-pressed", "true");
+				await expect(page.getByRole("button", { name: "Rule enabled" }).first()).toHaveAttribute(
+					"aria-pressed",
+					"true",
+				);
 				await expect(page.getByText("then Server rule", { exact: true })).toHaveCount(1);
 			} else {
 				await expect(page.locator(`#${axis.id}`)).toHaveValue(String(axis.later));
 			}
 			assert.equal(await page.evaluate(() => window.refreshCalls), 2);
+		});
+	});
+}
+
+for (const axis of [...snapshotAxes, { kind: "add" }]) {
+	test(`snapshot: an unmounted ${axis.id ?? axis.kind} response survives an older initial page`, async () => {
+		await withPage(async (page) => {
+			await seedSnapshot(page);
+			await page.evaluate(() => {
+				window.heldWrites = [];
+				window.send = (data) => new Promise((resolve) => window.heldWrites.push({ data, resolve }));
+			});
+			if (axis.kind === "add") {
+				await page.getByLabel("Then", { exact: true }).fill("Saved while away");
+				await page.getByRole("button", { name: "Add rule", exact: true }).click();
+			} else if (axis.kind === "rule") {
+				await page.getByRole("button", { name: "Rule enabled" }).click();
+			} else {
+				await page.locator(`#${axis.id}`).fill(String(axis.saved));
+			}
+			await page.waitForFunction(() => window.heldWrites.length === 1);
+			await page.getByRole("button", { name: "Leave rules" }).click();
+			await expect(page.getByRole("heading", { name: "Rules and limits" })).toHaveCount(0);
+			await page.evaluate(async () => {
+				window.returnRead = window.beginRulesRead();
+				const write = window.heldWrites[0];
+				write.resolve(
+					typeof write.data.value === "number"
+						? { key: write.data.key, value: write.data.value }
+						: window.ruleRow(write.data),
+				);
+				await window.flush();
+			});
+			await page.evaluate(async () => {
+				window.returnRead.loadRules([...window.seedRules]);
+				window.returnRead.loadLimits(window.seedLimits.map((row) => ({ ...row })));
+				await window.flush();
+			});
+			await page.getByRole("button", { name: "Return to rules" }).click();
+			if (axis.kind === "add") {
+				await expect(page.getByText("then Saved while away", { exact: true })).toHaveCount(1);
+				await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(2);
+			} else if (axis.kind === "rule") {
+				await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveAttribute("aria-pressed", "false");
+			} else {
+				await expect(page.locator(`#${axis.id}`)).toHaveValue(String(axis.saved));
+			}
+			assert.equal(await page.evaluate(() => window.refreshCalls), 0);
 		});
 	});
 }

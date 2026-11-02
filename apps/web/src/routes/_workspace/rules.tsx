@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { RulesScreen } from "#/screens/rules/screen.tsx";
-import { rulesWriteCounter } from "#/screens/rules/snapshot.ts";
+import { rulesWriteCounter } from "#/screens/rules/write-queue.ts";
 import { loadRulesPage } from "#/server/rules.ts";
 
 export const Route = createFileRoute("/_workspace/rules")({
