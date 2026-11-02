@@ -88,6 +88,8 @@ test("decline removes the approval and changes no agent", async ({ page, workspa
 });
 
 test("an empty inbox shows the nothing waiting text and no badge", async ({ page, workspaceUser }) => {
+	// Four writes share one test database. Each write may take the full 15 second bound.
+	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
 	await page.locator("main").getByRole("button", { name: "Approve mission" }).click();
 	await expect(page.locator("[data-if='dockUnread']")).toHaveText("3", settled);
