@@ -1,0 +1,255 @@
+[
+  {
+    "label": "Initial seeded state",
+    "rules": [
+      {
+        "id": "r1",
+        "when": "a refund request comes in",
+        "agent": "support",
+        "action": "refund it if it is under the refund limit, otherwise ask me",
+        "approval": "Auto under limit",
+        "on": true
+      },
+      {
+        "id": "r2",
+        "when": "Printify ships an item",
+        "agent": "orders",
+        "action": "add the tracking number in Shopify and email the customer",
+        "approval": "Auto",
+        "on": true
+      },
+      {
+        "id": "r3",
+        "when": "return on ad spend is under 2 for 3 days",
+        "agent": "marketing",
+        "action": "pause that ad set",
+        "approval": "Ask first",
+        "on": true
+      },
+      {
+        "id": "r4",
+        "when": "a product drops under 10 in stock",
+        "agent": "inventory",
+        "action": "draft a reorder from the usual supplier",
+        "approval": "Ask first",
+        "on": true
+      },
+      {
+        "id": "r5",
+        "when": "it is Monday at 8:00",
+        "agent": "finance",
+        "action": "send me last week's profit summary",
+        "approval": "Auto",
+        "on": false
+      }
+    ],
+    "store": {
+      "order.A-1007.tracking": "LI400083615LT",
+      "order.A-1007.print_status": "in_production",
+      "order.A-1007.eta": "2026-11-03",
+      "policy.refund_auto_limit": 50,
+      "policy.daily_ad_cap": 200,
+      "policy.reorder_limit": 500,
+      "marketing.roas_7d": 3.4,
+      "finance.revenue_7d": 8420,
+      "finance.profit_7d": 2610,
+      "inventory.low_stock": "[\"Black hoodie M\",\"A3 frame\"]"
+    },
+    "events": 9
+  },
+  {
+    "label": "Blank action",
+    "result": null
+  },
+  {
+    "label": "Add response",
+    "row": {
+      "id": "r100",
+      "when": "a new order arrives",
+      "agent": "orders",
+      "action": "Disposable rule",
+      "approval": "Ask first",
+      "on": true
+    }
+  },
+  {
+    "label": "Toggle response",
+    "row": {
+      "id": "r100",
+      "when": "a new order arrives",
+      "agent": "orders",
+      "action": "Disposable rule",
+      "approval": "Ask first",
+      "on": false
+    }
+  },
+  {
+    "label": "Refund response",
+    "row": {
+      "key": "policy.refund_auto_limit",
+      "value": 55
+    }
+  },
+  {
+    "label": "Before blocked writes",
+    "rules": [
+      {
+        "id": "r1",
+        "when": "a refund request comes in",
+        "agent": "support",
+        "action": "refund it if it is under the refund limit, otherwise ask me",
+        "approval": "Auto under limit",
+        "on": true
+      },
+      {
+        "id": "r2",
+        "when": "Printify ships an item",
+        "agent": "orders",
+        "action": "add the tracking number in Shopify and email the customer",
+        "approval": "Auto",
+        "on": true
+      },
+      {
+        "id": "r3",
+        "when": "return on ad spend is under 2 for 3 days",
+        "agent": "marketing",
+        "action": "pause that ad set",
+        "approval": "Ask first",
+        "on": true
+      },
+      {
+        "id": "r4",
+        "when": "a product drops under 10 in stock",
+        "agent": "inventory",
+        "action": "draft a reorder from the usual supplier",
+        "approval": "Ask first",
+        "on": true
+      },
+      {
+        "id": "r5",
+        "when": "it is Monday at 8:00",
+        "agent": "finance",
+        "action": "send me last week's profit summary",
+        "approval": "Auto",
+        "on": false
+      },
+      {
+        "id": "r100",
+        "when": "a new order arrives",
+        "agent": "orders",
+        "action": "Disposable rule",
+        "approval": "Ask first",
+        "on": false
+      }
+    ],
+    "store": {
+      "order.A-1007.tracking": "LI400083615LT",
+      "order.A-1007.print_status": "in_production",
+      "order.A-1007.eta": "2026-11-03",
+      "policy.refund_auto_limit": 55,
+      "policy.daily_ad_cap": 200,
+      "policy.reorder_limit": 500,
+      "marketing.roas_7d": 3.4,
+      "finance.revenue_7d": 8420,
+      "finance.profit_7d": 2610,
+      "inventory.low_stock": "[\"Black hoodie M\",\"A3 frame\"]"
+    },
+    "events": 9
+  },
+  {
+    "label": "Held lock writes",
+    "results": [
+      {
+        "method": "setLimit",
+        "result": "rejected",
+        "elapsedMs": 10013,
+        "message": "Failed query: SELECT pg_advisory_xact_lock(1952804467, 1)\nparams: "
+      },
+      {
+        "method": "setRuleOn",
+        "result": "rejected",
+        "elapsedMs": 10162,
+        "message": "Failed query: SELECT pg_advisory_xact_lock(1952804467, 1)\nparams: "
+      },
+      {
+        "method": "addRule",
+        "result": "rejected",
+        "elapsedMs": 10146,
+        "message": "Failed query: SELECT pg_advisory_xact_lock(1952804467, 1)\nparams: "
+      }
+    ]
+  },
+  {
+    "label": "After 31 seconds and lock release",
+    "rules": [
+      {
+        "id": "r1",
+        "when": "a refund request comes in",
+        "agent": "support",
+        "action": "refund it if it is under the refund limit, otherwise ask me",
+        "approval": "Auto under limit",
+        "on": true
+      },
+      {
+        "id": "r2",
+        "when": "Printify ships an item",
+        "agent": "orders",
+        "action": "add the tracking number in Shopify and email the customer",
+        "approval": "Auto",
+        "on": true
+      },
+      {
+        "id": "r3",
+        "when": "return on ad spend is under 2 for 3 days",
+        "agent": "marketing",
+        "action": "pause that ad set",
+        "approval": "Ask first",
+        "on": true
+      },
+      {
+        "id": "r4",
+        "when": "a product drops under 10 in stock",
+        "agent": "inventory",
+        "action": "draft a reorder from the usual supplier",
+        "approval": "Ask first",
+        "on": true
+      },
+      {
+        "id": "r5",
+        "when": "it is Monday at 8:00",
+        "agent": "finance",
+        "action": "send me last week's profit summary",
+        "approval": "Auto",
+        "on": false
+      },
+      {
+        "id": "r100",
+        "when": "a new order arrives",
+        "agent": "orders",
+        "action": "Disposable rule",
+        "approval": "Ask first",
+        "on": false
+      }
+    ],
+    "store": {
+      "order.A-1007.tracking": "LI400083615LT",
+      "order.A-1007.print_status": "in_production",
+      "order.A-1007.eta": "2026-11-03",
+      "policy.refund_auto_limit": 55,
+      "policy.daily_ad_cap": 200,
+      "policy.reorder_limit": 500,
+      "marketing.roas_7d": 3.4,
+      "finance.revenue_7d": 8420,
+      "finance.profit_7d": 2610,
+      "inventory.low_stock": "[\"Black hoodie M\",\"A3 frame\"]"
+    },
+    "events": 9
+  },
+  {
+    "label": "Recovery write",
+    "row": {
+      "key": "policy.daily_ad_cap",
+      "value": 250
+    }
+  }
+]
