@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { proposalId } from "../../../../domain/src/squads/agent-commands.ts";
 import { commitAgentOn } from "../../../../kernel/src/plugins/squads.ts";
 import type { MachineProvider } from "../../../../kernel/src/ports.ts";
+import { PENDING_TASK_WINDOW_MS } from "../../pending-window.ts";
 import { createTestMachine, type MachineRecord } from "../../test-machine.ts";
 import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
@@ -78,9 +79,13 @@ export async function setAgentOn(
 	createMachine: MachineFactory = createTestMachine,
 ): Promise<void> {
 	const accountId = accountIdOf(scope);
-	await workspaceTransaction(db, async (tx) => {
-		await persistAgentOn(tx, accountId, agentId, on, createMachine);
-	});
+	await workspaceTransaction(
+		db,
+		async (tx) => {
+			await persistAgentOn(tx, accountId, agentId, on, createMachine);
+		},
+		{ deadlineMs: PENDING_TASK_WINDOW_MS },
+	);
 }
 
 async function persistSkillOn(tx: Tx, accountId: string, agentId: string, skillId: string, on: boolean): Promise<void> {
@@ -105,9 +110,13 @@ export async function setSkillOn(
 	on: boolean,
 ): Promise<void> {
 	const accountId = accountIdOf(scope);
-	await workspaceTransaction(db, async (tx) => {
-		await persistSkillOn(tx, accountId, agentId, skillId, on);
-	});
+	await workspaceTransaction(
+		db,
+		async (tx) => {
+			await persistSkillOn(tx, accountId, agentId, skillId, on);
+		},
+		{ deadlineMs: PENDING_TASK_WINDOW_MS },
+	);
 }
 
 export async function setAutonomy(
@@ -117,12 +126,16 @@ export async function setAutonomy(
 	autonomy: Autonomy,
 ): Promise<void> {
 	const accountId = accountIdOf(scope);
-	await workspaceTransaction(db, async (tx) => {
-		await tx
-			.update(agents)
-			.set({ autonomy })
-			.where(and(eq(agents.accountId, accountId), eq(agents.id, agentId)));
-	});
+	await workspaceTransaction(
+		db,
+		async (tx) => {
+			await tx
+				.update(agents)
+				.set({ autonomy })
+				.where(and(eq(agents.accountId, accountId), eq(agents.id, agentId)));
+		},
+		{ deadlineMs: PENDING_TASK_WINDOW_MS },
+	);
 }
 
 function proposalStatus(value: string): MissionProposal["status"] {
@@ -175,7 +188,11 @@ async function insertRevision(tx: Tx, accountId: string, agentId: string, now: n
 
 export async function askRevise(db: AppDatabase, scope: AccountScope, agentId: string): Promise<void> {
 	const accountId = accountIdOf(scope);
-	await workspaceTransaction(db, async (tx) => {
-		await insertRevision(tx, accountId, agentId, Date.now());
-	});
+	await workspaceTransaction(
+		db,
+		async (tx) => {
+			await insertRevision(tx, accountId, agentId, Date.now());
+		},
+		{ deadlineMs: PENDING_TASK_WINDOW_MS },
+	);
 }
