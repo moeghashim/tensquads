@@ -559,3 +559,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-02 02-overview: A click changes the card and the badge at once. Writes queue in click order, and a second click on the same card sends one request. An empty proposal mission shows an em dash.
 - 2026-11-02 02-overview: The last decision shows "Nothing waiting. Your squads are working inside their limits." at the click. A settled test waits for its write before it reads the server.
 - 2026-11-02 02-overview: A timed-out refresh keeps the card until a server read, and a second click on that card sends nothing.
+- 2026-11-02 02-overview: One deadline starts with the decision and covers the account read and the transaction. A late decision commits no Approval and no Mandate. The dock badge and the inbox use one published count. Three queued jobs run in click order. TLC reached 190 states and 392 steps with no broken rule. The chart draws 8 states and 14 arrows.

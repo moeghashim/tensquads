@@ -28,11 +28,11 @@ export function policy(
 	policyApprovals(context, config);
 	policyRules();
 	const commands = config.repositories() as { readonly policy: PolicyCommands };
-	context.provide("workspacePolicy", {
-		setRuleOn: (scope, id, on, fence, deadlineAt) =>
-			commands.policy.setRuleOn(scope, id, on, fence, deadlineAt),
+	const workspacePolicy: PolicyCommands = {
+		setRuleOn: (scope, id, on, fence, deadlineAt) => commands.policy.setRuleOn(scope, id, on, fence, deadlineAt),
 		addRule: (scope, draft, deadlineAt) => commands.policy.addRule(scope, draft, deadlineAt),
 		setLimit: (scope, key, value, fence, deadlineAt) =>
 			commands.policy.setLimit(scope, key, value, fence, deadlineAt),
-	});
+	};
+	context.provide("workspacePolicy", workspacePolicy);
 }

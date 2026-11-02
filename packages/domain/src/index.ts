@@ -78,6 +78,7 @@ export type {
 	Rule,
 	StoredLimit,
 	WriteFence,
+	WrittenDecision,
 } from "./policy/types.ts";
 export type { RepositoryBag } from "./repositories.ts";
 export type { AccountScope } from "./scope.ts";

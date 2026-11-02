@@ -1,8 +1,8 @@
-import type { AccountScope } from "@tensquads/domain";
+import type { AccountScope, WrittenDecision } from "@tensquads/domain";
 
 export interface PolicyApprovalCommands {
-	decide(scope: AccountScope, id: string, ok: boolean): Promise<void>;
-	decideMission(scope: AccountScope, id: string, ok: boolean): Promise<void>;
+	decide(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision>;
+	decideMission(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision>;
 }
 
 export interface PolicyApprovalConfig {
@@ -11,8 +11,8 @@ export interface PolicyApprovalConfig {
 
 interface PolicyBag {
 	readonly policy: {
-		decide(scope: AccountScope, id: string, ok: boolean): Promise<void>;
-		decideMission(scope: AccountScope, id: string, ok: boolean): Promise<void>;
+		decide(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision>;
+		decideMission(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision>;
 	};
 }
 
@@ -22,11 +22,11 @@ export function policyApprovals(
 ): void {
 	if (!context) return;
 	context.provide("policyApprovals", {
-		decide(scope, id, ok) {
-			return policyBag(config).policy.decide(scope, id, ok);
+		decide(scope, id, ok, deadlineAt) {
+			return policyBag(config).policy.decide(scope, id, ok, deadlineAt);
 		},
-		decideMission(scope, id, ok) {
-			return policyBag(config).policy.decideMission(scope, id, ok);
+		decideMission(scope, id, ok, deadlineAt) {
+			return policyBag(config).policy.decideMission(scope, id, ok, deadlineAt);
 		},
 	});
 }

@@ -64,8 +64,13 @@ test("approve writes one Mandate in the same transaction as the Approval", async
 	await withDemo("approve", async (db, accountId) => {
 		const before = await oneAgent(db, accountId, "support");
 		assert.equal(before.tasks, 96);
-		await kernel(db).decide(scope(accountId), "ap1", true);
-		await kernel(db).decide(scope(accountId), "ap1", true);
+		const row = await kernel(db).decide(scope(accountId), "ap1", true);
+		const again = await kernel(db).decide(scope(accountId), "ap1", true);
+		const inbox = await createRepositories(db).policy.inbox(scope(accountId));
+		assert.equal(row.id, "ap1");
+		assert.equal(row.status, "Approved");
+		assert.equal(row.count, inbox.count);
+		assert.deepEqual(again, row);
 		const events = await generated(db, accountId);
 		assert.equal(events.length, 1);
 		assert.equal(events[0]?.kind, "Approval");

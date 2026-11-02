@@ -7,7 +7,7 @@ import { decideMissionOverview, decideOverview } from "#/server/overview.ts";
 import { missionBits } from "#/workspace/agent-view.ts";
 import { useRefresh } from "#/workspace/context.ts";
 
-import { enqueueDecision, patchSnapshot, subscribeDecisions, watchServerCount } from "./actions.ts";
+import { badgeCount, enqueueDecision, patchSnapshot, subscribeOverviewPage, watchServerCount } from "./actions.ts";
 import type { OverviewAgentView, OverviewData } from "./types.ts";
 import { type DecisionPatch, presentOverview } from "./view.ts";
 
@@ -97,7 +97,7 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 	const navigate = useNavigate();
 	const refresh = useRefresh();
 	const router = useRouter();
-	const patches = useSyncExternalStore(subscribeDecisions, patchSnapshot, () => emptyPatches);
+	const patches = useSyncExternalStore(subscribeOverviewPage, patchSnapshot, () => emptyPatches);
 	watchServerCount(data.count, data);
 	const shown = presentOverview(data, patches);
 	const accept = (patch: DecisionPatch, work: (signal: AbortSignal) => Promise<unknown>) => {
@@ -107,9 +107,9 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 			work,
 			async () => {
 				await refresh();
-				const match = router.state.matches.find((item) => item.routeId === "/_workspace");
-				if (match?.status !== "success" || !match.loaderData) throw new Error("The workspace frame did not load.");
-				return match.loaderData.approvalCount;
+				const match = router.state.matches.find((item) => item.routeId === "/_workspace/overview");
+				if (match?.status !== "success" || !match.loaderData) throw new Error("The overview did not load.");
+				return match.loaderData.count;
 			},
 			() => undefined,
 		);
@@ -197,7 +197,7 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 					<section aria-label="Needs you" style={css(inbox)}>
 						<div style={css(inboxHead)}>
 							<h2 style={css(h2)}>Needs your approval</h2>
-							<span style={css(count)}>{shown.count}</span>
+							<span style={css(count)}>{badgeCount(shown.count)}</span>
 						</div>
 						<div data-loop="missionProposals" data-loop-as="mp" style={css(contents)}>
 							{shown.proposals.map((item, index) => (

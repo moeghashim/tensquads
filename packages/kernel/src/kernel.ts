@@ -1,4 +1,12 @@
-import type { AccountScope, Fenced, Rule, SendResult, StoredLimit, WriteFence } from "@tensquads/domain";
+import type {
+	AccountScope,
+	Fenced,
+	Rule,
+	SendResult,
+	StoredLimit,
+	WriteFence,
+	WrittenDecision,
+} from "@tensquads/domain";
 import { Context } from "cordis";
 import { type BusCommands, bus } from "./plugins/bus.ts";
 import type { ConversationCommands } from "./plugins/conversation.ts";
@@ -121,14 +129,14 @@ export class Kernel {
 		return (this.context.get("workspacePolicy") as PolicyCommands).setLimit(scope, key, value, fence, deadlineAt);
 	}
 
-	async decide(scope: AccountScope, id: string, ok: boolean): Promise<void> {
+	async decide(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision> {
 		await this.ready;
-		await this.approvals().decide(scope, id, ok);
+		return this.approvals().decide(scope, id, ok, deadlineAt);
 	}
 
-	async decideMission(scope: AccountScope, id: string, ok: boolean): Promise<void> {
+	async decideMission(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision> {
 		await this.ready;
-		await this.approvals().decideMission(scope, id, ok);
+		return this.approvals().decideMission(scope, id, ok, deadlineAt);
 	}
 
 	private approvals(): PolicyApprovalCommands {

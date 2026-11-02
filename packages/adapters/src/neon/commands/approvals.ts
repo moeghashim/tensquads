@@ -1,4 +1,4 @@
-import type { AccountScope, Approval, MissionProposal, Rule } from "@tensquads/domain";
+import type { AccountScope, Approval, MissionProposal, Rule, WrittenDecision } from "@tensquads/domain";
 import {
 	decideApproval,
 	greetingName,
@@ -9,6 +9,7 @@ import {
 	requireScope,
 } from "@tensquads/domain";
 import { and, asc, eq } from "drizzle-orm";
+import { PENDING_TASK_WINDOW_MS } from "../../pending-window.ts";
 import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { accounts, agents, approvals, missionProposals, rules, stateEntries } from "../schema.ts";
@@ -17,11 +18,47 @@ import { createMandate } from "./mandates.ts";
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 
-export async function decide(db: AppDatabase, scope: AccountScope, id: string, ok: boolean): Promise<void> {
+const unfinished = "The workspace write did not finish.";
+
+function deadlineWindow(deadlineAt: number | undefined): { readonly absolute: number; readonly remaining: number } {
+	const absolute = deadlineAt ?? Date.now() + PENDING_TASK_WINDOW_MS;
+	const remaining = absolute - Date.now();
+	// A lock_timeout of 0 waits forever, so a few milliseconds left is already late.
+	if (remaining < 4) {
+		throw new Error(unfinished);
+	}
+	return { absolute, remaining };
+}
+
+async function commitDecision<T>(
+	db: AppDatabase,
+	deadlineAt: number | undefined,
+	work: (tx: Tx) => Promise<T>,
+): Promise<T> {
+	const window = deadlineWindow(deadlineAt);
+	return workspaceTransaction(
+		db,
+		async (tx, constrainDeadline) => {
+			constrainDeadline(window.absolute);
+			return work(tx);
+		},
+		{ deadlineMs: window.remaining },
+	);
+}
+
+export async function decide(
+	db: AppDatabase,
+	scope: AccountScope,
+	id: string,
+	ok: boolean,
+	deadlineAt?: number,
+): Promise<WrittenDecision> {
 	const accountId = accountOf(scope);
-	await workspaceTransaction(db, async (tx) => {
+	return commitDecision(db, deadlineAt, async (tx) => {
 		const approval = await oneApproval(tx, accountId, id);
-		if (approval?.status !== "Pending") return;
+		if (approval?.status !== "Pending") {
+			return { id, status: approval?.status ?? "Pending", count: await countInbox(tx, accountId) };
+		}
 		const agent = await oneAgent(tx, accountId, approval.agent);
 		if (!agent) throw new Error("The approval names an agent.");
 		const at = new Date();
@@ -55,14 +92,23 @@ export async function decide(db: AppDatabase, scope: AccountScope, id: string, o
 			at,
 		);
 		if (ok) await recordMandate(tx, scope, accountId, approval, name, at);
+		return { id, status: next.approval.status, count: await countInbox(tx, accountId) };
 	});
 }
 
-export async function decideMission(db: AppDatabase, scope: AccountScope, id: string, ok: boolean): Promise<void> {
+export async function decideMission(
+	db: AppDatabase,
+	scope: AccountScope,
+	id: string,
+	ok: boolean,
+	deadlineAt?: number,
+): Promise<WrittenDecision> {
 	const accountId = accountOf(scope);
-	await workspaceTransaction(db, async (tx) => {
+	return commitDecision(db, deadlineAt, async (tx) => {
 		const proposal = await oneProposal(tx, accountId, id);
-		if (proposal?.status !== "Proposed") return;
+		if (proposal?.status !== "Proposed") {
+			return { id, status: proposal?.status ?? "Proposed", count: await countInbox(tx, accountId) };
+		}
 		const agent = await oneAgent(tx, accountId, proposal.agent);
 		if (!agent) throw new Error("The proposal names an agent.");
 		const next = planMission(missionAgent(agent), toProposal(proposal), ok);
@@ -70,16 +116,30 @@ export async function decideMission(db: AppDatabase, scope: AccountScope, id: st
 			.update(missionProposals)
 			.set({ status: next.proposal.status })
 			.where(and(eq(missionProposals.accountId, accountId), eq(missionProposals.id, id)));
-		if (!ok) return;
-		await tx
-			.update(agents)
-			.set({
-				mission: next.agent.mission,
-				targets: next.agent.targets,
-				contribution: next.agent.contribution,
-			})
-			.where(and(eq(agents.accountId, accountId), eq(agents.id, agent.id)));
+		if (ok) {
+			await tx
+				.update(agents)
+				.set({
+					mission: next.agent.mission,
+					targets: next.agent.targets,
+					contribution: next.agent.contribution,
+				})
+				.where(and(eq(agents.accountId, accountId), eq(agents.id, agent.id)));
+		}
+		return { id, status: next.proposal.status, count: await countInbox(tx, accountId) };
 	});
+}
+
+async function countInbox(tx: Tx, accountId: string): Promise<number> {
+	const pending = await tx
+		.select({ id: approvals.id })
+		.from(approvals)
+		.where(and(eq(approvals.accountId, accountId), eq(approvals.status, "Pending")));
+	const proposed = await tx
+		.select({ id: missionProposals.id })
+		.from(missionProposals)
+		.where(and(eq(missionProposals.accountId, accountId), eq(missionProposals.status, "Proposed")));
+	return pending.length + proposed.length;
 }
 
 async function recordMandate(

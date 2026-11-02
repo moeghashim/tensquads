@@ -1,6 +1,12 @@
 ---- MODULE Approval ----
 \* One pending spend approval and one proposed mission.
+\* A click starts a write. A second click on the other card waits behind it.
+\* A failed write and a late write change no stored decision. The read then
+\* reloads, and a waiting click starts. The 30 second timers are WriteLate
+\* and ReadTimeout. Fairness on those two is the timer.
 \* # model: packages/domain/src/policy/decide.ts
+\* # model: packages/adapters/src/neon/commands/approvals.ts
+\* # model: apps/web/src/screens/overview/actions.ts
 \* Main.dc.html:1165 approves a spend. Main.dc.html:1175 approves a mission.
 \* Main.dc.html:1186 asks to revise when that agent has no proposal left.
 \* Main.dc.html:1429 counts Pending approvals plus Proposed proposals.
@@ -11,8 +17,9 @@ EXTENDS Integers
 
 CONSTANT EmptyInbox
 
-VARIABLES approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate
-vars == <<approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate>>
+VARIABLES approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate, wait, inflight, queued, clicks
+vars == <<approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate, wait, inflight, queued, clicks>>
+stored == <<approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate>>
 
 InitialTasks == 1
 InitialContribution == 10
@@ -20,6 +27,10 @@ InitialContribution == 10
 ApprovalStates == {"Pending", "Approved", "Declined"}
 ProposalStates == {"Proposed", "Revising", "Approved"}
 StateKeys == {"", "approved", "declined"}
+Waits == {"none", "write", "read"}
+Kinds == {"none", "approve", "decline", "mission", "revise"}
+SpendKinds == {"approve", "decline"}
+MissionKinds == {"mission", "revise"}
 
 Count(a, p) ==
     (IF a = "Pending" THEN 1 ELSE 0) + (IF p = "Proposed" THEN 1 ELSE 0)
@@ -41,6 +52,19 @@ TypeOK ==
     /\ events \in 0..1
     /\ stateKey \in StateKeys
     /\ mandate \in BOOLEAN
+    /\ wait \in Waits
+    /\ inflight \in Kinds
+    /\ queued \in Kinds
+    /\ clicks \in 0..3
+
+\* A waiting write has one decision in flight. The other card can wait behind it.
+\* The same card is not in flight and queued.
+WaitShape ==
+    /\ (wait = "none" => inflight = "none" /\ queued = "none")
+    /\ (wait \in {"write", "read"} => inflight # "none")
+    /\ (queued # "none" => queued # inflight /\ wait # "none")
+    /\ ~ (inflight \in SpendKinds /\ queued \in SpendKinds)
+    /\ ~ (inflight \in MissionKinds /\ queued \in MissionKinds)
 
 Init ==
     /\ approval = "Pending"
@@ -55,6 +79,10 @@ Init ==
     /\ mandate = FALSE
     /\ badge = Count(approval, proposal)
     /\ banner = BannerFor(approval, proposal)
+    /\ wait = "none"
+    /\ inflight = "none"
+    /\ queued = "none"
+    /\ clicks = 3
 
 SpendApproved ==
     approval = "Approved" => tasks = InitialTasks + 1 /\ last = "title (approved)"
@@ -90,7 +118,50 @@ EventRecorded ==
 
 MandateRecorded == (mandate = TRUE) <=> (approval = "Approved")
 
+Start(kind) ==
+    /\ clicks' = clicks - 1
+    /\ IF wait = "none"
+       THEN /\ inflight' = kind
+            /\ wait' = "write"
+            /\ UNCHANGED queued
+       ELSE /\ queued' = kind
+            /\ UNCHANGED <<inflight, wait>>
+
+ClickApprove ==
+    /\ clicks > 0
+    /\ approval = "Pending"
+    /\ inflight \notin SpendKinds
+    /\ queued \notin SpendKinds
+    /\ Start("approve")
+    /\ UNCHANGED stored
+
+ClickDecline ==
+    /\ clicks > 0
+    /\ approval = "Pending"
+    /\ inflight \notin SpendKinds
+    /\ queued \notin SpendKinds
+    /\ Start("decline")
+    /\ UNCHANGED stored
+
+ClickMission ==
+    /\ clicks > 0
+    /\ proposal = "Proposed"
+    /\ inflight \notin MissionKinds
+    /\ queued \notin MissionKinds
+    /\ Start("mission")
+    /\ UNCHANGED stored
+
+ClickRevise ==
+    /\ clicks > 0
+    /\ proposal \in {"Proposed", "Approved"}
+    /\ inflight \notin MissionKinds
+    /\ queued \notin MissionKinds
+    /\ Start("revise")
+    /\ UNCHANGED stored
+
 ApproveSpend ==
+    /\ wait = "write"
+    /\ inflight = "approve"
     /\ approval = "Pending"
     /\ approval' = "Approved"
     /\ tasks' = tasks + 1
@@ -98,52 +169,108 @@ ApproveSpend ==
     /\ events' = events + 1
     /\ stateKey' = "approved"
     /\ mandate' = TRUE
-    /\ UNCHANGED <<proposal, mission, contribution, fromApproval>>
+    /\ wait' = "read"
+    /\ UNCHANGED <<proposal, mission, contribution, fromApproval, inflight, queued, clicks>>
     /\ badge' = Count(approval', proposal)
     /\ banner' = BannerFor(approval', proposal)
 
 DeclineSpend ==
+    /\ wait = "write"
+    /\ inflight = "decline"
     /\ approval = "Pending"
     /\ approval' = "Declined"
     /\ events' = events + 1
     /\ stateKey' = "declined"
-    /\ UNCHANGED <<tasks, last, proposal, mission, contribution, fromApproval, mandate>>
+    /\ wait' = "read"
+    /\ UNCHANGED <<tasks, last, proposal, mission, contribution, fromApproval, mandate, inflight, queued, clicks>>
     /\ badge' = Count(approval', proposal)
     /\ banner' = BannerFor(approval', proposal)
 
 ApproveMission ==
+    /\ wait = "write"
+    /\ inflight = "mission"
     /\ proposal = "Proposed"
     /\ proposal' = "Approved"
     /\ mission' = "new"
     /\ contribution' = 0
     /\ fromApproval' = FALSE
-    /\ UNCHANGED <<approval, tasks, last, events, stateKey, mandate>>
+    /\ wait' = "read"
+    /\ UNCHANGED <<approval, tasks, last, events, stateKey, mandate, inflight, queued, clicks>>
     /\ badge' = Count(approval, proposal')
     /\ banner' = BannerFor(approval, proposal')
 
 DeclineMission ==
+    /\ wait = "write"
+    /\ inflight = "revise"
     /\ proposal = "Proposed"
     /\ proposal' = "Revising"
     /\ fromApproval' = FALSE
-    /\ UNCHANGED <<approval, tasks, last, mission, contribution, events, stateKey, mandate>>
+    /\ wait' = "read"
+    /\ UNCHANGED <<approval, tasks, last, mission, contribution, events, stateKey, mandate, inflight, queued, clicks>>
     /\ badge' = Count(approval, proposal')
     /\ banner' = BannerFor(approval, proposal')
 
 AskRevise ==
+    /\ wait = "write"
+    /\ inflight = "revise"
     /\ proposal = "Approved"
     /\ proposal' = "Revising"
     /\ fromApproval' = TRUE
-    /\ UNCHANGED <<approval, tasks, last, mission, contribution, events, stateKey, mandate>>
+    /\ wait' = "read"
+    /\ UNCHANGED <<approval, tasks, last, mission, contribution, events, stateKey, mandate, inflight, queued, clicks>>
     /\ badge' = Count(approval, proposal')
     /\ banner' = BannerFor(approval, proposal')
 
+\* The write did not commit. The Approval and the Mandate stay as they were.
+WriteFail ==
+    /\ wait = "write"
+    /\ wait' = "read"
+    /\ UNCHANGED stored
+    /\ UNCHANGED <<inflight, queued, clicks>>
+
+WriteLate ==
+    /\ wait = "write"
+    /\ wait' = "read"
+    /\ UNCHANGED stored
+    /\ UNCHANGED <<inflight, queued, clicks>>
+
+FinishRead ==
+    /\ wait = "read"
+    /\ IF queued = "none"
+       THEN /\ wait' = "none"
+            /\ inflight' = "none"
+            /\ UNCHANGED queued
+       ELSE /\ wait' = "write"
+            /\ inflight' = queued
+            /\ queued' = "none"
+    /\ UNCHANGED stored
+    /\ UNCHANGED clicks
+
+ReadReload == FinishRead
+ReadTimeout == FinishRead
+
 Idle ==
-    /\ approval # "Pending"
-    /\ proposal # "Proposed"
+    /\ wait = "none"
     /\ UNCHANGED vars
 
-Next == ApproveSpend \/ DeclineSpend \/ ApproveMission \/ DeclineMission \/ AskRevise \/ Idle
+Next ==
+    \/ ClickApprove
+    \/ ClickDecline
+    \/ ClickMission
+    \/ ClickRevise
+    \/ ApproveSpend
+    \/ DeclineSpend
+    \/ ApproveMission
+    \/ DeclineMission
+    \/ AskRevise
+    \/ WriteFail
+    \/ WriteLate
+    \/ ReadReload
+    \/ ReadTimeout
+    \/ Idle
 
-Spec == Init /\ [][Next]_vars
+WaitEnds == [](wait # "none" => <>(wait = "none"))
+
+Spec == Init /\ [][Next]_vars /\ WF_vars(WriteLate) /\ WF_vars(ReadTimeout)
 
 ====

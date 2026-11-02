@@ -2,7 +2,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useSyncExternalStore } from "react";
 
 import { css } from "#/screens/css.ts";
-import { decisionSnapshot, subscribeDecisions } from "#/screens/overview/actions.ts";
+import { badgeCount, subscribeDecisions } from "#/screens/overview/actions.ts";
 
 import { masterInitial } from "./agent-view.ts";
 import { useWorkspace } from "./context.ts";
@@ -48,8 +48,11 @@ function VisibleDock({
 	} = workspace;
 	const mark = masterInitial(frame.masterName);
 	const online = frame.agents.filter((agent) => agent.on).length;
-	const held = useSyncExternalStore(subscribeDecisions, decisionSnapshot, () => null);
-	const shownCount = held === null ? approvalCount : held;
+	const shownCount = useSyncExternalStore(
+		subscribeDecisions,
+		() => badgeCount(approvalCount),
+		() => approvalCount,
+	);
 	const unread = dockUnread(dockOpen, shownCount);
 	const label = dockOpen ? "Hide chat" : `Ask ${frame.masterName}`;
 	return (

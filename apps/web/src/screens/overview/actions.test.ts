@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { enqueueDecision, patchSnapshot, reconcileDecisions, resetDecisions, shownApprovalCount } from "./actions.ts";
+import {
+	badgeCount,
+	type DecisionResult,
+	enqueueDecision,
+	patchSnapshot,
+	reconcileDecisions,
+	resetDecisions,
+	shownApprovalCount,
+	subscribeOverviewPage,
+} from "./actions.ts";
 
 describe("overview decisions", { concurrency: false }, () => {
 	test("a finished decision refreshes and clears the guard", async () => {
@@ -93,6 +102,128 @@ describe("overview decisions", { concurrency: false }, () => {
 		reconcileDecisions(4);
 		assert.deepEqual(patchSnapshot(), []);
 		assert.equal(shownApprovalCount(4), 4);
+	});
+
+	test("three queued jobs run in click order behind the held job", async () => {
+		resetDecisions();
+		let release = () => {};
+		const gate = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const seen: string[] = [];
+		const held = settled(
+			"refund",
+			4,
+			async () => {
+				seen.push("refund");
+				await gate;
+			},
+			async () => {
+				seen.push("refresh-refund");
+			},
+		);
+		const first = settled(
+			"marketing",
+			4,
+			async () => {
+				seen.push("marketing");
+			},
+			async () => {
+				seen.push("refresh-marketing");
+			},
+		);
+		const second = settled(
+			"inventory",
+			4,
+			async () => {
+				seen.push("inventory");
+			},
+			async () => {
+				seen.push("refresh-inventory");
+			},
+		);
+		const third = settled(
+			"orders",
+			4,
+			async () => {
+				seen.push("orders");
+			},
+			async () => {
+				seen.push("refresh-orders");
+			},
+		);
+		await Promise.resolve();
+		assert.deepEqual(seen, ["refund"]);
+		release();
+		await held;
+		await first;
+		await second;
+		await third;
+		assert.deepEqual(seen, [
+			"refund",
+			"refresh-refund",
+			"marketing",
+			"refresh-marketing",
+			"inventory",
+			"refresh-inventory",
+			"orders",
+			"refresh-orders",
+		]);
+	});
+
+	test("the badge stays on the inbox count when the frame count is held", async () => {
+		resetDecisions();
+		const stop = subscribeOverviewPage(() => undefined);
+		try {
+			let release = () => {};
+			const gate = new Promise<void>((resolve) => {
+				release = resolve;
+			});
+			const job = settled(
+				"refund",
+				4,
+				async () => {
+					await gate;
+				},
+				async () => 3,
+			);
+			await Promise.resolve();
+			assert.equal(badgeCount(4), 3);
+			release();
+			await job;
+			assert.equal(badgeCount(4), 3);
+			assert.equal(badgeCount(4), shownApprovalCount(3));
+		} finally {
+			stop();
+		}
+	});
+
+	test("a write keeps the server row and a missed read leaves the card", async () => {
+		resetDecisions();
+		const row = { id: "ap1", status: "Approved", count: 9 };
+		const result = await settled(
+			"refund",
+			4,
+			async () => row,
+			async () => {
+				throw new Error("The read failed.");
+			},
+		);
+		assert.equal(result.wrote, true);
+		assert.equal(result.refreshed, false);
+		assert.equal(result.count, null);
+		assert.deepEqual(result.row, row);
+		assert.equal(patchSnapshot().length, 1);
+		assert.equal(
+			enqueueDecision(
+				patch("refund"),
+				4,
+				async () => row,
+				async () => 3,
+				() => undefined,
+			),
+			false,
+		);
 	});
 
 	test("two cards queue in click order and a double click sends one write", async () => {
@@ -349,7 +480,7 @@ function settled(
 	serverCount: number,
 	work: (signal: AbortSignal) => Promise<unknown>,
 	refresh: () => Promise<number | undefined>,
-): Promise<{ readonly wrote: boolean; readonly refreshed: boolean }> {
+): Promise<DecisionResult> {
 	return new Promise((resolve) => {
 		const queued = enqueueDecision(patch(key), serverCount, work, async () => (await refresh()) ?? 4, resolve);
 		assert.equal(queued, true);

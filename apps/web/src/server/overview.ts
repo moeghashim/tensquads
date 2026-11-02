@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 
 interface DecisionBody {
 	readonly id: string;
@@ -26,21 +27,28 @@ export const loadOverview = createServerFn({ method: "GET" }).handler(async () =
 export const decideOverview = createServerFn({ method: "POST" })
 	.validator(validateDecision)
 	.handler(async ({ data }) => {
+		const startedAt = Date.now();
 		const { requireWorkspace } = await import("./workspace-session.ts");
 		return requireWorkspace(async (scope, db) => {
 			const { createRepositories } = await import("@tensquads/adapters");
 			const { Kernel } = await import("@tensquads/kernel");
-			await new Kernel(createRepositories(db)).decide(scope, data.id, data.ok);
-		});
+			return new Kernel(createRepositories(db)).decide(scope, data.id, data.ok, startedAt + PENDING_TASK_WINDOW_MS);
+		}, startedAt);
 	});
 
 export const decideMissionOverview = createServerFn({ method: "POST" })
 	.validator(validateDecision)
 	.handler(async ({ data }) => {
+		const startedAt = Date.now();
 		const { requireWorkspace } = await import("./workspace-session.ts");
 		return requireWorkspace(async (scope, db) => {
 			const { createRepositories } = await import("@tensquads/adapters");
 			const { Kernel } = await import("@tensquads/kernel");
-			await new Kernel(createRepositories(db)).decideMission(scope, data.id, data.ok);
-		});
+			return new Kernel(createRepositories(db)).decideMission(
+				scope,
+				data.id,
+				data.ok,
+				startedAt + PENDING_TASK_WINDOW_MS,
+			);
+		}, startedAt);
 	});

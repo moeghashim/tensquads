@@ -70,6 +70,12 @@ export interface MissionProposal {
 	readonly status: MissionProposalStatus;
 }
 
+export interface WrittenDecision {
+	readonly id: string;
+	readonly status: string;
+	readonly count: number;
+}
+
 export interface Inbox {
 	readonly approvals: readonly Approval[];
 	readonly proposals: readonly MissionProposal[];

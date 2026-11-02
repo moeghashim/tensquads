@@ -2,10 +2,17 @@ import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 
 import type { DecisionPatch } from "./view.ts";
 
+export interface DecisionRow {
+	readonly id: string;
+	readonly status: string;
+	readonly count: number;
+}
+
 export interface DecisionResult {
 	readonly wrote: boolean;
 	readonly refreshed: boolean;
 	readonly count: number | null;
+	readonly row: DecisionRow | null;
 }
 
 interface Job {
@@ -21,6 +28,9 @@ const listeners = new Set<() => void>();
 let running = false;
 let generation = 0;
 let target: number | null = null;
+let published: number | null = null;
+let overviewLive = false;
+let overviewSubs = 0;
 let patches: readonly DecisionPatch[] = [];
 let activeKey: string | null = null;
 let seenServer: object | null = null;
@@ -31,6 +41,8 @@ export function resetDecisions(): void {
 	jobs.length = 0;
 	running = false;
 	target = null;
+	published = null;
+	overviewLive = overviewSubs > 0;
 	patches = [];
 	activeKey = null;
 	seenServer = null;
@@ -48,8 +60,28 @@ export function subscribeDecisions(listener: () => void): () => void {
 	};
 }
 
-export function decisionSnapshot(): number | null {
-	return target;
+// The dock and the inbox both read this. While Overview is open, the published
+// overview count wins over the frame count the provider can hold during a send.
+export function badgeCount(frameCount: number): number {
+	if (overviewLive && published !== null) {
+		return shownApprovalCount(published);
+	}
+	return target === null ? frameCount : target;
+}
+
+export function subscribeOverviewPage(listener: () => void): () => void {
+	overviewSubs += 1;
+	overviewLive = true;
+	const stop = subscribeDecisions(listener);
+	return () => {
+		stop();
+		overviewSubs = Math.max(0, overviewSubs - 1);
+		if (overviewSubs === 0) {
+			overviewLive = false;
+			published = null;
+			notify();
+		}
+	};
 }
 
 export function patchSnapshot(): readonly DecisionPatch[] {
@@ -108,7 +140,9 @@ export function reconcileDecisions(serverCount: number): void {
 		dropped = true;
 	}
 	const nextTarget = next.length === 0 ? null : Math.max(0, serverCount - next.length);
-	if (!dropped && nextTarget === target) {
+	const publishedChanged = published !== serverCount;
+	published = serverCount;
+	if (!dropped && nextTarget === target && !publishedChanged) {
 		return;
 	}
 	patches = next;
@@ -117,13 +151,29 @@ export function reconcileDecisions(serverCount: number): void {
 }
 
 export function watchServerCount(serverCount: number, token: object): void {
+	const publishedChanged = published !== serverCount;
+	published = serverCount;
 	if (token === seenServer) {
+		if (publishedChanged) {
+			const gen = generation;
+			queueMicrotask(() => {
+				if (gen === generation) {
+					notify();
+				}
+			});
+		}
 		return;
 	}
 	seenServer = token;
 	const gen = generation;
 	queueMicrotask(() => {
-		if (gen !== generation || patches.every((patch) => liveKeys().has(patch.key))) {
+		if (gen !== generation) {
+			return;
+		}
+		if (patches.every((patch) => liveKeys().has(patch.key))) {
+			if (publishedChanged) {
+				notify();
+			}
 			return;
 		}
 		reconcileDecisions(serverCount);
@@ -166,10 +216,12 @@ async function runJob(job: Job, gen: number): Promise<void> {
 
 async function runBounded(job: Job): Promise<DecisionResult> {
 	let wrote = true;
+	let row: DecisionRow | null = null;
 	try {
-		await bounded(job.work);
+		row = decisionRow(await bounded(job.work));
 	} catch {
 		wrote = false;
+		row = null;
 	}
 	let count: number | null = null;
 	let refreshed = false;
@@ -179,7 +231,23 @@ async function runBounded(job: Job): Promise<DecisionResult> {
 	} catch {
 		refreshed = false;
 	}
-	return { wrote, refreshed, count };
+	return { wrote, refreshed, count, row };
+}
+
+function decisionRow(value: unknown): DecisionRow | null {
+	if (typeof value !== "object" || value === null) {
+		return null;
+	}
+	if (!("id" in value) || !("status" in value) || !("count" in value)) {
+		return null;
+	}
+	const id = value.id;
+	const status = value.status;
+	const count = value.count;
+	if (typeof id !== "string" || id.length === 0 || typeof status !== "string" || typeof count !== "number") {
+		return null;
+	}
+	return { id, status, count };
 }
 
 function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
