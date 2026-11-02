@@ -48,6 +48,7 @@ interface Snapshot {
 function createQueue(agentId: string, initialView: AgentDetailView) {
 	const queue: Write[] = [];
 	let busy = false;
+	let reading = false;
 	let state: Snapshot = { view: initialView, pending: [] };
 	let loaderView = initialView;
 	const listeners = new Set<() => void>();
@@ -58,11 +59,16 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 	}
 
 	async function read() {
+		if (reading) return;
+		reading = true;
+		const previous = state.view;
 		try {
 			const view = await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
-			publish({ ...state, view });
+			if (state.view === previous) publish({ ...state, view });
 		} catch {
 			return;
+		} finally {
+			reading = false;
 		}
 	}
 

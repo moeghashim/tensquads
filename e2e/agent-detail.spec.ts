@@ -534,6 +534,62 @@ test("a failed off write recovers the successful held on response", async ({ pag
 	}
 });
 
+test("a held recovery read cannot undo a successful off response", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(120_000);
+	await openAgent(page, workspaceUser, "support");
+	await expect(running(page)).toBeVisible();
+	let release: () => void = () => undefined;
+	const held = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	let failed = false;
+	let responseHeld = false;
+	let released = false;
+	const pattern = /\/_serverFn\//;
+	const handler = async (route: Route) => {
+		if (route.request().method() === "POST") {
+			if (!failed) {
+				failed = true;
+				await route.fulfill({ status: 500, contentType: "text/plain", body: "Write failed" });
+				return;
+			}
+			return route.continue();
+		}
+		const response = await route.fetch();
+		responseHeld = true;
+		await held;
+		await route.fulfill({ response });
+		released = true;
+	};
+	await page.route(pattern, handler);
+	try {
+		await squadSwitch(page).click();
+		await expect.poll(() => responseHeld, settled).toBe(true);
+		await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "true");
+		expect((await readAgent(accountId, "support")).isOn).toBe(true);
+		const posted = page.waitForResponse(
+			(response) => response.request().method() === "POST" && response.url().includes("/_serverFn/"),
+		);
+		await squadSwitch(page).click();
+		const success = await posted;
+		expect(success.ok()).toBe(true);
+		await success.finished();
+		await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(false);
+		await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "false");
+		release();
+		await expect.poll(() => released, settled).toBe(true);
+		await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "false");
+		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+		await wait(PENDING_TASK_WINDOW_MS + 1_000);
+		await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "false");
+		expect((await readAgent(accountId, "support")).isOn).toBe(false);
+		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+	} finally {
+		release();
+		await page.unroute(pattern, handler);
+	}
+});
+
 test("revise opens overview while its write and a skill write are held", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(60_000);
 	await openAgent(page, workspaceUser, "support");

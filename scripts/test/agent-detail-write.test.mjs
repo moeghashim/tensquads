@@ -255,3 +255,64 @@ test("pending writes survive a fresh loader and keep the on/off display formula"
 	await settle();
 	assert.equal(h.render().view.on, true);
 });
+
+for (const action of ["running", "skill", "autonomy", "revise"]) {
+	test(`a held recovery cannot replace a later successful ${action} response`, async (t) => {
+		t.mock.timers.enable({ apis: ["setTimeout"] });
+		const h = harness();
+		h.failNextPost();
+		h.render().toggleAgent(false);
+		await settle();
+		h.posts.shift().answer();
+		await settle();
+		assert.equal(h.reads.length, 1);
+		assert.equal(h.render().view.on, true);
+		h.server.events = ["post response"];
+		const control = h.render();
+		if (action === "running") control.toggleAgent(false);
+		if (action === "skill") control.toggleSkill("inbox.read", false);
+		if (action === "autonomy") control.pickAutonomy("Full auto");
+		if (action === "revise") control.askRevise();
+		await settle();
+		h.posts.shift().answer();
+		await settle();
+		h.reads.shift().answer();
+		await settle();
+		const view = h.render().view;
+		assert.deepEqual(view.events, ["post response"]);
+		if (action === "running") assert.equal(view.on, false);
+		if (action === "skill") assert.equal(view.skills[0].onStr, "false");
+		if (action === "autonomy") assert.equal(view.autonomyOpts[1].onStr, "true");
+		t.mock.timers.tick(30_001);
+		await settle();
+		assert.deepEqual(h.render().view.events, ["post response"]);
+		assert.equal(h.reads.length, 0);
+	});
+}
+
+for (const outcome of ["answer", "fail", "timeout"]) {
+	test(`one recovery read runs at a time and a ${outcome} permits a later recovery`, async (t) => {
+		t.mock.timers.enable({ apis: ["setTimeout"] });
+		const h = harness();
+		for (let index = 0; index < 2; index++) {
+			h.failNextPost();
+			h.render().toggleAgent(false);
+			await settle();
+			h.posts.shift().answer();
+			await settle();
+		}
+		assert.equal(h.reads.length, 1);
+		const read = h.reads.shift();
+		if (outcome === "timeout") t.mock.timers.tick(30_001);
+		else read[outcome]();
+		await settle();
+		h.failNextPost();
+		h.render().toggleAgent(false);
+		await settle();
+		h.posts.shift().answer();
+		await settle();
+		assert.equal(h.reads.length, 1);
+		h.reads.shift().answer();
+		await settle();
+	});
+}
