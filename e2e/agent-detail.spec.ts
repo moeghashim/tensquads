@@ -260,8 +260,7 @@ test("a frame read started before off cannot restore the Running sidebar dot", a
 	const held = await holdAgentReads(page, true);
 	try {
 		await page.evaluate(() => {
-			const router = (window as unknown as { __TSR_ROUTER__?: { invalidate: () => Promise<void> } })
-				.__TSR_ROUTER__;
+			const router = (window as unknown as { __TSR_ROUTER__?: { invalidate: () => Promise<void> } }).__TSR_ROUTER__;
 			if (!router) throw new Error("The router is missing.");
 			void router.invalidate();
 		});
@@ -271,8 +270,7 @@ test("a frame read started before off cannot restore the Running sidebar dot", a
 		await expect(supportDot(page, "Paused")).toBeVisible();
 		held.release();
 		await page.waitForFunction(() => {
-			const router = (window as unknown as { __TSR_ROUTER__?: { state: { isLoading: boolean } } })
-				.__TSR_ROUTER__;
+			const router = (window as unknown as { __TSR_ROUTER__?: { state: { isLoading: boolean } } }).__TSR_ROUTER__;
 			return router?.state.isLoading === false;
 		});
 		await expect(supportDot(page, "Paused")).toBeVisible();

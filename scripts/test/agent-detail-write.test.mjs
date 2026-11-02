@@ -454,7 +454,10 @@ for (const on of [false, true]) {
 		h.newLoader(h.server);
 		h.render();
 		const readAt = stampAgentReads();
-		const old = [{ id: "support", on: !on }, { id: "inventory", on: false }];
+		const old = [
+			{ id: "support", on: !on },
+			{ id: "inventory", on: false },
+		];
 		h.render().toggleAgent(on);
 		await settle();
 		h.posts.shift().answer();
@@ -464,7 +467,10 @@ for (const on of [false, true]) {
 			{ id: "inventory", on: false },
 		]);
 		const laterReadAt = stampAgentReads();
-		const later = [{ id: "support", on: !on }, { id: "inventory", on: true }];
+		const later = [
+			{ id: "support", on: !on },
+			{ id: "inventory", on: true },
+		];
 		assert.equal(applyAgentOn(later, agentOnSnapshot(), laterReadAt), later);
 	});
 }
