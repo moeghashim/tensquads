@@ -1,0 +1,8 @@
+Database error handling: duplicate create exits 1 with SQLSTATE 42P04 only; no connection value is printed.
+Concurrent CLI create: ci_987654_1_macos, ci_987654_1_linux, ci_987654_2_macos, ci_987655_1_macos. Each GITHUB_ENV output names an existing, distinct database on the direct host. Local stdout and stderr are empty.
+Isolation: all four databases accept the same table name concurrently, retain their own row value, and leave the admin database without that table.
+Forced cleanup: drop terminates an active pg_sleep connection and removes only its job database. The three sibling databases remain usable.
+Cleanup: repeated drop succeeds; all disposable ci_ databases are absent and the admin database still accepts queries.
+GitHub mode: create emits only add-mask protocol commands and writes its usable private connection to GITHUB_ENV; local mode emits no URL. Mask values withheld from evidence.
+Missing credentials: both CLI modes exit 1 with "TEST_DATABASE_URL is missing." for a human; both exit 0 silently for Dependabot in Actions.
+Workflow semantic check (not live CI): both OS matrix entries create before Verify, Verify inherits GITHUB_ENV, and cleanup uses always() with the admin secret.
