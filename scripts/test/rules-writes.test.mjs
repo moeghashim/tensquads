@@ -237,7 +237,7 @@ for (const refreshResult of ["timeout", "reject"]) {
 						window.rejectRefresh(new Error("Read failed"));
 						await window.flush();
 					});
-				await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(1);
+				await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(0);
 				await expect(action).toHaveValue(newer);
 				if (!newer) await add.click();
 				assert.equal(await page.evaluate(() => window.calls.length), 1);
@@ -415,5 +415,50 @@ test("add rule: editing and clearing an action prevents old draft restoration", 
 		});
 		await expect(action).toHaveValue("");
 		await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(0);
+	});
+});
+
+test("add rule: identical submissions keep the newer pending row until its own refresh settles", async () => {
+	await withPage(async (page) => {
+		await holdAdds(page);
+		const action = page.getByLabel("Then", { exact: true });
+		const add = page.getByRole("button", { name: "Add rule", exact: true });
+		const switches = page.getByRole("button", { name: "Rule enabled" });
+		await action.fill("Same action");
+		await add.click();
+		await page.waitForFunction(() => window.adds.length === 1);
+		await action.fill("Same action");
+		await add.click();
+		await page.waitForFunction(() => window.adds.length === 2);
+		assert.deepEqual(await page.evaluate(() => window.adds.map((submission) => submission.data)), [
+			{ when: "A new order arrives", agent: "orders", action: "Same action", approval: "Ask first" },
+			{ when: "A new order arrives", agent: "orders", action: "Same action", approval: "Ask first" },
+		]);
+		await page.evaluate(async () => {
+			window.savedA = { ...window.adds[0].data, id: "r100", on: true, when: "a new order arrives" };
+			window.loadRules([window.savedA]);
+			window.adds[0].resolve();
+			await window.flush();
+		});
+		await expect(switches).toHaveCount(2);
+		await expect(action).toHaveValue("");
+		assert.equal(await page.evaluate(() => window.adds[1].signal.aborted), false);
+		await page.evaluate(async () => {
+			window.refresh = () =>
+				new Promise((resolve) => {
+					window.releaseOwnRefresh = resolve;
+				});
+			window.loadRules([window.savedA, { ...window.savedA, id: "r101" }]);
+			window.adds[1].resolve();
+			await window.flush();
+		});
+		await page.waitForFunction(() => window.releaseOwnRefresh);
+		await expect(switches).toHaveCount(3);
+		await page.evaluate(async () => {
+			window.releaseOwnRefresh();
+			await window.flush();
+		});
+		await expect(switches).toHaveCount(2);
+		await expect(action).toHaveValue("");
 	});
 });
