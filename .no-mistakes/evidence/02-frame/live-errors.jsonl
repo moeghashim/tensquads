@@ -1,0 +1,3 @@
+{"action":"real database SQLSTATE injection","code":"40P01","attempts":3,"transactionSettings":[{"lock":"9999ms","statement":"9999ms"},{"lock":"9999ms","statement":"9999ms"},{"lock":"9999ms","statement":"9999ms"}],"budgetForThreeAttemptsMs":29997,"pendingWindowMs":30000}
+{"action":"real database SQLSTATE injection","code":"55P03","attempts":1,"transactionSettings":[{"lock":"9999ms","statement":"9999ms"}],"budgetForThreeAttemptsMs":29997,"pendingWindowMs":30000}
+{"action":"real database SQLSTATE injection","code":"57014","attempts":1,"transactionSettings":[{"lock":"9999ms","statement":"9999ms"}],"budgetForThreeAttemptsMs":29997,"pendingWindowMs":30000}

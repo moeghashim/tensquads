@@ -1,0 +1,4 @@
+{"action":"send while real advisory lock held","lockHeldMs":31005,"outcome":{"kind":"rejected","code":"57014","settledMs":10149},"before":{"messages":5,"events":9},"after":{"messages":5,"events":9},"unchanged":true}
+{"action":"send after releasing lock","begin":"working","finish":"replied","reply":"Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.","counts":{"messages":8,"events":11}}
+{"action":"slow statement","code":"57014","attempts":1,"elapsedMs":10068}
+{"action":"send after short lock wait","kind":"working","requestStart":1793597436002,"taskInstant":1793597436002,"unlockedAt":1793597437503,"taskPredatesUnlockMs":1501}

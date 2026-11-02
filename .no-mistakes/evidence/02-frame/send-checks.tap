@@ -1,0 +1,26 @@
+✔ a send uses one dock thread with seeded messages (842.853542ms)
+✔ a send uses one dock thread when no thread exists (482.340791ms)
+✔ a marketing send writes the task, and the reply writes the result without changing the store (432.62275ms)
+✔ a message with no agent or a paused agent writes no event and does not move the clock (887.73775ms)
+✔ an empty message, a blank message, or a second send changes nothing (443.509291ms)
+✔ a pending task stays when the reply is not finished (436.907541ms)
+✔ a marketing send with no skill on records a dash (418.413084ms)
+✔ an abandoned Task expires at 30 seconds and a later send gets its own reply (448.045667ms)
+✔ an ignored send restores the submitted draft (1706.704542ms)
+✔ an ignored send keeps newer typing (1048.626ms)
+✔ reload during Working retains the first Task and a later send replies (1184.939917ms)
+✔ a lost finish response recovers the saved reply and approval count (964.3735ms)
+✔ a failed recovery read releases the send guard and older loaders cannot replace a send (1125.233ms)
+✔ saved bubbles stay while invalidation completes before the loader frame is rendered (980.50625ms)
+✔ a finish request that never settles releases the guard and accepts another send (1239.283ms)
+✔ a begin request that never settles releases the guard and accepts another send (1250.549666ms)
+✔ a refresh that never settles releases the guard and accepts another send (1109.713708ms)
+✔ a failed refresh keeps returned messages and permits another send (994.42025ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12091.486

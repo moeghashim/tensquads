@@ -1,0 +1,5 @@
+{"action":"CLI deploy without project token","status":1,"stderr":"CLOUDFLARE_WORKERS_API_TOKEN is absent.","databaseAccountsTable":null}
+{"action":"deploy with real migration failure","status":1,"spawned":false,"stderr":["The database migration did not finish."],"connectionStringPrinted":false}
+{"action":"migration lock held","deploymentStarted":false}
+{"action":"deployment executable boundary reached after real migration","command":"node","args":["wrangler/bin/wrangler.js","deploy"],"cwd":"apps/web","CI":"true"}
+{"action":"inspect real migration state","publicTables":21,"realCloudflareDeploy":false}

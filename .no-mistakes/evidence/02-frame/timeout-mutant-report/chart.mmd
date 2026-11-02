@@ -1,0 +1,1902 @@
+stateDiagram-v2
+  state "Legend" as legend {
+    lg0: Path to the WaitEnds bug
+    lg1: Repeats forever, so WaitEnds breaks
+  }
+  class lg0 bugPath
+  class lg1 repeats
+  s0: phase="idle" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s1: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s2: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s3: phase="idle" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s4: phase="idle" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s5: phase="idle" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s6: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s7: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s8: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s9: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s10: phase="idle" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s11: phase="idle" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s12: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s13: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s14: phase="idle" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s15: phase="idle" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s16: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s17: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s18: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s19: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s20: phase="working" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s21: phase="working" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s22: phase="idle" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s23: phase="idle" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s24: phase="idle" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s25: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s26: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s27: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s28: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s29: phase="idle" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s30: phase="idle" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s31: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s32: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s33: phase="idle" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s34: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s35: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s36: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s37: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s38: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s39: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s40: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s41: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s42: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s43: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s44: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s45: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s46: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s47: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s48: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s49: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s50: phase="working" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s51: phase="working" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s52: phase="working" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s53: phase="working" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s54: phase="idle" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s55: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s56: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s57: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s58: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s59: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s60: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s61: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s62: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s63: phase="idle" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s64: phase="idle" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s65: phase="idle" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s66: phase="idle" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s67: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s68: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s69: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s70: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s71: phase="idle" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s72: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s73: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s74: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s75: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s76: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s77: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s78: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s79: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s80: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s81: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s82: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s83: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s84: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s85: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s86: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s87: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s88: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s89: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s90: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s91: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s92: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s93: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s94: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s95: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s96: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s97: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s98: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s99: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s100: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s101: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s102: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s103: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s104: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s105: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s106: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s107: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s108: phase="working" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s109: phase="working" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s110: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s111: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s112: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s113: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s114: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s115: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s116: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s117: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s118: phase="idle" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s119: phase="idle" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s120: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s121: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=FALSE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s122: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s123: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s124: phase="idle" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s125: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s126: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s127: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s128: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s129: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s130: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s131: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s132: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s133: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s134: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s135: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s136: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s137: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s138: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s139: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s140: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s141: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s142: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s143: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s144: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s145: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s146: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s147: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s148: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s149: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s150: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s151: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s152: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s153: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s154: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s155: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s156: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s157: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s158: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s159: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s160: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s161: phase="idle" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s162: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s163: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s164: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s165: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s166: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s167: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s168: phase="idle" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s169: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s170: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s171: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s172: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s173: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s174: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s175: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s176: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s177: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s178: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s179: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s180: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s181: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s182: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s183: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s184: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s185: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s186: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s187: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s188: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s189: phase="idle" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s190: phase="idle" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s191: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s192: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s193: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s194: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s195: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s196: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s197: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s198: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=FALSE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s199: phase="working" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s200: phase="working" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s201: phase="idle" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s202: phase="idle" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s203: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s204: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s205: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s206: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s207: phase="idle" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s208: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s209: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s210: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s211: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s212: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s213: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s214: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s215: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s216: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s217: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s218: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s219: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s220: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s221: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s222: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s223: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s224: phase="working" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s225: phase="working" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s226: phase="working" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s227: phase="working" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s228: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s229: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s230: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s231: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s232: phase="idle" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s233: phase="idle" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s234: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s235: phase="idle" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="begin" lastSet=FALSE userMsg=0 masterMsg=0 abandonedTask=TRUE sent="no" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s236: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s237: phase="replied" pageDraft="" dockDraft="" dock="closed" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s238: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s239: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s240: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s241: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s242: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s243: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s244: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s245: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s246: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s247: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s248: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s249: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s250: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s251: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s252: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s253: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s254: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s255: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s256: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s257: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s258: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s259: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s260: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s261: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s262: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s263: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s264: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s265: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s266: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s267: phase="working" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s268: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s269: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s270: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s271: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=0 resultEv=0 held="closed" taskEv=1
+  s272: phase="working" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s273: phase="working" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s274: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s275: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s276: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s277: phase="idle" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=TRUE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s278: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s279: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s280: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s281: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s282: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s283: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s284: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s285: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s286: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s287: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s288: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s289: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s290: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s291: phase="replied" pageDraft="" dockDraft="" dock="open" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s292: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s293: phase="replied" pageDraft="text" dockDraft="text" dock="closed" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s294: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s295: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s296: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s297: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="closed" taskEv=0
+  s298: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s299: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s300: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s301: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="refresh" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s302: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s303: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s304: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s305: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s306: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s307: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="workspace" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s308: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s309: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s310: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s311: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s312: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s313: phase="working" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="finish" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=0 resultEv=0 held="open" taskEv=1
+  s314: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s315: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s316: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s317: phase="replied" pageDraft="" dockDraft="" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s318: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s319: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="none" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s320: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="admin" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s321: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=0 abandoned=FALSE wait="none" lastSet=FALSE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="paused" storeSame=TRUE page="chat" skill="none" agentMsg=0 resultEv=0 held="open" taskEv=0
+  s322: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s323: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s324: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s325: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="closed" taskEv=1
+  s326: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s327: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s328: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s329: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="refresh" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s330: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="workspace" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s331: phase="replied" pageDraft="text" dockDraft="text" dock="open" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="workspace" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s332: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="admin" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s333: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="noskill" storeSame=TRUE page="chat" skill="-" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s334: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="admin" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  s335: phase="replied" pageDraft="text" dockDraft="text" dock="hidden" tasks=1 abandoned=FALSE wait="none" lastSet=TRUE userMsg=1 masterMsg=1 abandonedTask=TRUE sent="on" storeSame=TRUE page="chat" skill="skill" agentMsg=1 resultEv=1 held="open" taskEv=1
+  [*] --> s0
+  s0 --> s1: OpenAdmin
+  s0 --> s2: OpenChat
+  s0 --> s3: OpenDock
+  s0 --> s4: Type
+  s1 --> s0: LeaveAdmin
+  s1 --> s2: OpenChat
+  s1 --> s8: Type
+  s2 --> s0: LeaveChat
+  s2 --> s1: OpenAdmin
+  s2 --> s9: Type
+  s3 --> s0: CloseDock
+  s3 --> s6: OpenAdmin
+  s3 --> s7: OpenChat
+  s3 --> s10: Type
+  s4 --> s5: StartBegin
+  s4 --> s8: OpenAdmin
+  s4 --> s9: OpenChat
+  s4 --> s10: OpenDock
+  s5 --> s11: BeginTimeout
+  s5 --> s12: OpenAdmin
+  s5 --> s13: OpenChat
+  s5 --> s14: OpenDock
+  s5 --> s15: Type
+  s5 --> s18: SendNone
+  s5 --> s19: SendPaused
+  s5 --> s20: SendNoSkill
+  s5 --> s21: SendOn
+  s6 --> s3: LeaveAdmin
+  s6 --> s7: OpenChat
+  s6 --> s16: Type
+  s7 --> s3: LeaveChat
+  s7 --> s6: OpenAdmin
+  s7 --> s17: Type
+  s8 --> s4: LeaveAdmin
+  s8 --> s9: OpenChat
+  s8 --> s12: StartBegin
+  s9 --> s4: LeaveChat
+  s9 --> s8: OpenAdmin
+  s9 --> s13: StartBegin
+  s10 --> s4: CloseDock
+  s10 --> s14: StartBegin
+  s10 --> s16: OpenAdmin
+  s10 --> s17: OpenChat
+  s11 --> s0: Refresh
+  s11 --> s27: OpenAdmin
+  s11 --> s28: OpenChat
+  s11 --> s29: OpenDock
+  s11 --> s30: Type
+  s12 --> s5: LeaveAdmin
+  s12 --> s13: OpenChat
+  s12 --> s27: BeginTimeout
+  s12 --> s31: Type
+  s12 --> s38: SendNone
+  s12 --> s40: SendPaused
+  s12 --> s46: SendNoSkill
+  s12 --> s48: SendOn
+  s13 --> s5: LeaveChat
+  s13 --> s12: OpenAdmin
+  s13 --> s28: BeginTimeout
+  s13 --> s32: Type
+  s13 --> s39: SendNone
+  s13 --> s41: SendPaused
+  s13 --> s47: SendNoSkill
+  s13 --> s49: SendOn
+  s14 --> s5: CloseDock
+  s14 --> s25: OpenAdmin
+  s14 --> s26: OpenChat
+  s14 --> s29: BeginTimeout
+  s14 --> s33: Type
+  s14 --> s42: SendNone
+  s14 --> s43: SendPaused
+  s14 --> s50: SendNoSkill
+  s14 --> s51: SendOn
+  s15 --> s30: BeginTimeout
+  s15 --> s31: OpenAdmin
+  s15 --> s32: OpenChat
+  s15 --> s33: OpenDock
+  s15 --> s44: SendNone
+  s15 --> s45: SendPaused
+  s15 --> s52: SendNoSkill
+  s15 --> s53: SendOn
+  s16 --> s10: LeaveAdmin
+  s16 --> s17: OpenChat
+  s16 --> s25: StartBegin
+  s17 --> s10: LeaveChat
+  s17 --> s16: OpenAdmin
+  s17 --> s26: StartBegin
+  s18 --> s11: NextMessage
+  s18 --> s34: Refresh
+  s18 --> s38: OpenAdmin
+  s18 --> s39: OpenChat
+  s18 --> s42: OpenDock
+  s18 --> s44: Type
+  s19 --> s11: NextMessage
+  s19 --> s35: Refresh
+  s19 --> s40: OpenAdmin
+  s19 --> s41: OpenChat
+  s19 --> s43: OpenDock
+  s19 --> s45: Type
+  s20 --> s22: ClientTimeout
+  s20 --> s23: Reload
+  s20 --> s36: Finish
+  s20 --> s46: OpenAdmin
+  s20 --> s47: OpenChat
+  s20 --> s50: OpenDock
+  s20 --> s52: Type
+  s21 --> s22: ClientTimeout
+  s21 --> s24: Reload
+  s21 --> s37: Finish
+  s21 --> s48: OpenAdmin
+  s21 --> s49: OpenChat
+  s21 --> s51: OpenDock
+  s21 --> s53: Type
+  s22 --> s54: Refresh
+  s22 --> s57: OpenAdmin
+  s22 --> s58: OpenChat
+  s22 --> s63: OpenDock
+  s22 --> s66: Type
+  s23 --> s54: Timeout
+  s23 --> s59: OpenAdmin
+  s23 --> s60: OpenChat
+  s23 --> s64: OpenDock
+  s24 --> s54: Timeout
+  s24 --> s61: OpenAdmin
+  s24 --> s62: OpenChat
+  s24 --> s65: OpenDock
+  s25 --> s14: LeaveAdmin
+  s25 --> s26: OpenChat
+  s25 --> s55: BeginTimeout
+  s25 --> s67: Type
+  s25 --> s78: SendNone
+  s25 --> s80: SendPaused
+  s25 --> s100: SendNoSkill
+  s25 --> s102: SendOn
+  s26 --> s14: LeaveChat
+  s26 --> s25: OpenAdmin
+  s26 --> s56: BeginTimeout
+  s26 --> s68: Type
+  s26 --> s79: SendNone
+  s26 --> s81: SendPaused
+  s26 --> s101: SendNoSkill
+  s26 --> s103: SendOn
+  s27 --> s1: Refresh
+  s27 --> s11: LeaveAdmin
+  s27 --> s28: OpenChat
+  s27 --> s69: Type
+  s28 --> s2: Refresh
+  s28 --> s11: LeaveChat
+  s28 --> s27: OpenAdmin
+  s28 --> s70: Type
+  s29 --> s3: Refresh
+  s29 --> s11: CloseDock
+  s29 --> s55: OpenAdmin
+  s29 --> s56: OpenChat
+  s29 --> s71: Type
+  s30 --> s4: Refresh
+  s30 --> s69: OpenAdmin
+  s30 --> s70: OpenChat
+  s30 --> s71: OpenDock
+  s31 --> s15: LeaveAdmin
+  s31 --> s32: OpenChat
+  s31 --> s69: BeginTimeout
+  s31 --> s94: SendNone
+  s31 --> s96: SendPaused
+  s31 --> s104: SendNoSkill
+  s31 --> s106: SendOn
+  s32 --> s15: LeaveChat
+  s32 --> s31: OpenAdmin
+  s32 --> s70: BeginTimeout
+  s32 --> s95: SendNone
+  s32 --> s97: SendPaused
+  s32 --> s105: SendNoSkill
+  s32 --> s107: SendOn
+  s33 --> s15: CloseDock
+  s33 --> s67: OpenAdmin
+  s33 --> s68: OpenChat
+  s33 --> s71: BeginTimeout
+  s33 --> s98: SendNone
+  s33 --> s99: SendPaused
+  s33 --> s108: SendNoSkill
+  s33 --> s109: SendOn
+  s34 --> s0: NextMessage
+  s34 --> s74: OpenAdmin
+  s34 --> s75: OpenChat
+  s34 --> s86: OpenDock
+  s34 --> s90: Type
+  s35 --> s0: NextMessage
+  s35 --> s76: OpenAdmin
+  s35 --> s77: OpenChat
+  s35 --> s87: OpenDock
+  s35 --> s91: Type
+  s36 --> s11: NextMessage
+  s36 --> s72: Refresh
+  s36 --> s82: OpenAdmin
+  s36 --> s83: OpenChat
+  s36 --> s88: OpenDock
+  s36 --> s92: Type
+  s37 --> s11: NextMessage
+  s37 --> s73: Refresh
+  s37 --> s84: OpenAdmin
+  s37 --> s85: OpenChat
+  s37 --> s89: OpenDock
+  s37 --> s93: Type
+  s38 --> s18: LeaveAdmin
+  s38 --> s27: NextMessage
+  s38 --> s39: OpenChat
+  s38 --> s74: Refresh
+  s38 --> s94: Type
+  s39 --> s18: LeaveChat
+  s39 --> s28: NextMessage
+  s39 --> s38: OpenAdmin
+  s39 --> s75: Refresh
+  s39 --> s95: Type
+  s40 --> s19: LeaveAdmin
+  s40 --> s27: NextMessage
+  s40 --> s41: OpenChat
+  s40 --> s76: Refresh
+  s40 --> s96: Type
+  s41 --> s19: LeaveChat
+  s41 --> s28: NextMessage
+  s41 --> s40: OpenAdmin
+  s41 --> s77: Refresh
+  s41 --> s97: Type
+  s42 --> s18: CloseDock
+  s42 --> s29: NextMessage
+  s42 --> s78: OpenAdmin
+  s42 --> s79: OpenChat
+  s42 --> s86: Refresh
+  s42 --> s98: Type
+  s43 --> s19: CloseDock
+  s43 --> s29: NextMessage
+  s43 --> s80: OpenAdmin
+  s43 --> s81: OpenChat
+  s43 --> s87: Refresh
+  s43 --> s99: Type
+  s44 --> s30: NextMessage
+  s44 --> s90: Refresh
+  s44 --> s94: OpenAdmin
+  s44 --> s95: OpenChat
+  s44 --> s98: OpenDock
+  s45 --> s30: NextMessage
+  s45 --> s91: Refresh
+  s45 --> s96: OpenAdmin
+  s45 --> s97: OpenChat
+  s45 --> s99: OpenDock
+  s46 --> s20: LeaveAdmin
+  s46 --> s47: OpenChat
+  s46 --> s57: ClientTimeout
+  s46 --> s59: Reload
+  s46 --> s82: Finish
+  s46 --> s104: Type
+  s47 --> s20: LeaveChat
+  s47 --> s46: OpenAdmin
+  s47 --> s58: ClientTimeout
+  s47 --> s60: Reload
+  s47 --> s83: Finish
+  s47 --> s105: Type
+  s48 --> s21: LeaveAdmin
+  s48 --> s49: OpenChat
+  s48 --> s57: ClientTimeout
+  s48 --> s61: Reload
+  s48 --> s84: Finish
+  s48 --> s106: Type
+  s49 --> s21: LeaveChat
+  s49 --> s48: OpenAdmin
+  s49 --> s58: ClientTimeout
+  s49 --> s62: Reload
+  s49 --> s85: Finish
+  s49 --> s107: Type
+  s50 --> s20: CloseDock
+  s50 --> s23: Reload
+  s50 --> s63: ClientTimeout
+  s50 --> s88: Finish
+  s50 --> s100: OpenAdmin
+  s50 --> s101: OpenChat
+  s50 --> s108: Type
+  s51 --> s21: CloseDock
+  s51 --> s24: Reload
+  s51 --> s63: ClientTimeout
+  s51 --> s89: Finish
+  s51 --> s102: OpenAdmin
+  s51 --> s103: OpenChat
+  s51 --> s109: Type
+  s52 --> s23: Reload
+  s52 --> s66: ClientTimeout
+  s52 --> s92: Finish
+  s52 --> s104: OpenAdmin
+  s52 --> s105: OpenChat
+  s52 --> s108: OpenDock
+  s53 --> s24: Reload
+  s53 --> s66: ClientTimeout
+  s53 --> s93: Finish
+  s53 --> s106: OpenAdmin
+  s53 --> s107: OpenChat
+  s53 --> s109: OpenDock
+  s54 --> s110: OpenAdmin
+  s54 --> s111: OpenChat
+  s54 --> s118: OpenDock
+  s54 --> s119: Type
+  s55 --> s6: Refresh
+  s55 --> s29: LeaveAdmin
+  s55 --> s56: OpenChat
+  s55 --> s120: Type
+  s56 --> s7: Refresh
+  s56 --> s29: LeaveChat
+  s56 --> s55: OpenAdmin
+  s56 --> s121: Type
+  s57 --> s22: LeaveAdmin
+  s57 --> s58: OpenChat
+  s57 --> s110: Refresh
+  s57 --> s122: Type
+  s58 --> s22: LeaveChat
+  s58 --> s57: OpenAdmin
+  s58 --> s111: Refresh
+  s58 --> s123: Type
+  s59 --> s23: LeaveAdmin
+  s59 --> s60: OpenChat
+  s59 --> s110: Timeout
+  s60 --> s23: LeaveChat
+  s60 --> s59: OpenAdmin
+  s60 --> s111: Timeout
+  s61 --> s24: LeaveAdmin
+  s61 --> s62: OpenChat
+  s61 --> s110: Timeout
+  s62 --> s24: LeaveChat
+  s62 --> s61: OpenAdmin
+  s62 --> s111: Timeout
+  s63 --> s22: CloseDock
+  s63 --> s112: OpenAdmin
+  s63 --> s113: OpenChat
+  s63 --> s118: Refresh
+  s63 --> s124: Type
+  s64 --> s23: CloseDock
+  s64 --> s114: OpenAdmin
+  s64 --> s115: OpenChat
+  s64 --> s118: Timeout
+  s65 --> s24: CloseDock
+  s65 --> s116: OpenAdmin
+  s65 --> s117: OpenChat
+  s65 --> s118: Timeout
+  s66 --> s119: Refresh
+  s66 --> s122: OpenAdmin
+  s66 --> s123: OpenChat
+  s66 --> s124: OpenDock
+  s67 --> s33: LeaveAdmin
+  s67 --> s68: OpenChat
+  s67 --> s120: BeginTimeout
+  s67 --> s145: SendNone
+  s67 --> s147: SendPaused
+  s67 --> s157: SendNoSkill
+  s67 --> s159: SendOn
+  s68 --> s33: LeaveChat
+  s68 --> s67: OpenAdmin
+  s68 --> s121: BeginTimeout
+  s68 --> s146: SendNone
+  s68 --> s148: SendPaused
+  s68 --> s158: SendNoSkill
+  s68 --> s160: SendOn
+  s69 --> s8: Refresh
+  s69 --> s30: LeaveAdmin
+  s69 --> s70: OpenChat
+  s70 --> s9: Refresh
+  s70 --> s30: LeaveChat
+  s70 --> s69: OpenAdmin
+  s71 --> s10: Refresh
+  s71 --> s30: CloseDock
+  s71 --> s120: OpenAdmin
+  s71 --> s121: OpenChat
+  s72 --> s0: NextMessage
+  s72 --> s129: OpenAdmin
+  s72 --> s130: OpenChat
+  s72 --> s137: OpenDock
+  s72 --> s139: Type
+  s73 --> s0: NextMessage
+  s73 --> s131: OpenAdmin
+  s73 --> s132: OpenChat
+  s73 --> s138: OpenDock
+  s73 --> s140: Type
+  s74 --> s1: NextMessage
+  s74 --> s34: LeaveAdmin
+  s74 --> s75: OpenChat
+  s74 --> s141: Type
+  s75 --> s2: NextMessage
+  s75 --> s34: LeaveChat
+  s75 --> s74: OpenAdmin
+  s75 --> s142: Type
+  s76 --> s1: NextMessage
+  s76 --> s35: LeaveAdmin
+  s76 --> s77: OpenChat
+  s76 --> s143: Type
+  s77 --> s2: NextMessage
+  s77 --> s35: LeaveChat
+  s77 --> s76: OpenAdmin
+  s77 --> s144: Type
+  s78 --> s42: LeaveAdmin
+  s78 --> s55: NextMessage
+  s78 --> s79: OpenChat
+  s78 --> s125: Refresh
+  s78 --> s145: Type
+  s79 --> s42: LeaveChat
+  s79 --> s56: NextMessage
+  s79 --> s78: OpenAdmin
+  s79 --> s126: Refresh
+  s79 --> s146: Type
+  s80 --> s43: LeaveAdmin
+  s80 --> s55: NextMessage
+  s80 --> s81: OpenChat
+  s80 --> s127: Refresh
+  s80 --> s147: Type
+  s81 --> s43: LeaveChat
+  s81 --> s56: NextMessage
+  s81 --> s80: OpenAdmin
+  s81 --> s128: Refresh
+  s81 --> s148: Type
+  s82 --> s27: NextMessage
+  s82 --> s36: LeaveAdmin
+  s82 --> s83: OpenChat
+  s82 --> s129: Refresh
+  s82 --> s149: Type
+  s83 --> s28: NextMessage
+  s83 --> s36: LeaveChat
+  s83 --> s82: OpenAdmin
+  s83 --> s130: Refresh
+  s83 --> s150: Type
+  s84 --> s27: NextMessage
+  s84 --> s37: LeaveAdmin
+  s84 --> s85: OpenChat
+  s84 --> s131: Refresh
+  s84 --> s151: Type
+  s85 --> s28: NextMessage
+  s85 --> s37: LeaveChat
+  s85 --> s84: OpenAdmin
+  s85 --> s132: Refresh
+  s85 --> s152: Type
+  s86 --> s3: NextMessage
+  s86 --> s34: CloseDock
+  s86 --> s125: OpenAdmin
+  s86 --> s126: OpenChat
+  s86 --> s153: Type
+  s87 --> s3: NextMessage
+  s87 --> s35: CloseDock
+  s87 --> s127: OpenAdmin
+  s87 --> s128: OpenChat
+  s87 --> s154: Type
+  s88 --> s29: NextMessage
+  s88 --> s36: CloseDock
+  s88 --> s133: OpenAdmin
+  s88 --> s134: OpenChat
+  s88 --> s137: Refresh
+  s88 --> s155: Type
+  s89 --> s29: NextMessage
+  s89 --> s37: CloseDock
+  s89 --> s135: OpenAdmin
+  s89 --> s136: OpenChat
+  s89 --> s138: Refresh
+  s89 --> s156: Type
+  s90 --> s4: NextMessage
+  s90 --> s141: OpenAdmin
+  s90 --> s142: OpenChat
+  s90 --> s153: OpenDock
+  s91 --> s4: NextMessage
+  s91 --> s143: OpenAdmin
+  s91 --> s144: OpenChat
+  s91 --> s154: OpenDock
+  s92 --> s30: NextMessage
+  s92 --> s139: Refresh
+  s92 --> s149: OpenAdmin
+  s92 --> s150: OpenChat
+  s92 --> s155: OpenDock
+  s93 --> s30: NextMessage
+  s93 --> s140: Refresh
+  s93 --> s151: OpenAdmin
+  s93 --> s152: OpenChat
+  s93 --> s156: OpenDock
+  s94 --> s44: LeaveAdmin
+  s94 --> s69: NextMessage
+  s94 --> s95: OpenChat
+  s94 --> s141: Refresh
+  s95 --> s44: LeaveChat
+  s95 --> s70: NextMessage
+  s95 --> s94: OpenAdmin
+  s95 --> s142: Refresh
+  s96 --> s45: LeaveAdmin
+  s96 --> s69: NextMessage
+  s96 --> s97: OpenChat
+  s96 --> s143: Refresh
+  s97 --> s45: LeaveChat
+  s97 --> s70: NextMessage
+  s97 --> s96: OpenAdmin
+  s97 --> s144: Refresh
+  s98 --> s44: CloseDock
+  s98 --> s71: NextMessage
+  s98 --> s145: OpenAdmin
+  s98 --> s146: OpenChat
+  s98 --> s153: Refresh
+  s99 --> s45: CloseDock
+  s99 --> s71: NextMessage
+  s99 --> s147: OpenAdmin
+  s99 --> s148: OpenChat
+  s99 --> s154: Refresh
+  s100 --> s50: LeaveAdmin
+  s100 --> s59: Reload
+  s100 --> s101: OpenChat
+  s100 --> s112: ClientTimeout
+  s100 --> s133: Finish
+  s100 --> s157: Type
+  s101 --> s50: LeaveChat
+  s101 --> s60: Reload
+  s101 --> s100: OpenAdmin
+  s101 --> s113: ClientTimeout
+  s101 --> s134: Finish
+  s101 --> s158: Type
+  s102 --> s51: LeaveAdmin
+  s102 --> s61: Reload
+  s102 --> s103: OpenChat
+  s102 --> s112: ClientTimeout
+  s102 --> s135: Finish
+  s102 --> s159: Type
+  s103 --> s51: LeaveChat
+  s103 --> s62: Reload
+  s103 --> s102: OpenAdmin
+  s103 --> s113: ClientTimeout
+  s103 --> s136: Finish
+  s103 --> s160: Type
+  s104 --> s52: LeaveAdmin
+  s104 --> s59: Reload
+  s104 --> s105: OpenChat
+  s104 --> s122: ClientTimeout
+  s104 --> s149: Finish
+  s105 --> s52: LeaveChat
+  s105 --> s60: Reload
+  s105 --> s104: OpenAdmin
+  s105 --> s123: ClientTimeout
+  s105 --> s150: Finish
+  s106 --> s53: LeaveAdmin
+  s106 --> s61: Reload
+  s106 --> s107: OpenChat
+  s106 --> s122: ClientTimeout
+  s106 --> s151: Finish
+  s107 --> s53: LeaveChat
+  s107 --> s62: Reload
+  s107 --> s106: OpenAdmin
+  s107 --> s123: ClientTimeout
+  s107 --> s152: Finish
+  s108 --> s23: Reload
+  s108 --> s52: CloseDock
+  s108 --> s124: ClientTimeout
+  s108 --> s155: Finish
+  s108 --> s157: OpenAdmin
+  s108 --> s158: OpenChat
+  s109 --> s24: Reload
+  s109 --> s53: CloseDock
+  s109 --> s124: ClientTimeout
+  s109 --> s156: Finish
+  s109 --> s159: OpenAdmin
+  s109 --> s160: OpenChat
+  s110 --> s54: LeaveAdmin
+  s110 --> s111: OpenChat
+  s110 --> s164: Type
+  s111 --> s54: LeaveChat
+  s111 --> s110: OpenAdmin
+  s111 --> s165: Type
+  s112 --> s63: LeaveAdmin
+  s112 --> s113: OpenChat
+  s112 --> s162: Refresh
+  s112 --> s166: Type
+  s113 --> s63: LeaveChat
+  s113 --> s112: OpenAdmin
+  s113 --> s163: Refresh
+  s113 --> s167: Type
+  s114 --> s64: LeaveAdmin
+  s114 --> s115: OpenChat
+  s114 --> s162: Timeout
+  s115 --> s64: LeaveChat
+  s115 --> s114: OpenAdmin
+  s115 --> s163: Timeout
+  s116 --> s65: LeaveAdmin
+  s116 --> s117: OpenChat
+  s116 --> s162: Timeout
+  s117 --> s65: LeaveChat
+  s117 --> s116: OpenAdmin
+  s117 --> s163: Timeout
+  s118 --> s54: CloseDock
+  s118 --> s162: OpenAdmin
+  s118 --> s163: OpenChat
+  s118 --> s168: Type
+  s119 --> s161: StartBegin
+  s119 --> s164: OpenAdmin
+  s119 --> s165: OpenChat
+  s119 --> s168: OpenDock
+  s120 --> s16: Refresh
+  s120 --> s71: LeaveAdmin
+  s120 --> s121: OpenChat
+  s121 --> s17: Refresh
+  s121 --> s71: LeaveChat
+  s121 --> s120: OpenAdmin
+  s122 --> s66: LeaveAdmin
+  s122 --> s123: OpenChat
+  s122 --> s164: Refresh
+  s123 --> s66: LeaveChat
+  s123 --> s122: OpenAdmin
+  s123 --> s165: Refresh
+  s124 --> s66: CloseDock
+  s124 --> s166: OpenAdmin
+  s124 --> s167: OpenChat
+  s124 --> s168: Refresh
+  s125 --> s6: NextMessage
+  s125 --> s86: LeaveAdmin
+  s125 --> s126: OpenChat
+  s125 --> s173: Type
+  s126 --> s7: NextMessage
+  s126 --> s86: LeaveChat
+  s126 --> s125: OpenAdmin
+  s126 --> s174: Type
+  s127 --> s6: NextMessage
+  s127 --> s87: LeaveAdmin
+  s127 --> s128: OpenChat
+  s127 --> s175: Type
+  s128 --> s7: NextMessage
+  s128 --> s87: LeaveChat
+  s128 --> s127: OpenAdmin
+  s128 --> s176: Type
+  s129 --> s1: NextMessage
+  s129 --> s72: LeaveAdmin
+  s129 --> s130: OpenChat
+  s129 --> s177: Type
+  s130 --> s2: NextMessage
+  s130 --> s72: LeaveChat
+  s130 --> s129: OpenAdmin
+  s130 --> s178: Type
+  s131 --> s1: NextMessage
+  s131 --> s73: LeaveAdmin
+  s131 --> s132: OpenChat
+  s131 --> s179: Type
+  s132 --> s2: NextMessage
+  s132 --> s73: LeaveChat
+  s132 --> s131: OpenAdmin
+  s132 --> s180: Type
+  s133 --> s55: NextMessage
+  s133 --> s88: LeaveAdmin
+  s133 --> s134: OpenChat
+  s133 --> s169: Refresh
+  s133 --> s181: Type
+  s134 --> s56: NextMessage
+  s134 --> s88: LeaveChat
+  s134 --> s133: OpenAdmin
+  s134 --> s170: Refresh
+  s134 --> s182: Type
+  s135 --> s55: NextMessage
+  s135 --> s89: LeaveAdmin
+  s135 --> s136: OpenChat
+  s135 --> s171: Refresh
+  s135 --> s183: Type
+  s136 --> s56: NextMessage
+  s136 --> s89: LeaveChat
+  s136 --> s135: OpenAdmin
+  s136 --> s172: Refresh
+  s136 --> s184: Type
+  s137 --> s3: NextMessage
+  s137 --> s72: CloseDock
+  s137 --> s169: OpenAdmin
+  s137 --> s170: OpenChat
+  s137 --> s185: Type
+  s138 --> s3: NextMessage
+  s138 --> s73: CloseDock
+  s138 --> s171: OpenAdmin
+  s138 --> s172: OpenChat
+  s138 --> s186: Type
+  s139 --> s4: NextMessage
+  s139 --> s177: OpenAdmin
+  s139 --> s178: OpenChat
+  s139 --> s185: OpenDock
+  s140 --> s4: NextMessage
+  s140 --> s179: OpenAdmin
+  s140 --> s180: OpenChat
+  s140 --> s186: OpenDock
+  s141 --> s8: NextMessage
+  s141 --> s90: LeaveAdmin
+  s141 --> s142: OpenChat
+  s142 --> s9: NextMessage
+  s142 --> s90: LeaveChat
+  s142 --> s141: OpenAdmin
+  s143 --> s8: NextMessage
+  s143 --> s91: LeaveAdmin
+  s143 --> s144: OpenChat
+  s144 --> s9: NextMessage
+  s144 --> s91: LeaveChat
+  s144 --> s143: OpenAdmin
+  s145 --> s98: LeaveAdmin
+  s145 --> s120: NextMessage
+  s145 --> s146: OpenChat
+  s145 --> s173: Refresh
+  s146 --> s98: LeaveChat
+  s146 --> s121: NextMessage
+  s146 --> s145: OpenAdmin
+  s146 --> s174: Refresh
+  s147 --> s99: LeaveAdmin
+  s147 --> s120: NextMessage
+  s147 --> s148: OpenChat
+  s147 --> s175: Refresh
+  s148 --> s99: LeaveChat
+  s148 --> s121: NextMessage
+  s148 --> s147: OpenAdmin
+  s148 --> s176: Refresh
+  s149 --> s69: NextMessage
+  s149 --> s92: LeaveAdmin
+  s149 --> s150: OpenChat
+  s149 --> s177: Refresh
+  s150 --> s70: NextMessage
+  s150 --> s92: LeaveChat
+  s150 --> s149: OpenAdmin
+  s150 --> s178: Refresh
+  s151 --> s69: NextMessage
+  s151 --> s93: LeaveAdmin
+  s151 --> s152: OpenChat
+  s151 --> s179: Refresh
+  s152 --> s70: NextMessage
+  s152 --> s93: LeaveChat
+  s152 --> s151: OpenAdmin
+  s152 --> s180: Refresh
+  s153 --> s10: NextMessage
+  s153 --> s90: CloseDock
+  s153 --> s173: OpenAdmin
+  s153 --> s174: OpenChat
+  s154 --> s10: NextMessage
+  s154 --> s91: CloseDock
+  s154 --> s175: OpenAdmin
+  s154 --> s176: OpenChat
+  s155 --> s71: NextMessage
+  s155 --> s92: CloseDock
+  s155 --> s181: OpenAdmin
+  s155 --> s182: OpenChat
+  s155 --> s185: Refresh
+  s156 --> s71: NextMessage
+  s156 --> s93: CloseDock
+  s156 --> s183: OpenAdmin
+  s156 --> s184: OpenChat
+  s156 --> s186: Refresh
+  s157 --> s59: Reload
+  s157 --> s108: LeaveAdmin
+  s157 --> s158: OpenChat
+  s157 --> s166: ClientTimeout
+  s157 --> s181: Finish
+  s158 --> s60: Reload
+  s158 --> s108: LeaveChat
+  s158 --> s157: OpenAdmin
+  s158 --> s167: ClientTimeout
+  s158 --> s182: Finish
+  s159 --> s61: Reload
+  s159 --> s109: LeaveAdmin
+  s159 --> s160: OpenChat
+  s159 --> s166: ClientTimeout
+  s159 --> s183: Finish
+  s160 --> s62: Reload
+  s160 --> s109: LeaveChat
+  s160 --> s159: OpenAdmin
+  s160 --> s167: ClientTimeout
+  s160 --> s184: Finish
+  s161 --> s22: BeginTimeout
+  s161 --> s187: OpenAdmin
+  s161 --> s188: OpenChat
+  s161 --> s189: OpenDock
+  s161 --> s190: Type
+  s161 --> s193: SendNone
+  s161 --> s194: SendPaused
+  s161 --> s199: SendNoSkill
+  s161 --> s200: SendOn
+  s162 --> s118: LeaveAdmin
+  s162 --> s163: OpenChat
+  s162 --> s191: Type
+  s163 --> s118: LeaveChat
+  s163 --> s162: OpenAdmin
+  s163 --> s192: Type
+  s164 --> s119: LeaveAdmin
+  s164 --> s165: OpenChat
+  s164 --> s187: StartBegin
+  s165 --> s119: LeaveChat
+  s165 --> s164: OpenAdmin
+  s165 --> s188: StartBegin
+  s166 --> s124: LeaveAdmin
+  s166 --> s167: OpenChat
+  s166 --> s191: Refresh
+  s167 --> s124: LeaveChat
+  s167 --> s166: OpenAdmin
+  s167 --> s192: Refresh
+  s168 --> s119: CloseDock
+  s168 --> s189: StartBegin
+  s168 --> s191: OpenAdmin
+  s168 --> s192: OpenChat
+  s169 --> s6: NextMessage
+  s169 --> s137: LeaveAdmin
+  s169 --> s170: OpenChat
+  s169 --> s195: Type
+  s170 --> s7: NextMessage
+  s170 --> s137: LeaveChat
+  s170 --> s169: OpenAdmin
+  s170 --> s196: Type
+  s171 --> s6: NextMessage
+  s171 --> s138: LeaveAdmin
+  s171 --> s172: OpenChat
+  s171 --> s197: Type
+  s172 --> s7: NextMessage
+  s172 --> s138: LeaveChat
+  s172 --> s171: OpenAdmin
+  s172 --> s198: Type
+  s173 --> s16: NextMessage
+  s173 --> s153: LeaveAdmin
+  s173 --> s174: OpenChat
+  s174 --> s17: NextMessage
+  s174 --> s153: LeaveChat
+  s174 --> s173: OpenAdmin
+  s175 --> s16: NextMessage
+  s175 --> s154: LeaveAdmin
+  s175 --> s176: OpenChat
+  s176 --> s17: NextMessage
+  s176 --> s154: LeaveChat
+  s176 --> s175: OpenAdmin
+  s177 --> s8: NextMessage
+  s177 --> s139: LeaveAdmin
+  s177 --> s178: OpenChat
+  s178 --> s9: NextMessage
+  s178 --> s139: LeaveChat
+  s178 --> s177: OpenAdmin
+  s179 --> s8: NextMessage
+  s179 --> s140: LeaveAdmin
+  s179 --> s180: OpenChat
+  s180 --> s9: NextMessage
+  s180 --> s140: LeaveChat
+  s180 --> s179: OpenAdmin
+  s181 --> s120: NextMessage
+  s181 --> s155: LeaveAdmin
+  s181 --> s182: OpenChat
+  s181 --> s195: Refresh
+  s182 --> s121: NextMessage
+  s182 --> s155: LeaveChat
+  s182 --> s181: OpenAdmin
+  s182 --> s196: Refresh
+  s183 --> s120: NextMessage
+  s183 --> s156: LeaveAdmin
+  s183 --> s184: OpenChat
+  s183 --> s197: Refresh
+  s184 --> s121: NextMessage
+  s184 --> s156: LeaveChat
+  s184 --> s183: OpenAdmin
+  s184 --> s198: Refresh
+  s185 --> s10: NextMessage
+  s185 --> s139: CloseDock
+  s185 --> s195: OpenAdmin
+  s185 --> s196: OpenChat
+  s186 --> s10: NextMessage
+  s186 --> s140: CloseDock
+  s186 --> s197: OpenAdmin
+  s186 --> s198: OpenChat
+  s187 --> s57: BeginTimeout
+  s187 --> s161: LeaveAdmin
+  s187 --> s188: OpenChat
+  s187 --> s205: Type
+  s187 --> s212: SendNone
+  s187 --> s214: SendPaused
+  s187 --> s220: SendNoSkill
+  s187 --> s222: SendOn
+  s188 --> s58: BeginTimeout
+  s188 --> s161: LeaveChat
+  s188 --> s187: OpenAdmin
+  s188 --> s206: Type
+  s188 --> s213: SendNone
+  s188 --> s215: SendPaused
+  s188 --> s221: SendNoSkill
+  s188 --> s223: SendOn
+  s189 --> s63: BeginTimeout
+  s189 --> s161: CloseDock
+  s189 --> s203: OpenAdmin
+  s189 --> s204: OpenChat
+  s189 --> s207: Type
+  s189 --> s216: SendNone
+  s189 --> s217: SendPaused
+  s189 --> s224: SendNoSkill
+  s189 --> s225: SendOn
+  s190 --> s66: BeginTimeout
+  s190 --> s205: OpenAdmin
+  s190 --> s206: OpenChat
+  s190 --> s207: OpenDock
+  s190 --> s218: SendNone
+  s190 --> s219: SendPaused
+  s190 --> s226: SendNoSkill
+  s190 --> s227: SendOn
+  s191 --> s168: LeaveAdmin
+  s191 --> s192: OpenChat
+  s191 --> s203: StartBegin
+  s192 --> s168: LeaveChat
+  s192 --> s191: OpenAdmin
+  s192 --> s204: StartBegin
+  s193 --> s22: NextMessage
+  s193 --> s208: Refresh
+  s193 --> s212: OpenAdmin
+  s193 --> s213: OpenChat
+  s193 --> s216: OpenDock
+  s193 --> s218: Type
+  s194 --> s22: NextMessage
+  s194 --> s209: Refresh
+  s194 --> s214: OpenAdmin
+  s194 --> s215: OpenChat
+  s194 --> s217: OpenDock
+  s194 --> s219: Type
+  s195 --> s16: NextMessage
+  s195 --> s185: LeaveAdmin
+  s195 --> s196: OpenChat
+  s196 --> s17: NextMessage
+  s196 --> s185: LeaveChat
+  s196 --> s195: OpenAdmin
+  s197 --> s16: NextMessage
+  s197 --> s186: LeaveAdmin
+  s197 --> s198: OpenChat
+  s198 --> s17: NextMessage
+  s198 --> s186: LeaveChat
+  s198 --> s197: OpenAdmin
+  s199 --> s22: ClientTimeout
+  s199 --> s201: Reload
+  s199 --> s210: Finish
+  s199 --> s220: OpenAdmin
+  s199 --> s221: OpenChat
+  s199 --> s224: OpenDock
+  s199 --> s226: Type
+  s200 --> s22: ClientTimeout
+  s200 --> s202: Reload
+  s200 --> s211: Finish
+  s200 --> s222: OpenAdmin
+  s200 --> s223: OpenChat
+  s200 --> s225: OpenDock
+  s200 --> s227: Type
+  s201 --> s54: Timeout
+  s201 --> s228: OpenAdmin
+  s201 --> s229: OpenChat
+  s201 --> s232: OpenDock
+  s202 --> s54: Timeout
+  s202 --> s230: OpenAdmin
+  s202 --> s231: OpenChat
+  s202 --> s233: OpenDock
+  s203 --> s112: BeginTimeout
+  s203 --> s189: LeaveAdmin
+  s203 --> s204: OpenChat
+  s203 --> s234: Type
+  s203 --> s242: SendNone
+  s203 --> s244: SendPaused
+  s203 --> s264: SendNoSkill
+  s203 --> s266: SendOn
+  s204 --> s113: BeginTimeout
+  s204 --> s189: LeaveChat
+  s204 --> s203: OpenAdmin
+  s204 --> s235: Type
+  s204 --> s243: SendNone
+  s204 --> s245: SendPaused
+  s204 --> s265: SendNoSkill
+  s204 --> s267: SendOn
+  s205 --> s122: BeginTimeout
+  s205 --> s190: LeaveAdmin
+  s205 --> s206: OpenChat
+  s205 --> s258: SendNone
+  s205 --> s260: SendPaused
+  s205 --> s268: SendNoSkill
+  s205 --> s270: SendOn
+  s206 --> s123: BeginTimeout
+  s206 --> s190: LeaveChat
+  s206 --> s205: OpenAdmin
+  s206 --> s259: SendNone
+  s206 --> s261: SendPaused
+  s206 --> s269: SendNoSkill
+  s206 --> s271: SendOn
+  s207 --> s124: BeginTimeout
+  s207 --> s190: CloseDock
+  s207 --> s234: OpenAdmin
+  s207 --> s235: OpenChat
+  s207 --> s262: SendNone
+  s207 --> s263: SendPaused
+  s207 --> s272: SendNoSkill
+  s207 --> s273: SendOn
+  s208 --> s54: NextMessage
+  s208 --> s238: OpenAdmin
+  s208 --> s239: OpenChat
+  s208 --> s250: OpenDock
+  s208 --> s254: Type
+  s209 --> s54: NextMessage
+  s209 --> s240: OpenAdmin
+  s209 --> s241: OpenChat
+  s209 --> s251: OpenDock
+  s209 --> s255: Type
+  s210 --> s22: NextMessage
+  s210 --> s236: Refresh
+  s210 --> s246: OpenAdmin
+  s210 --> s247: OpenChat
+  s210 --> s252: OpenDock
+  s210 --> s256: Type
+  s211 --> s22: NextMessage
+  s211 --> s237: Refresh
+  s211 --> s248: OpenAdmin
+  s211 --> s249: OpenChat
+  s211 --> s253: OpenDock
+  s211 --> s257: Type
+  s212 --> s57: NextMessage
+  s212 --> s193: LeaveAdmin
+  s212 --> s213: OpenChat
+  s212 --> s238: Refresh
+  s212 --> s258: Type
+  s213 --> s58: NextMessage
+  s213 --> s193: LeaveChat
+  s213 --> s212: OpenAdmin
+  s213 --> s239: Refresh
+  s213 --> s259: Type
+  s214 --> s57: NextMessage
+  s214 --> s194: LeaveAdmin
+  s214 --> s215: OpenChat
+  s214 --> s240: Refresh
+  s214 --> s260: Type
+  s215 --> s58: NextMessage
+  s215 --> s194: LeaveChat
+  s215 --> s214: OpenAdmin
+  s215 --> s241: Refresh
+  s215 --> s261: Type
+  s216 --> s63: NextMessage
+  s216 --> s193: CloseDock
+  s216 --> s242: OpenAdmin
+  s216 --> s243: OpenChat
+  s216 --> s250: Refresh
+  s216 --> s262: Type
+  s217 --> s63: NextMessage
+  s217 --> s194: CloseDock
+  s217 --> s244: OpenAdmin
+  s217 --> s245: OpenChat
+  s217 --> s251: Refresh
+  s217 --> s263: Type
+  s218 --> s66: NextMessage
+  s218 --> s254: Refresh
+  s218 --> s258: OpenAdmin
+  s218 --> s259: OpenChat
+  s218 --> s262: OpenDock
+  s219 --> s66: NextMessage
+  s219 --> s255: Refresh
+  s219 --> s260: OpenAdmin
+  s219 --> s261: OpenChat
+  s219 --> s263: OpenDock
+  s220 --> s57: ClientTimeout
+  s220 --> s199: LeaveAdmin
+  s220 --> s221: OpenChat
+  s220 --> s228: Reload
+  s220 --> s246: Finish
+  s220 --> s268: Type
+  s221 --> s58: ClientTimeout
+  s221 --> s199: LeaveChat
+  s221 --> s220: OpenAdmin
+  s221 --> s229: Reload
+  s221 --> s247: Finish
+  s221 --> s269: Type
+  s222 --> s57: ClientTimeout
+  s222 --> s200: LeaveAdmin
+  s222 --> s223: OpenChat
+  s222 --> s230: Reload
+  s222 --> s248: Finish
+  s222 --> s270: Type
+  s223 --> s58: ClientTimeout
+  s223 --> s200: LeaveChat
+  s223 --> s222: OpenAdmin
+  s223 --> s231: Reload
+  s223 --> s249: Finish
+  s223 --> s271: Type
+  s224 --> s63: ClientTimeout
+  s224 --> s199: CloseDock
+  s224 --> s201: Reload
+  s224 --> s252: Finish
+  s224 --> s264: OpenAdmin
+  s224 --> s265: OpenChat
+  s224 --> s272: Type
+  s225 --> s63: ClientTimeout
+  s225 --> s200: CloseDock
+  s225 --> s202: Reload
+  s225 --> s253: Finish
+  s225 --> s266: OpenAdmin
+  s225 --> s267: OpenChat
+  s225 --> s273: Type
+  s226 --> s66: ClientTimeout
+  s226 --> s201: Reload
+  s226 --> s256: Finish
+  s226 --> s268: OpenAdmin
+  s226 --> s269: OpenChat
+  s226 --> s272: OpenDock
+  s227 --> s66: ClientTimeout
+  s227 --> s202: Reload
+  s227 --> s257: Finish
+  s227 --> s270: OpenAdmin
+  s227 --> s271: OpenChat
+  s227 --> s273: OpenDock
+  s228 --> s110: Timeout
+  s228 --> s201: LeaveAdmin
+  s228 --> s229: OpenChat
+  s229 --> s111: Timeout
+  s229 --> s201: LeaveChat
+  s229 --> s228: OpenAdmin
+  s230 --> s110: Timeout
+  s230 --> s202: LeaveAdmin
+  s230 --> s231: OpenChat
+  s231 --> s111: Timeout
+  s231 --> s202: LeaveChat
+  s231 --> s230: OpenAdmin
+  s232 --> s118: Timeout
+  s232 --> s201: CloseDock
+  s232 --> s274: OpenAdmin
+  s232 --> s275: OpenChat
+  s233 --> s118: Timeout
+  s233 --> s202: CloseDock
+  s233 --> s276: OpenAdmin
+  s233 --> s277: OpenChat
+  s234 --> s166: BeginTimeout
+  s234 --> s207: LeaveAdmin
+  s234 --> s235: OpenChat
+  s234 --> s298: SendNone
+  s234 --> s300: SendPaused
+  s234 --> s310: SendNoSkill
+  s234 --> s312: SendOn
+  s235 --> s167: BeginTimeout
+  s235 --> s207: LeaveChat
+  s235 --> s234: OpenAdmin
+  s235 --> s299: SendNone
+  s235 --> s301: SendPaused
+  s235 --> s311: SendNoSkill
+  s235 --> s313: SendOn
+  s236 --> s54: NextMessage
+  s236 --> s282: OpenAdmin
+  s236 --> s283: OpenChat
+  s236 --> s290: OpenDock
+  s236 --> s292: Type
+  s237 --> s54: NextMessage
+  s237 --> s284: OpenAdmin
+  s237 --> s285: OpenChat
+  s237 --> s291: OpenDock
+  s237 --> s293: Type
+  s238 --> s110: NextMessage
+  s238 --> s208: LeaveAdmin
+  s238 --> s239: OpenChat
+  s238 --> s294: Type
+  s239 --> s111: NextMessage
+  s239 --> s208: LeaveChat
+  s239 --> s238: OpenAdmin
+  s239 --> s295: Type
+  s240 --> s110: NextMessage
+  s240 --> s209: LeaveAdmin
+  s240 --> s241: OpenChat
+  s240 --> s296: Type
+  s241 --> s111: NextMessage
+  s241 --> s209: LeaveChat
+  s241 --> s240: OpenAdmin
+  s241 --> s297: Type
+  s242 --> s112: NextMessage
+  s242 --> s216: LeaveAdmin
+  s242 --> s243: OpenChat
+  s242 --> s278: Refresh
+  s242 --> s298: Type
+  s243 --> s113: NextMessage
+  s243 --> s216: LeaveChat
+  s243 --> s242: OpenAdmin
+  s243 --> s279: Refresh
+  s243 --> s299: Type
+  s244 --> s112: NextMessage
+  s244 --> s217: LeaveAdmin
+  s244 --> s245: OpenChat
+  s244 --> s280: Refresh
+  s244 --> s300: Type
+  s245 --> s113: NextMessage
+  s245 --> s217: LeaveChat
+  s245 --> s244: OpenAdmin
+  s245 --> s281: Refresh
+  s245 --> s301: Type
+  s246 --> s57: NextMessage
+  s246 --> s210: LeaveAdmin
+  s246 --> s247: OpenChat
+  s246 --> s282: Refresh
+  s246 --> s302: Type
+  s247 --> s58: NextMessage
+  s247 --> s210: LeaveChat
+  s247 --> s246: OpenAdmin
+  s247 --> s283: Refresh
+  s247 --> s303: Type
+  s248 --> s57: NextMessage
+  s248 --> s211: LeaveAdmin
+  s248 --> s249: OpenChat
+  s248 --> s284: Refresh
+  s248 --> s304: Type
+  s249 --> s58: NextMessage
+  s249 --> s211: LeaveChat
+  s249 --> s248: OpenAdmin
+  s249 --> s285: Refresh
+  s249 --> s305: Type
+  s250 --> s118: NextMessage
+  s250 --> s208: CloseDock
+  s250 --> s278: OpenAdmin
+  s250 --> s279: OpenChat
+  s250 --> s306: Type
+  s251 --> s118: NextMessage
+  s251 --> s209: CloseDock
+  s251 --> s280: OpenAdmin
+  s251 --> s281: OpenChat
+  s251 --> s307: Type
+  s252 --> s63: NextMessage
+  s252 --> s210: CloseDock
+  s252 --> s286: OpenAdmin
+  s252 --> s287: OpenChat
+  s252 --> s290: Refresh
+  s252 --> s308: Type
+  s253 --> s63: NextMessage
+  s253 --> s211: CloseDock
+  s253 --> s288: OpenAdmin
+  s253 --> s289: OpenChat
+  s253 --> s291: Refresh
+  s253 --> s309: Type
+  s254 --> s119: NextMessage
+  s254 --> s294: OpenAdmin
+  s254 --> s295: OpenChat
+  s254 --> s306: OpenDock
+  s255 --> s119: NextMessage
+  s255 --> s296: OpenAdmin
+  s255 --> s297: OpenChat
+  s255 --> s307: OpenDock
+  s256 --> s66: NextMessage
+  s256 --> s292: Refresh
+  s256 --> s302: OpenAdmin
+  s256 --> s303: OpenChat
+  s256 --> s308: OpenDock
+  s257 --> s66: NextMessage
+  s257 --> s293: Refresh
+  s257 --> s304: OpenAdmin
+  s257 --> s305: OpenChat
+  s257 --> s309: OpenDock
+  s258 --> s122: NextMessage
+  s258 --> s218: LeaveAdmin
+  s258 --> s259: OpenChat
+  s258 --> s294: Refresh
+  s259 --> s123: NextMessage
+  s259 --> s218: LeaveChat
+  s259 --> s258: OpenAdmin
+  s259 --> s295: Refresh
+  s260 --> s122: NextMessage
+  s260 --> s219: LeaveAdmin
+  s260 --> s261: OpenChat
+  s260 --> s296: Refresh
+  s261 --> s123: NextMessage
+  s261 --> s219: LeaveChat
+  s261 --> s260: OpenAdmin
+  s261 --> s297: Refresh
+  s262 --> s124: NextMessage
+  s262 --> s218: CloseDock
+  s262 --> s298: OpenAdmin
+  s262 --> s299: OpenChat
+  s262 --> s306: Refresh
+  s263 --> s124: NextMessage
+  s263 --> s219: CloseDock
+  s263 --> s300: OpenAdmin
+  s263 --> s301: OpenChat
+  s263 --> s307: Refresh
+  s264 --> s112: ClientTimeout
+  s264 --> s224: LeaveAdmin
+  s264 --> s228: Reload
+  s264 --> s265: OpenChat
+  s264 --> s286: Finish
+  s264 --> s310: Type
+  s265 --> s113: ClientTimeout
+  s265 --> s224: LeaveChat
+  s265 --> s229: Reload
+  s265 --> s264: OpenAdmin
+  s265 --> s287: Finish
+  s265 --> s311: Type
+  s266 --> s112: ClientTimeout
+  s266 --> s225: LeaveAdmin
+  s266 --> s230: Reload
+  s266 --> s267: OpenChat
+  s266 --> s288: Finish
+  s266 --> s312: Type
+  s267 --> s113: ClientTimeout
+  s267 --> s225: LeaveChat
+  s267 --> s231: Reload
+  s267 --> s266: OpenAdmin
+  s267 --> s289: Finish
+  s267 --> s313: Type
+  s268 --> s122: ClientTimeout
+  s268 --> s226: LeaveAdmin
+  s268 --> s228: Reload
+  s268 --> s269: OpenChat
+  s268 --> s302: Finish
+  s269 --> s123: ClientTimeout
+  s269 --> s226: LeaveChat
+  s269 --> s229: Reload
+  s269 --> s268: OpenAdmin
+  s269 --> s303: Finish
+  s270 --> s122: ClientTimeout
+  s270 --> s227: LeaveAdmin
+  s270 --> s230: Reload
+  s270 --> s271: OpenChat
+  s270 --> s304: Finish
+  s271 --> s123: ClientTimeout
+  s271 --> s227: LeaveChat
+  s271 --> s231: Reload
+  s271 --> s270: OpenAdmin
+  s271 --> s305: Finish
+  s272 --> s124: ClientTimeout
+  s272 --> s201: Reload
+  s272 --> s226: CloseDock
+  s272 --> s308: Finish
+  s272 --> s310: OpenAdmin
+  s272 --> s311: OpenChat
+  s273 --> s124: ClientTimeout
+  s273 --> s202: Reload
+  s273 --> s227: CloseDock
+  s273 --> s309: Finish
+  s273 --> s312: OpenAdmin
+  s273 --> s313: OpenChat
+  s274 --> s162: Timeout
+  s274 --> s232: LeaveAdmin
+  s274 --> s275: OpenChat
+  s275 --> s163: Timeout
+  s275 --> s232: LeaveChat
+  s275 --> s274: OpenAdmin
+  s276 --> s162: Timeout
+  s276 --> s233: LeaveAdmin
+  s276 --> s277: OpenChat
+  s277 --> s163: Timeout
+  s277 --> s233: LeaveChat
+  s277 --> s276: OpenAdmin
+  s278 --> s162: NextMessage
+  s278 --> s250: LeaveAdmin
+  s278 --> s279: OpenChat
+  s278 --> s318: Type
+  s279 --> s163: NextMessage
+  s279 --> s250: LeaveChat
+  s279 --> s278: OpenAdmin
+  s279 --> s319: Type
+  s280 --> s162: NextMessage
+  s280 --> s251: LeaveAdmin
+  s280 --> s281: OpenChat
+  s280 --> s320: Type
+  s281 --> s163: NextMessage
+  s281 --> s251: LeaveChat
+  s281 --> s280: OpenAdmin
+  s281 --> s321: Type
+  s282 --> s110: NextMessage
+  s282 --> s236: LeaveAdmin
+  s282 --> s283: OpenChat
+  s282 --> s322: Type
+  s283 --> s111: NextMessage
+  s283 --> s236: LeaveChat
+  s283 --> s282: OpenAdmin
+  s283 --> s323: Type
+  s284 --> s110: NextMessage
+  s284 --> s237: LeaveAdmin
+  s284 --> s285: OpenChat
+  s284 --> s324: Type
+  s285 --> s111: NextMessage
+  s285 --> s237: LeaveChat
+  s285 --> s284: OpenAdmin
+  s285 --> s325: Type
+  s286 --> s112: NextMessage
+  s286 --> s252: LeaveAdmin
+  s286 --> s287: OpenChat
+  s286 --> s314: Refresh
+  s286 --> s326: Type
+  s287 --> s113: NextMessage
+  s287 --> s252: LeaveChat
+  s287 --> s286: OpenAdmin
+  s287 --> s315: Refresh
+  s287 --> s327: Type
+  s288 --> s112: NextMessage
+  s288 --> s253: LeaveAdmin
+  s288 --> s289: OpenChat
+  s288 --> s316: Refresh
+  s288 --> s328: Type
+  s289 --> s113: NextMessage
+  s289 --> s253: LeaveChat
+  s289 --> s288: OpenAdmin
+  s289 --> s317: Refresh
+  s289 --> s329: Type
+  s290 --> s118: NextMessage
+  s290 --> s236: CloseDock
+  s290 --> s314: OpenAdmin
+  s290 --> s315: OpenChat
+  s290 --> s330: Type
+  s291 --> s118: NextMessage
+  s291 --> s237: CloseDock
+  s291 --> s316: OpenAdmin
+  s291 --> s317: OpenChat
+  s291 --> s331: Type
+  s292 --> s119: NextMessage
+  s292 --> s322: OpenAdmin
+  s292 --> s323: OpenChat
+  s292 --> s330: OpenDock
+  s293 --> s119: NextMessage
+  s293 --> s324: OpenAdmin
+  s293 --> s325: OpenChat
+  s293 --> s331: OpenDock
+  s294 --> s164: NextMessage
+  s294 --> s254: LeaveAdmin
+  s294 --> s295: OpenChat
+  s295 --> s165: NextMessage
+  s295 --> s254: LeaveChat
+  s295 --> s294: OpenAdmin
+  s296 --> s164: NextMessage
+  s296 --> s255: LeaveAdmin
+  s296 --> s297: OpenChat
+  s297 --> s165: NextMessage
+  s297 --> s255: LeaveChat
+  s297 --> s296: OpenAdmin
+  s298 --> s166: NextMessage
+  s298 --> s262: LeaveAdmin
+  s298 --> s299: OpenChat
+  s298 --> s318: Refresh
+  s299 --> s167: NextMessage
+  s299 --> s262: LeaveChat
+  s299 --> s298: OpenAdmin
+  s299 --> s319: Refresh
+  s300 --> s166: NextMessage
+  s300 --> s263: LeaveAdmin
+  s300 --> s301: OpenChat
+  s300 --> s320: Refresh
+  s301 --> s167: NextMessage
+  s301 --> s263: LeaveChat
+  s301 --> s300: OpenAdmin
+  s301 --> s321: Refresh
+  s302 --> s122: NextMessage
+  s302 --> s256: LeaveAdmin
+  s302 --> s303: OpenChat
+  s302 --> s322: Refresh
+  s303 --> s123: NextMessage
+  s303 --> s256: LeaveChat
+  s303 --> s302: OpenAdmin
+  s303 --> s323: Refresh
+  s304 --> s122: NextMessage
+  s304 --> s257: LeaveAdmin
+  s304 --> s305: OpenChat
+  s304 --> s324: Refresh
+  s305 --> s123: NextMessage
+  s305 --> s257: LeaveChat
+  s305 --> s304: OpenAdmin
+  s305 --> s325: Refresh
+  s306 --> s168: NextMessage
+  s306 --> s254: CloseDock
+  s306 --> s318: OpenAdmin
+  s306 --> s319: OpenChat
+  s307 --> s168: NextMessage
+  s307 --> s255: CloseDock
+  s307 --> s320: OpenAdmin
+  s307 --> s321: OpenChat
+  s308 --> s124: NextMessage
+  s308 --> s256: CloseDock
+  s308 --> s326: OpenAdmin
+  s308 --> s327: OpenChat
+  s308 --> s330: Refresh
+  s309 --> s124: NextMessage
+  s309 --> s257: CloseDock
+  s309 --> s328: OpenAdmin
+  s309 --> s329: OpenChat
+  s309 --> s331: Refresh
+  s310 --> s166: ClientTimeout
+  s310 --> s228: Reload
+  s310 --> s272: LeaveAdmin
+  s310 --> s311: OpenChat
+  s310 --> s326: Finish
+  s311 --> s167: ClientTimeout
+  s311 --> s229: Reload
+  s311 --> s272: LeaveChat
+  s311 --> s310: OpenAdmin
+  s311 --> s327: Finish
+  s312 --> s166: ClientTimeout
+  s312 --> s230: Reload
+  s312 --> s273: LeaveAdmin
+  s312 --> s313: OpenChat
+  s312 --> s328: Finish
+  s313 --> s167: ClientTimeout
+  s313 --> s231: Reload
+  s313 --> s273: LeaveChat
+  s313 --> s312: OpenAdmin
+  s313 --> s329: Finish
+  s314 --> s162: NextMessage
+  s314 --> s290: LeaveAdmin
+  s314 --> s315: OpenChat
+  s314 --> s332: Type
+  s315 --> s163: NextMessage
+  s315 --> s290: LeaveChat
+  s315 --> s314: OpenAdmin
+  s315 --> s333: Type
+  s316 --> s162: NextMessage
+  s316 --> s291: LeaveAdmin
+  s316 --> s317: OpenChat
+  s316 --> s334: Type
+  s317 --> s163: NextMessage
+  s317 --> s291: LeaveChat
+  s317 --> s316: OpenAdmin
+  s317 --> s335: Type
+  s318 --> s191: NextMessage
+  s318 --> s306: LeaveAdmin
+  s318 --> s319: OpenChat
+  s319 --> s192: NextMessage
+  s319 --> s306: LeaveChat
+  s319 --> s318: OpenAdmin
+  s320 --> s191: NextMessage
+  s320 --> s307: LeaveAdmin
+  s320 --> s321: OpenChat
+  s321 --> s192: NextMessage
+  s321 --> s307: LeaveChat
+  s321 --> s320: OpenAdmin
+  s322 --> s164: NextMessage
+  s322 --> s292: LeaveAdmin
+  s322 --> s323: OpenChat
+  s323 --> s165: NextMessage
+  s323 --> s292: LeaveChat
+  s323 --> s322: OpenAdmin
+  s324 --> s164: NextMessage
+  s324 --> s293: LeaveAdmin
+  s324 --> s325: OpenChat
+  s325 --> s165: NextMessage
+  s325 --> s293: LeaveChat
+  s325 --> s324: OpenAdmin
+  s326 --> s166: NextMessage
+  s326 --> s308: LeaveAdmin
+  s326 --> s327: OpenChat
+  s326 --> s332: Refresh
+  s327 --> s167: NextMessage
+  s327 --> s308: LeaveChat
+  s327 --> s326: OpenAdmin
+  s327 --> s333: Refresh
+  s328 --> s166: NextMessage
+  s328 --> s309: LeaveAdmin
+  s328 --> s329: OpenChat
+  s328 --> s334: Refresh
+  s329 --> s167: NextMessage
+  s329 --> s309: LeaveChat
+  s329 --> s328: OpenAdmin
+  s329 --> s335: Refresh
+  s330 --> s168: NextMessage
+  s330 --> s292: CloseDock
+  s330 --> s332: OpenAdmin
+  s330 --> s333: OpenChat
+  s331 --> s168: NextMessage
+  s331 --> s293: CloseDock
+  s331 --> s334: OpenAdmin
+  s331 --> s335: OpenChat
+  s332 --> s191: NextMessage
+  s332 --> s330: LeaveAdmin
+  s332 --> s333: OpenChat
+  s333 --> s192: NextMessage
+  s333 --> s330: LeaveChat
+  s333 --> s332: OpenAdmin
+  s334 --> s191: NextMessage
+  s334 --> s331: LeaveAdmin
+  s334 --> s335: OpenChat
+  s335 --> s192: NextMessage
+  s335 --> s331: LeaveChat
+  s335 --> s334: OpenAdmin
+  class s0 bugPath
+  class s4 bugPath
+  class s5 bugPath
+  class s15 bugPath
+  class s30 repeats
+  class s69 repeats

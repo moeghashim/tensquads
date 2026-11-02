@@ -1,0 +1,17 @@
+✔ a unique violation whose text says deadlock detected is not retried (0.469833ms)
+✔ a deadlock code retries the whole transaction three times (0.089875ms)
+✔ a deadlock code on a cause retries, and the words alone do not (0.119792ms)
+✔ deadlock retries set timeouts that stay inside the pending window (0.195ms)
+✔ wrangler config pins the project account (0.431292ms)
+✔ cf:deploy uses the deploy script (0.111833ms)
+✔ deploy stops when the project token is absent (0.413084ms)
+✔ deploy maps the project token and drops OAuth credentials (0.158292ms)
+✔ deploy migrates before it deploys and stops when migration fails (0.150333ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 149.689875
