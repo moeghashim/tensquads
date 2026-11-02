@@ -50,7 +50,7 @@ export async function conversationTransaction<T>(
 				async appendEvent(draft) {
 					const [event] = await appendEvents(tx, accountId, [draft], startedAt);
 					if (!event) throw new Error("The event was not saved.");
-					return event.id;
+					return { id: event.id, time: event.time };
 				},
 				async completeAgent(id, text) {
 					await tx

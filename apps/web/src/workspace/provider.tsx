@@ -1,4 +1,4 @@
-import { useRouter } from "@tanstack/react-router";
+import { useRouter, useRouterState } from "@tanstack/react-router";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import {
 	type Dispatch,
@@ -14,7 +14,7 @@ import {
 import { beginWorkspaceSend, finishWorkspaceSend } from "#/server/workspace.ts";
 
 import { missionBits } from "./agent-view.ts";
-import { useRefresh, useWorkspace, WorkspaceContext } from "./context.ts";
+import { type StartedTask, useRefresh, useWorkspace, WorkspaceContext } from "./context.ts";
 import { decorate, useInspect } from "./event-view.ts";
 import { runLiveTick } from "./live.ts";
 import { gateStyle, kindStyle, navStyle, pill, switchParts } from "./styles.ts";
@@ -35,8 +35,18 @@ export function WorkspaceProvider({
 	const [thinking, setThinking] = useState(false);
 	const [thinkingAgent, setThinkingAgent] = useState("");
 	const [pending, setPending] = useState(false);
-	const { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive, ruleForm, setRuleForm } =
-		useWorkspaceControls(frame);
+	const {
+		selEvent,
+		setSelEvent,
+		busFilter,
+		setBusFilter,
+		live,
+		setLive,
+		ruleForm,
+		setRuleForm,
+		startedTask,
+		setStartedTask,
+	} = useWorkspaceControls(frame);
 	const sending = useRef(false);
 	const { messages, setMessages, approvalCount, applyFrame } = useFrameMessages(frame, sending);
 
@@ -51,6 +61,7 @@ export function WorkspaceProvider({
 		setMessages,
 		setThinking,
 		setThinkingAgent,
+		setStartedTask,
 		setPending,
 		refreshFrame,
 		sending,
@@ -66,6 +77,7 @@ export function WorkspaceProvider({
 			toggleDock: () => setDockOpen((open) => !open),
 			thinking,
 			thinkingAgent,
+			startedTask,
 			pending,
 			messages,
 			approvalCount,
@@ -98,6 +110,7 @@ export function WorkspaceProvider({
 			setLive,
 			setRuleForm,
 			setSelEvent,
+			startedTask,
 			submit,
 			thinking,
 			thinkingAgent,
@@ -111,7 +124,21 @@ export function WorkspaceProvider({
 	);
 }
 
+function taskAcknowledged(state: ReturnType<typeof useRouter>["state"], startedTask: StartedTask | null) {
+	return state.matches.some(
+		(match) =>
+			match.routeId === "/_workspace/chat" &&
+			match.status === "success" &&
+			match.loaderData?.events.some((event) => event.id === startedTask?.id),
+	);
+}
+
 function useWorkspaceControls(frame: WorkspaceFrameData) {
+	const [startedTask, setStartedTask] = useState<StartedTask | null>(null);
+	const acknowledged = useRouterState({
+		select: (state) => taskAcknowledged(state, startedTask),
+	});
+	if (startedTask !== null && acknowledged) setStartedTask(null);
 	const [selEvent, setSelEvent] = useState("");
 	const [busFilter, setBusFilter] = useState("all");
 	const [live, setLive] = useState(false);
@@ -121,7 +148,18 @@ function useWorkspaceControls(frame: WorkspaceFrameData) {
 		action: "",
 		approval: "Ask first",
 	});
-	return { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive, ruleForm, setRuleForm };
+	return {
+		selEvent,
+		setSelEvent,
+		busFilter,
+		setBusFilter,
+		live,
+		setLive,
+		ruleForm,
+		setRuleForm,
+		startedTask,
+		setStartedTask,
+	};
 }
 
 function useSubmit(draft: string, thinking: boolean, hooks: SendHooks) {
@@ -234,6 +272,7 @@ interface SendHooks {
 	readonly setMessages: (messages: WorkspaceFrameData["messages"]) => void;
 	readonly setThinking: (value: boolean) => void;
 	readonly setThinkingAgent: (value: string) => void;
+	readonly setStartedTask: (task: StartedTask | null) => void;
 	readonly setPending: (value: boolean) => void;
 	readonly refreshFrame: () => Promise<WorkspaceFrameData>;
 	readonly sending: { current: boolean };
@@ -304,6 +343,7 @@ async function finishWorkingSend(
 ) {
 	hooks.setThinking(true);
 	hooks.setThinkingAgent(started.agentName);
+	hooks.setStartedTask(started.task);
 	await delay(replyWaitMs);
 	if (!hooks.mounted.current) {
 		return;

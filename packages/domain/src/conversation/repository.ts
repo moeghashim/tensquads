@@ -18,6 +18,11 @@ export interface PendingChatTask {
 	readonly skill: string;
 }
 
+export interface AppendedChatEvent {
+	readonly id: string;
+	readonly time: string;
+}
+
 export interface ConversationTransaction {
 	pendingTask(): Promise<PendingChatTask | null>;
 	agent(id: string): Promise<{ readonly id: string; readonly name: string; readonly isOn: boolean } | null>;
@@ -25,7 +30,7 @@ export interface ConversationTransaction {
 	store(): Promise<Readonly<Record<string, unknown>>>;
 	message(from: MessageFrom, text: string, agent?: string): Promise<void>;
 	messages(): Promise<readonly Message[]>;
-	appendEvent(draft: ChatEventDraft): Promise<string>;
+	appendEvent(draft: ChatEventDraft): Promise<AppendedChatEvent>;
 	completeAgent(id: string, text: string): Promise<void>;
 }
 

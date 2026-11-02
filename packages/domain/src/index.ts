@@ -14,8 +14,13 @@ export type {
 	Severity,
 } from "./catalog/types.ts";
 export type { ConversationEvent, MessageSent } from "./conversation/events.ts";
-export type { ChatEventDraft, ConversationRepository, ConversationTransaction } from "./conversation/repository.ts";
-export type { Message, MessageFrom, SendResult, Thread } from "./conversation/types.ts";
+export type {
+	AppendedChatEvent,
+	ChatEventDraft,
+	ConversationRepository,
+	ConversationTransaction,
+} from "./conversation/repository.ts";
+export type { Message, MessageFrom, SendResult, SentTask, Thread } from "./conversation/types.ts";
 export type { Eval, Source, Trigger } from "./inbound.ts";
 export { chatSource, chatTrigger, evalChatTrigger } from "./inbound.ts";
 export type { AccountOpened, PlatformEvent } from "./platform/events.ts";

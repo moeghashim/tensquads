@@ -6,6 +6,22 @@ Branch: `02-chat`. One pull request. One builder agent. Starts only when 02-fram
 
 `/chat` replaces the blank page from task 01. It shows the thread, the working line, four suggestion chips, the input and the hand-offs panel. It uses the send path, the thread and the draft from 02-frame, so the page and the dock show one conversation. It matches the design at 1440 px and 390 px. `make verify` returns 0.
 
+## Orchestrator decisions
+
+Moe delegated these build questions. Each item uses the recommended answer. These decisions are final for this screen.
+
+1. An empty thread shows the heading, the chips, and the input. Add no text.
+2. Empty hand-offs show the heading and the sentence, with no rows.
+3. Add no page scroll.
+4. Frame item 10 stays. `send()` follows the design order. This screen does not change `send()`.
+5. Frame item 11 stays. The chat input focus offset stays 6 px.
+6. Frame item 13 stays. The loader runs on the server. A write shows at once. A failed write reads the data again and shows no new text. A failed read uses the default router error page.
+7. Frame item 15 stays. An agent with no skills uses the skill value `-`. This screen does not change that path.
+8. Frame item 16 stays. A Result lists writes and has no set. This screen changes no stored value.
+9. Frame item 17 stays. A reload during Working leaves the Task and writes no Result. This screen does not change that path.
+
+The page adds no state and no action. The Chat and dock model stays the 02-frame model.
+
 ## Read
 
 - `docs/PLAN.md`: Decisions (all), Architecture (Conversation, "How agents send messages"), State models (Chat and dock), Phases (phase 2)
