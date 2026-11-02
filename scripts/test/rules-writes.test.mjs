@@ -12,6 +12,7 @@ const bundle = await build({
 			import { WorkspaceContext } from "./apps/web/src/workspace/context.ts";
 			import { gateStyle, switchParts } from "./apps/web/src/workspace/styles.ts";
 			import { RulesScreen } from "./apps/web/src/screens/rules/screen.tsx";
+			import { rulesWriteCounter } from "./apps/web/src/screens/rules/snapshot.ts";
 			import * as queue from "./apps/web/src/screens/rules/write-queue.ts";
 			window.queue = queue;
 			window.calls = [];
@@ -36,14 +37,23 @@ const bundle = await build({
 				const [showRules, setShowRules] = useState(true);
 				const [rules, setRules] = useState([]);
 				const [limits, setLimits] = useState([]);
-				const page = useMemo(() => ({ rules, limits }), [rules, limits]);
-				window.loadRules = setRules;
-				window.loadLimits = setLimits;
+				const [readCounter, setReadCounter] = useState(0);
+				const page = useMemo(() => ({ rules, limits, readCounter }), [rules, limits, readCounter]);
+				window.beginRulesRead = () => {
+					const counter = rulesWriteCounter();
+					const reader = {
+						loadRules: (rows) => { setReadCounter(counter); setRules(rows); },
+						loadLimits: (rows) => { setReadCounter(counter); setLimits(rows); },
+					};
+					Object.assign(window, reader);
+					return reader;
+				};
+				useMemo(() => window.beginRulesRead(), []);
 				const [ruleForm, setRuleForm] = useState({
 					when: "A new order arrives", agent: "orders", action: "", approval: "Ask first"
 				});
 				return <WorkspaceContext.Provider value={{
-					ruleForm, setRuleForm, refresh: () => window.refresh(),
+					ruleForm, setRuleForm, refresh: () => { window.beginRulesRead(); return window.refresh(); },
 					frame: { masterName: "Master", agents: [{id: "orders", name: "Orders"}, {id: "support", name: "Support"}] },
 					helpers: { gateStyle, switchParts }
 				}}>
@@ -1096,3 +1106,105 @@ test("a failed recovery read makes the next write and the next loader read once"
 		assert.equal(await page.evaluate(() => window.refreshCalls), 3);
 	});
 });
+
+const snapshotAxes = [
+	{ kind: "rule" },
+	{ kind: "limit", id: "lim-refund", initial: 50, saved: 70, later: 90 },
+	{ kind: "limit", id: "lim-ads", initial: 200, saved: 240, later: 260 },
+	{ kind: "limit", id: "lim-reorder", initial: 500, saved: 600, later: 700 },
+];
+
+async function seedSnapshot(page) {
+	await page.evaluate(() => window.mount());
+	await page.evaluate(async () => {
+		window.seedRules = [window.ruleRow({ id: "r1", action: "Seed", on: true })];
+		window.seedLimits = [
+			{ id: "lim-refund", key: "policy.refund_auto_limit", label: "Refund", min: 0, max: 200, step: 5, value: 50 },
+			{ id: "lim-ads", key: "policy.daily_ad_cap", label: "Ads", min: 0, max: 1000, step: 10, value: 200 },
+			{ id: "lim-reorder", key: "policy.reorder_limit", label: "Reorder", min: 0, max: 2000, step: 50, value: 500 },
+		];
+		window.loadRules(window.seedRules);
+		window.loadLimits(window.seedLimits);
+		window.refreshCalls = 0;
+		window.refresh = async () => { window.refreshCalls += 1; };
+		await window.flush();
+	});
+	await expect(page.getByRole("slider")).toHaveCount(3);
+}
+
+async function saveSnapshotAxis(page, axis) {
+	if (axis.kind === "rule") {
+		await page.getByRole("button", { name: "Rule enabled" }).first().click();
+		await expect(page.getByRole("button", { name: "Rule enabled" }).first()).toHaveAttribute("aria-pressed", "false");
+	} else {
+		await page.locator(`#${axis.id}`).fill(String(axis.saved));
+		await expect(page.locator(`#${axis.id}`)).toHaveValue(String(axis.saved));
+	}
+	await page.evaluate(() => window.flush());
+}
+
+for (const axis of snapshotAxes) {
+	const name = axis.id ?? "rules";
+	test(`snapshot: a held dock read preserves a saved ${name}`, async () => {
+		await withPage(async (page) => {
+			await seedSnapshot(page);
+			await page.evaluate(() => { window.dockRead = window.beginRulesRead(); });
+			await saveSnapshotAxis(page, axis);
+			if (axis.kind === "rule") {
+				await page.getByLabel("Then", { exact: true }).fill("Saved new rule");
+				await page.getByRole("button", { name: "Add rule", exact: true }).click();
+				await page.evaluate(() => window.flush());
+				await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(2);
+			}
+			await page.evaluate(async () => {
+				window.dockRead.loadRules([...window.seedRules]);
+				window.dockRead.loadLimits(window.seedLimits.map((row) => ({ ...row })));
+				await window.flush();
+			});
+			if (axis.kind === "rule") {
+				await expect(page.getByRole("button", { name: "Rule enabled" }).first()).toHaveAttribute("aria-pressed", "false");
+				await expect(page.getByText("then Saved new rule", { exact: true })).toHaveCount(1);
+			} else {
+				await expect(page.locator(`#${axis.id}`)).toHaveValue(String(axis.saved));
+			}
+			assert.equal(await page.evaluate(() => window.refreshCalls), 0);
+		});
+	});
+
+	test(`snapshot: a fresh recovery read accepts later server ${name}`, async () => {
+		await withPage(async (page) => {
+			await seedSnapshot(page);
+			await page.evaluate(() => {
+				window.send = (data) => {
+					if (typeof data.action === "string") return Promise.reject(new Error("Add failed"));
+					if (typeof data.value === "number") return Promise.resolve({ key: data.key, value: data.value });
+					return Promise.resolve(window.ruleRow(data));
+				};
+				window.refresh = () => {
+					window.refreshCalls += 1;
+					if (window.refreshCalls === 1) return Promise.reject(new Error("Read failed"));
+					window.recoveryRead = { loadRules: window.loadRules, loadLimits: window.loadLimits };
+					return new Promise(() => {});
+				};
+			});
+			await page.getByLabel("Then", { exact: true }).fill("Rejected draft");
+			await page.getByRole("button", { name: "Add rule", exact: true }).click();
+			await page.waitForFunction(() => window.refreshCalls === 1);
+			await page.evaluate(() => window.flush());
+			await saveSnapshotAxis(page, axis);
+			await page.waitForFunction(() => window.refreshCalls === 2);
+			await page.evaluate(async (axis) => {
+				window.recoveryRead.loadRules([...window.seedRules, window.ruleRow({ id: "r9", action: "Server rule" })]);
+				window.recoveryRead.loadLimits(window.seedLimits.map((row) => row.id === axis.id ? { ...row, value: axis.later } : { ...row }));
+				await window.flush();
+			}, axis);
+			if (axis.kind === "rule") {
+				await expect(page.getByRole("button", { name: "Rule enabled" }).first()).toHaveAttribute("aria-pressed", "true");
+				await expect(page.getByText("then Server rule", { exact: true })).toHaveCount(1);
+			} else {
+				await expect(page.locator(`#${axis.id}`)).toHaveValue(String(axis.later));
+			}
+			assert.equal(await page.evaluate(() => window.refreshCalls), 2);
+		});
+	});
+}

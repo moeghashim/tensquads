@@ -288,10 +288,10 @@ Next ==
 WaitEnds == [](wait # "none" => <>(wait = "none"))
 
 Spec == Init /\ [][Next]_vars
-    /\ WF_vars(CommitAdd) /\ WF_vars(FailAdd) /\ WF_vars(LateAdd)
-    /\ WF_vars(CommitRefund) /\ WF_vars(FailRefund) /\ WF_vars(LateRefund)
-    /\ WF_vars(CommitAds) /\ WF_vars(FailAds) /\ WF_vars(LateAds)
-    /\ WF_vars(CommitToggle) /\ WF_vars(FailToggle) /\ WF_vars(LateToggle)
-    /\ WF_vars(ReadOk) /\ WF_vars(ReadFail)
+    /\ WF_vars(LateAdd)
+    /\ WF_vars(LateRefund)
+    /\ WF_vars(LateAds)
+    /\ WF_vars(LateToggle)
+    /\ WF_vars(ReadFail)
 
 ====

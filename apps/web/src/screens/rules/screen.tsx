@@ -5,7 +5,7 @@ import { addWorkspaceRule, type RulesPageData, type RulesRule } from "#/server/r
 import { useWorkspace } from "#/workspace/context.ts";
 import type { RuleForm } from "#/workspace/types.ts";
 
-import { useRulesSnapshot } from "./snapshot.ts";
+import { type RulesSnapshotPage, useRulesSnapshot } from "./snapshot.ts";
 import {
 	bounded,
 	isRulesRule,
@@ -85,7 +85,7 @@ const pendingShown = new Map<symbol, boolean>();
 const rowOwners = new Map<string, symbol>();
 let pendingSerial = 0;
 
-export function RulesScreen({ page }: { readonly page: RulesPageData }) {
+export function RulesScreen({ page }: { readonly page: RulesSnapshotPage }) {
 	useRuleWrites();
 	const workspace = useWorkspace();
 	const { snapshot, refresh } = useRulesSnapshot(page, workspace.refresh);
