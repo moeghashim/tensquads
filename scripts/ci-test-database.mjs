@@ -26,6 +26,14 @@ export function buildDatabaseName({ runId, attempt, os }) {
 	return name;
 }
 
+function decodeDatabaseName(value) {
+	try {
+		return decodeURIComponent(value);
+	} catch {
+		throw new Error("The database name encoding is not valid.");
+	}
+}
+
 function databaseName(value) {
 	let parsed;
 	try {
@@ -33,7 +41,7 @@ function databaseName(value) {
 	} catch {
 		throw new Error("The database URL is not valid.");
 	}
-	const name = parsed.pathname.replace(/^\//, "").split("/")[0] ?? "";
+	const name = decodeDatabaseName(parsed.pathname.replace(/^\//, "").split("/")[0] ?? "");
 	if (name.length === 0) throw new Error("The database URL has no database name.");
 	return name;
 }
@@ -70,13 +78,14 @@ function quoteIdent(name) {
 
 export function refuseNeon({ name, sourceUrl, neonUrl }) {
 	const sourceDatabase = databaseName(sourceUrl);
+	const privateDatabase = decodeDatabaseName(name);
 	// The production database is named neondb. CI does not receive the Neon URL.
-	if (sourceDatabase === "neondb" || name === "neondb") {
+	if (sourceDatabase === "neondb" || privateDatabase === "neondb") {
 		throw new Error("refusing the Neon connection");
 	}
 	if (!neonUrl) return;
 	const neonDatabase = databaseName(neonUrl);
-	if (sourceDatabase === neonDatabase || name === neonDatabase) {
+	if (sourceDatabase === neonDatabase || privateDatabase === neonDatabase) {
 		throw new Error("refusing the Neon connection");
 	}
 }

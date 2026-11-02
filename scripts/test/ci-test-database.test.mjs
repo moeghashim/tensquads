@@ -106,6 +106,51 @@ test("create and drop refuse the Neon database and do not connect", async () => 
 	);
 });
 
+for (const [label, sourcePath, neonPath, error] of [
+	["encoded neondb without a Neon URL", "%6eeondb", "", /refusing the Neon connection/],
+	["encoded neondb with a Neon URL", "%6eeondb", "neondb", /refusing the Neon connection/],
+	["encoded protected source", "%70rotected", "protected", /refusing the Neon connection/],
+	["encoded Neon source", "protected", "%70rotected", /refusing the Neon connection/],
+	["encoded Neon private name", "testdb", "%63i_41431113192_1_macos", /refusing the Neon connection/],
+	["invalid source encoding", "%ZZ", "", /not valid/],
+	["invalid Neon encoding", "testdb", "%ZZ", /not valid/],
+]) {
+	for (const operation of [createPrivateDatabase, dropPrivateDatabase]) {
+		test(`${operation.name} refuses ${label} before query`, async () => {
+			let queries = 0;
+			await assert.rejects(
+				() => operation({
+					env: env({
+						TEST_DATABASE_URL: `postgres://role@database.invalid/${sourcePath}`,
+						NEON_POSTGRES_CONNECTION_STRING: neonPath ? `postgres://role@database.invalid/${neonPath}` : "",
+					}),
+					query: async () => { queries += 1; },
+					mask: () => undefined,
+					writeEnv: () => undefined,
+				}),
+				error,
+			);
+			assert.equal(queries, 0);
+		});
+	}
+}
+
+test("the guard decodes private names before production comparisons", () => {
+	for (const [name, neonUrl] of [
+		["%6eeondb", ""],
+		["%63i_protected", "postgres://role@database.invalid/ci_protected"],
+	]) {
+		assert.throws(
+			() => refuseNeon({ name, sourceUrl: "postgres://role@database.invalid/testdb", neonUrl }),
+			/refusing the Neon connection/,
+		);
+	}
+	assert.throws(
+		() => refuseNeon({ name: "%ZZ", sourceUrl: "postgres://role@database.invalid/testdb", neonUrl: "" }),
+		/not valid/,
+	);
+});
+
 test("drop refuses every name outside the ci_ prefix", () => {
 	for (const name of ["neondb", "postgres", "testdb", "CI_1_1_linux", "ci-1", ""]) {
 		assert.throws(() => refuseDrop(name), /outside the ci_ prefix/);
