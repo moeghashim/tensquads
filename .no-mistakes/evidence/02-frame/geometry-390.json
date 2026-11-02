@@ -1,0 +1,127 @@
+{
+  "viewport": "390",
+  "built": {
+    "panel": {
+      "x": 20,
+      "y": 206,
+      "width": 350,
+      "right": 370,
+      "bottom": 766
+    },
+    "agentRows": [
+      {
+        "x": 16,
+        "width": 260,
+        "dotRight": 10,
+        "dotWidth": 8
+      },
+      {
+        "x": 16,
+        "width": 260,
+        "dotRight": 10,
+        "dotWidth": 8
+      },
+      {
+        "x": 16,
+        "width": 260,
+        "dotRight": 10,
+        "dotWidth": 8
+      },
+      {
+        "x": 16,
+        "width": 260,
+        "dotRight": 10,
+        "dotWidth": 8
+      },
+      {
+        "x": 16,
+        "width": 260,
+        "dotRight": 10,
+        "dotWidth": 8
+      }
+    ],
+    "agentGaps": [
+      4,
+      4,
+      4,
+      4
+    ],
+    "messageGaps": [
+      10,
+      10,
+      10,
+      10
+    ],
+    "chipGaps": [
+      6,
+      6
+    ],
+    "chipTops": [
+      678,
+      678,
+      678
+    ]
+  },
+  "design": {
+    "panel": {
+      "x": 20,
+      "y": 206,
+      "width": 350,
+      "right": 370,
+      "bottom": 766
+    },
+    "agentRows": [
+      {
+        "x": 16,
+        "width": 260,
+        "dotRight": 10,
+        "dotWidth": 8
+      },
+      {
+        "x": 16,
+        "width": 260,
+        "dotRight": 10,
+        "dotWidth": 8
+      },
+      {
+        "x": 16,
+        "width": 260,
+        "dotRight": 10,
+        "dotWidth": 8
+      },
+      {
+        "x": 16,
+        "width": 260,
+        "dotRight": 10,
+        "dotWidth": 8
+      },
+      {
+        "x": 16,
+        "width": 260,
+        "dotRight": 10,
+        "dotWidth": 8
+      }
+    ],
+    "agentGaps": [
+      4,
+      4,
+      4,
+      4
+    ],
+    "messageGaps": [
+      10,
+      10,
+      10,
+      10
+    ],
+    "chipGaps": [
+      6,
+      6
+    ],
+    "chipTops": [
+      678,
+      678,
+      678
+    ]
+  }
+}

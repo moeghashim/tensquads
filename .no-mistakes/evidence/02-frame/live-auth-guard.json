@@ -1,0 +1,27 @@
+[
+  {
+    "requested": "/overview",
+    "landed": "/signin",
+    "workspaceVisible": 0
+  },
+  {
+    "requested": "/chat",
+    "landed": "/signin",
+    "workspaceVisible": 0
+  },
+  {
+    "requested": "/agents",
+    "landed": "/signin",
+    "workspaceVisible": 0
+  },
+  {
+    "requested": "/traffic",
+    "landed": "/signin",
+    "workspaceVisible": 0
+  },
+  {
+    "requested": "/rules",
+    "landed": "/signin",
+    "workspaceVisible": 0
+  }
+]
