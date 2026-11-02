@@ -1,0 +1,74 @@
+[
+  {
+    "surface": "server-rendered product HTML (no hydration or authenticated route)",
+    "name": "seed",
+    "width": 1440,
+    "noHorizontalScroll": true
+  },
+  {
+    "surface": "server-rendered product HTML (no hydration or authenticated route)",
+    "name": "seed",
+    "width": 390,
+    "noHorizontalScroll": true
+  },
+  {
+    "surface": "server-rendered product HTML (no hydration or authenticated route)",
+    "name": "approved",
+    "width": 1440,
+    "noHorizontalScroll": true
+  },
+  {
+    "surface": "server-rendered product HTML (no hydration or authenticated route)",
+    "name": "approved",
+    "width": 390,
+    "noHorizontalScroll": true
+  },
+  {
+    "surface": "server-rendered product HTML (no hydration or authenticated route)",
+    "name": "empty-inbox",
+    "width": 1440,
+    "noHorizontalScroll": true
+  },
+  {
+    "surface": "server-rendered product HTML (no hydration or authenticated route)",
+    "name": "empty-inbox",
+    "width": 390,
+    "noHorizontalScroll": true
+  },
+  {
+    "surface": "server-rendered product HTML (no hydration or authenticated route)",
+    "name": "revising",
+    "width": 1440,
+    "noHorizontalScroll": true
+  },
+  {
+    "surface": "server-rendered product HTML (no hydration or authenticated route)",
+    "name": "revising",
+    "width": 390,
+    "noHorizontalScroll": true
+  },
+  {
+    "surface": "server-rendered product HTML (no hydration or authenticated route)",
+    "name": "no-store",
+    "width": 1440,
+    "noHorizontalScroll": true
+  },
+  {
+    "surface": "server-rendered product HTML (no hydration or authenticated route)",
+    "name": "no-store",
+    "width": 390,
+    "noHorizontalScroll": true
+  },
+  {
+    "surface": "server-rendered product HTML (no hydration or authenticated route)",
+    "name": "blank",
+    "width": 1440,
+    "noHorizontalScroll": true
+  },
+  {
+    "surface": "server-rendered product HTML (no hydration or authenticated route)",
+    "name": "blank",
+    "width": 390,
+    "noHorizontalScroll": true
+  }
+]

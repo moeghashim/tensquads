@@ -1,0 +1,66 @@
+import React from 'react';
+import { renderToString } from 'react-dom/server';
+import { createRootRoute, createRoute, createRouter, createMemoryHistory, RouterProvider } from '@tanstack/react-router';
+import { readWorkspaceFrame, createRepositories, saveWorkspace, schema } from '@tensquads/adapters';
+import { Kernel } from '@tensquads/kernel';
+import { eq,and } from 'drizzle-orm';
+import { openPglite } from '../packages/adapters/test/pglite.ts';
+import { workspaceFromDesign } from '../packages/seed/src/workspace.ts';
+import { readOverview } from '../apps/web/src/server/overview-read.ts';
+import { OverviewPage } from '../apps/web/src/screens/overview/page.tsx';
+import { WorkspaceProvider } from '../apps/web/src/workspace/provider.tsx';
+import { WorkspaceShell } from '../apps/web/src/workspace/shell.tsx';
+import { readFileSync,writeFileSync } from 'node:fs';
+import assert from 'node:assert/strict';
+const evidence='/Users/moeghashim/.no-mistakes/evidence/01M6E1MX216VYJ1R76P4Y74P86';
+const opened=await openPglite(); const db=opened.db;
+const scope={accountId:'demo',mode:'account' as const};
+const kernel=new Kernel(createRepositories(db));
+const transcript:any[]=[];
+async function reset(){await saveWorkspace(db,workspaceFromDesign());}
+async function render(name:string, selected=scope){
+ const data=await readOverview(db,selected); const frame=await readWorkspaceFrame(db,selected);
+ const root=createRootRoute();
+ const route=createRoute({getParentRoute:()=>root,path:'/overview',component:()=> <WorkspaceProvider frame={frame}><WorkspaceShell><OverviewPage data={data}/></WorkspaceShell></WorkspaceProvider>});
+ const router=createRouter({routeTree:root.addChildren([route]),history:createMemoryHistory({initialEntries:['/overview']})});
+ await router.load();
+ const markup=renderToString(<RouterProvider router={router}/>);
+ assert.ok(markup.includes(data.greeting));
+ const css=readFileSync('apps/web/src/design/public.css','utf8')+readFileSync('apps/web/src/workspace/workspace.css','utf8');
+ writeFileSync(`${evidence}/current-${name}.html`,`<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"><style>${css}</style></head><body>${markup}</body></html>`);
+ return data;
+}
+try{
+ await reset(); const seed=await render('overview-seed');
+ assert.equal(seed.tiles[4].value,'331'); assert.equal(seed.count,4);
+ transcript.push({action:'read seeded overview',greeting:seed.greeting,tiles:seed.tiles,bars:seed.bars.length,inbox:seed.count,cards:seed.agents.length});
+ await kernel.decide(scope,'ap1',true); await kernel.decide(scope,'ap1',true);
+ const approved=await render('overview-approved');
+ assert.equal(approved.tiles[4].value,'332');assert.equal(approved.count,3);
+ const mandate=await createRepositories(db).policy.mandate(scope,'ap1');assert.equal(mandate?.saidYes,'Moe');assert.equal(mandate?.limitValue,50);
+ const events=await db.select().from(schema.busEvents).where(eq(schema.busEvents.accountId,'demo'));
+ assert.equal(events.filter(e=>/^e\d+$/.test(e.id)).length,1);
+ transcript.push({action:'approve ap1 twice',tasks:approved.tiles[4].value,count:approved.count,support:approved.agents.find(a=>a.id==='support'),mandate,events:events.filter(e=>/^e\d+$/.test(e.id))});
+ await kernel.decide(scope,'ap2',false); assert.equal(await createRepositories(db).policy.mandate(scope,'ap2'),null);
+ const declined=await readOverview(db,scope);assert.equal(declined.tiles[4].value,'332');assert.equal(declined.count,2);
+ transcript.push({action:'decline ap2',tasks:declined.tiles[4].value,count:declined.count,marketing:declined.agents.find(a=>a.id==='marketing'),mandate:null});
+ await kernel.decideMission(scope,'mp-inventory',true);await kernel.decide(scope,'ap3',false);
+ const empty=await render('overview-empty-inbox');assert.equal(empty.empty,true);assert.equal(empty.count,0);
+ const inventory=empty.agents.find(a=>a.id==='inventory');assert.equal(inventory?.contribution,0);assert.ok(inventory?.mission.includes('Never run out'));
+ transcript.push({action:'approve mission and finish inbox',empty:empty.empty,emptyText:empty.emptyText,inventory});
+ await reset();await kernel.decideMission(scope,'mp-inventory',false);for(const id of ['ap1','ap2','ap3']) await kernel.decide(scope,id,false);
+ const revising=await render('overview-revising');assert.equal(revising.empty,false);assert.equal(revising.count,0);assert.equal(revising.proposals[0].revising,true);
+ transcript.push({action:'request revision then decline all approvals',empty:revising.empty,count:revising.count,proposals:revising.proposals});
+ await reset();await db.delete(schema.stateEntries).where(and(eq(schema.stateEntries.accountId,'demo'),eq(schema.stateEntries.key,'policy.refund_auto_limit')));
+ await assert.rejects(()=>kernel.decide(scope,'ap1',true));
+ const rollback=await readOverview(db,scope);assert.equal(rollback.tiles[4].value,'331');assert.equal(rollback.count,4);assert.equal(await createRepositories(db).policy.mandate(scope,'ap1'),null);
+ transcript.push({action:'approve without required limit',tasks:rollback.tiles[4].value,count:rollback.count,mandate:null});
+ await reset();const noStore=await render('overview-no-store',{accountId:'leen',mode:'account'});assert.equal(noStore.bars.length,0);assert.equal(noStore.tiles[4].value,'0');
+ transcript.push({action:'read no-store account',tiles:noStore.tiles,bars:noStore.bars.length,empty:noStore.empty});
+ const stored=await createRepositories(db).platform.overviewTiles(scope); await db.update(schema.overviewTiles).set({tiles:stored.map(t=>t.label==='Orders'?{...t,value:' ',delta:''}:t)}).where(eq(schema.overviewTiles.accountId,'demo'));
+ await db.update(schema.missionProposals).set({targets:[[' ',' ']]}).where(eq(schema.missionProposals.accountId,'demo'));
+ const blank=await render('overview-blank');const orders=blank.tiles.find(t=>t.label==='Orders');assert.equal(orders?.value,'—');assert.equal(orders?.delta,'\u00a0');assert.equal(blank.proposals[0].chips[0],'—');
+ transcript.push({action:'read stored blank Orders and target chip',orders,chip:blank.proposals[0].chips[0]});
+ writeFileSync(`${evidence}/current-policy-session.json`,JSON.stringify(transcript,null,2));
+ console.log('Real Kernel commands, repository reads, transaction rollback, and overview SSR completed.');
+}finally{await opened.close();}
