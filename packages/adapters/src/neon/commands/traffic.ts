@@ -2,6 +2,7 @@ import { type AccountScope, type BusEvent, type BusKind, requireScope } from "@t
 import { asc, eq } from "drizzle-orm";
 import designFile from "../../../../seed/src/design.json" with { type: "json" };
 import { createMemoryBus, type ScriptedBusEvent } from "../../memory-bus.ts";
+import { PENDING_TASK_WINDOW_MS } from "../../pending-window.ts";
 import { traceFor } from "../../trace.ts";
 import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
@@ -103,7 +104,11 @@ async function writeNextEvent(tx: Tx, accountId: string): Promise<void> {
 export async function nextEvent(db: AppDatabase, scope: AccountScope): Promise<void> {
 	const checked = requireScope(scope);
 	if (checked.mode !== "account") return;
-	await workspaceTransaction(db, async (tx) => {
-		await writeNextEvent(tx, checked.accountId);
-	});
+	await workspaceTransaction(
+		db,
+		async (tx) => {
+			await writeNextEvent(tx, checked.accountId);
+		},
+		{ deadlineMs: PENDING_TASK_WINDOW_MS },
+	);
 }
