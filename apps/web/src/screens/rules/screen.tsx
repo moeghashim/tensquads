@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useState } from "react";
 
 import { css } from "#/screens/css.ts";
 import { addWorkspaceRule, type RulesPageData, type RulesRule } from "#/server/rules.ts";
@@ -51,16 +51,19 @@ const sliderStyle = "width: 100%; accent-color: #181818";
 const limitNote = "margin: 0; font-size: 12px; color: #5d5d5d";
 const knob = "width: 16px; height: 16px; border-radius: 999px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2)";
 
+type SetRuleForm = Dispatch<SetStateAction<RuleForm>>;
+
+const submissions = new WeakMap<SetRuleForm, { readonly id: symbol; actionEdited: boolean }>();
+
 interface PendingRule {
-	readonly baseCount: number;
+	readonly id: symbol;
+	readonly existingIds: ReadonlySet<string>;
 	readonly row: RulesRule;
 }
 
 export function RulesScreen({ page }: { readonly page: RulesPageData }) {
 	useRuleWrites();
 	const workspace = useWorkspace();
-	const formRef = useRef(workspace.ruleForm);
-	formRef.current = workspace.ruleForm;
 	const [pending, setPending] = useState<PendingRule | null>(null);
 	const rules = visibleRules(page.rules, pending);
 	return (
@@ -86,8 +89,7 @@ export function RulesScreen({ page }: { readonly page: RulesPageData }) {
 						form={workspace.ruleForm}
 						agents={workspace.frame.agents}
 						setForm={workspace.setRuleForm}
-						formRef={formRef}
-						baseCount={page.rules.length}
+						loaded={page.rules}
 						setPending={setPending}
 						refresh={workspace.refresh}
 					/>
@@ -99,7 +101,17 @@ export function RulesScreen({ page }: { readonly page: RulesPageData }) {
 }
 
 function visibleRules(rules: readonly RulesRule[], pending: PendingRule | null): readonly RulesRule[] {
-	if (!pending || rules.length > pending.baseCount) {
+	if (
+		!pending ||
+		rules.some(
+			(rule) =>
+				!pending.existingIds.has(rule.id) &&
+				rule.when === pending.row.when &&
+				rule.agent === pending.row.agent &&
+				rule.action === pending.row.action &&
+				rule.approval === pending.row.approval,
+		)
+	) {
 		return rules;
 	}
 	return [...rules, pending.row];
@@ -208,17 +220,15 @@ function NewRule({
 	form,
 	agents,
 	setForm,
-	formRef,
-	baseCount,
+	loaded,
 	setPending,
 	refresh,
 }: {
 	readonly form: RuleForm;
 	readonly agents: readonly { readonly id: string; readonly name: string }[];
-	readonly setForm: (form: RuleForm) => void;
-	readonly formRef: { readonly current: RuleForm };
-	readonly baseCount: number;
-	readonly setPending: (pending: PendingRule | null) => void;
+	readonly setForm: SetRuleForm;
+	readonly loaded: readonly RulesRule[];
+	readonly setPending: Dispatch<SetStateAction<PendingRule | null>>;
 	readonly refresh: () => Promise<void>;
 }) {
 	return (
@@ -260,7 +270,13 @@ function NewRule({
 						data-handler="onAction"
 						data-event="onChange"
 						placeholder="What the agent should do"
-						onChange={(event) => setForm({ ...form, action: event.target.value })}
+						onChange={(event) => {
+							const owner = submissions.get(setForm);
+							if (owner) {
+								owner.actionEdited = true;
+							}
+							setForm({ ...form, action: event.target.value });
+						}}
 						style={css(actionStyle)}
 					/>
 				</label>
@@ -282,7 +298,7 @@ function NewRule({
 					type="button"
 					data-handler="addRule"
 					data-event="onClick"
-					onClick={() => addRule(form, formRef, baseCount, setForm, setPending, refresh)}
+					onClick={() => addRule(form, loaded, setForm, setPending, refresh)}
 					style={css(addButton)}
 				>
 					Add rule
@@ -314,10 +330,9 @@ function OptionLoop({
 
 function addRule(
 	form: RuleForm,
-	formRef: { readonly current: RuleForm },
-	baseCount: number,
-	setForm: (form: RuleForm) => void,
-	setPending: (pending: PendingRule | null) => void,
+	loaded: readonly RulesRule[],
+	setForm: SetRuleForm,
+	setPending: Dispatch<SetStateAction<PendingRule | null>>,
 	refresh: () => Promise<void>,
 ) {
 	const action = form.action.trim();
@@ -325,8 +340,11 @@ function addRule(
 		return;
 	}
 	const typed = form.action;
+	const id = Symbol();
+	submissions.set(setForm, { id, actionEdited: false });
 	setPending({
-		baseCount,
+		id,
+		existingIds: new Set(loaded.map((rule) => rule.id)),
 		row: {
 			id: "pending-rule",
 			when: form.when.charAt(0).toLowerCase() + form.when.slice(1),
@@ -337,15 +355,15 @@ function addRule(
 		},
 	});
 	setForm({ ...form, action: "" });
-	void saveRule(form, typed, formRef, setForm, setPending, refresh);
+	void saveRule(form, typed, id, setForm, setPending, refresh);
 }
 
 async function saveRule(
 	form: RuleForm,
 	typed: string,
-	formRef: { readonly current: RuleForm },
-	setForm: (form: RuleForm) => void,
-	setPending: (pending: PendingRule | null) => void,
+	id: symbol,
+	setForm: SetRuleForm,
+	setPending: Dispatch<SetStateAction<PendingRule | null>>,
 	refresh: () => Promise<void>,
 ) {
 	try {
@@ -356,10 +374,16 @@ async function saveRule(
 			}),
 		);
 	} catch {
-		setPending(null);
-		if (formRef.current.action.length === 0) {
-			setForm({ ...formRef.current, action: typed });
+		if (submissions.get(setForm)?.id !== id) {
+			return;
 		}
+		setPending((current) => (current?.id === id ? null : current));
+		setForm((current) => {
+			const owner = submissions.get(setForm);
+			return owner?.id === id && !owner.actionEdited && current.action.length === 0
+				? { ...current, action: typed }
+				: current;
+		});
 		return;
 	}
 	await bounded(() => refresh()).catch(() => undefined);

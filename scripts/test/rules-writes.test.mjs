@@ -19,14 +19,21 @@ const bundle = await build({
 			window.refresh = async () => {};
 			window.flush = async () => { for (let i = 0; i < 50; i++) await Promise.resolve(); };
 			function Harness() {
+				const [showRules, setShowRules] = useState(true);
+				const [rules, setRules] = useState([]);
+				window.loadRules = setRules;
 				const [ruleForm, setRuleForm] = useState({
 					when: "A new order arrives", agent: "orders", action: "", approval: "Ask first"
 				});
 				return <WorkspaceContext.Provider value={{
 					ruleForm, setRuleForm, refresh: () => window.refresh(),
-					frame: { masterName: "Master", agents: [{id: "orders", name: "Orders"}] },
+					frame: { masterName: "Master", agents: [{id: "orders", name: "Orders"}, {id: "support", name: "Support"}] },
 					helpers: { gateStyle, switchParts }
-				}}><RulesScreen page={{ rules: [], limits: [] }} /></WorkspaceContext.Provider>;
+				}}>
+					<button onClick={() => setShowRules(false)}>Leave rules</button>
+					<button onClick={() => setShowRules(true)}>Return to rules</button>
+					{showRules && <RulesScreen page={{ rules, limits: [] }} />}
+				</WorkspaceContext.Provider>;
 			}
 			window.mount = () => {
 				window.root = createRoot(document.getElementById("root"));
@@ -255,5 +262,92 @@ test("add rule: a successful refresh keeps the action cleared", async () => {
 		assert.deepEqual(await page.evaluate(() => window.calls), [{
 			when: "A new order arrives", agent: "orders", action: "Handle the order", approval: "Ask first",
 		}]);
+	});
+});
+
+async function holdAdds(page) {
+	await page.evaluate(() => {
+		window.adds = [];
+		window.send = (data, signal) => new Promise((resolve, reject) => {
+			window.adds.push({ data, signal, resolve, reject });
+		});
+		window.mount();
+	});
+}
+
+async function typeSecondDraft(page) {
+	await page.getByLabel("When", { exact: true }).selectOption("A refund request comes in");
+	await page.getByLabel("Agent", { exact: true }).selectOption("support");
+	await page.getByLabel("Approval", { exact: true }).selectOption("Auto");
+	await page.getByLabel("Then", { exact: true }).fill("Draft B");
+}
+
+test("add rule: an old failure after navigation preserves the current provider draft", async () => {
+	await withPage(async (page) => {
+		await holdAdds(page);
+		await page.getByLabel("Then", { exact: true }).fill("Draft A");
+		await page.getByRole("button", { name: "Add rule", exact: true }).click();
+		await page.waitForFunction(() => window.adds.length === 1);
+		await page.getByRole("button", { name: "Leave rules", exact: true }).click();
+		await expect(page.getByLabel("Then", { exact: true })).toHaveCount(0);
+		await page.getByRole("button", { name: "Return to rules", exact: true }).click();
+		await typeSecondDraft(page);
+		assert.equal(await page.evaluate(() => window.adds[0].signal.aborted), false);
+		await page.evaluate(async () => { window.adds[0].reject(new Error("HTTP 500")); await window.flush(); });
+		await expect(page.getByLabel("Then", { exact: true })).toHaveValue("Draft B");
+		await expect(page.getByLabel("When", { exact: true })).toHaveValue("A refund request comes in");
+		await expect(page.getByLabel("Agent", { exact: true })).toHaveValue("support");
+		await expect(page.getByLabel("Approval", { exact: true })).toHaveValue("Auto");
+	});
+});
+
+for (const outcome of ["failure", "success"]) {
+	test(`add rule: an older ${outcome} cannot clear a newer submission`, async () => {
+		await withPage(async (page) => {
+			await holdAdds(page);
+			const action = page.getByLabel("Then", { exact: true });
+			const add = page.getByRole("button", { name: "Add rule", exact: true });
+			await action.fill("Draft A");
+			await add.click();
+			await page.waitForFunction(() => window.adds.length === 1);
+			await typeSecondDraft(page);
+			await add.click();
+			await page.waitForFunction(() => window.adds.length === 2);
+			await expect(action).toHaveValue("");
+			await page.evaluate(async (outcome) => {
+				const first = window.adds[0];
+				if (outcome === "failure") first.reject(new Error("HTTP 500"));
+				else {
+					window.loadRules([{ ...first.data, id: "r100", on: true,
+						when: "a new order arrives" }]);
+					first.resolve();
+				}
+				await window.flush();
+			}, outcome);
+			await expect(action).toHaveValue("");
+			await expect(page.locator("section[aria-label='Rules']").getByText("Draft B", { exact: false })).toHaveCount(1);
+			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(outcome === "failure" ? 1 : 2);
+			await expect(page.getByLabel("When", { exact: true })).toHaveValue("A refund request comes in");
+			await expect(page.getByLabel("Agent", { exact: true })).toHaveValue("support");
+			await expect(page.getByLabel("Approval", { exact: true })).toHaveValue("Auto");
+			await page.evaluate(async () => { window.adds[1].reject(new Error("HTTP 500")); await window.flush(); });
+			await expect(action).toHaveValue("Draft B");
+			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(outcome === "failure" ? 0 : 1);
+		});
+	});
+}
+
+test("add rule: editing and clearing an action prevents old draft restoration", async () => {
+	await withPage(async (page) => {
+		await holdAdds(page);
+		const action = page.getByLabel("Then", { exact: true });
+		await action.fill("Draft A");
+		await page.getByRole("button", { name: "Add rule", exact: true }).click();
+		await page.waitForFunction(() => window.adds.length === 1);
+		await action.fill("Draft B");
+		await action.fill("");
+		await page.evaluate(async () => { window.adds[0].reject(new Error("HTTP 500")); await window.flush(); });
+		await expect(action).toHaveValue("");
+		await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(0);
 	});
 });
