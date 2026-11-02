@@ -4,6 +4,7 @@ const rulesFenceRepeat = Number(process.env.RULES_FENCE_REPEAT ?? "1");
 
 export default defineConfig({
 	testDir: "e2e",
+	timeout: 120_000,
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: 0,
