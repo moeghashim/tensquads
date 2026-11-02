@@ -1,0 +1,17 @@
+Target: b519c0f977881aff983cedb12006b136ef6741f1
+Host: darwin, Node v24.21.0
+
+Real product attempt:
+npx playwright test e2e/rules.spec.ts --grep 'macOS screenshot baselines|form adds a rule|tab reaches' --workers=1 --output=/Users/moeghashim/.no-mistakes/evidence/01M6EBGZ0VJN3B3YWGR6Q10MMR/playwright
+The development server started. All three selected tests stopped in the workspace fixture before sign-in:
+Error: publishable, secret, testDatabase is missing.
+e2e/support.ts:334, called by e2e/workspace.ts:41.
+localSecrets() confirmed all three values absent, including repository-local configuration.
+No authenticated product screenshots or baseline comparisons completed.
+
+Supplemental browser checks:
+node --test scripts/test/rules-writes.test.mjs completed successfully.
+These use the real RulesScreen with test doubles at the provider and server boundary, so they are not live product validation.
+A disposable probe reused that harness and captured the actual rendered select arrows at 1440 and 390 pixels. Each select changed options through Playwright selectOption. The probe uses Arial and has no sidebar, seeded rules, limits, or authentication, so its images cannot establish baseline equivalence.
+The first keyboard attempt (ArrowDown then Enter) left the value unchanged under the harness's paused clock; the probe switched to selectOption. Keyboard menu behavior remains unverified.
+No baseline, threshold, mask, retry, design or product source was changed.

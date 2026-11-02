@@ -1,0 +1,41 @@
+{
+  "surface": "RulesScreen component harness; server and provider are test doubles; not authenticated product or baseline comparison",
+  "results": [
+    {
+      "width": 1440,
+      "name": "When",
+      "before": "A new order arrives",
+      "after": "A refund request comes in"
+    },
+    {
+      "width": 1440,
+      "name": "Agent",
+      "before": "orders",
+      "after": "support"
+    },
+    {
+      "width": 1440,
+      "name": "Approval",
+      "before": "Ask first",
+      "after": "Auto"
+    },
+    {
+      "width": 390,
+      "name": "When",
+      "before": "A refund request comes in",
+      "after": "Printify ships an item"
+    },
+    {
+      "width": 390,
+      "name": "Agent",
+      "before": "support",
+      "after": "orders"
+    },
+    {
+      "width": 390,
+      "name": "Approval",
+      "before": "Auto",
+      "after": "Auto under limit"
+    }
+  ]
+}
