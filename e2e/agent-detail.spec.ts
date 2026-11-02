@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs";
-import { PENDING_TASK_WINDOW_MS } from "../packages/adapters/src/pending-window.ts";
 import { setAgentOn } from "../packages/adapters/src/neon/commands/agents.ts";
+import { PENDING_TASK_WINDOW_MS } from "../packages/adapters/src/pending-window.ts";
+import { accessibilityViolations } from "./accessibility-helper.ts";
 import {
 	agentDetailSource,
 	expectDetail,
@@ -28,7 +29,6 @@ import {
 	watchedMachine,
 	withDb,
 } from "./agent-detail-support.ts";
-import { accessibilityViolations } from "./accessibility-helper.ts";
 import { expectNoHorizontalScroll, skipUnlessMacScreenshot, waitForScreenFonts } from "./support.ts";
 import { expect, openWorkspace, test } from "./workspace.ts";
 
@@ -153,9 +153,7 @@ test("a skill switch changes only that skill", async ({ page, workspaceUser, acc
 		);
 	}
 	await expect(running(page)).toBeVisible();
-	await expect
-		.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.read"), settled)
-		.toBe(false);
+	await expect.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.read"), settled).toBe(false);
 	const stored = await readAgent(accountId, "support");
 	expect(stored.isOn).toBe(true);
 	expect(skillFlag(stored, "inbox.read")).toBe(false);
