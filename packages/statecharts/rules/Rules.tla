@@ -1,11 +1,12 @@
 ---- MODULE Rules ----
-\* A rule switch changes only that rule.
-\* A slider may differ from the stored limit only while that limit's write waits.
-\* The traffic table is the stored value. A late write commits nothing.
+\* The screen shows the snapshot plus a pending row.
+\* The snapshot changes only when a write response or a read arrives.
+\* A write response returns the row and replaces it. A late write commits nothing.
+\* A failed or late write leaves the queue. One read then refreshes the snapshot.
+\* A failed read stops the wait. The next action reads again.
 \* A blank action adds no rule. A new rule is on. The add clears the action.
 \* A later keystroke can type an action again. A second edit does not clear it.
-\* One write waits at a time. The wait is bounded and it ends.
-\* A saved row stays until a later read confirms it.
+\* One write waits at a time. The wait ends.
 \* A later change does not change an existing Mandate.
 \* A limit change writes no event.
 \* The reorder limit stays at the design value. The refund limit and the ad cap
@@ -42,7 +43,7 @@ vars == <<
 
 Bits == {0, 1}
 ActionText == {"blank", "text"}
-Saves == {"idle", "adding", "reading", "stays", "saving"}
+Saves == {"idle", "adding", "reading", "saving"}
 Waits == {"none", "add", "limit", "refresh"}
 Limits == {"none", "refund", "ads"}
 
@@ -68,13 +69,12 @@ ShownLimit ==
 
 \* One deadline covers the write. The kind of wait matches the save.
 BoundedWait ==
-    /\ wait = "none" <=> save \in {"idle", "stays"}
+    /\ wait = "none" <=> save = "idle"
     /\ wait = "add" <=> save = "adding"
     /\ wait = "limit" <=> save = "saving"
     /\ wait = "refresh" <=> save = "reading"
     /\ save = "adding" => pending = 1 /\ added = 0 /\ which = "none"
-    /\ save = "reading" => pending = 1 /\ added = 1 /\ newOn = TRUE /\ which = "none"
-    /\ save = "stays" => pending = 1 /\ added = 1 /\ newOn = TRUE
+    /\ save = "reading" => which = "none" /\ pending = 0
     /\ save = "idle" => pending = 0 /\ which = "none"
     /\ save = "saving" => which \in {"refund", "ads"}
 
@@ -113,56 +113,54 @@ ToggleB ==
     /\ ruleB' = ~ruleB
     /\ UNCHANGED <<ruleA, limits, form, save, wait, which, frozen>>
 
-\* Back to the save that was waiting. A hung read returns to the saved row.
-Restore == IF pending = 1 /\ added = 1 THEN "stays" ELSE "idle"
-
-\* The screen shows the new slider at once. The store waits for the commit.
+\* The screen shows the new slider at once. The store waits for the response.
 StartRefund ==
-    /\ save \in {"idle", "stays"} /\ wait = "none" /\ which = "none"
+    /\ save = "idle" /\ wait = "none" /\ which = "none"
     /\ which' = "refund" /\ wait' = "limit" /\ save' = "saving"
     /\ refundSlider' = 1 - refund
     /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, adsSlider, reorderSlider, refundTable, adsTable, reorderTable, form, frozen>>
 
 StartAds ==
-    /\ save \in {"idle", "stays"} /\ wait = "none" /\ which = "none"
+    /\ save = "idle" /\ wait = "none" /\ which = "none"
     /\ which' = "ads" /\ wait' = "limit" /\ save' = "saving"
     /\ adsSlider' = 1 - ads
     /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, refundSlider, reorderSlider, refundTable, adsTable, reorderTable, form, frozen>>
 
+\* The response replaces the snapshot. The wait ends. No second read.
 CommitRefund ==
     /\ save = "saving" /\ wait = "limit" /\ which = "refund"
-    /\ which' = "none" /\ wait' = "none" /\ save' = Restore
+    /\ which' = "none" /\ wait' = "none" /\ save' = "idle"
     /\ refund' = refundSlider /\ refundTable' = refundSlider
     /\ UNCHANGED <<ruleA, ruleB, refundSlider, ads, adsSlider, adsTable, reorder, reorderSlider, reorderTable, form, frozen>>
 
 CommitAds ==
     /\ save = "saving" /\ wait = "limit" /\ which = "ads"
-    /\ which' = "none" /\ wait' = "none" /\ save' = Restore
+    /\ which' = "none" /\ wait' = "none" /\ save' = "idle"
     /\ ads' = adsSlider /\ adsTable' = adsSlider
     /\ UNCHANGED <<ruleA, ruleB, adsSlider, refund, refundSlider, refundTable, reorder, reorderSlider, reorderTable, form, frozen>>
 
-\* A failed or late write stores nothing. The slider returns to the store.
+\* The write leaves the queue. The slider returns to the store. One read starts.
 FailRefund ==
     /\ save = "saving" /\ wait = "limit" /\ which = "refund"
-    /\ which' = "none" /\ wait' = "none" /\ save' = Restore
+    /\ which' = "none" /\ wait' = "refresh" /\ save' = "reading"
     /\ refundSlider' = refund /\ adsSlider' = ads
     /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen>>
 
 LateRefund ==
     /\ save = "saving" /\ wait = "limit" /\ which = "refund"
-    /\ which' = "none" /\ wait' = "none" /\ save' = Restore
+    /\ which' = "none" /\ wait' = "refresh" /\ save' = "reading"
     /\ refundSlider' = refund /\ adsSlider' = ads
     /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen>>
 
 FailAds ==
     /\ save = "saving" /\ wait = "limit" /\ which = "ads"
-    /\ which' = "none" /\ wait' = "none" /\ save' = Restore
+    /\ which' = "none" /\ wait' = "refresh" /\ save' = "reading"
     /\ refundSlider' = refund /\ adsSlider' = ads
     /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen>>
 
 LateAds ==
     /\ save = "saving" /\ wait = "limit" /\ which = "ads"
-    /\ which' = "none" /\ wait' = "none" /\ save' = Restore
+    /\ which' = "none" /\ wait' = "refresh" /\ save' = "reading"
     /\ refundSlider' = refund /\ adsSlider' = ads
     /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen>>
 
@@ -179,16 +177,18 @@ StartAdd ==
     /\ pending' = 1 /\ save' = "adding" /\ wait' = "add"
     /\ UNCHANGED <<ruleA, ruleB, limits, added, newOn, which, frozen>>
 
+\* The response puts the row in the snapshot and drops the pending row.
 CommitAdd ==
     /\ save = "adding" /\ wait = "add"
-    /\ added' = 1 /\ newOn' = TRUE
-    /\ save' = "reading" /\ wait' = "refresh"
-    /\ UNCHANGED <<ruleA, ruleB, limits, action, edited, pending, which, frozen>>
+    /\ added' = 1 /\ newOn' = TRUE /\ pending' = 0
+    /\ save' = "idle" /\ wait' = "none"
+    /\ UNCHANGED <<ruleA, ruleB, limits, action, edited, which, frozen>>
 
 \* Nothing is stored. The draft returns only when the user has not typed again.
+\* The write leaves the queue and one read starts.
 FailAdd ==
     /\ save = "adding" /\ wait = "add"
-    /\ pending' = 0 /\ save' = "idle" /\ wait' = "none"
+    /\ pending' = 0 /\ save' = "reading" /\ wait' = "refresh"
     /\ IF edited = FALSE /\ action = "blank"
        THEN /\ action' = "text"
             /\ UNCHANGED edited
@@ -197,24 +197,24 @@ FailAdd ==
 
 LateAdd ==
     /\ save = "adding" /\ wait = "add"
-    /\ pending' = 0 /\ save' = "idle" /\ wait' = "none"
+    /\ pending' = 0 /\ save' = "reading" /\ wait' = "refresh"
     /\ IF edited = FALSE /\ action = "blank"
        THEN /\ action' = "text"
             /\ UNCHANGED edited
        ELSE UNCHANGED <<action, edited>>
     /\ UNCHANGED <<ruleA, ruleB, limits, added, newOn, which, frozen>>
 
-\* The read timed out. The saved row stays on the screen.
-RefreshTimeout ==
+\* The read returns the store. The snapshot stays, because the failed write stored nothing.
+ReadOk ==
     /\ save = "reading" /\ wait = "refresh"
-    /\ save' = "stays" /\ wait' = "none"
+    /\ save' = "idle" /\ wait' = "none"
     /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen>>
 
-\* A server read confirms the row. This also ends a row that stayed after a hung read.
-LaterRead ==
-    /\ save \in {"reading", "stays"} /\ pending = 1 /\ added = 1
-    /\ pending' = 0 /\ save' = "idle" /\ wait' = "none"
-    /\ UNCHANGED <<ruleA, ruleB, limits, action, edited, added, newOn, which, frozen>>
+\* The read fails. The wait stops. The snapshot stays. The next action reads again.
+ReadFail ==
+    /\ save = "reading" /\ wait = "refresh"
+    /\ save' = "idle" /\ wait' = "none"
+    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen>>
 
 \* A blank action does nothing.
 AddBlank ==
@@ -223,8 +223,8 @@ AddBlank ==
 
 EndAdd == CommitAdd \/ FailAdd \/ LateAdd
 EndLimit == CommitRefund \/ CommitAds \/ FailRefund \/ FailAds \/ LateRefund \/ LateAds
-\* The read's own deadline. A row that already stayed is not forced to leave.
-FinishRefresh == RefreshTimeout \/ (LaterRead /\ save = "reading")
+\* The one read ends on a response or a failure. It is enabled only while that read waits.
+FinishRefresh == ReadOk \/ ReadFail
 
 Next ==
     \/ ToggleA
@@ -242,11 +242,11 @@ Next ==
     \/ CommitAdd
     \/ FailAdd
     \/ LateAdd
-    \/ RefreshTimeout
-    \/ LaterRead
+    \/ ReadOk
+    \/ ReadFail
     \/ AddBlank
 
-\* A begin, a limit, and a refresh each end. A saved row may stay.
+\* A begin, a limit, and a read each end.
 WaitEnds == [](wait # "none" => <>(wait = "none"))
 
 Spec == Init /\ [][Next]_vars

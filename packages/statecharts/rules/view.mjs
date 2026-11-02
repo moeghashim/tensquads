@@ -5,10 +5,9 @@ const money = (bit, full) => (bit === 1 ? full : "$0");
 
 const added = (v) => {
 	if (v.added === 1 && v.action === "text") return "Added, typed again";
-	if (v.added === 1 && v.pending === 1 && v.save === "reading") return "Waiting for the read";
-	if (v.added === 1 && v.pending === 1) return "Saved row stays";
 	if (v.added === 1) return "Added, on";
 	if (v.save === "adding") return "Adding";
+	if (v.save === "reading") return "One read";
 	if (v.action === "text") return "Action typed";
 	return "Empty action";
 };
@@ -17,8 +16,7 @@ const saved = {
 	idle: "Idle",
 	adding: "Adding",
 	saving: "Saving a limit",
-	reading: "Waiting for the read",
-	stays: "Saved row stays",
+	reading: "Waiting for one read",
 };
 
 export const state = (v) => ({
@@ -46,11 +44,11 @@ const labels = {
 	LateAds: "the ad cap is late",
 	TypeAction: "you type an action",
 	StartAdd: "you add the rule",
-	CommitAdd: "the add is saved",
+	CommitAdd: "the add returns the row",
 	FailAdd: "the add fails",
 	LateAdd: "the add is late",
-	RefreshTimeout: "the read times out",
-	LaterRead: "the read confirms the row",
+	ReadOk: "the read returns the snapshot",
+	ReadFail: "the read fails and the wait stops",
 };
 
 export const step = (action) => {

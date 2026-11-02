@@ -1,12 +1,12 @@
-import type { AccountScope, RuleDraft } from "@tensquads/domain";
+import type { AccountScope, Rule, RuleDraft, StoredLimit } from "@tensquads/domain";
 
 import { policyApprovals } from "./policy-approvals.ts";
 import { policyRules } from "./policy-rules.ts";
 
 export interface PolicyCommands {
-	setRuleOn(scope: AccountScope, id: string, on: boolean): Promise<void>;
-	addRule(scope: AccountScope, draft: RuleDraft): Promise<string | null>;
-	setLimit(scope: AccountScope, key: string, value: number): Promise<void>;
+	setRuleOn(scope: AccountScope, id: string, on: boolean): Promise<Rule>;
+	addRule(scope: AccountScope, draft: RuleDraft): Promise<Rule | null>;
+	setLimit(scope: AccountScope, key: string, value: number): Promise<StoredLimit>;
 }
 
 export function policy(

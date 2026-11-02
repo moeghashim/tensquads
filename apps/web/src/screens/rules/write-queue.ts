@@ -1,20 +1,33 @@
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import { useSyncExternalStore } from "react";
 
-import { setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
+import { type RulesRule, setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
 
 interface Flight<T> {
-	readonly baseline: T;
 	shown: T;
-	confirmed: T;
 	sending: boolean;
 	queued: T | null;
+}
+
+interface LimitValue {
+	readonly key: string;
+	readonly value: number;
 }
 
 const ruleFlights = new Map<string, Flight<boolean>>();
 const limitFlights = new Map<string, Flight<number>>();
 const listeners = new Set<() => void>();
 let version = 0;
+let replaceRule = (_rule: RulesRule): void => undefined;
+let replaceLimit = (_row: LimitValue): void => undefined;
+
+export function bindRuleWrites(apply: {
+	readonly rule: (rule: RulesRule) => void;
+	readonly limit: (row: LimitValue) => void;
+}): void {
+	replaceRule = apply.rule;
+	replaceLimit = apply.limit;
+}
 
 export function useRuleWrites(): number {
 	return useSyncExternalStore(
@@ -35,95 +48,119 @@ export function shownLimit(key: string, loaded: number): number {
 	return shownValue(limitFlights, key, loaded);
 }
 
-export function queueRule(id: string, next: boolean, loaded: boolean, refresh: () => Promise<void>): void {
-	const flight = queueValue(ruleFlights, id, next, loaded);
+export function queueRule(id: string, next: boolean, refresh: () => Promise<void>): void {
+	const flight = queueValue(ruleFlights, id, next);
 	if (!flight) {
 		return;
 	}
-	void run(flight, (value, signal) => setRuleEnabled({ data: { id, on: value }, signal }), refresh);
+	void run(ruleFlights, id, flight, (value, signal) => sendRule(id, value, signal), refresh);
 }
 
-export function queueLimit(key: string, next: number, loaded: number, refresh: () => Promise<void>): void {
-	const flight = queueValue(limitFlights, key, next, loaded);
+export function queueLimit(key: string, next: number, refresh: () => Promise<void>): void {
+	const flight = queueValue(limitFlights, key, next);
 	if (!flight) {
 		return;
 	}
-	void run(flight, (value, signal) => setRuleLimit({ data: { key, value }, signal }), refresh);
+	void run(limitFlights, key, flight, (value, signal) => sendLimit(key, value, signal), refresh);
 }
 
-function queueValue<T>(map: Map<string, Flight<T>>, key: string, next: T, loaded: T): Flight<T> | null {
-	const flight = map.get(key) ?? createFlight(map, key, next, loaded);
-	if (flight.sending) {
-		flight.shown = next;
-		flight.queued = next;
-		notify();
-		return null;
+export function placeRule(rule: RulesRule): void {
+	replaceRule(rule);
+}
+
+export function isRulesRule(value: unknown): value is RulesRule {
+	if (!isRecord(value)) {
+		return false;
+	}
+	return (
+		typeof value.id === "string" &&
+		value.id.length > 0 &&
+		typeof value.when === "string" &&
+		typeof value.agent === "string" &&
+		typeof value.action === "string" &&
+		typeof value.approval === "string" &&
+		typeof value.on === "boolean"
+	);
+}
+
+function queueValue<T>(map: Map<string, Flight<T>>, key: string, next: T): Flight<T> | null {
+	const flight = map.get(key);
+	if (!flight) {
+		const created = { shown: next, sending: false, queued: null };
+		map.set(key, created);
+		return created;
 	}
 	flight.shown = next;
-	flight.queued = null;
-	return flight;
+	flight.queued = next;
+	notify();
+	return null;
 }
 
-function createFlight<T>(map: Map<string, Flight<T>>, key: string, next: T, loaded: T): Flight<T> {
-	const flight = { baseline: loaded, shown: next, confirmed: loaded, sending: false, queued: null };
-	map.set(key, flight);
-	return flight;
+async function sendRule(id: string, value: boolean, signal: AbortSignal): Promise<boolean | null> {
+	const row = await setRuleEnabled({ data: { id, on: value }, signal });
+	if (signal.aborted || !isRulesRule(row) || row.id !== id) {
+		return null;
+	}
+	replaceRule(row);
+	return row.on;
+}
+
+async function sendLimit(key: string, value: number, signal: AbortSignal): Promise<number | null> {
+	const row = await setRuleLimit({ data: { key, value }, signal });
+	if (signal.aborted || !isLimitValue(row) || row.key !== key) {
+		return null;
+	}
+	replaceLimit(row);
+	return row.value;
 }
 
 async function run<T>(
+	map: Map<string, Flight<T>>,
+	key: string,
 	flight: Flight<T>,
-	send: (value: T, signal: AbortSignal) => Promise<unknown>,
+	send: (value: T, signal: AbortSignal) => Promise<T | null>,
 	refresh: () => Promise<void>,
 ): Promise<void> {
-	flight.sending = true;
-	notify();
-	await sendUntilQuiet(flight, send);
-	await bounded(() => refresh()).catch(() => undefined);
-	const next = flight.queued;
-	flight.queued = null;
-	if (next === null) {
-		flight.sending = false;
-		notify();
-		return;
-	}
-	flight.shown = next;
-	await run(flight, send, refresh);
-}
-
-async function sendUntilQuiet<T>(
-	flight: Flight<T>,
-	send: (value: T, signal: AbortSignal) => Promise<unknown>,
-): Promise<void> {
-	while (true) {
+	while (map.get(key) === flight) {
 		const sent = flight.queued ?? flight.shown;
 		flight.queued = null;
-		const wrote = await sendValue(flight, send, sent);
-		if (!wrote) {
+		flight.sending = true;
+		notify();
+		let returned: T | null = null;
+		try {
+			returned = await bounded((signal) => send(sent, signal));
+		} catch {
+			returned = null;
+		}
+		if (returned === null) {
+			const newer = takeNewer(flight, sent);
+			if (newer) {
+				continue;
+			}
+			map.delete(key);
+			notify();
+			await bounded(() => refresh()).catch(() => undefined);
 			return;
 		}
-		if (flight.queued === null) {
-			flight.shown = sent;
+		const newer = takeNewer(flight, returned);
+		if (!newer) {
+			map.delete(key);
+			notify();
 			return;
 		}
 	}
 }
 
-async function sendValue<T>(
-	flight: Flight<T>,
-	send: (value: T, signal: AbortSignal) => Promise<unknown>,
-	sent: T,
-): Promise<boolean> {
-	try {
-		await bounded((signal) => send(sent, signal));
-		flight.confirmed = sent;
-		return true;
-	} catch {
-		if (flight.queued === null) {
-			flight.shown = flight.confirmed;
-			return false;
-		}
-		return true;
+function takeNewer<T>(flight: Flight<T>, sent: T): boolean {
+	const newer = flight.queued;
+	flight.queued = null;
+	if (newer === null || newer === sent) {
+		flight.sending = false;
+		return false;
 	}
+	flight.shown = newer;
+	notify();
+	return true;
 }
 
 function shownValue<T>(map: Map<string, Flight<T>>, key: string, loaded: T): T {
@@ -134,11 +171,16 @@ function shownValue<T>(map: Map<string, Flight<T>>, key: string, loaded: T): T {
 	if (flight.sending || flight.queued !== null) {
 		return flight.shown;
 	}
-	if (loaded !== flight.confirmed && loaded === flight.baseline) {
-		return flight.confirmed;
-	}
 	map.delete(key);
 	return loaded;
+}
+
+function isLimitValue(value: unknown): value is LimitValue {
+	return isRecord(value) && typeof value.key === "string" && value.key.length > 0 && typeof value.value === "number";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null;
 }
 
 function notify(): void {

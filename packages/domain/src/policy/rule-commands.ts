@@ -1,11 +1,12 @@
 import type { AccountScope } from "../scope.ts";
 import type { RuleDraft } from "./repository.ts";
+import type { Rule, StoredLimit } from "./types.ts";
 
-export type SetRuleOnCommand = (scope: AccountScope, id: string, on: boolean) => Promise<void>;
+export type SetRuleOnCommand = (scope: AccountScope, id: string, on: boolean) => Promise<Rule>;
 
-export type AddRuleCommand = (scope: AccountScope, draft: RuleDraft) => Promise<string | null>;
+export type AddRuleCommand = (scope: AccountScope, draft: RuleDraft) => Promise<Rule | null>;
 
-export type SetLimitCommand = (scope: AccountScope, key: string, value: number) => Promise<void>;
+export type SetLimitCommand = (scope: AccountScope, key: string, value: number) => Promise<StoredLimit>;
 
 export interface LimitDefinition {
 	readonly id: string;

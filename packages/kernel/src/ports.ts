@@ -1,4 +1,4 @@
-import type { ConversationRepository } from "@tensquads/domain";
+import type { ConversationRepository, Rule, StoredLimit } from "@tensquads/domain";
 
 // The five ports. Step 6 supplies every adapter except Decider.
 // Decider stays without an adapter in version 1.
@@ -61,12 +61,12 @@ export interface Repositories {
 	};
 	readonly policy: {
 		inbox(scope: AccountScope): Promise<unknown>;
-		setRuleOn(scope: AccountScope, id: string, on: boolean): Promise<void>;
+		setRuleOn(scope: AccountScope, id: string, on: boolean): Promise<Rule>;
 		addRule(
 			scope: AccountScope,
 			draft: { readonly when: string; readonly agent: string; readonly action: string; readonly approval: string },
-		): Promise<string | null>;
-		setLimit(scope: AccountScope, key: string, value: number): Promise<void>;
+		): Promise<Rule | null>;
+		setLimit(scope: AccountScope, key: string, value: number): Promise<StoredLimit>;
 	};
 	readonly catalog: {
 		listImages(scope: AccountScope): Promise<readonly unknown[]>;

@@ -14,7 +14,10 @@ test("setLimit changes the value bus.readStore returns and writes no event", asy
 		await replaceDemoAccount(db, scope.accountId, "clerk-rules");
 		const repositories = createRepositories(db);
 		const before = await repositories.bus.listEvents(scope);
-		await repositories.policy.setLimit(scope, "policy.refund_auto_limit", 55);
+		assert.deepEqual(await repositories.policy.setLimit(scope, "policy.refund_auto_limit", 55), {
+			key: "policy.refund_auto_limit",
+			value: 55,
+		});
 		const store = await repositories.bus.readStore(scope);
 		assert.equal(store["policy.refund_auto_limit"], 55);
 		assert.equal(store["policy.daily_ad_cap"], 200);
@@ -49,14 +52,21 @@ test("a blank action adds no rule and a new rule is on and last", async () => {
 			null,
 		);
 		assert.equal((await policy.listRules(scope)).length, before.length);
-		assert.equal(
+		assert.deepEqual(
 			await policy.addRule(scope, {
 				when: "A new order arrives",
 				agent: "support",
 				action: " email them ",
 				approval: "Auto",
 			}),
-			"r100",
+			{
+				id: "r100",
+				when: "a new order arrives",
+				agent: "support",
+				action: "email them",
+				approval: "Auto",
+				on: true,
+			},
 		);
 		const after = await policy.listRules(scope);
 		assert.equal(after.length, before.length + 1);
@@ -82,7 +92,7 @@ test("a rule switch changes only that rule", async () => {
 	try {
 		await replaceDemoAccount(db, scope.accountId, "clerk-rules-switch");
 		const policy = createRepositories(db).policy;
-		await policy.setRuleOn(scope, "r5", true);
+		assert.equal((await policy.setRuleOn(scope, "r5", true)).on, true);
 		const rules = await policy.listRules(scope);
 		assert.equal(rules.find((rule) => rule.id === "r5")?.on, true);
 		assert.equal(rules.find((rule) => rule.id === "r1")?.on, true);

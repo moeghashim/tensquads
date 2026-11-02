@@ -44,34 +44,38 @@ export const loadRulesPage = createServerFn({ method: "GET" }).handler(async ():
 	});
 });
 
+export interface RulesLimitValue {
+	readonly key: string;
+	readonly value: number;
+}
+
 export const setRuleEnabled = createServerFn({ method: "POST" })
 	.validator(validateRuleOn)
-	.handler(async ({ data }) => {
-		await writeThroughKernel((kernel, scope) => kernel.setRuleOn(scope, data.id, data.on));
+	.handler(async ({ data }): Promise<RulesRule> => {
+		return writeThroughKernel((kernel, scope) => kernel.setRuleOn(scope, data.id, data.on));
 	});
 
 export const addWorkspaceRule = createServerFn({ method: "POST" })
 	.validator(validateDraft)
-	.handler(async ({ data }) => {
-		const id = await writeThroughKernel((kernel, scope) => kernel.addRule(scope, data));
-		return { id };
+	.handler(async ({ data }): Promise<RulesRule | null> => {
+		return writeThroughKernel((kernel, scope) => kernel.addRule(scope, data));
 	});
 
 export const setRuleLimit = createServerFn({ method: "POST" })
 	.validator(validateLimit)
-	.handler(async ({ data }) => {
-		await writeThroughKernel((kernel, scope) => kernel.setLimit(scope, data.key, data.value));
+	.handler(async ({ data }): Promise<RulesLimitValue> => {
+		return writeThroughKernel((kernel, scope) => kernel.setLimit(scope, data.key, data.value));
 	});
 
 async function writeThroughKernel<T>(
 	work: (
 		kernel: {
-			setRuleOn(scope: { accountId: string; mode: "account" }, id: string, on: boolean): Promise<void>;
+			setRuleOn(scope: { accountId: string; mode: "account" }, id: string, on: boolean): Promise<RulesRule>;
 			addRule(
 				scope: { accountId: string; mode: "account" },
 				draft: { when: string; agent: string; action: string; approval: string },
-			): Promise<string | null>;
-			setLimit(scope: { accountId: string; mode: "account" }, key: string, value: number): Promise<void>;
+			): Promise<RulesRule | null>;
+			setLimit(scope: { accountId: string; mode: "account" }, key: string, value: number): Promise<RulesLimitValue>;
 		},
 		scope: { accountId: string; mode: "account" },
 	) => Promise<T>,

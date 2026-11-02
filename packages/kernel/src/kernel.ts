@@ -1,4 +1,4 @@
-import type { AccountScope, SendResult } from "@tensquads/domain";
+import type { AccountScope, Rule, SendResult, StoredLimit } from "@tensquads/domain";
 import { Context } from "cordis";
 import { type BusCommands, bus } from "./plugins/bus.ts";
 import type { ConversationCommands } from "./plugins/conversation.ts";
@@ -89,17 +89,17 @@ export class Kernel {
 		return port.nextEvent(scope, deadlineAt);
 	}
 
-	async setRuleOn(scope: AccountScope, id: string, on: boolean): Promise<void> {
+	async setRuleOn(scope: AccountScope, id: string, on: boolean): Promise<Rule> {
 		await this.ready;
 		return (this.context.get("workspacePolicy") as PolicyCommands).setRuleOn(scope, id, on);
 	}
 
-	async addRule(scope: AccountScope, draft: Parameters<PolicyCommands["addRule"]>[1]): Promise<string | null> {
+	async addRule(scope: AccountScope, draft: Parameters<PolicyCommands["addRule"]>[1]): Promise<Rule | null> {
 		await this.ready;
 		return (this.context.get("workspacePolicy") as PolicyCommands).addRule(scope, draft);
 	}
 
-	async setLimit(scope: AccountScope, key: string, value: number): Promise<void> {
+	async setLimit(scope: AccountScope, key: string, value: number): Promise<StoredLimit> {
 		await this.ready;
 		return (this.context.get("workspacePolicy") as PolicyCommands).setLimit(scope, key, value);
 	}

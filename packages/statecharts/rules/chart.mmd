@@ -24,16 +24,16 @@ stateDiagram-v2
       s4: #36;50
       s5: #36;0
       [*] --> s4
-      s4 --> s5: the refund limit is saved [when New rule is none of Adding, Waiting for the read and Save is Saving a limit]
-      s5 --> s4: the refund limit is saved [when New rule is none of Adding, Waiting for the read and Save is Saving a limit]
+      s4 --> s5: the refund limit is saved [when New rule is none of Adding, One read and Save is Saving a limit]
+      s5 --> s4: the refund limit is saved [when New rule is none of Adding, One read and Save is Saving a limit]
     }
     --
     state "Ad cap" as r3 {
       s6: #36;200
       s7: #36;0
       [*] --> s6
-      s6 --> s7: the ad cap is saved [when New rule is none of Adding, Waiting for the read and Save is Saving a limit]
-      s7 --> s6: the ad cap is saved [when New rule is none of Adding, Waiting for the read and Save is Saving a limit]
+      s6 --> s7: the ad cap is saved [when New rule is none of Adding, One read and Save is Saving a limit]
+      s7 --> s6: the ad cap is saved [when New rule is none of Adding, One read and Save is Saving a limit]
     }
     --
     state "Reorder limit" as r4 {
@@ -45,40 +45,34 @@ stateDiagram-v2
       s9: Empty action
       s10: Action typed
       s11: Adding
-      s12: Waiting for the read
+      s12: One read
       s13: Added, on
       s14: Added, typed again
-      s15: Saved row stays
       [*] --> s9
       s9 --> s10: you type an action
       s10 --> s11: you add the rule [when Save is Idle]
-      s11 --> s10: the add fails or the add is late
-      s11 --> s12: the add is saved
-      s11 --> s14: the add is saved
-      s12 --> s13: the read confirms the row
-      s12 --> s14: you type an action
-      s12 --> s15: the read times out
+      s9 --> s12: the refund limit fails or the refund limit is late or the ad cap fails or the ad cap is late [when Save is Saving a limit]
+      s11 --> s12: the add fails or the add is late
+      s11 --> s13: the add returns the row
+      s12 --> s9: the read fails and the wait stops or the read returns the snapshot
+      s10 --> s12: the refund limit fails or the refund limit is late or the ad cap fails or the ad cap is late [when Save is Saving a limit]
+      s11 --> s14: the add returns the row
+      s12 --> s10: the read fails and the wait stops or the read returns the snapshot
       s13 --> s14: you type an action
-      s15 --> s13: the read confirms the row [when Save is Saved row stays]
-      s15 --> s14: you type an action
     }
     --
     state "Save" as r6 {
-      s16: Idle
-      s17: Saving a limit
-      s18: Adding
-      s19: Waiting for the read
-      s20: Saved row stays
-      [*] --> s16
-      s16 --> s17: you move the refund limit or you move the ad cap
-      s16 --> s18: you add the rule [when New rule is Action typed]
-      s17 --> s16: the refund limit fails or the refund limit is late or the refund limit is saved or the ad cap fails or the ad cap is late or the ad cap is saved [when New rule is not Saved row stays]
-      s18 --> s16: the add fails or the add is late
-      s18 --> s19: the add is saved
-      s19 --> s16: the read confirms the row
-      s19 --> s20: the read times out
-      s20 --> s16: the read confirms the row
-      s20 --> s17: you move the refund limit or you move the ad cap
-      s17 --> s20: the refund limit fails or the refund limit is late or the refund limit is saved or the ad cap fails or the ad cap is late or the ad cap is saved [when New rule is one of Added, typed again, Saved row stays]
+      s15: Idle
+      s16: Saving a limit
+      s17: Adding
+      s18: Waiting for one read
+      [*] --> s15
+      s15 --> s16: you move the refund limit or you move the ad cap
+      s15 --> s17: you add the rule [when New rule is Action typed]
+      s16 --> s15: the refund limit is saved or the ad cap is saved
+      s16 --> s18: the refund limit fails or the refund limit is late or the ad cap fails or the ad cap is late
+      s17 --> s18: the add fails or the add is late
+      s17 --> s15: the add returns the row
+      s18 --> s15: the read fails and the wait stops or the read returns the snapshot
     }
   }

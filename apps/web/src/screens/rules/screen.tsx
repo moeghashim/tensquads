@@ -5,7 +5,17 @@ import { addWorkspaceRule, type RulesPageData, type RulesRule } from "#/server/r
 import { useWorkspace } from "#/workspace/context.ts";
 import type { RuleForm } from "#/workspace/types.ts";
 
-import { bounded, queueLimit, queueRule, shownLimit, shownOn, useRuleWrites } from "./write-queue.ts";
+import {
+	bindRuleWrites,
+	bounded,
+	isRulesRule,
+	placeRule,
+	queueLimit,
+	queueRule,
+	shownLimit,
+	shownOn,
+	useRuleWrites,
+} from "./write-queue.ts";
 
 const triggerOptions = [
 	"A new order arrives",
@@ -65,13 +75,11 @@ interface Submission {
 interface PendingRule {
 	readonly id: symbol;
 	readonly rowId: string;
-	readonly savedId: string | null;
 	readonly row: RulesRule;
 }
 
 const submissions = new Map<symbol, Submission>();
 const wantedOn = new Map<symbol, boolean>();
-const savedIds = new Map<symbol, string>();
 const pendingShown = new Map<symbol, boolean>();
 const rowOwners = new Map<string, symbol>();
 let pendingSerial = 0;
@@ -79,14 +87,19 @@ let pendingSerial = 0;
 export function RulesScreen({ page }: { readonly page: RulesPageData }) {
 	useRuleWrites();
 	const workspace = useWorkspace();
-	const [pending, setPending] = useState<readonly PendingRule[]>([]);
-	const visiblePending = pending.filter(
-		(item) => item.savedId === null || !page.rules.some((rule) => rule.id === item.savedId),
-	);
-	if (visiblePending.length !== pending.length) {
-		setPending(visiblePending);
+	const [snapshot, setSnapshot] = useState(page);
+	const [seenPage, setSeenPage] = useState(stamp(page));
+	const incoming = stamp(page);
+	if (incoming !== seenPage) {
+		setSeenPage(incoming);
+		setSnapshot(page);
 	}
-	const rules = [...page.rules, ...visiblePending.map((item) => item.row)];
+	bindRuleWrites({
+		rule: (rule) => setSnapshot((current) => withRule(current, rule)),
+		limit: (row) => setSnapshot((current) => withLimit(current, row)),
+	});
+	const [pending, setPending] = useState<readonly PendingRule[]>([]);
+	const rules = [...snapshot.rules, ...pending.map((item) => item.row)];
 	return (
 		<div data-if="isRules" style={css("display: contents")}>
 			<div style={css(pageColumn)}>
@@ -102,7 +115,7 @@ export function RulesScreen({ page }: { readonly page: RulesPageData }) {
 					agents={workspace.frame.agents}
 					gateStyle={workspace.helpers.gateStyle}
 					switchParts={workspace.helpers.switchParts}
-					loaded={page.rules}
+					loaded={snapshot.rules}
 					refresh={workspace.refresh}
 					setPending={setPending}
 				/>
@@ -114,7 +127,7 @@ export function RulesScreen({ page }: { readonly page: RulesPageData }) {
 						setPending={setPending}
 						refresh={workspace.refresh}
 					/>
-					<Limits page={page} refresh={workspace.refresh} />
+					<Limits limits={snapshot.limits} refresh={workspace.refresh} />
 				</div>
 			</div>
 		</div>
@@ -336,25 +349,22 @@ function OptionLoop({
 
 function shownRuleOn(rule: RulesRule, loaded: boolean): boolean {
 	const owner = rowOwners.get(rule.id);
-	const saved = owner === undefined ? undefined : savedIds.get(owner);
-	return shownOn(saved ?? rule.id, saved === undefined ? loaded : true);
+	if (owner !== undefined && submissions.has(owner)) {
+		return pendingShown.get(owner) ?? true;
+	}
+	return shownOn(rule.id, loaded);
 }
 
 function toggleRow(rule: RulesRule, loaded: boolean, refresh: () => Promise<void>, setPending: SetPending) {
 	const id = rowOwners.get(rule.id);
-	if (!id) {
-		queueRule(rule.id, !shownOn(rule.id, loaded), loaded, refresh);
+	if (id !== undefined && submissions.has(id)) {
+		const next = !(pendingShown.get(id) ?? true);
+		pendingShown.set(id, next);
+		wantedOn.set(id, next);
+		setPending((items) => items.map((item) => (item.id === id ? { ...item, row: { ...item.row, on: next } } : item)));
 		return;
 	}
-	const saved = savedIds.get(id);
-	if (saved !== undefined) {
-		queueRule(saved, !shownRuleOn(rule, loaded), true, refresh);
-		return;
-	}
-	const next = !(pendingShown.get(id) ?? true);
-	pendingShown.set(id, next);
-	wantedOn.set(id, next);
-	setPending((items) => items.map((item) => (item.id === id ? { ...item, row: { ...item.row, on: next } } : item)));
+	queueRule(rule.id, !shownOn(rule.id, loaded), refresh);
 }
 
 function addRule(form: RuleForm, setForm: SetRuleForm, setPending: SetPending, refresh: () => Promise<void>) {
@@ -375,7 +385,6 @@ function addRule(form: RuleForm, setForm: SetRuleForm, setPending: SetPending, r
 		{
 			id,
 			rowId,
-			savedId: null,
 			row: {
 				id: rowId,
 				when: form.when.charAt(0).toLowerCase() + form.when.slice(1),
@@ -398,7 +407,7 @@ async function saveRule(
 	refresh: () => Promise<void>,
 ) {
 	const { id, typed, rowId } = submission;
-	let result: { readonly id?: string | null } | null | undefined;
+	let result: RulesRule | null = null;
 	try {
 		result = await bounded((signal) =>
 			addWorkspaceRule({
@@ -419,34 +428,37 @@ async function saveRule(
 		await bounded(() => refresh()).catch(() => undefined);
 		return;
 	}
-	submissions.delete(id);
-	const savedId = typeof result?.id === "string" && result.id.length > 0 ? result.id : null;
-	if (!savedId) {
+	if (!isRulesRule(result)) {
 		return;
 	}
-	savedIds.set(id, savedId);
-	setPending((items) => items.map((item) => (item.id === id ? { ...item, savedId } : item)));
 	const wanted = wantedOn.get(id);
-	if (wanted !== undefined && wanted !== true) {
-		queueRule(savedId, wanted, true, refresh);
+	submissions.delete(id);
+	placeRule(result);
+	dropPending(id, rowId, setPending);
+	if (wanted !== undefined && wanted !== result.on) {
+		queueRule(result.id, wanted, refresh);
 	}
-	await bounded(() => refresh()).catch(() => undefined);
 }
 
 function dropPending(id: symbol, rowId: string, setPending: SetPending) {
 	wantedOn.delete(id);
-	savedIds.delete(id);
 	pendingShown.delete(id);
 	rowOwners.delete(rowId);
 	setPending((items) => items.filter((item) => item.id !== id));
 }
 
-function Limits({ page, refresh }: { readonly page: RulesPageData; readonly refresh: () => Promise<void> }) {
+function Limits({
+	limits,
+	refresh,
+}: {
+	readonly limits: RulesPageData["limits"];
+	readonly refresh: () => Promise<void>;
+}) {
 	return (
 		<section aria-label="Limits" style={css(limitsCard)}>
 			<h2 style={css(heading)}>Limits for every agent</h2>
 			<div data-loop="limits" data-loop-as="l" style={css("display: contents")}>
-				{page.limits.map((limit) => {
+				{limits.map((limit) => {
 					const value = shownLimit(limit.key, limit.value);
 					return (
 						<div key={limit.id} style={css(limitBlock)}>
@@ -463,7 +475,7 @@ function Limits({ page, refresh }: { readonly page: RulesPageData; readonly refr
 								value={value}
 								data-handler="l.change"
 								data-event="onChange"
-								onChange={(event) => queueLimit(limit.key, Number(event.target.value), limit.value, refresh)}
+								onChange={(event) => queueLimit(limit.key, Number(event.target.value), refresh)}
 								style={css(sliderStyle)}
 							/>
 						</div>
@@ -475,4 +487,22 @@ function Limits({ page, refresh }: { readonly page: RulesPageData; readonly refr
 			</p>
 		</section>
 	);
+}
+
+function stamp(page: RulesPageData): string {
+	return JSON.stringify({ rules: page.rules, limits: page.limits });
+}
+
+function withRule(page: RulesPageData, rule: RulesRule): RulesPageData {
+	const index = page.rules.findIndex((item) => item.id === rule.id);
+	const rules =
+		index < 0 ? [...page.rules, rule] : page.rules.map((item, position) => (position === index ? rule : item));
+	return { ...page, rules };
+}
+
+function withLimit(page: RulesPageData, row: { readonly key: string; readonly value: number }): RulesPageData {
+	return {
+		...page,
+		limits: page.limits.map((limit) => (limit.key === row.key ? { ...limit, value: row.value } : limit)),
+	};
 }

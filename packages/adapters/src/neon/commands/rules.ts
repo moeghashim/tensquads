@@ -1,4 +1,4 @@
-import type { AccountScope, RuleDraft } from "@tensquads/domain";
+import type { AccountScope, Rule, RuleDraft, StoredLimit } from "@tensquads/domain";
 import { requireScope } from "@tensquads/domain";
 import { and, eq } from "drizzle-orm";
 
@@ -25,13 +25,14 @@ function accountIdOf(scope: AccountScope): string {
 	return checked.accountId;
 }
 
-export async function setRuleOn(db: AppDatabase, scope: AccountScope, id: string, on: boolean): Promise<void> {
+export async function setRuleOn(db: AppDatabase, scope: AccountScope, id: string, on: boolean): Promise<Rule> {
 	const accountId = accountIdOf(scope);
 	const planned = planRuleOn(on);
-	await workspaceTransaction(
+	return workspaceTransaction(
 		db,
 		async (tx) => {
 			await updateRuleOn(tx, accountId, id, planned.on);
+			return readRule(tx, accountId, id);
 		},
 		writeDeadline,
 	);
@@ -51,13 +52,20 @@ async function updateRuleOn(tx: Tx, accountId: string, id: string, on: boolean):
 		.where(and(eq(rules.accountId, accountId), eq(rules.id, id)));
 }
 
-export async function addRule(db: AppDatabase, scope: AccountScope, draft: RuleDraft): Promise<string | null> {
+export async function addRule(db: AppDatabase, scope: AccountScope, draft: RuleDraft): Promise<Rule | null> {
 	const planned = planRule(draft);
 	if (!planned) {
 		return null;
 	}
 	const accountId = accountIdOf(scope);
-	return workspaceTransaction(db, async (tx) => insertRule(tx, accountId, planned), writeDeadline);
+	return workspaceTransaction(
+		db,
+		async (tx) => {
+			const id = await insertRule(tx, accountId, planned);
+			return readRule(tx, accountId, id);
+		},
+		writeDeadline,
+	);
 }
 
 async function insertRule(
@@ -84,16 +92,17 @@ async function insertRule(
 	return id;
 }
 
-export async function setLimit(db: AppDatabase, scope: AccountScope, key: string, value: number): Promise<void> {
+export async function setLimit(db: AppDatabase, scope: AccountScope, key: string, value: number): Promise<StoredLimit> {
 	const planned = planLimit(key, value);
 	if (!planned) {
 		throw new Error("The limit is not valid.");
 	}
 	const accountId = accountIdOf(scope);
-	await workspaceTransaction(
+	return workspaceTransaction(
 		db,
 		async (tx) => {
 			await writeLimit(tx, accountId, planned.key, planned.value);
+			return readLimit(tx, accountId, planned.key);
 		},
 		writeDeadline,
 	);
@@ -117,6 +126,41 @@ async function writeLimit(tx: Tx, accountId: string, key: string, value: number)
 			target: [stateEntries.accountId, stateEntries.key],
 			set: { value: JSON.stringify(value) },
 		});
+}
+
+async function readRule(tx: Tx, accountId: string, id: string): Promise<Rule> {
+	const rows = await tx
+		.select({
+			id: rules.id,
+			when: rules.ruleWhen,
+			agent: rules.agent,
+			action: rules.action,
+			approval: rules.approval,
+			on: rules.isOn,
+		})
+		.from(rules)
+		.where(and(eq(rules.accountId, accountId), eq(rules.id, id)));
+	const row = rows[0];
+	if (!row) {
+		throw new Error("The rule is missing.");
+	}
+	return row;
+}
+
+async function readLimit(tx: Tx, accountId: string, key: string): Promise<StoredLimit> {
+	const rows = await tx
+		.select({ value: stateEntries.value })
+		.from(stateEntries)
+		.where(and(eq(stateEntries.accountId, accountId), eq(stateEntries.key, key)));
+	const row = rows[0];
+	if (!row) {
+		throw new Error("The limit is missing.");
+	}
+	const value = JSON.parse(row.value) as unknown;
+	if (typeof value !== "number" || !Number.isFinite(value)) {
+		throw new Error("The limit is missing.");
+	}
+	return { key, value };
 }
 
 function nextSort(orders: readonly number[]): number {

@@ -15,13 +15,29 @@ const bundle = await build({
 			import * as queue from "./apps/web/src/screens/rules/write-queue.ts";
 			window.queue = queue;
 			window.calls = [];
-			window.send = async (data) => { window.calls.push(data); };
+			window.ruleRow = (data, id = "r100") => ({
+				id: data.id || id,
+				when: data.when ? data.when.charAt(0).toLowerCase() + data.when.slice(1) : "a new order arrives",
+				agent: data.agent || "orders",
+				action: (data.action || "Handle the order").trim(),
+				approval: data.approval || "Ask first",
+				on: typeof data.on === "boolean" ? data.on : true,
+			});
+			window.send = async (data) => {
+				window.calls.push(data);
+				if (typeof data.on === "boolean") return window.ruleRow(data);
+				if (typeof data.value === "number") return { key: data.key, value: data.value };
+				if (typeof data.action === "string") return window.ruleRow(data);
+				return null;
+			};
 			window.refresh = async () => {};
 			window.flush = async () => { for (let i = 0; i < 50; i++) await Promise.resolve(); };
 			function Harness() {
 				const [showRules, setShowRules] = useState(true);
 				const [rules, setRules] = useState([]);
+				const [limits, setLimits] = useState([]);
 				window.loadRules = setRules;
+				window.loadLimits = setLimits;
 				const [ruleForm, setRuleForm] = useState({
 					when: "A new order arrives", agent: "orders", action: "", approval: "Ask first"
 				});
@@ -32,7 +48,7 @@ const bundle = await build({
 				}}>
 					<button onClick={() => setShowRules(false)}>Leave rules</button>
 					<button onClick={() => setShowRules(true)}>Return to rules</button>
-					{showRules && <RulesScreen page={{ rules, limits: [] }} />}
+					{showRules && <RulesScreen page={{ rules, limits }} />}
 				</WorkspaceContext.Provider>;
 			}
 			window.mount = () => {
@@ -86,168 +102,256 @@ async function configure(page, values) {
 	await page.evaluate((values) => {
 		window.values = values;
 		const { kind } = values;
-		window.write = (value, loaded) =>
-			window.queue[kind === "rule" ? "queueRule" : "queueLimit"]("test-key", value, loaded, () => window.refresh());
+		window.write = (value) =>
+			window.queue[kind === "rule" ? "queueRule" : "queueLimit"]("test-key", value, () => window.refresh());
 		window.shown = (loaded) => window.queue[kind === "rule" ? "shownOn" : "shownLimit"]("test-key", loaded);
 	}, values);
 }
 
+function sentRow(kind, value) {
+	return kind === "rule" ? { id: "test-key", on: value } : { key: "test-key", value };
+}
+
 for (const values of cases) {
-	test(`${values.kind}: a confirmed idle flight yields to later loader reads`, async () => {
+	test(`${values.kind}: a finished write does not cover a later read`, async () => {
 		await withPage(async (page) => {
 			await configure(page, values);
 			assert.equal(
 				await page.evaluate(async () => {
-					const { initial, first } = window.values;
-					window.refresh = () =>
-						new Promise((resolve) => {
-							window.releaseRefresh = resolve;
-						});
-					window.write(first, initial);
-					await window.flush();
-					return window.shown(initial);
-				}),
-				values.first,
-			);
-			assert.equal(
-				await page.evaluate(async () => {
-					window.shown(window.values.first);
-					window.releaseRefresh();
+					window.refreshCalls = 0;
+					window.refresh = async () => {
+						window.refreshCalls += 1;
+					};
+					window.write(window.values.first);
 					await window.flush();
 					return window.shown(window.values.initial);
 				}),
-				values.first,
+				values.initial,
 			);
+			assert.equal(await page.evaluate(() => window.refreshCalls), 0);
 			assert.equal(await page.evaluate(() => window.shown(window.values.first)), values.first);
 			assert.equal(await page.evaluate(() => window.shown(window.values.newer)), values.newer);
-			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.initial);
+			assert.equal(await page.evaluate(() => window.calls.length), 1);
 		});
 	});
 
-	for (const finish of ["settle", "timeout"]) {
-		test(`${values.kind}: the last value queued during refresh goes out after ${finish}`, async () => {
-			await withPage(async (page) => {
-				await configure(page, values);
-				await page.evaluate(async () => {
-					const { initial, first, last } = window.values;
-					window.refresh = () =>
-						new Promise((resolve) => {
-							window.releaseRefresh = resolve;
-						});
-					window.write(first, initial);
-					await window.flush();
-					window.write(first, initial);
-					window.write(last, initial);
-					window.mount();
-				});
-				await page.getByRole("heading", { name: "Rules and limits" }).waitFor();
-				await page.evaluate(() => window.root.unmount());
-				assert.equal(await page.evaluate(() => window.shown(window.values.first)), values.last);
-				assert.equal(await page.evaluate(() => window.calls.length), 1);
-				if (finish === "timeout") await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
-				else
-					await page.evaluate(async () => {
-						window.releaseRefresh();
-						await window.flush();
-					});
-				assert.deepEqual(
-					await page.evaluate(() => window.calls),
-					values.kind === "rule"
-						? [
-								{ id: "test-key", on: values.first },
-								{ id: "test-key", on: values.last },
-							]
-						: [
-								{ key: "test-key", value: values.first },
-								{ key: "test-key", value: values.last },
-							],
-				);
-				await page.evaluate(async () => {
-					window.releaseRefresh();
-					await window.flush();
-				});
-				assert.equal(await page.evaluate(() => window.shown(window.values.last)), values.last);
-				assert.equal(await page.evaluate(() => window.shown(window.values.newer)), values.newer);
-			});
-		});
-	}
-
-	test(`${values.kind}: a failed write after refresh timeout preserves confirmed storage`, async () => {
+	test(`${values.kind}: the last value queued during a write goes out once`, async () => {
 		await withPage(async (page) => {
 			await configure(page, values);
 			await page.evaluate(async () => {
-				window.stored = window.values.initial;
-				window.send = async (data) => {
-					window.stored = data.on ?? data.value;
+				const { first } = window.values;
+				window.refreshCalls = 0;
+				window.refresh = async () => {
+					window.refreshCalls += 1;
 				};
-				window.refresh = () => new Promise(() => {});
-				window.write(window.values.first, window.values.initial);
+				const row = (data) =>
+					typeof data.on === "boolean" ? window.ruleRow(data) : { key: data.key, value: data.value };
+				window.send = (data) => {
+					window.calls.push(data);
+					if (window.calls.length > 1) {
+						return Promise.resolve(row(data));
+					}
+					return new Promise((resolve) => {
+						window.releaseSend = () => resolve(row(data));
+					});
+				};
+				window.write(first);
 				await window.flush();
+				window.write(window.values.last);
+				window.mount();
 			});
-			await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
-			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.first);
+			await page.getByRole("heading", { name: "Rules and limits" }).waitFor();
+			await page.evaluate(() => window.root.unmount());
+			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.last);
+			assert.equal(await page.evaluate(() => window.calls.length), 1);
 			await page.evaluate(async () => {
-				window.send = async () => {
-					throw new Error("Write failed");
-				};
-				window.refresh = async () => {};
-				window.write(window.values.last, window.values.initial);
+				window.releaseSend();
 				await window.flush();
 			});
-			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.first);
-			assert.equal(await page.evaluate(() => window.stored), values.first);
+			assert.deepEqual(await page.evaluate(() => window.calls), [
+				sentRow(values.kind, values.first),
+				sentRow(values.kind, values.last),
+			]);
+			assert.equal(await page.evaluate(() => window.refreshCalls), 0);
+			assert.equal(await page.evaluate(() => window.shown(window.values.last)), values.last);
+			assert.equal(await page.evaluate(() => window.shown(window.values.newer)), values.newer);
+		});
+	});
+
+	test(`${values.kind}: a timed-out write leaves the queue and one read follows`, async () => {
+		await withPage(async (page) => {
+			await configure(page, values);
+			await page.evaluate(async () => {
+				window.refreshCalls = 0;
+				window.refresh = async () => {
+					window.refreshCalls += 1;
+				};
+				window.send = (data) =>
+					new Promise((resolve) => {
+						window.calls.push(data);
+						window.releaseSend = () =>
+							resolve(
+								typeof data.on === "boolean" ? window.ruleRow(data) : { key: data.key, value: data.value },
+							);
+					});
+				window.write(window.values.first);
+				await window.flush();
+				window.write(window.values.last);
+				await window.flush();
+			});
+			assert.equal(await page.evaluate(() => window.calls.length), 1);
+			await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+			await page.evaluate(() => window.flush());
+			assert.deepEqual(await page.evaluate(() => window.calls), [
+				sentRow(values.kind, values.first),
+				sentRow(values.kind, values.last),
+			]);
+			assert.equal(await page.evaluate(() => window.refreshCalls), 0);
+			await page.evaluate(async () => {
+				window.releaseSend();
+				await window.flush();
+			});
+			assert.equal(await page.evaluate(() => window.calls.length), 2);
+			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.initial);
+			assert.equal(await page.evaluate(() => window.refreshCalls), 0);
+		});
+	});
+
+	test(`${values.kind}: a failed write does not send the failed value again`, async () => {
+		await withPage(async (page) => {
+			await configure(page, values);
+			await page.evaluate(async () => {
+				window.refreshCalls = 0;
+				window.refresh = async () => {
+					window.refreshCalls += 1;
+				};
+				window.send = (data) => {
+					window.calls.push(data);
+					return new Promise((_resolve, reject) => {
+						window.rejectSend = reject;
+					});
+				};
+				window.write(window.values.first);
+				await window.flush();
+				window.write(window.values.last);
+				window.send = async (data) => {
+					window.calls.push(data);
+					return typeof data.on === "boolean" ? window.ruleRow(data) : { key: data.key, value: data.value };
+				};
+				window.rejectSend(new Error("Write failed"));
+				await window.flush();
+			});
+			assert.deepEqual(await page.evaluate(() => window.calls), [
+				sentRow(values.kind, values.first),
+				sentRow(values.kind, values.last),
+			]);
+			assert.equal(await page.evaluate(() => window.refreshCalls), 0);
+			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.initial);
+			assert.equal(await page.evaluate(() => window.shown(window.values.last)), values.last);
 		});
 	});
 }
 
-test("limit: a newer read reconciles without first observing the confirmed value", async () => {
+test("limit: the response value replaces the snapshot", async () => {
 	await withPage(async (page) => {
-		await configure(page, cases[0]);
-		await page.evaluate(async () => {
-			window.write(70, 50);
-			await window.flush();
+		await page.evaluate(() => {
+			window.refreshCalls = 0;
+			window.refresh = async () => {
+				window.refreshCalls += 1;
+			};
+			window.send = async (data) => {
+				window.calls.push(data);
+				return { key: data.key, value: 55 };
+			};
+			window.mount();
 		});
-		assert.equal(await page.evaluate(() => window.shown(50)), 70);
-		assert.equal(await page.evaluate(() => window.shown(80)), 80);
-		assert.equal(await page.evaluate(() => window.shown(50)), 50);
+		await page.getByRole("heading", { name: "Rules and limits" }).waitFor();
+		await page.evaluate(() => {
+			window.loadLimits([
+				{
+					id: "lim-refund",
+					key: "policy.refund_auto_limit",
+					label: "Refund without asking, up to",
+					min: 0,
+					max: 200,
+					step: 5,
+					value: 50,
+				},
+			]);
+		});
+		await page.getByRole("slider").fill("70");
+		await page.evaluate(() => window.flush());
+		await expect(page.getByText("$55", { exact: true })).toBeVisible();
+		assert.equal(await page.evaluate(() => window.refreshCalls), 0);
+		await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+		await expect(page.getByText("$55", { exact: true })).toBeVisible();
+		assert.deepEqual(await page.evaluate(() => window.calls), [{ key: "policy.refund_auto_limit", value: 70 }]);
 	});
 });
 
-for (const refreshResult of ["timeout", "reject"]) {
-	for (const newer of ["", "A newer action"]) {
-		test(`add rule: refresh ${refreshResult} after POST success preserves the cleared draft or newer typing (${newer})`, async () => {
-			await withPage(async (page) => {
-				await page.evaluate(() => {
-					window.send = async (data) => {
-						window.calls.push(data);
-						return { id: "r100" };
-					};
-					window.refresh = () =>
-						new Promise((_resolve, reject) => {
-							window.rejectRefresh = reject;
-						});
-					window.mount();
-				});
-				const action = page.getByLabel("Then", { exact: true });
-				await action.fill("Handle the order");
-				const add = page.getByRole("button", { name: "Add rule", exact: true });
-				await add.click();
-				await page.waitForFunction(() => window.rejectRefresh);
-				await expect(action).toHaveValue("");
-				if (newer) await action.fill(newer);
-				if (refreshResult === "timeout") await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
-				else
-					await page.evaluate(async () => {
-						window.rejectRefresh(new Error("Read failed"));
-						await window.flush();
-					});
-				await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(1);
-				await expect(action).toHaveValue(newer);
-				if (!newer) await add.click();
-				assert.equal(await page.evaluate(() => window.calls.length), 1);
-			});
+test("limit: a failed write reads once and a failed read stops", async () => {
+	await withPage(async (page) => {
+		await page.evaluate(() => {
+			window.refreshCalls = 0;
+			window.refresh = async () => {
+				window.refreshCalls += 1;
+				throw new Error("Read failed");
+			};
+			window.send = async () => {
+				throw new Error("Write failed");
+			};
+			window.mount();
 		});
-	}
+		await page.getByRole("heading", { name: "Rules and limits" }).waitFor();
+		await page.evaluate(() => {
+			window.loadLimits([
+				{
+					id: "lim-refund",
+					key: "policy.refund_auto_limit",
+					label: "Refund without asking, up to",
+					min: 0,
+					max: 200,
+					step: 5,
+					value: 50,
+				},
+			]);
+		});
+		await page.getByRole("slider").fill("70");
+		await page.evaluate(() => window.flush());
+		await expect(page.getByText("$50", { exact: true })).toBeVisible();
+		assert.equal(await page.evaluate(() => window.refreshCalls), 1);
+		await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+		await page.evaluate(() => window.flush());
+		assert.equal(await page.evaluate(() => window.refreshCalls), 1);
+		await expect(page.getByText("$50", { exact: true })).toBeVisible();
+	});
+});
+
+for (const newer of ["", "A newer action"]) {
+	test(`add rule: a successful add keeps the row without a confirmation read (${newer})`, async () => {
+		await withPage(async (page) => {
+			await page.evaluate(() => {
+				window.refreshCalls = 0;
+				window.refresh = async () => {
+					window.refreshCalls += 1;
+				};
+				window.mount();
+			});
+			const action = page.getByLabel("Then", { exact: true });
+			await action.fill("Handle the order");
+			const add = page.getByRole("button", { name: "Add rule", exact: true });
+			await add.click();
+			await page.evaluate(() => window.flush());
+			await expect(action).toHaveValue("");
+			if (newer) await action.fill(newer);
+			await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+			await expect(page.getByRole("button", { name: "Rule enabled" })).toHaveCount(1);
+			await expect(action).toHaveValue(newer);
+			assert.equal(await page.evaluate(() => window.refreshCalls), 0);
+			if (!newer) await add.click();
+			assert.equal(await page.evaluate(() => window.calls.length), 1);
+		});
+	});
 }
 
 for (const newer of ["", "A newer action"]) {
@@ -382,10 +486,7 @@ for (const outcome of ["failure", "success"]) {
 			await page.evaluate(async (outcome) => {
 				const first = window.adds[0];
 				if (outcome === "failure") first.reject(new Error("HTTP 500"));
-				else {
-					window.loadRules([{ ...first.data, id: "r100", on: true, when: "a new order arrives" }]);
-					first.resolve({ id: "r100" });
-				}
+				else first.resolve(window.ruleRow({ ...first.data, id: "r100", on: true }));
 				await window.flush();
 			}, outcome);
 			await expect(action).toHaveValue("");
@@ -426,7 +527,7 @@ test("add rule: editing and clearing an action prevents old draft restoration", 
 	});
 });
 
-test("add rule: identical submissions keep each row until its own read confirms it", async () => {
+test("add rule: each success puts its own row in the snapshot", async () => {
 	await withPage(async (page) => {
 		await holdAdds(page);
 		const action = page.getByLabel("Then", { exact: true });
@@ -445,28 +546,24 @@ test("add rule: identical submissions keep each row until its own read confirms 
 		]);
 		await page.evaluate(async () => {
 			window.refresh = () => new Promise(() => {});
-			window.adds[0].resolve({ id: "r100" });
+			window.adds[0].resolve(window.ruleRow({ ...window.adds[0].data, id: "r100", on: true }));
 			await window.flush();
 		});
 		await expect(switches).toHaveCount(2);
 		await expect(action).toHaveValue("");
 		assert.equal(await page.evaluate(() => window.adds[1].signal.aborted), false);
 		await page.evaluate(async () => {
-			window.savedA = { ...window.adds[0].data, id: "r100", on: true, when: "a new order arrives" };
-			window.loadRules([window.savedA]);
+			window.adds[1].resolve(window.ruleRow({ ...window.adds[1].data, id: "r101", on: true }));
 			await window.flush();
 		});
+		await expect(switches).toHaveCount(2);
+		await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
 		await expect(switches).toHaveCount(2);
 		await page.evaluate(async () => {
-			window.adds[1].resolve({ id: "r101" });
+			window.loadRules([window.ruleRow({ ...window.adds[0].data, id: "r100", on: true })]);
 			await window.flush();
 		});
-		await expect(switches).toHaveCount(2);
-		await page.evaluate(async () => {
-			window.loadRules([window.savedA, { ...window.savedA, id: "r101" }]);
-			await window.flush();
-		});
-		await expect(switches).toHaveCount(2);
+		await expect(switches).toHaveCount(1);
 		await expect(action).toHaveValue("");
 	});
 });
@@ -485,9 +582,9 @@ test("add rule: a click on a pending row shows at once and waits behind the add"
 			window.calls = [];
 			window.send = async (data) => {
 				window.calls.push(data);
-				return { id: "r100" };
+				return window.ruleRow(data);
 			};
-			window.adds[0].resolve({ id: "r100" });
+			window.adds[0].resolve(window.ruleRow({ ...window.adds[0].data, id: "r100", on: true }));
 			await window.flush();
 		});
 		await expect(toggle).toHaveAttribute("aria-pressed", "false");
@@ -589,14 +686,18 @@ test("add rule: each failure restores only its own draft when the form is empty"
 	});
 });
 
-test("add rule: a saved row stays while the refresh hangs", async () => {
+test("add rule: a saved row stays while a later read hangs", async () => {
 	await withPage(async (page) => {
 		await page.evaluate(() => {
+			window.refreshCalls = 0;
 			window.send = async (data) => {
 				window.calls.push(data);
-				return { id: "r100" };
+				return window.ruleRow(data);
 			};
-			window.refresh = () => new Promise(() => {});
+			window.refresh = () => {
+				window.refreshCalls += 1;
+				return new Promise(() => {});
+			};
 			window.mount();
 		});
 		await page.getByLabel("Then", { exact: true }).fill("Handle the order");
@@ -605,23 +706,22 @@ test("add rule: a saved row stays while the refresh hangs", async () => {
 		await expect(toggles).toHaveCount(1);
 		await page.waitForFunction(() => window.calls.length === 1);
 		await page.evaluate(() => window.flush());
+		assert.equal(await page.evaluate(() => window.refreshCalls), 0);
 		await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
 		await page.evaluate(() => window.flush());
 		await expect(toggles).toHaveCount(1);
-		await page.evaluate(async () => {
-			window.loadRules([
-				{
-					id: "r100",
-					when: "a new order arrives",
-					agent: "orders",
-					action: "Handle the order",
-					approval: "Ask first",
-					on: true,
-				},
-			]);
-			await window.flush();
-		});
-		await expect(toggles).toHaveCount(1);
+		await toggles.click();
+		await page.evaluate(() => window.flush());
+		assert.deepEqual(await page.evaluate(() => window.calls), [
+			{
+				when: "A new order arrives",
+				agent: "orders",
+				action: "Handle the order",
+				approval: "Ask first",
+			},
+			{ id: "r100", on: false },
+		]);
+		await expect(toggles).toHaveAttribute("aria-pressed", "false");
 		await expect(page.getByText("Handle the order", { exact: false })).toHaveCount(1);
 	});
 });
@@ -648,7 +748,7 @@ for (const clickBeforeSave of [false, true]) {
 						window.rejectToggle = reject;
 					});
 				};
-				window.adds[0].resolve({ id: "r100" });
+				window.adds[0].resolve(window.ruleRow({ ...window.adds[0].data, id: "r100", on: true }));
 				await window.flush();
 			});
 			if (!clickBeforeSave) await toggle.click();
@@ -663,6 +763,7 @@ for (const clickBeforeSave of [false, true]) {
 			await page.evaluate(() => {
 				window.send = async (data) => {
 					window.calls.push(data);
+					return window.ruleRow(data);
 				};
 			});
 			await toggle.click();
@@ -718,12 +819,12 @@ for (const refreshResult of ["success", "reject", "timeout"]) {
 			});
 			await page.waitForFunction(() => window.refreshCalls === 1);
 			if (refreshResult === "timeout") {
-				// Complete B before its own write deadline. Its saved row must survive the hung reads.
+				// Complete B before its own write deadline. Its saved row must survive the hung read.
 				await page.evaluate(async () => {
-					window.adds[1].resolve({ id: "r100" });
+					window.adds[1].resolve(window.ruleRow({ ...window.adds[1].data, id: "r100", on: true }));
 					await window.flush();
 				});
-				await page.waitForFunction(() => window.refreshCalls === 2);
+				assert.equal(await page.evaluate(() => window.refreshCalls), 1);
 				await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
 			}
 			await expect(page.locator("section[aria-label='Rules']").getByText("Draft B", { exact: false })).toHaveCount(

@@ -14,6 +14,12 @@ export interface Limit {
 	readonly value: number;
 }
 
+// The row a limit write returns. The screen replaces this key in the snapshot.
+export interface StoredLimit {
+	readonly key: string;
+	readonly value: number;
+}
+
 export type ApprovalStatus = "Pending" | "Approved" | "Declined";
 
 export interface Approval {
