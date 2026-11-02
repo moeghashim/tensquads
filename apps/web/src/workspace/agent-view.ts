@@ -57,7 +57,16 @@ export function skillChips(skills: readonly { readonly id: string; readonly on: 
 		.map((skill) => skill.id);
 }
 
+const blankOwner = "—";
+
+export function ownerText(owner: string): string {
+	return owner.trim().length === 0 ? blankOwner : owner;
+}
+
 export function initials(owner: string): string {
+	if (owner.trim().length === 0) {
+		return blankOwner;
+	}
 	if (owner.includes("@")) {
 		const local = owner.split("@")[0] ?? "";
 		return local.slice(0, 2).toUpperCase();

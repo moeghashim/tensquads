@@ -245,6 +245,24 @@ test("the side-by-side evidence shows the design and the build", async ({ page, 
 	}
 });
 
+test("the frame boxes match the rendered design at 1440 and 390", async ({ page, workspaceUser }) => {
+	await openWorkspace(page, workspaceUser);
+	await page.getByRole("button", { name: "Ask Master" }).click();
+	for (const viewport of viewports) {
+		await page.setViewportSize({ width: viewport.width, height: viewport.height });
+		await waitForScreenFonts(page);
+		const designPage = await openDesignFrame(page, viewport.width, viewport.height, true);
+		try {
+			await waitForScreenFonts(designPage);
+			const design = await measureFrame(designPage);
+			const built = await measureFrame(page);
+			expectFrameBoxes(built, design, viewport.name);
+		} finally {
+			await designPage.close();
+		}
+	}
+});
+
 test("the frame matches the macOS screenshot baselines", async ({ page, workspaceUser, accountId }) => {
 	void accountId;
 	skipUnlessMacScreenshot();
@@ -302,39 +320,132 @@ async function shot(page: Page) {
 	return page.screenshot({ fullPage: true, animations: "disabled", caret: "hide", scale: "css" });
 }
 
-async function designShot(page: Page, width: number, height: number, dockOpen: boolean) {
+async function openDesignFrame(page: Page, width: number, height: number, dockOpen: boolean) {
 	const canvas = await page.context().newPage();
+	await installLocalFonts(canvas);
+	await canvas.setViewportSize({ width, height });
+	const body = await renderDesignMarkup(canvas, readInventory("Main"), { view: "overview", dockOpen });
+	const source = readFileSync(new URL("../design/Main.dc.html", import.meta.url), "utf8");
+	const css = source.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
+	await canvas.setContent(
+		`<!doctype html><html lang="en"><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"><style>${css}x-dc{display:contents}</style></head><body>${body}</body></html>`,
+	);
+	await canvas.locator("[data-handler='goAdmin']").evaluate((element) => element.remove());
+	await canvas.locator("main").evaluate((element) => element.replaceChildren());
+	// The evidence renderer turns sc-for and sc-if into divs. The design source gives those elements no box.
+	await canvas.evaluate(() => {
+		for (const node of document.querySelectorAll("[data-loop], [data-if]")) {
+			if (node instanceof HTMLElement) node.style.setProperty("display", "contents");
+		}
+	});
+	await waitForScreenFonts(canvas);
+	return canvas;
+}
+
+async function designShot(page: Page, width: number, height: number, dockOpen: boolean) {
+	const canvas = await openDesignFrame(page, width, height, dockOpen);
 	try {
-		await installLocalFonts(canvas);
-		await canvas.setViewportSize({ width, height });
-		const body = await renderDesignMarkup(canvas, readInventory("Main"), { view: "overview", dockOpen });
-		const source = readFileSync(new URL("../design/Main.dc.html", import.meta.url), "utf8");
-		const css = source.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
-		await canvas.setContent(
-			`<!doctype html><html lang="en"><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"><style>${css}x-dc{display:contents}</style></head><body>${body}</body></html>`,
-		);
-		await canvas.locator("[data-handler='goAdmin']").evaluate((element) => element.remove());
-		await canvas.locator("main").evaluate((element) => element.replaceChildren());
-		// The evidence renderer wraps each loop in a div. The design source does not, so the chips stay on one row.
-		await canvas.evaluate(() => {
-			for (const loop of document.querySelectorAll("[data-loop]")) {
-				const parent = loop.parentElement;
-				if (!parent) {
-					continue;
-				}
-				parent.setAttribute("data-loop", loop.getAttribute("data-loop") ?? "");
-				const as = loop.getAttribute("data-loop-as");
-				if (as) {
-					parent.setAttribute("data-loop-as", as);
-				}
-				loop.replaceWith(...loop.childNodes);
-			}
-		});
-		await waitForScreenFonts(canvas);
 		return await shot(canvas);
 	} finally {
 		await canvas.close();
 	}
+}
+
+type FrameBoxes = Awaited<ReturnType<typeof measureFrame>>;
+
+function expectNear(actual: number, expected: number, label: string) {
+	expect(Math.abs(actual - expected), `${label}: build ${actual}, design ${expected}`).toBeLessThanOrEqual(0.5);
+}
+
+function expectFrameBoxes(built: FrameBoxes, design: FrameBoxes, name: string) {
+	expectPanel(built, design, name);
+	expectAgentRows(built, design, name);
+	expectAgentGaps(built.agentGaps, design.agentGaps, name);
+	expectMessageGaps(built.messageGaps, design.messageGaps, name);
+	expectChipRow(built, design, name);
+}
+
+function expectPanel(built: FrameBoxes, design: FrameBoxes, name: string) {
+	expect(design.panel, `${name} design panel`).not.toBeNull();
+	expect(built.panel, `${name} build panel`).not.toBeNull();
+	expectNear(built.panel?.width ?? 0, design.panel?.width ?? 0, `${name} panel width`);
+	expectNear(built.panel?.x ?? 0, design.panel?.x ?? 0, `${name} panel x`);
+}
+
+function expectAgentRows(built: FrameBoxes, design: FrameBoxes, name: string) {
+	expect(built.agentRows.length).toBe(design.agentRows.length);
+	expect(design.agentRows.length).toBeGreaterThan(1);
+	for (const [index, row] of built.agentRows.entries()) {
+		expectAgentRow(row, design.agentRows[index], name, index);
+	}
+}
+
+function expectAgentRow(
+	row: FrameBoxes["agentRows"][number],
+	expected: FrameBoxes["agentRows"][number] | undefined,
+	name: string,
+	index: number,
+) {
+	const target = expected ?? { x: 0, width: 0, dotRight: 0, dotWidth: 0 };
+	expectNear(row.width, target.width, `${name} agent ${index} width`);
+	expectNear(row.x, target.x, `${name} agent ${index} x`);
+	expectNear(row.dotRight, target.dotRight, `${name} agent ${index} dot`);
+	expectNear(row.dotWidth, target.dotWidth, `${name} agent ${index} dot width`);
+}
+
+function expectAgentGaps(built: number[], design: number[], name: string) {
+	expect(built.length).toBe(design.length);
+	for (const [index, gap] of built.entries()) {
+		expectNear(gap, design[index] ?? 0, `${name} agent gap ${index}`);
+	}
+}
+
+function expectMessageGaps(built: number[], design: number[], name: string) {
+	expect(design.length).toBeGreaterThan(0);
+	expect(built.length).toBeGreaterThan(0);
+	for (const gap of built) {
+		expectNear(gap, design[0] ?? 0, `${name} message gap`);
+	}
+}
+
+function expectChipRow(built: FrameBoxes, design: FrameBoxes, name: string) {
+	expect(built.chipGaps.length).toBe(design.chipGaps.length);
+	for (const [index, gap] of built.chipGaps.entries()) {
+		expectNear(gap, design.chipGaps[index] ?? 0, `${name} suggestion gap ${index}`);
+	}
+	expect(new Set(built.chipTops.map((top) => Math.round(top))).size).toBe(1);
+}
+
+async function measureFrame(page: Page) {
+	return page.evaluate(() => {
+		const boxOf = (element) => {
+			const box = element.getBoundingClientRect();
+			return { x: box.x, y: box.y, width: box.width, right: box.right, bottom: box.bottom };
+		};
+		const panelElement = document.querySelector("section[aria-label='Chat with the master']");
+		const panel = panelElement ? boxOf(panelElement) : null;
+		const nav = document.querySelector("nav[aria-label='Workspace']");
+		const rows = nav
+			? [...nav.querySelectorAll("button")].filter((button) =>
+					button.querySelector("[aria-label='Running'], [aria-label='Paused']"),
+				)
+			: [];
+		const agentRows = rows.map((row) => {
+			const box = boxOf(row);
+			const dot = row.querySelector("[aria-label='Running'], [aria-label='Paused']");
+			const dotBox = dot ? boxOf(dot) : { right: box.right, width: 0 };
+			return { x: box.x, width: box.width, dotRight: box.right - dotBox.right, dotWidth: dotBox.width };
+		});
+		const agentGaps = rows.slice(1).map((row, index) => boxOf(row).y - boxOf(rows[index] ?? row).bottom);
+		const loop = document.querySelector("[data-loop='dockChat']");
+		const bubbles = loop ? [...loop.children] : [];
+		const messageGaps = bubbles.slice(1).map((node, index) => boxOf(node).y - boxOf(bubbles[index] ?? node).bottom);
+		const suggestions = document.querySelector("[data-loop='dockSuggestions']");
+		const chips = suggestions ? [...suggestions.querySelectorAll("button")] : [];
+		const chipGaps = chips.slice(1).map((chip, index) => boxOf(chip).x - boxOf(chips[index] ?? chip).right);
+		const chipTops = chips.map((chip) => boxOf(chip).y);
+		return { panel, agentRows, agentGaps, messageGaps, chipGaps, chipTops };
+	});
 }
 
 function pngSize(image: Buffer) {

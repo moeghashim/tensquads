@@ -49,14 +49,14 @@ function VisibleDock({
 	const unread = dockUnread(dockOpen, approvalCount);
 	const label = dockOpen ? "Hide chat" : `Ask ${frame.masterName}`;
 	return (
-		<div data-if="showDock">
+		<div data-if="showDock" style={css("display: contents")}>
 			<div
 				style={css(
 					"position: fixed; right: 20px; bottom: 20px; z-index: 5; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; max-width: calc(100vw - 40px)",
 				)}
 			>
 				{dockOpen ? (
-					<div data-if="dockOpen">
+					<div data-if="dockOpen" style={css("display: contents")}>
 						<DockPanel
 							masterName={frame.masterName}
 							mark={mark}
@@ -196,11 +196,13 @@ function DockPanel({
 				</button>
 			</div>
 			<div
+				// biome-ignore lint/a11y/noNoninteractiveTabindex: The message list scrolls, so the keyboard must reach it.
+				tabIndex={0}
 				style={css(
 					"flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px",
 				)}
 			>
-				<div data-loop="dockChat" data-loop-as="m">
+				<div data-loop="dockChat" data-loop-as="m" style={css("display: contents")}>
 					{messages.map((message, index) => (
 						<DockBubble
 							key={message.id}
@@ -319,7 +321,7 @@ function DockBubble({
 	return (
 		<div style={css(`display: flex; flex-direction: column; align-items: ${align}; gap: 4px`)}>
 			{user ? null : (
-				<div {...(markTag ? { "data-if": "m.hasTag" } : {})}>
+				<div style={css("display: contents")} {...(markTag ? { "data-if": "m.hasTag" } : {})}>
 					<span
 						style={css("font-size: 11px; color: #5d5d5d; display: inline-flex; align-items: center; gap: 6px")}
 					>

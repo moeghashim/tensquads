@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { css } from "#/screens/css.ts";
 
-import { agentStatus, initials, masterInitial, squadLine } from "./agent-view.ts";
+import { agentStatus, initials, masterInitial, ownerText, squadLine } from "./agent-view.ts";
 import { useWorkspace } from "./context.ts";
 import { ChatIcon, FlowIcon, OverviewIcon, RulesIcon, SquadsIcon } from "./icons.tsx";
 import { navStyle } from "./styles.ts";
@@ -74,7 +74,7 @@ export function Sidebar() {
 			<div style={css("margin-top: 20px; padding: 0 10px; font-size: 12px; font-weight: 500; color: #5d5d5d")}>
 				Squads
 			</div>
-			<div data-loop="agents" data-loop-as="a">
+			<div data-loop="agents" data-loop-as="a" style={css("display: contents")}>
 				{frame.agents.map((agent) => {
 					const status = agentStatus(agent.on);
 					return (
@@ -110,7 +110,7 @@ export function Sidebar() {
 				>
 					{initials(frame.owner)}
 				</div>
-				<span style={css("font-size: 14px")}>{frame.owner}</span>
+				<span style={css("font-size: 14px")}>{ownerText(frame.owner)}</span>
 			</div>
 		</nav>
 	);
