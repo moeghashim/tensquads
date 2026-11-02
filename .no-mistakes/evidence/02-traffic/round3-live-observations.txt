@@ -1,0 +1,41 @@
+traffic shows the hub, the chips, the list, the inspector, the state table and both controls: passed
+a hub click filters the list to that agent: passed
+a second hub click clears the filter: passed
+an event click fills the inspector: passed
+live adds one event every 3.5 seconds, on any page, until paused: passed
+send next event adds the event, selects it and updates the state table: passed
+a filter chip filters the list and All agents clears it: passed
+a Result shows its mission delta and other kinds show None: passed
+the script starts again after eight events with new ids: passed
+an empty bus shows blank inspector values and None: passed
+the list follows sequence order: passed
+the Inventory hub node is dimmed: passed
+the traffic boxes match the rendered design at 1440 and 390: passed
+the traffic inventory matches the flow view: passed
+the keyboard reaches every traffic button and shows the focus ring: passed
+the traffic page has no horizontal scroll at 390: passed
+the traffic page passes axe: passed
+a hung send clears and the next click adds the event: passed
+the traffic matches the macOS screenshot baselines: passed
+the side-by-side evidence shows the design and the build: passed
+send resumes after hung refresh following successful advance without reload: passed
+{"action":"send","stallAdvance":false,"heldReads":3,"posts":2,"before":1,"after":2,"recoveredWithoutReload":true}
+
+send resumes after hung refresh following timed-out advance without reload: passed
+{"action":"send","stallAdvance":true,"heldReads":3,"posts":2,"before":0,"after":1,"recoveredWithoutReload":true}
+
+live resumes after hung refresh following successful advance without reload: passed
+{"action":"live","stallAdvance":false,"heldReads":3,"posts":2,"before":1,"after":2,"recoveredWithoutReload":true}
+
+live resumes after hung refresh following timed-out advance without reload: passed
+{"action":"live","stallAdvance":true,"heldReads":3,"posts":2,"before":0,"after":1,"recoveredWithoutReload":true}
+
+missing agent shows its id and does not create a hub node: passed
+repeated event id changes neither event history nor shared state nor cursor: passed
+{"duplicateId":"e100","events":10,"historyUnchanged":true,"storeUnchanged":true,"cursorUnchanged":true}
+
+empty bus keeps blank inspector cards and the shared state table: passed
+send next event selects the new event without React render errors: passed
+empty selection uses second event and a removed selected id falls back to the last event: passed
+{"initialSelection":"e1042ordersmaster","removedSelection":"e1056financemaster","fallbackSelection":"e1055supportmaster","consoleErrors":[]}
+

@@ -1,0 +1,13 @@
+2e85b8f9298c0e268f6db94242f54dbb5b18a0e923f11ca6140076e3dddc512c  AGENTS.md
+afea3c45c89da2bd0514baf7e2dba2a2f27b17443690fb36eef554efce6a6eac  docs/PLAN.md
+26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
+b2f5f24d144280eca45606025bdbccb2c4cb353b85e752fe328b04619f4e7e9e  tasks/02-traffic.md
+376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89  design/Main.dc.html
+1e084bf939dec51d1eb287f6cb3160581ec4b9e449cfb7a66354505eb96b8eae  design/Traffic.dc.html
+deccce08d6932c707935dd44be6fd089e3a27d9c514e067d576129632117d5ec  design/inventory/Main.json
+075c1cf3456b7d35d4d04ed667adfc1c483ac02fe7c715ac0622b03f2aed2b9b  design/inventory/Traffic.json
+373b935a1f04ef1f1cd7a72b610be74b554035ed6998fa3b8aa0de532ca65eb8  progress.md
+
+Decisions 1 to 32 read. No question.
+Design check: all 13 files OK. design/ matches canvas version 1793448823-a766.
+No unmapped traffic requirement identified. This run is scoped to the assigned test phase.

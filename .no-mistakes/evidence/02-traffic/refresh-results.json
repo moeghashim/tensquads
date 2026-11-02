@@ -1,0 +1,277 @@
+{
+  "config": {
+    "argv": [
+      "/opt/homebrew/Cellar/node@24/24.21.0/bin/node",
+      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      ".traffic-validation/refresh.config.ts"
+    ],
+    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/.traffic-validation/refresh.config.ts",
+    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6E46V878X5EJFZGJYCAW7KJ/refresh-playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          ".validation-refresh.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6E46V878X5EJFZGJYCAW7KJ/refresh-playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e",
+        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e",
+        "testIgnore": [],
+        "testMatch": ".validation-refresh.spec.ts",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://localhost:3000",
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "deviceScaleFactor": 1,
+          "screenshot": "only-on-failure",
+          "trace": "retain-on-failure",
+          "launchOptions": {
+            "args": [
+              "--font-render-hinting=none",
+              "--disable-font-subpixel-positioning",
+              "--force-color-profile=srgb"
+            ]
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6E46V878X5EJFZGJYCAW7KJ/refresh-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": ".validation-refresh.spec.ts",
+      "file": ".validation-refresh.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "send resumes after hung refresh following successful advance without reload",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1591,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "{\"action\":\"send\",\"stallAdvance\":false,\"heldReads\":3,\"posts\":2,\"before\":1,\"after\":2,\"recoveredWithoutReload\":true}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T12:59:46.832Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f8f6a3df8dbce6ce2041-7cf8026fde9b8aa468cf",
+          "file": ".validation-refresh.spec.ts",
+          "line": 4,
+          "column": 3
+        },
+        {
+          "title": "send resumes after hung refresh following timed-out advance without reload",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1224,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "{\"action\":\"send\",\"stallAdvance\":true,\"heldReads\":3,\"posts\":2,\"before\":0,\"after\":1,\"recoveredWithoutReload\":true}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T12:59:48.496Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f8f6a3df8dbce6ce2041-0aeaf93e50b27f5751ce",
+          "file": ".validation-refresh.spec.ts",
+          "line": 4,
+          "column": 3
+        },
+        {
+          "title": "live resumes after hung refresh following successful advance without reload",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1306,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "{\"action\":\"live\",\"stallAdvance\":false,\"heldReads\":3,\"posts\":2,\"before\":1,\"after\":2,\"recoveredWithoutReload\":true}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T12:59:49.725Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f8f6a3df8dbce6ce2041-d833426b143186ca3c63",
+          "file": ".validation-refresh.spec.ts",
+          "line": 4,
+          "column": 3
+        },
+        {
+          "title": "live resumes after hung refresh following timed-out advance without reload",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1525,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "{\"action\":\"live\",\"stallAdvance\":true,\"heldReads\":3,\"posts\":2,\"before\":0,\"after\":1,\"recoveredWithoutReload\":true}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T12:59:51.035Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f8f6a3df8dbce6ce2041-84258f07ebfaf6920f8e",
+          "file": ".validation-refresh.spec.ts",
+          "line": 4,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-02T12:59:46.626Z",
+    "duration": 5968.911,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

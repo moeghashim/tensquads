@@ -1,0 +1,231 @@
+{
+  "config": {
+    "argv": [
+      "/opt/homebrew/Cellar/node@24/24.21.0/bin/node",
+      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      ".traffic-validation/boundary.config.ts"
+    ],
+    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/.traffic-validation/boundary.config.ts",
+    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6E46V878X5EJFZGJYCAW7KJ/boundary-playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          ".validation-boundary.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6E46V878X5EJFZGJYCAW7KJ/boundary-playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e",
+        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e",
+        "testIgnore": [],
+        "testMatch": ".validation-boundary.spec.ts",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://localhost:3000",
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "deviceScaleFactor": 1,
+          "screenshot": "only-on-failure",
+          "trace": "retain-on-failure",
+          "launchOptions": {
+            "args": [
+              "--font-render-hinting=none",
+              "--disable-font-subpixel-positioning",
+              "--force-color-profile=srgb"
+            ]
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6E46V878X5EJFZGJYCAW7KJ/boundary-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": ".validation-boundary.spec.ts",
+      "file": ".validation-boundary.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "missing agent shows its id and does not create a hub node",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1403,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T13:00:55.845Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "859dda3a673273627b56-1cc64c339f8eca407b45",
+          "file": ".validation-boundary.spec.ts",
+          "line": 3,
+          "column": 1
+        },
+        {
+          "title": "repeated event id changes neither event history nor shared state nor cursor",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 711,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "{\"duplicateId\":\"e100\",\"events\":10,\"historyUnchanged\":true,\"storeUnchanged\":true,\"cursorUnchanged\":true}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T13:00:57.313Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "859dda3a673273627b56-4c3a358d432c2ec8fe43",
+          "file": ".validation-boundary.spec.ts",
+          "line": 12,
+          "column": 1
+        },
+        {
+          "title": "empty bus keeps blank inspector cards and the shared state table",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 679,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T13:00:58.032Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "859dda3a673273627b56-a86cbde07bb7e5c32473",
+          "file": ".validation-boundary.spec.ts",
+          "line": 24,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-02T13:00:55.629Z",
+    "duration": 3116.325,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,199 @@
+{
+  "config": {
+    "argv": [
+      "/opt/homebrew/Cellar/node@24/24.21.0/bin/node",
+      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      ".traffic-validation/console.config.ts"
+    ],
+    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/.traffic-validation/console.config.ts",
+    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6E46V878X5EJFZGJYCAW7KJ/console-playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          ".validation-console.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6E46V878X5EJFZGJYCAW7KJ/console-playwright",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e",
+        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e",
+        "testIgnore": [],
+        "testMatch": ".validation-console.spec.ts",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://localhost:3000",
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "deviceScaleFactor": 1,
+          "screenshot": "only-on-failure",
+          "trace": "retain-on-failure",
+          "launchOptions": {
+            "args": [
+              "--font-render-hinting=none",
+              "--disable-font-subpixel-positioning",
+              "--force-color-profile=srgb"
+            ]
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6E46V878X5EJFZGJYCAW7KJ/console-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": ".validation-console.spec.ts",
+      "file": ".validation-console.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "send next event selects the new event without React render errors",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 2448,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 3\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://react.dev/link/setstate-in-render WorkspaceProvider TrafficPage TrafficPage\",\u001b[39m\n\u001b[31m+ ]\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 3\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://react.dev/link/setstate-in-render WorkspaceProvider TrafficPage TrafficPage\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e/.validation-console.spec.ts:13:17",
+                    "location": {
+                      "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e/.validation-console.spec.ts",
+                      "column": 17,
+                      "line": 13
+                    },
+                    "snippet": "  11 |  await page.screenshot({path:`${evidence}/run-send-console.png`,fullPage:true});\n  12 |  writeFileSync(`${evidence}/run-console-errors.txt`,errors.join('\\n')+'\\n');\n> 13 |  expect(errors).toEqual([]);\n     |                 ^\n  14 | });\n  15 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e/.validation-console.spec.ts",
+                        "column": 17,
+                        "line": 13
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 3\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://react.dev/link/setstate-in-render WorkspaceProvider TrafficPage TrafficPage\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  11 |  await page.screenshot({path:`${evidence}/run-send-console.png`,fullPage:true});\n  12 |  writeFileSync(`${evidence}/run-console-errors.txt`,errors.join('\\n')+'\\n');\n> 13 |  expect(errors).toEqual([]);\n     |                 ^\n  14 | });\n  15 |\n    at /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e/.validation-console.spec.ts:13:17"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-02T13:02:57.945Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6E46V878X5EJFZGJYCAW7KJ/console-playwright/.validation-console-send-n-69771-without-React-render-errors/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6E46V878X5EJFZGJYCAW7KJ/console-playwright/.validation-console-send-n-69771-without-React-render-errors/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6E46V878X5EJFZGJYCAW7KJ/console-playwright/.validation-console-send-n-69771-without-React-render-errors/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6E46V878X5EJFZGJYCAW7KJ/e2e/.validation-console.spec.ts",
+                    "column": 17,
+                    "line": 13
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "a9c57d4480ecbac8e605-8b68e3773b285d41cb88",
+          "file": ".validation-console.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-02T13:02:57.763Z",
+    "duration": 2742.277,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

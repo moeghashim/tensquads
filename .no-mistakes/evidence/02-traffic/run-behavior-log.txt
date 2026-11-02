@@ -1,0 +1,5 @@
+{"action":"send","stallAdvance":false,"heldReads":3,"posts":2,"before":1,"after":2,"recoveredWithoutReload":true}
+{"action":"send","stallAdvance":true,"heldReads":3,"posts":2,"before":0,"after":1,"recoveredWithoutReload":true}
+{"action":"live","stallAdvance":false,"heldReads":3,"posts":2,"before":1,"after":2,"recoveredWithoutReload":true}
+{"action":"live","stallAdvance":true,"heldReads":3,"posts":2,"before":0,"after":1,"recoveredWithoutReload":true}
+{"duplicateId":"e100","events":10,"historyUnchanged":true,"storeUnchanged":true,"cursorUnchanged":true}

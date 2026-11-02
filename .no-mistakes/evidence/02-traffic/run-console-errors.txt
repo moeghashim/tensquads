@@ -1,0 +1,1 @@
+Cannot update a component (`%s`) while rendering a different component (`%s`). To locate the bad setState() call inside `%s`, follow the stack trace as described in https://react.dev/link/setstate-in-render WorkspaceProvider TrafficPage TrafficPage
