@@ -37,7 +37,7 @@ registerHooks({
 const moduleUrl = process.env.AGENT_WRITE_TEST_MODULE
 	? pathToFileURL(process.env.AGENT_WRITE_TEST_MODULE)
 	: new URL("../../apps/web/src/screens/agent-detail/write.ts", import.meta.url);
-const { useAgentWrites } = await import(moduleUrl.href);
+const { stampAgentRead, useAgentWrites } = await import(moduleUrl.href);
 
 function harness() {
 	const reads = [];
@@ -57,6 +57,7 @@ function harness() {
 		],
 	};
 	let loader = structuredClone(server);
+	let stamped;
 	const match = { status: "success" };
 	const router = {};
 	function post(key, update) {
@@ -65,7 +66,11 @@ function harness() {
 		if (!failed) update();
 		const view = structuredClone(server);
 		return new Promise((resolve, reject) => {
-			posts.push({ key, answer: () => (failed ? reject(new Error("Write failed")) : resolve(view)) });
+			posts.push({
+				key,
+				answer: () => (failed ? reject(new Error("Write failed")) : resolve(view)),
+				lose: () => reject(new Error("Response lost")),
+			});
 		});
 	}
 	runtime = {
@@ -114,7 +119,7 @@ function harness() {
 		},
 	};
 	function render() {
-		return useAgentWrites(loader);
+		return stamped === undefined ? useAgentWrites(loader) : useAgentWrites(loader, stamped);
 	}
 	return {
 		render,
@@ -125,11 +130,21 @@ function harness() {
 			failNext = true;
 		},
 		navigations: () => navigations,
-		newLoader(view, status = "success") {
+		newLoader(view, status = "success", readAt) {
 			loader = structuredClone(view);
 			match.status = status;
+			stamped = readAt;
 		},
 	};
+}
+
+function sameControls(view, server) {
+	assert.equal(view.on, server.on);
+	assert.deepEqual(view.skills, server.skills);
+	assert.deepEqual(
+		view.autonomyOpts.map((option) => option.onStr),
+		server.autonomyOpts.map((option) => option.onStr),
+	);
 }
 
 async function settle() {
@@ -319,3 +334,64 @@ for (const outcome of ["answer", "fail", "timeout"]) {
 		await settle();
 	});
 }
+
+for (const action of ["running", "skill", "autonomy"]) {
+	test(`a read started before a successful ${action} write does not replace it`, async () => {
+		const h = harness();
+		const readAt = stampAgentRead("support");
+		const old = structuredClone(h.server);
+		const control = h.render();
+		if (action === "running") control.toggleAgent(false);
+		if (action === "skill") control.toggleSkill("inbox.read", false);
+		if (action === "autonomy") control.pickAutonomy("Full auto");
+		await settle();
+		h.posts.shift().answer();
+		await settle();
+		h.newLoader(old, "success", readAt);
+		sameControls(h.render().view, h.server);
+	});
+
+	test(`a read started before a successful ${action} write does not replace it after a timeout`, async (t) => {
+		t.mock.timers.enable({ apis: ["setTimeout"] });
+		const h = harness();
+		h.render().toggleSkill("inbox.read", false);
+		await settle();
+		t.mock.timers.tick(30_001);
+		await settle();
+		h.reads.shift().answer();
+		await settle();
+		const readAt = stampAgentRead("support");
+		const old = structuredClone(h.server);
+		const control = h.render();
+		if (action === "running") control.toggleAgent(false);
+		if (action === "skill") control.toggleSkill("inbox.read", true);
+		if (action === "autonomy") control.pickAutonomy("Full auto");
+		await settle();
+		h.posts.at(-1).answer();
+		await settle();
+		h.newLoader(old, "success", readAt);
+		sameControls(h.render().view, h.server);
+	});
+}
+
+test("a recovery read started before a later lost response does not satisfy that failure", async () => {
+	const h = harness();
+	h.failNextPost();
+	h.render().toggleAgent(false);
+	await settle();
+	h.posts.shift().answer();
+	await settle();
+	assert.equal(h.reads.length, 1);
+	h.render().toggleSkill("inbox.read", false);
+	await settle();
+	assert.equal(h.server.skills[0].onStr, "false");
+	h.posts.shift().lose();
+	await settle();
+	h.reads.shift().answer();
+	await settle();
+	assert.equal(h.reads.length, 1);
+	h.reads.shift().answer();
+	await settle();
+	assert.equal(h.render().view.skills[0].onStr, "false");
+	assert.equal(h.reads.length, 0);
+});

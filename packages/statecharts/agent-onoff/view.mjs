@@ -15,9 +15,15 @@ const waits = {
 
 export const title = "Agent on and off";
 
-export const state = (v) => (v.wait === "none" ? phases[v.phase] : waits[v.wait]);
+export const state = (v) => {
+	if (v.wait === "reload" && v.owed) return "A later write failed";
+	return v.wait === "none" ? phases[v.phase] : waits[v.wait];
+};
 
-export const group = (v) => (v.wait === "none" ? phases[v.phase] : waits[v.wait]);
+export const group = (v) => {
+	if (v.wait === "reload" && v.owed) return "Failed";
+	return v.wait === "none" ? phases[v.phase] : waits[v.wait];
+};
 
 export const colors = {
 	Off: "tan",
@@ -45,9 +51,17 @@ const labels = {
 	ReadAfterFailure: "one recovery read starts",
 	ConfirmRead: "the recovery read returns",
 	RefreshTimeout: "the recovery wait ends at its bound",
+	FailDuringRead: "a later write fails during the recovery read",
+	StaleReadEnds: "the old read ends and the later failure remains",
 };
 
-export const step = (action) => {
-	if (hidden.has(action)) return null;
-	return labels[action] ?? null;
+function namedAction(action, from, to) {
+	if (action === "RefreshTimeout" && from.owed === true && to.wait === "failed") return "StaleReadEnds";
+	return action;
+}
+
+export const step = (action, from, to) => {
+	const name = namedAction(action, from, to);
+	if (hidden.has(name)) return null;
+	return labels[name] ?? null;
 };

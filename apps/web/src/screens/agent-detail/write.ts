@@ -9,9 +9,20 @@ import {
 	setAgentRunning,
 	setSkillEnabled,
 } from "#/server/agent-detail.ts";
+import { publishAgentOn } from "#/workspace/agent-on.ts";
 import { agentStatus } from "#/workspace/agent-view.ts";
 import { switchParts } from "#/workspace/styles.ts";
 import { type AgentDetailView, autonomyStyle, blank } from "./model.ts";
+
+const epochs = new Map<string, number>();
+
+export function stampAgentRead(agentId: string): number {
+	return epochs.get(agentId) ?? 0;
+}
+
+function noteWrite(agentId: string): void {
+	epochs.set(agentId, stampAgentRead(agentId) + 1);
+}
 
 function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
 	const controller = new AbortController();
@@ -49,6 +60,7 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 	const queue: Write[] = [];
 	let busy = false;
 	let reading = false;
+	let again = false;
 	let state: Snapshot = { view: initialView, pending: [] };
 	let loaderView = initialView;
 	const listeners = new Set<() => void>();
@@ -58,17 +70,33 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 		for (const listener of listeners) listener();
 	}
 
+	function accept(view: AgentDetailView, pending: readonly Write[]) {
+		publish({ view, pending });
+		publishAgentOn(view.id, view.on);
+	}
+
 	async function read() {
-		if (reading) return;
-		reading = true;
-		const previous = state.view;
-		try {
-			const view = await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
-			if (state.view === previous) publish({ ...state, view });
-		} catch {
+		if (reading) {
+			again = true;
 			return;
+		}
+		reading = true;
+		try {
+			const started = stampAgentRead(agentId);
+			const previous = state.view;
+			try {
+				const view = await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
+				// A read keeps the version from when it started. A newer write wins.
+				if (started === stampAgentRead(agentId) && state.view === previous) accept(view, state.pending);
+			} catch {
+				// A failed or timed-out read stops. It does not retry.
+			}
 		} finally {
 			reading = false;
+			if (again) {
+				again = false;
+				void read();
+			}
 		}
 	}
 
@@ -80,7 +108,10 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 			while (write) {
 				try {
 					const view = await bounded(write.work);
-					publish({ view, pending: state.pending.filter((value) => value !== write) });
+					accept(
+						view,
+						state.pending.filter((value) => value !== write),
+					);
 				} catch {
 					publish({ ...state, pending: state.pending.filter((value) => value !== write) });
 					void read();
@@ -94,11 +125,10 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 
 	return {
 		snapshot: () => state,
-		load(view: AgentDetailView) {
-			if (view !== loaderView) {
-				loaderView = view;
-				publish({ ...state, view });
-			}
+		load(view: AgentDetailView, readAt: number) {
+			if (readAt !== stampAgentRead(agentId) || view === loaderView) return;
+			loaderView = view;
+			accept(view, state.pending);
 		},
 		subscribe(listener: () => void) {
 			listeners.add(listener);
@@ -107,6 +137,7 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 			};
 		},
 		enqueue(write: Write) {
+			noteWrite(agentId);
 			const index = queue.findIndex((value) => value.key === write.key);
 			if (index === -1) {
 				queue.push(write);
@@ -152,13 +183,13 @@ function agentQueue(owner: object, agentId: string, initialView: AgentDetailView
 	return queue;
 }
 
-export function useAgentWrites(serverView: AgentDetailView) {
+export function useAgentWrites(serverView: AgentDetailView, readAt = stampAgentRead(serverView.id)) {
 	const agentId = serverView.id;
 	const router = useRouter();
 	const navigate = useNavigate();
 	const match = useMatch({ from: "/_workspace/agents/$id" });
 	const { enqueue, snapshot, subscribe, load } = agentQueue(router, agentId, serverView);
-	if (match.status === "success") load(serverView);
+	if (match.status === "success") load(serverView, readAt);
 	const state = useSyncExternalStore(subscribe, snapshot, snapshot);
 
 	return {

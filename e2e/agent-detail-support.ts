@@ -185,6 +185,18 @@ export async function openDesignDetail(page: Page, width: number, height: number
 	return canvas;
 }
 
+export function loadedInterWeights(page: Page): Promise<string[]> {
+	return page.evaluate(() =>
+		[
+			...new Set(
+				[...document.fonts]
+					.filter((face) => face.family === "Inter" && face.status === "loaded")
+					.map((face) => face.weight),
+			),
+		].sort(),
+	);
+}
+
 interface Box {
 	readonly x: number;
 	readonly y: number;
@@ -424,6 +436,35 @@ export async function openAgent(page: Page, user: WorkspaceUser, agentId: string
 	await expect(page).toHaveURL(new RegExp(`/agents/${agentId}$`), { timeout: 15_000 });
 	await expect(page).toHaveTitle("Agent dashboard");
 	await waitForScreenFonts(page);
+}
+
+export async function holdAgentReads(page: Page) {
+	let held = false;
+	let releaseGate: () => void = () => undefined;
+	const gate = new Promise<void>((resolve) => {
+		releaseGate = resolve;
+	});
+	const pattern = /\/_serverFn\//;
+	const handler = async (route: Route) => {
+		const request = route.request();
+		if (request.method() === "GET" && decodeURIComponent(request.url()).includes('"support"')) {
+			const response = await route.fetch();
+			held = true;
+			await gate;
+			await route.fulfill({ response }).catch(() => undefined);
+			return;
+		}
+		await route.continue();
+	};
+	await page.route(pattern, handler);
+	return {
+		held: () => held,
+		release: () => releaseGate(),
+		async stop() {
+			releaseGate();
+			await page.unroute(pattern, handler);
+		},
+	};
 }
 
 export async function failServerPosts(page: Page) {

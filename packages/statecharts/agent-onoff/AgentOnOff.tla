@@ -9,6 +9,9 @@
 \* A successful write response supplies the view and ends the wait.
 \* Failed and late each start one bounded recovery read.
 \* The recovery response or its 30-second bound ends the wait. No read loops.
+\* A recovery read that started before a later failure does not end that failure.
+\* The old read's return or its bound leaves that failure its own read.
+\* The model records one later failure. The successor read is not overtaken.
 \* # model: packages/adapters/src/test-machine.ts
 \* # model: packages/kernel/src/plugins/squads.ts
 \* # model: packages/kernel/src/ports.ts
@@ -21,9 +24,9 @@
 EXTENDS Integers
 
 VARIABLES
-    phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick
+    phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick, owed, followed
 vars == <<
-    phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick
+    phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick, owed, followed
 >>
 
 Phases == {"Off", "Starting", "On", "Stopping", "Paused"}
@@ -48,6 +51,9 @@ TypeOK ==
     /\ autonomy \in Autonomies
     /\ label \in Labels
     /\ calls \in Calls
+    /\ owed \in BOOLEAN
+    /\ followed \in BOOLEAN
+    /\ (owed => wait = "reload" /\ followed)
 
 ShownOff == cpu = "0%" /\ uptime = "Paused" /\ label = "Paused" /\ skill = FALSE
 
@@ -68,7 +74,7 @@ ScreenLabel == (label = "Running") <=> (phase = "On")
 \* A skill runs only while the agent is On. This is the send() rule.
 SkillOff == skill => phase = "On"
 
-clock == UNCHANGED <<wait, tick>>
+clock == UNCHANGED <<wait, tick, owed, followed>>
 machine == UNCHANGED <<phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls>>
 
 Stopped ==
@@ -90,7 +96,7 @@ Running ==
     /\ label = "Running"
     /\ calls = "none"
 
-Init == (Stopped \/ Running) /\ wait = "none" /\ tick = 0
+Init == (Stopped \/ Running) /\ wait = "none" /\ tick = 0 /\ owed = FALSE /\ followed = FALSE
 
 stored == UNCHANGED <<storedCpu, storedUptime, autonomy>>
 
@@ -161,12 +167,16 @@ EnterQueue ==
     /\ wait = "none"
     /\ wait' = "queue"
     /\ tick' = tick
+    /\ owed' = FALSE
+    /\ followed' = FALSE
     /\ machine
 
 MarkFailed ==
     /\ wait = "queue"
     /\ wait' = "failed"
     /\ tick' = tick
+    /\ owed' = FALSE
+    /\ followed' = FALSE
     /\ machine
 
 \* The 30-second write deadline. The row does not change.
@@ -174,32 +184,71 @@ MarkLate ==
     /\ wait = "queue"
     /\ wait' = "late"
     /\ tick' = tick
+    /\ owed' = FALSE
+    /\ followed' = FALSE
     /\ machine
 
 MarkReload ==
     /\ wait = "queue"
     /\ wait' = "none"
     /\ tick' = 0
+    /\ owed' = FALSE
+    /\ followed' = FALSE
     /\ machine
 
 ReadAfterFailure ==
     /\ wait \in {"failed", "late"}
     /\ wait' = "reload"
     /\ tick' = 0
+    /\ owed' = FALSE
+    /\ followed' = followed
     /\ machine
 
 ConfirmRead ==
     /\ wait = "reload"
+    /\ owed = FALSE
     /\ wait' = "none"
     /\ tick' = 0
+    /\ owed' = FALSE
+    /\ followed' = FALSE
     /\ machine
 
-\* The 30-second recovery bound ends the wait even if the read never starts.
-RefreshTimeout ==
-    /\ wait \in {"failed", "late", "reload"}
-    /\ wait' = "none"
-    /\ tick' = 0
+\* A later write fails while an older recovery read is still open.
+FailDuringRead ==
+    /\ wait = "reload"
+    /\ owed = FALSE
+    /\ followed = FALSE
+    /\ owed' = TRUE
+    /\ followed' = TRUE
+    /\ UNCHANGED <<wait, tick>>
     /\ machine
+
+\* The older read returns. It does not end the later failure.
+StaleReadEnds ==
+    /\ wait = "reload"
+    /\ owed = TRUE
+    /\ owed' = FALSE
+    /\ followed' = TRUE
+    /\ wait' = "failed"
+    /\ tick' = tick
+    /\ machine
+
+\* The 30-second recovery bound. An older read's bound does not end a later failure.
+RefreshTimeout ==
+    \/ /\ wait \in {"failed", "late", "reload"}
+       /\ owed = FALSE
+       /\ wait' = "none"
+       /\ tick' = 0
+       /\ owed' = FALSE
+       /\ followed' = FALSE
+       /\ machine
+    \/ /\ wait = "reload"
+       /\ owed = TRUE
+       /\ wait' = "failed"
+       /\ tick' = tick
+       /\ owed' = FALSE
+       /\ followed' = TRUE
+       /\ machine
 
 Stay == UNCHANGED vars
 
@@ -217,6 +266,8 @@ Next ==
     \/ MarkReload
     \/ ReadAfterFailure
     \/ ConfirmRead
+    \/ FailDuringRead
+    \/ StaleReadEnds
     \/ RefreshTimeout
     \/ Stay
 
@@ -233,5 +284,9 @@ Spec == Init /\ [][Next]_vars
 AutonomyStable ==
     [][autonomy' # autonomy =>
         UNCHANGED <<phase, cpu, uptime, storedCpu, storedUptime, skill, label, calls>>]_vars
+
+\* A recovery read that is already open does not end a later failure.
+StaleReadKeepsFailure ==
+    [][(owed = TRUE /\ wait = "reload") => wait' # "none"]_vars
 
 ====

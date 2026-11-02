@@ -9,7 +9,9 @@ import {
 	expectDetail,
 	expectMatch,
 	failServerPosts,
+	holdAgentReads,
 	holdServerPosts,
+	loadedInterWeights,
 	measureDetail,
 	openAgent,
 	openDesignDetail,
@@ -192,6 +194,111 @@ test("the autonomy picker changes autonomy and not on or off", async ({ page, wo
 	const stored = await readAgent(accountId, "support");
 	expect(stored.autonomy).toBe("Ask first");
 	expect(stored.isOn).toBe(true);
+});
+
+for (const kind of ["running", "skill", "autonomy"] as const) {
+	test(`an old ${kind} loader does not replace a newer write`, async ({ page, workspaceUser, accountId }) => {
+		test.setTimeout(90_000);
+		await openAgent(page, workspaceUser, "support");
+		const held = await holdAgentReads(page);
+		try {
+			await page.evaluate(() => {
+				const router = (window as unknown as { __TSR_ROUTER__?: { invalidate: () => Promise<void> } })
+					.__TSR_ROUTER__;
+				if (!router) throw new Error("The router is missing.");
+				void router.invalidate();
+			});
+			await expect.poll(() => held.held(), settled).toBe(true);
+			const button =
+				kind === "running"
+					? squadSwitch(page)
+					: kind === "skill"
+						? skillRow(page, "inbox.read").getByRole("button")
+						: page
+								.getByRole("group", { name: "Autonomy" })
+								.getByRole("button", { name: "Full auto", exact: true });
+			const answer = page.waitForResponse(
+				(response) => response.request().method() === "POST" && response.url().includes("/_serverFn/"),
+			);
+			await button.click();
+			await (await answer).finished();
+			await expect
+				.poll(async () => {
+					const stored = await readAgent(accountId, "support");
+					if (kind === "running") return stored.isOn;
+					if (kind === "skill") return skillFlag(stored, "inbox.read");
+					return stored.autonomy;
+				}, settled)
+				.toBe(kind === "autonomy" ? "Full auto" : false);
+			held.release();
+			await expect(button).toHaveAttribute("aria-pressed", kind === "autonomy" ? "true" : "false", settled);
+		} finally {
+			await held.stop();
+		}
+	});
+}
+
+test("the sidebar dot follows a successful off write", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(60_000);
+	await openAgent(page, workspaceUser, "support");
+	await expect(supportDot(page, "Running")).toBeVisible();
+	await squadSwitch(page).click();
+	await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(false);
+	await expect(paused(page)).toBeVisible(settled);
+	await expect(sandbox(page).getByText("0%", { exact: true })).toBeVisible();
+	await expect(sandbox(page).getByText("Paused", { exact: true })).toBeVisible();
+	await expect(supportDot(page, "Paused")).toBeVisible();
+	await expect(supportDot(page, "Running")).toHaveCount(0);
+});
+
+test("an old recovery read does not hide a later lost response", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(90_000);
+	await openAgent(page, workspaceUser, "support");
+	let posts = 0;
+	let reads = 0;
+	let lost = 0;
+	let releaseGate: () => void = () => undefined;
+	const gate = new Promise<void>((resolve) => {
+		releaseGate = resolve;
+	});
+	const pattern = /\/_serverFn\//;
+	const handler = async (route: Route) => {
+		if (route.request().method() === "POST") {
+			posts += 1;
+			if (posts === 1) {
+				await route.fulfill({ status: 500, contentType: "text/plain", body: "The write failed." });
+				return;
+			}
+			await route.fetch();
+			await route.abort().catch(() => undefined);
+			lost += 1;
+			return;
+		}
+		reads += 1;
+		const response = await route.fetch();
+		await gate;
+		await route.fulfill({ response }).catch(() => undefined);
+	};
+	await page.route(pattern, handler);
+	try {
+		await squadSwitch(page).click();
+		await expect.poll(() => reads, settled).toBeGreaterThan(0);
+		const skill = skillRow(page, "inbox.read").getByRole("button");
+		await skill.click();
+		await expect
+			.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.read"), settled)
+			.toBe(false);
+		await expect.poll(() => lost, settled).toBe(1);
+		const firstReads = reads;
+		await expect(skill).toHaveAttribute("aria-pressed", "true", settled);
+		releaseGate();
+		await expect(skill).toHaveAttribute("aria-pressed", "false", settled);
+		expect(posts).toBe(2);
+		expect(reads).toBeGreaterThan(firstReads);
+	} finally {
+		releaseGate();
+		await page.unroute(pattern, handler);
+	}
 });
 
 test("pending skill writes show at once and reach the server in click order", async ({
@@ -778,6 +885,7 @@ test("the agent detail boxes match the rendered design at 1440 and 390", async (
 		await waitForScreenFonts(page);
 		const designPage = await openDesignDetail(page, board.width, board.height);
 		try {
+			expect(await loadedInterWeights(designPage)).toEqual(["400", "500", "600"]);
 			const design = await measureDetail(designPage);
 			const built = await measureDetail(page);
 			expectDetail(built, design, board.name);

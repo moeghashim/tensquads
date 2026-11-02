@@ -19,6 +19,7 @@ import { resetDecisions, watchServerCount } from "#/screens/overview/actions.ts"
 import { refreshTraffic } from "#/screens/traffic/refresh.ts";
 import { beginWorkspaceSend, finishWorkspaceSend } from "#/server/workspace.ts";
 
+import { agentOnSnapshot, applyAgentOn, subscribeAgentOn } from "./agent-on.ts";
 import { missionBits } from "./agent-view.ts";
 import {
 	currentWrites,
@@ -64,7 +65,10 @@ export function WorkspaceProvider({
 		setStartedTask,
 	} = useWorkspaceControls(frame);
 	const sending = useRef(false);
-	const { messages, setMessages, applyFrame, approvalCount, noteDecision } = useFrameAndCount(frame, sending);
+	const { messages, setMessages, applyFrame, approvalCount, noteDecision, shownFrame } = useFrameAndCount(
+		frame,
+		sending,
+	);
 
 	const mounted = useRef(true);
 	const refresh = useCallback(() => router.invalidate({ sync: true }), [router]);
@@ -86,7 +90,7 @@ export function WorkspaceProvider({
 
 	const value = useMemo(
 		() => ({
-			frame,
+			frame: shownFrame,
 			draft,
 			setDraft,
 			dockOpen,
@@ -116,8 +120,8 @@ export function WorkspaceProvider({
 			busFilter,
 			dockOpen,
 			draft,
-			frame,
 			live,
+			shownFrame,
 			messages,
 			noteDecision,
 			pending,
@@ -217,10 +221,27 @@ function useFrameAndCount(frame: WorkspaceFrameData & { readonly writeAt: number
 	useEffect(() => {
 		rememberFrame(frame);
 	}, [frame]);
+	const shownFrame = useShownAgents(frame);
 	const messages = useFrameMessages(frame, sending);
 	const count = useApprovalCount(frame);
 	useAccountBoundary();
-	return { ...messages, ...count };
+	return { ...messages, ...count, shownFrame };
+}
+
+function useShownAgents(frame: WorkspaceFrameData): WorkspaceFrameData {
+	const published = useSyncExternalStore(subscribeAgentOn, agentOnSnapshot, agentOnSnapshot);
+	const [seenFrame, setSeenFrame] = useState(frame);
+	const [agents, setAgents] = useState(frame.agents);
+	const [applied, setApplied] = useState(published);
+	if (frame !== seenFrame) {
+		setSeenFrame(frame);
+		setAgents(frame.agents);
+		setApplied(published);
+	} else if (published !== applied) {
+		setApplied(published);
+		setAgents(applyAgentOn(frame.agents, published));
+	}
+	return agents === frame.agents ? frame : { ...frame, agents };
 }
 
 function useFrameMessages(frame: WorkspaceFrameData, sending: { current: boolean }) {

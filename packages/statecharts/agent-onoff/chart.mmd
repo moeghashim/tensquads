@@ -31,6 +31,7 @@ stateDiagram-v2
   s6: Late
   s7: Paused
   s8: Reload
+  s9: A later write failed
   [*] --> s0
   [*] --> s1
   s0 --> s2: you queue a change
@@ -56,12 +57,14 @@ stateDiagram-v2
   s2 --> s3: the write response arrives
   s2 --> s4: the write response arrives
   s8 --> s0: the recovery read returns or the recovery wait ends at its bound
+  s8 --> s9: a later write fails during the recovery read
   s8 --> s1: the recovery read returns or the recovery wait ends at its bound
   s2 --> s7: the write response arrives
   s5 --> s3: the recovery wait ends at its bound
   s6 --> s3: the recovery wait ends at its bound
   s5 --> s4: the recovery wait ends at its bound
   s6 --> s4: the recovery wait ends at its bound
+  s9 --> s5: the old read ends and the later failure remains
   s5 --> s7: the recovery wait ends at its bound
   s6 --> s7: the recovery wait ends at its bound
   s8 --> s3: the recovery read returns or the recovery wait ends at its bound
@@ -76,3 +79,4 @@ stateDiagram-v2
   class s6 orange
   class s7 blue
   class s8 yellow
+  class s9 pink

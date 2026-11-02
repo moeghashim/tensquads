@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import type { Page } from "@playwright/test";
+import type { Page, Route } from "@playwright/test";
 
 const fontStylesheetUrl =
 	"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
@@ -43,12 +43,17 @@ function blockIsRequested(block: string, requested: ReadonlyMap<string, Set<stri
 	return requested.get(family)?.has(weight) ?? false;
 }
 
+function fulfillStylesheet(route: Route) {
+	return route.fulfill({
+		contentType: "text/css",
+		body: pinnedFontStylesheet(route.request().url()),
+	});
+}
+
 export async function installPinnedFonts(page: Page, workspace = false) {
-	await page.route(fontStylesheetUrl, (route) => route.fulfill({ contentType: "text/css", body: fontStylesheet }));
+	await page.route(fontStylesheetUrl, (route) => fulfillStylesheet(route));
 	if (workspace) {
-		await page.route("https://fonts.googleapis.com/css2**", (route) =>
-			route.fulfill({ contentType: "text/css", body: fontStylesheet }),
-		);
+		await page.route("https://fonts.googleapis.com/css2**", (route) => fulfillStylesheet(route));
 	}
 	await page.route("https://fonts.gstatic.com/**", (route) => {
 		const body = fontFiles.get(route.request().url());
