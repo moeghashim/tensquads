@@ -1,0 +1,157 @@
+[
+  {
+    "scenario": "holding",
+    "width": 1440,
+    "status": 200,
+    "heading": "Hire a squad of AI agents to run your business",
+    "horizontalOverflow": false
+  },
+  {
+    "scenario": "holding",
+    "width": 390,
+    "status": 200,
+    "heading": "Hire a squad of AI agents to run your business",
+    "horizontalOverflow": false
+  },
+  {
+    "request": "HEAD /",
+    "status": 200,
+    "bodyBytes": 0,
+    "headers": {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "public, max-age=300",
+      "content-encoding": "gzip",
+      "content-security-policy": "default-src 'none'; img-src data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff"
+    }
+  },
+  {
+    "request": "POST /",
+    "status": 405,
+    "allow": "GET, HEAD"
+  },
+  {
+    "request": "PUT /",
+    "status": 405,
+    "allow": "GET, HEAD"
+  },
+  {
+    "request": "DELETE /",
+    "status": 405,
+    "allow": "GET, HEAD"
+  },
+  {
+    "request": "OPTIONS /",
+    "status": 405,
+    "allow": "GET, HEAD"
+  },
+  {
+    "request": "GET /unknown-path",
+    "status": 302,
+    "location": "https://10squads.com/"
+  },
+  {
+    "request": "GET www.10squads.com/review/plan (local Host header)",
+    "status": 301,
+    "location": "https://10squads.com/review/plan"
+  },
+  {
+    "scenario": "review-plan",
+    "url": "http://127.0.0.1:8799/review/plan",
+    "diagrams": 3,
+    "domain": "<slug>.10squads.com",
+    "text": "tensquads — Build Plan"
+  },
+  {
+    "scenario": "design-render",
+    "url": "http://127.0.0.1:8799/review/design/Home.dc.html",
+    "status": 200,
+    "bodyCharacters": 5166,
+    "pageErrors": []
+  },
+  {
+    "scenario": "design-render",
+    "url": "http://127.0.0.1:8799/review/design/Onboarding.dc.html",
+    "status": 200,
+    "bodyCharacters": 1014,
+    "pageErrors": []
+  },
+  {
+    "scenario": "design-render",
+    "url": "http://127.0.0.1:8799/review/design/SignIn.dc.html",
+    "status": 200,
+    "bodyCharacters": 228,
+    "pageErrors": []
+  },
+  {
+    "scenario": "design-render",
+    "url": "http://127.0.0.1:8799/review/design/Accounts.dc.html",
+    "status": 200,
+    "bodyCharacters": 2756,
+    "pageErrors": []
+  },
+  {
+    "scenario": "design-render",
+    "url": "http://127.0.0.1:8799/review/design/AgentImages.dc.html",
+    "status": 200,
+    "bodyCharacters": 1919,
+    "pageErrors": []
+  },
+  {
+    "scenario": "design-render",
+    "url": "http://127.0.0.1:8799/review/design/Main.dc.html",
+    "status": 200,
+    "bodyCharacters": 2299,
+    "pageErrors": []
+  },
+  {
+    "scenario": "design-render",
+    "url": "http://127.0.0.1:8799/review/design/Chat.dc.html",
+    "status": 200,
+    "bodyCharacters": 1447,
+    "pageErrors": []
+  },
+  {
+    "scenario": "design-render",
+    "url": "http://127.0.0.1:8799/review/design/Agents.dc.html",
+    "status": 200,
+    "bodyCharacters": 1588,
+    "pageErrors": []
+  },
+  {
+    "scenario": "design-render",
+    "url": "http://127.0.0.1:8799/review/design/AgentDetail.dc.html",
+    "status": 200,
+    "bodyCharacters": 1730,
+    "pageErrors": []
+  },
+  {
+    "scenario": "design-render",
+    "url": "http://127.0.0.1:8799/review/design/Traffic.dc.html",
+    "status": 200,
+    "bodyCharacters": 3221,
+    "pageErrors": []
+  },
+  {
+    "scenario": "design-render",
+    "url": "http://127.0.0.1:8799/review/design/Rules.dc.html",
+    "status": 200,
+    "bodyCharacters": 1303,
+    "pageErrors": []
+  },
+  {
+    "scenario": "interactive-design",
+    "action": "Choose a new business, enter a name, go back, return",
+    "businessName": "Local Review Coffee"
+  },
+  {
+    "request": "GET /review/missing.html",
+    "status": 404,
+    "robots": "noindex, nofollow"
+  },
+  {
+    "pageErrors": [],
+    "result": "All live checks passed"
+  }
+]
