@@ -45,10 +45,10 @@ A model failure is a path of Type, an empty send, no agent, a paused agent, a se
 
 | Check | Covers | Sync commit |
 | --- | --- | --- |
-| `send.test.ts` | ids, clock, no event, a pending task, and a dash skill | `06ed4c7af446f86505fb095380e6a8587316e25a` |
-| `/statechart` on `ChatDock.tla` | one draft, one send, and a reload that keeps the Task | `06ed4c7af446f86505fb095380e6a8587316e25a` |
+| `send.test.ts` | ids, clock, the 30 second window, and a dash skill | `c78709cd1b55d4afadc05db3ad9a6572785cf79a` |
+| `/statechart` on `ChatDock.tla` | one draft, one send, a reload, and a later send | `c78709cd1b55d4afadc05db3ad9a6572785cf79a` |
 
-Both checks passed on `06ed4c7af446f86505fb095380e6a8587316e25a`. That tree keeps the dock send and the dock wait. `send.test.ts` exited 0. TLC exited 0, reached 40 states and 172 steps, and named no broken rule. The rules are TypeOK, MessageOrder, SendShape, DockHidden, OneDraft, WritesDoNotChangeStore, SkillDash, and NoDeadlock. The chart draws 3 states and 4 arrows. The view hides 140 steps.
+Both checks passed on `c78709cd1b55d4afadc05db3ad9a6572785cf79a`. That tree keeps the 30 second pending window and the dock wait. `send.test.ts` exited 0. TLC exited 0, reached 80 states and 392 steps, and named no broken rule. The rules are TypeOK, MessageOrder, SendShape, DockHidden, OneDraft, WritesDoNotChangeStore, SkillDash, NoDeadlock, and SendAgain. The chart draws 3 states and 5 arrows. The view hides 296 steps.
 
 Move a sync commit forward only after both checks pass and you confirm that the model and the tests still describe the code at the new commit. An intended change updates `conversation.ts`, `send.test.ts`, and `ChatDock.tla` together.
 
