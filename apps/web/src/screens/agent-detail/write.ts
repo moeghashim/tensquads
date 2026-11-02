@@ -41,13 +41,20 @@ interface Write {
 	readonly matches: (view: AgentDetailView) => boolean;
 }
 
+type ConfirmedPatch = Pick<Write, "key" | "apply" | "matches">;
+
+function applyConfirmed(view: AgentDetailView, patches: readonly ConfirmedPatch[]): AgentDetailView {
+	return patches.reduce((base, patch) => (patch.matches(base) ? base : patch.apply(base)), view);
+}
+
 interface Snapshot {
 	readonly base: AgentDetailView | null;
 	readonly loaderUpdatedAt: number;
 	readonly pending: readonly Write[];
+	readonly confirmed: readonly ConfirmedPatch[];
 }
 
-const emptySnapshot: Snapshot = { base: null, loaderUpdatedAt: 0, pending: [] };
+const emptySnapshot: Snapshot = { base: null, loaderUpdatedAt: 0, pending: [], confirmed: [] };
 
 function createQueue(agentId: string) {
 	const queue: Write[] = [];
@@ -81,13 +88,17 @@ function createQueue(agentId: string) {
 		result: { readonly number: number; readonly loaderUpdatedAt: number; readonly view: AgentDetailView },
 		write?: Write,
 	) {
-		if (result.loaderUpdatedAt < state.loaderUpdatedAt) {
-			if (write && state.base) publish({ ...state, base: write.apply(state.base) });
-			storedRead = Math.max(storedRead, result.number);
-		} else if (result.number > storedRead) {
-			storedRead = result.number;
-			publish({ ...state, base: result.view });
-		}
+		const confirmed =
+			write && write.key !== "revise"
+				? [
+						...state.confirmed.filter((patch) => patch.key !== write.key),
+						{ key: write.key, apply: write.apply, matches: write.matches },
+					]
+				: state.confirmed;
+		const base =
+			result.loaderUpdatedAt < state.loaderUpdatedAt || result.number <= storedRead ? state.base : result.view;
+		storedRead = Math.max(storedRead, result.number);
+		publish({ ...state, confirmed, base: base ? applyConfirmed(base, confirmed) : base });
 	}
 
 	async function read() {
@@ -152,7 +163,8 @@ function createQueue(agentId: string) {
 		snapshot: () => state,
 		reconcile(view: AgentDetailView, updatedAt: number) {
 			if (updatedAt > state.loaderUpdatedAt) {
-				publish({ ...state, base: view, loaderUpdatedAt: updatedAt });
+				const confirmed = state.confirmed.filter((patch) => !patch.matches(view));
+				publish({ ...state, base: applyConfirmed(view, confirmed), loaderUpdatedAt: updatedAt, confirmed });
 			}
 		},
 		subscribe(listener: () => void) {
@@ -223,7 +235,7 @@ export function useAgentWrites(serverView: AgentDetailView) {
 		match.status === "success" && match.updatedAt > state.loaderUpdatedAt ? serverView : (state.base ?? serverView);
 
 	return {
-		view: state.pending.reduce((view, write) => write.apply(view), base),
+		view: state.pending.reduce((view, write) => write.apply(view), applyConfirmed(base, state.confirmed)),
 		toggleAgent(on: boolean) {
 			enqueue({
 				key: "running",

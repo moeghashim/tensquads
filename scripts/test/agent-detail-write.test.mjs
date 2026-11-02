@@ -138,15 +138,18 @@ for (const adoption of ["before response", "after response"]) {
 			await settle();
 			assert.equal(h.reads.length, 1);
 			const fresh = { ...structuredClone(h.server), events: ["new message"] };
-			if (adoption === "before response") {
-				fresh.skills[0].onStr = "true";
-				fresh.on = true;
-				fresh.autonomyOpts = [{ label: "Ask first", onStr: "true" }, { label: "Full auto", onStr: "false" }];
-			}
+			fresh.skills[0].onStr = "true";
+			fresh.on = true;
+			fresh.autonomyOpts = [{ label: "Ask first", onStr: "true" }, { label: "Full auto", onStr: "false" }];
 			h.newLoader(fresh);
 			h.render(adoption === "before response");
 			h.reads.shift()();
 			await settle();
+			const beforeEffect = h.render(false).view;
+			assert.deepEqual(beforeEffect.events, ["new message"]);
+			if (action === "skill") assert.equal(beforeEffect.skills[0].onStr, "false");
+			if (action === "running") assert.equal(beforeEffect.on, false);
+			if (action === "autonomy") assert.equal(beforeEffect.autonomyOpts[1].onStr, "true");
 			h.commitEffects();
 			const view = h.render().view;
 			assert.deepEqual(view.events, ["new message"]);
@@ -179,4 +182,51 @@ test("a confirming read stays visible over the same loader and an error match", 
 	assert.equal(h.render().view.skills[0].onStr, "false");
 	h.newLoader({ ...h.server, skills: [{ id: "inbox.read", onStr: "true" }] }, "error");
 	assert.equal(h.render().view.skills[0].onStr, "false");
+});
+
+test("a stale route adopted after confirmation preserves the skill and newer messages", async () => {
+	const h = harness();
+	const captured = structuredClone(h.server);
+	h.render().toggleSkill("inbox.read", false);
+	await settle();
+	h.reads.shift()();
+	await settle();
+	h.newLoader({ ...captured, events: ["new message"] });
+	const beforeEffect = h.render(false).view;
+	assert.equal(beforeEffect.skills[0].onStr, "false");
+	assert.deepEqual(beforeEffect.events, ["new message"]);
+	h.commitEffects();
+	assert.equal(h.render().view.skills[0].onStr, "false");
+	assert.deepEqual(h.render().view.events, ["new message"]);
+});
+
+test("a loader that catches up releases the confirmed patch", async () => {
+	const h = harness();
+	h.render().toggleSkill("inbox.read", false);
+	await settle();
+	h.reads.shift()();
+	await settle();
+	h.newLoader({ ...h.server, events: ["caught up"] });
+	assert.equal(h.render().view.skills[0].onStr, "false");
+	h.newLoader({ ...h.server, skills: [{ id: "inbox.read", onStr: "true" }], events: ["later change"] });
+	assert.equal(h.render().view.skills[0].onStr, "true");
+	assert.deepEqual(h.render().view.events, ["later change"]);
+});
+
+test("pending writes override confirmed patches and a new confirmation replaces the same key", async () => {
+	const h = harness();
+	h.render().toggleSkill("inbox.read", false);
+	await settle();
+	h.reads.shift()();
+	await settle();
+	h.render().toggleSkill("inbox.read", true);
+	assert.equal(h.render().view.skills[0].onStr, "true");
+	await settle();
+	h.reads.shift()();
+	await settle();
+	h.newLoader({ ...h.server, skills: [{ id: "inbox.read", onStr: "false" }], events: ["new message"] });
+	assert.equal(h.render(false).view.skills[0].onStr, "true");
+	h.commitEffects();
+	assert.equal(h.render().view.skills[0].onStr, "true");
+	assert.deepEqual(h.render().view.events, ["new message"]);
 });
