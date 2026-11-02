@@ -2,7 +2,7 @@
 
 Off means CPU 0% and uptime "Paused". A skill cannot run when the agent is Off. A change of autonomy does not change on or off. The screen shows Running only while the agent is On. Starting and Stopping each last one step. The screen shows Running for On and Paused for every other phase. It does not show the word Starting. The test adapter sets on inside `start` and `stop`, so Starting and Stopping are not visible. The stored CPU and uptime stay in the machine row. The provider chooses the shown CPU and uptime. An on machine whose stored uptime is "Paused" shows "Just started".
 
-The chart hides Stay, ChangeAutonomy, RunSkill, EndSkill, and RefreshTimeout. Stay changes nothing. ChangeAutonomy changes only the autonomy. RunSkill turns the skill on only while the agent is On. EndSkill turns the skill off. RefreshTimeout stays on the written screen. A queue, a failed write, a late write, and a reload are separate states. A start reaches On, a stop reaches Paused, and every wait reaches none. Boot, Halt, the 30-second write deadline, and the 30-second read bound are fair. A failed or late write then reads, and a read in reload confirms.
+The chart hides Stay, ChangeAutonomy, RunSkill, EndSkill, and RefreshTimeout. Stay changes nothing. ChangeAutonomy changes only the autonomy. RunSkill turns the skill on only while the agent is On. EndSkill turns the skill off. RefreshTimeout stays on the written screen. A queue, a failed write, a late write, and a reload are separate states. A start reaches On, a stop reaches Paused, and a queued write leaves the queue. A reload can stay forever when reads do not succeed. Boot, Halt, the 30-second write deadline, and the 30-second read bound are fair. Only Boot, Halt, MarkLate, and RefreshTimeout have weak fairness. Read success is not assumed.
 
 ## When this applies
 
@@ -48,7 +48,7 @@ A model failure is a path of switch on, boot, switch off, halt, a skill while of
 | Check | Covers | Result |
 | --- | --- | --- |
 | `adapters.test.ts` | off shows 0% and Paused, and a paused store shows Just started when on | exit 0 |
-| `/statechart` on `AgentOnOff.tla` | five phases, queue, failed, late, and reload, one label pair, a skill only while on, autonomy stays off the switch, every wait ends | TLC reached 198 states and 1194 steps |
+| `/statechart` on `AgentOnOff.tla` | five phases, queue, failed, late, and reload, one label pair, a skill only while on, autonomy stays off the switch, start, stop, and queue waits end | TLC reached 198 states and 1194 steps |
 
 The checks name no commit, so a later head does not make this note stale. They keep the provider formula and the one-step start and stop. TLC named no broken rule. The rules are TypeOK, OffPaused, StartingPaused, OnRunning, StoppingPaused, PausedHold, ScreenLabel, SkillOff, NoDeadlock, AutonomyStable, and WaitEnds. The chart draws 9 states and 20 arrows. The view hides 732 steps.
 

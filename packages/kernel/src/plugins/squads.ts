@@ -23,8 +23,6 @@ export async function commitAgentOn(
 }
 
 export interface SquadCommands {
-	switchAgent(machine: AgentMachine, agentId: string, on: boolean): void;
-	commitAgentOn(machine: AgentMachine, agentId: string, on: boolean, persist: () => Promise<void>): Promise<void>;
 	setAgentOn(scope: AccountScope, agentId: string, on: boolean, deadlineAt: number): Promise<void>;
 	setSkillOn(scope: AccountScope, agentId: string, skillId: string, on: boolean, deadlineAt: number): Promise<void>;
 	setAutonomy(scope: AccountScope, agentId: string, autonomy: Autonomy, deadlineAt: number): Promise<void>;
@@ -46,8 +44,6 @@ export function squads(
 		return config.repositories().squads as unknown as SquadWrites;
 	}
 	context.provide("workspaceSquads", {
-		switchAgent,
-		commitAgentOn,
 		setAgentOn: (scope, agentId, on, deadlineAt) => writes().setAgentOn(scope, agentId, on, deadlineAt),
 		setSkillOn: (scope, agentId, skillId, on, deadlineAt) =>
 			writes().setSkillOn(scope, agentId, skillId, on, deadlineAt),

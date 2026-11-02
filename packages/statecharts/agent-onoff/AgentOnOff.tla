@@ -220,22 +220,14 @@ Next ==
     \/ RefreshTimeout
     \/ Stay
 
-\* A start reaches On, a stop reaches Paused, and every wait reaches none.
-\* Those three do not have to be true in the same state.
-\* Boot and Halt are the one-step machine timers.
-\* MarkLate is the 30-second write deadline. RefreshTimeout is the 30-second read bound.
-\* A failed or late write then reads, and a read in reload confirms. Those steps are fair
-\* so a wait cannot stutter past them. The refresh timeout stays on the written screen.
 WaitEnds ==
     /\ [](phase = "Starting" => <>(phase = "On"))
     /\ [](phase = "Stopping" => <>(phase = "Paused"))
-    /\ [](wait # "none" => <>(wait = "none"))
+    /\ [](wait = "queue" => <>(wait # "queue"))
 
 Spec == Init /\ [][Next]_vars
     /\ WF_vars(Boot) /\ WF_vars(Halt)
     /\ WF_vars(MarkLate) /\ WF_vars(RefreshTimeout)
-    /\ WF_vars(MarkFailed) /\ WF_vars(MarkReload)
-    /\ WF_vars(ReadAfterFailure) /\ WF_vars(ConfirmRead)
 
 \* A change of autonomy leaves the phase, the machine, the skill, and the label.
 AutonomyStable ==

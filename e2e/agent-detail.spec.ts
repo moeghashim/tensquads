@@ -416,6 +416,39 @@ test("a committed skill write stays on screen when the refresh times out", async
 	}
 });
 
+test("a committed skill write stays on screen when the read fails", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(90_000);
+	await openAgent(page, workspaceUser, "support");
+	let reads = 0;
+	const pattern = /\/_serverFn\//;
+	const handler = async (route: Route) => {
+		if (route.request().method() === "GET") {
+			reads += 1;
+			await route.fulfill({ status: 500, contentType: "text/plain", body: "Read failed" });
+			return;
+		}
+		await route.continue();
+	};
+	await page.route(pattern, handler);
+	try {
+		const button = skillRow(page, "inbox.read").getByRole("button");
+		await button.click();
+		await expect
+			.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.read"), settled)
+			.toBe(false);
+		await expect.poll(() => reads, settled).toBeGreaterThan(0);
+		await expect(button).toHaveAttribute("aria-pressed", "false");
+		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+		await expect.poll(() => reads, { timeout: PENDING_TASK_WINDOW_MS + 15_000 }).toBeGreaterThan(1);
+		await expect(button).toHaveAttribute("aria-pressed", "false");
+		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+	} finally {
+		await page.unroute(pattern, handler);
+	}
+	await reloadAgent(page);
+	await expect(skillRow(page, "inbox.read").getByRole("button")).toHaveAttribute("aria-pressed", "false");
+});
+
 test("revise opens overview while its write and a skill write are held", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(60_000);
 	await openAgent(page, workspaceUser, "support");

@@ -2,7 +2,13 @@ import { useNavigate } from "@tanstack/react-router";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import type { Autonomy } from "@tensquads/domain";
 import { useSyncExternalStore } from "react";
-import { askAgentRevise, setAgentAutonomy, setAgentRunning, setSkillEnabled } from "#/server/agent-detail.ts";
+import {
+	askAgentRevise,
+	loadAgentDetail,
+	setAgentAutonomy,
+	setAgentRunning,
+	setSkillEnabled,
+} from "#/server/agent-detail.ts";
 import { agentStatus } from "#/workspace/agent-view.ts";
 import { useRefresh } from "#/workspace/context.ts";
 import { switchParts } from "#/workspace/styles.ts";
@@ -33,9 +39,10 @@ interface Write {
 	readonly key: string;
 	readonly work: (signal: AbortSignal) => Promise<void>;
 	readonly apply: (view: AgentDetailView) => AgentDetailView;
+	readonly matches: (view: AgentDetailView) => boolean;
 }
 
-function createQueue(refresh: () => Promise<void>) {
+function createQueue(refresh: () => Promise<void>, agentId: string) {
 	const queue: Write[] = [];
 	let busy = false;
 	let pending: readonly Write[] = [];
@@ -55,7 +62,12 @@ function createQueue(refresh: () => Promise<void>) {
 	}
 
 	async function read() {
-		await bounded(() => refresh()).catch(() => undefined);
+		try {
+			await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
+			await bounded(() => refresh());
+		} catch {
+			return;
+		}
 	}
 
 	async function confirm(write: Write) {
@@ -63,6 +75,12 @@ function createQueue(refresh: () => Promise<void>) {
 			return;
 		}
 		try {
+			const view = await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
+			if (!write.matches(view)) {
+				await pause(PENDING_TASK_WINDOW_MS);
+				void confirm(write);
+				return;
+			}
 			await bounded(() => refresh());
 		} catch {
 			await pause(PENDING_TASK_WINDOW_MS);
@@ -146,7 +164,7 @@ function agentQueue(refresh: () => Promise<void>, agentId: string) {
 	}
 	let queue = agents.get(agentId);
 	if (!queue) {
-		queue = createQueue(refresh);
+		queue = createQueue(refresh, agentId);
 		agents.set(agentId, queue);
 	}
 	return queue;
@@ -166,11 +184,13 @@ export function useAgentWrites(serverView: AgentDetailView) {
 				key: "running",
 				work: (signal) => setAgentRunning({ data: { agentId, on }, signal }),
 				apply: (view) => runningFace(view, on),
+				matches: (view) => view.on === on,
 			});
 		},
 		toggleSkill(skillId: string, on: boolean) {
 			enqueue({
 				key: `skill:${skillId}`,
+				matches: (view) => view.skills.some((skill) => skill.id === skillId && skill.onStr === String(on)),
 				work: (signal) => setSkillEnabled({ data: { agentId, skillId, on }, signal }),
 				apply: (view) => ({
 					...view,
@@ -181,6 +201,7 @@ export function useAgentWrites(serverView: AgentDetailView) {
 		pickAutonomy(autonomy: Autonomy) {
 			enqueue({
 				key: "autonomy",
+				matches: (view) => view.autonomyOpts.some((option) => option.label === autonomy && option.onStr === "true"),
 				work: (signal) => setAgentAutonomy({ data: { agentId, autonomy }, signal }),
 				apply: (view) => ({
 					...view,
@@ -197,6 +218,7 @@ export function useAgentWrites(serverView: AgentDetailView) {
 				key: "revise",
 				work: (signal) => askAgentRevise({ data: agentId, signal }),
 				apply: (view) => view,
+				matches: () => true,
 			});
 			void navigate({ to: "/overview" });
 		},
