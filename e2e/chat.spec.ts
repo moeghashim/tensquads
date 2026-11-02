@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { openPostgres, schema } from "@tensquads/adapters";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
@@ -112,6 +112,42 @@ test("a message shows the bubble, the working line, then the agent reply", async
 	expect(rows.reduce((sum, row) => sum + row.tasks, 0)).toBe(332);
 	expect(rows.find((row) => row.id === "marketing")?.tasks).toBe(39);
 	expect(rows.find((row) => row.id === "marketing")?.lastText).toBe(marketingResult);
+});
+
+test("a Task hand-off is visible while the reply is still working", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(120_000);
+	await openChat(page, workspaceUser);
+	let posts = 0;
+	let held: { abort: () => Promise<void> } | undefined;
+	await page.route("**/_serverFn/**", async (route) => {
+		if (route.request().method() === "POST" && ++posts === 2) {
+			held = route;
+			return;
+		}
+		await route.continue();
+	});
+	const question = "How did ads do this week?";
+	await page.locator("#chat-input").fill(question);
+	await page.getByRole("button", { name: "Send", exact: true }).click();
+	await expect(page.getByText("Marketing agent is working on it…")).toBeVisible({ timeout: replyTimeout });
+	await expect.poll(() => held !== undefined).toBe(true);
+	const buttons = page.locator("[data-loop='chatBus'] button");
+	const first = buttons.first();
+	try {
+		await expect(first).toContainText("Task", { timeout: 2_000 });
+		await expect(first).toContainText(question);
+		await expect(buttons).toHaveCount(6);
+		await expect(buttons.filter({ hasText: question })).toHaveCount(1);
+	} finally {
+		if (held) await held.abort();
+		await page.unroute("**/_serverFn/**");
+	}
+	await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0, { timeout: 35_000 });
+	const newest = await newestBusEvent(accountId);
+	await expect(first).toContainText(newest.kind);
+	await expect(first).toContainText(newest.body);
+	await expect(buttons.filter({ hasText: question })).toHaveCount(1);
+	await expect(buttons).toHaveCount(6);
 });
 
 test("enter sends the draft and clears the input", async ({ page, workspaceUser }) => {
@@ -341,6 +377,24 @@ async function agentRows(accountId: string) {
 async function tasksDone(accountId: string) {
 	const rows = await agentRows(accountId);
 	return rows.reduce((sum, row) => sum + row.tasks, 0);
+}
+
+async function newestBusEvent(accountId: string) {
+	const secrets = secretsFor(["testDatabase"]);
+	const postgres = openPostgres(secrets.testDatabase);
+	try {
+		const rows = await postgres.db
+			.select()
+			.from(schema.busEvents)
+			.where(eq(schema.busEvents.accountId, accountId))
+			.orderBy(desc(schema.busEvents.seq))
+			.limit(1);
+		const row = rows[0];
+		if (!row) throw new Error("The bus has no event.");
+		return { kind: row.kind, body: row.body };
+	} finally {
+		await postgres.close();
+	}
 }
 
 async function turnInventoryOn(accountId: string) {

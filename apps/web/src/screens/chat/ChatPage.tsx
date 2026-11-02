@@ -1,5 +1,7 @@
+import { useRef, useSyncExternalStore } from "react";
+
 import { css } from "#/screens/css.ts";
-import type { ChatHandOff } from "#/server/chat.ts";
+import { type ChatHandOff, loadChat } from "#/server/chat.ts";
 import { useWorkspace } from "#/workspace/context.ts";
 import { useInspect } from "#/workspace/event-view.ts";
 import { kindStyle } from "#/workspace/styles.ts";
@@ -16,6 +18,7 @@ export function ChatPage({ threadId, events }: { readonly threadId: string; read
 	const { frame, draft, setDraft, thinking, thinkingAgent, messages, submit } = useWorkspace();
 	const inspect = useInspect();
 	const names = agentNames(frame.agents);
+	const handoffs = useFreshHandoffs(events, thinking);
 	return (
 		<div data-if="isChat" style={css("display: contents")}>
 			<div style={css("display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start")}>
@@ -30,10 +33,103 @@ export function ChatPage({ threadId, events }: { readonly threadId: string; read
 					onDraft={setDraft}
 					onSubmit={submit}
 				/>
-				<HandOffs masterName={frame.masterName} events={events} names={names} onInspect={inspect} />
+				<HandOffs masterName={frame.masterName} events={handoffs} names={names} onInspect={inspect} />
 			</div>
 		</div>
 	);
+}
+
+function useFreshHandoffs(loaderEvents: readonly ChatHandOff[], thinking: boolean): readonly ChatHandOff[] {
+	const reader = useRef<HandoffReader | null>(null);
+	if (reader.current === null) reader.current = createHandoffReader(loaderEvents);
+	const current = reader.current;
+	current.note(loaderEvents, thinking);
+	return useSyncExternalStore(current.subscribe, current.get, () => loaderEvents);
+}
+
+// Begin commits the Task before thinking turns on. Read that bus list at once.
+// A later loader list replaces it. A failed read keeps the last server list already shown.
+function createHandoffReader(initial: readonly ChatHandOff[]): HandoffReader {
+	let loaderEvents = initial;
+	let events = initial;
+	let generation = 0;
+	let request = 0;
+	let thinking = false;
+	let pending = false;
+	const listeners = new Set<() => void>();
+	const notify = () => {
+		for (const listener of listeners) listener();
+	};
+	const publish = (
+		requestId: number,
+		generationAtEdge: number,
+		loaderAtEdge: readonly ChatHandOff[],
+		next: readonly ChatHandOff[] | null,
+	) => {
+		if (requestId !== request || generation !== generationAtEdge || loaderEvents !== loaderAtEdge) return;
+		const resolved = next ?? (sameHandoffs(events, loaderAtEdge) ? loaderAtEdge : events);
+		if (sameHandoffs(events, resolved)) return;
+		events = resolved;
+		notify();
+	};
+	const flush = () => {
+		if (!pending || typeof window === "undefined") return;
+		pending = false;
+		const generationAtEdge = generation;
+		const loaderAtEdge = loaderEvents;
+		const requestId = ++request;
+		void Promise.resolve()
+			.then(() => loadChat())
+			.then(
+				(data) => publish(requestId, generationAtEdge, loaderAtEdge, data.events),
+				() => publish(requestId, generationAtEdge, loaderAtEdge, null),
+			);
+	};
+	return {
+		subscribe(listener) {
+			listeners.add(listener);
+			return () => {
+				listeners.delete(listener);
+			};
+		},
+		get: () => events,
+		note(nextLoader, nextThinking) {
+			if (loaderEvents !== nextLoader) {
+				loaderEvents = nextLoader;
+				generation += 1;
+				request += 1;
+				if (!sameHandoffs(events, nextLoader)) events = nextLoader;
+				pending = false;
+			}
+			if (thinking !== nextThinking) {
+				thinking = nextThinking;
+				pending = true;
+			}
+			flush();
+		},
+	};
+}
+
+interface HandoffReader {
+	readonly subscribe: (listener: () => void) => () => void;
+	readonly get: () => readonly ChatHandOff[];
+	readonly note: (loader: readonly ChatHandOff[], thinking: boolean) => void;
+}
+
+function sameHandoffs(left: readonly ChatHandOff[], right: readonly ChatHandOff[]): boolean {
+	if (left.length !== right.length) return false;
+	return left.every((item, index) => {
+		const other = right[index];
+		return (
+			other !== undefined &&
+			item.id === other.id &&
+			item.time === other.time &&
+			item.from === other.from &&
+			item.to === other.to &&
+			item.kind === other.kind &&
+			item.text === other.text
+		);
+	});
 }
 
 function ChatColumn({
