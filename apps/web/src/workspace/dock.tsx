@@ -196,6 +196,7 @@ function DockPanel({
 				</button>
 			</div>
 			<div
+				className="dock-log"
 				// biome-ignore lint/a11y/noNoninteractiveTabindex: The message list scrolls, so the keyboard must reach it.
 				tabIndex={0}
 				style={css(
