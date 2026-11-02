@@ -236,6 +236,40 @@ test("queued cards and counts survive leaving and returning to overview", async 
 	await secondDone;
 });
 
+test("navigation frame reads update the count after another tab decides", async ({
+	page,
+	browser,
+	workspaceUser,
+}) => {
+	await openWorkspace(page, workspaceUser);
+	await expect(inboxCount(page)).toHaveText("4");
+	await expect(dockBadge(page)).toHaveText("4");
+	const otherContext = await browser.newContext({
+		baseURL: "http://localhost:3000",
+		storageState: await page.context().storageState(),
+	});
+	try {
+		const otherPage = await otherContext.newPage();
+		await installLocalFonts(otherPage);
+		await otherPage.goto("/overview");
+		await waitForHydration(otherPage);
+		await refundCard(otherPage).getByRole("button", { name: "Approve", exact: true }).click();
+		await expect(
+			otherPage.locator("main [data-loop='kpis'] > div").filter({ hasText: "Tasks done by squads" }),
+		).toContainText("332", settled);
+		await page.getByRole("button", { name: "Squad traffic", exact: true }).click();
+		await expect(page).toHaveURL(/\/traffic$/);
+		await expect(page.locator("[data-if='isOverview']")).toHaveCount(0);
+		await page.getByRole("button", { name: "Overview", exact: true }).click();
+		await expect(page).toHaveURL(/\/overview$/);
+		await expect(refundCard(page)).toHaveCount(0, settled);
+		await expect(inboxCount(page)).toHaveText("3");
+		await expect(dockBadge(page)).toHaveText("3");
+	} finally {
+		await otherContext.close();
+	}
+});
+
 test("a rejected decision restores the badge after leaving overview", async ({ page, workspaceUser }) => {
 	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
