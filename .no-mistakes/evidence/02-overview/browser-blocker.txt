@@ -1,0 +1,5 @@
+Authenticated Playwright attempt: npx playwright test e2e/overview.spec.ts --grep "the overview shows the greeting" --workers=1 --output=/Users/moeghashim/.no-mistakes/evidence/01M6E90HCJ2TVF0P0ZWYPHKXJ1/playwright
+Fixture stopped: publishable, secret, testDatabase is missing.
+All localSecrets availability checks were false.
+Real Vite/Cloudflare app started at localhost:3000. Headless Chromium opened /overview and arrived at /signin. Screenshot: auth-boundary-1440.png.
+Disposable PGlite supplied real repository and Kernel command validation but cannot issue a Clerk-signed session. No authentication bypass or mocked identity provider was used. Provide dedicated Clerk test publishable/secret keys and an isolated TEST_DATABASE_URL to run authenticated browser checks.

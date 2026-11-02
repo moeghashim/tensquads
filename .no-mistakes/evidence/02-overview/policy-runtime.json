@@ -1,0 +1,198 @@
+{
+  "approve": {
+    "tasksBefore": "331",
+    "tasksAfter": "332",
+    "count": 3,
+    "support": {
+      "id": "support",
+      "name": "Support",
+      "role": "Customer inbox and refunds",
+      "tint": "#def5ee",
+      "last": "Refund $42 on #A-1012 (approved)",
+      "tasks": 97,
+      "success": "94%",
+      "saved": "9h",
+      "mission": "Answer every customer within an hour and keep satisfaction above 4.5.",
+      "contribution": 81
+    },
+    "events": [
+      {
+        "accountId": "local-overview",
+        "id": "e100",
+        "timeText": "11:03",
+        "occurredAt": "2026-11-02T15:07:29.450Z",
+        "fromAgent": "master",
+        "toAgent": "support",
+        "kind": "Approval",
+        "skill": "-",
+        "body": "Approved: Refund $42 on #A-1012",
+        "payload": {
+          "by": "Moe",
+          "approved": true,
+          "approval_id": "ap1"
+        },
+        "writes": [
+          "approvals.ap1"
+        ],
+        "trace": "tr_0cac87",
+        "seq": 100
+      }
+    ],
+    "mandates": [
+      {
+        "accountId": "local-overview",
+        "approvalId": "ap1",
+        "ruleId": "r1",
+        "ruleWhen": "a refund request comes in",
+        "ruleAction": "refund it if it is under the refund limit, otherwise ask me",
+        "ruleApproval": "Auto under limit",
+        "limitValue": 50,
+        "policyVersion": "policy-138ba18b",
+        "saidYes": "Moe",
+        "saidAt": "2026-11-02T15:07:29.450Z"
+      }
+    ]
+  },
+  "decline": {
+    "count": 2,
+    "marketingUnchanged": true,
+    "events": [
+      {
+        "accountId": "local-overview",
+        "id": "e100",
+        "timeText": "11:03",
+        "occurredAt": "2026-11-02T15:07:29.450Z",
+        "fromAgent": "master",
+        "toAgent": "support",
+        "kind": "Approval",
+        "skill": "-",
+        "body": "Approved: Refund $42 on #A-1012",
+        "payload": {
+          "by": "Moe",
+          "approved": true,
+          "approval_id": "ap1"
+        },
+        "writes": [
+          "approvals.ap1"
+        ],
+        "trace": "tr_0cac87",
+        "seq": 100
+      },
+      {
+        "accountId": "local-overview",
+        "id": "e101",
+        "timeText": "11:04",
+        "occurredAt": "2026-11-02T15:07:29.460Z",
+        "fromAgent": "master",
+        "toAgent": "marketing",
+        "kind": "Declined",
+        "skill": "-",
+        "body": "Declined: Raise prints ad set to $60 a day",
+        "payload": {
+          "by": "Moe",
+          "approved": false,
+          "approval_id": "ap2"
+        },
+        "writes": [
+          "approvals.ap2"
+        ],
+        "trace": "tr_f9decc",
+        "seq": 101
+      }
+    ],
+    "mandateCount": 1
+  },
+  "missingLimit": {
+    "pendingCount": 4,
+    "tasks": "331",
+    "events": [],
+    "mandates": []
+  },
+  "missingRule": {
+    "pendingCount": 4,
+    "events": [],
+    "mandates": []
+  },
+  "mission": {
+    "inventory": {
+      "id": "inventory",
+      "name": "Inventory",
+      "role": "Stock and suppliers",
+      "tint": "#fee7c2",
+      "last": "Drafted a reorder of 50 blank hoodies",
+      "tasks": 31,
+      "success": "97%",
+      "saved": "3.5h",
+      "mission": "Never run out of a top-20 product and keep stock under 30 days of cover.",
+      "contribution": 0
+    },
+    "count": 3,
+    "events": []
+  },
+  "empty": {
+    "count": 0,
+    "emptyText": "Nothing waiting. Your squads are working inside their limits."
+  },
+  "revising": {
+    "count": 0,
+    "empty": false,
+    "proposals": [
+      {
+        "id": "mp-inventory",
+        "agentName": "Inventory",
+        "tint": "#fee7c2",
+        "title": "Revised mission on its way",
+        "mission": "Never run out of a top-20 product and keep stock under 30 days of cover.",
+        "chips": [
+          "Stock-outs: 0",
+          "Days of stock: under 30",
+          "Reorders approved in time: 100%"
+        ],
+        "proposed": false,
+        "revising": true
+      }
+    ]
+  },
+  "noStore": {
+    "tiles": [
+      {
+        "label": "Revenue",
+        "value": "—",
+        "delta": " ",
+        "deltaColor": "#5d5d5d"
+      },
+      {
+        "label": "Orders",
+        "value": "—",
+        "delta": " ",
+        "deltaColor": "#5d5d5d"
+      },
+      {
+        "label": "Average order",
+        "value": "—",
+        "delta": " ",
+        "deltaColor": "#5d5d5d"
+      },
+      {
+        "label": "Profit margin",
+        "value": "—",
+        "delta": " ",
+        "deltaColor": "#5d5d5d"
+      },
+      {
+        "label": "Tasks done by squads",
+        "value": "0",
+        "delta": "This week",
+        "deltaColor": "#5d5d5d"
+      },
+      {
+        "label": "Hours saved",
+        "value": "—",
+        "delta": " ",
+        "deltaColor": "#5d5d5d"
+      }
+    ],
+    "bars": [],
+    "empty": true
+  }
+}

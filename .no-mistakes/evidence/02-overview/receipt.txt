@@ -1,10 +1,12 @@
 2e85b8f9298c0e268f6db94242f54dbb5b18a0e923f11ca6140076e3dddc512c  AGENTS.md
-afea3c45c89da2bd0514baf7e2dba2a2f27b17443690fb36eef554efce6a6eac  docs/PLAN.md
+1fc58b0cd33d82880ca67d45cc940f326ca062fb6c00911eb6edb3c1d9dec8fc  docs/PLAN.md
 5ebf4ed3bd994fb2471f7a36ad0a465b6e546bd7309618aab684c1a4322e53a3  tasks/02-overview.md
 376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89  design/Main.dc.html
 deccce08d6932c707935dd44be6fd089e3a27d9c514e067d576129632117d5ec  design/inventory/Main.json
 26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
-5f922c968a6c5e81f2cc1e618885c49d0a6861f080d70a3dd2835709bf450d57  progress.md
+7b72581686e9de32b4f63c9354998d4e4b6e02fb062eb3fe4f6c02aba8cdd576  tasks/02-frame.md
+54a899657949259282a9c34cbf7af78006100fc2eaef31ec24beef338f48a904  progress.md
+
+node scripts/design-check.mjs: exit 0. All canvas files OK. design/ matches the canvas.
 Decisions 1 to 32 read. No question.
-Design check: all 13 manifest entries OK; design/ matches canvas version 1793448823-a766.
-Overview requirements map to tasks/02-overview.md. Other screens are out of this phase.
+Existing task decisions cover greeting, computed online count, computed totals, and mission state differences. No new unmapped requirement found.
