@@ -1,0 +1,46 @@
+---
+title: "Bus event and shared state"
+---
+stateDiagram-v2
+  state "Legend" as legend {
+    lg0: Ready
+    lg1: Waiting
+    lg2: In flight
+    lg3: Acknowledged
+    lg4: Dead letter
+  }
+  class lg0 blue
+  class lg1 orange
+  class lg2 teal
+  class lg3 purple
+  class lg4 pink
+  s0: Ready
+  s1: Acknowledged
+  s2: Queued
+  s3: Waiting
+  s4: Acknowledged, filtered
+  s5: Dead letter
+  s6: Delivered
+  s7: Dead letter, filtered
+  [*] --> s0
+  s0 --> s1: the next event
+  s0 --> s2: the bus queues the event
+  s0 --> s3: the live tick starts
+  s1 --> s4: you filter the list
+  s2 --> s5: the bus dead-letters the event
+  s2 --> s6: the bus delivers the event
+  s3 --> s0: the wait ends
+  s3 --> s1: the next event
+  s4 --> s1: you clear the filter
+  s5 --> s7: you filter the list
+  s6 --> s1: the bus acknowledges the event
+  s6 --> s5: the bus dead-letters the event
+  s7 --> s5: you clear the filter
+  class s0 blue
+  class s1 purple
+  class s2 teal
+  class s3 orange
+  class s4 purple
+  class s5 pink
+  class s6 teal
+  class s7 pink

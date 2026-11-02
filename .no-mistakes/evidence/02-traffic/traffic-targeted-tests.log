@@ -1,0 +1,22 @@
+✔ events stay in sequence order when two events share a time (833.934125ms)
+✔ one nextEvent adds the row and its writes in one transaction (571.511542ms)
+✔ a repeat id changes nothing and the next call adds the event (459.108708ms)
+✔ the script starts again after eight events (457.237375ms)
+✔ a read past the deadline commits nothing (846.93175ms)
+✔ a write past the original deadline commits nothing (575.979125ms)
+✔ send recovers from a hung refresh after successful advance (2.949042ms)
+✔ send recovers from a hung refresh after timed-out advance (1.220208ms)
+✔ live recovers from a hung refresh after successful advance (0.592583ms)
+✔ live recovers from a hung refresh after timed-out advance (0.624542ms)
+✔ three Send next event clicks each add one event, in order (0.763459ms)
+✔ a failed advance refreshes and the queued click runs (0.486125ms)
+✔ a live tick does not queue behind an open send (0.32775ms)
+✔ each queued click keeps its id for its caller (0.875125ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2647.192917
