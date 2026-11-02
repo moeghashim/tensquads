@@ -316,6 +316,61 @@ test(
 	},
 );
 
+test(
+	"a begin request that never settles releases the guard and accepts another send",
+	{ timeout: 90_000 },
+	async (t) => {
+		await withDock(t, async ({ page }) => {
+			await page.clock.install();
+			await page.evaluate(() => {
+				window.realBegin = window.beginSend;
+				window.beginSend = () => new Promise(() => {});
+			});
+			await send(page);
+			await expect(page.locator("#pending")).toHaveText("true");
+			await page.clock.fastForward(PENDING_TASK_WINDOW_MS);
+			await expect(page.locator("#pending")).toHaveText("false");
+			await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0);
+			await page.evaluate(() => {
+				window.beginSend = window.realBegin;
+			});
+			await send(page);
+			await advanceReply(page);
+			await expect(page.getByText(reply, { exact: true })).toBeVisible();
+			await expect(page.locator("#pending")).toHaveText("false");
+		});
+	},
+);
+
+test("a refresh that never settles releases the guard and accepts another send", { timeout: 90_000 }, async (t) => {
+	await withDock(t, async ({ page }) => {
+		await page.clock.install();
+		await page.evaluate(() => {
+			window.refreshHeld = false;
+			window.realInvalidate = window.router.invalidate.bind(window.router);
+			window.router.invalidate = () => {
+				window.refreshHeld = true;
+				return new Promise(() => {});
+			};
+		});
+		await send(page);
+		await advanceReply(page);
+		await expect.poll(() => page.evaluate(() => window.refreshHeld)).toBe(true);
+		await expect(page.locator("#pending")).toHaveText("true");
+		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
+		await page.clock.fastForward(PENDING_TASK_WINDOW_MS);
+		await expect(page.locator("#pending")).toHaveText("false");
+		await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0);
+		await page.evaluate(() => {
+			window.router.invalidate = window.realInvalidate;
+		});
+		await send(page);
+		await advanceReply(page);
+		await expect(page.getByText(reply, { exact: true })).toHaveCount(2);
+		await expect(page.locator("#pending")).toHaveText("false");
+	});
+});
+
 test("a failed refresh keeps returned messages and permits another send", async (t) => {
 	await withDock(t, async ({ page }) => {
 		await page.clock.install();

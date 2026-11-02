@@ -142,7 +142,7 @@ function useSubmit(draft: string, thinking: boolean, hooks: SendHooks) {
 
 function useFrameRefresh(router: ReturnType<typeof useRouter>, refresh: () => Promise<void>) {
 	return useCallback(async (): Promise<WorkspaceFrameData> => {
-		await refresh();
+		await bounded(() => refresh());
 		const match = router.state.matches.find((item) => item.routeId === "/_workspace");
 		if (!match || match.status !== "success" || !match.loaderData)
 			throw new Error("The workspace frame did not load.");
@@ -241,18 +241,44 @@ interface SendHooks {
 	readonly applyFrame: (frame: WorkspaceFrameData) => void;
 }
 
+function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
+	const controller = new AbortController();
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const timeout = new Promise<never>((_resolve, reject) => {
+		timer = setTimeout(() => {
+			controller.abort();
+			reject(new DOMException("The operation was aborted.", "AbortError"));
+		}, PENDING_TASK_WINDOW_MS);
+	});
+	const work = Promise.resolve().then(() => run(controller.signal));
+	void work.then(
+		() => undefined,
+		() => undefined,
+	);
+	return Promise.race([work, timeout]).finally(() => {
+		if (timer !== undefined) clearTimeout(timer);
+	});
+}
+
 async function sendDraft(value: string, hooks: SendHooks) {
+	let refreshed: WorkspaceFrameData | undefined;
 	try {
 		await performSend(value, hooks);
 	} catch {
-		// Refresh below loads the thread the server kept. No local bubble remains.
+		// Begin or finish settled with an error. Refresh still runs.
+	}
+	try {
+		if (hooks.mounted.current) refreshed = await hooks.refreshFrame();
+	} catch {
+		// Refresh settled with an error. The guard still clears.
 	} finally {
-		await refreshAfterSend(hooks);
+		hooks.sending.current = false;
+		completeSend(hooks, refreshed);
 	}
 }
 
 async function performSend(value: string, hooks: SendHooks) {
-	const started = await beginWorkspaceSend({ data: value });
+	const started = await bounded((signal) => beginWorkspaceSend({ data: value, signal }));
 	if (!hooks.mounted.current) {
 		return;
 	}
@@ -283,28 +309,9 @@ async function finishWorkingSend(
 	if (!hooks.mounted.current) {
 		return;
 	}
-	const controller = new AbortController();
-	const timer = setTimeout(() => {
-		controller.abort();
-	}, PENDING_TASK_WINDOW_MS);
-	try {
-		const finished = await finishWorkspaceSend({ data: started.taskId, signal: controller.signal });
-		if (hooks.mounted.current && finished.kind === "replied") {
-			hooks.setMessages(finished.messages);
-		}
-	} finally {
-		clearTimeout(timer);
-	}
-}
-
-async function refreshAfterSend(hooks: SendHooks) {
-	let refreshed: WorkspaceFrameData | undefined;
-	try {
-		if (hooks.mounted.current) refreshed = await hooks.refreshFrame();
-	} catch {
-	} finally {
-		hooks.sending.current = false;
-		completeSend(hooks, refreshed);
+	const finished = await bounded((signal) => finishWorkspaceSend({ data: started.taskId, signal }));
+	if (hooks.mounted.current && finished.kind === "replied") {
+		hooks.setMessages(finished.messages);
 	}
 }
 
