@@ -1,10 +1,17 @@
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 
-import { advanceTraffic } from "#/server/traffic.ts";
-
 export interface LiveTick {
 	readonly live: boolean;
 	readonly refresh: () => void | Promise<void>;
+}
+
+// The route registers this call. This file cannot import the server function.
+// The dock bundle test compiles this module without the server-function compiler.
+type Advance = (options: { signal: AbortSignal }) => Promise<string>;
+let advance: Advance | null = null;
+
+export function registerTrafficAdvance(fn: Advance) {
+	advance = fn;
 }
 
 let pending = false;
@@ -43,7 +50,9 @@ function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
 async function step(refresh: () => void | Promise<void>): Promise<void> {
 	let id = "";
 	try {
-		id = await bounded((signal) => advanceTraffic({ signal }));
+		const call = advance;
+		if (!call) throw new Error("Traffic advance is not configured.");
+		id = await bounded((signal) => call({ signal }));
 	} catch {
 		id = "";
 	}

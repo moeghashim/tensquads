@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { TrafficPage } from "#/screens/traffic/page.tsx";
-import { loadTraffic } from "#/server/traffic.ts";
+import { advanceTraffic, loadTraffic } from "#/server/traffic.ts";
+import { registerTrafficAdvance } from "#/workspace/live.ts";
+
+registerTrafficAdvance((options) => advanceTraffic(options));
 
 export const Route = createFileRoute("/_workspace/traffic")({
 	head: () => ({
