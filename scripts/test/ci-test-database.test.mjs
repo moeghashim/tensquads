@@ -119,15 +119,18 @@ for (const [label, sourcePath, neonPath, error] of [
 		test(`${operation.name} refuses ${label} before query`, async () => {
 			let queries = 0;
 			await assert.rejects(
-				() => operation({
-					env: env({
-						TEST_DATABASE_URL: `postgres://role@database.invalid/${sourcePath}`,
-						NEON_POSTGRES_CONNECTION_STRING: neonPath ? `postgres://role@database.invalid/${neonPath}` : "",
+				() =>
+					operation({
+						env: env({
+							TEST_DATABASE_URL: `postgres://role@database.invalid/${sourcePath}`,
+							NEON_POSTGRES_CONNECTION_STRING: neonPath ? `postgres://role@database.invalid/${neonPath}` : "",
+						}),
+						query: async () => {
+							queries += 1;
+						},
+						mask: () => undefined,
+						writeEnv: () => undefined,
 					}),
-					query: async () => { queries += 1; },
-					mask: () => undefined,
-					writeEnv: () => undefined,
-				}),
 				error,
 			);
 			assert.equal(queries, 0);
