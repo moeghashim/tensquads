@@ -3,6 +3,7 @@ import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import type { Autonomy } from "@tensquads/domain";
 import { useSyncExternalStore } from "react";
 import { askAgentRevise, setAgentAutonomy, setAgentRunning, setSkillEnabled } from "#/server/agent-detail.ts";
+import { agentStatus } from "#/workspace/agent-view.ts";
 import { useRefresh } from "#/workspace/context.ts";
 import { switchParts } from "#/workspace/styles.ts";
 import { type AgentDetailView, autonomyStyle } from "./model.ts";
@@ -49,8 +50,26 @@ function createQueue(refresh: () => Promise<void>) {
 		publish(pending.filter((value) => value !== write));
 	}
 
+	function stillPending(write: Write) {
+		return pending.includes(write);
+	}
+
 	async function read() {
 		await bounded(() => refresh()).catch(() => undefined);
+	}
+
+	async function confirm(write: Write) {
+		if (!stillPending(write)) {
+			return;
+		}
+		try {
+			await bounded(() => refresh());
+		} catch {
+			await pause(PENDING_TASK_WINDOW_MS);
+			void confirm(write);
+			return;
+		}
+		clear(write);
 	}
 
 	async function drain() {
@@ -68,7 +87,7 @@ function createQueue(refresh: () => Promise<void>) {
 					continue;
 				}
 				const sent = write;
-				void read().then(() => clear(sent));
+				void confirm(sent);
 				write = queue.shift();
 			}
 		} finally {
@@ -91,6 +110,27 @@ function createQueue(refresh: () => Promise<void>) {
 			else queue[index] = write;
 			void drain();
 		},
+	};
+}
+
+function pause(ms: number) {
+	return new Promise<void>((resolve) => {
+		setTimeout(resolve, ms);
+	});
+}
+
+function runningFace(view: AgentDetailView, on: boolean): AgentDetailView {
+	const status = agentStatus(on);
+	const storedUptime = view.storedUptime;
+	return {
+		...view,
+		on,
+		...switchParts(on),
+		statusLabel: status.statusLabel,
+		statusStyle: status.statusStyle,
+		vmState: on ? "Isolated · running" : "Isolated · stopped",
+		cpu: on ? view.storedCpu : "0%",
+		uptime: on ? (storedUptime === "Paused" ? "Just started" : storedUptime) : "Paused",
 	};
 }
 
@@ -125,7 +165,7 @@ export function useAgentWrites(serverView: AgentDetailView) {
 			enqueue({
 				key: "running",
 				work: (signal) => setAgentRunning({ data: { agentId, on }, signal }),
-				apply: (view) => ({ ...view, on, ...switchParts(on) }),
+				apply: (view) => runningFace(view, on),
 			});
 		},
 		toggleSkill(skillId: string, on: boolean) {
@@ -153,9 +193,11 @@ export function useAgentWrites(serverView: AgentDetailView) {
 			});
 		},
 		askRevise() {
-			void bounded((signal) => askAgentRevise({ data: agentId, signal }))
-				.catch(() => undefined)
-				.finally(() => bounded(() => refresh()).catch(() => undefined));
+			enqueue({
+				key: "revise",
+				work: (signal) => askAgentRevise({ data: agentId, signal }),
+				apply: (view) => view,
+			});
 			void navigate({ to: "/overview" });
 		},
 	};

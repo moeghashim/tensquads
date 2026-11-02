@@ -168,8 +168,12 @@ export async function openDesignDetail(page: Page, width: number, height: number
 	});
 	const source = readFileSync(new URL("../design/Main.dc.html", import.meta.url), "utf8");
 	const css = source.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
+	const font = source.match(/https:\/\/fonts\.googleapis\.com\/css2\?[^"']+/)?.[0]?.replaceAll("&amp;", "&");
+	if (!font) {
+		throw new Error("The design font link is missing.");
+	}
 	await canvas.setContent(
-		`<!doctype html><html lang="en"><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"><style>${css}x-dc{display:contents}</style></head><body>${body}</body></html>`,
+		`<!doctype html><html lang="en"><head><link rel="stylesheet" href="${font}"><style>${css}x-dc{display:contents}</style></head><body>${body}</body></html>`,
 	);
 	await canvas.locator("[data-handler='goAdmin']").evaluate((element) => element.remove());
 	await canvas.evaluate(() => {

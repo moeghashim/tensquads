@@ -1,5 +1,6 @@
 import type {
 	AccountScope,
+	Autonomy,
 	Fenced,
 	Rule,
 	SendResult,
@@ -12,9 +13,10 @@ import { type BusCommands, bus } from "./plugins/bus.ts";
 import type { ConversationCommands } from "./plugins/conversation.ts";
 import { conversation } from "./plugins/conversation.ts";
 import { plugins } from "./plugins/index.ts";
+import type { PolicyApprovalCommands } from "./plugins/policy-approvals.ts";
 import type { PolicyCommands } from "./plugins/policy.ts";
 import { policy } from "./plugins/policy.ts";
-import type { PolicyApprovalCommands } from "./plugins/policy-approvals.ts";
+import { type SquadCommands, squads } from "./plugins/squads.ts";
 import {
 	DECIDER_MISSING,
 	type Decider,
@@ -62,6 +64,15 @@ export class Kernel {
 						},
 					}),
 				);
+			} else if (plugin === squads) {
+				fibers.push(
+					this.context.plugin(squads, {
+						repositories: () => {
+							if (!this.repositories) throw new Error("Repositories are not configured.");
+							return this.repositories;
+						},
+					}),
+				);
 			} else {
 				fibers.push(this.context.plugin(plugin));
 			}
@@ -82,6 +93,32 @@ export class Kernel {
 	async finishSend(scope: AccountScope, taskId: string): Promise<SendResult> {
 		await this.ready;
 		return (this.context.get("workspaceConversation") as ConversationCommands).finishSend(scope, taskId);
+	}
+
+	async setAgentOn(scope: AccountScope, agentId: string, on: boolean, deadlineAt: number): Promise<void> {
+		await this.ready;
+		return (this.context.get("workspaceSquads") as SquadCommands).setAgentOn(scope, agentId, on, deadlineAt);
+	}
+
+	async setSkillOn(
+		scope: AccountScope,
+		agentId: string,
+		skillId: string,
+		on: boolean,
+		deadlineAt: number,
+	): Promise<void> {
+		await this.ready;
+		return (this.context.get("workspaceSquads") as SquadCommands).setSkillOn(scope, agentId, skillId, on, deadlineAt);
+	}
+
+	async setAutonomy(scope: AccountScope, agentId: string, autonomy: Autonomy, deadlineAt: number): Promise<void> {
+		await this.ready;
+		return (this.context.get("workspaceSquads") as SquadCommands).setAutonomy(scope, agentId, autonomy, deadlineAt);
+	}
+
+	async askRevise(scope: AccountScope, agentId: string, deadlineAt: number): Promise<void> {
+		await this.ready;
+		return (this.context.get("workspaceSquads") as SquadCommands).askRevise(scope, agentId, deadlineAt);
 	}
 
 	async nextEvent(scope: AccountScope, deadlineAt?: number): Promise<void> {

@@ -44,6 +44,8 @@ export interface AgentDetailSource {
 	readonly size: string;
 	readonly cpu: string;
 	readonly uptime: string;
+	readonly storedCpu: string;
+	readonly storedUptime: string;
 	readonly egress: readonly string[];
 	readonly secrets: readonly string[];
 	readonly events: readonly AgentDetailEvent[];
@@ -95,6 +97,8 @@ export interface AgentDetailView {
 	readonly size: string;
 	readonly cpu: string;
 	readonly uptime: string;
+	readonly storedCpu: string;
+	readonly storedUptime: string;
 	readonly egress: readonly string[];
 	readonly secrets: readonly string[];
 	readonly sandboxNote: string;
@@ -173,6 +177,8 @@ export function agentDetailView(source: AgentDetailSource): AgentDetailView {
 		size: blank(source.size),
 		cpu: blank(source.cpu),
 		uptime: blank(source.uptime),
+		storedCpu: source.storedCpu,
+		storedUptime: source.storedUptime,
 		egress: source.egress.map((item) => blank(item)),
 		secrets: source.secrets.map((item) => blank(item)),
 		sandboxNote: `No direct link to other squads. It sends and receives only through ${source.masterName}, and only the state keys listed in each message. Every run also gets the company mission, the squad mission and its targets.`,

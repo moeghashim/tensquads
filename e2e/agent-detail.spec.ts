@@ -1,4 +1,6 @@
 import { mkdirSync } from "node:fs";
+import { Pool } from "@neondatabase/serverless";
+import type { Route } from "@playwright/test";
 import { setAgentOn } from "../packages/adapters/src/neon/commands/agents.ts";
 import { PENDING_TASK_WINDOW_MS } from "../packages/adapters/src/pending-window.ts";
 import { accessibilityViolations } from "./accessibility-helper.ts";
@@ -29,7 +31,7 @@ import {
 	watchedMachine,
 	withDb,
 } from "./agent-detail-support.ts";
-import { expectNoHorizontalScroll, skipUnlessMacScreenshot, waitForScreenFonts } from "./support.ts";
+import { expectNoHorizontalScroll, secretsFor, skipUnlessMacScreenshot, waitForScreenFonts } from "./support.ts";
 import { expect, openWorkspace, test } from "./workspace.ts";
 
 const boards = [
@@ -41,6 +43,12 @@ const pendingMission = "No mission yet. Master has proposed one; approve it in t
 const supportMission = "Answer every customer within an hour and keep satisfaction above 4.5.";
 const noTargets = "No targets until the mission is approved.";
 const settled = { timeout: 15_000 };
+
+function wait(ms: number) {
+	return new Promise((resolve) => {
+		setTimeout(resolve, ms);
+	});
+}
 
 test("the dashboard shows every section for one agent", async ({ page, workspaceUser }) => {
 	test.setTimeout(60_000);
@@ -301,6 +309,113 @@ test("pending agent writes survive leaving and returning to the dashboard", asyn
 	}
 });
 
+test("held off switch updates the derived fields at the click", async ({ page, workspaceUser }) => {
+	test.setTimeout(60_000);
+	await openAgent(page, workspaceUser, "support");
+	const held = await holdServerPosts(page);
+	try {
+		await squadSwitch(page).click();
+		await expect.poll(() => held.posts.length).toBe(1);
+		await expect(paused(page)).toBeVisible();
+		await expect(running(page)).toHaveCount(0);
+		await expect(sandbox(page).getByText("0%", { exact: true })).toBeVisible();
+		await expect(sandbox(page).getByText("Paused", { exact: true })).toBeVisible();
+		await expect(sandbox(page).getByText("Isolated · stopped", { exact: true })).toBeVisible();
+		await expect(sandbox(page).getByText("22%", { exact: true })).toHaveCount(0);
+		await expect(sandbox(page).getByText("18 days", { exact: true })).toHaveCount(0);
+	} finally {
+		await held.stop();
+	}
+});
+
+test("revision shares the per-agent queue and still opens overview", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(60_000);
+	await openAgent(page, workspaceUser, "support");
+	const held = await holdServerPosts(page, 2);
+	try {
+		await skillRow(page, "inbox.read").getByRole("button").click();
+		await expect.poll(() => held.posts.length).toBe(1);
+		await page.getByRole("button", { name: "Ask Master to revise" }).click();
+		await expect(page).toHaveURL(/\/overview$/);
+		await wait(1_000);
+		expect(held.posts).toHaveLength(1);
+		expect(held.posts[0]).toContain("inbox.read");
+		held.release();
+		await expect.poll(() => held.posts.length, settled).toBe(2);
+		expect(held.posts[1]).toContain("support");
+		await expect.poll(async () => (await readAgent(accountId, "support")).proposals.length, settled).toBe(1);
+	} finally {
+		await held.stop();
+	}
+});
+
+test("a read held past the deadline cannot commit the queued writes", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(120_000);
+	await openAgent(page, workspaceUser, "support");
+	const pool = new Pool({ connectionString: secretsFor(["testDatabase"]).testDatabase, max: 1 });
+	const client = await pool.connect();
+	let released = false;
+	try {
+		await client.query("BEGIN");
+		await client.query("LOCK TABLE accounts IN ACCESS EXCLUSIVE MODE");
+		await skillRow(page, "inbox.read").getByRole("button").click();
+		await page
+			.getByRole("group", { name: "Autonomy" })
+			.getByRole("button", { name: "Full auto", exact: true })
+			.click();
+		await wait(65_000);
+		await client.query("ROLLBACK");
+		released = true;
+		await wait(7_000);
+		const after = await readAgent(accountId, "support");
+		expect(skillFlag(after, "inbox.read")).toBe(true);
+		expect(after.autonomy).toBe("Auto under limit");
+	} finally {
+		if (!released) {
+			await client.query("ROLLBACK");
+		}
+		client.release();
+		await pool.end();
+	}
+});
+
+test("a committed skill write stays on screen when the refresh times out", async ({
+	page,
+	workspaceUser,
+	accountId,
+}) => {
+	test.setTimeout(90_000);
+	await openAgent(page, workspaceUser, "support");
+	let release: () => void = () => undefined;
+	const held = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	const pattern = /\/_serverFn\//;
+	const handler = async (route: Route) => {
+		if (route.request().method() === "GET") {
+			await held;
+			await route.abort().catch(() => undefined);
+			return;
+		}
+		await route.continue();
+	};
+	await page.route(pattern, handler);
+	try {
+		const button = skillRow(page, "inbox.read").getByRole("button");
+		await button.click();
+		await expect
+			.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.read"), settled)
+			.toBe(false);
+		await wait(32_000);
+		const server = skillFlag(await readAgent(accountId, "support"), "inbox.read");
+		await expect(button).toHaveAttribute("aria-pressed", String(server));
+		expect(server).toBe(false);
+	} finally {
+		release();
+		await page.unroute(pattern, handler);
+	}
+});
+
 test("revise opens overview while its write and a skill write are held", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(60_000);
 	await openAgent(page, workspaceUser, "support");
@@ -310,7 +425,8 @@ test("revise opens overview while its write and a skill write are held", async (
 		await expect.poll(() => held.posts.length).toBe(1);
 		await page.getByRole("button", { name: "Ask Master to revise" }).click();
 		await expect(page).toHaveURL(/\/overview$/);
-		await expect.poll(() => held.posts.length).toBe(2);
+		await wait(1_000);
+		expect(held.posts).toHaveLength(1);
 		expect((await readAgent(accountId, "support")).proposals).toEqual([]);
 		held.release();
 		await expect.poll(async () => (await readAgent(accountId, "support")).proposals.length, settled).toBe(1);
@@ -343,9 +459,13 @@ test("queued switches and autonomy coalesce to their latest values", async ({ pa
 			await expect(option).toHaveAttribute("aria-pressed", "true");
 			await expect(option).toHaveCSS("background-color", "rgb(255, 255, 255)");
 		}
-		await expect(running(page)).toBeVisible();
-		await expect(sandbox(page).getByText("22%", { exact: true })).toBeVisible();
-		await expect(sandbox(page).getByText("18 days", { exact: true })).toBeVisible();
+		await expect(paused(page)).toBeVisible();
+		await expect(running(page)).toHaveCount(0);
+		await expect(sandbox(page).getByText("0%", { exact: true })).toBeVisible();
+		await expect(sandbox(page).getByText("Paused", { exact: true })).toBeVisible();
+		await expect(sandbox(page).getByText("Isolated · stopped", { exact: true })).toBeVisible();
+		await expect(sandbox(page).getByText("22%", { exact: true })).toHaveCount(0);
+		await expect(sandbox(page).getByText("18 days", { exact: true })).toHaveCount(0);
 		held.release();
 		await expect
 			.poll(async () => {
@@ -372,10 +492,12 @@ test("turning on a stopped agent shows Just started", async ({ page, workspaceUs
 	await expect(sandbox(page).getByText("Just started", { exact: true })).toBeVisible();
 	await expect(sandbox(page).getByText("0%", { exact: true })).toBeVisible();
 	await expect(page.getByText("Starting")).toHaveCount(0);
-	const stored = await readAgent(accountId, "inventory");
-	expect(stored.isOn).toBe(true);
-	expect(stored.uptime).toBe("Paused");
-	expect(stored.cpu).toBe("0%");
+	await expect
+		.poll(async () => {
+			const stored = await readAgent(accountId, "inventory");
+			return [stored.isOn, stored.uptime, stored.cpu];
+		}, settled)
+		.toEqual([true, "Paused", "0%"]);
 });
 
 test("an agent with no mission shows the pending text and no targets", async ({ page, workspaceUser }) => {

@@ -8,26 +8,57 @@ stateDiagram-v2
     lg2: On
     lg3: Stopping
     lg4: Paused
+    lg5: Queued
+    lg6: Failed
+    lg7: Late
+    lg8: Reload
   }
   class lg0 tan
   class lg1 orange
   class lg2 teal
   class lg3 yellow
   class lg4 blue
+  class lg5 purple
+  class lg6 pink
+  class lg7 orange
+  class lg8 yellow
   s0: Off
   s1: On
-  s2: Starting
-  s3: Stopping
-  s4: Paused
+  s2: Queued
+  s3: Starting
+  s4: Stopping
+  s5: Failed
+  s6: Late
+  s7: Reload
+  s8: Paused
   [*] --> s0
   [*] --> s1
-  s0 --> s2: you switch it on
-  s1 --> s3: you switch it off
-  s2 --> s1: it starts
-  s3 --> s4: it stops
-  s4 --> s2: you switch it on
+  s0 --> s2: you queue a change
+  s0 --> s3: you switch it on
+  s1 --> s2: you queue a change
+  s1 --> s4: you switch it off
+  s2 --> s5: the write fails
+  s2 --> s6: the deadline passes
+  s2 --> s7: the write lands
+  s3 --> s1: it starts
+  s3 --> s2: you queue a change
+  s4 --> s8: it stops
+  s4 --> s2: you queue a change
+  s5 --> s7: the page reads again
+  s6 --> s7: the page reads again
+  s7 --> s0: the read confirms
+  s7 --> s1: the read confirms
+  s8 --> s2: you queue a change
+  s8 --> s3: you switch it on
+  s7 --> s3: the read confirms
+  s7 --> s4: the read confirms
+  s7 --> s8: the read confirms
   class s0 tan
   class s1 teal
-  class s2 orange
-  class s3 yellow
-  class s4 blue
+  class s2 purple
+  class s3 orange
+  class s4 yellow
+  class s5 pink
+  class s6 orange
+  class s7 yellow
+  class s8 blue

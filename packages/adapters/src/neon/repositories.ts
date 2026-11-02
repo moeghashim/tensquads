@@ -100,10 +100,13 @@ export function createRepositories(db: AppDatabase): RepositoryBag {
 			listAgents: (scope) => listAgents(db, scope),
 			master: (scope) => readMaster(db, scope),
 			tasksDone: (scope) => tasksDone(db, scope),
-			setAgentOn: (scope, agentId, on) => setAgentOn(db, scope, agentId, on),
-			setSkillOn: (scope, agentId, skillId, on) => setSkillOn(db, scope, agentId, skillId, on),
-			setAutonomy: (scope, agentId, autonomy) => setAutonomy(db, scope, agentId, autonomy),
-			askRevise: (scope, agentId) => askRevise(db, scope, agentId),
+			setAgentOn: (scope, agentId, on, deadlineAt?: number) =>
+				setAgentOn(db, scope, agentId, on, undefined, deadlineAt),
+			setSkillOn: (scope, agentId, skillId, on, deadlineAt?: number) =>
+				setSkillOn(db, scope, agentId, skillId, on, deadlineAt),
+			setAutonomy: (scope, agentId, autonomy, deadlineAt?: number) =>
+				setAutonomy(db, scope, agentId, autonomy, deadlineAt),
+			askRevise: (scope, agentId, deadlineAt?: number) => askRevise(db, scope, agentId, deadlineAt),
 		},
 		bus: {
 			listEvents: (scope) => listEvents(db, scope),

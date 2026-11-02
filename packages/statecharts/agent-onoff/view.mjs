@@ -6,11 +6,18 @@ const phases = {
 	Paused: "Paused",
 };
 
+const waits = {
+	queue: "Queued",
+	failed: "Failed",
+	late: "Late",
+	reload: "Reload",
+};
+
 export const title = "Agent on and off";
 
-export const state = (v) => phases[v.phase];
+export const state = (v) => (v.wait === "none" ? phases[v.phase] : waits[v.wait]);
 
-export const group = (v) => phases[v.phase];
+export const group = (v) => (v.wait === "none" ? phases[v.phase] : waits[v.wait]);
 
 export const colors = {
 	Off: "tan",
@@ -18,15 +25,25 @@ export const colors = {
 	On: "teal",
 	Stopping: "yellow",
 	Paused: "blue",
+	Queued: "purple",
+	Failed: "pink",
+	Late: "orange",
+	Reload: "yellow",
 };
 
-const hidden = new Set(["Stay", "ChangeAutonomy", "RunSkill", "EndSkill"]);
+const hidden = new Set(["Stay", "ChangeAutonomy", "RunSkill", "EndSkill", "RefreshTimeout"]);
 
 const labels = {
 	SwitchOn: "you switch it on",
 	Boot: "it starts",
 	SwitchOff: "you switch it off",
 	Halt: "it stops",
+	EnterQueue: "you queue a change",
+	MarkFailed: "the write fails",
+	MarkLate: "the deadline passes",
+	MarkReload: "the write lands",
+	ReadAfterFailure: "the page reads again",
+	ConfirmRead: "the read confirms",
 };
 
 export const step = (action) => {

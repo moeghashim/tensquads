@@ -16,6 +16,33 @@ type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 export type MachineFactory = (rows: readonly MachineRecord[]) => MachineProvider;
 
 const accountChange = "An agent change needs an account.";
+const unfinished = "The workspace write did not finish.";
+
+function deadlineWindow(deadlineAt: number | undefined): { readonly absolute: number; readonly remaining: number } {
+	const absolute = deadlineAt ?? Date.now() + PENDING_TASK_WINDOW_MS;
+	const remaining = absolute - Date.now();
+	// A lock_timeout of 0 waits forever, so a few milliseconds left is already late.
+	if (remaining < 4) {
+		throw new Error(unfinished);
+	}
+	return { absolute, remaining };
+}
+
+async function commitChange(
+	db: AppDatabase,
+	deadlineAt: number | undefined,
+	work: (tx: Tx) => Promise<void>,
+): Promise<void> {
+	const window = deadlineWindow(deadlineAt);
+	await workspaceTransaction(
+		db,
+		async (tx, constrainDeadline) => {
+			constrainDeadline(window.absolute);
+			await work(tx);
+		},
+		{ deadlineMs: window.remaining },
+	);
+}
 
 function accountIdOf(scope: AccountScope): string {
 	const checked = requireScope(scope);
@@ -77,15 +104,10 @@ export async function setAgentOn(
 	agentId: string,
 	on: boolean,
 	createMachine: MachineFactory = createTestMachine,
+	deadlineAt?: number,
 ): Promise<void> {
 	const accountId = accountIdOf(scope);
-	await workspaceTransaction(
-		db,
-		async (tx) => {
-			await persistAgentOn(tx, accountId, agentId, on, createMachine);
-		},
-		{ deadlineMs: PENDING_TASK_WINDOW_MS },
-	);
+	await commitChange(db, deadlineAt, (tx) => persistAgentOn(tx, accountId, agentId, on, createMachine));
 }
 
 async function persistSkillOn(tx: Tx, accountId: string, agentId: string, skillId: string, on: boolean): Promise<void> {
@@ -108,15 +130,10 @@ export async function setSkillOn(
 	agentId: string,
 	skillId: string,
 	on: boolean,
+	deadlineAt?: number,
 ): Promise<void> {
 	const accountId = accountIdOf(scope);
-	await workspaceTransaction(
-		db,
-		async (tx) => {
-			await persistSkillOn(tx, accountId, agentId, skillId, on);
-		},
-		{ deadlineMs: PENDING_TASK_WINDOW_MS },
-	);
+	await commitChange(db, deadlineAt, (tx) => persistSkillOn(tx, accountId, agentId, skillId, on));
 }
 
 export async function setAutonomy(
@@ -124,18 +141,15 @@ export async function setAutonomy(
 	scope: AccountScope,
 	agentId: string,
 	autonomy: Autonomy,
+	deadlineAt?: number,
 ): Promise<void> {
 	const accountId = accountIdOf(scope);
-	await workspaceTransaction(
-		db,
-		async (tx) => {
-			await tx
-				.update(agents)
-				.set({ autonomy })
-				.where(and(eq(agents.accountId, accountId), eq(agents.id, agentId)));
-		},
-		{ deadlineMs: PENDING_TASK_WINDOW_MS },
-	);
+	await commitChange(db, deadlineAt, async (tx) => {
+		await tx
+			.update(agents)
+			.set({ autonomy })
+			.where(and(eq(agents.accountId, accountId), eq(agents.id, agentId)));
+	});
 }
 
 function proposalStatus(value: string): MissionProposal["status"] {
@@ -186,13 +200,12 @@ async function insertRevision(tx: Tx, accountId: string, agentId: string, now: n
 	});
 }
 
-export async function askRevise(db: AppDatabase, scope: AccountScope, agentId: string): Promise<void> {
+export async function askRevise(
+	db: AppDatabase,
+	scope: AccountScope,
+	agentId: string,
+	deadlineAt?: number,
+): Promise<void> {
 	const accountId = accountIdOf(scope);
-	await workspaceTransaction(
-		db,
-		async (tx) => {
-			await insertRevision(tx, accountId, agentId, Date.now());
-		},
-		{ deadlineMs: PENDING_TASK_WINDOW_MS },
-	);
+	await commitChange(db, deadlineAt, (tx) => insertRevision(tx, accountId, agentId, Date.now()));
 }
