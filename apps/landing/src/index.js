@@ -52,11 +52,29 @@ const HEADERS = {
 	"x-content-type-options": "nosniff",
 };
 
+const REVIEW_PATHS = { "/review": "/review/index.html", "/review/": "/review/index.html", "/review/plan": "/review/plan.html" };
+
+// The team review pages. Search engines skip them. The design files need script,
+// so these pages do not use the strict policy of the holding page.
+async function review(request, env, url) {
+	const target = new URL(REVIEW_PATHS[url.pathname] ?? url.pathname, url);
+	const file = await env.ASSETS.fetch(new Request(target, request));
+	const response = new Response(file.body, file);
+	response.headers.set("x-robots-tag", "noindex, nofollow");
+	response.headers.set("referrer-policy", "no-referrer");
+	response.headers.set("x-content-type-options", "nosniff");
+	response.headers.set("cache-control", "no-cache");
+	return response;
+}
+
 export default {
-	fetch(request) {
+	fetch(request, env) {
 		const url = new URL(request.url);
 		if (url.hostname === "www.10squads.com") {
 			return Response.redirect(`https://10squads.com${url.pathname}`, 301);
+		}
+		if (url.pathname === "/review" || url.pathname.startsWith("/review/")) {
+			return review(request, env, url);
 		}
 		if (request.method !== "GET" && request.method !== "HEAD") {
 			return new Response(null, { status: 405, headers: { allow: "GET, HEAD" } });

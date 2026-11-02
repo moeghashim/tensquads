@@ -5,6 +5,7 @@
 	"account_id": "678c5a795f40f7e9f33b8a71248cc829",
 	"main": "src/index.js",
 	"compatibility_date": "2026-10-01",
+	"assets": { "directory": "public", "binding": "ASSETS", "run_worker_first": true, "html_handling": "none", "not_found_handling": "none" },
 	"routes": [
 		{ "pattern": "10squads.com/*", "zone_name": "10squads.com" },
 		{ "pattern": "www.10squads.com/*", "zone_name": "10squads.com" }
