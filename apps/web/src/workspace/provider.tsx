@@ -16,7 +16,7 @@ import { beginWorkspaceSend, finishWorkspaceSend } from "#/server/workspace.ts";
 import { missionBits } from "./agent-view.ts";
 import { type StartedTask, useRefresh, useWorkspace, WorkspaceContext } from "./context.ts";
 import { decorate, useInspect } from "./event-view.ts";
-import { runLiveTick } from "./live.ts";
+import { consumeQueuedEvent, runLiveTick } from "./live.ts";
 import { gateStyle, kindStyle, navStyle, pill, switchParts } from "./styles.ts";
 import type { RuleForm, WorkspaceFrameData } from "./types.ts";
 
@@ -228,9 +228,14 @@ function InspectBridge({ children }: { readonly children: ReactNode }) {
 }
 
 function LiveTimer() {
-	const live = useWorkspace().live;
+	const { live, setSelEvent } = useWorkspace();
 	const refresh = useRefresh();
-	useLiveClock(live, refresh);
+	const refreshTraffic = useCallback(async () => {
+		await refresh();
+		const id = consumeQueuedEvent();
+		if (id.length > 0) setSelEvent(id);
+	}, [refresh, setSelEvent]);
+	useLiveClock(live, refreshTraffic);
 	return null;
 }
 

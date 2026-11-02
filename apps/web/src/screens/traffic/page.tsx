@@ -1,4 +1,4 @@
-import { createElement, Fragment, useEffect, useRef } from "react";
+import { createElement, Fragment } from "react";
 
 import { css } from "#/screens/css.ts";
 import { useRefresh, useWorkspace } from "#/workspace/context.ts";
@@ -55,7 +55,6 @@ const contents = "display: contents";
 export function TrafficPage({ data }: { readonly data: TrafficData }) {
 	const { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive } = useWorkspace();
 	const refresh = useRefresh();
-	useTrafficSelection(data.events, selEvent, setSelEvent);
 	const selectedId = selectedEventId(data.events, selEvent);
 	const names = agentNames(data.agents);
 	const selected = data.events.find((event) => event.id === selectedId);
@@ -98,7 +97,11 @@ export function TrafficPage({ data }: { readonly data: TrafficData }) {
 							className="soft-btn"
 							data-handler="simulate"
 							data-event="onClick"
-							onClick={() => void sendNextEvent(refresh)}
+							onClick={async () => {
+								await sendNextEvent(refresh);
+								const id = consumeQueuedEvent();
+								if (id.length > 0) setSelEvent(id);
+							}}
 							style={css(sendStyle)}
 						>
 							Send next event
@@ -352,30 +355,4 @@ function agentNames(agents: readonly TrafficAgent[]): Readonly<Record<string, st
 	const names: Record<string, string> = {};
 	for (const agent of agents) names[agent.id] = agent.name;
 	return names;
-}
-
-function useTrafficSelection(
-	events: readonly { readonly id: string }[],
-	selEvent: string,
-	setSelEvent: (id: string) => void,
-) {
-	const seen = useRef<string | null>(null);
-	useEffect(() => {
-		const idKey = events.map((event) => event.id).join("\n");
-		if (seen.current === null) {
-			seen.current = idKey;
-			const queued = consumeQueuedEvent();
-			if (queued.length > 0 && events.some((event) => event.id === queued) && queued !== selEvent) {
-				setSelEvent(queued);
-			}
-			return;
-		}
-		if (seen.current === idKey) return;
-		const previous = new Set(seen.current.split("\n").filter((id) => id.length > 0));
-		const added = events.filter((event) => !previous.has(event.id));
-		seen.current = idKey;
-		consumeQueuedEvent();
-		const newest = added.at(-1);
-		if (newest && newest.id !== selEvent) setSelEvent(newest.id);
-	}, [events, selEvent, setSelEvent]);
 }
