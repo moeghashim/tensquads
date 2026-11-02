@@ -573,3 +573,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-02 02-overview: The snapshot test deletes the copied account's child rows, then ends the reader before its pool.
 - 2026-11-03 02-overview: A frame read keeps an Overview patch after a lost response. A chat finish closes the Task id it was given. A failed Overview read keeps the snapshot and the controls.
 - 2026-11-03 02-overview: A failed frame read keeps the accepted frame and the screen. The next read runs once and clears recovery.
+- 2026-11-02 02-agent-detail: The on/off switch calls the machine provider before the stored row changes. Off shows 0% and Paused while the stored CPU stays 22% and the stored uptime stays 18 days. A failed write clears the guard and stays on the page. TLC reached 33 states and 144 steps with no broken rule.
