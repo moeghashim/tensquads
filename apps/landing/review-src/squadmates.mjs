@@ -1,18 +1,19 @@
 // Squadmates: one character for the master and for each agent image.
 // A character is one round body, two eyes and one role accessory, on a 64 by 64 grid.
 // The eyes show the Agent loop state (docs/PLAN.md, decision 32).
-// This is a proposal for Moe. The product does not use it yet.
+// Each name is a famous place. Moe chose this set on 3 November 2026.
+// A customer cannot rename the master. The product does not use these yet.
 
 export const SQUADMATES = [
-	{ id: "master", name: "Ten", role: "Master", tint: "#e8e8e8", body: "#1f1f1f", eye: "#ffffff", prop: "crown", line: "Keeps the squad in sync and asks you only when it matters." },
-	{ id: "orders", name: "Dash", role: "Orders", tint: "#e7efff", body: "#5b8def", prop: "cap", line: "Fulfils orders and chases tracking numbers." },
-	{ id: "support", name: "Juno", role: "Support", tint: "#def5ee", body: "#34b98c", prop: "headset", line: "Answers the inbox and handles refunds." },
-	{ id: "marketing", name: "Pop", role: "Marketing", tint: "#ece3ff", body: "#9a6bf2", prop: "antenna", line: "Runs ads, social and email." },
-	{ id: "finance", name: "Penny", role: "Finance", tint: "#ffefa4", body: "#f0bd1d", prop: "visor", line: "Watches payouts, costs and profit." },
-	{ id: "inventory", name: "Stack", role: "Inventory", tint: "#fee7c2", body: "#f39a3d", prop: "beanie", line: "Counts stock and talks to suppliers." },
-	{ id: "market", name: "Scout", role: "Market researcher", tint: "#fde2f3", body: "#e8679f", prop: "glasses", line: "Finds the competitors and reads their prices." },
-	{ id: "website", name: "Brick", role: "Website builder", tint: "#e5e9f0", body: "#6c7d99", prop: "hardhat", line: "Builds the page and publishes on your yes." },
-	{ id: "analytics", name: "Lens", role: "Analytics", tint: "#e7efff", body: "#4a6fd1", prop: "monocle", line: "Writes the reports and the weekly digest." },
+	{ id: "master", name: "Petra", place: "Petra, Jordan", role: "Master", tint: "#e8e8e8", body: "#1f1f1f", eye: "#ffffff", prop: "crown", line: "Keeps the squad in sync and asks you only when it matters." },
+	{ id: "orders", name: "Pisa", place: "Pisa, Italy", role: "Orders", tint: "#e7efff", body: "#5b8def", prop: "cap", line: "Fulfils orders and chases tracking numbers." },
+	{ id: "support", name: "Kyoto", place: "Kyoto, Japan", role: "Support", tint: "#def5ee", body: "#34b98c", prop: "headset", line: "Answers the inbox and handles refunds." },
+	{ id: "marketing", name: "Rio", place: "Rio de Janeiro, Brazil", role: "Marketing", tint: "#ece3ff", body: "#9a6bf2", prop: "antenna", line: "Runs ads, social and email." },
+	{ id: "finance", name: "Zurich", place: "Zurich, Switzerland", role: "Finance", tint: "#ffefa4", body: "#f0bd1d", prop: "visor", line: "Watches payouts, costs and profit." },
+	{ id: "inventory", name: "Giza", place: "Giza, Egypt", role: "Inventory", tint: "#fee7c2", body: "#f39a3d", prop: "beanie", line: "Counts stock and talks to suppliers." },
+	{ id: "market", name: "Machu", place: "Machu Picchu, Peru", role: "Market researcher", tint: "#fde2f3", body: "#e8679f", prop: "glasses", line: "Finds the competitors and reads their prices." },
+	{ id: "website", name: "Angkor", place: "Angkor Wat, Cambodia", role: "Website builder", tint: "#e5e9f0", body: "#6c7d99", prop: "hardhat", line: "Builds the page and publishes on your yes." },
+	{ id: "analytics", name: "Delphi", place: "Delphi, Greece", role: "Analytics", tint: "#e7efff", body: "#4a6fd1", prop: "monocle", line: "Writes the reports and the weekly digest." },
 ];
 
 // The Agent loop states, in the order of the state model.

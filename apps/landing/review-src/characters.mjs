@@ -9,6 +9,7 @@ const CSS = `<style>
 .mate svg{display:block;margin:0 auto 8px}
 .mate b{display:block;font-size:18px;line-height:24px;color:#0d0d0d}
 .tag{display:inline-block;margin:4px 0 8px;padding:1px 8px;border-radius:6px;background:rgba(255,255,255,.75);color:#5d5d5d;font-size:12px;line-height:20px;font-weight:500}
+.mate .pl{font-size:12px;color:#8f8f8f;margin:0 0 6px}
 .mate p{margin:0;font-size:13px;line-height:19px;color:#5d5d5d}
 .states{overflow-x:auto;margin-top:12px}
 .states table{border-collapse:collapse;min-width:820px}
@@ -34,8 +35,8 @@ const CSS = `<style>
 </style>`;
 
 const ROWS = [
-	["master", "running", "on", "Dash is checking A-1007. I'll tell you when it ships.", "3m", "Working", "run"],
-	["orders", "checking", "", "Ten handed A-1007 to Dash", "3m", "Checking", "run"],
+	["master", "running", "on", "Pisa is checking A-1007. I'll tell you when it ships.", "3m", "Working", "run"],
+	["orders", "checking", "", "Petra handed A-1007 to Pisa", "3m", "Checking", "run"],
 	["support", "done", "", "Refund for Maya sent, under the limit.", "5m", "Done", "ok"],
 	["inventory", "blocked", "", "Needs your yes to reorder 40 units", "12m", "Waiting for you", "wait"],
 	["marketing", "escalated", "", "Ad spend hit the daily cap twice", "37m", "Escalated", "esc"],
@@ -45,7 +46,7 @@ const ROWS = [
 
 export function charactersPage() {
 	const cast = SQUADMATES.map(
-		(m) => `<div class="mate" style="background:${m.tint}">${avatar(m, "idle", 112)}<b>${m.name}</b><span class="tag">${m.role}</span><p>${m.line}</p></div>`,
+		(m) => `<div class="mate" style="background:${m.tint}">${avatar(m, "idle", 112)}<b>${m.name}</b><span class="tag">${m.role}</span><p class="pl">Named after ${m.place}</p><p>${m.line}</p></div>`,
 	).join("");
 	const head = `<tr><th></th>${STATES.map(([, label, hint]) => `<th>${label}<small>${hint}</small></th>`).join("")}</tr>`;
 	const rows = ["master", "support", "website"]
@@ -59,8 +60,8 @@ export function charactersPage() {
 	return `${SQUADMATE_CSS}${CSS}
 <p class="note"><a href="/review/">Back to review</a></p>
 <h1>Squadmates</h1>
-<p class="note">A proposal. One character for the master and for each agent. The body takes the agent's colour from the design. The accessory shows the role. The eyes show what the agent is doing now, from the Agent loop states in the plan. Nothing here is in the product yet.</p>
-<div class="ask"><b>For Moe to decide</b><ol><li>The names: Ten, Dash, Juno, Pop, Penny, Stack, Scout, Brick, Lens. Change any of them.</li><li>Does a customer rename the master, or is it always Ten? Recommended: Ten by default, and the customer can rename it.</li><li>The style: one round body, one accessory, eyes that change with the state. Keep it, or ask for a different direction.</li></ol></div>
+<p class="note">One character for the master and for each agent. The body takes the agent's colour from the design. The accessory shows the role. The eyes show what the agent is doing now, from the Agent loop states in the plan. The product adds them next.</p>
+<div class="ask"><b>Decided by Moe on 3 November 2026</b><ol><li>Each squadmate is named after a famous place: Petra, Pisa, Kyoto, Rio, Zurich, Giza, Machu, Angkor and Delphi.</li><li>A customer cannot rename the master.</li><li>The style stays: one round body, one accessory, eyes that change with the state.</li></ol></div>
 <h2>The squad</h2><div class="cast">${cast}</div>
 <h2>States</h2><p class="note">The nine Agent loop states. Waiting and idle blink slowly. A badge shows the states a person must see.</p>
 <div class="states"><table>${head}${rows}</table></div>
