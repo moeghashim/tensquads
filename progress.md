@@ -564,3 +564,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-02 02-overview: A patch stays until a read that started after the write. The browser write counter orders a same-millisecond read and a clock that steps backward. Signing out drops the previous account's queue. A chat finish finds its task after another bus event. TLC reached 266 states and 685 steps with no broken rule. The chart draws 8 states and 14 arrows.
 - 2026-11-02 02-overview: The dock regression bundle stubs the signed-in account and stamps its loader with the write counter.
 - 2026-11-02 02-overview: The refund approval test waits for the write before it reads the bus. The held chat reply is read from the chat region.
+- 2026-11-02 02-overview: An overview read keeps the count when a frame from the same counter is an older snapshot. A blocking reload can leave Traffic up until the overview response lands.

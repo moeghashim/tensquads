@@ -229,6 +229,7 @@ function useFrameMessages(frame: WorkspaceFrameData, sending: { current: boolean
 }
 
 function useApprovalCount(frame: WorkspaceFrameData & { readonly writeAt: number }) {
+	const router = useRouter();
 	const [clock, setClock] = useState(() => seedApprovalCount(frame.approvalCount));
 	const noteDecision = useCallback((count: number) => {
 		const writeAt = currentWrites();
@@ -239,16 +240,32 @@ function useApprovalCount(frame: WorkspaceFrameData & { readonly writeAt: number
 		if (live !== frame.writeAt) {
 			return;
 		}
-		setClock((current) => {
-			const next = noteFrameCount(current, frame.approvalCount, frame.writeAt, currentWrites());
-			if (next.value === current.value && next.writeAt === current.writeAt) {
-				return current;
-			}
-			return next;
-		});
+		// The overview effect already ran. Its read matches the cards. A frame from
+		// the same counter can be an older server snapshot, so it must not replace it.
+		if (!overviewOwnsCount(router.state.matches, frame.writeAt)) {
+			setClock((current) => {
+				const next = noteFrameCount(current, frame.approvalCount, frame.writeAt, currentWrites());
+				if (next.value === current.value && next.writeAt === current.writeAt) {
+					return current;
+				}
+				return next;
+			});
+		}
 		watchServerCount(frame.approvalCount, frame, frame.writeAt);
-	}, [frame]);
+	}, [frame, router]);
 	return { approvalCount: clock.value, noteDecision };
+}
+
+function overviewOwnsCount(
+	matches: readonly { routeId: string; status: string; loaderData?: unknown }[],
+	writeAt: number,
+) {
+	const overview = matches.find((item) => item.routeId === "/_workspace/overview");
+	if (overview?.status !== "success" || overview.loaderData === undefined || overview.loaderData === null) {
+		return false;
+	}
+	const data = overview.loaderData as { writeAt?: number };
+	return data.writeAt === writeAt;
 }
 
 // The first signed-in id is the account that rendered this document. A later
