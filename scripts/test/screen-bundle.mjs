@@ -18,15 +18,20 @@ export const bundle = await build({
 			name: "signin-boundaries",
 			setup(build) {
 				build.onResolve(
-					{ filter: /^(@clerk\/tanstack-react-start|@tanstack\/react-router|#\/server\/create-account.ts)$/ },
+					{
+						filter:
+							/^(@clerk\/tanstack-react-start|@tanstack\/react-router|#\/server\/create-account.ts|#\/server\/admin.ts)$/,
+					},
 					(args) => ({ path: args.path, namespace: "boundary" }),
 				);
 				build.onLoad({ filter: /.*/, namespace: "boundary" }, ({ path }) => ({
 					contents: path.startsWith("@clerk")
-						? "export const useSignIn = () => ({signIn: {}}); export const useSignUp = () => ({signUp: {}});"
-						: path.startsWith("#")
-							? "export const createAccount = async () => {};"
-							: "export const useNavigate = () => () => {};",
+						? "export const useSignIn = () => ({signIn: {}}); export const useSignUp = () => ({signUp: {}}); export const useClerk = () => ({ user: null });"
+						: path.endsWith("admin.ts")
+							? "export const platformOrgId = async () => '';"
+							: path.startsWith("#")
+								? "export const createAccount = async () => {};"
+								: "export const useNavigate = () => () => {};",
 				}));
 			},
 		},

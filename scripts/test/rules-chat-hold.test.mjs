@@ -93,9 +93,12 @@ const bundle = await build({
 
 function frame(messages = []) {
 	return {
+		accountId: "northwind",
 		accountName: "Northwind",
 		owner: "Moe",
 		masterName: "Master",
+		squadCount: 1,
+		superAdmin: false,
 		agents: [{ id: "orders", name: "Orders", tint: "#181818", on: true }],
 		approvalCount: 0,
 		messages,

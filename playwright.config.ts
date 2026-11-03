@@ -34,8 +34,13 @@ export default defineConfig({
 	projects: [
 		{
 			name: "app",
-			testIgnore: /rules-fence\.spec\.ts|agent-fence\.spec\.ts/,
+			testIgnore: [/rules-fence\.spec\.ts/, /agent-fence\.spec\.ts/, /admin-.*\.spec\.ts/],
 			fullyParallel: true,
+		},
+		{
+			name: "admin",
+			testMatch: /admin-.*\.spec\.ts/,
+			fullyParallel: false,
 		},
 		{
 			name: "rules-fence",
