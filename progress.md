@@ -565,3 +565,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-02 02-overview: The dock regression bundle stubs the signed-in account and stamps its loader with the write counter.
 - 2026-11-02 02-overview: The refund approval test waits for the write before it reads the bus. The held chat reply is read from the chat region.
 - 2026-11-02 02-overview: An overview read keeps the count when a frame from the same counter is an older snapshot. A blocking reload can leave Traffic up until the overview response lands.
+- 2026-11-02 02-overview: The other tab's approval is read after its write commits, and the refund card is checked only once Overview is on screen. The frame effect keeps that overview count when both reads share a counter.

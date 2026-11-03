@@ -7,6 +7,9 @@ import {
 	currentWrites,
 	noteDecisionCount,
 	noteFrameCount,
+	noteOverviewCount,
+	overviewMatchStamp,
+	overviewReadFromStamp,
 	seedApprovalCount,
 } from "./approval-count.ts";
 
@@ -68,5 +71,33 @@ describe("approval count clock", () => {
 		assert.equal(accepted.value, 2);
 		const rejected = noteFrameCount(accepted, 4, before, currentWrites());
 		assert.equal(rejected.value, 2);
+	});
+
+	test("an overview read keeps the count when a same-stamp frame is an older snapshot", () => {
+		const next = noteOverviewCount(seedApprovalCount(4), 4, 0, 0, { count: 3, writeAt: 0 });
+		assert.equal(next.value, 3);
+		assert.equal(next.writeAt, 0);
+	});
+
+	test("a frame applies when no overview read is on screen", () => {
+		const next = noteOverviewCount(seedApprovalCount(4), 3, 0, 0, null);
+		assert.equal(next.value, 3);
+		assert.equal(next.writeAt, 0);
+	});
+
+	test("a later frame replaces an overview read that started before a write", () => {
+		const decided = noteDecisionCount(seedApprovalCount(4), 3, 1);
+		const next = noteOverviewCount(decided, 2, 2, 2, { count: 3, writeAt: 1 });
+		assert.equal(next.value, 2);
+		assert.equal(next.writeAt, 2);
+	});
+
+	test("the overview stamp round-trips only while that read is still current", () => {
+		const stamp = overviewMatchStamp({ count: 3, writeAt: 0, greeting: "Good morning, Moe" });
+		assert.equal(stamp, "0:3");
+		assert.deepEqual(overviewReadFromStamp(stamp, 0), { count: 3, writeAt: 0 });
+		assert.equal(overviewReadFromStamp(stamp, 1), null);
+		assert.equal(overviewMatchStamp(null), null);
+		assert.equal(overviewMatchStamp({ count: "3", writeAt: 0 }), null);
 	});
 });

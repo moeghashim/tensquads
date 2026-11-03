@@ -20,7 +20,15 @@ import { refreshTraffic } from "#/screens/traffic/refresh.ts";
 import { beginWorkspaceSend, finishWorkspaceSend } from "#/server/workspace.ts";
 
 import { missionBits } from "./agent-view.ts";
-import { currentWrites, noteDecisionCount, noteFrameCount, seedApprovalCount } from "./approval-count.ts";
+import {
+	currentWrites,
+	noteDecisionCount,
+	noteOverviewCount,
+	overviewMatchStamp,
+	overviewReadFromStamp,
+	sameCount,
+	seedApprovalCount,
+} from "./approval-count.ts";
 import { type StartedTask, useRefresh, useWorkspace, WorkspaceContext } from "./context.ts";
 import { decorate, useInspect } from "./event-view.ts";
 import { runLiveTick } from "./live.ts";
@@ -229,7 +237,7 @@ function useFrameMessages(frame: WorkspaceFrameData, sending: { current: boolean
 }
 
 function useApprovalCount(frame: WorkspaceFrameData & { readonly writeAt: number }) {
-	const router = useRouter();
+	const overviewStamp = useRouterState({ select: overviewStampOf });
 	const [clock, setClock] = useState(() => seedApprovalCount(frame.approvalCount));
 	const noteDecision = useCallback((count: number) => {
 		const writeAt = currentWrites();
@@ -237,35 +245,23 @@ function useApprovalCount(frame: WorkspaceFrameData & { readonly writeAt: number
 	}, []);
 	useEffect(() => {
 		const live = currentWrites();
-		if (live !== frame.writeAt) {
-			return;
+		// This effect runs after the overview page effect. A frame from the same
+		// counter can be an older server snapshot, so the page count stays.
+		const overview = overviewReadFromStamp(overviewStamp, live);
+		if (live === frame.writeAt) {
+			watchServerCount(frame.approvalCount, frame, frame.writeAt);
 		}
-		// The overview effect already ran. Its read matches the cards. A frame from
-		// the same counter can be an older server snapshot, so it must not replace it.
-		if (!overviewOwnsCount(router.state.matches, frame.writeAt)) {
-			setClock((current) => {
-				const next = noteFrameCount(current, frame.approvalCount, frame.writeAt, currentWrites());
-				if (next.value === current.value && next.writeAt === current.writeAt) {
-					return current;
-				}
-				return next;
-			});
-		}
-		watchServerCount(frame.approvalCount, frame, frame.writeAt);
-	}, [frame, router]);
+		setClock((current) => {
+			const next = noteOverviewCount(current, frame.approvalCount, frame.writeAt, live, overview);
+			return sameCount(current, next) ? current : next;
+		});
+	}, [frame, overviewStamp]);
 	return { approvalCount: clock.value, noteDecision };
 }
 
-function overviewOwnsCount(
-	matches: readonly { routeId: string; status: string; loaderData?: unknown }[],
-	writeAt: number,
-) {
-	const overview = matches.find((item) => item.routeId === "/_workspace/overview");
-	if (overview?.status !== "success" || overview.loaderData === undefined || overview.loaderData === null) {
-		return false;
-	}
-	const data = overview.loaderData as { writeAt?: number };
-	return data.writeAt === writeAt;
+function overviewStampOf(state: { matches: readonly { routeId: string; loaderData?: unknown }[] }): string | null {
+	const match = state.matches.find((item) => item.routeId === "/_workspace/overview");
+	return overviewMatchStamp(match?.loaderData);
 }
 
 // The first signed-in id is the account that rendered this document. A later

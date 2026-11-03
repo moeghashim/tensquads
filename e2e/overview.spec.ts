@@ -262,7 +262,9 @@ test("navigation frame reads update the count after another tab decides", async 
 		await installLocalFonts(otherPage);
 		await otherPage.goto("/overview");
 		await waitForHydration(otherPage);
+		const decided = decisionDone(otherPage, "ap1");
 		await refundCard(otherPage).getByRole("button", { name: "Approve", exact: true }).click();
+		await decided;
 		await expect(
 			otherPage.locator("main [data-loop='kpis'] > div").filter({ hasText: "Tasks done by squads" }),
 		).toContainText("332", settled);
@@ -271,7 +273,8 @@ test("navigation frame reads update the count after another tab decides", async 
 		await expect(page.locator("[data-if='isOverview']")).toHaveCount(0);
 		await page.getByRole("button", { name: "Overview", exact: true }).click();
 		await expect(page).toHaveURL(/\/overview$/);
-		await expect(refundCard(page)).toHaveCount(0, settled);
+		await expect(page.locator("[data-if='isOverview']")).toHaveCount(1, settled);
+		await expect(refundCard(page)).toHaveCount(0);
 		await expect(inboxCount(page)).toHaveText("3");
 		await expect(dockBadge(page)).toHaveText("3");
 	} finally {
