@@ -40,7 +40,9 @@ A model failure is a path of a status change, a rollout start, a health check th
 
 | Check | Covers | Sync commit |
 | --- | --- | --- |
-| `admin-view.test.ts` | Seed totals, filters, on latest, nothing requested | pending |
-| `/statechart` on `ImageRelease.tla` | Status, attention badge, on latest, rollout stop, same version while idle | pending |
+| `admin-view.test.ts` | Seed totals, filters, on latest, nothing requested | `47208351169bbba9e3de199bba9fac1054cd5ad8` |
+| `/statechart` on `ImageRelease.tla` | Status, attention badge, on latest, rollout stop, same version while idle | `47208351169bbba9e3de199bba9fac1054cd5ad8` |
+
+Both checks passed on `47208351169bbba9e3de199bba9fac1054cd5ad8`. The domain and seed admin-view tests exited 0. TLC exited 0, reached 384 states and 3648 steps, and named no broken rule. The chart draws 8 states and 20 arrows.
 
 Move a sync commit forward only after both checks pass and you confirm that the model and the tests still describe the code at the new commit.
