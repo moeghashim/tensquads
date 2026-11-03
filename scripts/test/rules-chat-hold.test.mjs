@@ -58,6 +58,16 @@ const bundle = await build({
 					path,
 					namespace: "boundary",
 				}));
+				build.onResolve({ filter: /^@clerk\/tanstack-react-start$/ }, ({ path }) => ({
+					path,
+					namespace: "clerk",
+				}));
+				build.onLoad({ filter: /.*/, namespace: "clerk" }, () => ({
+					contents: `export function useAuth() {
+						return { isLoaded: true, userId: "clerk-rules-hold" };
+					}`,
+					loader: "js",
+				}));
 				build.onLoad({ filter: /.*/, namespace: "boundary" }, ({ path }) => ({
 					contents: path.endsWith("workspace.ts")
 						? `
