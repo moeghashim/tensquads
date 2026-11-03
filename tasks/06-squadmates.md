@@ -30,7 +30,7 @@ The name belongs to the agent image, not to the account. No customer can change 
 | analytics | Delphi | Delphi, Greece | Analytics |
 | hr | Sydney | Sydney, Australia | People |
 
-Sydney is the planner's choice for the `hr` image, because the sheet has no People character. Report it in the pull request for Moe. Draw it like the others, with a name badge on the body as its accessory.
+Decision 33 fixes the name for the `hr` image. The reference sheet has no People character. Report this drawing addition in the pull request for Moe. Draw it like the others, with a name badge on the body as its accessory.
 
 ## Steps, in order
 
