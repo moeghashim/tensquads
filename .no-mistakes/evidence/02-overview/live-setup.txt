@@ -1,0 +1,21 @@
+Isolated product: http://localhost:3107/overview
+HTTP status: 200
+Rendered output:
+tensquads
+New here?
+Start free
+Sign in to tensquads
+
+Your squads kept working while you were away.
+
+Email
+Password
+Forgot password?
+Sign in
+or
+Email me a sign-in link
+
+By signing in you agree to the [TERMS] and [PRIVACY POLICY].
+
+Authenticated E2E fixture error: publishable, secret, testDatabase is missing.
+No operator data or existing port-3000 service was used.
