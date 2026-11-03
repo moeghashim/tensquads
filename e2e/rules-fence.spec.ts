@@ -60,7 +60,7 @@ test("an older rule switch held before it arrives does not replace the newer swi
 	test.setTimeout(60_000);
 	await openRules(page, workspaceUser);
 	const control = mondaySwitch(page);
-	await control.click();
+	await clickRule(page, true);
 	await expect(control).toHaveAttribute("aria-pressed", "true");
 	await expectRuleOn(accountId, true);
 	await page.clock.install();
@@ -87,7 +87,7 @@ test("an older rule switch that arrives first still loses to the newer switch", 
 }) => {
 	await openRules(page, workspaceUser);
 	const control = mondaySwitch(page);
-	await control.click();
+	await clickRule(page, true);
 	await expect(control).toHaveAttribute("aria-pressed", "true");
 	await expectRuleOn(accountId, true);
 	const held = await holdPosts(page, "r5");
@@ -611,6 +611,17 @@ async function settle(route: Route) {
 
 function mondaySwitch(page: Page) {
 	return page.locator("[data-loop='rules'] > div").nth(4).getByRole("button", { name: "Rule enabled" });
+}
+
+async function clickRule(page: Page, on: boolean) {
+	const marker = on ? '{"t":2,"s":2}' : '{"t":2,"s":3}';
+	const written = page.waitForResponse((response) => {
+		const request = response.request();
+		const body = request.postData() ?? "";
+		return request.method() === "POST" && body.includes("r5") && body.includes(marker);
+	});
+	await mondaySwitch(page).click();
+	await written;
 }
 
 async function act(page: Page, kind: "lim-refund" | "lim-ads" | "lim-reorder" | "rule" | "add") {

@@ -181,8 +181,9 @@ async function sendRule(id: string, value: boolean, signal: AbortSignal): Promis
 		data: { id, on: value, tab: fence.tab, seq: fence.seq, retires: fence.retires },
 		signal,
 	});
-	confirmRetired(fence.retires);
 	const row = acceptedRule(body, id);
+	// A validation error is a 200 with an error payload. The server wrote nothing.
+	if (row) confirmRetired(fence.retires);
 	if (!sameAccount(epoch) || signal.aborted || !row) {
 		return null;
 	}
@@ -197,8 +198,9 @@ async function sendLimit(key: string, value: number, signal: AbortSignal): Promi
 		data: { key, value, tab: fence.tab, seq: fence.seq, retires: fence.retires },
 		signal,
 	});
-	confirmRetired(fence.retires);
 	const row = acceptedLimit(body, key);
+	// A validation error is a 200 with an error payload. The server wrote nothing.
+	if (row) confirmRetired(fence.retires);
 	if (!sameAccount(epoch) || signal.aborted || !row) {
 		return null;
 	}

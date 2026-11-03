@@ -14,6 +14,8 @@ const bundle = await build({
 			import { gateStyle, switchParts } from "./apps/web/src/workspace/styles.ts";
 			import { RulesScreen } from "./apps/web/src/screens/rules/screen.tsx";
 			import { rulesWriteCounter } from "./apps/web/src/screens/rules/write-queue.ts";
+			import { nextWriteFence } from "./apps/web/src/write-fence.ts";
+			window.nextWriteFence = nextWriteFence;
 			import { loadRulesSnapshot } from "./apps/web/src/screens/rules/loader.ts";
 			import * as queue from "./apps/web/src/screens/rules/write-queue.ts";
 			window.queue = queue;
@@ -98,19 +100,20 @@ const bundle = await build({
 						return rest;
 					}
 					function asWritten(data, row) {
-						if (!row || typeof row !== "object" || row.status) return row;
+						if (!row || typeof row !== "object" || row.status || Object.hasOwn(row, "error")) return row;
 						if (typeof data.on === "boolean" || typeof data.value === "number") return { status: "written", row };
 						return row;
 					}
+					async function settle(data, signal) {
+						const row = await window.send(data, signal);
+						if (row && typeof row === "object" && Object.hasOwn(row, "error")) {
+							throw new Error(String(row.error).replace(/^Error: /, ""));
+						}
+						return asWritten(data, row);
+					}
 					export const loadRulesPage = () => window.readSource();
-					export const setRuleEnabled = async ({data, signal}) => {
-						const body = withoutFence(data);
-						return asWritten(body, await window.send(body, signal));
-					};
-					export const setRuleLimit = async ({data, signal}) => {
-						const body = withoutFence(data);
-						return asWritten(body, await window.send(body, signal));
-					};
+					export const setRuleEnabled = async ({data, signal}) => settle(withoutFence(data), signal);
+					export const setRuleLimit = async ({data, signal}) => settle(withoutFence(data), signal);
 					export const addWorkspaceRule = async ({data, signal}) => window.send(withoutFence(data), signal);
 				`,
 				}));
@@ -287,6 +290,39 @@ for (const values of cases) {
 			assert.equal(await page.evaluate(() => window.refreshCalls), 1);
 			assert.equal(await page.evaluate(() => window.shown(window.values.initial)), values.initial);
 			assert.equal(await page.evaluate(() => window.shown(window.values.last)), values.last);
+		});
+	});
+
+	test(`${values.kind}: a serialized validation error is a failed write and keeps the retire list`, async () => {
+		await withPage(async (page) => {
+			await configure(page, values);
+			const result = await page.evaluate(async () => {
+				window.refreshCalls = 0;
+				window.refresh = async () => {
+					window.refreshCalls += 1;
+				};
+				window.send = async () => ({ error: "Error: The write fence is not valid." });
+				window.dispatchEvent(new Event("pagehide"));
+				const before = window.nextWriteFence().retires;
+				const counterBefore = window.queue.rulesWriteCounter();
+				window.write(window.values.first);
+				await window.flush();
+				return {
+					before,
+					pending: window.nextWriteFence().retires,
+					counter: window.queue.rulesWriteCounter(),
+					counterBefore,
+					needed: window.queue.readNeeded(),
+					refreshCalls: window.refreshCalls,
+					shown: window.shown(window.values.initial),
+				};
+			});
+			assert.ok(result.before.length > 0);
+			assert.deepEqual(result.pending, result.before);
+			assert.equal(result.counter, result.counterBefore + 1);
+			assert.equal(result.needed, true);
+			assert.equal(result.refreshCalls, 1);
+			assert.equal(result.shown, values.initial);
 		});
 	});
 }

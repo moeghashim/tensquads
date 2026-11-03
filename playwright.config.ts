@@ -39,6 +39,7 @@ export default defineConfig({
 		{
 			name: "rules-fence",
 			testMatch: /rules-fence\.spec\.ts/,
+			// scripts/e2e.mjs runs this project alone with --workers=1. fullyParallel does not set workers.
 			fullyParallel: false,
 			repeatEach: Number.isInteger(rulesFenceRepeat) && rulesFenceRepeat > 0 ? rulesFenceRepeat : 1,
 		},
