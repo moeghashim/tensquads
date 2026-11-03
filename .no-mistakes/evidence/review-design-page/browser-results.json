@@ -1,0 +1,80 @@
+{
+  "results": [
+    {
+      "scenario": "Review navigation separates the design gallery while retaining the plan and five questions",
+      "result": "pass"
+    },
+    {
+      "screen": "Homepage",
+      "url": "http://127.0.0.1:8791/review/design/Home.dc.html",
+      "visibleText": "tensquads\nAgents\nHow it works\nControl\nPricing\nSign in\nStart free\nNew: Analytics agent in beta\nHire a squad of AI agents to run your business\n\nOrders, support, marketing, finance and stock, each handled by its own agent. One master keeps them in sync and only interrupts you when it matters.\n\nNew business\nExisting business\nDescribe your business\nA Sh"
+    },
+    {
+      "screen": "Sign up: business and mission",
+      "url": "http://127.0.0.1:8791/review/design/Onboarding.dc.html",
+      "visibleText": "tensquads\nAlready have an account?\nSign in\nFree for 14 days\nRun your business with a team of squads\n\nEach part of your business gets its own squad: one agent with its tools. A master squad coordinates them, and every squad works toward your mission.\n\nOrders, support, marketing, finance, stock\nStart with the squads you need. Add more later.\nYou set "
+    },
+    {
+      "screen": "Sign in",
+      "url": "http://127.0.0.1:8791/review/design/SignIn.dc.html",
+      "visibleText": "tensquads\nNew here?\nStart free\nSign in to tensquads\n\nYour squads kept working while you were away.\n\nEmail\nPassword\nForgot password?\nSign in\nor\nEmail me a sign-in link\n\nBy signing in you agree to the [TERMS] and [PRIVACY POLICY]."
+    },
+    {
+      "screen": "Platform admin: all companies",
+      "url": "http://127.0.0.1:8791/review/design/Accounts.dc.html",
+      "visibleText": "Platform admin\nYour company account\nCompanies\nSquad images\n2\nComing next\nUsage and billing\nPlatform health\nAdmin users\nMG\nMoe Ghashim\nSuper admin\nCompanies\n\nEvery company on the platform, with its mission and the squads it runs. Figures are demo data.\n\nDemo data\n53 squads online now\nCompanies\n9\n+1 in the last 2 weeks\nActive companies\n6\n2 on trial ·"
+    },
+    {
+      "screen": "Platform admin: squad images",
+      "url": "http://127.0.0.1:8791/review/design/AgentImages.dc.html",
+      "visibleText": "Platform admin\nYour company account\nCompanies\nSquad images\n2\nComing next\nUsage and billing\nPlatform health\nAdmin users\nMG\nMoe Ghashim\nSuper admin\nSquad images\n\nThe squad templates companies can deploy. One image is one agent with its tools. Each image carries its version, open bugs and requested features. Figures are demo data.\n\nDemo data\n2 images "
+    },
+    {
+      "screen": "Overview",
+      "url": "http://127.0.0.1:8791/review/design/Main.dc.html",
+      "visibleText": "All companies\nM\nMaster\nRuns 5 squads · Demo store\nOverview\nChat with the master\nSquads\nSquad traffic\nRules and limits\nSquads\nOrders\nSupport\nMarketing\nFinance\nInventory\nMG\nMoe Ghashim\nGood morning, Moe\n\nLast 7 days across the store and your squads. Figures are demo data.\n\nMission\nReach $1M in annual sales with repeat customers by the end of 2027.\n\nD"
+    },
+    {
+      "screen": "Chat with the master",
+      "url": "http://127.0.0.1:8791/review/design/Chat.dc.html",
+      "visibleText": "All companies\nM\nMaster\nRuns 5 squads · Demo store\nOverview\nChat with the master\nSquads\nSquad traffic\nRules and limits\nSquads\nOrders\nSupport\nMarketing\nFinance\nInventory\nMG\nMoe Ghashim\nMaster\n\nAsk for anything. Master hands the work to the right squad and reports back here.\n\nDid the tracking for #A-1007 go through?\nMaster\nI asked the Orders agent. Th"
+    },
+    {
+      "screen": "Squads",
+      "url": "http://127.0.0.1:8791/review/design/Agents.dc.html",
+      "visibleText": "All companies\nM\nMaster\nRuns 5 squads · Demo store\nOverview\nChat with the master\nSquads\nSquad traffic\nRules and limits\nSquads\nOrders\nSupport\nMarketing\nFinance\nInventory\nMG\nMoe Ghashim\nSquads\n\nEach squad is one agent with its own tools. It runs alone in its own sandbox server, with only its own skills, keys and network access. Squads work together on"
+    },
+    {
+      "scenario": "Open Squads from the gallery and select Support to view its dashboard",
+      "result": "pass"
+    },
+    {
+      "screen": "Squad dashboard: Support",
+      "url": "http://127.0.0.1:8791/review/design/AgentDetail.dc.html",
+      "visibleText": "All companies\nM\nMaster\nRuns 5 squads · Demo store\nOverview\nChat with the master\nSquads\nSquad traffic\nRules and limits\nSquads\nOrders\nSupport\nMarketing\nFinance\nInventory\nMG\nMoe Ghashim\nAll squads\nSupport squad\n\nCustomer inbox and refunds\n\nRunning\nMission\nApproved by you\n\nAnswer every customer within an hour and keep satisfaction above 4.5.\n\nRolls up "
+    },
+    {
+      "screen": "Squad traffic and messaging",
+      "url": "http://127.0.0.1:8791/review/design/Traffic.dc.html",
+      "visibleText": "All companies\nM\nMaster\nRuns 5 squads · Demo store\nOverview\nChat with the master\nSquads\nSquad traffic\nRules and limits\nSquads\nOrders\nSupport\nMarketing\nFinance\nInventory\nMG\nMoe Ghashim\nSquad traffic\n\nEvery task, result and relay between Master and the squads, with the payload, the state it changed and the mission target it moved.\n\nPaused\nSend next ev"
+    },
+    {
+      "screen": "Rules and limits",
+      "url": "http://127.0.0.1:8791/review/design/Rules.dc.html",
+      "visibleText": "All companies\nM\nMaster\nRuns 5 squads · Demo store\nOverview\nChat with the master\nSquads\nSquad traffic\nRules and limits\nSquads\nOrders\nSupport\nMarketing\nFinance\nInventory\nMG\nMoe Ghashim\nRules and limits\n\nTell Master what to do when something happens, which squad does it, and when it must ask you first.\n\nWhen a refund request comes in\nthen refund it if"
+    },
+    {
+      "scenario": "All eleven thumbnail cards load rendered original screens without runtime exceptions",
+      "result": "pass"
+    },
+    {
+      "scenario": "Both direct gallery URLs load and Back to review returns to the review page",
+      "result": "pass"
+    },
+    {
+      "scenario": "At 390px the gallery has no horizontal overflow and a thumbnail opens its design",
+      "result": "pass"
+    }
+  ],
+  "errors": []
+}
