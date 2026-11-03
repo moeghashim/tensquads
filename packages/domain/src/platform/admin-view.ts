@@ -93,8 +93,9 @@ export function missionText(mission: string): string {
 export function weekCounts(accounts: readonly Account[]): number[] {
 	const counts = [0, 0, 0, 0, 0, 0, 0, 0];
 	for (const account of accounts) {
-		if (account.createdWeek >= 0 && account.createdWeek <= 7) {
-			counts[account.createdWeek] += 1;
+		const week = account.createdWeek;
+		if (week >= 0 && week <= 7) {
+			counts[week] = (counts[week] ?? 0) + 1;
 		}
 	}
 	return counts;
@@ -193,7 +194,7 @@ export function accountAdminView(accounts: readonly Account[], filter: AccountFi
 			{
 				label: "Companies",
 				value: String(accounts.length),
-				delta: `+${counts[7] + counts[6]} in the last 2 weeks`,
+				delta: `+${(counts[7] ?? 0) + (counts[6] ?? 0)} in the last 2 weeks`,
 				deltaColor: "#00692a",
 			},
 			{
