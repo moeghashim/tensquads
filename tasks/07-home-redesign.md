@@ -21,6 +21,16 @@ Screen 1 gets a new design with an inspiring hero. Decision 34 in `docs/PLAN.md`
 4. Save the design as `docs/designs/home/home.html`, with screenshots at 1440 px and 390 px. Deploy it to `https://10squads.com/review/home` with the review build.
 5. Stop. Moe approves the design or asks for changes. Do not start Part 2 before the approval.
 
+## Moe's approval
+
+On 3 November 2026 Moe approved the Part 1 design at head `b816c4f` (`b816c4f76e0ecfcaacfb54605b0b3be7d08f8cb5`).
+
+- The design at https://10squads.com/review/home (head `b816c4f`).
+- The squadmate names beside each role.
+- The new display font Familjen Grotesk for this page only.
+
+Part 2 still waits until task 06 (`packages/squadmates`) is merged.
+
 ## Part 2: the build
 
 6. Build the approved design in `apps/web/src/screens/home/`. Every control does what it does today.
@@ -30,7 +40,7 @@ Screen 1 gets a new design with an inspiring hero. Decision 34 in `docs/PLAN.md`
 
 ## Done when
 
-- [ ] Moe approved the design in `docs/designs/home/`
+- [x] Moe approved the design in `docs/designs/home/`
 - [ ] The build matches the approved design at 1440 px and 390 px
 - [ ] Every control on screen 1 works as before, and the sign-up path works
 - [ ] Tab reaches every control, the focus ring is 2 px `#0169cc` with a 2 px offset, and at 390 px there is no horizontal scroll
