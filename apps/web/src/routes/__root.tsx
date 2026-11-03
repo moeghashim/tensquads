@@ -1,6 +1,6 @@
 import { ClerkProvider, useUser } from "@clerk/tanstack-react-start";
 import { createRootRoute, HeadContent, Outlet, Scripts, useRouter } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useRef } from "react";
 
 import "#/design/public.css";
 import { watchSignedInUser } from "#/screens/rules/write-queue.ts";
@@ -52,16 +52,18 @@ function ClerkAccountReset({ children }: { readonly children: ReactNode }) {
 	const { isLoaded, user } = useUser();
 	const router = useRouter();
 	const next = isLoaded ? (user?.id ?? null) : undefined;
-	const [seen, setSeen] = useState(next);
-	useEffect(() => {
-		if (next === undefined || seen === next) return;
-		if (seen !== undefined) {
-			resetAgentClientState();
-			if (next !== null) void router.invalidate({ sync: true });
+	const previous = useRef(next);
+	if (next !== undefined && previous.current !== next) {
+		const wasLoaded = previous.current !== undefined;
+		previous.current = next;
+		if (wasLoaded) {
+			queueMicrotask(() => {
+				resetAgentClientState();
+				if (next !== null) void router.invalidate({ sync: true });
+			});
 		}
-		setSeen(next);
-	}, [next, seen, router]);
-	return seen === next ? children : null;
+	}
+	return children;
 }
 
 function RootDocument({ children }: { children: ReactNode }) {

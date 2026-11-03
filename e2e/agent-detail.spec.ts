@@ -1039,9 +1039,19 @@ test("an account switch on the mounted agent route hides the previous account", 
 	});
 	let held = 0;
 	let delivered = 0;
+	let heldRead = false;
+	let deliveredRead = false;
 	const pattern = /\/_serverFn\//;
 	const handler = async (route: Route) => {
 		const request = route.request();
+		if (request.method() === "GET" && serverFnExport(request.url()).startsWith("loadAgentDetail") && !heldRead) {
+			const response = await route.fetch();
+			heldRead = true;
+			await gate;
+			await route.fulfill({ response }).catch(() => undefined);
+			deliveredRead = true;
+			return;
+		}
 		if (request.method() === "POST" && serverFnExport(request.url()).startsWith("setSkillEnabled")) {
 			const response = await route.fetch();
 			held += 1;
@@ -1076,6 +1086,11 @@ test("an account switch on the mounted agent route hides the previous account", 
 		await skill.click();
 		await expect.poll(() => held, settled).toBe(1);
 		await expect(skill).toHaveAttribute("aria-pressed", "false");
+		await page.evaluate(() => {
+			const router = (window as unknown as { __TSR_ROUTER__: { invalidate: () => Promise<void> } }).__TSR_ROUTER__;
+			void router.invalidate();
+		});
+		await expect.poll(() => heldRead, settled).toBe(true);
 		await signOutOnAgent(page);
 		await expect(page).toHaveURL(/\/agents\/support$/);
 		await expect(squadSwitch(page)).toHaveCount(0);
@@ -1099,9 +1114,13 @@ test("an account switch on the mounted agent route hides the previous account", 
 		expect(skillFlag(beforeRelease, "inbox.read")).toBe(true);
 		release();
 		await expect.poll(() => delivered, settled).toBe(1);
+		await expect.poll(() => deliveredRead, settled).toBe(true);
 		await expect(supportDot(page, "Running")).toBeVisible(settled);
 		await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "true");
 		await expect(skillRow(page, "inbox.read").getByRole("button")).toHaveAttribute("aria-pressed", "true", settled);
+		await expect(page.getByText("Account B mission", { exact: true })).toBeVisible();
+		await expect(page.getByText("Account B message", { exact: true }).first()).toBeVisible();
+		await expect(page.getByText(supportMission, { exact: true })).toHaveCount(0);
 		const afterRelease = await readAgent(other.accountId, "support");
 		expect(afterRelease.isOn).toBe(true);
 		expect(skillFlag(afterRelease, "inbox.read")).toBe(true);
@@ -1200,29 +1219,20 @@ async function signOutOnAgent(page: Page) {
 }
 
 async function signInOnAgent(page: Page, user: WorkspaceUser) {
-	await page.evaluate(
-		async ({ email, password }) => {
-			const clerk = (
-				window as unknown as {
-					Clerk: {
-						client: {
-							signIn: {
-								create: (input: { strategy: string; identifier: string; password: string }) => Promise<{
-									status: string;
-									createdSessionId: string | null;
-								}>;
-							};
-						};
-						setActive: (input: { session: string; navigate: () => Promise<void> }) => Promise<void>;
-					};
-				}
-			).Clerk;
-			const result = await clerk.client.signIn.create({ strategy: "password", identifier: email, password });
-			if (result.status !== "complete" || !result.createdSessionId) throw new Error("Sign-in did not complete.");
-			await clerk.setActive({ session: result.createdSessionId, navigate: async () => undefined });
-		},
-		{ email: user.email, password: user.password },
-	);
+	await navigateClient(page, "/signin");
+	await page.getByLabel("Email").fill(user.email);
+	await page.getByLabel("Password").fill(user.password);
+	await page.getByRole("button", { name: "Sign in", exact: true }).click();
+	await expect(page).toHaveURL(/\/overview$/, { timeout: 20_000 });
+	await navigateClient(page, "/agents/support");
+}
+
+async function navigateClient(page: Page, to: string) {
+	await page.evaluate(async (path) => {
+		const router = (window as unknown as { __TSR_ROUTER__: { navigate: (options: { to: string }) => Promise<void> } })
+			.__TSR_ROUTER__;
+		await router.navigate({ to: path });
+	}, to);
 }
 
 async function temporaryAccount(): Promise<WorkspaceUser> {

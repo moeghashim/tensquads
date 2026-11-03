@@ -58,6 +58,7 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 	let busy = false;
 	let reading = false;
 	let again = false;
+	let needsRead = false;
 	let bound = agentSession();
 	let state: Snapshot = { view: initialView, pending: [] };
 	let loaderView = initialView;
@@ -84,6 +85,7 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 			return;
 		}
 		reading = true;
+		needsRead = false;
 		const startedSession = agentSession();
 		try {
 			const started = stampAgentRead(agentId);
@@ -94,7 +96,8 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 				if (startedSession !== agentSession()) return;
 				if (started === stampAgentRead(agentId) && state.view === previous) accept(view, state.pending);
 			} catch {
-				// A failed or timed-out read stops. It does not retry.
+				// A failed read stops. Only another user action can request it again.
+				if (startedSession === agentSession()) needsRead = true;
 			}
 		} finally {
 			reading = false;
@@ -139,6 +142,7 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 			queue.length = 0;
 			reading = false;
 			again = false;
+			needsRead = false;
 			bound = -1;
 			if (state.pending.length > 0) publish({ view: state.view, pending: [] });
 		},
@@ -168,6 +172,7 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 				publish({ ...state, pending: state.pending.map((value) => (value === replaced ? write : value)) });
 			}
 			void drain();
+			if (needsRead) void read();
 		},
 	};
 }

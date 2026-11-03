@@ -450,6 +450,70 @@ for (const action of ["running", "skill", "autonomy"]) {
 	}
 }
 
+for (const action of ["running", "skill", "autonomy"]) {
+	for (const outcome of ["failure", "timeout"]) {
+		test(`a ${action} ${outcome} advances the read counter before recovery`, async (t) => {
+			t.mock.timers.enable({ apis: ["setTimeout"] });
+			const h = harness();
+			if (outcome === "failure") h.failNextPost();
+			const control = h.render();
+			if (action === "running") control.toggleAgent(false);
+			if (action === "skill") control.toggleSkill("inbox.read", false);
+			if (action === "autonomy") control.pickAutonomy("Full auto");
+			const beforeSettlement = stampAgentRead("support");
+			await settle();
+			if (outcome === "timeout") t.mock.timers.tick(30_001);
+			else h.posts.shift().answer();
+			await settle();
+			assert.equal(stampAgentRead("support"), beforeSettlement + 1);
+			assert.equal(h.reads.length, 1);
+			h.newLoader({ ...h.server, events: ["stale loader"] }, "success", beforeSettlement);
+			assert.deepEqual(h.render().view.events, ["old message"]);
+			h.reads.shift().answer();
+			await settle();
+			sameControls(h.render().view, h.server);
+			h.newLoader({ ...h.server, events: ["later loader"] }, "success", stampAgentRead("support"));
+			assert.deepEqual(h.render().view.events, ["later loader"]);
+			assert.equal(h.reads.length, 0);
+			if (outcome === "timeout") h.posts.shift().answer();
+			await settle();
+		});
+	}
+}
+
+test("a failed POST and recovery GET keep the snapshot usable until the next action reads once", async (t) => {
+	t.mock.timers.enable({ apis: ["setTimeout"] });
+	const h = harness();
+	h.failNextPost();
+	h.render().toggleAgent(false);
+	const beforeSettlement = stampAgentRead("support");
+	await settle();
+	h.posts.shift().answer();
+	await settle();
+	assert.equal(stampAgentRead("support"), beforeSettlement + 1);
+	assert.equal(h.reads.length, 1);
+	h.reads.shift().fail();
+	await settle();
+	assert.equal(h.render().view.on, true);
+	assert.deepEqual(h.render().view.events, ["old message"]);
+	t.mock.timers.tick(90_001);
+	await settle();
+	assert.equal(h.reads.length, 0);
+	h.render().toggleSkill("inbox.read", false);
+	assert.equal(h.render().view.skills[0].onStr, "false");
+	await settle();
+	assert.equal(h.posts.length, 1);
+	assert.equal(h.reads.length, 1);
+	h.posts.shift().answer();
+	await settle();
+	h.reads.shift().answer();
+	await settle();
+	sameControls(h.render().view, h.server);
+	t.mock.timers.tick(90_001);
+	await settle();
+	assert.equal(h.reads.length, 0);
+});
+
 for (const on of [false, true]) {
 	test(`an older frame keeps accepted ${on} and a later frame accepts server ${!on}`, async () => {
 		const h = harness();
