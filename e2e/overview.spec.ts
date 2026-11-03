@@ -669,6 +669,8 @@ test("a failed decision does not stay on the next account", async ({ page, works
 			await expect(tasksTile(page)).toContainText("331");
 		} finally {
 			await held.release();
+			await abortParkedRoutes();
+			await page.unroute("**/_serverFn/**").catch(() => undefined);
 		}
 	} finally {
 		await deleteWorkspaceAccount(accountId);
