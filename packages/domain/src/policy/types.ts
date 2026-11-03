@@ -20,6 +20,18 @@ export interface StoredLimit {
 	readonly value: number;
 }
 
+// One browser tab and its rising write number. The value is not a limit or a rule.
+export interface WriteFence {
+	readonly tab: string;
+	readonly seq: number;
+}
+
+// superseded means a newer write from the same tab already owns the key.
+export interface Fenced<T> {
+	readonly status: "written" | "superseded";
+	readonly row: T;
+}
+
 export type ApprovalStatus = "Pending" | "Approved" | "Declined";
 
 export interface Approval {

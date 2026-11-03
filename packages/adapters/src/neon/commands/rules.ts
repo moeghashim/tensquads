@@ -1,4 +1,4 @@
-import type { AccountScope, Rule, RuleDraft, StoredLimit } from "@tensquads/domain";
+import type { AccountScope, Fenced, Rule, RuleDraft, StoredLimit, WriteFence } from "@tensquads/domain";
 import { requireScope } from "@tensquads/domain";
 import { and, eq } from "drizzle-orm";
 
@@ -12,6 +12,7 @@ import { PENDING_TASK_WINDOW_MS } from "../../pending-window.ts";
 import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { rules, stateEntries } from "../schema.ts";
+import { claimWriteFence } from "./write-fence.ts";
 
 const unfinished = "The workspace write did not finish.";
 
@@ -54,13 +55,18 @@ export async function setRuleOn(
 	scope: AccountScope,
 	id: string,
 	on: boolean,
+	fence: WriteFence,
 	deadlineAt?: number,
-): Promise<Rule> {
+): Promise<Fenced<Rule>> {
 	const accountId = accountIdOf(scope);
 	const planned = planRuleOn(on);
 	return writeWithin(db, deadlineAt, async (tx) => {
+		const claimed = await claimWriteFence(tx, accountId, id, fence);
+		if (!claimed) {
+			return { status: "superseded", row: await readRule(tx, accountId, id) };
+		}
 		await updateRuleOn(tx, accountId, id, planned.on);
-		return readRule(tx, accountId, id);
+		return { status: "written", row: await readRule(tx, accountId, id) };
 	});
 }
 
@@ -124,16 +130,21 @@ export async function setLimit(
 	scope: AccountScope,
 	key: string,
 	value: number,
+	fence: WriteFence,
 	deadlineAt?: number,
-): Promise<StoredLimit> {
+): Promise<Fenced<StoredLimit>> {
 	const planned = planLimit(key, value);
 	if (!planned) {
 		throw new Error("The limit is not valid.");
 	}
 	const accountId = accountIdOf(scope);
 	return writeWithin(db, deadlineAt, async (tx) => {
+		const claimed = await claimWriteFence(tx, accountId, planned.key, fence);
+		if (!claimed) {
+			return { status: "superseded", row: await readLimit(tx, accountId, planned.key) };
+		}
 		await writeLimit(tx, accountId, planned.key, planned.value);
-		return readLimit(tx, accountId, planned.key);
+		return { status: "written", row: await readLimit(tx, accountId, planned.key) };
 	});
 }
 

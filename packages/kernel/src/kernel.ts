@@ -1,4 +1,4 @@
-import type { AccountScope, Rule, SendResult, StoredLimit } from "@tensquads/domain";
+import type { AccountScope, Fenced, Rule, SendResult, StoredLimit, WriteFence } from "@tensquads/domain";
 import { Context } from "cordis";
 import { type BusCommands, bus } from "./plugins/bus.ts";
 import type { ConversationCommands } from "./plugins/conversation.ts";
@@ -89,9 +89,15 @@ export class Kernel {
 		return port.nextEvent(scope, deadlineAt);
 	}
 
-	async setRuleOn(scope: AccountScope, id: string, on: boolean, deadlineAt?: number): Promise<Rule> {
+	async setRuleOn(
+		scope: AccountScope,
+		id: string,
+		on: boolean,
+		fence: WriteFence,
+		deadlineAt?: number,
+	): Promise<Fenced<Rule>> {
 		await this.ready;
-		return (this.context.get("workspacePolicy") as PolicyCommands).setRuleOn(scope, id, on, deadlineAt);
+		return (this.context.get("workspacePolicy") as PolicyCommands).setRuleOn(scope, id, on, fence, deadlineAt);
 	}
 
 	async addRule(
@@ -103,9 +109,15 @@ export class Kernel {
 		return (this.context.get("workspacePolicy") as PolicyCommands).addRule(scope, draft, deadlineAt);
 	}
 
-	async setLimit(scope: AccountScope, key: string, value: number, deadlineAt?: number): Promise<StoredLimit> {
+	async setLimit(
+		scope: AccountScope,
+		key: string,
+		value: number,
+		fence: WriteFence,
+		deadlineAt?: number,
+	): Promise<Fenced<StoredLimit>> {
 		await this.ready;
-		return (this.context.get("workspacePolicy") as PolicyCommands).setLimit(scope, key, value, deadlineAt);
+		return (this.context.get("workspacePolicy") as PolicyCommands).setLimit(scope, key, value, fence, deadlineAt);
 	}
 
 	pluginNames(): readonly string[] {

@@ -10,6 +10,7 @@ import {
 	bounded,
 	isRulesRule,
 	markReadFailed,
+	noteUncertainWrite,
 	onRulesAccountReset,
 	placeRule,
 	queueLimit,
@@ -432,6 +433,7 @@ async function saveRule(
 		);
 	} catch {
 		if (leftAccount(epoch)) return;
+		noteUncertainWrite(epoch);
 		markReadFailed(epoch);
 		dropPending(id, rowId, setPending);
 		const owner = submissions.get(id);

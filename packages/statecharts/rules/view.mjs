@@ -53,6 +53,8 @@ const labels = {
 	FailAds: "the ad cap fails",
 	LateRefund: "the refund limit is late",
 	LateAds: "the ad cap is late",
+	OpenLate: "the late ad cap can still arrive",
+	ArriveLate: "the late ad cap reaches the server",
 	TypeAction: "you type an action",
 	StartAdd: "you add the rule",
 	CommitAdd: "the add returns the row",

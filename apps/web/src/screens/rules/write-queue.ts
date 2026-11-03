@@ -1,7 +1,8 @@
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import { useSyncExternalStore } from "react";
 
-import { type RulesLimitValue, type RulesRule, setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
+import { type RulesLimitValue, type RulesRule, type RulesWrite, setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
+import { nextWriteFence } from "#/write-fence.ts";
 
 interface Flight<T> {
 	shown: T;
@@ -92,6 +93,11 @@ export function rulesWriteCounter(): number {
 	return writeCounter;
 }
 
+export function noteUncertainWrite(epoch = accountEpoch): void {
+	if (!sameAccount(epoch)) return;
+	writeCounter += 1;
+}
+
 export function rulesWrittenSince(counter: number) {
 	return {
 		rules: [...writtenRules.values()].filter(({ stamp }) => stamp > counter).map(({ row }) => row),
@@ -170,8 +176,10 @@ function queueValue<T>(map: Map<string, Flight<T>>, key: string, next: T): Fligh
 
 async function sendRule(id: string, value: boolean, signal: AbortSignal): Promise<boolean | null> {
 	const epoch = accountEpoch;
-	const row = await setRuleEnabled({ data: { id, on: value }, signal });
-	if (!sameAccount(epoch) || signal.aborted || !isRulesRule(row) || row.id !== id) {
+	const fence = nextWriteFence();
+	const body = await setRuleEnabled({ data: { id, on: value, tab: fence.tab, seq: fence.seq }, signal });
+	const row = acceptedRule(body, id);
+	if (!sameAccount(epoch) || signal.aborted || !row) {
 		return null;
 	}
 	placeRule(row);
@@ -180,8 +188,10 @@ async function sendRule(id: string, value: boolean, signal: AbortSignal): Promis
 
 async function sendLimit(key: string, value: number, signal: AbortSignal): Promise<number | null> {
 	const epoch = accountEpoch;
-	const row = await setRuleLimit({ data: { key, value }, signal });
-	if (!sameAccount(epoch) || signal.aborted || !isLimitValue(row) || row.key !== key) {
+	const fence = nextWriteFence();
+	const body = await setRuleLimit({ data: { key, value, tab: fence.tab, seq: fence.seq }, signal });
+	const row = acceptedLimit(body, key);
+	if (!sameAccount(epoch) || signal.aborted || !row) {
 		return null;
 	}
 	writeCounter += 1;
@@ -211,6 +221,7 @@ async function run<T>(
 		}
 		if (!sameAccount(epoch)) return;
 		if (returned === null) {
+			noteUncertainWrite(epoch);
 			markReadFailed(epoch);
 			const newer = takeNewer(flight, sent);
 			if (newer) {
@@ -253,6 +264,20 @@ function shownValue<T>(map: Map<string, Flight<T>>, key: string, loaded: T): T {
 	}
 	map.delete(key);
 	return loaded;
+}
+
+function acceptedRule(body: RulesWrite<RulesRule> | null, id: string): RulesRule | null {
+	if (!isWrite(body) || !isRulesRule(body.row) || body.row.id !== id) return null;
+	return body.row;
+}
+
+function acceptedLimit(body: RulesWrite<RulesLimitValue> | null, key: string): RulesLimitValue | null {
+	if (!isWrite(body) || !isLimitValue(body.row) || body.row.key !== key) return null;
+	return body.row;
+}
+
+function isWrite(value: unknown): value is RulesWrite<unknown> {
+	return isRecord(value) && (value.status === "written" || value.status === "superseded");
 }
 
 function isLimitValue(value: unknown): value is RulesLimitValue {

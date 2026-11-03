@@ -307,3 +307,13 @@ ALTER TABLE approvals DROP CONSTRAINT IF EXISTS approvals_account_id_fkey;
 ALTER TABLE approvals
   ADD CONSTRAINT approvals_account_id_fkey
   FOREIGN KEY (account_id) REFERENCES accounts (id) ON DELETE CASCADE;
+
+CREATE TABLE IF NOT EXISTS write_fences (
+  account_id text NOT NULL REFERENCES accounts (id) ON DELETE CASCADE,
+  key text NOT NULL,
+  tab text NOT NULL,
+  seq integer NOT NULL,
+  PRIMARY KEY (account_id, key),
+  CHECK (char_length(tab) > 0),
+  CHECK (seq >= 1)
+);

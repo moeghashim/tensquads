@@ -20,6 +20,9 @@
 \* # model: apps/web/src/screens/rules/snapshot.ts
 \* # model: apps/web/src/screens/rules/write-queue.ts
 \* # model: apps/web/src/server/rules.ts
+\* # model: apps/web/src/screens/rules/loader.ts
+\* # model: apps/web/src/write-fence.ts
+\* # model: packages/adapters/src/neon/commands/write-fence.ts
 
 EXTENDS Integers
 
@@ -31,7 +34,8 @@ VARIABLES
     action, edited, added, newOn, pending,
     save, wait, which, needsRead, readStale,
     mandate, events,
-    textA, textB
+    textA, textB,
+    gap, want
 
 vars == <<
     ruleA, ruleB,
@@ -41,7 +45,8 @@ vars == <<
     action, edited, added, newOn, pending,
     save, wait, which, needsRead, readStale,
     mandate, events,
-    textA, textB
+    textA, textB,
+    gap, want
 >>
 
 Bits == {0, 1}
@@ -62,6 +67,7 @@ TypeOK ==
     /\ readStale => needsRead /\ wait = "refresh"
     /\ mandate = "frozen" /\ events = 0
     /\ textA = "refund" /\ textB = "monday"
+    /\ gap \in 0..2 /\ want \in Bits /\ (gap = 0 => want = 0)
 
 \* The table equals the store. A slider differs only while that limit's write waits.
 ShownLimit ==
@@ -113,122 +119,137 @@ Init ==
     /\ readStale = FALSE
     /\ mandate = "frozen" /\ events = 0
     /\ textA = "refund" /\ textB = "monday"
+    /\ gap = 0 /\ want = 0
 
 \* The screen shows the next value. The stored rule waits for the response.
 StartToggle ==
+    /\ gap = 0
     /\ save = "idle" /\ wait = "none" /\ pending = 0
     /\ save' = "toggling" /\ wait' = "toggle"
-    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, memory>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, memory, gap, want>>
 
 CommitToggle ==
+    /\ gap = 0
     /\ save = "toggling" /\ wait = "toggle"
     /\ ruleA' = ~ruleA
     /\ IF needsRead
        THEN /\ save' = "reading" /\ wait' = "refresh"
        ELSE /\ save' = "idle" /\ wait' = "none"
-    /\ UNCHANGED <<ruleB, limits, form, which, frozen, memory>>
+    /\ UNCHANGED <<ruleB, limits, form, which, frozen, memory, gap, want>>
 
 \* The write leaves the queue. The shown value returns to the store. One read starts.
 FailToggle ==
+    /\ gap = 0
     /\ save = "toggling" /\ wait = "toggle"
     /\ save' = "reading" /\ wait' = "refresh"
     /\ needsRead' = TRUE
-    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, readStale>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, readStale, gap, want>>
 
 LateToggle ==
+    /\ gap = 0
     /\ save = "toggling" /\ wait = "toggle"
     /\ save' = "reading" /\ wait' = "refresh"
     /\ needsRead' = TRUE
-    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, readStale>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, readStale, gap, want>>
 
 \* The Monday rule stays off. A second switch path passes 500 states.
 
 \* The screen shows the new slider at once. The store waits for the response.
 StartRefund ==
+    /\ gap = 0
     /\ save = "idle" /\ wait = "none" /\ which = "none"
     /\ which' = "refund" /\ wait' = "limit" /\ save' = "saving"
     /\ refundSlider' = 1 - refund
-    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, adsSlider, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, memory>>
+    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, adsSlider, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, memory, gap, want>>
 
 StartAds ==
     /\ save = "idle" /\ wait = "none" /\ which = "none"
     /\ which' = "ads" /\ wait' = "limit" /\ save' = "saving"
     /\ adsSlider' = 1 - ads
-    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, refundSlider, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, memory>>
+    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, refundSlider, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, memory, gap, want>>
 
 \* The response replaces the snapshot. A flag from a failed read starts one read.
 CommitRefund ==
+    /\ gap = 0
     /\ save = "saving" /\ wait = "limit" /\ which = "refund"
     /\ which' = "none"
     /\ refund' = refundSlider /\ refundTable' = refundSlider
     /\ IF needsRead
        THEN /\ save' = "reading" /\ wait' = "refresh"
        ELSE /\ save' = "idle" /\ wait' = "none"
-    /\ UNCHANGED <<ruleA, ruleB, refundSlider, ads, adsSlider, adsTable, reorder, reorderSlider, reorderTable, form, frozen, memory>>
+    /\ UNCHANGED <<ruleA, ruleB, refundSlider, ads, adsSlider, adsTable, reorder, reorderSlider, reorderTable, form, frozen, memory, gap, want>>
 
 CommitAds ==
     /\ save = "saving" /\ wait = "limit" /\ which = "ads"
     /\ which' = "none"
     /\ ads' = adsSlider /\ adsTable' = adsSlider
+    /\ gap' = IF gap = 0 THEN 0 ELSE 2
     /\ IF needsRead
        THEN /\ save' = "reading" /\ wait' = "refresh"
        ELSE /\ save' = "idle" /\ wait' = "none"
-    /\ UNCHANGED <<ruleA, ruleB, adsSlider, refund, refundSlider, refundTable, reorder, reorderSlider, reorderTable, form, frozen, memory>>
+    /\ UNCHANGED <<ruleA, ruleB, adsSlider, refund, refundSlider, refundTable, reorder, reorderSlider, reorderTable, form, frozen, memory, want>>
 
 \* The write leaves the queue. The slider returns to the store. One read starts.
 FailRefund ==
+    /\ gap = 0
     /\ save = "saving" /\ wait = "limit" /\ which = "refund"
     /\ which' = "none" /\ wait' = "refresh" /\ save' = "reading"
     /\ refundSlider' = refund /\ adsSlider' = ads
     /\ needsRead' = TRUE
-    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, readStale>>
+    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, readStale, gap, want>>
 
 LateRefund ==
+    /\ gap = 0
     /\ save = "saving" /\ wait = "limit" /\ which = "refund"
     /\ which' = "none" /\ wait' = "refresh" /\ save' = "reading"
     /\ refundSlider' = refund /\ adsSlider' = ads
     /\ needsRead' = TRUE
-    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, readStale>>
+    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, readStale, gap, want>>
 
 FailAds ==
+    /\ gap = 0
     /\ save = "saving" /\ wait = "limit" /\ which = "ads"
     /\ which' = "none" /\ wait' = "refresh" /\ save' = "reading"
     /\ refundSlider' = refund /\ adsSlider' = ads
     /\ needsRead' = TRUE
-    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, readStale>>
+    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, readStale, gap, want>>
 
 LateAds ==
     /\ save = "saving" /\ wait = "limit" /\ which = "ads"
     /\ which' = "none" /\ wait' = "refresh" /\ save' = "reading"
     /\ refundSlider' = refund /\ adsSlider' = ads
     /\ needsRead' = TRUE
-    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, readStale>>
+    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, readStale, gap, want>>
 
 \* Typing is allowed after the add, and while a write waits.
 TypeAction ==
+    /\ gap = 0
     /\ action = "blank"
     /\ action' = "text" /\ edited' = TRUE
-    /\ UNCHANGED <<ruleA, ruleB, limits, added, newOn, pending, save, wait, which, frozen, memory>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, added, newOn, pending, save, wait, which, frozen, memory, gap, want>>
 
 \* The row appears at once. The action clears. The write has not committed.
 StartAdd ==
+    /\ gap = 0
     /\ save = "idle" /\ wait = "none" /\ added = 0 /\ pending = 0 /\ action = "text"
     /\ action' = "blank" /\ edited' = FALSE
     /\ pending' = 1 /\ newOn' = TRUE /\ save' = "adding" /\ wait' = "add"
-    /\ UNCHANGED <<ruleA, ruleB, limits, added, which, frozen, memory>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, added, which, frozen, memory, gap, want>>
 
 \* The response puts the row in the snapshot and drops the pending row.
 CommitAdd ==
+    /\ gap = 0
     /\ save = "adding" /\ wait = "add"
     /\ added' = 1 /\ newOn' = TRUE /\ pending' = 0
     /\ IF needsRead
        THEN /\ save' = "reading" /\ wait' = "refresh"
        ELSE /\ save' = "idle" /\ wait' = "none"
-    /\ UNCHANGED <<ruleA, ruleB, limits, action, edited, which, frozen, memory>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, action, edited, which, frozen, memory, gap, want>>
 
 \* Nothing is stored. The draft returns only when the user has not typed again.
 \* The write leaves the queue and one read starts.
 FailAdd ==
+    /\ gap = 0
     /\ save = "adding" /\ wait = "add"
     /\ pending' = 0 /\ newOn' = FALSE /\ save' = "reading" /\ wait' = "refresh"
     /\ needsRead' = TRUE
@@ -236,9 +257,10 @@ FailAdd ==
        THEN /\ action' = "text"
             /\ UNCHANGED edited
        ELSE UNCHANGED <<action, edited>>
-    /\ UNCHANGED <<ruleA, ruleB, limits, added, which, frozen, readStale>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, added, which, frozen, readStale, gap, want>>
 
 LateAdd ==
+    /\ gap = 0
     /\ save = "adding" /\ wait = "add"
     /\ pending' = 0 /\ newOn' = FALSE /\ save' = "reading" /\ wait' = "refresh"
     /\ needsRead' = TRUE
@@ -246,37 +268,65 @@ LateAdd ==
        THEN /\ action' = "text"
             /\ UNCHANGED edited
        ELSE UNCHANGED <<action, edited>>
-    /\ UNCHANGED <<ruleA, ruleB, limits, added, which, frozen, readStale>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, added, which, frozen, readStale, gap, want>>
 
-\* The read returns the store. The flag clears. The snapshot stays.
+\* The read returns the store. A stale read keeps the flag.
 ReadOk ==
     /\ save = "reading" /\ wait = "refresh"
     /\ save' = "idle" /\ wait' = "none" /\ needsRead' = (needsRead /\ readStale)
     /\ readStale' = FALSE
-    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, gap, want>>
 
 \* The read fails. The flag is set. The wait stops. The snapshot stays.
 ReadFail ==
     /\ save = "reading" /\ wait = "refresh"
     /\ save' = "idle" /\ wait' = "none" /\ needsRead' = TRUE
     /\ readStale' = FALSE
-    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, gap, want>>
 
 \* The screen loads again. One read starts. This is not a timer.
 Reload ==
+    /\ gap = 0
     /\ save = "idle" /\ wait = "none" /\ needsRead = TRUE /\ pending = 0
     /\ save' = "reading" /\ wait' = "refresh"
-    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, memory>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, memory, gap, want>>
 
 Navigate ==
+    /\ gap = 0
     /\ save = "idle" /\ wait = "none"
     /\ save' = "reading" /\ wait' = "refresh"
-    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, memory>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, form, which, frozen, memory, gap, want>>
 
 FailureDuringRead ==
+    /\ gap = 0
     /\ save = "reading" /\ wait = "refresh" /\ ~readStale
     /\ needsRead' = TRUE /\ readStale' = TRUE
-    /\ UNCHANGED <<ruleA, ruleB, limits, form, save, wait, which, frozen>>
+    /\ UNCHANGED <<ruleA, ruleB, limits, form, save, wait, which, frozen, gap, want>>
+
+\* The timed-out ad cap is still the newest write, so it may commit when it arrives.
+OpenLate ==
+    /\ gap = 0 /\ want = 0
+    /\ save = "saving" /\ wait = "limit" /\ which = "ads"
+    /\ ads = 1 /\ refund = 1 /\ reorder = 1
+    /\ ruleA = TRUE /\ ruleB = FALSE
+    /\ added = 0 /\ pending = 0 /\ newOn = FALSE
+    /\ action = "blank" /\ edited = FALSE
+    /\ needsRead = FALSE /\ readStale = FALSE
+    /\ which' = "none" /\ wait' = "refresh" /\ save' = "reading"
+    /\ want' = adsSlider /\ gap' = 1
+    /\ refundSlider' = refund /\ adsSlider' = ads
+    /\ needsRead' = TRUE
+    /\ UNCHANGED <<ruleA, ruleB, refund, ads, reorder, reorderSlider, refundTable, adsTable, reorderTable, form, frozen, readStale>>
+
+\* A later arrival commits only when no newer write has landed.
+ArriveLate ==
+    /\ gap \in {1, 2}
+    /\ save = "idle" /\ wait = "none"
+    /\ IF gap = 1
+       THEN /\ ads' = want /\ adsTable' = want /\ adsSlider' = want
+       ELSE UNCHANGED <<ads, adsTable, adsSlider>>
+    /\ gap' = 0 /\ want' = 0
+    /\ UNCHANGED <<ruleA, ruleB, refund, reorder, refundSlider, reorderSlider, refundTable, reorderTable, form, save, wait, which, frozen, memory>>
 
 \* A blank action does nothing.
 AddBlank ==
@@ -306,10 +356,16 @@ Next ==
     \/ Reload
     \/ Navigate
     \/ FailureDuringRead
+    \/ OpenLate
+    \/ ArriveLate
     \/ AddBlank
 
 \* A begin, a limit, a switch, and a read each end.
 WaitEnds == [](wait # "none" => <>(wait = "none"))
+\* An older read does not clear a failure that happened while it waited.
+ReadKeepsStale == [][ReadOk => (readStale => needsRead')]_vars
+\* An older timed-out write does not replace a newer value.
+FenceHolds == [][ArriveLate => ((gap = 1 => ads' = want /\ adsTable' = want) /\ (gap = 2 => UNCHANGED <<ads, adsTable>>))]_vars
 
 Spec == Init /\ [][Next]_vars
     /\ WF_vars(LateAdd)

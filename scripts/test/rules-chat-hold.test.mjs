@@ -65,9 +65,14 @@ const bundle = await build({
 							export const finishWorkspaceSend = ({ data }) => window.finishSend(data);
 						`
 						: `
+							function asWritten(data, row) {
+								if (!row || typeof row !== "object" || row.status) return row;
+								if (typeof data.on === "boolean" || typeof data.value === "number") return { status: "written", row };
+								return row;
+							}
 							export const loadRulesPage = () => window.readRules();
-							export const setRuleEnabled = ({ data }) => window.send(data);
-							export const setRuleLimit = ({ data }) => window.send(data);
+							export const setRuleEnabled = async ({ data }) => asWritten(data, await window.send(data));
+							export const setRuleLimit = async ({ data }) => asWritten(data, await window.send(data));
 							export const addWorkspaceRule = ({ data }) => window.send(data);
 						`,
 				}));

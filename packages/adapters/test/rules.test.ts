@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createRepositories, schema } from "@tensquads/adapters";
 import type { MandateDraft } from "@tensquads/domain";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { replaceDemoAccount } from "../../seed/src/demo-account.ts";
 import { openPglite } from "./pglite.ts";
 
 const scope = { accountId: "rules-account", mode: "account" as const };
+const fence = (seq: number, tab = "rules-test") => ({ tab, seq });
 
 test("setLimit changes the value bus.readStore returns and writes no event", async () => {
 	const { db, close } = await openPglite();
@@ -14,9 +15,9 @@ test("setLimit changes the value bus.readStore returns and writes no event", asy
 		await replaceDemoAccount(db, scope.accountId, "clerk-rules");
 		const repositories = createRepositories(db);
 		const before = await repositories.bus.listEvents(scope);
-		assert.deepEqual(await repositories.policy.setLimit(scope, "policy.refund_auto_limit", 55), {
-			key: "policy.refund_auto_limit",
-			value: 55,
+		assert.deepEqual(await repositories.policy.setLimit(scope, "policy.refund_auto_limit", 55, fence(1)), {
+			status: "written",
+			row: { key: "policy.refund_auto_limit", value: 55 },
 		});
 		const store = await repositories.bus.readStore(scope);
 		assert.equal(store["policy.refund_auto_limit"], 55);
@@ -25,10 +26,13 @@ test("setLimit changes the value bus.readStore returns and writes no event", asy
 		const after = await repositories.bus.listEvents(scope);
 		assert.equal(after.length, before.length);
 		await assert.rejects(
-			() => repositories.policy.setLimit(scope, "policy.refund_auto_limit", 51),
+			() => repositories.policy.setLimit(scope, "policy.refund_auto_limit", 51, fence(2)),
 			/The limit is not valid/,
 		);
-		await assert.rejects(() => repositories.policy.setLimit(scope, "policy.other", 50), /The limit is not valid/);
+		await assert.rejects(
+			() => repositories.policy.setLimit(scope, "policy.other", 50, fence(3)),
+			/The limit is not valid/,
+		);
 		const again = await repositories.bus.readStore(scope);
 		assert.equal(again["policy.refund_auto_limit"], 55);
 	} finally {
@@ -92,7 +96,7 @@ test("a rule switch changes only that rule", async () => {
 	try {
 		await replaceDemoAccount(db, scope.accountId, "clerk-rules-switch");
 		const policy = createRepositories(db).policy;
-		assert.equal((await policy.setRuleOn(scope, "r5", true)).on, true);
+		assert.equal((await policy.setRuleOn(scope, "r5", true, fence(1))).row.on, true);
 		const rules = await policy.listRules(scope);
 		assert.equal(rules.find((rule) => rule.id === "r5")?.on, true);
 		assert.equal(rules.find((rule) => rule.id === "r1")?.on, true);
@@ -100,9 +104,9 @@ test("a rule switch changes only that rule", async () => {
 			rules.find((rule) => rule.id === "r1")?.action,
 			"refund it if it is under the refund limit, otherwise ask me",
 		);
-		await assert.rejects(() => policy.setRuleOn(scope, "missing", false), /The rule is missing/);
+		await assert.rejects(() => policy.setRuleOn(scope, "missing", false, fence(2)), /The rule is missing/);
 		await assert.rejects(
-			() => policy.setLimit({ accountId: "platform", mode: "platform" }, "policy.daily_ad_cap", 200),
+			() => policy.setLimit({ accountId: "platform", mode: "platform" }, "policy.daily_ad_cap", 200, fence(3)),
 			/A rule change needs an account/,
 		);
 	} finally {
@@ -123,6 +127,7 @@ test("a new account has no rules", async () => {
 			agents: [{ id: "orders", name: "Orders", role: "Fulfilment and tracking", tint: "#e7efff" }],
 		});
 		assert.deepEqual(await repositories.policy.listRules(account), []);
+		assert.equal(await fenceCount(db, account.accountId), 0);
 		const store = await repositories.bus.readStore(account);
 		assert.equal(store["policy.daily_ad_cap"], 200);
 	} finally {
@@ -159,14 +164,14 @@ test("a later rule or limit change does not change an existing Mandate", async (
 			at: new Date("2026-11-02T12:00:00.000Z"),
 		};
 		const made = await policy.createMandate(scope, draft);
-		await policy.setRuleOn(scope, rule.id, !rule.on);
+		await policy.setRuleOn(scope, rule.id, !rule.on, fence(1));
 		await policy.addRule(scope, {
 			when: "A customer leaves a bad review",
 			agent: "support",
 			action: "draft a reply",
 			approval: "Ask first",
 		});
-		await policy.setLimit(scope, "policy.refund_auto_limit", 40);
+		await policy.setLimit(scope, "policy.refund_auto_limit", 40, fence(2));
 		const changed = await policy.listRules(scope);
 		assert.equal(changed.find((item) => item.id === rule.id)?.on, !rule.on);
 		assert.equal((await createRepositories(db).bus.readStore(scope))["policy.refund_auto_limit"], 40);
@@ -180,3 +185,66 @@ test("a later rule or limit change does not change an existing Mandate", async (
 		await close();
 	}
 });
+
+test("an older fence does not replace a newer limit or rule, and an add stores no fence", async () => {
+	const { db, close } = await openPglite();
+	try {
+		await replaceDemoAccount(db, scope.accountId, "clerk-rules-fence");
+		const policy = createRepositories(db).policy;
+		const cap = "policy.daily_ad_cap";
+		assert.deepEqual(await policy.setLimit(scope, cap, 260, fence(2)), {
+			status: "written",
+			row: { key: cap, value: 260 },
+		});
+		assert.deepEqual(await policy.setLimit(scope, cap, 240, fence(1)), {
+			status: "superseded",
+			row: { key: cap, value: 260 },
+		});
+		assert.equal((await createRepositories(db).bus.readStore(scope))[cap], 260);
+		assert.deepEqual(await policy.setLimit(scope, cap, 240, fence(1, "other-tab")), {
+			status: "written",
+			row: { key: cap, value: 240 },
+		});
+		assert.deepEqual(await policy.setLimit(scope, cap, 260, fence(3)), {
+			status: "written",
+			row: { key: cap, value: 260 },
+		});
+		const store = await createRepositories(db).bus.readStore(scope);
+		assert.equal(store[cap], 260);
+		assert.equal(Object.hasOwn(store, "write_fences"), false);
+		const before = (await policy.listRules(scope)).length;
+		await policy.addRule(scope, {
+			when: "A new order arrives",
+			agent: "orders",
+			action: "Late add",
+			approval: "Ask first",
+		});
+		await policy.addRule(scope, {
+			when: "A new order arrives",
+			agent: "orders",
+			action: "Late add",
+			approval: "Ask first",
+		});
+		assert.equal((await policy.listRules(scope)).length, before + 2);
+		assert.equal(await fenceCount(db, scope.accountId), 1);
+		const turned = await policy.setRuleOn(scope, "r5", true, fence(2, "switch"));
+		assert.equal(turned.status, "written");
+		assert.equal(turned.row.on, true);
+		const again = await policy.setRuleOn(scope, "r5", false, fence(1, "switch"));
+		assert.equal(again.status, "superseded");
+		assert.equal(again.row.on, true);
+		await assert.rejects(
+			() => policy.setLimit(scope, cap, 280, { tab: "  ", seq: 4 }),
+			/The write fence is not valid/,
+		);
+		assert.equal((await createRepositories(db).bus.readStore(scope))[cap], 260);
+	} finally {
+		await close();
+	}
+});
+
+async function fenceCount(db: { execute: (query: ReturnType<typeof sql>) => Promise<unknown> }, accountId: string) {
+	const result = await db.execute(sql`SELECT count(*)::int AS n FROM write_fences WHERE account_id = ${accountId}`);
+	const rows = Array.isArray(result) ? result : ((result as { rows?: { n: number }[] }).rows ?? []);
+	return Number(rows[0]?.n ?? 0);
+}

@@ -92,10 +92,26 @@ const bundle = await build({
 				build.onResolve({ filter: /^#\/server\/rules.ts$/ }, ({ path }) => ({ path, namespace: "boundary" }));
 				build.onLoad({ filter: /.*/, namespace: "boundary" }, () => ({
 					contents: `
+					function withoutFence(data) {
+						if (!data || typeof data !== "object") return data;
+						const { tab, seq, ...rest } = data;
+						return rest;
+					}
+					function asWritten(data, row) {
+						if (!row || typeof row !== "object" || row.status) return row;
+						if (typeof data.on === "boolean" || typeof data.value === "number") return { status: "written", row };
+						return row;
+					}
 					export const loadRulesPage = () => window.readSource();
-					export const setRuleEnabled = ({data, signal}) => window.send(data, signal);
-					export const setRuleLimit = ({data, signal}) => window.send(data, signal);
-					export const addWorkspaceRule = ({data, signal}) => window.send(data, signal);
+					export const setRuleEnabled = async ({data, signal}) => {
+						const body = withoutFence(data);
+						return asWritten(body, await window.send(body, signal));
+					};
+					export const setRuleLimit = async ({data, signal}) => {
+						const body = withoutFence(data);
+						return asWritten(body, await window.send(body, signal));
+					};
+					export const addWorkspaceRule = async ({data, signal}) => window.send(withoutFence(data), signal);
 				`,
 				}));
 			},
@@ -1374,12 +1390,14 @@ for (const axis of [...snapshotAxes, { kind: "add" }]) {
 			await actOnRecoveryAxis(page, axis);
 			await page.waitForFunction(() => window.refreshCalls === 1);
 			await page.evaluate(async () => {
+				window.afterFailure = window.queue.rulesWriteCounter();
 				window.oldRead.finish();
 				await window.oldRead.done;
 			});
 			assert.equal(await page.evaluate(() => window.queue.readNeeded()), true);
+			assert.equal(await page.evaluate(() => window.afterFailure > window.counterBeforeFailure), true);
 			assert.equal(
-				await page.evaluate(() => window.queue.rulesWriteCounter() === window.counterBeforeFailure),
+				await page.evaluate(() => window.queue.rulesWriteCounter() === window.afterFailure),
 				true,
 			);
 			assert.equal(await page.evaluate(() => window.refreshCalls), 1);
@@ -1393,26 +1411,50 @@ for (const axis of [...snapshotAxes, { kind: "add" }]) {
 	});
 }
 
-test("recovery: a timed-out GET records a failure and rejects without retrying", async () => {
+test("recovery: a timed-out GET records a failure and keeps the held snapshot", async () => {
 	await withPage(async (page) => {
 		await seedSnapshot(page);
 		await page.evaluate(() => {
 			window.beforeRead = window.queue.rulesRecoveryGeneration();
 			window.timedRead = window.beginRulesRead();
-			window.readRejected = false;
-			void window.timedRead.done.catch(() => {
-				window.readRejected = true;
-			});
+			window.readSettled = "";
+			void window.timedRead.done.then(
+				(page) => {
+					window.readSettled = "kept";
+					window.keptRules = page.rules.length;
+				},
+				() => {
+					window.readSettled = "rejected";
+				},
+			);
 		});
 		await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
-		assert.equal(await page.evaluate(() => window.readRejected && window.queue.readNeeded()), true);
+		await page.waitForFunction(() => window.readSettled === "kept" && window.queue.readNeeded());
 		assert.equal(await page.evaluate(() => window.queue.rulesRecoveryGeneration() > window.beforeRead), true);
+		assert.equal(await page.evaluate(() => window.keptRules), 1);
 		await page.evaluate(async () => {
 			window.timedRead.finish();
 			await window.flush();
 		});
 		assert.equal(await page.evaluate(() => window.queue.readNeeded()), true);
 		assert.equal(await page.evaluate(() => window.refreshCalls), 0);
+	});
+});
+
+test("recovery: a timed-out GET with no snapshot still rejects", async () => {
+	await withPage(async (page) => {
+		await page.evaluate(() => {
+			window.readSource = () => new Promise(() => {});
+			window.beforeRead = window.queue.rulesRecoveryGeneration();
+			window.timedRead = window.loadRulesSnapshot();
+			window.readRejected = false;
+			void window.timedRead.catch(() => {
+				window.readRejected = true;
+			});
+		});
+		await page.clock.fastForward(PENDING_TASK_WINDOW_MS + 1);
+		assert.equal(await page.evaluate(() => window.readRejected && window.queue.readNeeded()), true);
+		assert.equal(await page.evaluate(() => window.queue.rulesRecoveryGeneration() > window.beforeRead), true);
 	});
 });
 

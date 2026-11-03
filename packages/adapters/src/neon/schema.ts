@@ -1,4 +1,5 @@
-import { boolean, foreignKey, integer, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { boolean, check, foreignKey, integer, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 
 // Column names that cannot be the design field: is_on (on), last_text (last), description (desc),
 // time_text (time), from_agent (from), to_agent (to), body (text), from_role (from), rule_when (when).
@@ -290,6 +291,23 @@ export const bugs = pgTable("bugs", {
 	sortOrder: integer("sort_order").notNull(),
 });
 
+export const writeFences = pgTable(
+	"write_fences",
+	{
+		accountId: text("account_id")
+			.notNull()
+			.references(() => accounts.id, { onDelete: "cascade" }),
+		key: text("key").notNull(),
+		tab: text("tab").notNull(),
+		seq: integer("seq").notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.accountId, table.key] }),
+		check("write_fences_tab_length", sql`char_length(${table.tab}) > 0`),
+		check("write_fences_seq_min", sql`${table.seq} >= 1`),
+	],
+);
+
 export const featureRequests = pgTable("feature_requests", {
 	id: text("id").primaryKey(),
 	imageId: text("image_id").notNull(),
@@ -322,4 +340,5 @@ export const schema = {
 	agentImages,
 	bugs,
 	featureRequests,
+	writeFences,
 };

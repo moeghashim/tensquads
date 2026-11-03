@@ -26,7 +26,7 @@ test("the decider has no adapter in version 1", () => {
 test("rule writes require configured repositories", async () => {
 	const kernel = new Kernel();
 	const scope = { accountId: "account-1", mode: "account" } as const;
-	await assert.rejects(kernel.setRuleOn(scope, "r1", false), {
+	await assert.rejects(kernel.setRuleOn(scope, "r1", false, { tab: "kernel", seq: 1 }), {
 		message: "Repositories are not configured.",
 	});
 	await assert.rejects(

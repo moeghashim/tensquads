@@ -100,7 +100,7 @@ test("a late ad-cap write commits nothing after the deadline", {
 		await holdLock(client);
 		locked = true;
 		let settled = "pending";
-		const write = kernel.setLimit(scope, adCap, 240).then(
+		const write = kernel.setLimit(scope, adCap, 240, { tab: "deadline", seq: 1 }).then(
 			() => {
 				settled = "committed";
 			},
@@ -143,10 +143,10 @@ test("a deadline that already passed commits no rule, switch, or limit", async (
 		const before = await repositories.policy.listRules(scope);
 		const first = before[0];
 		if (!first) throw new Error("the seed has no rule");
-		await assert.rejects(() => kernel.setLimit(scope, adCap, 260, late), {
+		await assert.rejects(() => kernel.setLimit(scope, adCap, 260, { tab: "deadline", seq: 2 }, late), {
 			message: "The workspace write did not finish.",
 		});
-		await assert.rejects(() => kernel.setRuleOn(scope, first.id, !first.on, late), {
+		await assert.rejects(() => kernel.setRuleOn(scope, first.id, !first.on, { tab: "deadline", seq: 3 }, late), {
 			message: "The workspace write did not finish.",
 		});
 		await assert.rejects(

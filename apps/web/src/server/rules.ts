@@ -49,10 +49,17 @@ export interface RulesLimitValue {
 	readonly value: number;
 }
 
+export interface RulesWrite<T> {
+	readonly status: "written" | "superseded";
+	readonly row: T;
+}
+
 export const setRuleEnabled = createServerFn({ method: "POST" })
 	.validator(validateRuleOn)
-	.handler(async ({ data }): Promise<RulesRule> => {
-		return writeThroughKernel((kernel, scope, deadlineAt) => kernel.setRuleOn(scope, data.id, data.on, deadlineAt));
+	.handler(async ({ data }): Promise<RulesWrite<RulesRule>> => {
+		return writeThroughKernel((kernel, scope, deadlineAt) =>
+			kernel.setRuleOn(scope, data.id, data.on, { tab: data.tab, seq: data.seq }, deadlineAt),
+		);
 	});
 
 export const addWorkspaceRule = createServerFn({ method: "POST" })
@@ -63,9 +70,9 @@ export const addWorkspaceRule = createServerFn({ method: "POST" })
 
 export const setRuleLimit = createServerFn({ method: "POST" })
 	.validator(validateLimit)
-	.handler(async ({ data }): Promise<RulesLimitValue> => {
+	.handler(async ({ data }): Promise<RulesWrite<RulesLimitValue>> => {
 		return writeThroughKernel((kernel, scope, deadlineAt) =>
-			kernel.setLimit(scope, data.key, data.value, deadlineAt),
+			kernel.setLimit(scope, data.key, data.value, { tab: data.tab, seq: data.seq }, deadlineAt),
 		);
 	});
 
@@ -76,8 +83,9 @@ async function writeThroughKernel<T>(
 				scope: { accountId: string; mode: "account" },
 				id: string,
 				on: boolean,
+				fence: { tab: string; seq: number },
 				deadlineAt: number,
-			): Promise<RulesRule>;
+			): Promise<RulesWrite<RulesRule>>;
 			addRule(
 				scope: { accountId: string; mode: "account" },
 				draft: { when: string; agent: string; action: string; approval: string },
@@ -87,8 +95,9 @@ async function writeThroughKernel<T>(
 				scope: { accountId: string; mode: "account" },
 				key: string,
 				value: number,
+				fence: { tab: string; seq: number },
 				deadlineAt: number,
-			): Promise<RulesLimitValue>;
+			): Promise<RulesWrite<RulesLimitValue>>;
 		},
 		scope: { accountId: string; mode: "account" },
 		deadlineAt: number,
@@ -115,11 +124,17 @@ function isRecord(input: unknown): input is Record<string, unknown> {
 	return typeof input === "object" && input !== null;
 }
 
-function validateRuleOn(input: unknown): { readonly id: string; readonly on: boolean } {
+function validateRuleOn(input: unknown): {
+	readonly id: string;
+	readonly on: boolean;
+	readonly tab: string;
+	readonly seq: number;
+} {
 	if (!isRecord(input) || typeof input.id !== "string" || input.id.length === 0 || typeof input.on !== "boolean") {
 		throw new Error("The rule change is not valid.");
 	}
-	return { id: input.id, on: input.on };
+	const fence = validateFence(input);
+	return { id: input.id, on: input.on, tab: fence.tab, seq: fence.seq };
 }
 
 function validateDraft(input: unknown): {
@@ -140,9 +155,26 @@ function validateDraft(input: unknown): {
 	return { when: input.when, agent: input.agent, action: input.action, approval: input.approval };
 }
 
-function validateLimit(input: unknown): { readonly key: string; readonly value: number } {
+function validateLimit(input: unknown): {
+	readonly key: string;
+	readonly value: number;
+	readonly tab: string;
+	readonly seq: number;
+} {
 	if (!isRecord(input) || typeof input.key !== "string" || input.key.length === 0 || typeof input.value !== "number") {
 		throw new Error("The limit change is not valid.");
 	}
-	return { key: input.key, value: input.value };
+	const fence = validateFence(input);
+	return { key: input.key, value: input.value, tab: fence.tab, seq: fence.seq };
+}
+
+function validateFence(input: Record<string, unknown>): { readonly tab: string; readonly seq: number } {
+	const { tab, seq } = input;
+	if (typeof tab !== "string" || tab.length === 0 || tab.length > 80 || tab !== tab.trim()) {
+		throw new Error("The write fence is not valid.");
+	}
+	if (typeof seq !== "number" || !Number.isSafeInteger(seq) || seq < 1) {
+		throw new Error("The write fence is not valid.");
+	}
+	return { tab, seq };
 }

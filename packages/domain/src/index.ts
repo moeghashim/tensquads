@@ -51,8 +51,10 @@ export type {
 	Mandate,
 	MissionProposal,
 	MissionProposalStatus,
+	Fenced,
 	Rule,
 	StoredLimit,
+	WriteFence,
 } from "./policy/types.ts";
 export type { RepositoryBag } from "./repositories.ts";
 export type { AccountScope } from "./scope.ts";
