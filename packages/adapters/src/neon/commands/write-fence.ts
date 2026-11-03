@@ -25,7 +25,7 @@ function parseWriteFence(input: unknown): CheckedFence {
 
 function parseRetires(input: unknown): readonly string[] {
 	if (input === undefined) return [];
-	if (!Array.isArray(input)) {
+	if (!Array.isArray(input) || input.length > 8) {
 		throw new Error(invalid);
 	}
 	const retires: string[] = [];
@@ -55,10 +55,14 @@ export async function claimWriteFence(
 		WHERE account_id = ${accountId}
 			AND retired_at < now() - interval '24 hours'
 	`);
-	for (const id of checked.retires) {
+	if (checked.retires.length > 0) {
+		const values = sql.join(
+			checked.retires.map((id) => sql`(${accountId}, ${id}, now())`),
+			sql`, `,
+		);
 		await tx.execute(sql`
 			INSERT INTO retired_tabs (account_id, tab, retired_at)
-			VALUES (${accountId}, ${id}, now())
+			VALUES ${values}
 			ON CONFLICT (account_id, tab) DO UPDATE SET retired_at = EXCLUDED.retired_at
 		`);
 	}

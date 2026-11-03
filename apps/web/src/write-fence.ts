@@ -1,20 +1,19 @@
 // Each document load takes a new tab id and keeps it in memory.
-// sessionStorage lists earlier ids from this tab that the server has not retired.
-// A duplicated tab copies that list. Both loads retire the same old id and write with different new ids.
+// sessionStorage lists earlier ids from this tab. The live id stays out of storage.
+// pagehide adds the live id. A reload or navigation fires it. A duplicated tab does not.
+// A restored page takes a fresh id, because the old one may already be retired.
+// The list keeps the newest eight ids. A kill without pagehide leaves no entry.
 // A page without storage keeps one id for this load and retires nothing.
 // The id is created on load. Module startup must not call crypto. The server does not trust the value.
 
 const storageKey = "tensquads.writeFence";
-
-interface StoredFence {
-	readonly current: string;
-	readonly pending: readonly string[];
-}
+const pendingLimit = 8;
 
 let tab: string | null = null;
 let seq = 0;
 let pending: string[] = [];
 let booted = false;
+let hiddenTab: string | null = null;
 
 export function nextWriteFence(): {
 	readonly tab: string;
@@ -38,9 +37,7 @@ export function confirmRetired(ids: readonly string[]): void {
 function ensureIdentity(): void {
 	if (booted) return;
 	booted = true;
-	const stored = readStored();
-	pending = stored ? [...stored.pending] : [];
-	if (stored) addPending(stored.current);
+	pending = trimPending(readStoredIds());
 	tab = createTabId();
 	seq = 0;
 	persist();
@@ -53,32 +50,68 @@ function requiredTab(): string {
 	return tab;
 }
 
+function hideTab(): void {
+	ensureIdentity();
+	if (tab === null) return;
+	hiddenTab = tab;
+	addPending(tab);
+	persist();
+}
+
+function showTab(event: PageTransitionEvent): void {
+	if (event.persisted) {
+		ensureIdentity();
+		if (tab !== null) addPending(tab);
+		tab = createTabId();
+		seq = 0;
+		hiddenTab = null;
+		persist();
+		return;
+	}
+	if (hiddenTab !== null && hiddenTab === tab) {
+		pending = pending.filter((id) => id !== hiddenTab);
+		hiddenTab = null;
+		persist();
+	}
+}
+
 function addPending(id: string): void {
 	if (!validTab(id) || pending.includes(id)) return;
 	pending.push(id);
+	if (pending.length > pendingLimit) pending.splice(0, pending.length - pendingLimit);
 }
 
-function readStored(): StoredFence | null {
+function trimPending(ids: readonly string[]): string[] {
+	const unique: string[] = [];
+	for (const id of ids) {
+		if (!validTab(id) || unique.includes(id)) continue;
+		unique.push(id);
+	}
+	if (unique.length <= pendingLimit) return unique;
+	return unique.slice(unique.length - pendingLimit);
+}
+
+function readStoredIds(): string[] {
 	const store = fenceStorage();
-	if (!store) return null;
+	if (!store) return [];
 	try {
 		const raw = store.getItem(storageKey);
-		if (!raw) return null;
-		const parsed = JSON.parse(raw) as Partial<StoredFence> & { tab?: unknown };
-		const current = validTab(parsed.current) ? parsed.current : validTab(parsed.tab) ? parsed.tab : null;
-		if (!current) return null;
+		if (!raw) return [];
+		const parsed = JSON.parse(raw) as { pending?: unknown; current?: unknown; tab?: unknown };
 		const listed = Array.isArray(parsed.pending) ? parsed.pending.filter(validTab) : [];
-		return { current, pending: listed.filter((id, index) => listed.indexOf(id) === index && id !== current) };
+		const previous = validTab(parsed.current) ? parsed.current : validTab(parsed.tab) ? parsed.tab : null;
+		const ids = previous ? [...listed.filter((id) => id !== previous), previous] : listed;
+		return ids.filter((id, index) => ids.indexOf(id) === index);
 	} catch {
-		return null;
+		return [];
 	}
 }
 
 function persist(): void {
 	const store = fenceStorage();
-	if (!store || tab === null) return;
+	if (!store) return;
 	try {
-		store.setItem(storageKey, JSON.stringify({ current: tab, pending } satisfies StoredFence));
+		store.setItem(storageKey, JSON.stringify({ pending }));
 	} catch {
 		// Private mode and a blocked storage keep the id in memory for this load.
 	}
@@ -119,6 +152,12 @@ function createTabId(): string {
 }
 
 if (typeof window !== "undefined") {
+	window.addEventListener("pagehide", () => {
+		hideTab();
+	});
+	window.addEventListener("pageshow", (event) => {
+		showTab(event);
+	});
 	queueMicrotask(() => {
 		ensureIdentity();
 	});

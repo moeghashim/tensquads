@@ -193,7 +193,7 @@ function validateFence(input: Record<string, unknown>): {
 
 function validateRetires(input: unknown): readonly string[] {
 	if (input === undefined) return [];
-	if (!Array.isArray(input)) {
+	if (!Array.isArray(input) || input.length > 8) {
 		throw new Error("The write fence is not valid.");
 	}
 	const retires: string[] = [];

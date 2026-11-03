@@ -12,7 +12,6 @@ const rulesQueueModule = "/src/screens/rules/write-queue.ts";
 const rulesLoaderModule = "/src/screens/rules/loader.ts";
 const fenceStorageKey = "tensquads.writeFence";
 const fenceModule = "/src/write-fence.ts";
-const rulesServerModule = "/src/server/rules.ts";
 
 test("an older ad cap held before it arrives does not replace the newer cap", async ({
 	page,
@@ -215,12 +214,12 @@ test("an old read does not replace the snapshot kept after a lost ad cap respons
 			}
 		}
 		if (!postLost && request.method() === "POST" && (request.postData() ?? "").includes(adCap)) {
-			postLost = true;
 			const response = await route.fetch();
 			if (!response.ok()) {
 				throw new Error(`The ad cap write failed with status ${response.status()}.`);
 			}
 			await route.fulfill({ status: 500, contentType: "text/plain", body: "lost response" });
+			postLost = true;
 			return;
 		}
 		await route.continue();
@@ -296,7 +295,13 @@ test("two reloads before a write retire a held request", async ({ page, workspac
 	expect(third.pending).toContain(first.current);
 	expect(third.pending).toContain(second.current);
 	expect(third.current).not.toBe(second.current);
+	const written = page.waitForResponse((response) => {
+		const request = response.request();
+		const body = request.postData() ?? "";
+		return request.method() === "POST" && body.includes(adCap) && body.includes("260");
+	});
 	await page.locator("#lim-ads").fill("260");
+	await written;
 	await expectStored(accountId, adCap, 260);
 	await expect.poll(async () => (await fenceState(page)).pending).not.toContain(first.current);
 	await expect.poll(async () => (await fenceState(page)).pending).not.toContain(second.current);
@@ -317,96 +322,24 @@ test("two reloads before a write retire a held request", async ({ page, workspac
 	await expectStored(accountId, adCap, 260);
 });
 
-test("duplicated tabs write at once and neither new write is superseded", async ({
+test("a duplicated tab released first still lets the original write win", async ({
 	page,
 	workspaceUser,
 	accountId,
 }) => {
-	test.setTimeout(90_000);
+	test.setTimeout(120_000);
 	await openRules(page, workspaceUser);
-	const stored = await page.evaluate((key) => sessionStorage.getItem(key), fenceStorageKey);
-	if (!stored) {
-		throw new Error("The tab fence was not stored.");
-	}
-	const oldId = (JSON.parse(stored) as { current: string }).current;
-	const second = await page.context().newPage();
-	const third = await page.context().newPage();
-	const held: Route[] = [];
-	const watch = async (route: Route) => {
-		const request = route.request();
-		if (request.method() === "POST" && (request.postData() ?? "").includes(adCap)) {
-			held.push(route);
-			return;
-		}
-		await route.continue();
-	};
-	try {
-		await second.addInitScript(
-			([key, value]) => {
-				sessionStorage.setItem(key, value);
-			},
-			[fenceStorageKey, stored] as const,
-		);
-		await third.addInitScript(
-			([key, value]) => {
-				sessionStorage.setItem(key, value);
-			},
-			[fenceStorageKey, stored] as const,
-		);
-		await second.route("**/*", watch);
-		await third.route("**/*", watch);
-		await second.goto("/rules");
-		await third.goto("/rules");
-		await whenSliderReady(second);
-		await whenSliderReady(third);
-		const left = await fenceState(second);
-		const right = await fenceState(third);
-		expect(left.current).not.toBe(right.current);
-		expect(left.current).not.toBe(oldId);
-		expect(right.current).not.toBe(oldId);
-		expect(left.pending).toContain(oldId);
-		expect(right.pending).toContain(oldId);
-		await second.locator("#lim-ads").fill("240");
-		await expect.poll(() => held.length).toBe(1);
-		await third.locator("#lim-ads").fill("260");
-		await expect.poll(() => held.length).toBe(2);
-		const early = held[0];
-		const later = held[1];
-		if (!early || !later) {
-			throw new Error("The duplicate writes were not held.");
-		}
-		const earlyBody = early.request().postData() ?? "";
-		const laterBody = later.request().postData() ?? "";
-		expect(earlyBody).toContain(left.current);
-		expect(earlyBody).toContain(oldId);
-		expect(earlyBody).not.toContain(right.current);
-		expect(laterBody).toContain(right.current);
-		expect(laterBody).toContain(oldId);
-		expect(laterBody).not.toContain(left.current);
-		await settle(early);
-		await expectStored(accountId, adCap, 240);
-		await settle(later);
-		await expectStored(accountId, adCap, 260);
-	} finally {
-		await second.close();
-		await third.close();
-	}
-	const replay = await page.evaluate(
-		async ({ fencePath, rulesPath, key }) => {
-			const fence = await import(fencePath);
-			const api = await import(rulesPath);
-			const stamp = fence.nextWriteFence();
-			const body = await api.setRuleLimit({
-				data: { key, value: 280, tab: stamp.tab, seq: stamp.seq, retires: stamp.retires },
-			});
-			return { status: body.status, value: body.row.value, tab: stamp.tab };
-		},
-		{ fencePath: fenceModule, rulesPath: rulesServerModule, key: adCap },
-	);
-	expect(replay.tab).toBe(oldId);
-	expect(replay.status).toBe("superseded");
-	expect(replay.value).toBe(260);
-	await expectStored(accountId, adCap, 260);
+	await releaseDuplicate(page, accountId, "duplicate-first");
+});
+
+test("an original tab released first still lets the duplicate write win", async ({
+	page,
+	workspaceUser,
+	accountId,
+}) => {
+	test.setTimeout(120_000);
+	await openRules(page, workspaceUser);
+	await releaseDuplicate(page, accountId, "original-first");
 });
 
 test("storage off keeps a fresh id and retires nothing", async ({ page }) => {
@@ -444,14 +377,165 @@ test("storage off keeps a fresh id and retires nothing", async ({ page }) => {
 });
 
 async function fenceState(page: Page) {
-	return page.evaluate((key) => {
-		const raw = sessionStorage.getItem(key);
-		if (!raw) {
-			throw new Error("The tab fence was not stored.");
-		}
-		return JSON.parse(raw) as { current: string; pending: string[] };
-	}, fenceStorageKey);
+	return page.evaluate(
+		async ({ key, specifier }) => {
+			const raw = sessionStorage.getItem(key);
+			if (!raw) {
+				throw new Error("The tab fence was not stored.");
+			}
+			const stored = JSON.parse(raw) as { current?: string; pending?: string[] };
+			if (stored.current) {
+				throw new Error("The live tab id is in sessionStorage.");
+			}
+			const fence = await import(specifier);
+			const stamp = fence.nextWriteFence() as { tab: string; retires: string[] };
+			return { current: stamp.tab as string, pending: stored.pending ?? [] };
+		},
+		{ key: fenceStorageKey, specifier: fenceModule },
+	);
 }
+
+async function releaseDuplicate(page: Page, accountId: string, order: "duplicate-first" | "original-first") {
+	const original = await fenceState(page);
+	const stored = await page.evaluate((key) => sessionStorage.getItem(key), fenceStorageKey);
+	if (!stored) {
+		throw new Error("The tab fence was not stored.");
+	}
+	const parsed = JSON.parse(stored) as { current?: string; pending?: string[] };
+	expect(parsed.current).toBeUndefined();
+	expect(parsed.pending ?? []).not.toContain(original.current);
+	const duplicate = await page.context().newPage();
+	const held: Route[] = [];
+	const watch = async (route: Route) => {
+		const request = route.request();
+		if (request.method() === "POST" && (request.postData() ?? "").includes(adCap)) {
+			held.push(route);
+			return;
+		}
+		await route.continue();
+	};
+	try {
+		await duplicate.addInitScript(
+			([key, value]) => {
+				sessionStorage.setItem(key, value);
+			},
+			[fenceStorageKey, stored] as const,
+		);
+		await duplicate.route("**/*", watch);
+		await duplicate.goto("/rules");
+		await whenSliderReady(duplicate);
+		const copy = await fenceState(duplicate);
+		expect(copy.current).not.toBe(original.current);
+		expect(copy.pending).not.toContain(original.current);
+		await page.route("**/*", watch);
+		await page.locator("#lim-ads").fill("260");
+		await duplicate.locator("#lim-ads").fill("240");
+		await expect.poll(() => held.length).toBe(2);
+		const originalRoute = held.find((route) => (route.request().postData() ?? "").includes(original.current));
+		const duplicateRoute = held.find((route) => (route.request().postData() ?? "").includes(copy.current));
+		if (!originalRoute || !duplicateRoute) {
+			throw new Error("The duplicate writes were not held.");
+		}
+		const originalBody = originalRoute.request().postData() ?? "";
+		const duplicateBody = duplicateRoute.request().postData() ?? "";
+		expect(originalBody).not.toContain(copy.current);
+		expect(duplicateBody).not.toContain(original.current);
+		const first = order === "duplicate-first" ? duplicateRoute : originalRoute;
+		const second = order === "duplicate-first" ? originalRoute : duplicateRoute;
+		const firstValue = order === "duplicate-first" ? 240 : 260;
+		const secondValue = order === "duplicate-first" ? 260 : 240;
+		await settle(first);
+		await expectStored(accountId, adCap, firstValue);
+		await settle(second);
+		await expectStored(accountId, adCap, secondValue);
+	} finally {
+		await page.unroute("**/*");
+		await duplicate.close();
+	}
+}
+
+test("a stored list longer than eight keeps the newest eight", async ({ page }) => {
+	const ids = Array.from({ length: 9 }, (_, index) => `old-tab-${index}`);
+	await page.addInitScript(
+		([key, value]) => {
+			sessionStorage.setItem(key, value);
+		},
+		[fenceStorageKey, JSON.stringify({ pending: ids })] as const,
+	);
+	await page.goto("/rules");
+	const state = await page.evaluate(async (specifier) => {
+		const fence = await import(specifier);
+		const stamp = fence.nextWriteFence() as { retires: string[] };
+		const stored = JSON.parse(sessionStorage.getItem("tensquads.writeFence") ?? "{}") as {
+			pending?: string[];
+			current?: string;
+		};
+		return { retires: stamp.retires, pending: stored.pending ?? [], current: stored.current };
+	}, fenceModule);
+	expect(state.retires).toEqual(ids.slice(1));
+	expect(state.pending).toEqual(ids.slice(1));
+	expect(state.current).toBeUndefined();
+	expect(state.retires).not.toContain("old-tab-0");
+});
+
+test("pagehide records the live id and a restored page takes a fresh one", async ({ page }) => {
+	await page.goto("/rules");
+	const before = await page.evaluate(async (specifier) => {
+		const fence = await import(specifier);
+		const stamp = fence.nextWriteFence() as { tab: string };
+		return { tab: stamp.tab, raw: sessionStorage.getItem("tensquads.writeFence") ?? "" };
+	}, fenceModule);
+	expect(before.raw).not.toContain(before.tab);
+	await page.evaluate(() => {
+		window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true }));
+	});
+	const hidden = await page.evaluate((tab) => {
+		const raw = sessionStorage.getItem("tensquads.writeFence") ?? "";
+		return { has: raw.includes(tab), current: raw.includes('"current"') };
+	}, before.tab);
+	expect(hidden.has).toBe(true);
+	expect(hidden.current).toBe(false);
+	const after = await page.evaluate(async (specifier) => {
+		window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
+		const fence = await import(specifier);
+		const stamp = fence.nextWriteFence() as { tab: string; retires: string[] };
+		const stored = JSON.parse(sessionStorage.getItem("tensquads.writeFence") ?? "{}") as {
+			current?: string;
+			pending?: string[];
+		};
+		return { tab: stamp.tab, retires: stamp.retires, stored };
+	}, fenceModule);
+	expect(after.tab).not.toBe(before.tab);
+	expect(after.retires).toContain(before.tab);
+	expect(after.stored.current).toBeUndefined();
+	expect(after.stored.pending ?? []).toContain(before.tab);
+	expect(after.stored.pending ?? []).not.toContain(after.tab);
+});
+
+test("a cancelled navigation does not retire the live id", async ({ page }) => {
+	await page.goto("/rules");
+	const tab = await page.evaluate(async (specifier) => {
+		const fence = await import(specifier);
+		return (fence.nextWriteFence() as { tab: string }).tab;
+	}, fenceModule);
+	await page.evaluate(() => {
+		window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: false }));
+		window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: false }));
+	});
+	const after = await page.evaluate(async (specifier) => {
+		const fence = await import(specifier);
+		const stamp = fence.nextWriteFence() as { tab: string; retires: string[] };
+		const stored = JSON.parse(sessionStorage.getItem("tensquads.writeFence") ?? "{}") as {
+			pending?: string[];
+			current?: string;
+		};
+		return { tab: stamp.tab, pending: stored.pending ?? [], current: stored.current, retires: stamp.retires };
+	}, fenceModule);
+	expect(after.tab).toBe(tab);
+	expect(after.pending).not.toContain(tab);
+	expect(after.retires).not.toContain(tab);
+	expect(after.current).toBeUndefined();
+});
 
 async function whenSliderReady(page: Page) {
 	await page.waitForFunction(() => {

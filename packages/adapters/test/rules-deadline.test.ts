@@ -11,8 +11,7 @@ import { openPostgres } from "../src/neon/postgres.ts";
 import { PENDING_TASK_WINDOW_MS } from "../src/pending-window.ts";
 
 const connection = process.env.TEST_DATABASE_URL ?? "";
-const lockKey = "SELECT pg_try_advisory_lock(1952804467, 1)";
-const unlockKey = "SELECT pg_advisory_unlock(1952804467, 1)";
+const fenceLockClass = 1952804468;
 const adCap = "policy.daily_ad_cap";
 
 function delay(ms: number): Promise<void> {
@@ -50,13 +49,33 @@ async function retryLockWait<T>(run: () => Promise<T>): Promise<T> {
 	}
 }
 
-async function holdLock(client: PoolClient): Promise<void> {
+async function holdAccountLock(client: PoolClient, accountId: string): Promise<void> {
 	const deadline = Date.now() + 90_000;
 	for (;;) {
-		const acquired = await client.query<{ pg_try_advisory_lock: boolean }>(lockKey);
+		const acquired = await client.query<{ pg_try_advisory_lock: boolean }>(
+			"SELECT pg_try_advisory_lock($1, hashtext($2))",
+			[fenceLockClass, accountId],
+		);
 		if (acquired.rows[0]?.pg_try_advisory_lock) return;
-		if (Date.now() >= deadline) throw new Error("the workspace lock stayed busy");
+		if (Date.now() >= deadline) throw new Error("the account fence lock stayed busy");
 		await delay(250);
+	}
+}
+
+async function releaseAccountLock(client: PoolClient, accountId: string): Promise<void> {
+	await client.query("SELECT pg_advisory_unlock($1, hashtext($2))", [fenceLockClass, accountId]);
+}
+
+async function waitForFenceWait(client: PoolClient): Promise<void> {
+	const deadline = Date.now() + 10_000;
+	for (;;) {
+		const waiting = await client.query<{ n: number }>(
+			"SELECT count(*)::int AS n FROM pg_locks WHERE locktype = 'advisory' AND classid = $1 AND NOT granted",
+			[fenceLockClass],
+		);
+		if ((waiting.rows[0]?.n ?? 0) > 0) return;
+		if (Date.now() >= deadline) throw new Error("the account write did not wait on its fence lock");
+		await delay(50);
 	}
 }
 
@@ -97,7 +116,7 @@ test("a late ad-cap write commits nothing after the deadline", {
 		const repositories = createRepositories(opened.db);
 		const kernel = new Kernel(repositories);
 		assert.equal((await repositories.bus.readStore(scope))[adCap], 200);
-		await holdLock(client);
+		await holdAccountLock(client, accountId);
 		locked = true;
 		let settled = "pending";
 		const write = kernel.setLimit(scope, adCap, 240, { tab: "deadline", seq: 1 }).then(
@@ -112,18 +131,75 @@ test("a late ad-cap write commits nothing after the deadline", {
 			write.then(() => settled),
 			delay(PENDING_TASK_WINDOW_MS + 2_000).then(() => "waiting"),
 		]);
-		await client.query(unlockKey);
+		await releaseAccountLock(client, accountId);
 		locked = false;
 		if (raced === "waiting") await write;
 		const store = await repositories.bus.readStore(scope);
 		assert.equal(store[adCap], 200);
 		assert.equal(settled, "rejected");
 	} finally {
-		if (locked) await client.query(unlockKey).catch(() => undefined);
+		if (locked) await releaseAccountLock(client, accountId).catch(() => undefined);
 		client.release();
 		await holder.end();
 		await removeAccount(opened.db, accountId);
 		await opened.close();
+	}
+});
+
+test("two accounts write at once and neither waits on the other", {
+	timeout: 120_000,
+	skip: connection.length === 0,
+}, async () => {
+	refuseProduction();
+	const suffix = randomBytes(4).toString("hex");
+	const accountA = `rules-lock-a-${suffix}`;
+	const accountB = `rules-lock-b-${suffix}`;
+	const openedA = openPostgres(connection);
+	const openedB = openPostgres(connection);
+	await openedA.migrate();
+	const holder = new Pool({ connectionString: connection, max: 1 });
+	const client = await holder.connect();
+	let locked = false;
+	try {
+		await retryLockWait(() => replaceDemoAccount(openedA.db, accountA, `clerk-a-${suffix}`));
+		await retryLockWait(() => replaceDemoAccount(openedB.db, accountB, `clerk-b-${suffix}`));
+		const scopeA = { accountId: accountA, mode: "account" as const };
+		const scopeB = { accountId: accountB, mode: "account" as const };
+		const kernelA = new Kernel(createRepositories(openedA.db));
+		const kernelB = new Kernel(createRepositories(openedB.db));
+		await holdAccountLock(client, accountA);
+		locked = true;
+		let settledA = "pending";
+		const writeA = kernelA.setLimit(scopeA, adCap, 240, { tab: "account-a", seq: 1 }).then(
+			() => {
+				settledA = "committed";
+			},
+			() => {
+				settledA = "rejected";
+			},
+		);
+		await waitForFenceWait(client);
+		const started = Date.now();
+		const resultB = await kernelB.setLimit(scopeB, adCap, 260, { tab: "account-b", seq: 1 });
+		const elapsed = Date.now() - started;
+		assert.equal(resultB.status, "written");
+		assert.equal(resultB.row.value, 260);
+		assert.ok(elapsed < 4_000, `account B waited ${elapsed}ms`);
+		assert.equal(settledA, "pending");
+		await releaseAccountLock(client, accountA);
+		locked = false;
+		await writeA;
+		assert.equal(settledA, "committed");
+		assert.equal((await createRepositories(openedA.db).bus.readStore(scopeA))[adCap], 240);
+		assert.equal((await createRepositories(openedB.db).bus.readStore(scopeB))[adCap], 260);
+	} finally {
+		if (locked) await releaseAccountLock(client, accountA).catch(() => undefined);
+		client.release();
+		await holder.end();
+		await removeAccount(openedA.db, accountA);
+		await removeAccount(openedA.db, accountB);
+		await openedA.close();
+		await openedB.close();
 	}
 });
 

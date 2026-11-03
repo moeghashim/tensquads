@@ -28,6 +28,7 @@ function remainingWindow(deadlineAt: number | undefined): { readonly absolute: n
 
 async function writeWithin<T>(
 	db: AppDatabase,
+	accountId: string,
 	deadlineAt: number | undefined,
 	work: (tx: Tx) => Promise<T>,
 ): Promise<T> {
@@ -38,7 +39,7 @@ async function writeWithin<T>(
 			constrainDeadline(window.absolute);
 			return work(tx);
 		},
-		{ deadlineMs: window.deadlineMs },
+		{ deadlineMs: window.deadlineMs, accountId },
 	);
 }
 
@@ -60,7 +61,7 @@ export async function setRuleOn(
 ): Promise<Fenced<Rule>> {
 	const accountId = accountIdOf(scope);
 	const planned = planRuleOn(on);
-	return writeWithin(db, deadlineAt, async (tx) => {
+	return writeWithin(db, accountId, deadlineAt, async (tx) => {
 		const claimed = await claimWriteFence(tx, accountId, id, fence);
 		if (!claimed) {
 			return { status: "superseded", row: await readRule(tx, accountId, id) };
@@ -95,7 +96,7 @@ export async function addRule(
 		return null;
 	}
 	const accountId = accountIdOf(scope);
-	return writeWithin(db, deadlineAt, async (tx) => {
+	return writeWithin(db, accountId, deadlineAt, async (tx) => {
 		const id = await insertRule(tx, accountId, planned);
 		return readRule(tx, accountId, id);
 	});
@@ -138,7 +139,7 @@ export async function setLimit(
 		throw new Error("The limit is not valid.");
 	}
 	const accountId = accountIdOf(scope);
-	return writeWithin(db, deadlineAt, async (tx) => {
+	return writeWithin(db, accountId, deadlineAt, async (tx) => {
 		const claimed = await claimWriteFence(tx, accountId, planned.key, fence);
 		if (!claimed) {
 			return { status: "superseded", row: await readLimit(tx, accountId, planned.key) };

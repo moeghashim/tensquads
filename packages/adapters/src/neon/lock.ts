@@ -7,11 +7,18 @@ type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 // The migration takes this lock. A test reset waits for it, so the two cannot deadlock.
 const workspaceLock = sql`SELECT pg_advisory_xact_lock(1952804467, 1)`;
 
+// A rules write takes this lock instead of the migration lock. The class differs, so one
+// account does not wait on another account, a chat send, or a migration.
+function accountFenceLock(accountId: string) {
+	return sql`SELECT pg_advisory_xact_lock(1952804468, hashtext(${accountId}))`;
+}
+
 const sendAttempts = 3;
 const unfinished = "The workspace write did not finish.";
 
 export interface WorkspaceTransactionOptions {
 	readonly deadlineMs: number;
+	readonly accountId?: string;
 }
 
 interface SendBound {
@@ -27,8 +34,9 @@ export async function workspaceTransaction<T>(
 	options?: WorkspaceTransactionOptions,
 ): Promise<T> {
 	const bound = sendBound(options);
+	const accountId = options?.accountId;
 	for (let attempt = 1; attempt <= sendAttempts; attempt++) {
-		const finished = await tryAttempt(db, run, bound, attempt);
+		const finished = await tryAttempt(db, run, bound, attempt, accountId);
 		if (finished) {
 			return finished.value;
 		}
@@ -62,12 +70,13 @@ async function tryAttempt<T>(
 	run: WorkspaceWork<T>,
 	bound: SendBound | undefined,
 	attempt: number,
+	accountId: string | undefined,
 ): Promise<{ readonly value: T } | undefined> {
 	if (!retryFits(bound, attempt)) {
 		throw new Error(unfinished);
 	}
 	try {
-		return { value: await runAttempt(db, run, bound) };
+		return { value: await runAttempt(db, run, bound, accountId) };
 	} catch (error) {
 		rethrowUnlessRetry(error, attempt);
 		return undefined;
@@ -83,10 +92,15 @@ function rethrowUnlessRetry(error: unknown, attempt: number): void {
 	}
 }
 
-async function runAttempt<T>(db: AppDatabase, run: WorkspaceWork<T>, bound: SendBound | undefined): Promise<T> {
+async function runAttempt<T>(
+	db: AppDatabase,
+	run: WorkspaceWork<T>,
+	bound: SendBound | undefined,
+	accountId: string | undefined,
+): Promise<T> {
 	return db.transaction(async (tx) => {
 		await armSend(tx, bound);
-		await tx.execute(workspaceLock);
+		await tx.execute(accountId ? accountFenceLock(accountId) : workspaceLock);
 		const value = await run(tx, (deadline) => {
 			if (bound) bound.deadline = Math.min(bound.deadline, deadline);
 		});
