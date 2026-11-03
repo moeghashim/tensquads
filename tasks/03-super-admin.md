@@ -67,12 +67,12 @@ The workspace routes do not change. A row click opens `/overview`, as `open: go(
 15. Add the screenshot comparison at 1440 px and the 390 px check for both screens, with the method task 01 uses. Inside the table boxes the horizontal scroll stays: `min-width: 1360px` and `min-width: 720px`.
 16. Add the inventory comparison as item 18 says.
 17. Deploy to the Cloudflare preview. Apply the migration to the Neon database in `.env`. Check that `/admin` and `/admin/images` send a visitor with no session to `/signin`.
-18. Write the final report at the path in item 20. It lists: each decision 1 to 28 and its answer; each control that does nothing, from all merged pull requests and this one; each approved difference from the design, and who approved it. Include each word difference below. Nothing else can ship as a difference.
+18. Write the final report at the path in item 20. It lists: each decision and its answer from the Decisions table in `docs/PLAN.md`; each control that does nothing, from all merged pull requests and this one; each approved difference from the design, and who approved it. Include each word difference below. Nothing else can ship as a difference.
 19. Append one line to `progress.md` with the commit script.
 
 ### Report these differences in the pull request and the final report
 
-The design wins for what a screen shows. Do not change the design, the plan or the brief.
+Follow the source precedence in `AGENTS.md`, including the decision exceptions. Do not change the design, the plan or the brief.
 
 - The brief says "Accounts", "All accounts" and "Agent images". The design says "Companies", "All companies" and "Squad images". The design also keeps "accounts" in `aria-label` values, in the `<title>` of each wrapper, and in "34 accounts" and "reported by 5 accounts".
 - The brief says 8 tiles. The design has 6 on screen 9.
@@ -94,7 +94,7 @@ The design wins for what a screen shows. Do not change the design, the plan or t
 - [ ] A special session gives the target account's scope to a super admin and to nobody else, proved by tests
 - [ ] A row click opens that account's workspace. The test proves no other account's data shows
 - [ ] `packages/statecharts/image-release/chart.mmd` exists and TLC reports no broken rule
-- [ ] The final report exists, and it lists all 32 decisions
+- [ ] The final report exists, and it lists every decision in `docs/PLAN.md`
 - [ ] The nine seed numbers still pass, including Tasks done 331
 - [ ] Moe's steps in step 2 are done, or listed as open in the pull request
 - [ ] `node scripts/design-check.mjs` returns 0
