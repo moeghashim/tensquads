@@ -102,6 +102,7 @@ testSerial("any other signed-out answer needs a refresh and grants nothing", asy
 		"session-token-but-no-client-uat",
 		"session-token-iat-before-client-uat",
 		"dev-browser-missing",
+		"token-invalid-authorized-parties",
 		null,
 	];
 	for (const reason of reasons) {

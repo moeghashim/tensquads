@@ -56,6 +56,77 @@ test("a signed-out client with an unexpired session cookie opens sign-in", async
 	await expect(page).toHaveTitle("Sign in", settled);
 });
 
+test("Tab during a token refresh still reloads once", async ({ page, workspaceUser }) => {
+	test.setTimeout(90_000);
+	await openWorkspace(page, workspaceUser);
+	await watchRefresh(page);
+	await holdFreshToken(page);
+	await failWorkspaceFrame(page, 1);
+	await page
+		.getByRole("navigation", { name: "Workspace" })
+		.getByRole("button", { name: "Squads", exact: true })
+		.click();
+	await expect.poll(() => tokenWaiting(page), settled).toBe(true);
+	await page.keyboard.press("Tab");
+	await page.mouse.move(12, 24);
+	await releaseFreshToken(page);
+	await expect.poll(() => refreshCounts(page), settled).toEqual({ reloads: 1, freshTokens: 1 });
+	await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible(settled);
+	await expect(page.getByText("Something went wrong!")).toHaveCount(0);
+	await expect(page).not.toHaveURL(/\/signin/, settled);
+});
+
+test("browser Back starts a new refresh", async ({ page, workspaceUser }) => {
+	test.setTimeout(90_000);
+	await openWorkspace(page, workspaceUser);
+	await watchRefresh(page);
+	await failWorkspaceFrame(page, 1);
+	await page
+		.getByRole("navigation", { name: "Workspace" })
+		.getByRole("button", { name: "Squads", exact: true })
+		.click();
+	await expect.poll(() => refreshCounts(page), settled).toEqual({ reloads: 1, freshTokens: 1 });
+	await expect(page).toHaveURL(/\/agents$/, settled);
+	await expect(page.getByRole("heading", { name: "Squads", exact: true })).toBeVisible(settled);
+	await page.unroute(/\/_serverFn\//);
+	await failWorkspaceFrame(page, 1);
+	await page.goBack({ waitUntil: "commit", timeout: 15_000 });
+	await expect.poll(() => refreshCounts(page), settled).toEqual({ reloads: 2, freshTokens: 2 });
+	await expect(page).toHaveURL(/\/overview$/, settled);
+	await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible(settled);
+});
+
+test("browser Forward starts a new refresh", async ({ page, workspaceUser }) => {
+	test.setTimeout(90_000);
+	await openWorkspace(page, workspaceUser);
+	await watchRefresh(page);
+	await page
+		.getByRole("navigation", { name: "Workspace" })
+		.getByRole("button", { name: "Squads", exact: true })
+		.click();
+	await expect(page).toHaveURL(/\/agents$/, settled);
+	await expect(page.getByRole("heading", { name: "Squads", exact: true })).toBeVisible(settled);
+	await page.goBack({ waitUntil: "commit", timeout: 15_000 });
+	await expect(page).toHaveURL(/\/overview$/, settled);
+	await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible(settled);
+	await expect.poll(() => routerStatus(page), settled).toBe("idle");
+	await expect.poll(() => refreshCounts(page), settled).toEqual({ reloads: 0, freshTokens: 0 });
+	// Spend the open allowance on this page. A reload is not a new navigation.
+	await failWorkspaceFrame(page, 1);
+	await reloadCachedRoutes(page);
+	await expect.poll(() => refreshCounts(page), settled).toEqual({ reloads: 2, freshTokens: 1 });
+	await expect(page).toHaveURL(/\/overview$/, settled);
+	await expect.poll(() => routerStatus(page), settled).toBe("idle");
+	await page.unroute(/\/_serverFn\//);
+	// The recovery reloaded this page and left the cached Squads match fresh.
+	await markRouteCacheStale(page);
+	await failWorkspaceFrame(page, 1);
+	await page.goForward({ waitUntil: "commit", timeout: 15_000 });
+	await expect.poll(() => refreshCounts(page), settled).toEqual({ reloads: 3, freshTokens: 2 });
+	await expect(page).toHaveURL(/\/agents$/, settled);
+	await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible(settled);
+});
+
 function serverFnExport(url: string): string {
 	const id = new URL(url).pathname.split("/").pop() ?? "";
 	try {
@@ -148,6 +219,70 @@ async function watchRefresh(page: Page, rejectFreshToken = false) {
 			return getToken(options);
 		};
 	}, rejectFreshToken);
+}
+
+async function holdFreshToken(page: Page) {
+	await page.evaluate(() => {
+		const browser = window as Window & {
+			__releaseToken?: () => void;
+			__tokenWaiting?: boolean;
+			Clerk?: {
+				session?: {
+					getToken: (options?: { skipCache?: boolean }) => Promise<string | null>;
+				} | null;
+			};
+		};
+		const session = browser.Clerk?.session;
+		if (!session) throw new Error("The signed-in workspace is not ready.");
+		const getToken = session.getToken.bind(session);
+		session.getToken = (options) => {
+			if (options?.skipCache !== true) return getToken(options);
+			browser.__tokenWaiting = true;
+			return new Promise((resolve, reject) => {
+				browser.__releaseToken = () => {
+					void getToken(options).then(resolve, reject);
+				};
+			});
+		};
+	});
+}
+
+async function tokenWaiting(page: Page) {
+	return page.evaluate(() => Boolean((window as Window & { __tokenWaiting?: boolean }).__tokenWaiting));
+}
+
+async function releaseFreshToken(page: Page) {
+	await page.evaluate(() => {
+		const release = (window as Window & { __releaseToken?: () => void }).__releaseToken;
+		if (!release) throw new Error("The token refresh is not waiting.");
+		release();
+	});
+}
+
+async function routerStatus(page: Page) {
+	return page.evaluate(() => {
+		const router = (window as Window & { __TSR_ROUTER__?: { stores?: { status?: { get(): string } } } })
+			.__TSR_ROUTER__;
+		return router?.stores?.status?.get() ?? "";
+	});
+}
+
+async function reloadCachedRoutes(page: Page) {
+	await page.evaluate(async () => {
+		const router = (window as Window & { __TSR_ROUTER__?: { invalidate: () => Promise<unknown> } }).__TSR_ROUTER__;
+		if (!router) throw new Error("The router is missing.");
+		await router.invalidate();
+	});
+}
+
+async function markRouteCacheStale(page: Page) {
+	await page.evaluate(() => {
+		const router = (window as Window & { __TSR_ROUTER__?: { _cache?: Map<string, { invalid?: boolean }> } })
+			.__TSR_ROUTER__;
+		const cache = router?._cache;
+		if (!cache || cache.size === 0) throw new Error("The route cache is missing.");
+		for (const match of cache.values()) match.invalid = true;
+	});
 }
 
 async function refreshCounts(page: Page) {

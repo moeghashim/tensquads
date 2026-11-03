@@ -12,14 +12,13 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 	let spent = false;
 	let signingIn = false;
 	let wave: Promise<void> | null = null;
+	let waveGeneration = -1;
 	let waveIds = new Set<number>();
 	const open = new Set<number>();
 
 	function noteAction(): void {
 		generation += 1;
 		spent = false;
-		wave = null;
-		waveIds = new Set();
 		signingIn = false;
 	}
 
@@ -42,8 +41,8 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 
 	async function finish(error: unknown, method: string, id: number): Promise<void> {
 		if (!isSessionRefreshNeeded(error) || method !== "GET") return;
-		if (wave && !spent) waveIds.add(id);
-		if (wave && waveIds.has(id)) {
+		if (wave && waveGeneration === generation && !spent) waveIds.add(id);
+		if (wave && waveGeneration === generation && waveIds.has(id)) {
 			const seen = generation;
 			try {
 				await wave;
@@ -75,23 +74,24 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 			};
 		});
 		wave = pending;
+		waveGeneration = seen;
 		void (async () => {
 			try {
 				const token = await deps.token();
-				// A click or keypress during the token read cancels this wave.
-				if (seen !== generation) {
-					settle();
-					return;
-				}
 				if (typeof token !== "string" || token.length === 0) {
 					throw new Error("The session token is missing.");
 				}
-				for (const current of open) waveIds.add(current);
-				spent = true;
+				// A newer action keeps its own allowance. This recovery still reloads.
+				if (seen === generation) {
+					for (const current of open) waveIds.add(current);
+					spent = true;
+				}
 				deps.reload();
 				settle();
 			} catch (error) {
 				settle(error);
+			} finally {
+				if (wave === pending) wave = null;
 			}
 		})();
 		return pending;

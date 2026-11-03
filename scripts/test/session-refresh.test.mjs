@@ -103,14 +103,26 @@ test("a write is not replayed", async () => {
 	assert.deepEqual(calls, { token: 0, reload: 0, signIn: 0 });
 });
 
-test("the next action may refresh once", async () => {
+test("a new action during the token read still lets that recovery reload", async () => {
 	const { calls, refresh, setToken } = harness(async () => {
 		refresh.noteAction();
 		return "fresh-token";
 	});
 	await refresh.finish(needed(), "GET", refresh.begin());
-	assert.deepEqual(calls, { token: 1, reload: 0, signIn: 0 });
+	assert.deepEqual(calls, { token: 1, reload: 1, signIn: 0 });
 	setToken(async () => "fresh-token");
 	await refresh.finish(needed(), "GET", refresh.begin());
-	assert.deepEqual(calls, { token: 2, reload: 1, signIn: 0 });
+	assert.deepEqual(calls, { token: 2, reload: 2, signIn: 0 });
+	await refresh.finish(needed(), "GET", refresh.begin());
+	assert.deepEqual(calls, { token: 2, reload: 2, signIn: 1 });
+});
+
+test("a new action after a refresh may refresh once", async () => {
+	const { calls, refresh } = harness();
+	await refresh.finish(needed(), "GET", refresh.begin());
+	refresh.noteAction();
+	await refresh.finish(needed(), "GET", refresh.begin());
+	assert.deepEqual(calls, { token: 2, reload: 2, signIn: 0 });
+	await refresh.finish(needed(), "GET", refresh.begin());
+	assert.deepEqual(calls, { token: 2, reload: 2, signIn: 1 });
 });

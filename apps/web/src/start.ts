@@ -1,6 +1,8 @@
 import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
 import { createCsrfMiddleware, createMiddleware, createStart } from "@tanstack/react-start";
 
+import { authorizedParties } from "#/server/authorized-parties.ts";
+
 const csrf = createCsrfMiddleware({
 	filter: (ctx) => ctx.handlerType === "serverFn",
 });
@@ -27,6 +29,6 @@ function loadSessionRefresh() {
 
 export const startInstance = createStart(() => {
 	const secret = process.env.CLERK_SECRET_KEY ?? "";
-	const requestMiddleware = secret.length > 0 ? [csrf, clerkMiddleware()] : [csrf];
+	const requestMiddleware = secret.length > 0 ? [csrf, clerkMiddleware({ authorizedParties })] : [csrf];
 	return { requestMiddleware, functionMiddleware: [sessionRefresh] };
 });

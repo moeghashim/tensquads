@@ -9,9 +9,16 @@ const refresh = createSessionRefresh({
 });
 
 let listening = false;
+let ignoreNavigation = false;
+let armed = false;
+let armStamp = 0;
 
 export function beginSessionRead(): number {
 	listenForNextAction();
+	if (armed) {
+		armed = false;
+		refresh.noteAction();
+	}
 	return refresh.begin();
 }
 
@@ -26,11 +33,33 @@ export async function finishSessionRead(error: unknown, method: string, requestI
 function listenForNextAction(): void {
 	if (listening || typeof window === "undefined") return;
 	listening = true;
-	const reset = () => {
+	window.addEventListener("click", armUserRequest, true);
+	void listenToRouter();
+}
+
+// A click arms the next server call in this turn. A later poll keeps the current allowance.
+function armUserRequest(): void {
+	armed = true;
+	const stamp = ++armStamp;
+	setTimeout(() => {
+		if (armStamp === stamp) armed = false;
+	}, 0);
+}
+
+async function listenToRouter(): Promise<void> {
+	const router = await getRouterInstance();
+	let previous = locationKey(router.history.location);
+	router.history.subscribe((event) => {
+		const next = locationKey(event.location);
+		const changed = next !== previous;
+		previous = next;
+		if (!changed || ignoreNavigation) return;
 		refresh.noteAction();
-	};
-	window.addEventListener("pointerdown", reset, true);
-	window.addEventListener("keydown", reset, true);
+	});
+}
+
+function locationKey(location: { pathname: string; search: string }): string {
+	return `${location.pathname}${location.search}`;
 }
 
 function reloadOnce(): void {
@@ -44,7 +73,12 @@ async function reloadRouter(): Promise<void> {
 
 async function goToSignIn(): Promise<void> {
 	const router = await getRouterInstance();
-	await router.navigate({ to: "/signin" });
+	ignoreNavigation = true;
+	try {
+		await router.navigate({ to: "/signin" });
+	} finally {
+		ignoreNavigation = false;
+	}
 }
 
 interface ClerkTokenSession {
