@@ -1,6 +1,6 @@
 // The character belongs to the agent image. A customer cannot rename it.
 // `role` is the label on the review sheet. Petra keeps "Master" there so the sheet stays the same.
-// `roleTag` is the product tag. Petra has none.
+// `roleTag` is the product tag. Petra's tag is "Master". A screen shows Petra as the name.
 
 export const AGENT_LOOP_STATES = [
 	{ id: "waiting", label: "Waiting", hint: "Nothing to do now. Blinks slowly." },
@@ -46,7 +46,7 @@ export const SQUADMATES = [
 		id: "master",
 		name: "Petra",
 		place: "Petra, Jordan",
-		roleTag: null,
+		roleTag: "Master",
 		role: "Master",
 		tint: "#e8e8e8",
 		body: "#1f1f1f",

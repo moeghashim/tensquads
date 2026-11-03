@@ -12,7 +12,7 @@ import {
 } from "../src/index.ts";
 
 const TASK_TABLE: readonly (readonly [string, string, string, string | null])[] = [
-	["master", "Petra", "Petra, Jordan", null],
+	["master", "Petra", "Petra, Jordan", "Master"],
 	["orders", "Pisa", "Pisa, Italy", "Orders"],
 	["support", "Kyoto", "Kyoto, Japan", "Support"],
 	["marketing", "Rio", "Rio de Janeiro, Brazil", "Marketing"],
