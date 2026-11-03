@@ -7,7 +7,7 @@
 # Test info
 
 - Name: agent-detail.spec.ts >> a ticket session switch keeps the agent route isolated from held account responses
-- Location: e2e/agent-detail.spec.ts:1138:1
+- Location: e2e/agent-detail.spec.ts:1200:1
 
 # Error details
 

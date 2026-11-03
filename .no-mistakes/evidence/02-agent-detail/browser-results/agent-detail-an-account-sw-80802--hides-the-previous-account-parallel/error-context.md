@@ -7,7 +7,7 @@
 # Test info
 
 - Name: agent-detail.spec.ts >> an account switch on the mounted agent route hides the previous account
-- Location: e2e/agent-detail.spec.ts:1029:1
+- Location: e2e/agent-detail.spec.ts:1091:1
 
 # Error details
 
