@@ -52,7 +52,7 @@ const HEADERS = {
 	"x-content-type-options": "nosniff",
 };
 
-const REVIEW_PATHS = { "/review": "/review/index.html", "/review/": "/review/index.html", "/review/plan": "/review/plan.html" };
+const REVIEW_PATHS = { "/review": "/review/index.html", "/review/": "/review/index.html", "/review/plan": "/review/plan.html", "/review/design": "/review/design/index.html", "/review/design/": "/review/design/index.html" };
 
 // The team review pages. Search engines skip them. The design files need script,
 // so these pages do not use the strict policy of the holding page.
