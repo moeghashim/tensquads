@@ -110,7 +110,7 @@ function useFreshOverview(data: OverviewData & { readonly writeAt: number }, not
 			return;
 		}
 		noteDecision(data.count);
-		acceptOverviewRead(data.count, data.writeAt);
+		acceptOverviewRead(data, data.writeAt);
 	}, [data, noteDecision]);
 }
 

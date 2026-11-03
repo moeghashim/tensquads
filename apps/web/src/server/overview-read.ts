@@ -1,5 +1,5 @@
 import type { AppDatabase } from "@tensquads/adapters";
-import { createRepositories } from "@tensquads/adapters";
+import { readOverviewSnapshot } from "@tensquads/adapters";
 import type { AccountScope, Agent } from "@tensquads/domain";
 import {
 	assembleTiles,
@@ -15,14 +15,7 @@ import type { OverviewData } from "#/screens/overview/types.ts";
 
 // One loader request. The reads stay in order because PGlite serves one query at a time.
 export async function readOverview(db: AppDatabase, scope: AccountScope): Promise<OverviewData> {
-	const repos = createRepositories(db);
-	const accounts = await repos.platform.listAccounts(scope);
-	const agents = await repos.squads.listAgents(scope);
-	const tasksDone = await repos.squads.tasksDone(scope);
-	const master = await repos.squads.master(scope);
-	const stored = await repos.platform.overviewTiles(scope);
-	const revenue = await repos.platform.dailyRevenue(scope);
-	const inbox = await repos.policy.inbox(scope);
+	const { accounts, agents, tasksDone, master, stored, revenue, inbox } = await readOverviewSnapshot(db, scope);
 	const account = accounts.find((item) => item.id === scope.accountId);
 	if (!account) {
 		throw new Error("The account is missing.");

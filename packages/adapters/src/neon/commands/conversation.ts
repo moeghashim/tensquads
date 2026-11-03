@@ -144,6 +144,7 @@ function isOpenChatTask(
 	if (row?.kind !== "Task" || !isChatPayload(row.payload) || !row.occurredAt) {
 		return false;
 	}
+	let unmatched = 0;
 	for (let later = index + 1; later < rows.length; later += 1) {
 		const next = rows[later];
 		if (!next) {
@@ -153,8 +154,12 @@ function isOpenChatTask(
 		if (next.kind === "Task" && isChatPayload(next.payload)) {
 			return true;
 		}
+		if (next.kind === "Task") {
+			unmatched += 1;
+		}
 		if (next.kind === "Result") {
-			return false;
+			if (unmatched === 0) return false;
+			unmatched -= 1;
 		}
 	}
 	return true;

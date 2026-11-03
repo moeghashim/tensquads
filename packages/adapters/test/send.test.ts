@@ -291,3 +291,23 @@ test("an approval between a chat task and its finish still writes the reply", as
 		);
 	});
 });
+
+
+test("traffic task and result leave a held chat open for its own finish", async () => {
+	await withCopy("traffic-between", async (db, accountId) => {
+		const kernel = new Kernel(createRepositories(db));
+		const accountScope = scope(accountId);
+		const started = await kernel.beginSend(accountScope, ads);
+		assert.equal(started.kind, "working");
+		if (started.kind !== "working") return;
+		await kernel.nextEvent(accountScope);
+		await kernel.nextEvent(accountScope);
+		assert.equal((await kernel.beginSend(accountScope, ads)).kind, "ignored");
+		const finished = await kernel.finishSend(accountScope, started.taskId);
+		assert.equal(finished.kind, "replied");
+		if (finished.kind !== "replied") return;
+		assert.equal(finished.messages.at(-1)?.text, marketingResult);
+		assert.deepEqual((await generated(db, accountId)).map(({ kind }) => kind), ["Task", "Task", "Result", "Result"]);
+		assert.equal((await kernel.finishSend(accountScope, started.taskId)).kind, "ignored");
+	});
+});

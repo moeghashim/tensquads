@@ -3,6 +3,7 @@ import { describe, test } from "node:test";
 import { currentWrites } from "#/workspace/approval-count.ts";
 import {
 	badgeCount,
+	type DecisionRefresh,
 	type DecisionResult,
 	enqueueDecision,
 	patchSnapshot,
@@ -26,7 +27,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				refreshed += 1;
-				return 4;
+				return { count: 4, readAt: currentWrites(), dropLanded: true };
 			},
 		);
 		assert.equal(calls, 1);
@@ -40,7 +41,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				refreshed += 1;
-				return 4;
+				return { count: 4, readAt: currentWrites(), dropLanded: true };
 			},
 		);
 		assert.equal(calls, 2);
@@ -57,7 +58,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				refreshed += 1;
-				return 4;
+				return { count: 4, readAt: currentWrites(), dropLanded: true };
 			},
 		);
 		assert.equal(refreshed, 1);
@@ -67,7 +68,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			patch("one"),
 			4,
 			async () => undefined,
-			async () => 4,
+			async () => ({ count: 4, readAt: currentWrites(), dropLanded: true }),
 			() => undefined,
 		);
 		assert.equal(again, true);
@@ -95,7 +96,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			patch("one"),
 			3,
 			async () => undefined,
-			async () => 4,
+			async () => ({ count: 4, readAt: currentWrites(), dropLanded: true }),
 			() => undefined,
 		);
 		assert.equal(again, false);
@@ -121,6 +122,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				seen.push("refresh-refund");
+				return { count: 4, readAt: currentWrites(), dropLanded: true };
 			},
 		);
 		const first = settled(
@@ -131,6 +133,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				seen.push("refresh-marketing");
+				return { count: 4, readAt: currentWrites(), dropLanded: true };
 			},
 		);
 		const second = settled(
@@ -141,6 +144,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				seen.push("refresh-inventory");
+				return { count: 4, readAt: currentWrites(), dropLanded: true };
 			},
 		);
 		const third = settled(
@@ -151,6 +155,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				seen.push("refresh-orders");
+				return { count: 4, readAt: currentWrites(), dropLanded: true };
 			},
 		);
 		await Promise.resolve();
@@ -186,7 +191,7 @@ describe("overview decisions", { concurrency: false }, () => {
 				async () => {
 					await gate;
 				},
-				async () => 3,
+				async () => ({ count: 3, readAt: currentWrites(), dropLanded: true }),
 			);
 			await Promise.resolve();
 			assert.equal(badgeCount(4), 3);
@@ -222,7 +227,7 @@ describe("overview decisions", { concurrency: false }, () => {
 				patch("refund"),
 				4,
 				async () => row,
-				async () => 3,
+				async () => ({ count: 3, readAt: currentWrites(), dropLanded: true }),
 				() => undefined,
 			),
 			false,
@@ -245,6 +250,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				seen.push("refresh-refund");
+				return { count: 4, readAt: currentWrites(), dropLanded: true };
 			},
 		);
 		const second = settled(
@@ -255,6 +261,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				seen.push("refresh-marketing");
+				return { count: 4, readAt: currentWrites(), dropLanded: true };
 			},
 		);
 		await Promise.resolve();
@@ -266,7 +273,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			async () => {
 				seen.push("duplicate");
 			},
-			async () => 4,
+			async () => ({ count: 4, readAt: currentWrites(), dropLanded: true }),
 			() => undefined,
 		);
 		assert.equal(duplicate, false);
@@ -293,6 +300,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				seen.push("refresh-refund");
+				return { count: 4, readAt: currentWrites(), dropLanded: true };
 			},
 		);
 		const second = settled(
@@ -303,6 +311,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			},
 			async () => {
 				seen.push("refresh-marketing");
+				return { count: 4, readAt: currentWrites(), dropLanded: true };
 			},
 		);
 		await Promise.resolve();
@@ -327,7 +336,7 @@ describe("overview decisions", { concurrency: false }, () => {
 				await gate;
 				throw new Error("The response was lost after commit.");
 			},
-			async () => 3,
+			async () => ({ count: 3, readAt: currentWrites(), dropLanded: true }),
 		);
 		let releaseSecond = () => {};
 		const secondGate = new Promise<void>((resolve) => {
@@ -339,7 +348,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			async () => {
 				await secondGate;
 			},
-			async () => 2,
+			async () => ({ count: 2, readAt: currentWrites(), dropLanded: true }),
 		);
 		assert.equal(shownApprovalCount(4), 2);
 		release();
@@ -376,7 +385,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			"marketing",
 			4,
 			async () => undefined,
-			async () => 2,
+			async () => ({ count: 2, readAt: currentWrites(), dropLanded: true }),
 		);
 		assert.equal(shownApprovalCount(2), 2);
 		assert.deepEqual(patchSnapshot(), []);
@@ -415,7 +424,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			async () => {
 				sent += 1;
 			},
-			async () => 4,
+			async () => ({ count: 4, readAt: currentWrites(), dropLanded: true }),
 			() => undefined,
 		);
 		assert.equal(duplicate, false);
@@ -431,7 +440,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			async () => {
 				await gate;
 			},
-			async () => 3,
+			async () => ({ count: 3, readAt: currentWrites(), dropLanded: true }),
 		);
 		await Promise.resolve();
 		reconcileDecisions(4);
@@ -481,7 +490,7 @@ describe("overview decisions", { concurrency: false }, () => {
 					async () => {
 						sent += 1;
 					},
-					async () => 4,
+					async () => ({ count: 4, readAt: currentWrites(), dropLanded: true }),
 					() => undefined,
 				),
 				false,
@@ -496,7 +505,7 @@ describe("overview decisions", { concurrency: false }, () => {
 						"marketing",
 						4,
 						() => gate,
-						async () => 4,
+						async () => ({ count: 4, readAt: currentWrites(), dropLanded: true }),
 					)
 				: null;
 			await Promise.resolve();
@@ -527,7 +536,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			() => new Promise(() => undefined),
 			async () => {
 				refreshed += 1;
-				return 4;
+				return { count: 4, readAt: currentWrites(), dropLanded: true };
 			},
 		);
 		const next = settled(
@@ -536,7 +545,7 @@ describe("overview decisions", { concurrency: false }, () => {
 			async () => undefined,
 			async () => {
 				refreshed += 1;
-				return 4;
+				return { count: 4, readAt: currentWrites(), dropLanded: true };
 			},
 		);
 		await Promise.resolve();
@@ -553,10 +562,10 @@ function settled(
 	key: string,
 	serverCount: number,
 	work: (signal: AbortSignal) => Promise<unknown>,
-	refresh: () => Promise<number | undefined>,
+	refresh: () => Promise<DecisionRefresh>,
 ): Promise<DecisionResult> {
 	return new Promise((resolve) => {
-		const queued = enqueueDecision(patch(key), serverCount, work, async () => (await refresh()) ?? 4, resolve);
+		const queued = enqueueDecision(patch(key), serverCount, work, refresh, resolve);
 		assert.equal(queued, true);
 	});
 }

@@ -2,7 +2,8 @@ import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 
 import { advanceWrites, currentWrites } from "#/workspace/approval-count.ts";
 
-import type { DecisionPatch } from "./view.ts";
+import type { OverviewData } from "./types.ts";
+import { type DecisionPatch, presentOverview } from "./view.ts";
 
 export interface DecisionRow {
 	readonly id: string;
@@ -28,7 +29,7 @@ export interface DecisionResult {
 interface Job {
 	readonly key: string;
 	readonly work: (signal: AbortSignal) => Promise<unknown>;
-	readonly refresh: () => Promise<number | DecisionRefresh>;
+	readonly refresh: () => Promise<DecisionRefresh>;
 	readonly settled: (result: DecisionResult) => void;
 }
 
@@ -40,6 +41,7 @@ let generation = 0;
 let target: number | null = null;
 let patches: readonly DecisionPatch[] = [];
 const landed = new Map<string, number>();
+const reflected = new Set<string>();
 let activeKey: string | null = null;
 let seenServer: object | null = null;
 
@@ -61,6 +63,7 @@ export function resetDecisions(): void {
 	target = null;
 	patches = [];
 	landed.clear();
+	reflected.clear();
 	activeKey = null;
 	seenServer = null;
 	advanceWrites();
@@ -101,7 +104,7 @@ export function enqueueDecision(
 	patch: DecisionPatch,
 	serverCount: number,
 	work: (signal: AbortSignal) => Promise<unknown>,
-	refresh: () => Promise<number | DecisionRefresh>,
+	refresh: () => Promise<DecisionRefresh>,
 	settled: (result: DecisionResult) => void,
 ): boolean {
 	const key = patch.key;
@@ -143,7 +146,7 @@ export function reconcileDecisions(serverCount: number, readAt = currentWrites()
 		const land = landed.get(patch.key);
 		if (live.has(patch.key)) {
 			next.push(patch);
-			if (land === undefined) {
+			if (land === undefined && !reflected.has(patch.key)) {
 				pending += 1;
 			}
 			continue;
@@ -154,6 +157,7 @@ export function reconcileDecisions(serverCount: number, readAt = currentWrites()
 		}
 		keys.delete(patch.key);
 		landed.delete(patch.key);
+		reflected.delete(patch.key);
 		dropped = true;
 	}
 	const nextTarget = pending === 0 ? null : Math.max(0, serverCount - pending);
@@ -183,11 +187,18 @@ export function watchServerCount(serverCount: number, token: object, readAt: num
 }
 
 // The overview page that is on screen started at readAt. A fresh one replaces the overlay.
-export function acceptOverviewRead(serverCount: number, readAt: number): void {
+export function acceptOverviewRead(data: OverviewData, readAt: number): void {
 	if (currentWrites() !== readAt) {
 		return;
 	}
-	reconcileDecisions(serverCount, readAt, true);
+	for (const patch of patches) {
+		if (presentOverview(data, [patch]) === data) {
+			reflected.add(patch.key);
+		} else {
+			reflected.delete(patch.key);
+		}
+	}
+	reconcileDecisions(data.count, readAt, true);
 }
 
 function pump(): void {
@@ -242,7 +253,7 @@ async function runBounded(job: Job, gen: number): Promise<DecisionResult> {
 		landed.set(job.key, currentWrites());
 	}
 	try {
-		const read = asRefresh(await bounded(() => job.refresh()));
+		const read = await bounded(() => job.refresh());
 		if (gen !== generation) {
 			return emptyResult();
 		}
@@ -250,13 +261,6 @@ async function runBounded(job: Job, gen: number): Promise<DecisionResult> {
 	} catch {
 		return { wrote, refreshed: false, count: null, row, readAt: null, dropLanded: false };
 	}
-}
-
-function asRefresh(value: number | DecisionRefresh): DecisionRefresh {
-	if (typeof value === "number") {
-		return { count: value, readAt: currentWrites(), dropLanded: true };
-	}
-	return value;
 }
 
 function decisionRow(value: unknown): DecisionRow | null {

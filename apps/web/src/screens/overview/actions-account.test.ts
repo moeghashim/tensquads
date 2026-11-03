@@ -1,13 +1,18 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
+import type { OverviewData } from "./types.ts";
+import { presentOverview, type DecisionKind } from "./view.ts";
+
 import { currentWrites } from "#/workspace/approval-count.ts";
 
 import {
 	acceptOverviewRead,
+	type DecisionRefresh,
 	type DecisionResult,
 	enqueueDecision,
 	patchSnapshot,
+	reconcileDecisions,
 	resetDecisions,
 	shownApprovalCount,
 	watchServerCount,
@@ -35,9 +40,9 @@ describe("overview account and landed reads", { concurrency: false }, () => {
 			patchSnapshot().map((item) => item.key),
 			["refund"],
 		);
-		acceptOverviewRead(3, started);
+		acceptOverviewRead(snapshot(3), started);
 		assert.equal(patchSnapshot().length, 1);
-		acceptOverviewRead(3, currentWrites());
+		acceptOverviewRead(snapshot(3), currentWrites());
 		assert.deepEqual(patchSnapshot(), []);
 		assert.equal(shownApprovalCount(3), 3);
 	});
@@ -64,7 +69,7 @@ describe("overview account and landed reads", { concurrency: false }, () => {
 				},
 				async () => {
 					refreshA += 1;
-					return 1;
+					return { count: 1, readAt: currentWrites(), dropLanded: true };
 				},
 				resolve,
 			);
@@ -76,7 +81,7 @@ describe("overview account and landed reads", { concurrency: false }, () => {
 			"other",
 			4,
 			async () => ({ id: "ap9", status: "Approved", count: 4 }),
-			async () => 4,
+			async () => ({ count: 4, readAt: currentWrites(), dropLanded: true }),
 		);
 		release();
 		await first;
@@ -91,14 +96,51 @@ function settled(
 	key: string,
 	serverCount: number,
 	work: (signal: AbortSignal) => Promise<unknown>,
-	refresh: () => Promise<number | { count: number; readAt: number; dropLanded: boolean } | undefined>,
+	refresh: () => Promise<DecisionRefresh>,
 ): Promise<DecisionResult> {
 	return new Promise((resolve) => {
-		const queued = enqueueDecision(patch(key), serverCount, work, async () => (await refresh()) ?? 4, resolve);
+		const queued = enqueueDecision(patch(key), serverCount, work, refresh, resolve);
 		assert.equal(queued, true);
 	});
 }
 
 function patch(key: string) {
 	return { key, id: key, kind: "spend-approve" as const };
+}
+
+
+function snapshot(count: number): OverviewData {
+	return {
+		greeting: "Good morning, Moe", mission: "", online: "", tiles: [], bars: [], count,
+		empty: false, emptyText: "", masterName: "Master", agents: [],
+		approvals: [{ id: "ap1", agentName: "Support", tint: "", amount: "$42", title: "Refund", detail: "" }],
+		proposals: [{ id: "mp1", agentName: "Inventory", tint: "", title: "Proposed mission", mission: "Stock", chips: [], proposed: true, revising: false }],
+	};
+}
+
+for (const kind of ["spend-approve", "spend-decline", "mission-approve", "mission-revise"] as const satisfies readonly DecisionKind[]) {
+	for (const reflected of [false, true]) {
+		test(`${kind} counts a held patch only when the accepted snapshot still needs it: ${reflected}`, async () => {
+			resetDecisions();
+			const item = { key: "held", id: kind.startsWith("spend") ? "ap1" : "mp1", kind };
+			let release = () => {};
+			const gate = new Promise<void>((resolve) => { release = resolve; });
+			const refresh = async () => ({ count: 3, readAt: currentWrites(), dropLanded: true });
+			const done = new Promise<DecisionResult>((resolve) => {
+				assert.equal(enqueueDecision(item, 4, () => gate, refresh, resolve), true);
+			});
+			const before = snapshot(4);
+			const page = reflected ? presentOverview(before, [item]) : before;
+			acceptOverviewRead(page, currentWrites());
+			assert.equal(shownApprovalCount(page.count), 3);
+			assert.equal(presentOverview(page, patchSnapshot()).count, 3);
+			assert.equal(patchSnapshot().length, 1);
+			assert.equal(enqueueDecision(item, page.count, () => gate, refresh, () => {}), false);
+			reconcileDecisions(page.count, currentWrites(), false);
+			assert.equal(shownApprovalCount(page.count), 3);
+			release();
+			await done;
+			assert.deepEqual(patchSnapshot(), []);
+		});
+	}
 }
