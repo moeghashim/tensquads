@@ -20,13 +20,15 @@ export interface StoredLimit {
 	readonly value: number;
 }
 
-// One browser tab and its rising write number. The value is not a limit or a rule.
+// One browser tab, its rising write number, and earlier tab ids this write retires.
+// The value is not a limit or a rule. A missing list retires nothing.
 export interface WriteFence {
 	readonly tab: string;
 	readonly seq: number;
+	readonly retires?: readonly string[];
 }
 
-// superseded means a newer write from the same tab already owns the key.
+// superseded means this tab is retired, or this tab already stored an equal or higher sequence.
 export interface Fenced<T> {
 	readonly status: "written" | "superseded";
 	readonly row: T;

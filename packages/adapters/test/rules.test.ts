@@ -7,7 +7,7 @@ import { replaceDemoAccount } from "../../seed/src/demo-account.ts";
 import { openPglite } from "./pglite.ts";
 
 const scope = { accountId: "rules-account", mode: "account" as const };
-const fence = (seq: number, tab = "rules-test") => ({ tab, seq });
+const fence = (seq: number, tab = "rules-test", retires: readonly string[] = []) => ({ tab, seq, retires });
 
 test("setLimit changes the value bus.readStore returns and writes no event", async () => {
 	const { db, close } = await openPglite();
@@ -243,8 +243,55 @@ test("an older fence does not replace a newer limit or rule, and an add stores n
 	}
 });
 
+test("a retired tab loses before the fence check, and rows older than a day are removed", async () => {
+	const { db, close } = await openPglite();
+	try {
+		await replaceDemoAccount(db, scope.accountId, "clerk-rules-retire");
+		const policy = createRepositories(db).policy;
+		const cap = "policy.daily_ad_cap";
+		assert.equal((await policy.setLimit(scope, cap, 240, fence(1, "held-tab", ["older-tab"]))).status, "written");
+		assert.deepEqual(await retiredTabs(db, scope.accountId), ["older-tab"]);
+		assert.equal((await policy.setLimit(scope, cap, 250, fence(2, "held-tab"))).status, "written");
+		assert.equal((await policy.setLimit(scope, cap, 260, fence(1, "live-tab", ["held-tab"]))).status, "written");
+		assert.deepEqual(await retiredTabs(db, scope.accountId), ["held-tab", "older-tab"]);
+		assert.deepEqual(await policy.setLimit(scope, cap, 280, fence(9, "held-tab")), {
+			status: "superseded",
+			row: { key: cap, value: 260 },
+		});
+		assert.equal((await createRepositories(db).bus.readStore(scope))[cap], 260);
+		await assert.rejects(
+			() => policy.setLimit(scope, cap, 300, fence(2, "live-tab", [" "])),
+			/The write fence is not valid/,
+		);
+		assert.equal((await createRepositories(db).bus.readStore(scope))[cap], 260);
+		await db.execute(sql`
+			INSERT INTO retired_tabs (account_id, tab, retired_at) VALUES
+				(${scope.accountId}, 'expired-tab', now() - interval '25 hours'),
+				(${scope.accountId}, 'kept-tab', now() - interval '23 hours')
+		`);
+		assert.equal((await policy.setLimit(scope, cap, 220, fence(1, "expired-tab"))).status, "written");
+		const left = await retiredTabs(db, scope.accountId);
+		assert.equal(left.includes("expired-tab"), false);
+		assert.equal(left.includes("kept-tab"), true);
+		assert.deepEqual(await policy.setLimit(scope, cap, 200, fence(4, "kept-tab")), {
+			status: "superseded",
+			row: { key: cap, value: 220 },
+		});
+		assert.equal((await policy.setLimit(scope, cap, 210, fence(1, "self-tab", ["self-tab"]))).status, "superseded");
+		assert.equal((await createRepositories(db).bus.readStore(scope))[cap], 220);
+	} finally {
+		await close();
+	}
+});
+
 async function fenceCount(db: { execute: (query: ReturnType<typeof sql>) => Promise<unknown> }, accountId: string) {
 	const result = await db.execute(sql`SELECT count(*)::int AS n FROM write_fences WHERE account_id = ${accountId}`);
 	const rows = Array.isArray(result) ? result : ((result as { rows?: { n: number }[] }).rows ?? []);
 	return Number(rows[0]?.n ?? 0);
+}
+
+async function retiredTabs(db: { execute: (query: ReturnType<typeof sql>) => Promise<unknown> }, accountId: string) {
+	const result = await db.execute(sql`SELECT tab FROM retired_tabs WHERE account_id = ${accountId}`);
+	const rows = Array.isArray(result) ? result : ((result as { rows?: { tab: string }[] }).rows ?? []);
+	return rows.map((row) => String(row.tab)).sort();
 }

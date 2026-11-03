@@ -11,6 +11,8 @@ const monday = "it is Monday at 8:00";
 const rulesQueueModule = "/src/screens/rules/write-queue.ts";
 const rulesLoaderModule = "/src/screens/rules/loader.ts";
 const fenceStorageKey = "tensquads.writeFence";
+const fenceModule = "/src/write-fence.ts";
+const rulesServerModule = "/src/server/rules.ts";
 
 test("an older ad cap held before it arrives does not replace the newer cap", async ({
 	page,
@@ -265,13 +267,10 @@ test("an old read does not replace the snapshot kept after a lost ad cap respons
 	await expect(page.locator("#lim-ads")).toHaveValue("240");
 });
 
-test("a reload keeps the tab fence and an older request leaves the newer cap", async ({
-	page,
-	workspaceUser,
-	accountId,
-}) => {
+test("two reloads before a write retire a held request", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(90_000);
 	await openRules(page, workspaceUser);
+	const first = await fenceState(page);
 	let old: { url: string; body: string } | null = null;
 	await page.route("**/*", async (route) => {
 		const request = route.request();
@@ -287,11 +286,24 @@ test("a reload keeps the tab fence and an older request leaves the newer cap", a
 	await page.reload();
 	await expect(page.locator("#lim-ads")).toHaveValue("200");
 	await whenSliderReady(page);
+	const second = await fenceState(page);
+	expect(second.pending).toContain(first.current);
+	expect(second.current).not.toBe(first.current);
+	await page.reload();
+	await expect(page.locator("#lim-ads")).toHaveValue("200");
+	await whenSliderReady(page);
+	const third = await fenceState(page);
+	expect(third.pending).toContain(first.current);
+	expect(third.pending).toContain(second.current);
+	expect(third.current).not.toBe(second.current);
 	await page.locator("#lim-ads").fill("260");
 	await expectStored(accountId, adCap, 260);
+	await expect.poll(async () => (await fenceState(page)).pending).not.toContain(first.current);
+	await expect.poll(async () => (await fenceState(page)).pending).not.toContain(second.current);
 	if (!old) {
 		throw new Error("The old request was not held.");
 	}
+	expect(old.body).toContain(first.current);
 	const response = await page.request.post(old.url, {
 		headers: {
 			"content-type": "application/json",
@@ -305,21 +317,29 @@ test("a reload keeps the tab fence and an older request leaves the newer cap", a
 	await expectStored(accountId, adCap, 260);
 });
 
-test("a duplicated tab takes a new fence id and starts its sequence at 1", async ({
+test("duplicated tabs write at once and neither new write is superseded", async ({
 	page,
 	workspaceUser,
 	accountId,
 }) => {
 	test.setTimeout(90_000);
 	await openRules(page, workspaceUser);
-	await page.locator("#lim-ads").fill("240");
-	await expectStored(accountId, adCap, 240);
 	const stored = await page.evaluate((key) => sessionStorage.getItem(key), fenceStorageKey);
 	if (!stored) {
 		throw new Error("The tab fence was not stored.");
 	}
-	const original = JSON.parse(stored) as { tab: string; seq: number };
+	const oldId = (JSON.parse(stored) as { current: string }).current;
 	const second = await page.context().newPage();
+	const third = await page.context().newPage();
+	const held: Route[] = [];
+	const watch = async (route: Route) => {
+		const request = route.request();
+		if (request.method() === "POST" && (request.postData() ?? "").includes(adCap)) {
+			held.push(route);
+			return;
+		}
+		await route.continue();
+	};
 	try {
 		await second.addInitScript(
 			([key, value]) => {
@@ -327,26 +347,111 @@ test("a duplicated tab takes a new fence id and starts its sequence at 1", async
 			},
 			[fenceStorageKey, stored] as const,
 		);
+		await third.addInitScript(
+			([key, value]) => {
+				sessionStorage.setItem(key, value);
+			},
+			[fenceStorageKey, stored] as const,
+		);
+		await second.route("**/*", watch);
+		await third.route("**/*", watch);
 		await second.goto("/rules");
-		await expect(second.locator("#lim-ads")).toHaveValue("240");
-		await expect
-			.poll(async () => {
-				const raw = await second.evaluate((key) => sessionStorage.getItem(key), fenceStorageKey);
-				return raw ? (JSON.parse(raw) as { tab: string }).tab : "";
-			})
-			.not.toBe(original.tab);
-		const stamp = await second.evaluate(async (specifier) => {
-			const fence = await import(specifier);
-			return fence.nextWriteFence();
-		}, "/src/write-fence.ts");
-		expect(stamp.seq).toBe(1);
-		expect(stamp.tab).not.toBe(original.tab);
-		const kept = await page.evaluate((key) => sessionStorage.getItem(key), fenceStorageKey);
-		expect(JSON.parse(kept ?? "{}").tab).toBe(original.tab);
+		await third.goto("/rules");
+		await whenSliderReady(second);
+		await whenSliderReady(third);
+		const left = await fenceState(second);
+		const right = await fenceState(third);
+		expect(left.current).not.toBe(right.current);
+		expect(left.current).not.toBe(oldId);
+		expect(right.current).not.toBe(oldId);
+		expect(left.pending).toContain(oldId);
+		expect(right.pending).toContain(oldId);
+		await second.locator("#lim-ads").fill("240");
+		await expect.poll(() => held.length).toBe(1);
+		await third.locator("#lim-ads").fill("260");
+		await expect.poll(() => held.length).toBe(2);
+		const early = held[0];
+		const later = held[1];
+		if (!early || !later) {
+			throw new Error("The duplicate writes were not held.");
+		}
+		const earlyBody = early.request().postData() ?? "";
+		const laterBody = later.request().postData() ?? "";
+		expect(earlyBody).toContain(left.current);
+		expect(earlyBody).toContain(oldId);
+		expect(earlyBody).not.toContain(right.current);
+		expect(laterBody).toContain(right.current);
+		expect(laterBody).toContain(oldId);
+		expect(laterBody).not.toContain(left.current);
+		await settle(early);
+		await expectStored(accountId, adCap, 240);
+		await settle(later);
+		await expectStored(accountId, adCap, 260);
 	} finally {
 		await second.close();
+		await third.close();
+	}
+	const replay = await page.evaluate(
+		async ({ fencePath, rulesPath, key }) => {
+			const fence = await import(fencePath);
+			const api = await import(rulesPath);
+			const stamp = fence.nextWriteFence();
+			const body = await api.setRuleLimit({
+				data: { key, value: 280, tab: stamp.tab, seq: stamp.seq, retires: stamp.retires },
+			});
+			return { status: body.status, value: body.row.value, tab: stamp.tab };
+		},
+		{ fencePath: fenceModule, rulesPath: rulesServerModule, key: adCap },
+	);
+	expect(replay.tab).toBe(oldId);
+	expect(replay.status).toBe("superseded");
+	expect(replay.value).toBe(260);
+	await expectStored(accountId, adCap, 260);
+});
+
+test("storage off keeps a fresh id and retires nothing", async ({ page }) => {
+	const bare = await page.context().newPage();
+	try {
+		await bare.addInitScript(() => {
+			Object.defineProperty(window, "sessionStorage", {
+				configurable: true,
+				get() {
+					throw new DOMException("Blocked", "SecurityError");
+				},
+			});
+		});
+		await bare.goto("/rules");
+		const first = await bare.evaluate(async (specifier) => {
+			const fence = await import(specifier);
+			return [fence.nextWriteFence(), fence.nextWriteFence()];
+		}, fenceModule);
+		expect(first[0]?.retires).toEqual([]);
+		expect(first[1]?.retires).toEqual([]);
+		expect(first[0]?.tab).toBe(first[1]?.tab);
+		expect(first[0]?.seq).toBe(1);
+		expect(first[1]?.seq).toBe(2);
+		await bare.reload();
+		const second = await bare.evaluate(async (specifier) => {
+			const fence = await import(specifier);
+			return fence.nextWriteFence();
+		}, fenceModule);
+		expect(second.tab).not.toBe(first[0]?.tab);
+		expect(second.seq).toBe(1);
+		expect(second.retires).toEqual([]);
+	} finally {
+		await bare.close();
 	}
 });
+
+async function fenceState(page: Page) {
+	return page.evaluate((key) => {
+		const raw = sessionStorage.getItem(key);
+		if (!raw) {
+			throw new Error("The tab fence was not stored.");
+		}
+		return JSON.parse(raw) as { current: string; pending: string[] };
+	}, fenceStorageKey);
+}
 
 async function whenSliderReady(page: Page) {
 	await page.waitForFunction(() => {

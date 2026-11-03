@@ -25,6 +25,7 @@ const childTables = [
 	"subscriptions",
 	"bus_cursors",
 	"write_fences",
+	"retired_tabs",
 ] as const;
 
 export interface WorkspaceUser {

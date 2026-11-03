@@ -94,7 +94,7 @@ const bundle = await build({
 					contents: `
 					function withoutFence(data) {
 						if (!data || typeof data !== "object") return data;
-						const { tab, seq, ...rest } = data;
+						const { tab, seq, retires, ...rest } = data;
 						return rest;
 					}
 					function asWritten(data, row) {

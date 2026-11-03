@@ -1,55 +1,48 @@
-// One tab id for this browser tab. sessionStorage keeps it across a reload.
-// A duplicated tab copies that storage, hears the original tab, and takes a new id.
-// The id is created on the first call. Module startup must not call crypto.
-// A page without storage keeps the id in memory for this load. The server does not trust the value.
+// Each document load takes a new tab id and keeps it in memory.
+// sessionStorage lists earlier ids from this tab that the server has not retired.
+// A duplicated tab copies that list. Both loads retire the same old id and write with different new ids.
+// A page without storage keeps one id for this load and retires nothing.
+// The id is created on load. Module startup must not call crypto. The server does not trust the value.
 
 const storageKey = "tensquads.writeFence";
-const channelName = "tensquads.writeFence";
+
+interface StoredFence {
+	readonly current: string;
+	readonly pending: readonly string[];
+}
 
 let tab: string | null = null;
 let seq = 0;
-let startedAt = 0;
-let bootedAt = 0;
-let nonce = "";
-let channel: BroadcastChannel | null = null;
+let pending: string[] = [];
+let booted = false;
 
-interface StoredFence {
+export function nextWriteFence(): {
 	readonly tab: string;
 	readonly seq: number;
-	readonly startedAt: number;
-}
-
-interface FenceMessage {
-	readonly kind: "hello" | "have";
-	readonly tab: string;
-	readonly nonce: string;
-	readonly bootedAt: number;
-}
-
-export function nextWriteFence(): { readonly tab: string; readonly seq: number } {
+	readonly retires: readonly string[];
+} {
 	ensureIdentity();
 	seq += 1;
-	const stamp = { tab: requiredTab(), seq };
+	return { tab: requiredTab(), seq, retires: pending.slice() };
+}
+
+export function confirmRetired(ids: readonly string[]): void {
+	if (ids.length === 0 || pending.length === 0) return;
+	const drop = new Set(ids);
+	const next = pending.filter((id) => !drop.has(id));
+	if (next.length === pending.length) return;
+	pending = next;
 	persist();
-	return stamp;
 }
 
 function ensureIdentity(): void {
-	if (tab !== null) return;
+	if (booted) return;
+	booted = true;
 	const stored = readStored();
-	if (stored) {
-		tab = stored.tab;
-		seq = stored.seq;
-		startedAt = stored.startedAt;
-		bootedAt = Date.now();
-		listen();
-		announce();
-		return;
-	}
+	pending = stored ? [...stored.pending] : [];
+	if (stored) addPending(stored.current);
 	tab = createTabId();
-	startedAt = Date.now();
-	bootedAt = startedAt;
-	listen();
+	seq = 0;
 	persist();
 }
 
@@ -60,39 +53,9 @@ function requiredTab(): string {
 	return tab;
 }
 
-function listen(): void {
-	if (channel || typeof BroadcastChannel !== "function") return;
-	nonce = createTabId();
-	channel = new BroadcastChannel(channelName);
-	channel.onmessage = (event: MessageEvent<FenceMessage>) => {
-		const data = event.data;
-		if (!data || data.nonce === nonce || data.tab !== tab) return;
-		if (data.kind !== "hello" && data.kind !== "have") return;
-		if (data.kind === "have" || newerThan(data)) {
-			claimNewTab();
-			return;
-		}
-		channel?.postMessage({ kind: "have", tab, nonce, bootedAt } satisfies FenceMessage);
-	};
-}
-
-function announce(): void {
-	const current = requiredTab();
-	channel?.postMessage({ kind: "hello", tab: current, nonce, bootedAt } satisfies FenceMessage);
-}
-
-function newerThan(data: FenceMessage): boolean {
-	if (bootedAt !== data.bootedAt) return bootedAt > data.bootedAt;
-	return nonce > data.nonce;
-}
-
-function claimNewTab(): void {
-	tab = createTabId();
-	seq = 0;
-	startedAt = Date.now();
-	bootedAt = startedAt;
-	persist();
-	announce();
+function addPending(id: string): void {
+	if (!validTab(id) || pending.includes(id)) return;
+	pending.push(id);
 }
 
 function readStored(): StoredFence | null {
@@ -101,10 +64,11 @@ function readStored(): StoredFence | null {
 	try {
 		const raw = store.getItem(storageKey);
 		if (!raw) return null;
-		const parsed = JSON.parse(raw) as Partial<StoredFence>;
-		if (!validTab(parsed.tab) || !validSeq(parsed.seq)) return null;
-		const storedStart = typeof parsed.startedAt === "number" ? parsed.startedAt : Date.now();
-		return { tab: parsed.tab, seq: parsed.seq, startedAt: storedStart };
+		const parsed = JSON.parse(raw) as Partial<StoredFence> & { tab?: unknown };
+		const current = validTab(parsed.current) ? parsed.current : validTab(parsed.tab) ? parsed.tab : null;
+		if (!current) return null;
+		const listed = Array.isArray(parsed.pending) ? parsed.pending.filter(validTab) : [];
+		return { current, pending: listed.filter((id, index) => listed.indexOf(id) === index && id !== current) };
 	} catch {
 		return null;
 	}
@@ -114,7 +78,7 @@ function persist(): void {
 	const store = fenceStorage();
 	if (!store || tab === null) return;
 	try {
-		store.setItem(storageKey, JSON.stringify({ tab, seq, startedAt } satisfies StoredFence));
+		store.setItem(storageKey, JSON.stringify({ current: tab, pending } satisfies StoredFence));
 	} catch {
 		// Private mode and a blocked storage keep the id in memory for this load.
 	}
@@ -131,10 +95,6 @@ function fenceStorage(): Storage | null {
 
 function validTab(value: unknown): value is string {
 	return typeof value === "string" && value.length > 0 && value.length <= 80 && value === value.trim();
-}
-
-function validSeq(value: unknown): value is number {
-	return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
 }
 
 function randomUuid(): string | null {

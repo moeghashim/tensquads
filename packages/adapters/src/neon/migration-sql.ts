@@ -318,4 +318,12 @@ CREATE TABLE IF NOT EXISTS write_fences (
   CHECK (char_length(tab) > 0),
   CHECK (seq >= 1)
 );
+
+CREATE TABLE IF NOT EXISTS retired_tabs (
+  account_id text NOT NULL REFERENCES accounts (id) ON DELETE CASCADE,
+  tab text NOT NULL,
+  retired_at timestamptz NOT NULL,
+  PRIMARY KEY (account_id, tab),
+  CHECK (char_length(tab) > 0)
+);
 `;

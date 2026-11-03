@@ -58,7 +58,7 @@ export const setRuleEnabled = createServerFn({ method: "POST" })
 	.validator(validateRuleOn)
 	.handler(async ({ data }): Promise<RulesWrite<RulesRule>> => {
 		return writeThroughKernel((kernel, scope, deadlineAt) =>
-			kernel.setRuleOn(scope, data.id, data.on, { tab: data.tab, seq: data.seq }, deadlineAt),
+			kernel.setRuleOn(scope, data.id, data.on, { tab: data.tab, seq: data.seq, retires: data.retires }, deadlineAt),
 		);
 	});
 
@@ -72,7 +72,13 @@ export const setRuleLimit = createServerFn({ method: "POST" })
 	.validator(validateLimit)
 	.handler(async ({ data }): Promise<RulesWrite<RulesLimitValue>> => {
 		return writeThroughKernel((kernel, scope, deadlineAt) =>
-			kernel.setLimit(scope, data.key, data.value, { tab: data.tab, seq: data.seq }, deadlineAt),
+			kernel.setLimit(
+				scope,
+				data.key,
+				data.value,
+				{ tab: data.tab, seq: data.seq, retires: data.retires },
+				deadlineAt,
+			),
 		);
 	});
 
@@ -83,7 +89,7 @@ async function writeThroughKernel<T>(
 				scope: { accountId: string; mode: "account" },
 				id: string,
 				on: boolean,
-				fence: { tab: string; seq: number },
+				fence: { tab: string; seq: number; retires: readonly string[] },
 				deadlineAt: number,
 			): Promise<RulesWrite<RulesRule>>;
 			addRule(
@@ -95,7 +101,7 @@ async function writeThroughKernel<T>(
 				scope: { accountId: string; mode: "account" },
 				key: string,
 				value: number,
-				fence: { tab: string; seq: number },
+				fence: { tab: string; seq: number; retires: readonly string[] },
 				deadlineAt: number,
 			): Promise<RulesWrite<RulesLimitValue>>;
 		},
@@ -129,12 +135,13 @@ function validateRuleOn(input: unknown): {
 	readonly on: boolean;
 	readonly tab: string;
 	readonly seq: number;
+	readonly retires: readonly string[];
 } {
 	if (!isRecord(input) || typeof input.id !== "string" || input.id.length === 0 || typeof input.on !== "boolean") {
 		throw new Error("The rule change is not valid.");
 	}
 	const fence = validateFence(input);
-	return { id: input.id, on: input.on, tab: fence.tab, seq: fence.seq };
+	return { id: input.id, on: input.on, tab: fence.tab, seq: fence.seq, retires: fence.retires };
 }
 
 function validateDraft(input: unknown): {
@@ -160,15 +167,20 @@ function validateLimit(input: unknown): {
 	readonly value: number;
 	readonly tab: string;
 	readonly seq: number;
+	readonly retires: readonly string[];
 } {
 	if (!isRecord(input) || typeof input.key !== "string" || input.key.length === 0 || typeof input.value !== "number") {
 		throw new Error("The limit change is not valid.");
 	}
 	const fence = validateFence(input);
-	return { key: input.key, value: input.value, tab: fence.tab, seq: fence.seq };
+	return { key: input.key, value: input.value, tab: fence.tab, seq: fence.seq, retires: fence.retires };
 }
 
-function validateFence(input: Record<string, unknown>): { readonly tab: string; readonly seq: number } {
+function validateFence(input: Record<string, unknown>): {
+	readonly tab: string;
+	readonly seq: number;
+	readonly retires: readonly string[];
+} {
 	const { tab, seq } = input;
 	if (typeof tab !== "string" || tab.length === 0 || tab.length > 80 || tab !== tab.trim()) {
 		throw new Error("The write fence is not valid.");
@@ -176,5 +188,20 @@ function validateFence(input: Record<string, unknown>): { readonly tab: string; 
 	if (typeof seq !== "number" || !Number.isSafeInteger(seq) || seq < 1) {
 		throw new Error("The write fence is not valid.");
 	}
-	return { tab, seq };
+	return { tab, seq, retires: validateRetires(input.retires) };
+}
+
+function validateRetires(input: unknown): readonly string[] {
+	if (input === undefined) return [];
+	if (!Array.isArray(input)) {
+		throw new Error("The write fence is not valid.");
+	}
+	const retires: string[] = [];
+	for (const id of input) {
+		if (typeof id !== "string" || id.length === 0 || id.length > 80 || id !== id.trim()) {
+			throw new Error("The write fence is not valid.");
+		}
+		if (!retires.includes(id)) retires.push(id);
+	}
+	return retires;
 }

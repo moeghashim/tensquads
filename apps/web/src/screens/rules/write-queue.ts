@@ -2,7 +2,7 @@ import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import { useSyncExternalStore } from "react";
 
 import { type RulesLimitValue, type RulesRule, type RulesWrite, setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
-import { nextWriteFence } from "#/write-fence.ts";
+import { confirmRetired, nextWriteFence } from "#/write-fence.ts";
 
 interface Flight<T> {
 	shown: T;
@@ -177,7 +177,11 @@ function queueValue<T>(map: Map<string, Flight<T>>, key: string, next: T): Fligh
 async function sendRule(id: string, value: boolean, signal: AbortSignal): Promise<boolean | null> {
 	const epoch = accountEpoch;
 	const fence = nextWriteFence();
-	const body = await setRuleEnabled({ data: { id, on: value, tab: fence.tab, seq: fence.seq }, signal });
+	const body = await setRuleEnabled({
+		data: { id, on: value, tab: fence.tab, seq: fence.seq, retires: fence.retires },
+		signal,
+	});
+	confirmRetired(fence.retires);
 	const row = acceptedRule(body, id);
 	if (!sameAccount(epoch) || signal.aborted || !row) {
 		return null;
@@ -189,7 +193,11 @@ async function sendRule(id: string, value: boolean, signal: AbortSignal): Promis
 async function sendLimit(key: string, value: number, signal: AbortSignal): Promise<number | null> {
 	const epoch = accountEpoch;
 	const fence = nextWriteFence();
-	const body = await setRuleLimit({ data: { key, value, tab: fence.tab, seq: fence.seq }, signal });
+	const body = await setRuleLimit({
+		data: { key, value, tab: fence.tab, seq: fence.seq, retires: fence.retires },
+		signal,
+	});
+	confirmRetired(fence.retires);
 	const row = acceptedLimit(body, key);
 	if (!sameAccount(epoch) || signal.aborted || !row) {
 		return null;

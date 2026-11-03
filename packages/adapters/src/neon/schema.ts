@@ -308,6 +308,21 @@ const writeFences = pgTable(
 	],
 );
 
+const retiredTabs = pgTable(
+	"retired_tabs",
+	{
+		accountId: text("account_id")
+			.notNull()
+			.references(() => accounts.id, { onDelete: "cascade" }),
+		tab: text("tab").notNull(),
+		retiredAt: timestamp("retired_at", { withTimezone: true, mode: "date" }).notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.accountId, table.tab] }),
+		check("retired_tabs_tab_length", sql`char_length(${table.tab}) > 0`),
+	],
+);
+
 export const featureRequests = pgTable("feature_requests", {
 	id: text("id").primaryKey(),
 	imageId: text("image_id").notNull(),
@@ -341,4 +356,5 @@ export const schema = {
 	bugs,
 	featureRequests,
 	writeFences,
+	retiredTabs,
 };
