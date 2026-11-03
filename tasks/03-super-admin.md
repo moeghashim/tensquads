@@ -60,6 +60,10 @@ Step 2 is done on the development instance. Record it in the pull request.
 
 Tests make their own Clerk users, plus a test organization or a membership in the company organization, through the Backend API. They remove those after each test. They never change or remove moe@10claws.com, its membership, the `tensquads` organization, or the role.
 
+A removed role ends when the session token refreshes. Measured on this development instance on 3 November 2026, `exp` minus `iat` is 60 seconds. The Frontend API session token and `POST /v1/sessions/{id}/tokens` both returned that lifetime. This instance has no custom JWT template, and `GET /v1/instance` has no token-lifetime field. `nbf` is 10 seconds before `iat`. That is clock skew. The session itself lasts 7 days, and the inactivity window is 30 days. Those clocks do not refresh the role. The server still reads the role from the session. It makes no Backend API call per request. Approved by the orchestrator under Moe's delegation, 3 November 2026.
+
+The special-session cookie value is the account id, a dot, and the open time in milliseconds. The server rejects that value when its clock is more than one hour after the open time. A value with no open time is rejected. The cookie stays unsigned, as answer 4 says.
+
 ## Routes
 
 | Route | Design | Notes |
@@ -106,7 +110,7 @@ The workspace routes do not change. A row click opens `/overview`, as `open: go(
 14. Load the seed in the test database before the admin tests. Run them in their own Playwright project, one at a time, so a sign-up test cannot change the count of 9 accounts. `saveWorkspace` deletes every row, so read item 21 first.
 15. Add the screenshot comparison at 1440 px and the 390 px check for both screens, with the method task 01 uses. Inside the table boxes the horizontal scroll stays: `min-width: 1360px` and `min-width: 720px`.
 16. Add the inventory comparison as item 18 says.
-17. Deploy to the Cloudflare preview. Apply the migration to the Neon database in `.env`. Check that `/admin` and `/admin/images` send a visitor with no session to `/signin`.
+17. Deploy to the Cloudflare preview. Apply the migration to the Neon database in `.env`. Check that `/admin` and `/admin/images` send a visitor with no session to `/signin`. Status: done by the orchestrator after merge.
 18. Write the final report at the path in item 20. It lists: each decision and its answer from the Decisions table in `docs/PLAN.md`; each control that does nothing, from all merged pull requests and this one; each approved difference from the design, and who approved it. Include each word difference below. Nothing else can ship as a difference.
 19. Append one line to `progress.md` with the commit script.
 
