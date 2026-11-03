@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Review navigation opens the complete squadmate cast",
+    "result": "pass",
+    "details": {
+      "url": "http://127.0.0.1:8791/review/characters",
+      "cast": [
+        "\n\n\n\n\n\n\nPetraMasterNamed after Petra, JordanKeeps the squad in sync and asks you only when it matters.",
+        "\n\n\n\n\n\n\nPisaOrdersNamed after Pisa, ItalyFulfils orders and chases tracking numbers.",
+        "\n\n\n\n\n\n\nKyotoSupportNamed after Kyoto, JapanAnswers the inbox and handles refunds.",
+        "\n\n\n\n\n\n\nRioMarketingNamed after Rio de Janeiro, BrazilRuns ads, social and email.",
+        "\n\n\n\n\n\n\nZurichFinanceNamed after Zurich, SwitzerlandWatches payouts, costs and profit.",
+        "\n\n\n\n\n\n\nGizaInventoryNamed after Giza, EgyptCounts stock and talks to suppliers.",
+        "\n\n\n\n\n\n\nMachuMarket researcherNamed after Machu Picchu, PeruFinds the competitors and reads their prices.",
+        "\n\n\n\n\n\n\nAngkorWebsite builderNamed after Angkor Wat, CambodiaBuilds the page and publishes on your yes.",
+        "\n\n\n\n\n\n\nDelphiAnalyticsNamed after Delphi, GreeceWrites the reports and the weekly digest."
+      ]
+    }
+  },
+  {
+    "name": "State sheet, example conversations and avatar sizes render",
+    "result": "pass",
+    "details": {
+      "stateLabels": [
+        "",
+        "WaitingNothing to do now. Blinks slowly.",
+        "PlanningLooks up while it plans.",
+        "Running skillLooks at the work.",
+        "CheckingSquints while the code check runs.",
+        "DoneThe check passed.",
+        "Sent backThe check failed once. Looks down.",
+        "BlockedWaits for a person. Holds no machine.",
+        "EscalatedSecond fail. Needs you now.",
+        "DroppedNothing to do at all. Asleep."
+      ],
+      "sampleRows": "Petra\nMaster\nPisa is checking A-1007. I'll tell you when it ships.\n3m\nWorking\nPisa\nOrders\nPetra handed A-1007 to Pisa\n3m\nChecking\nKyoto\nSupport\nRefund for Maya sent, under the limit.\n5m\nDone\nGiza\nInventory\nNeeds your yes to reorder 40 units\n12m\nWaiting for you\nRio\nMarketing\nAd spend hit the daily cap twice\n37m\nEscalated\nZurich\nFinance\nWeekly profit summary is ready\n1h\nIdle\nz\nz\nMachu\nMarket researcher\nNo competitor changes today\n10h\nIdle"
+    }
+  },
+  {
+    "name": "Waiting characters animate and respect reduced motion",
+    "result": "pass",
+    "details": {
+      "normal": {
+        "name": "sm-blink",
+        "duration": "4.8s"
+      },
+      "animation": [
+        {
+          "state": "running",
+          "frames": [
+            "scaleY(1)",
+            "scaleY(1)",
+            "scaleY(0.1)",
+            "scaleY(1)"
+          ]
+        }
+      ],
+      "reducedMotion": "none"
+    }
+  },
+  {
+    "name": "390px sheet keeps overflow inside the state table",
+    "result": "pass",
+    "details": {
+      "viewport": 390,
+      "document": 390,
+      "tableContainer": 342,
+      "tableWidth": 820
+    }
+  },
+  {
+    "name": "Direct and HEAD requests retain review headers; keyboard returns to review; home stays unchanged",
+    "result": "pass",
+    "details": {
+      "direct": 200,
+      "robots": "noindex, nofollow",
+      "backNavigation": true,
+      "holdingPage": true,
+      "errors": []
+    }
+  }
+]
