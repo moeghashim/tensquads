@@ -94,7 +94,10 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 				const view = await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
 				// A read keeps the version from when it started. A newer write wins.
 				if (startedSession !== agentSession()) return;
-				if (started === stampAgentRead(agentId) && state.view === previous) accept(view, state.pending);
+				if (started === stampAgentRead(agentId) && state.view === previous) {
+					needsRead = false;
+					accept(view, state.pending);
+				}
 			} catch {
 				// A failed read stops. Only another user action can request it again.
 				if (startedSession === agentSession()) needsRead = true;
@@ -147,10 +150,17 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 			if (state.pending.length > 0) publish({ view: state.view, pending: [] });
 		},
 		snapshot: () => state,
+		failRead(): AgentDetailView | null {
+			if (!current()) return null;
+			needsRead = true;
+			return state.view;
+		},
 		load(view: AgentDetailView, readAt: number) {
 			if (!current()) return;
+			// A read stamped at the current counter started after the latest failure.
 			if (readAt !== stampAgentRead(agentId) || view === loaderView) return;
 			loaderView = view;
+			needsRead = false;
 			accept(view, state.pending);
 		},
 		subscribe(listener: () => void) {
@@ -194,13 +204,22 @@ function runningFace(view: AgentDetailView, on: boolean): AgentDetailView {
 
 let queues = new WeakMap<object, Map<string, ReturnType<typeof createQueue>>>();
 const liveQueues = new Set<ReturnType<typeof createQueue>>();
+const openReads = new Map<string, ReturnType<typeof createQueue>>();
 
 onAgentClientReset(() => {
 	const open = [...liveQueues];
 	liveQueues.clear();
+	openReads.clear();
 	queues = new WeakMap();
 	for (const queue of open) queue.abandon();
 });
+
+export function keepFailedAgentRead(agentId: string, session: number): AgentDetailView | null {
+	if (typeof window === "undefined") return null;
+	const queue = openReads.get(agentId);
+	if (!queue || queue.session() !== session) return null;
+	return queue.failRead();
+}
 
 function agentQueue(owner: object, agentId: string, initialView: AgentDetailView, session: number) {
 	if (typeof window === "undefined") return createQueue(agentId, initialView);
@@ -215,20 +234,21 @@ function agentQueue(owner: object, agentId: string, initialView: AgentDetailView
 		agents.set(agentId, queue);
 		liveQueues.add(queue);
 	}
+	openReads.set(agentId, queue);
 	return queue;
 }
 
 const absentSnapshot = () => undefined;
 const absentSubscribe = () => () => undefined;
 
-export function useAgentWrites(serverView: AgentDetailView, readAt: number, loaderSession: number) {
+export function useAgentWrites(serverView: AgentDetailView, readAt: number, loaderSession: number, kept = false) {
 	const agentId = serverView.id;
 	const session = useSyncExternalStore(subscribeAgentSession, agentSession, agentSession);
 	const router = useRouter();
 	const navigate = useNavigate();
 	const match = useMatch({ from: "/_workspace/agents/$id" });
 	const queue = loaderSession === session ? agentQueue(router, agentId, serverView, session) : undefined;
-	if (match.status === "success") queue?.load(serverView, readAt);
+	if (match.status === "success" && !kept) queue?.load(serverView, readAt);
 	const snapshot = queue?.snapshot ?? absentSnapshot;
 	const state = useSyncExternalStore(queue?.subscribe ?? absentSubscribe, snapshot, snapshot);
 	if (!queue || !state) return null;

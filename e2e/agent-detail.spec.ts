@@ -319,6 +319,68 @@ test("a later frame shows a server on change after an accepted off write", async
 	await expect(supportDot(page, "Paused")).toHaveCount(0);
 });
 
+test("a failed background loader keeps the snapshot and the controls", async ({ page, workspaceUser }) => {
+	await openAgent(page, workspaceUser, "support");
+	let reads = 0;
+	const pattern = /\/_serverFn\//;
+	const handler = async (route: Route) => {
+		const request = route.request();
+		if (request.method() === "GET" && serverFnExport(request.url()).startsWith("loadAgentDetail")) {
+			reads += 1;
+			await route.fulfill({ status: 500, contentType: "text/plain", body: "failed read" });
+			return;
+		}
+		await route.continue();
+	};
+	await page.route(pattern, handler);
+	try {
+		await invalidateAgent(page);
+		await expect.poll(() => reads, settled).toBe(1);
+		await expect(squadSwitch(page)).toBeVisible();
+	} finally {
+		await page.unroute(pattern, handler);
+	}
+});
+
+test("a successful later loader ends recovery", async ({ page, workspaceUser }) => {
+	await openAgent(page, workspaceUser, "support");
+	let posts = 0;
+	let reads = 0;
+	const pattern = /\/_serverFn\//;
+	const handler = async (route: Route) => {
+		const request = route.request();
+		if (request.method() === "POST") {
+			posts += 1;
+			if (posts === 1) {
+				await route.fulfill({ status: 500, contentType: "text/plain", body: "failed" });
+				return;
+			}
+		}
+		if (request.method() === "GET" && serverFnExport(request.url()).startsWith("loadAgentDetail")) {
+			reads += 1;
+			if (reads === 1) {
+				await route.fulfill({ status: 500, contentType: "text/plain", body: "failed read" });
+				return;
+			}
+		}
+		await route.continue();
+	};
+	await page.route(pattern, handler);
+	try {
+		await squadSwitch(page).click();
+		await expect.poll(() => reads, settled).toBe(1);
+		await wait(200);
+		await invalidateAgent(page);
+		expect(reads).toBe(2);
+		await squadSwitch(page).click();
+		await expect.poll(() => posts, settled).toBe(2);
+		await wait(1_500);
+		expect(reads).toBe(2);
+	} finally {
+		await page.unroute(pattern, handler);
+	}
+});
+
 test("an old recovery read does not hide a later lost response", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(90_000);
 	await openAgent(page, workspaceUser, "support");
@@ -1327,6 +1389,25 @@ test("a held chat send and a held agent write both keep their results", async ({
 	await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(true);
 	await expect(supportDot(page, "Running")).toBeVisible(settled);
 });
+
+async function invalidateAgent(page: Page) {
+	await page.evaluate(async () => {
+		const router = (
+			window as unknown as {
+				__TSR_ROUTER__?: {
+					invalidate: (options: { sync: boolean }) => Promise<void>;
+					state: { isLoading: boolean };
+				};
+			}
+		).__TSR_ROUTER__;
+		if (!router) throw new Error("The router is missing.");
+		await router.invalidate({ sync: true });
+	});
+	await page.waitForFunction(() => {
+		const router = (window as unknown as { __TSR_ROUTER__?: { state: { isLoading: boolean } } }).__TSR_ROUTER__;
+		return router?.state.isLoading === false;
+	});
+}
 
 async function signOutOnAgent(page: Page) {
 	await page.evaluate(async () => {

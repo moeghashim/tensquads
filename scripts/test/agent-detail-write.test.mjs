@@ -39,7 +39,7 @@ registerHooks({
 const moduleUrl = process.env.AGENT_WRITE_TEST_MODULE
 	? pathToFileURL(process.env.AGENT_WRITE_TEST_MODULE)
 	: new URL("../../apps/web/src/screens/agent-detail/write.ts", import.meta.url);
-const { useAgentWrites } = await import(moduleUrl.href);
+const { keepFailedAgentRead, useAgentWrites } = await import(moduleUrl.href);
 const { agentSession, stampAgentRead, stampAgentReads, applyAgentOn, agentOnSnapshot, resetAgentClientState } =
 	await import("../../apps/web/src/workspace/agent-on.ts");
 
@@ -595,6 +595,40 @@ for (const outcome of ["success", "recovery"]) {
 		assert.equal(h.render(), null);
 	});
 }
+
+test("a failed background read keeps the snapshot and the next action reads once", async () => {
+	assert.equal(keepFailedAgentRead("missing-agent", agentSession()), null);
+	const h = harness();
+	assert.equal(h.render().view.on, true);
+	const held = keepFailedAgentRead("support", agentSession());
+	assert.equal(held.on, true);
+	assert.deepEqual(held.events, ["old message"]);
+	h.render().toggleSkill("inbox.read", false);
+	await settle();
+	assert.equal(h.reads.length, 1);
+	assert.equal(h.posts.length, 1);
+	assert.equal(h.render().view.on, true);
+	assert.equal(h.render().view.skills[0].onStr, "false");
+});
+
+test("a successful later loader ends recovery", async () => {
+	const h = harness();
+	h.failNextPost();
+	h.render().toggleAgent(false);
+	await settle();
+	h.posts.shift().answer();
+	await settle();
+	assert.equal(h.reads.length, 1);
+	h.reads.shift().fail();
+	await settle();
+	assert.equal(h.render().view.on, true);
+	h.newLoader(h.server, "success", stampAgentRead("support"));
+	h.render().toggleSkill("inbox.read", false);
+	await settle();
+	assert.equal(h.reads.length, 0);
+	assert.equal(h.posts.length, 1);
+	assert.equal(h.render().view.skills[0].onStr, "false");
+});
 
 test("SSR renders do not reuse persistent client queues", () => {
 	const browserWindow = globalThis.window;
