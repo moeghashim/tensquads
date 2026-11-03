@@ -16,7 +16,6 @@ import {
 } from "react";
 
 import { resetDecisions, watchServerCount } from "#/screens/overview/actions.ts";
-import { onRulesAccountReset } from "#/screens/rules/write-queue.ts";
 import { refreshTraffic } from "#/screens/traffic/refresh.ts";
 import { beginWorkspaceSend, finishWorkspaceSend } from "#/server/workspace.ts";
 
@@ -39,8 +38,6 @@ import { gateStyle, kindStyle, navStyle, pill, switchParts } from "./styles.ts";
 import type { RuleForm, WorkspaceFrameData } from "./types.ts";
 
 const replyWaitMs = 1400;
-
-onRulesAccountReset(resetDecisions);
 
 export function WorkspaceProvider({
 	frame,

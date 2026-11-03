@@ -1,5 +1,6 @@
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 
+import { onRulesAccountReset } from "#/screens/rules/write-queue.ts";
 import { advanceWrites, currentWrites } from "#/workspace/approval-count.ts";
 import { clearFrameHold } from "#/workspace/frame-load.ts";
 
@@ -46,6 +47,8 @@ const landed = new Map<string, number>();
 const reflected = new Set<string>();
 let activeKey: string | null = null;
 let seenServer: object | null = null;
+
+onRulesAccountReset(resetDecisions);
 
 function emptyResult(): DecisionResult {
 	return { wrote: false, refreshed: false, count: null, row: null, readAt: null, dropLanded: false };
