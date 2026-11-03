@@ -651,6 +651,77 @@ test("a held chat finish still writes the reply after an approval", async ({ pag
 	}
 });
 
+test("a lost approval keeps the screen when the frame and overview reads fail", async ({
+	page,
+	workspaceUser,
+	accountId,
+}) => {
+	test.setTimeout(90_000);
+	await openWorkspace(page, workspaceUser);
+	await refundCard(page).getByRole("button", { name: "Approve", exact: true }).click();
+	await expect(tasksTile(page)).toContainText("332", settled);
+	await expect(refundCard(page)).toHaveCount(0);
+	await expect(inboxCount(page)).toHaveText("3", settled);
+	const lost = await loseCommittedRefresh(page, "ap2");
+	try {
+		await printsCard(page).getByRole("button", { name: "Approve", exact: true }).click();
+		await expect.poll(() => lost.failed(), { timeout: 20_000 }).toBe(true);
+		await expect(page).toHaveURL(/\/overview$/);
+		await expect(page.getByText("Something went wrong")).toHaveCount(0);
+		await expect(page.locator("nav[aria-label='Workspace']")).toBeVisible();
+		await expect(page.locator("[data-handler='ap.approve']")).toHaveCount(1);
+		await expect(refundCard(page)).toHaveCount(0);
+		await expect(printsCard(page)).toHaveCount(0);
+		await expect(tasksTile(page)).toContainText("333");
+		await expect(inboxCount(page)).toHaveText("2");
+		await expect(dockBadge(page)).toHaveText("2");
+		expect(await recoveryFlags(page)).toEqual({ frame: true, overview: true });
+		expect((await mandateFor(accountId, "ap2")).row).not.toBeNull();
+		const before = { frame: lost.reads.frame, overview: lost.reads.overview };
+		await page.evaluate(async () => {
+			const router = (
+				window as unknown as { __TSR_ROUTER__?: { invalidate: (options: { sync: boolean }) => Promise<void> } }
+			).__TSR_ROUTER__;
+			if (!router) throw new Error("Router is missing.");
+			await router.invalidate({ sync: true });
+		});
+		await expect.poll(() => recoveryFlags(page), { timeout: 20_000 }).toEqual({ frame: false, overview: false });
+		expect(lost.reads.frame).toBe(before.frame + 1);
+		expect(lost.reads.overview).toBe(before.overview + 1);
+		await expect(tasksTile(page)).toContainText("333");
+		await expect(inboxCount(page)).toHaveText("2");
+		await expect(dockBadge(page)).toHaveText("2");
+		await expect(printsCard(page)).toHaveCount(0);
+		await expect(page.locator("[data-handler='ap.approve']")).toHaveCount(1);
+	} finally {
+		await page.unroute("**/_serverFn/**").catch(() => undefined);
+	}
+});
+
+test("a failed frame refresh keeps the squads screen", async ({ page, workspaceUser }) => {
+	test.setTimeout(90_000);
+	await openWorkspace(page, workspaceUser);
+	const held = await failFrameRefresh(page);
+	try {
+		await page.getByRole("button", { name: "Squads", exact: true }).click();
+		await expect(page).toHaveURL(/\/agents$/);
+		await expect(page.getByRole("heading", { name: "Squads", exact: true })).toBeVisible();
+		await expect(page.getByText("Something went wrong")).toHaveCount(0);
+		await expect(page.locator("nav[aria-label='Workspace']")).toBeVisible();
+		await expect.poll(() => recoveryFlags(page), { timeout: 20_000 }).toEqual({ frame: true, overview: false });
+		const before = held.reads.frame;
+		held.allow();
+		await page.getByRole("button", { name: "Squad traffic", exact: true }).click();
+		await expect(page).toHaveURL(/\/traffic$/);
+		await expect.poll(() => recoveryFlags(page), { timeout: 20_000 }).toEqual({ frame: false, overview: false });
+		expect(held.reads.frame).toBe(before + 1);
+		await expect(page.getByText("Something went wrong")).toHaveCount(0);
+		await expect(page.locator("nav[aria-label='Workspace']")).toBeVisible();
+	} finally {
+		await page.unroute("**/_serverFn/**").catch(() => undefined);
+	}
+});
+
 function tasksTile(page: Page) {
 	return page.locator("main [data-loop='kpis'] > div").filter({ hasText: "Tasks done by squads" });
 }
@@ -723,6 +794,92 @@ async function holdFailedRefresh(page: Page) {
 			releaseGate();
 		},
 	};
+}
+
+function recoveryFlags(page: Page): Promise<{ frame: boolean; overview: boolean }> {
+	return page.evaluate(async () => {
+		const frame = await import("/src/workspace/frame-load.ts");
+		const overview = await import("/src/screens/overview/load.ts");
+		return { frame: frame.frameNeedsRead(), overview: overview.overviewNeedsRead() };
+	});
+}
+
+async function loseCommittedRefresh(page: Page, id: string) {
+	const reads = { frame: 0, overview: 0 };
+	let lost = false;
+	let failedFrame = false;
+	let failedOverview = false;
+	await page.route("**/_serverFn/**", async (route) => {
+		const request = route.request();
+		const body = request.postData() ?? "";
+		if (request.method() === "POST" && body.includes(id) && !lost) {
+			lost = true;
+			const response = await route.fetch();
+			await response.text();
+			await route.fulfill({ status: 500, contentType: "text/plain", body: "lost" });
+			return;
+		}
+		if (request.method() !== "GET") {
+			await route.continue();
+			return;
+		}
+		const response = await route.fetch();
+		const text = await response.text();
+		const kind = readKind(text);
+		if (kind === "frame") reads.frame += 1;
+		if (kind === "overview") reads.overview += 1;
+		if (lost && kind === "frame" && !failedFrame) {
+			failedFrame = true;
+			await route.fulfill({ status: 500, contentType: "text/plain", body: "no" });
+			return;
+		}
+		if (lost && kind === "overview" && !failedOverview) {
+			failedOverview = true;
+			await route.fulfill({ status: 500, contentType: "text/plain", body: "no" });
+			return;
+		}
+		await route.fulfill({ response, body: text });
+	});
+	return {
+		reads,
+		failed: () => lost && failedFrame && failedOverview,
+	};
+}
+
+async function failFrameRefresh(page: Page) {
+	const reads = { frame: 0 };
+	let fail = true;
+	await page.route("**/_serverFn/**", async (route) => {
+		const request = route.request();
+		if (request.method() !== "GET") {
+			await route.continue();
+			return;
+		}
+		const response = await route.fetch();
+		const text = await response.text();
+		if (readKind(text) !== "frame") {
+			await route.fulfill({ response, body: text });
+			return;
+		}
+		reads.frame += 1;
+		if (fail) {
+			await route.fulfill({ status: 500, contentType: "text/plain", body: "no" });
+			return;
+		}
+		await route.fulfill({ response, body: text });
+	});
+	return {
+		reads,
+		allow: () => {
+			fail = false;
+		},
+	};
+}
+
+function readKind(text: string): "frame" | "overview" | "other" {
+	if (text.includes('"approvalCount"')) return "frame";
+	if (text.includes("Tasks done by squads")) return "overview";
+	return "other";
 }
 
 type BrowserSignIn = {

@@ -1,6 +1,7 @@
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 
 import { advanceWrites, currentWrites } from "#/workspace/approval-count.ts";
+import { clearFrameHold } from "#/workspace/frame-load.ts";
 
 import { clearOverviewHold } from "./load.ts";
 import type { OverviewData } from "./types.ts";
@@ -68,6 +69,7 @@ export function resetDecisions(): void {
 	activeKey = null;
 	seenServer = null;
 	clearOverviewHold();
+	clearFrameHold();
 	advanceWrites();
 	notify();
 }

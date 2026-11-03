@@ -31,6 +31,7 @@ import {
 } from "./approval-count.ts";
 import { type StartedTask, useRefresh, useWorkspace, WorkspaceContext } from "./context.ts";
 import { decorate, useInspect } from "./event-view.ts";
+import { rememberFrame } from "./frame-load.ts";
 import { runLiveTick } from "./live.ts";
 import { gateStyle, kindStyle, navStyle, pill, switchParts } from "./styles.ts";
 import type { RuleForm, WorkspaceFrameData } from "./types.ts";
@@ -213,6 +214,9 @@ function draftValue(text: string | undefined, draft: string): string {
 }
 
 function useFrameAndCount(frame: WorkspaceFrameData & { readonly writeAt: number }, sending: { current: boolean }) {
+	useEffect(() => {
+		rememberFrame(frame);
+	}, [frame]);
 	const messages = useFrameMessages(frame, sending);
 	const count = useApprovalCount(frame);
 	useAccountBoundary();
