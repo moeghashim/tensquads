@@ -7,7 +7,7 @@
 # Test info
 
 - Name: overview.spec.ts >> the overview shows the greeting, six tiles, fourteen bars, the inbox and five cards
-- Location: e2e/overview.spec.ts:17:1
+- Location: e2e/overview.spec.ts:35:1
 
 # Error details
 
