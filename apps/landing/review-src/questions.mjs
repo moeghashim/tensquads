@@ -33,6 +33,28 @@ export const QUESTIONS = [
 			"A mailbox-for-agents service (for example AgentMail) is the alternative. It costs more, but it keeps threads and attachments for us.",
 		],
 	},
+	{
+		q: "How do we replace Ahrefs?",
+		now: "The plan has no SEO data source. The Market researcher uses context.dev Search, context.dev maps and reviews, and Scrapling to read pages (task 05).",
+		rec: [
+			"Do not build our own crawler or backlink index. Split what Ahrefs gives into two parts.",
+			"The customer's own site: Google Search Console, through the broker in question 1. It is free and first-party: real queries, clicks, impressions and positions.",
+			"Competitors and keywords: a pay-per-call SEO data API behind IntegrationGateway. DataForSEO is the first candidate: search results, keyword volumes, ranked keywords per domain, and backlinks. We pay per request, not per seat.",
+			"Expose it as researcher skills, for example seo.keywords and seo.competitor_domain. Each number in a report carries its source, as the report check already asks.",
+		],
+	},
+	{
+		q: "How do we understand a competitor's marketing strategy and performance?",
+		now: "Task 05 reports competitors, their offers and prices, and one gap. competition.watch makes a context.dev monitor that sends change.detected to the master. Marketing channels and performance are not covered.",
+		rec: [
+			"Make it a second researcher report, after the proof of concept: \"How they market\". It has the channels, the messages and offers, and an estimate of performance.",
+			"Paid search: the keywords a competitor bids on and its estimated paid traffic, from the SEO data API in question 4.",
+			"Paid social: the Meta Ad Library. Its API covers all ads only in the EU, and political ads elsewhere. Outside the EU, the researcher reads the public library pages. The Google Ads Transparency Center has no public API, so the same applies.",
+			"Organic: ranked keywords and estimated organic traffic (question 4), public social profiles and posting rate, and reviews from the maps sources already in task 05.",
+			"Change over time: competition.watch already notices site changes. Add new ads and price changes as more Triggers to the master.",
+			"Performance from outside is always an estimate. Each figure shows its source and the word \"estimate\". The check rejects a figure with no source.",
+		],
+	},
 ];
 
 const esc = (s) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
