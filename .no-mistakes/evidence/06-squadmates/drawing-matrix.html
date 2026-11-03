@@ -1,0 +1,705 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Squadmates public API consumer</title><style>
+.sm-blink{transform-box:fill-box;transform-origin:center;animation:sm-blink 4.8s infinite}
+@keyframes sm-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@media (prefers-reduced-motion:reduce){.sm-blink{animation:none}}
+</style><style>body{font:14px system-ui;background:#fcfcfc;color:#282828;padding:24px}table{border-collapse:collapse}td,th{padding:12px;text-align:center}td:first-child{text-align:left}svg{display:block}th{font-size:12px}</style></head><body><h1>Squadmates — all draw states</h1><table><tr><th>Name / role</th><th>idle</th><th>waiting</th><th>planning</th><th>running</th><th>checking</th><th>done</th><th>sentback</th><th>blocked</th><th>escalated</th><th>dropped</th></tr><tr><td>Petra<br>(no role tag)</td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#ffffff"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#ffffff"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#ffffff"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#ffffff"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#ffffff"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, sentback">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><rect x="21.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#ffffff"/><rect x="35.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#ffffff"/><rect x="29.7" y="47.7" width="4.6" height="2.6" rx="1.3" fill="#ffffff"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#ffffff"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#ffffff"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#ffffff"/><circle cx="39" cy="37" r="4.4" fill="#ffffff"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#ffffff"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg></td></tr><tr><td>Pisa<br>Orders</td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Pisa, Orders">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Pisa, Orders, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Pisa, Orders, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Pisa, Orders, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Pisa, Orders, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Pisa, Orders, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Pisa, Orders, sentback">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g><rect x="21.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="35.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="29.7" y="47.7" width="4.6" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Pisa, Orders, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Pisa, Orders, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Pisa, Orders, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg></td></tr><tr><td>Kyoto<br>Support</td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, sentback">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><rect x="21.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="35.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="29.7" y="47.7" width="4.6" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg></td></tr><tr><td>Rio<br>Marketing</td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Rio, Marketing">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Rio, Marketing, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Rio, Marketing, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Rio, Marketing, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Rio, Marketing, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Rio, Marketing, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Rio, Marketing, sentback">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g><rect x="21.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="35.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="29.7" y="47.7" width="4.6" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Rio, Marketing, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Rio, Marketing, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Rio, Marketing, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg></td></tr><tr><td>Zurich<br>Finance</td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Zurich, Finance">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Zurich, Finance, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Zurich, Finance, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Zurich, Finance, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Zurich, Finance, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Zurich, Finance, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Zurich, Finance, sentback">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g><rect x="21.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="35.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="29.7" y="47.7" width="4.6" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Zurich, Finance, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Zurich, Finance, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Zurich, Finance, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg></td></tr><tr><td>Giza<br>Inventory</td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Giza, Inventory">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Giza, Inventory, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Giza, Inventory, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Giza, Inventory, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Giza, Inventory, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Giza, Inventory, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Giza, Inventory, sentback">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g><rect x="21.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="35.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="29.7" y="47.7" width="4.6" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Giza, Inventory, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Giza, Inventory, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Giza, Inventory, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg></td></tr><tr><td>Machu<br>Market researcher</td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Machu, Market researcher">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Machu, Market researcher, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Machu, Market researcher, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Machu, Market researcher, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Machu, Market researcher, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Machu, Market researcher, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Machu, Market researcher, sentback">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g><rect x="21.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="35.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="29.7" y="47.7" width="4.6" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Machu, Market researcher, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Machu, Market researcher, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Machu, Market researcher, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg></td></tr><tr><td>Angkor<br>Website builder</td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, sentback">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><rect x="21.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="35.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="29.7" y="47.7" width="4.6" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg></td></tr><tr><td>Delphi<br>Analytics</td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Delphi, Analytics">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Delphi, Analytics, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Delphi, Analytics, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Delphi, Analytics, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Delphi, Analytics, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Delphi, Analytics, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Delphi, Analytics, sentback">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g><rect x="21.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="35.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="29.7" y="47.7" width="4.6" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Delphi, Analytics, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Delphi, Analytics, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Delphi, Analytics, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg></td></tr><tr><td>Sydney<br>People</td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sydney, People">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<rect x="15" y="18" width="34" height="12" rx="2.5" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.4"/><circle cx="32" cy="18" r="1.6" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.2"/><text x="32" y="26.5" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="7.5" font-weight="700" fill="#0d0d0d">Sydney</text>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sydney, People, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<rect x="15" y="18" width="34" height="12" rx="2.5" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.4"/><circle cx="32" cy="18" r="1.6" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.2"/><text x="32" y="26.5" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="7.5" font-weight="700" fill="#0d0d0d">Sydney</text>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sydney, People, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<rect x="15" y="18" width="34" height="12" rx="2.5" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.4"/><circle cx="32" cy="18" r="1.6" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.2"/><text x="32" y="26.5" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="7.5" font-weight="700" fill="#0d0d0d">Sydney</text>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sydney, People, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<rect x="15" y="18" width="34" height="12" rx="2.5" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.4"/><circle cx="32" cy="18" r="1.6" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.2"/><text x="32" y="26.5" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="7.5" font-weight="700" fill="#0d0d0d">Sydney</text>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sydney, People, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<rect x="15" y="18" width="34" height="12" rx="2.5" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.4"/><circle cx="32" cy="18" r="1.6" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.2"/><text x="32" y="26.5" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="7.5" font-weight="700" fill="#0d0d0d">Sydney</text>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sydney, People, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<rect x="15" y="18" width="34" height="12" rx="2.5" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.4"/><circle cx="32" cy="18" r="1.6" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.2"/><text x="32" y="26.5" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="7.5" font-weight="700" fill="#0d0d0d">Sydney</text>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sydney, People, sentback">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<rect x="15" y="18" width="34" height="12" rx="2.5" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.4"/><circle cx="32" cy="18" r="1.6" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.2"/><text x="32" y="26.5" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="7.5" font-weight="700" fill="#0d0d0d">Sydney</text>
+<g><rect x="21.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="35.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="29.7" y="47.7" width="4.6" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sydney, People, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<rect x="15" y="18" width="34" height="12" rx="2.5" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.4"/><circle cx="32" cy="18" r="1.6" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.2"/><text x="32" y="26.5" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="7.5" font-weight="700" fill="#0d0d0d">Sydney</text>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sydney, People, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<rect x="15" y="18" width="34" height="12" rx="2.5" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.4"/><circle cx="32" cy="18" r="1.6" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.2"/><text x="32" y="26.5" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="7.5" font-weight="700" fill="#0d0d0d">Sydney</text>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sydney, People, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<rect x="15" y="18" width="34" height="12" rx="2.5" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.4"/><circle cx="32" cy="18" r="1.6" fill="#fff" stroke="rgba(13,13,13,.78)" stroke-width="1.2"/><text x="32" y="26.5" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="7.5" font-weight="700" fill="#0d0d0d">Sydney</text>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg></td></tr></table></body></html>

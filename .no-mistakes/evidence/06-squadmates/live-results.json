@@ -1,0 +1,193 @@
+{
+  "existingDrawings": {
+    "comparison": "actual old and new renderer outputs, byte for byte",
+    "characters": 9,
+    "states": 10,
+    "sizes": [
+      16,
+      24,
+      32,
+      48,
+      64,
+      96,
+      112
+    ],
+    "matchingOutputs": 630
+  },
+  "exports": {
+    "roster": [
+      [
+        "master",
+        "Petra",
+        "Petra, Jordan",
+        null
+      ],
+      [
+        "orders",
+        "Pisa",
+        "Pisa, Italy",
+        "Orders"
+      ],
+      [
+        "support",
+        "Kyoto",
+        "Kyoto, Japan",
+        "Support"
+      ],
+      [
+        "marketing",
+        "Rio",
+        "Rio de Janeiro, Brazil",
+        "Marketing"
+      ],
+      [
+        "finance",
+        "Zurich",
+        "Zurich, Switzerland",
+        "Finance"
+      ],
+      [
+        "inventory",
+        "Giza",
+        "Giza, Egypt",
+        "Inventory"
+      ],
+      [
+        "market",
+        "Machu",
+        "Machu Picchu, Peru",
+        "Market researcher"
+      ],
+      [
+        "website",
+        "Angkor",
+        "Angkor Wat, Cambodia",
+        "Website builder"
+      ],
+      [
+        "analytics",
+        "Delphi",
+        "Delphi, Greece",
+        "Analytics"
+      ],
+      [
+        "hr",
+        "Sydney",
+        "Sydney, Australia",
+        "People"
+      ]
+    ],
+    "loopStates": [
+      {
+        "id": "waiting",
+        "label": "Waiting",
+        "hint": "Nothing to do now. Blinks slowly."
+      },
+      {
+        "id": "planning",
+        "label": "Planning",
+        "hint": "Looks up while it plans."
+      },
+      {
+        "id": "running",
+        "label": "Running skill",
+        "hint": "Looks at the work."
+      },
+      {
+        "id": "checking",
+        "label": "Checking",
+        "hint": "Squints while the code check runs."
+      },
+      {
+        "id": "done",
+        "label": "Done",
+        "hint": "The check passed."
+      },
+      {
+        "id": "sentback",
+        "label": "Sent back",
+        "hint": "The check failed once. Looks down."
+      },
+      {
+        "id": "blocked",
+        "label": "Blocked",
+        "hint": "Waits for a person. Holds no machine."
+      },
+      {
+        "id": "escalated",
+        "label": "Escalated",
+        "hint": "Second fail. Needs you now."
+      },
+      {
+        "id": "dropped",
+        "label": "Dropped",
+        "hint": "Nothing to do at all. Asleep."
+      }
+    ],
+    "idleExcluded": true
+  },
+  "invalidInputs": [
+    {
+      "imageId": "legal",
+      "error": "UnknownSquadmateError",
+      "message": "Unknown squadmate image: legal"
+    },
+    {
+      "imageId": "",
+      "error": "UnknownSquadmateError",
+      "message": "Unknown squadmate image: "
+    },
+    {
+      "imageId": "__proto__",
+      "error": "UnknownSquadmateError",
+      "message": "Unknown squadmate image: __proto__"
+    },
+    {
+      "imageId": "constructor",
+      "error": "UnknownSquadmateError",
+      "message": "Unknown squadmate image: constructor"
+    },
+    {
+      "imageId": "<script>alert(1)</script>",
+      "error": "UnknownSquadmateError",
+      "message": "Unknown squadmate image: <script>alert(1)</script>"
+    },
+    {
+      "state": "asleep",
+      "error": "UnknownSquadmateStateError",
+      "message": "Unknown squadmate state: asleep"
+    }
+  ],
+  "sheetByteContract": {
+    "unchangedAfterRemovingSydney": true,
+    "baseBodySha256": "1cc787295b106fcb5f73ce4c9b6f5bc800c8a2a3ac662d0362b538a09c66940c",
+    "currentBodyBytes": 52583,
+    "newCardBytes": 1075
+  },
+  "sydney": {
+    "colors": {
+      "tint": "rgb(222, 245, 238)",
+      "body": "#34b98c"
+    },
+    "badgeText": "Sydney",
+    "role": "People",
+    "place": "Sydney, Australia",
+    "description": "Hires people and runs onboarding."
+  },
+  "mobile": {
+    "viewport": 390,
+    "documentWidth": 390
+  },
+  "matrix": {
+    "renderedSvgs": 100,
+    "dimensions": {
+      "width": 64,
+      "height": 64
+    }
+  },
+  "motion": {
+    "normal": "sm-blink",
+    "reduced": "none"
+  },
+  "browserErrors": []
+}
