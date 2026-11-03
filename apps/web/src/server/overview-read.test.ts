@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { Pool } from "@neondatabase/serverless";
 import { createRepositories, openPostgres, saveWorkspace, schema } from "@tensquads/adapters";
+import { TASKS_DONE_LABEL } from "@tensquads/domain";
 import { Kernel } from "@tensquads/kernel";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import { replaceDemoAccount } from "../../../../packages/seed/src/demo-account.ts";
-import { TASKS_DONE_LABEL } from "@tensquads/domain";
 import { openPglite } from "../../../../packages/adapters/test/pglite.ts";
+import { replaceDemoAccount } from "../../../../packages/seed/src/demo-account.ts";
 import { workspaceFromDesign } from "../../../../packages/seed/src/index.ts";
 import { readOverview } from "./overview-read.ts";
 
@@ -67,10 +67,11 @@ test("an account with no store shows dashes, zero tasks, and an empty inbox", as
 	}
 });
 
-
 const connection = process.env.TEST_DATABASE_URL ?? "";
 
-test("an Overview stays on one snapshot when another client approves after its first query", { skip: !connection }, async (t) => {
+test("an Overview stays on one snapshot when another client approves after its first query", {
+	skip: !connection,
+}, async (t) => {
 	const pool = new Pool({ connectionString: connection });
 	const writer = openPostgres(connection);
 	const client = await pool.connect();
@@ -97,15 +98,30 @@ test("an Overview stays on one snapshot when another client approves after its f
 		assert.equal(committed, true);
 		assert.equal(page.count, 4);
 		assert.equal(page.tiles[4]?.value, "331");
-		assert.equal(page.agents.reduce((sum, agent) => sum + agent.tasks, 0), 331);
+		assert.equal(
+			page.agents.reduce((sum, agent) => sum + agent.tasks, 0),
+			331,
+		);
 		assert.ok(page.approvals.some((approval) => approval.id === "ap1"));
-		assert.equal(page.agents.find((agent) => agent.id === "support")?.last, before.agents.find((agent) => agent.id === "support")?.last);
+		assert.equal(
+			page.agents.find((agent) => agent.id === "support")?.last,
+			before.agents.find((agent) => agent.id === "support")?.last,
+		);
 		const fresh = await readOverview(writer.db, scope);
 		assert.equal(fresh.count, 3);
 		assert.equal(fresh.tiles[4]?.value, "332");
-		assert.equal(fresh.agents.reduce((sum, agent) => sum + agent.tasks, 0), 332);
-		assert.equal(fresh.approvals.some((approval) => approval.id === "ap1"), false);
-		assert.equal(fresh.agents.find((agent) => agent.id === "support")?.last, `${before.approvals.find((approval) => approval.id === "ap1")?.title} (approved)`);
+		assert.equal(
+			fresh.agents.reduce((sum, agent) => sum + agent.tasks, 0),
+			332,
+		);
+		assert.equal(
+			fresh.approvals.some((approval) => approval.id === "ap1"),
+			false,
+		);
+		assert.equal(
+			fresh.agents.find((agent) => agent.id === "support")?.last,
+			`${before.approvals.find((approval) => approval.id === "ap1")?.title} (approved)`,
+		);
 	} finally {
 		await writer.db.delete(schema.accounts).where(eq(schema.accounts.id, accountId));
 		client.release();

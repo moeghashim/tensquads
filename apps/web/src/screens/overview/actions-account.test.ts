@@ -1,11 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-
-import type { OverviewData } from "./types.ts";
-import { presentOverview, type DecisionKind } from "./view.ts";
-
 import { currentWrites } from "#/workspace/approval-count.ts";
-
 import {
 	acceptOverviewRead,
 	type DecisionRefresh,
@@ -17,6 +12,8 @@ import {
 	shownApprovalCount,
 	watchServerCount,
 } from "./actions.ts";
+import type { OverviewData } from "./types.ts";
+import { type DecisionKind, presentOverview } from "./view.ts";
 
 describe("overview account and landed reads", { concurrency: false }, () => {
 	test("a finished write keeps its patch until a read that started after it landed", async () => {
@@ -108,26 +105,54 @@ function patch(key: string) {
 	return { key, id: key, kind: "spend-approve" as const };
 }
 
-
 function snapshot(count: number): OverviewData {
 	return {
-		greeting: "Good morning, Moe", mission: "", online: "", tiles: [], bars: [], count,
-		empty: false, emptyText: "", masterName: "Master", agents: [],
+		greeting: "Good morning, Moe",
+		mission: "",
+		online: "",
+		tiles: [],
+		bars: [],
+		count,
+		empty: false,
+		emptyText: "",
+		masterName: "Master",
+		agents: [],
 		approvals: [{ id: "ap1", agentName: "Support", tint: "", amount: "$42", title: "Refund", detail: "" }],
-		proposals: [{ id: "mp1", agentName: "Inventory", tint: "", title: "Proposed mission", mission: "Stock", chips: [], proposed: true, revising: false }],
+		proposals: [
+			{
+				id: "mp1",
+				agentName: "Inventory",
+				tint: "",
+				title: "Proposed mission",
+				mission: "Stock",
+				chips: [],
+				proposed: true,
+				revising: false,
+			},
+		],
 	};
 }
 
-for (const kind of ["spend-approve", "spend-decline", "mission-approve", "mission-revise"] as const satisfies readonly DecisionKind[]) {
+for (const kind of [
+	"spend-approve",
+	"spend-decline",
+	"mission-approve",
+	"mission-revise",
+] as const satisfies readonly DecisionKind[]) {
 	for (const reflected of [false, true]) {
 		test(`${kind} counts a held patch only when the accepted snapshot still needs it: ${reflected}`, async () => {
 			resetDecisions();
 			const item = { key: "held", id: kind.startsWith("spend") ? "ap1" : "mp1", kind };
 			let release = () => {};
-			const gate = new Promise<void>((resolve) => { release = resolve; });
+			const gate = new Promise<void>((resolve) => {
+				release = resolve;
+			});
 			const refresh = async () => ({ count: 3, readAt: currentWrites(), dropLanded: true });
 			const done = new Promise<DecisionResult>((resolve) => {
-				assert.equal(enqueueDecision(item, 4, () => gate, refresh, resolve), true);
+				assert.equal(
+					enqueueDecision(item, 4, () => gate, refresh, resolve),
+					true,
+				);
 			});
 			const before = snapshot(4);
 			const page = reflected ? presentOverview(before, [item]) : before;
@@ -135,7 +160,16 @@ for (const kind of ["spend-approve", "spend-decline", "mission-approve", "missio
 			assert.equal(shownApprovalCount(page.count), 3);
 			assert.equal(presentOverview(page, patchSnapshot()).count, 3);
 			assert.equal(patchSnapshot().length, 1);
-			assert.equal(enqueueDecision(item, page.count, () => gate, refresh, () => {}), false);
+			assert.equal(
+				enqueueDecision(
+					item,
+					page.count,
+					() => gate,
+					refresh,
+					() => {},
+				),
+				false,
+			);
 			reconcileDecisions(page.count, currentWrites(), false);
 			assert.equal(shownApprovalCount(page.count), 3);
 			release();

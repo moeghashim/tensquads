@@ -568,3 +568,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-02 02-overview: The other tab's approval is read after its write commits, and the refund card is checked only once Overview is on screen. The frame effect keeps that overview count when both reads share a counter.
 - 2026-11-02 02-overview: Accepted snapshots count only unapplied patches, Traffic results preserve open chat tasks, and Overview reads use one repeatable-read snapshot.
 - 2026-11-02 02-overview: A Result closes the newest open Task with the same skill and reversed endpoints, so Traffic and chat finish independently.
+- 2026-11-02 02-overview: The review tests match the formatter, and the Result scan walks backward without a newer library target.

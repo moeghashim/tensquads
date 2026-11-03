@@ -292,7 +292,6 @@ test("an approval between a chat task and its finish still writes the reply", as
 	});
 });
 
-
 for (const order of ["chat-both-traffic", "chat-traffic-task", "traffic-task-chat-result"] as const) {
 	test(`${order} matches each Result to its own Task`, async () => {
 		await withCopy(order, async (db, accountId) => {
@@ -310,10 +309,7 @@ for (const order of ["chat-both-traffic", "chat-traffic-task", "traffic-task-cha
 			if (finished.kind !== "replied") return;
 			assert.equal(finished.messages.at(-1)?.text, marketingResult);
 			const events = await generated(db, accountId);
-			assert.equal(
-				events.filter((event) => event.kind === "Result" && event.fromAgent === "marketing").length,
-				1,
-			);
+			assert.equal(events.filter((event) => event.kind === "Result" && event.fromAgent === "marketing").length, 1);
 			const agents = await createRepositories(db).squads.listAgents(accountScope);
 			assert.equal(agents.find((agent) => agent.id === "marketing")?.tasks, 39);
 			assert.equal((await kernel.finishSend(accountScope, started.taskId)).kind, "ignored");

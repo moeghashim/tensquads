@@ -142,11 +142,19 @@ function openChatTasks(rows: readonly (typeof busEvents.$inferSelect)[]) {
 		if (row.kind === "Task") {
 			open.push(row);
 		} else if (row.kind === "Result") {
-			const index = open.findLastIndex((task) => matchesResult(task, row));
+			const index = newestMatch(open, row);
 			if (index !== -1) open.splice(index, 1);
 		}
 	}
 	return open.filter((row) => isChatPayload(row.payload) && row.occurredAt !== null);
+}
+
+function newestMatch(open: readonly (typeof busEvents.$inferSelect)[], result: typeof busEvents.$inferSelect): number {
+	for (let index = open.length - 1; index >= 0; index -= 1) {
+		const task = open[index];
+		if (task && matchesResult(task, result)) return index;
+	}
+	return -1;
 }
 
 function matchesResult(task: typeof busEvents.$inferSelect, result: typeof busEvents.$inferSelect): boolean {
