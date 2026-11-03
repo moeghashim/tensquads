@@ -1,0 +1,336 @@
+{
+  "config": {
+    "argv": [
+      "/opt/homebrew/Cellar/node@24/24.21.0/bin/node",
+      "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/node_modules/.bin/playwright",
+      "test",
+      "e2e/agent-detail.spec.ts",
+      "--config",
+      ".test-phase.playwright.config.ts",
+      "--project",
+      "parallel",
+      "--grep",
+      "the dashboard shows every section|an account switch on the mounted|a ticket session switch"
+    ],
+    "configFile": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/.test-phase.playwright.config.ts",
+    "rootDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6FGY3VQ834SDK930RBC0RKD/browser-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "parallel",
+        "name": "parallel",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      },
+      {
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6FGY3VQ834SDK930RBC0RKD/browser-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "account-lock",
+        "name": "account-lock",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": {},
+        "outputDir": "/Users/moeghashim/.no-mistakes/evidence/01M6FGY3VQ834SDK930RBC0RKD/browser-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "parallel",
+        "testDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e",
+        "snapshotDir": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 120000,
+        "use": {
+          "baseURL": "http://localhost:3000",
+          "deviceScaleFactor": 1,
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "launchOptions": {
+            "args": [
+              "--font-render-hinting=none",
+              "--disable-font-subpixel-positioning",
+              "--force-color-profile=srgb"
+            ]
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "parallel"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/Users/moeghashim/.no-mistakes/evidence/01M6FGY3VQ834SDK930RBC0RKD/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "agent-detail.spec.ts",
+      "file": "agent-detail.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "the dashboard shows every section for one agent",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "parallel",
+              "projectName": "parallel",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 0,
+                  "error": {
+                    "message": "Error: publishable, secret, testDatabase is missing.",
+                    "stack": "Error: publishable, secret, testDatabase is missing.\n    at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts:334:8)\n    at Object.base.extend.workspaceUser.scope (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/workspace.ts:41:20)",
+                    "location": {
+                      "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts",
+                      "column": 8,
+                      "line": 334
+                    },
+                    "snippet": "\u001b[90m   at \u001b[39msupport.ts:334\n\n  332 | \t\treturn secrets;\n  333 | \t}\n> 334 | \tthrow new Error(`${missing.join(\", \")} is missing.`);\n      | \t      ^\n  335 | }\n  336 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts",
+                        "column": 8,
+                        "line": 334
+                      },
+                      "message": "Error: publishable, secret, testDatabase is missing.\n\n   at support.ts:334\n\n  332 | \t\treturn secrets;\n  333 | \t}\n> 334 | \tthrow new Error(`${missing.join(\", \")} is missing.`);\n      | \t      ^\n  335 | }\n  336 |\n    at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts:334:8)\n    at Object.base.extend.workspaceUser.scope (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/workspace.ts:41:20)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-03T01:44:03.921Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6FGY3VQ834SDK930RBC0RKD/browser-results/agent-detail-the-dashboard-shows-every-section-for-one-agent-parallel/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts",
+                    "column": 8,
+                    "line": 334
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "9d4610d717bf083f81d0-c4881f005583dbcbc22f",
+          "file": "agent-detail.spec.ts",
+          "line": 60,
+          "column": 1
+        },
+        {
+          "title": "an account switch on the mounted agent route hides the previous account",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "parallel",
+              "projectName": "parallel",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 0,
+                  "error": {
+                    "message": "Error: publishable, secret, testDatabase is missing.",
+                    "stack": "Error: publishable, secret, testDatabase is missing.\n    at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts:334:8)\n    at Object.base.extend.workspaceUser.scope (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/workspace.ts:41:20)",
+                    "location": {
+                      "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts",
+                      "column": 8,
+                      "line": 334
+                    },
+                    "snippet": "\u001b[90m   at \u001b[39msupport.ts:334\n\n  332 | \t\treturn secrets;\n  333 | \t}\n> 334 | \tthrow new Error(`${missing.join(\", \")} is missing.`);\n      | \t      ^\n  335 | }\n  336 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts",
+                        "column": 8,
+                        "line": 334
+                      },
+                      "message": "Error: publishable, secret, testDatabase is missing.\n\n   at support.ts:334\n\n  332 | \t\treturn secrets;\n  333 | \t}\n> 334 | \tthrow new Error(`${missing.join(\", \")} is missing.`);\n      | \t      ^\n  335 | }\n  336 |\n    at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts:334:8)\n    at Object.base.extend.workspaceUser.scope (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/workspace.ts:41:20)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-03T01:44:04.341Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6FGY3VQ834SDK930RBC0RKD/browser-results/agent-detail-an-account-sw-80802--hides-the-previous-account-parallel/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts",
+                    "column": 8,
+                    "line": 334
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "9d4610d717bf083f81d0-30d648051e1aff354944",
+          "file": "agent-detail.spec.ts",
+          "line": 1029,
+          "column": 1
+        },
+        {
+          "title": "a ticket session switch keeps the agent route isolated from held account responses",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "parallel",
+              "projectName": "parallel",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 0,
+                  "error": {
+                    "message": "Error: publishable, secret, testDatabase is missing.",
+                    "stack": "Error: publishable, secret, testDatabase is missing.\n    at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts:334:8)\n    at Object.base.extend.workspaceUser.scope (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/workspace.ts:41:20)",
+                    "location": {
+                      "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts",
+                      "column": 8,
+                      "line": 334
+                    },
+                    "snippet": "\u001b[90m   at \u001b[39msupport.ts:334\n\n  332 | \t\treturn secrets;\n  333 | \t}\n> 334 | \tthrow new Error(`${missing.join(\", \")} is missing.`);\n      | \t      ^\n  335 | }\n  336 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts",
+                        "column": 8,
+                        "line": 334
+                      },
+                      "message": "Error: publishable, secret, testDatabase is missing.\n\n   at support.ts:334\n\n  332 | \t\treturn secrets;\n  333 | \t}\n> 334 | \tthrow new Error(`${missing.join(\", \")} is missing.`);\n      | \t      ^\n  335 | }\n  336 |\n    at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts:334:8)\n    at Object.base.extend.workspaceUser.scope (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/workspace.ts:41:20)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-03T01:44:04.760Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/moeghashim/.no-mistakes/evidence/01M6FGY3VQ834SDK930RBC0RKD/browser-results/agent-detail-a-ticket-sess-402a6-from-held-account-responses-parallel/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6FGY3VQ834SDK930RBC0RKD/e2e/support.ts",
+                    "column": 8,
+                    "line": 334
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "9d4610d717bf083f81d0-572c1495702175e69fa7",
+          "file": "agent-detail.spec.ts",
+          "line": 1138,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-03T01:44:03.059Z",
+    "duration": 1726.278,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 3,
+    "flaky": 0
+  }
+}

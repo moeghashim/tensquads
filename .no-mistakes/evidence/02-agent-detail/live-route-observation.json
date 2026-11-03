@@ -1,0 +1,6 @@
+{
+  "url": "http://localhost:3000/signin",
+  "status": 200,
+  "body": "tensquads\nNew here?\nStart free\nSign in to tensquads\n\nYour squads kept working while you were away.\n\nEmail\nPassword\nForgot password?\nSign in\nor\nEmail me a sign-in link\n\nBy signing in you agree to the [TERMS] and [PRIVACY POLICY].",
+  "errors": []
+}
