@@ -35,7 +35,7 @@ export async function loadRulesSnapshot(): Promise<RulesSnapshotPage> {
 		markReadSucceeded(generation, epoch);
 		return shown;
 	} catch (error) {
-		if (isRedirect(error) || isSessionRefreshNeeded(error)) throw error;
+		if ((typeof Response !== "undefined" && isRedirect(error)) || isSessionRefreshNeeded(error)) throw error;
 		if (typeof window === "undefined") {
 			markReadFailed(epoch);
 			throw error;

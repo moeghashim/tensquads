@@ -68,7 +68,7 @@ export async function loadHeldFrame(
 		return acceptFrameLoad(writeAt, await read(), epochAtStart);
 	} catch (error) {
 		// A signed-out redirect, and a session refresh, are not failed reads.
-		if (isRedirect(error) || isSessionRefreshNeeded(error)) throw error;
+		if ((typeof Response !== "undefined" && isRedirect(error)) || isSessionRefreshNeeded(error)) throw error;
 		const kept = retainFailedFrame(epochAtStart);
 		if (!kept) throw error;
 		return kept;

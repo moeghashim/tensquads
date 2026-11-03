@@ -57,7 +57,7 @@ export async function loadHeldOverview(
 	try {
 		return acceptOverviewLoad(writeAt, await read(), epochAtStart);
 	} catch (error) {
-		if (isRedirect(error) || isSessionRefreshNeeded(error)) throw error;
+		if ((typeof Response !== "undefined" && isRedirect(error)) || isSessionRefreshNeeded(error)) throw error;
 		const kept = retainFailedOverview(epochAtStart);
 		if (!kept) throw error;
 		return kept;
