@@ -39,7 +39,7 @@ test("the sidebar marks the current page and the agent rows show status and open
 }) => {
 	await openWorkspace(page, workspaceUser);
 	await expect(page).toHaveTitle("tensquads workspace");
-	await expect(page.locator("main")).toHaveText("");
+	await expect(page.getByRole("heading", { name: "Good morning, Moe" })).toBeVisible();
 	await expect(page.getByText("Runs 5 squads · Demo store")).toBeVisible();
 	await expect(page.getByText("Moe Ghashim")).toBeVisible();
 	const overview = page.getByRole("button", { name: "Overview" });
@@ -108,7 +108,7 @@ test("a dock message shows the bubble, the working line, the reply, and writes t
 	await expect(chat.getByText("How did ads do this week?")).toBeVisible({ timeout: dockReplyTimeout });
 	await expect(chat.getByText("Passing this to the Marketing agent. I will report back here.")).toBeVisible();
 	await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
-	await expect(page.getByText(marketingResult)).toBeVisible({ timeout: dockReplyTimeout });
+	await expect(chat.getByText(marketingResult)).toBeVisible({ timeout: dockReplyTimeout });
 	await expect(page.getByText("Did the tracking for #A-1007 go through?")).toHaveCount(0);
 	await expect(page.locator("[data-loop='dockChat'] > div")).toHaveCount(6);
 	const events = await generatedEvents(accountId);
@@ -156,7 +156,9 @@ test("an empty message or a second send does nothing", async ({ page, workspaceU
 	await expect(page.getByRole("button", { name: "Send" })).toBeDisabled();
 	await page.locator("#dock-input").fill("Hello there");
 	await page.locator("#dock-input").press("Enter");
-	await expect(page.getByText(marketingResult)).toBeVisible({ timeout: dockReplyTimeout });
+	await expect(page.locator("[data-loop='dockChat']").getByText(marketingResult)).toBeVisible({
+		timeout: dockReplyTimeout,
+	});
 	await expect(page.getByText(noAgent)).toHaveCount(0);
 	const events = await generatedEvents(accountId);
 	expect(events.map((event) => `${event.kind}`)).toEqual(["Task", "Result"]);

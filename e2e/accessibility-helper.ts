@@ -13,6 +13,7 @@ const designContrastFaults = [
 	"signin-terms",
 	"signup-inactive-step",
 	"signup-terms",
+	"overview-online-pill",
 ] as const;
 
 export async function accessibilityViolations(page: Page, disabledRules: readonly string[] = []) {

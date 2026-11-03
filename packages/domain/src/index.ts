@@ -14,11 +14,13 @@ export type {
 	Severity,
 } from "./catalog/types.ts";
 export type { ConversationEvent, MessageSent } from "./conversation/events.ts";
-export type {
-	AppendedChatEvent,
-	ChatEventDraft,
-	ConversationRepository,
-	ConversationTransaction,
+export {
+	type AppendedChatEvent,
+	type ChatEventDraft,
+	type ConversationRepository,
+	type ConversationTransaction,
+	chatTaskLink,
+	type PendingChatTask,
 } from "./conversation/repository.ts";
 export type { Message, MessageFrom, SendResult, SentTask, Thread } from "./conversation/types.ts";
 export type { Eval, Source, Trigger } from "./inbound.ts";
@@ -39,7 +41,30 @@ export type {
 	WorkspaceDraft,
 } from "./platform/types.ts";
 export type { DecideCommand, DecideMissionCommand } from "./policy/approval-commands.ts";
-export { askRevise, decideApproval, decideMission, EMPTY_INBOX, inboxCount, inboxIsEmpty } from "./policy/decide.ts";
+export {
+	askRevise,
+	assembleTiles,
+	BLANK,
+	blankText,
+	chipText,
+	decideApproval,
+	decideMission,
+	EMPTY_INBOX,
+	greetingLine,
+	greetingName,
+	inboxCount,
+	inboxIsEmpty,
+	limitKeyFor,
+	matchedRule,
+	onlineLine,
+	policyVersion,
+	proposalTitle,
+	type RevenueBar,
+	revenueBars,
+	revisingLine,
+	TASKS_DONE_LABEL,
+	type TileInput,
+} from "./policy/decide.ts";
 export type { ApprovalDecided, MissionDecided, PolicyEvent } from "./policy/events.ts";
 export type { MandateDraft, PolicyRepository, RuleDraft } from "./policy/repository.ts";
 export type { AddRuleCommand, SetLimitCommand, SetRuleOnCommand } from "./policy/rule-commands.ts";
@@ -55,6 +80,7 @@ export type {
 	Rule,
 	StoredLimit,
 	WriteFence,
+	WrittenDecision,
 } from "./policy/types.ts";
 export type { RepositoryBag } from "./repositories.ts";
 export type { AccountScope } from "./scope.ts";

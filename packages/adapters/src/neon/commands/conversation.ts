@@ -1,5 +1,5 @@
-import type { AccountScope, ConversationTransaction, Message, MessageFrom } from "@tensquads/domain";
-import { requireScope } from "@tensquads/domain";
+import type { AccountScope, ConversationTransaction, Message, MessageFrom, PendingChatTask } from "@tensquads/domain";
+import { chatTaskLink, requireScope } from "@tensquads/domain";
 import { and, asc, eq, sql } from "drizzle-orm";
 
 import { PENDING_TASK_WINDOW_MS } from "../../pending-window.ts";
@@ -11,6 +11,7 @@ import { appendEvents, type BusCursor, lockCursor, saveCursor } from "./bus.ts";
 export { PENDING_TASK_WINDOW_MS };
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
+type BusRow = typeof busEvents.$inferSelect;
 
 const DOCK_THREAD = "dock";
 
@@ -32,12 +33,8 @@ export async function conversationTransaction<T>(
 		db,
 		async (tx, constrainDeadline) => {
 			await lockCursor(tx, accountId);
-			const pending = await pendingTask(tx, accountId);
-			if (pending?.occurredAt) {
-				constrainDeadline(pending.occurredAt.getTime() + PENDING_TASK_WINDOW_MS);
-			}
 			return work({
-				pendingTask: async () => pending,
+				pendingTask: (taskId) => pendingTask(tx, accountId, constrainDeadline, taskId),
 				agent: (id) => readAgent(tx, accountId, id),
 				skills: (id) => readSkills(tx, accountId, id),
 				store: () => readStore(tx, accountId),
@@ -123,19 +120,72 @@ async function readStore(tx: Tx, accountId: string): Promise<Record<string, unkn
 	return store;
 }
 
-async function pendingTask(tx: Tx, accountId: string) {
-	const rows = await tx.select().from(busEvents).where(eq(busEvents.accountId, accountId));
-	const generated = rows.filter((row) => /^e\d+$/.test(row.id)).sort((left, right) => right.seq - left.seq);
-	const latest = generated[0];
-	if (
-		latest?.kind !== "Task" ||
-		!isChatPayload(latest.payload) ||
-		!latest.occurredAt ||
-		Date.now() - latest.occurredAt.getTime() >= PENDING_TASK_WINDOW_MS
-	) {
+async function pendingTask(
+	tx: Tx,
+	accountId: string,
+	constrainDeadline: (absoluteMs: number) => void,
+	taskId?: string,
+): Promise<PendingChatTask | null> {
+	if (taskId !== undefined) {
+		return lockedChatTask(tx, accountId, taskId, constrainDeadline);
+	}
+	const rows = await tx.select().from(busEvents).where(eq(busEvents.accountId, accountId)).orderBy(asc(busEvents.seq));
+	const linked = linkedTaskIds(rows);
+	for (const row of rows) {
+		const pending = unclosedChat(row, linked, constrainDeadline);
+		if (pending) return pending;
+	}
+	return null;
+}
+
+async function lockedChatTask(
+	tx: Tx,
+	accountId: string,
+	taskId: string,
+	constrainDeadline: (absoluteMs: number) => void,
+): Promise<PendingChatTask | null> {
+	const rows = await tx
+		.select()
+		.from(busEvents)
+		.where(and(eq(busEvents.accountId, accountId), eq(busEvents.id, taskId)))
+		.for("update");
+	const row = rows[0];
+	if (!row) return null;
+	const results = await tx
+		.select()
+		.from(busEvents)
+		.where(and(eq(busEvents.accountId, accountId), eq(busEvents.kind, "Result")));
+	return unclosedChat(row, linkedTaskIds(results), constrainDeadline);
+}
+
+function linkedTaskIds(rows: readonly BusRow[]): Set<string> {
+	const linked = new Set<string>();
+	for (const row of rows) {
+		if (row.kind !== "Result") continue;
+		const task = taskLink(row.payload);
+		if (task) linked.add(task);
+	}
+	return linked;
+}
+
+function unclosedChat(
+	row: BusRow,
+	linked: ReadonlySet<string>,
+	constrainDeadline: (absoluteMs: number) => void,
+): PendingChatTask | null {
+	if (row.kind !== "Task" || !isChatPayload(row.payload) || row.occurredAt === null || linked.has(row.id)) {
 		return null;
 	}
-	return latest;
+	const opened = row.occurredAt.getTime();
+	if (Date.now() - opened >= PENDING_TASK_WINDOW_MS) return null;
+	constrainDeadline(opened + PENDING_TASK_WINDOW_MS);
+	return { id: row.id, toAgent: row.toAgent, skill: row.skill };
+}
+
+function taskLink(payload: unknown): string | null {
+	if (typeof payload !== "object" || payload === null || !(chatTaskLink in payload)) return null;
+	const value = payload[chatTaskLink];
+	return typeof value === "string" && value.length > 0 ? value : null;
 }
 
 function isChatPayload(payload: unknown): boolean {

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createMemoryBus, createRepositories, saveWorkspace, squadId, traceFor } from "@tensquads/adapters";
-import { type AgentImage, type BusEvent, EMPTY_INBOX } from "@tensquads/domain";
+import { type AgentImage, assembleTiles, type BusEvent, EMPTY_INBOX, TASKS_DONE_LABEL } from "@tensquads/domain";
 import { sql } from "drizzle-orm";
 import { extractDesign } from "../../../scripts/extract-design.mjs";
 import { openPglite } from "../../adapters/test/pglite.ts";
@@ -60,11 +60,29 @@ test("the seed computes the nine numbers", async () => {
 		);
 
 		const tiles = await repos.platform.overviewTiles(demo);
-		assert.deepEqual(tiles, design.tiles);
-		assert.equal(tiles?.[4]?.value, "331");
+		const storedTiles = design.tiles.filter((tile) => tile.label !== TASKS_DONE_LABEL);
+		assert.equal(
+			storedTiles.some((tile) => tile.label === TASKS_DONE_LABEL),
+			false,
+		);
+		assert.deepEqual(tiles, storedTiles);
+		assert.equal(
+			tiles?.some((tile) => tile.label === TASKS_DONE_LABEL),
+			false,
+		);
 		assert.equal(tiles?.[3]?.delta.codePointAt(0), 0x2212);
-		assert.equal(await repos.platform.overviewTiles({ accountId: "leen", mode: "account" }), null);
 		const revenue = await repos.platform.dailyRevenue(demo);
+		const shown = assembleTiles({
+			stored: tiles,
+			tasksDone: 331,
+			revenue: revenue.map((day) => day.amount),
+			saved: agents.map((agent) => agent.saved),
+		});
+		assert.equal(shown[0]?.value, "$8,420");
+		assert.equal(shown[4]?.label, TASKS_DONE_LABEL);
+		assert.equal(shown[4]?.value, "331");
+		assert.equal(shown[5]?.value, "34h");
+		assert.equal(await repos.platform.overviewTiles({ accountId: "leen", mode: "account" }), null);
 		assert.equal(revenue.length, 14);
 		assert.equal(revenue[0]?.day, "2026-10-14");
 		assert.equal(revenue[0]?.amount, 980);

@@ -1,5 +1,5 @@
 import type { WorkspaceSnapshot } from "@tensquads/adapters";
-import type { Plan, PlanName } from "@tensquads/domain";
+import { type Plan, type PlanName, TASKS_DONE_LABEL } from "@tensquads/domain";
 
 import { design } from "./design-file.ts";
 
@@ -38,7 +38,7 @@ export function demoData() {
 		approvals: design.seed.approvals.map((item) => ({ ...item, status: "Pending" as const })),
 		proposals: design.seed.missionProposals,
 		revenue: design.revenue.map((day) => ({ day: day.day, amount: day.amount })),
-		tiles: design.tiles,
+		tiles: design.tiles.filter((tile) => tile.label !== TASKS_DONE_LABEL),
 		messages: design.seed.chat,
 	};
 }

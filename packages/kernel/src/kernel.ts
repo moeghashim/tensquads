@@ -1,4 +1,12 @@
-import type { AccountScope, Fenced, Rule, SendResult, StoredLimit, WriteFence } from "@tensquads/domain";
+import type {
+	AccountScope,
+	Fenced,
+	Rule,
+	SendResult,
+	StoredLimit,
+	WriteFence,
+	WrittenDecision,
+} from "@tensquads/domain";
 import { Context } from "cordis";
 import { type BusCommands, bus } from "./plugins/bus.ts";
 import type { ConversationCommands } from "./plugins/conversation.ts";
@@ -6,6 +14,7 @@ import { conversation } from "./plugins/conversation.ts";
 import { plugins } from "./plugins/index.ts";
 import type { PolicyCommands } from "./plugins/policy.ts";
 import { policy } from "./plugins/policy.ts";
+import type { PolicyApprovalCommands } from "./plugins/policy-approvals.ts";
 import {
 	DECIDER_MISSING,
 	type Decider,
@@ -49,7 +58,7 @@ export class Kernel {
 					this.context.plugin(policy, {
 						repositories: () => {
 							if (!this.repositories) throw new Error("Repositories are not configured.");
-							return { policy: this.repositories.policy };
+							return this.repositories;
 						},
 					}),
 				);
@@ -118,6 +127,20 @@ export class Kernel {
 	): Promise<Fenced<StoredLimit>> {
 		await this.ready;
 		return (this.context.get("workspacePolicy") as PolicyCommands).setLimit(scope, key, value, fence, deadlineAt);
+	}
+
+	async decide(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision> {
+		await this.ready;
+		return this.approvals().decide(scope, id, ok, deadlineAt);
+	}
+
+	async decideMission(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision> {
+		await this.ready;
+		return this.approvals().decideMission(scope, id, ok, deadlineAt);
+	}
+
+	private approvals(): PolicyApprovalCommands {
+		return this.context.get("policyApprovals") as PolicyApprovalCommands;
 	}
 
 	pluginNames(): readonly string[] {

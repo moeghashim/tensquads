@@ -1,6 +1,6 @@
 import type { AccountScope, Fenced, Rule, RuleDraft, StoredLimit, WriteFence } from "@tensquads/domain";
 
-import { policyApprovals } from "./policy-approvals.ts";
+import { type PolicyApprovalConfig, policyApprovals } from "./policy-approvals.ts";
 import { policyRules } from "./policy-rules.ts";
 
 export interface PolicyCommands {
@@ -22,16 +22,17 @@ export interface PolicyCommands {
 }
 
 export function policy(
-	context: { provide(name: string, service: PolicyCommands): unknown },
-	config: { repositories: () => { readonly policy: PolicyCommands } },
+	context: { provide(name: string, service: unknown): unknown },
+	config: PolicyApprovalConfig,
 ): void {
-	policyApprovals();
+	policyApprovals(context, config);
 	policyRules();
-	context.provide("workspacePolicy", {
-		setRuleOn: (scope, id, on, fence, deadlineAt) =>
-			config.repositories().policy.setRuleOn(scope, id, on, fence, deadlineAt),
-		addRule: (scope, draft, deadlineAt) => config.repositories().policy.addRule(scope, draft, deadlineAt),
+	const policyCommands = (): PolicyCommands => (config.repositories() as { readonly policy: PolicyCommands }).policy;
+	const workspacePolicy: PolicyCommands = {
+		setRuleOn: (scope, id, on, fence, deadlineAt) => policyCommands().setRuleOn(scope, id, on, fence, deadlineAt),
+		addRule: (scope, draft, deadlineAt) => policyCommands().addRule(scope, draft, deadlineAt),
 		setLimit: (scope, key, value, fence, deadlineAt) =>
-			config.repositories().policy.setLimit(scope, key, value, fence, deadlineAt),
-	});
+			policyCommands().setLimit(scope, key, value, fence, deadlineAt),
+	};
+	context.provide("workspacePolicy", workspacePolicy);
 }

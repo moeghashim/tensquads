@@ -18,13 +18,16 @@ export interface PendingChatTask {
 	readonly skill: string;
 }
 
+// A chat Result names its Task in the payload. Another agent's Result does not.
+export const chatTaskLink = "task";
+
 export interface AppendedChatEvent {
 	readonly id: string;
 	readonly time: string;
 }
 
 export interface ConversationTransaction {
-	pendingTask(): Promise<PendingChatTask | null>;
+	pendingTask(taskId?: string): Promise<PendingChatTask | null>;
 	agent(id: string): Promise<{ readonly id: string; readonly name: string; readonly isOn: boolean } | null>;
 	skills(id: string): Promise<readonly { readonly id: string; readonly on: boolean }[]>;
 	store(): Promise<Readonly<Record<string, unknown>>>;

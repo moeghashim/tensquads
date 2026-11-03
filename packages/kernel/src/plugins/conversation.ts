@@ -1,5 +1,5 @@
 import type { AccountScope, ConversationTransaction, SendResult } from "@tensquads/domain";
-import { chatSource, chatTrigger, evalChatTrigger, requireScope } from "@tensquads/domain";
+import { chatSource, chatTaskLink, chatTrigger, evalChatTrigger, requireScope } from "@tensquads/domain";
 import type { Repositories } from "../ports.ts";
 import type { BusCommands } from "./bus.ts";
 
@@ -30,7 +30,7 @@ export function conversation(
 			const checked = requireScope(scope);
 			if (checked.mode !== "account") return { kind: "ignored" };
 			return config.repositories().conversation.transaction(checked, async (commands) => {
-				const pending = await commands.pendingTask();
+				const pending = await commands.pendingTask(taskId);
 				if (!pending || pending.id !== taskId) return { kind: "ignored" };
 				const planned = resultFor(pending.toAgent);
 				if (!planned) return { kind: "ignored" };
@@ -41,7 +41,7 @@ export function conversation(
 					kind: "Result",
 					skill: pending.skill,
 					text: planned.text,
-					payload: planned.payload,
+					payload: { ...planned.payload, [chatTaskLink]: pending.id },
 					writes: planned.writes,
 				});
 				await commands.completeAgent(pending.toAgent, planned.text);

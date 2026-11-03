@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/tanstack-react-start";
 import { useRouter, useRouterState } from "@tanstack/react-router";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import {
@@ -5,18 +6,32 @@ import {
 	type ReactNode,
 	type SetStateAction,
 	useCallback,
+	// The frame and a signed-in account change the approval counter after commit.
+	// biome-ignore lint/style/noRestrictedImports: rendering must not change that module state
+	useEffect,
 	useMemo,
 	useRef,
 	useState,
 	useSyncExternalStore,
 } from "react";
 
+import { resetDecisions, watchServerCount } from "#/screens/overview/actions.ts";
 import { refreshTraffic } from "#/screens/traffic/refresh.ts";
 import { beginWorkspaceSend, finishWorkspaceSend } from "#/server/workspace.ts";
 
 import { missionBits } from "./agent-view.ts";
+import {
+	currentWrites,
+	noteDecisionCount,
+	noteOverviewCount,
+	overviewMatchStamp,
+	overviewReadFromStamp,
+	sameCount,
+	seedApprovalCount,
+} from "./approval-count.ts";
 import { type StartedTask, useRefresh, useWorkspace, WorkspaceContext } from "./context.ts";
 import { decorate, useInspect } from "./event-view.ts";
+import { rememberFrame } from "./frame-load.ts";
 import { runLiveTick } from "./live.ts";
 import { gateStyle, kindStyle, navStyle, pill, switchParts } from "./styles.ts";
 import type { RuleForm, WorkspaceFrameData } from "./types.ts";
@@ -27,7 +42,7 @@ export function WorkspaceProvider({
 	frame,
 	children,
 }: {
-	readonly frame: WorkspaceFrameData;
+	readonly frame: WorkspaceFrameData & { readonly writeAt: number };
 	readonly children: ReactNode;
 }) {
 	const router = useRouter();
@@ -49,7 +64,7 @@ export function WorkspaceProvider({
 		setStartedTask,
 	} = useWorkspaceControls(frame);
 	const sending = useRef(false);
-	const { messages, setMessages, approvalCount, applyFrame } = useFrameMessages(frame, sending);
+	const { messages, setMessages, applyFrame, approvalCount, noteDecision } = useFrameAndCount(frame, sending);
 
 	const mounted = useRef(true);
 	const refresh = useCallback(() => router.invalidate({ sync: true }), [router]);
@@ -82,6 +97,7 @@ export function WorkspaceProvider({
 			pending,
 			messages,
 			approvalCount,
+			noteDecision,
 			submit,
 			selEvent,
 			setSelEvent,
@@ -103,6 +119,7 @@ export function WorkspaceProvider({
 			frame,
 			live,
 			messages,
+			noteDecision,
 			pending,
 			refresh,
 			ruleForm,
@@ -196,12 +213,20 @@ function draftValue(text: string | undefined, draft: string): string {
 	return (text ?? draft).trim();
 }
 
+function useFrameAndCount(frame: WorkspaceFrameData & { readonly writeAt: number }, sending: { current: boolean }) {
+	useEffect(() => {
+		rememberFrame(frame);
+	}, [frame]);
+	const messages = useFrameMessages(frame, sending);
+	const count = useApprovalCount(frame);
+	useAccountBoundary();
+	return { ...messages, ...count };
+}
+
 function useFrameMessages(frame: WorkspaceFrameData, sending: { current: boolean }) {
 	const [messages, setMessages] = useState(frame.messages);
-	const [approvalCount, setApprovalCount] = useState(frame.approvalCount);
 	const applyFrame = useCallback((loaded: WorkspaceFrameData) => {
 		setMessages(loaded.messages);
-		setApprovalCount(loaded.approvalCount);
 	}, []);
 	// A loader that arrives during a send must not replace the bubbles from that send.
 	const [seenFrame, setSeenFrame] = useState(frame);
@@ -209,11 +234,62 @@ function useFrameMessages(frame: WorkspaceFrameData, sending: { current: boolean
 		setSeenFrame(frame);
 		if (!sending.current) {
 			setMessages(frame.messages);
-			setApprovalCount(frame.approvalCount);
 		}
 	}
 
-	return { messages, setMessages, approvalCount, applyFrame };
+	return { messages, setMessages, applyFrame };
+}
+
+function useApprovalCount(frame: WorkspaceFrameData & { readonly writeAt: number }) {
+	const overviewStamp = useRouterState({ select: overviewStampOf });
+	const [clock, setClock] = useState(() => seedApprovalCount(frame.approvalCount));
+	const noteDecision = useCallback((count: number) => {
+		const writeAt = currentWrites();
+		setClock((current) => noteDecisionCount(current, count, writeAt));
+	}, []);
+	useEffect(() => {
+		const live = currentWrites();
+		// This effect runs after the overview page effect. A frame from the same
+		// counter can be an older server snapshot, so the page count stays.
+		const overview = overviewReadFromStamp(overviewStamp, live);
+		if (live === frame.writeAt) {
+			watchServerCount(frame.approvalCount, frame, frame.writeAt);
+		}
+		setClock((current) => {
+			const next = noteOverviewCount(current, frame.approvalCount, frame.writeAt, live, overview);
+			return sameCount(current, next) ? current : next;
+		});
+	}, [frame, overviewStamp]);
+	return { approvalCount: clock.value, noteDecision };
+}
+
+function overviewStampOf(state: { matches: readonly { routeId: string; loaderData?: unknown }[] }): string | null {
+	const match = state.matches.find((item) => item.routeId === "/_workspace/overview");
+	return overviewMatchStamp(match?.loaderData);
+}
+
+// The first signed-in id is the account that rendered this document. A later
+// id, including sign-out, drops the previous account's queue before the next paint.
+function useAccountBoundary() {
+	const { userId, isLoaded } = useAuth();
+	const router = useRouter();
+	const seen = useRef<string | null | undefined>(undefined);
+	useEffect(() => {
+		if (!isLoaded) {
+			return;
+		}
+		const next = userId ?? null;
+		if (seen.current === undefined) {
+			seen.current = next;
+			return;
+		}
+		if (seen.current === next) {
+			return;
+		}
+		seen.current = next;
+		resetDecisions();
+		void router.invalidate({ sync: true });
+	}, [isLoaded, router, userId]);
 }
 
 function InspectBridge({ children }: { readonly children: ReactNode }) {

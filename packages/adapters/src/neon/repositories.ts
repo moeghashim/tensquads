@@ -34,7 +34,7 @@ import {
 	type SkillGate,
 	type Thread,
 } from "@tensquads/domain";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 
 import { askRevise, setAgentOn, setAutonomy, setSkillOn } from "./commands/agents.ts";
 import { decide, decideMission } from "./commands/approvals.ts";
@@ -68,6 +68,22 @@ import {
 	threads,
 } from "./schema.ts";
 
+type Reader = Pick<AppDatabase, "select">;
+
+export function readOverviewSnapshot(db: AppDatabase, scope: AccountScope) {
+	return db.transaction(async (tx) => {
+		await tx.execute(sql`set transaction isolation level repeatable read`);
+		const accounts = await listAccounts(tx, scope);
+		const agents = await listAgents(tx, scope);
+		const total = await tasksDone(tx, scope);
+		const master = await readMaster(tx, scope);
+		const stored = await listTiles(tx, scope);
+		const revenue = await listRevenue(tx, scope);
+		const inbox = await readInbox(tx, scope);
+		return { accounts, agents, tasksDone: total, master, stored, revenue, inbox };
+	});
+}
+
 export function createRepositories(db: AppDatabase): RepositoryBag {
 	return {
 		platform: {
@@ -99,8 +115,8 @@ export function createRepositories(db: AppDatabase): RepositoryBag {
 			listApprovals: (scope) => listApprovals(db, scope),
 			listMissionProposals: (scope) => listProposals(db, scope),
 			inbox: (scope) => readInbox(db, scope),
-			decide: (scope, id, ok) => decide(db, scope, id, ok),
-			decideMission: (scope, id, ok) => decideMission(db, scope, id, ok),
+			decide: (scope, id, ok, deadlineAt) => decide(db, scope, id, ok, deadlineAt),
+			decideMission: (scope, id, ok, deadlineAt) => decideMission(db, scope, id, ok, deadlineAt),
 			setRuleOn: (scope, id, on, fence, deadlineAt) => setRuleOn(db, scope, id, on, fence, deadlineAt),
 			addRule: (scope, draft, deadlineAt) => addRule(db, scope, draft, deadlineAt),
 			setLimit: (scope, key, value, fence, deadlineAt) => setLimit(db, scope, key, value, fence, deadlineAt),
@@ -118,7 +134,7 @@ export function createRepositories(db: AppDatabase): RepositoryBag {
 	};
 }
 
-async function listAccounts(db: AppDatabase, scope: AccountScope): Promise<readonly Account[]> {
+async function listAccounts(db: Reader, scope: AccountScope): Promise<readonly Account[]> {
 	const checked = requireScope(scope);
 	const accountRows =
 		checked.mode === "platform"
@@ -198,7 +214,7 @@ async function listPlans(db: AppDatabase, scope: AccountScope): Promise<readonly
 	return rows.map((row) => ({ id: asPlan(row.id), name: asPlan(row.name), monthly: row.monthly }));
 }
 
-async function listTiles(db: AppDatabase, scope: AccountScope): Promise<readonly OverviewTile[] | null> {
+async function listTiles(db: Reader, scope: AccountScope): Promise<readonly OverviewTile[] | null> {
 	const checked = requireScope(scope);
 	if (checked.mode === "platform") {
 		return null;
@@ -207,7 +223,7 @@ async function listTiles(db: AppDatabase, scope: AccountScope): Promise<readonly
 	return rows[0]?.tiles ?? null;
 }
 
-async function listRevenue(db: AppDatabase, scope: AccountScope): Promise<readonly DailyRevenue[]> {
+async function listRevenue(db: Reader, scope: AccountScope): Promise<readonly DailyRevenue[]> {
 	const checked = requireScope(scope);
 	const query =
 		checked.mode === "platform"
@@ -226,7 +242,7 @@ async function listSquads(db: AppDatabase, scope: AccountScope) {
 	return rows.map((row) => ({ id: row.id, accountId: row.accountId, name: row.name }));
 }
 
-async function listAgents(db: AppDatabase, scope: AccountScope): Promise<readonly Agent[]> {
+async function listAgents(db: Reader, scope: AccountScope): Promise<readonly Agent[]> {
 	const checked = requireScope(scope);
 	const agentRows = await agentTaskRows(db, checked);
 	const machineRows =
@@ -287,7 +303,7 @@ async function listAgents(db: AppDatabase, scope: AccountScope): Promise<readonl
 	});
 }
 
-async function agentTaskRows(db: AppDatabase, scope: AccountScope) {
+async function agentTaskRows(db: Reader, scope: AccountScope) {
 	const checked = requireScope(scope);
 	if (checked.mode === "platform") {
 		return db.select().from(agents).orderBy(asc(agents.sortOrder));
@@ -295,12 +311,12 @@ async function agentTaskRows(db: AppDatabase, scope: AccountScope) {
 	return db.select().from(agents).where(eq(agents.accountId, checked.accountId)).orderBy(asc(agents.sortOrder));
 }
 
-async function tasksDone(db: AppDatabase, scope: AccountScope): Promise<number> {
+async function tasksDone(db: Reader, scope: AccountScope): Promise<number> {
 	const rows = await agentTaskRows(db, scope);
 	return rows.reduce((sum, row) => sum + row.tasks, 0);
 }
 
-async function readMaster(db: AppDatabase, scope: AccountScope) {
+async function readMaster(db: Reader, scope: AccountScope) {
 	const checked = requireScope(scope);
 	if (checked.mode !== "account") {
 		return null;
@@ -371,7 +387,7 @@ async function listRules(db: AppDatabase, scope: AccountScope): Promise<readonly
 	}));
 }
 
-async function listApprovals(db: AppDatabase, scope: AccountScope): Promise<readonly Approval[]> {
+async function listApprovals(db: Reader, scope: AccountScope): Promise<readonly Approval[]> {
 	const checked = requireScope(scope);
 	const rows =
 		checked.mode === "platform"
@@ -391,7 +407,7 @@ async function listApprovals(db: AppDatabase, scope: AccountScope): Promise<read
 	}));
 }
 
-async function listProposals(db: AppDatabase, scope: AccountScope): Promise<readonly MissionProposal[]> {
+async function listProposals(db: Reader, scope: AccountScope): Promise<readonly MissionProposal[]> {
 	const checked = requireScope(scope);
 	const rows =
 		checked.mode === "platform"
@@ -410,7 +426,7 @@ async function listProposals(db: AppDatabase, scope: AccountScope): Promise<read
 	}));
 }
 
-async function readInbox(db: AppDatabase, scope: AccountScope): Promise<Inbox> {
+async function readInbox(db: Reader, scope: AccountScope): Promise<Inbox> {
 	const storedApprovals = await listApprovals(db, scope);
 	const storedProposals = await listProposals(db, scope);
 	const empty = inboxIsEmpty(storedApprovals, storedProposals);

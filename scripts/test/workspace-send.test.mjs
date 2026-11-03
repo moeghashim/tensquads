@@ -20,6 +20,7 @@ const bundle = await esbuild.build({
    import { WorkspaceProvider } from "./apps/web/src/workspace/provider.tsx";
    import { Dock } from "./apps/web/src/workspace/dock.tsx";
    import { useWorkspace } from "./apps/web/src/workspace/context.ts";
+   import { captureWrites } from "./apps/web/src/workspace/approval-count.ts";
    function Probe() {
     const value = useWorkspace();
     return <><Dock /><output id="pending">{String(value.pending)}</output>
@@ -29,13 +30,15 @@ const bundle = await esbuild.build({
    const workspaceRoute = createRoute({
     getParentRoute: () => rootRoute, id: "_workspace",
     loader: async () => {
+     const writeAt = captureWrites();
      if (window.holdLoader) await new Promise(resolve => { window.releaseLoader = resolve; });
      if (window.nextLoaderFrame) {
       const frame = window.nextLoaderFrame;
       window.nextLoaderFrame = undefined;
-      return frame;
+      return { ...frame, writeAt };
      }
-     return window.readFrame();
+     const frame = await window.readFrame();
+     return { ...frame, writeAt };
     },
     component: () => <WorkspaceProvider frame={workspaceRoute.useLoaderData()}><Probe /></WorkspaceProvider>,
    });
@@ -64,6 +67,16 @@ const bundle = await esbuild.build({
 				build.onResolve({ filter: /^#\/server\/workspace.ts$/ }, ({ path }) => ({
 					path,
 					namespace: "boundary",
+				}));
+				build.onResolve({ filter: /^@clerk\/tanstack-react-start$/ }, ({ path }) => ({
+					path,
+					namespace: "clerk",
+				}));
+				build.onLoad({ filter: /.*/, namespace: "clerk" }, () => ({
+					contents: `export function useAuth() {
+						return { isLoaded: true, userId: "clerk-dock-regression" };
+					}`,
+					loader: "js",
 				}));
 				build.onLoad({ filter: /.*/, namespace: "boundary" }, () => ({
 					contents: `

@@ -1,5 +1,15 @@
 import type { AccountScope } from "../scope.ts";
-import type { Approval, Fenced, Inbox, Mandate, MissionProposal, Rule, StoredLimit, WriteFence } from "./types.ts";
+import type {
+	Approval,
+	Fenced,
+	Inbox,
+	Mandate,
+	MissionProposal,
+	Rule,
+	StoredLimit,
+	WriteFence,
+	WrittenDecision,
+} from "./types.ts";
 
 export interface MandateDraft {
 	readonly approvalId: string;
@@ -22,8 +32,8 @@ export interface PolicyRepository {
 	listApprovals(scope: AccountScope): Promise<readonly Approval[]>;
 	listMissionProposals(scope: AccountScope): Promise<readonly MissionProposal[]>;
 	inbox(scope: AccountScope): Promise<Inbox>;
-	decide(scope: AccountScope, id: string, ok: boolean): Promise<void>;
-	decideMission(scope: AccountScope, id: string, ok: boolean): Promise<void>;
+	decide(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision>;
+	decideMission(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision>;
 	setRuleOn(
 		scope: AccountScope,
 		id: string,

@@ -497,6 +497,8 @@ async function setSkillOff(accountId: string, agentId: string, skillId: string) 
 
 async function clearAgents(accountId: string) {
 	await withDb(async (db) => {
+		await db.delete(schema.missionProposals).where(eq(schema.missionProposals.accountId, accountId));
+		await db.delete(schema.approvals).where(eq(schema.approvals.accountId, accountId));
 		await db.delete(schema.skills).where(eq(schema.skills.accountId, accountId));
 		await db.delete(schema.machines).where(eq(schema.machines.accountId, accountId));
 		await db.delete(schema.agents).where(eq(schema.agents.accountId, accountId));
