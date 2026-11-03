@@ -70,9 +70,12 @@ export async function readFrame(db: import("@tensquads/adapters").AppDatabase, s
 
 export async function sendWorkspace(method: "beginSend" | "finishSend", data: string, accountId: string) {
 	const startedAt = Date.now();
-	return requireWorkspace(async (scope, db) => {
-		const { createRepositories } = await import("@tensquads/adapters");
-		const { Kernel } = await import("@tensquads/kernel");
-		return new Kernel(createRepositories(db))[method](scope, data);
-	}, { accountId, startedAt });
+	return requireWorkspace(
+		async (scope, db) => {
+			const { createRepositories } = await import("@tensquads/adapters");
+			const { Kernel } = await import("@tensquads/kernel");
+			return new Kernel(createRepositories(db))[method](scope, data);
+		},
+		{ accountId, startedAt },
+	);
 }

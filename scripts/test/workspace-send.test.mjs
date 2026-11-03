@@ -146,7 +146,7 @@ async function withDock(t, run) {
 			return result;
 		});
 		await page.exposeFunction("readFrame", async () => {
-			return { ...await readWorkspaceFrame(db, scope), accountId: scope.accountId };
+			return { ...(await readWorkspaceFrame(db, scope)), accountId: scope.accountId };
 		});
 		const mount = async () => {
 			await page.setContent('<div id="root"></div>');

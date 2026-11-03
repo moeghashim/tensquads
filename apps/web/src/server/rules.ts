@@ -117,11 +117,14 @@ async function writeThroughKernel<T>(
 	const startedAt = Date.now();
 	const { requireWorkspace } = await import("./workspace-session.ts");
 	const { PENDING_TASK_WINDOW_MS } = await import("@tensquads/adapters/pending-window");
-	return requireWorkspace(async (scope, db) => {
-		const { createRepositories } = await import("@tensquads/adapters");
-		const { Kernel } = await import("@tensquads/kernel");
-		return work(new Kernel(createRepositories(db)), scope, startedAt + PENDING_TASK_WINDOW_MS);
-	}, { accountId, startedAt });
+	return requireWorkspace(
+		async (scope, db) => {
+			const { createRepositories } = await import("@tensquads/adapters");
+			const { Kernel } = await import("@tensquads/kernel");
+			return work(new Kernel(createRepositories(db)), scope, startedAt + PENDING_TASK_WINDOW_MS);
+		},
+		{ accountId, startedAt },
+	);
 }
 
 function numberLimit(value: unknown): number {
@@ -154,7 +157,14 @@ function validateRuleOn(input: unknown): {
 		throw new Error("The rule change is not valid.");
 	}
 	const fence = validateFence(input);
-	return { accountId: input.accountId, id: input.id, on: input.on, tab: fence.tab, seq: fence.seq, retires: fence.retires };
+	return {
+		accountId: input.accountId,
+		id: input.id,
+		on: input.on,
+		tab: fence.tab,
+		seq: fence.seq,
+		retires: fence.retires,
+	};
 }
 
 function validateDraft(input: unknown): {
@@ -175,7 +185,13 @@ function validateDraft(input: unknown): {
 	) {
 		throw new Error("The new rule is not valid.");
 	}
-	return { accountId: input.accountId, when: input.when, agent: input.agent, action: input.action, approval: input.approval };
+	return {
+		accountId: input.accountId,
+		when: input.when,
+		agent: input.agent,
+		action: input.action,
+		approval: input.approval,
+	};
 }
 
 function validateLimit(input: unknown): {
@@ -197,7 +213,14 @@ function validateLimit(input: unknown): {
 		throw new Error("The limit change is not valid.");
 	}
 	const fence = validateFence(input);
-	return { accountId: input.accountId, key: input.key, value: input.value, tab: fence.tab, seq: fence.seq, retires: fence.retires };
+	return {
+		accountId: input.accountId,
+		key: input.key,
+		value: input.value,
+		tab: fence.tab,
+		seq: fence.seq,
+		retires: fence.retires,
+	};
 }
 
 function validateFence(input: Record<string, unknown>): {

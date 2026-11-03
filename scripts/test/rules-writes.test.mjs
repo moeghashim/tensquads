@@ -146,7 +146,9 @@ async function configure(page, values) {
 		window.values = values;
 		const { kind } = values;
 		window.write = (value) =>
-			window.queue[kind === "rule" ? "queueRule" : "queueLimit"]("test-key", value, "rules-account", () => window.refresh());
+			window.queue[kind === "rule" ? "queueRule" : "queueLimit"]("test-key", value, "rules-account", () =>
+				window.refresh(),
+			);
 		window.shown = (loaded) => window.queue[kind === "rule" ? "shownOn" : "shownLimit"]("test-key", loaded);
 	}, values);
 }

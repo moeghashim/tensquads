@@ -14,7 +14,7 @@ const mocks = {
 		return { validator(fn) { validate = fn; return this; },
 			handler(fn) { return async (options = {}) => fn({ data: validate(options.data) }); } };
 	}`,
-	"react": `export const useSyncExternalStore = () => {};
+	react: `export const useSyncExternalStore = () => {};
 		export const createContext = () => ({});
 		export const useContext = () => globalThis.workspaceAccountTest.workspace;
 		export const useRef = (current) => ({ current });`,
@@ -78,8 +78,10 @@ const { clearFrameHold, loadHeldFrame, frameEpoch } = await import(new URL("work
 const { currentWrites, advanceWrites, overviewMatchStamp } = await import(new URL("workspace/approval-count.ts", web));
 const writes = [
 	(accountId) => rules.setRuleEnabled({ data: { accountId, id: "r1", on: false, tab: "tab", seq: 1 } }),
-	(accountId) => rules.setRuleLimit({ data: { accountId, key: "policy.daily_ad_cap", value: 200, tab: "tab", seq: 2 } }),
-	(accountId) => rules.addWorkspaceRule({ data: { accountId, when: "When", agent: "orders", action: "Then", approval: "Auto" } }),
+	(accountId) =>
+		rules.setRuleLimit({ data: { accountId, key: "policy.daily_ad_cap", value: 200, tab: "tab", seq: 2 } }),
+	(accountId) =>
+		rules.addWorkspaceRule({ data: { accountId, when: "When", agent: "orders", action: "Then", approval: "Auto" } }),
 	(accountId) => overview.decideOverview({ data: { accountId, id: "ap1", ok: true } }),
 	(accountId) => overview.decideMissionOverview({ data: { accountId, id: "mp1", ok: false } }),
 	(accountId) => chat.beginWorkspaceSend({ data: { accountId, text: "Hello" } }),
@@ -124,7 +126,10 @@ test("missing policy values yield no limits while three stored values yield thre
 		assert.deepEqual((await rules.loadRulesPage()).limits, []);
 	}
 	state.store = stored;
-	assert.deepEqual((await rules.loadRulesPage()).limits.map((limit) => limit.value), [1, 2, 3]);
+	assert.deepEqual(
+		(await rules.loadRulesPage()).limits.map((limit) => limit.value),
+		[1, 2, 3],
+	);
 	assert.deepEqual(state.store, stored);
 });
 
@@ -133,14 +138,24 @@ test("target reset drops queued decisions, patches and approval count without ch
 	try {
 		const tab = nextWriteFence().tab;
 		let release;
-		const held = new Promise((resolve) => { release = resolve; });
+		const held = new Promise((resolve) => {
+			release = resolve;
+		});
 		let secondCalls = 0;
-		const enqueue = (id, work) => decisions.enqueueDecision(
-			{ key: id, id, kind: "spend-approve" }, 5, work,
-			async () => { throw new Error("Old account refreshed"); }, () => {},
-		);
+		const enqueue = (id, work) =>
+			decisions.enqueueDecision(
+				{ key: id, id, kind: "spend-approve" },
+				5,
+				work,
+				async () => {
+					throw new Error("Old account refreshed");
+				},
+				() => {},
+			);
 		enqueue("first", () => held);
-		enqueue("second", async () => { secondCalls++; });
+		enqueue("second", async () => {
+			secondCalls++;
+		});
 		await setImmediate();
 		assert.equal(decisions.shownApprovalCount(5), 3);
 		queue.resetTargetAccount();
@@ -219,7 +234,9 @@ test("accepting a new frame account clears old optimistic state even during a wr
 		assert.equal(next.accountId, "northwind");
 		assert.deepEqual(queue.rulesWrittenSince(0), { rules: [], limits: [] });
 		assert.equal(nextWriteFence().tab, tab);
-		const retained = await loadHeldFrame(frameEpoch(), currentWrites(), async () => { throw new Error("Read failed"); });
+		const retained = await loadHeldFrame(frameEpoch(), currentWrites(), async () => {
+			throw new Error("Read failed");
+		});
 		assert.equal(retained.accountId, "northwind");
 	} finally {
 		clearFrameHold();

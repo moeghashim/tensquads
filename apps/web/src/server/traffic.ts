@@ -62,8 +62,11 @@ export const advanceTraffic = createServerFn({ method: "POST" })
 	.handler(async ({ data }): Promise<string> => {
 		const startedAt = Date.now();
 		const { requireWorkspace } = await import("./workspace-session.ts");
-		return requireWorkspace(async (scope, db) => {
-			const { advanceTrafficAccount } = await import("./traffic-step.ts");
-			return advanceTrafficAccount(db, scope, startedAt);
-		}, { accountId: data, startedAt });
+		return requireWorkspace(
+			async (scope, db) => {
+				const { advanceTrafficAccount } = await import("./traffic-step.ts");
+				return advanceTrafficAccount(db, scope, startedAt);
+			},
+			{ accountId: data, startedAt },
+		);
 	});

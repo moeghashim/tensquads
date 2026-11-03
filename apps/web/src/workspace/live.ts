@@ -82,7 +82,11 @@ function pump(): void {
 	void runOwned(next.accountId, next.refresh, next);
 }
 
-async function runOwned(accountId: string, refresh: () => void | Promise<void>, done: QueuedClick | null): Promise<void> {
+async function runOwned(
+	accountId: string,
+	refresh: () => void | Promise<void>,
+	done: QueuedClick | null,
+): Promise<void> {
 	try {
 		await step(accountId, refresh);
 		done?.resolve();

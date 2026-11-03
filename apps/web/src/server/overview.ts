@@ -37,11 +37,19 @@ export const decideOverview = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		const startedAt = Date.now();
 		const { requireWorkspace } = await import("./workspace-session.ts");
-		return requireWorkspace(async (scope, db) => {
-			const { createRepositories } = await import("@tensquads/adapters");
-			const { Kernel } = await import("@tensquads/kernel");
-			return new Kernel(createRepositories(db)).decide(scope, data.id, data.ok, startedAt + PENDING_TASK_WINDOW_MS);
-		}, { accountId: data.accountId, startedAt });
+		return requireWorkspace(
+			async (scope, db) => {
+				const { createRepositories } = await import("@tensquads/adapters");
+				const { Kernel } = await import("@tensquads/kernel");
+				return new Kernel(createRepositories(db)).decide(
+					scope,
+					data.id,
+					data.ok,
+					startedAt + PENDING_TASK_WINDOW_MS,
+				);
+			},
+			{ accountId: data.accountId, startedAt },
+		);
 	});
 
 export const decideMissionOverview = createServerFn({ method: "POST" })
@@ -49,14 +57,17 @@ export const decideMissionOverview = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		const startedAt = Date.now();
 		const { requireWorkspace } = await import("./workspace-session.ts");
-		return requireWorkspace(async (scope, db) => {
-			const { createRepositories } = await import("@tensquads/adapters");
-			const { Kernel } = await import("@tensquads/kernel");
-			return new Kernel(createRepositories(db)).decideMission(
-				scope,
-				data.id,
-				data.ok,
-				startedAt + PENDING_TASK_WINDOW_MS,
-			);
-		}, { accountId: data.accountId, startedAt });
+		return requireWorkspace(
+			async (scope, db) => {
+				const { createRepositories } = await import("@tensquads/adapters");
+				const { Kernel } = await import("@tensquads/kernel");
+				return new Kernel(createRepositories(db)).decideMission(
+					scope,
+					data.id,
+					data.ok,
+					startedAt + PENDING_TASK_WINDOW_MS,
+				);
+			},
+			{ accountId: data.accountId, startedAt },
+		);
 	});

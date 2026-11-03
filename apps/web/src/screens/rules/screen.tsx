@@ -375,7 +375,13 @@ function shownRuleOn(rule: RulesRule, loaded: boolean): boolean {
 	return shownOn(rule.id, loaded);
 }
 
-function toggleRow(rule: RulesRule, loaded: boolean, accountId: string, refresh: () => Promise<void>, setPending: SetPending) {
+function toggleRow(
+	rule: RulesRule,
+	loaded: boolean,
+	accountId: string,
+	refresh: () => Promise<void>,
+	setPending: SetPending,
+) {
 	const id = rowOwners.get(rule.id);
 	if (id !== undefined && submissions.has(id)) {
 		const next = !(pendingShown.get(id) ?? true);
@@ -387,7 +393,13 @@ function toggleRow(rule: RulesRule, loaded: boolean, accountId: string, refresh:
 	queueRule(rule.id, !shownOn(rule.id, loaded), accountId, refresh);
 }
 
-function addRule(form: RuleForm, accountId: string, setForm: SetRuleForm, setPending: SetPending, refresh: () => Promise<void>) {
+function addRule(
+	form: RuleForm,
+	accountId: string,
+	setForm: SetRuleForm,
+	setPending: SetPending,
+	refresh: () => Promise<void>,
+) {
 	const typed = form.action;
 	const action = typed.trim();
 	if (action.length === 0) {
