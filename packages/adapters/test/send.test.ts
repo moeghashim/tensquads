@@ -293,21 +293,64 @@ test("an approval between a chat task and its finish still writes the reply", as
 });
 
 
-test("traffic task and result leave a held chat open for its own finish", async () => {
-	await withCopy("traffic-between", async (db, accountId) => {
-		const kernel = new Kernel(createRepositories(db));
+for (const order of ["chat-both-traffic", "chat-traffic-task", "traffic-task-chat-result"] as const) {
+	test(`${order} matches each Result to its own Task`, async () => {
+		await withCopy(order, async (db, accountId) => {
+			const kernel = new Kernel(createRepositories(db));
+			const accountScope = scope(accountId);
+			if (order === "traffic-task-chat-result") await kernel.nextEvent(accountScope);
+			const started = await kernel.beginSend(accountScope, ads);
+			assert.equal(started.kind, "working");
+			if (started.kind !== "working") return;
+			await kernel.nextEvent(accountScope);
+			if (order === "chat-both-traffic") await kernel.nextEvent(accountScope);
+			assert.equal((await kernel.beginSend(accountScope, ads)).kind, "ignored");
+			const finished = await kernel.finishSend(accountScope, started.taskId);
+			assert.equal(finished.kind, "replied");
+			if (finished.kind !== "replied") return;
+			assert.equal(finished.messages.at(-1)?.text, marketingResult);
+			const events = await generated(db, accountId);
+			assert.equal(
+				events.filter((event) => event.kind === "Result" && event.fromAgent === "marketing").length,
+				1,
+			);
+			const agents = await createRepositories(db).squads.listAgents(accountScope);
+			assert.equal(agents.find((agent) => agent.id === "marketing")?.tasks, 39);
+			assert.equal((await kernel.finishSend(accountScope, started.taskId)).kind, "ignored");
+			assert.deepEqual(await generated(db, accountId), events);
+			assert.deepEqual(await createRepositories(db).squads.listAgents(accountScope), agents);
+			assert.deepEqual(
+				(await createRepositories(db).conversation.thread(accountScope))?.messages,
+				finished.messages,
+			);
+			assert.equal((await kernel.beginSend(accountScope, ads)).kind, "working");
+		});
+	});
+}
+
+test("a later matching chat Task takes the first Result and leaves the earlier Task open", async () => {
+	await withCopy("newest-matching", async (db, accountId) => {
+		const repos = createRepositories(db);
+		const kernel = new Kernel(repos);
 		const accountScope = scope(accountId);
-		const started = await kernel.beginSend(accountScope, ads);
-		assert.equal(started.kind, "working");
-		if (started.kind !== "working") return;
-		await kernel.nextEvent(accountScope);
-		await kernel.nextEvent(accountScope);
+		const first = await kernel.beginSend(accountScope, ads);
+		assert.equal(first.kind, "working");
+		if (first.kind !== "working") return;
+		const second = await repos.conversation.transaction(accountScope, (commands) =>
+			commands.appendEvent({
+				from: "master",
+				to: first.agentId,
+				kind: "Task",
+				skill: first.skill,
+				text: ads,
+				payload: { from: "chat" },
+			}),
+		);
+		assert.equal((await kernel.finishSend(accountScope, second.id)).kind, "replied");
+		assert.equal((await kernel.finishSend(accountScope, second.id)).kind, "ignored");
 		assert.equal((await kernel.beginSend(accountScope, ads)).kind, "ignored");
-		const finished = await kernel.finishSend(accountScope, started.taskId);
-		assert.equal(finished.kind, "replied");
-		if (finished.kind !== "replied") return;
-		assert.equal(finished.messages.at(-1)?.text, marketingResult);
-		assert.deepEqual((await generated(db, accountId)).map(({ kind }) => kind), ["Task", "Task", "Result", "Result"]);
-		assert.equal((await kernel.finishSend(accountScope, started.taskId)).kind, "ignored");
+		assert.equal((await kernel.finishSend(accountScope, first.taskId)).kind, "replied");
+		assert.equal((await kernel.finishSend(accountScope, first.taskId)).kind, "ignored");
+		assert.equal((await kernel.beginSend(accountScope, ads)).kind, "working");
 	});
 });

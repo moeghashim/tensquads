@@ -127,7 +127,7 @@ async function pendingTask(
 ): Promise<PendingChatTask | null> {
 	const rows = await tx.select().from(busEvents).where(eq(busEvents.accountId, accountId));
 	const generated = rows.filter((row) => /^e\d+$/.test(row.id)).sort((left, right) => left.seq - right.seq);
-	const open = generated.filter((_row, index) => isOpenChatTask(generated, index));
+	const open = openChatTasks(generated);
 	const match = taskId === undefined ? open.at(-1) : open.find((row) => row.id === taskId);
 	if (!match?.occurredAt || Date.now() - match.occurredAt.getTime() >= PENDING_TASK_WINDOW_MS) {
 		return null;
@@ -136,33 +136,21 @@ async function pendingTask(
 	return { id: match.id, toAgent: match.toAgent, skill: match.skill };
 }
 
-function isOpenChatTask(
-	rows: readonly { readonly kind: string; readonly payload: unknown; readonly occurredAt: Date | null }[],
-	index: number,
-): boolean {
-	const row = rows[index];
-	if (row?.kind !== "Task" || !isChatPayload(row.payload) || !row.occurredAt) {
-		return false;
-	}
-	let unmatched = 0;
-	for (let later = index + 1; later < rows.length; later += 1) {
-		const next = rows[later];
-		if (!next) {
-			continue;
-		}
-		// A later chat task stands between this row and anything after it.
-		if (next.kind === "Task" && isChatPayload(next.payload)) {
-			return true;
-		}
-		if (next.kind === "Task") {
-			unmatched += 1;
-		}
-		if (next.kind === "Result") {
-			if (unmatched === 0) return false;
-			unmatched -= 1;
+function openChatTasks(rows: readonly (typeof busEvents.$inferSelect)[]) {
+	const open: (typeof busEvents.$inferSelect)[] = [];
+	for (const row of rows) {
+		if (row.kind === "Task") {
+			open.push(row);
+		} else if (row.kind === "Result") {
+			const index = open.findLastIndex((task) => matchesResult(task, row));
+			if (index !== -1) open.splice(index, 1);
 		}
 	}
-	return true;
+	return open.filter((row) => isChatPayload(row.payload) && row.occurredAt !== null);
+}
+
+function matchesResult(task: typeof busEvents.$inferSelect, result: typeof busEvents.$inferSelect): boolean {
+	return task.skill === result.skill && task.toAgent === result.fromAgent && task.fromAgent === result.toAgent;
 }
 
 function isChatPayload(payload: unknown): boolean {
