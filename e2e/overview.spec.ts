@@ -798,8 +798,8 @@ async function holdFailedRefresh(page: Page) {
 
 function recoveryFlags(page: Page): Promise<{ frame: boolean; overview: boolean }> {
 	return page.evaluate(async () => {
-		const frame = await import("/src/workspace/frame-load.ts");
-		const overview = await import("/src/screens/overview/load.ts");
+		const frame = await import("/src/" + "workspace/frame-load.ts");
+		const overview = await import("/src/" + "screens/overview/load.ts");
 		return { frame: frame.frameNeedsRead(), overview: overview.overviewNeedsRead() };
 	});
 }
