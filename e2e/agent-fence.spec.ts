@@ -1,6 +1,5 @@
 import type { Page, Route } from "@playwright/test";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
-
 import {
 	openAgent,
 	paused,
@@ -12,6 +11,7 @@ import {
 	skillRow,
 	squadSwitch,
 } from "./agent-detail-support.ts";
+import { postedField } from "./fence-body.ts";
 import { expect, test } from "./workspace.ts";
 
 const fenceStorageKey = "tensquads.writeFence";
@@ -177,10 +177,10 @@ function requestFor(held: Route[], control: "running" | "skill" | "autonomy", wh
 
 function matches(route: Route, control: "running" | "skill" | "autonomy", which: "old" | "new"): boolean {
 	const body = route.request().postData() ?? "";
-	if (control === "autonomy") return body.includes(which === "old" ? "Ask first" : "Full auto");
-	const node = which === "old" ? falseNode : trueNode;
-	if (control === "skill") return body.includes("inbox.read") && body.includes(node);
-	return body.includes(node);
+	if (control === "autonomy") return postedField(body, "autonomy") === (which === "old" ? "Ask first" : "Full auto");
+	const on = which === "new";
+	if (control === "skill") return postedField(body, "skillId") === "inbox.read" && postedField(body, "on") === on;
+	return postedField(body, "on") === on;
 }
 
 async function settle(route: Route, observePage = true) {
@@ -229,7 +229,7 @@ function writeBody(
 	return (
 		request.method() === "POST" &&
 		serverFnExport(request.url()).startsWith(name) &&
-		(request.postData() ?? "").includes(marker)
+		postedField(request.postData() ?? "", "on") === (marker === trueNode)
 	);
 }
 
@@ -248,6 +248,17 @@ async function fenceState(page: Page) {
 	);
 }
 
+async function whenSquadReady(page: Page) {
+	await page.waitForFunction(() => {
+		const button = document.querySelector("button[data-handler='sel.toggle']");
+		if (!button) return false;
+		const key = Object.keys(button).find((name) => name.startsWith("__reactProps"));
+		if (!key) return false;
+		const props = (button as unknown as Record<string, { onClick?: unknown }>)[key];
+		return typeof props?.onClick === "function";
+	});
+}
+
 async function releaseDuplicate(page: Page, accountId: string, order: "duplicate-first" | "original-first") {
 	const duplicate = await page.context().newPage();
 	try {
@@ -261,6 +272,7 @@ async function releaseDuplicate(page: Page, accountId: string, order: "duplicate
 		);
 		await duplicate.goto("/agents/support");
 		await expect(duplicate).toHaveTitle("Agent dashboard");
+		await whenSquadReady(duplicate);
 		await duplicate.getByRole("button", { name: "Squad running" }).click();
 		await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(false);
 		await expect(running(page)).toBeVisible();
@@ -281,8 +293,12 @@ async function releaseDuplicate(page: Page, accountId: string, order: "duplicate
 		await squadSwitch(page).click();
 		await duplicate.getByRole("button", { name: "Squad running" }).click();
 		await expect.poll(() => held.length).toBe(2);
-		const originalRoute = held.find((route) => (route.request().postData() ?? "").includes(original.current));
-		const duplicateRoute = held.find((route) => (route.request().postData() ?? "").includes(copy.current));
+		const originalRoute = held.find(
+			(route) => postedField(route.request().postData() ?? "", "tab") === original.current,
+		);
+		const duplicateRoute = held.find(
+			(route) => postedField(route.request().postData() ?? "", "tab") === copy.current,
+		);
 		if (!originalRoute || !duplicateRoute) throw new Error("The duplicate writes were not held.");
 		const originalBody = originalRoute.request().postData() ?? "";
 		const duplicateBody = duplicateRoute.request().postData() ?? "";

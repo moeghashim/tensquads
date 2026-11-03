@@ -109,11 +109,12 @@ test("a transaction without send options does not set timeouts", async () => {
 	const text = seen.join("\n");
 	assert.equal((text.match(/lock_timeout/g) ?? []).length, 0);
 	assert.equal((text.match(/statement_timeout/g) ?? []).length, 0);
-	assert.match(text, /pg_advisory_xact_lock/);
-	assert.match(text, /1952804467/);
+	assert.match(text, /SELECT pg_advisory_xact_lock\(1952804467, 1\)/);
+	assert.doesNotMatch(text, /pg_advisory_xact_lock_shared/);
+	assert.doesNotMatch(text, /1952804468/);
 });
 
-test("an account fence lock is keyed by that account", async () => {
+test("an account writer takes the global key shared, then that account's fence", async () => {
 	const seen: string[] = [];
 	const db = {
 		async transaction(run: (tx: { execute: (query: unknown) => Promise<void> }) => Promise<unknown>) {
@@ -132,10 +133,11 @@ test("an account fence lock is keyed by that account", async () => {
 		"ok",
 	);
 	const text = seen.join("\n");
-	assert.match(text, /hashtext/);
-	assert.match(text, /account-a/);
-	assert.match(text, /1952804468/);
-	assert.doesNotMatch(text, /1952804467/);
+	const sharedAt = text.indexOf("pg_advisory_xact_lock_shared(1952804467, 1)");
+	const accountAt = text.indexOf("pg_advisory_xact_lock(1952804468, hashtext('account-a'))");
+	assert.ok(sharedAt >= 0);
+	assert.ok(accountAt > sharedAt);
+	assert.doesNotMatch(text, /pg_advisory_xact_lock\(1952804467, 1\)/);
 });
 
 test("a send past the deadline rolls back before commit", async () => {

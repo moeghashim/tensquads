@@ -3,6 +3,7 @@ import { openPostgres, schema } from "@tensquads/adapters";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import { eq } from "drizzle-orm";
 
+import { postedField } from "./fence-body.ts";
 import { secretsFor } from "./support.ts";
 import { expect, openWorkspace, test } from "./workspace.ts";
 
@@ -298,7 +299,7 @@ test("two reloads before a write retire a held request", async ({ page, workspac
 	const written = page.waitForResponse((response) => {
 		const request = response.request();
 		const body = request.postData() ?? "";
-		return request.method() === "POST" && body.includes(adCap) && body.includes("260");
+		return request.method() === "POST" && postedField(body, "key") === adCap && postedField(body, "value") === 260;
 	});
 	await page.locator("#lim-ads").fill("260");
 	await written;
@@ -431,8 +432,8 @@ async function releaseDuplicate(page: Page, accountId: string, order: "duplicate
 		await page.locator("#lim-ads").fill("260");
 		await duplicate.locator("#lim-ads").fill("240");
 		await expect.poll(() => held.length).toBe(2);
-		const originalRoute = held.find((route) => (route.request().postData() ?? "").includes(original.current));
-		const duplicateRoute = held.find((route) => (route.request().postData() ?? "").includes(copy.current));
+		const originalRoute = held.find((route) => postedField(route.request().postData() ?? "", "value") === 260);
+		const duplicateRoute = held.find((route) => postedField(route.request().postData() ?? "", "value") === 240);
 		if (!originalRoute || !duplicateRoute) {
 			throw new Error("The duplicate writes were not held.");
 		}
@@ -589,7 +590,8 @@ async function holdPosts(page: Page, marker: string) {
 }
 
 function requestFor(held: Route[], value: string) {
-	const route = held.find((item) => (item.request().postData() ?? "").includes(value));
+	const wanted = Number(value);
+	const route = held.find((item) => postedField(item.request().postData() ?? "", "value") === wanted);
 	if (!route) {
 		throw new Error(`The ${value} write was not held.`);
 	}
@@ -597,10 +599,8 @@ function requestFor(held: Route[], value: string) {
 }
 
 function switchOn(route: Route | undefined) {
-	const body = route?.request().postData() ?? "";
-	// Seroval stores a boolean as a constant node: false is s 3 and true is s 2.
-	if (body.includes('{"t":2,"s":3}')) return false;
-	if (body.includes('{"t":2,"s":2}')) return true;
+	const value = postedField(route?.request().postData() ?? "", "on");
+	if (value === true || value === false) return value;
 	throw new Error("The held switch has no on value.");
 }
 

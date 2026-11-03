@@ -2,6 +2,7 @@ import { Pool } from "@neondatabase/serverless";
 import { drizzle as drizzleNeon, type NeonDatabase } from "drizzle-orm/neon-serverless";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 
+import { takeWriterLock } from "./lock.ts";
 import { migrationSql } from "./migration-sql.ts";
 import { schema } from "./schema.ts";
 
@@ -67,7 +68,7 @@ async function applyMigration(pool: Pool): Promise<void> {
 	const client = await pool.connect();
 	try {
 		await client.query("BEGIN");
-		await client.query("SELECT pg_advisory_xact_lock(1952804467, 1)");
+		await takeWriterLock((statement) => client.query(statement));
 		for (const statement of migrationStatements(migrationSql)) {
 			await client.query(statement);
 		}

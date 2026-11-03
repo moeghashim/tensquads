@@ -4,13 +4,33 @@ import type { AppDatabase } from "./postgres.ts";
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 
-// The migration takes this lock. A test reset waits for it, so the two cannot deadlock.
-const workspaceLock = sql`SELECT pg_advisory_xact_lock(1952804467, 1)`;
+// Maintenance takes 1952804467 exclusive. An account writer takes that same key shared,
+// then 1952804468 for its account. Two accounts do not wait on each other. A migration
+// waits for every live writer, and a live writer waits for a migration, before either
+// touches a row.
+const globalLock = "SELECT pg_advisory_xact_lock(1952804467, 1)";
+const globalSharedLock = "SELECT pg_advisory_xact_lock_shared(1952804467, 1)";
 
-// A rules write takes this lock instead of the migration lock. The class differs, so one
-// account does not wait on another account, a chat send, or a migration.
-function accountFenceLock(accountId: string) {
-	return sql`SELECT pg_advisory_xact_lock(1952804468, hashtext(${accountId}))`;
+function quoteLiteral(value: string): string {
+	return `'${value.replaceAll("'", "''")}'`;
+}
+
+function accountFenceLock(accountId: string): string {
+	return `SELECT pg_advisory_xact_lock(1952804468, hashtext(${quoteLiteral(accountId)}))`;
+}
+
+// Every writer calls this. Omitting the account takes the global key exclusive.
+// An account id takes the global key shared, then that account's fence.
+export async function takeWriterLock(
+	execute: (statement: string) => Promise<unknown>,
+	accountId?: string,
+): Promise<void> {
+	if (accountId === undefined) {
+		await execute(globalLock);
+		return;
+	}
+	await execute(globalSharedLock);
+	await execute(accountFenceLock(accountId));
 }
 
 const sendAttempts = 3;
@@ -100,7 +120,7 @@ async function runAttempt<T>(
 ): Promise<T> {
 	return db.transaction(async (tx) => {
 		await armSend(tx, bound);
-		await tx.execute(accountId ? accountFenceLock(accountId) : workspaceLock);
+		await takeWriterLock((statement) => tx.execute(sql.raw(statement)), accountId);
 		const value = await run(tx, (deadline) => {
 			if (bound) bound.deadline = Math.min(bound.deadline, deadline);
 		});
