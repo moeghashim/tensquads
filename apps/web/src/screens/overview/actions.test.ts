@@ -456,7 +456,7 @@ describe("overview decisions", { concurrency: false }, () => {
 	});
 
 	for (const withSibling of [false, true]) {
-		test(`an accepted frame recovers a timed-out refund${withSibling ? " and keeps an in-flight job" : ""}`, async (t) => {
+		test(`a frame read keeps a timed-out refund${withSibling ? " beside an in-flight job" : ""}`, async (t) => {
 			t.mock.timers.enable({ apis: ["setTimeout"] });
 			resetDecisions();
 			let refreshStarted = () => {};
@@ -518,9 +518,14 @@ describe("overview decisions", { concurrency: false }, () => {
 			await Promise.resolve();
 			assert.deepEqual(
 				patchSnapshot().map((item) => item.key),
-				withSibling ? ["marketing"] : [],
+				withSibling ? ["refund", "marketing"] : ["refund"],
 			);
 			assert.equal(badgeCount(4), withSibling ? 3 : 4);
+			reconcileDecisions(4, currentWrites(), true);
+			assert.deepEqual(
+				patchSnapshot().map((item) => item.key),
+				withSibling ? ["marketing"] : [],
+			);
 			release();
 			await second;
 		});

@@ -41,6 +41,18 @@ async function generated(db: AppDatabase, accountId: string) {
 	return rows.filter((row) => /^e\d+$/.test(row.id)).sort((left, right) => left.seq - right.seq);
 }
 
+async function tasksDone(db: AppDatabase, accountId: string): Promise<number> {
+	return createRepositories(db).squads.tasksDone(scope(accountId));
+}
+
+async function advance(db: AppDatabase, accountId: string, times: number): Promise<void> {
+	const kernel = new Kernel(createRepositories(db));
+	const accountScope = scope(accountId);
+	for (let step = 0; step < times; step += 1) {
+		await kernel.nextEvent(accountScope);
+	}
+}
+
 async function cursor(db: AppDatabase, accountId: string) {
 	const rows = await db.select().from(schema.busCursors).where(eq(schema.busCursors.accountId, accountId));
 	const row = rows[0];
@@ -275,6 +287,7 @@ test("an approval between a chat task and its finish still writes the reply", as
 		if (started.kind !== "working") {
 			return;
 		}
+		assert.equal(await tasksDone(db, accountId), 331);
 		await new Kernel(createRepositories(db)).decide(scope(accountId), "ap1", true);
 		assert.equal((await beginSend(db, scope(accountId), "How did ads do this week?")).kind, "ignored");
 		const finished = await finishSend(db, scope(accountId), started.taskId);
@@ -283,7 +296,9 @@ test("an approval between a chat task and its finish still writes the reply", as
 			return;
 		}
 		assert.equal(finished.messages.at(-1)?.text, marketingResult);
+		assert.equal(await tasksDone(db, accountId), 333);
 		assert.equal((await finishSend(db, scope(accountId), started.taskId)).kind, "ignored");
+		assert.equal(await tasksDone(db, accountId), 333);
 		const events = await generated(db, accountId);
 		assert.deepEqual(
 			events.map(({ kind }) => kind),
@@ -324,7 +339,67 @@ for (const order of ["chat-both-traffic", "chat-traffic-task", "traffic-task-cha
 	});
 }
 
-test("a later matching chat Task takes the first Result and leaves the earlier Task open", async () => {
+test("a traffic result does not close the marketing chat", async () => {
+	await withCopy("traffic-result", async (db, accountId) => {
+		assert.equal(await tasksDone(db, accountId), 331);
+		await advance(db, accountId, 7);
+		const traffic = (await generated(db, accountId)).at(-1);
+		assert.equal(traffic?.kind, "Task");
+		assert.equal(traffic?.skill, "meta_ads.report");
+		assert.equal(traffic?.fromAgent, "master");
+		assert.equal(traffic?.toAgent, "marketing");
+		const started = await beginSend(db, scope(accountId), ads);
+		assert.equal(started.kind, "working");
+		if (started.kind !== "working") return;
+		await advance(db, accountId, 1);
+		const trafficResult = (await generated(db, accountId)).at(-1);
+		assert.equal(trafficResult?.kind, "Result");
+		assert.equal(trafficResult?.skill, "meta_ads.report");
+		assert.equal(trafficResult?.payload.task, undefined);
+		assert.equal((await beginSend(db, scope(accountId), ads)).kind, "ignored");
+		const finished = await finishSend(db, scope(accountId), started.taskId);
+		assert.equal(finished.kind, "replied");
+		assert.equal(await tasksDone(db, accountId), 332);
+		const linked = (await generated(db, accountId)).filter(
+			(event) => event.kind === "Result" && event.payload.task === started.taskId,
+		);
+		assert.equal(linked.length, 1);
+		assert.equal((await finishSend(db, scope(accountId), started.taskId)).kind, "ignored");
+		assert.equal(
+			(await generated(db, accountId)).filter(
+				(event) => event.kind === "Result" && event.payload.task === started.taskId,
+			).length,
+			1,
+		);
+		assert.equal(await tasksDone(db, accountId), 332);
+	});
+});
+
+test("a replayed chat finish does not close the later traffic task", async () => {
+	await withCopy("chat-replay", async (db, accountId) => {
+		await advance(db, accountId, 6);
+		const started = await beginSend(db, scope(accountId), ads);
+		assert.equal(started.kind, "working");
+		if (started.kind !== "working") return;
+		await advance(db, accountId, 1);
+		const traffic = (await generated(db, accountId)).at(-1);
+		assert.equal(traffic?.kind, "Task");
+		assert.equal(traffic?.skill, "meta_ads.report");
+		assert.equal(traffic?.fromAgent, "master");
+		const finished = await finishSend(db, scope(accountId), started.taskId);
+		assert.equal(finished.kind, "replied");
+		if (finished.kind !== "replied") return;
+		assert.equal(finished.messages.filter((message) => message.text === marketingResult).length, 1);
+		assert.equal(await tasksDone(db, accountId), 332);
+		const before = await generated(db, accountId);
+		assert.equal((await finishSend(db, scope(accountId), started.taskId)).kind, "ignored");
+		assert.deepEqual(await generated(db, accountId), before);
+		assert.equal(await tasksDone(db, accountId), 332);
+		assert.equal((await beginSend(db, scope(accountId), ads)).kind, "working");
+	});
+});
+
+test("a finish closes only the chat task it names", async () => {
 	await withCopy("newest-matching", async (db, accountId) => {
 		const repos = createRepositories(db);
 		const kernel = new Kernel(repos);

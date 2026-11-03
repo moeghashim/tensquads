@@ -3,6 +3,7 @@ import { describe, test } from "node:test";
 import { currentWrites } from "#/workspace/approval-count.ts";
 import {
 	acceptOverviewRead,
+	badgeCount,
 	type DecisionRefresh,
 	type DecisionResult,
 	enqueueDecision,
@@ -40,6 +41,35 @@ describe("overview account and landed reads", { concurrency: false }, () => {
 		acceptOverviewRead(snapshot(3), started);
 		assert.equal(patchSnapshot().length, 1);
 		acceptOverviewRead(snapshot(3), currentWrites());
+		assert.deepEqual(patchSnapshot(), []);
+		assert.equal(shownApprovalCount(3), 3);
+	});
+
+	test("a lost response stays through a frame read and leaves after a later overview read", async () => {
+		resetDecisions();
+		const started = currentWrites();
+		await settled(
+			"refund",
+			4,
+			async () => {
+				throw new Error("The response was lost after commit.");
+			},
+			async () => ({ count: 3, readAt: started, dropLanded: true }),
+		);
+		assert.deepEqual(
+			patchSnapshot().map((item) => item.key),
+			["refund"],
+		);
+		const frame = { approvalCount: 3 };
+		watchServerCount(frame.approvalCount, frame, currentWrites());
+		await Promise.resolve();
+		assert.deepEqual(
+			patchSnapshot().map((item) => item.key),
+			["refund"],
+		);
+		assert.equal(shownApprovalCount(3), 3);
+		assert.equal(badgeCount(3), 3);
+		reconcileDecisions(3, currentWrites(), true);
 		assert.deepEqual(patchSnapshot(), []);
 		assert.equal(shownApprovalCount(3), 3);
 	});

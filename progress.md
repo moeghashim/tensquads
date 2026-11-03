@@ -570,3 +570,4 @@ Append-only learning log for commits and deploys. Add new entries only at the en
 - 2026-11-02 02-overview: A Result closes the newest open Task with the same skill and reversed endpoints, so Traffic and chat finish independently.
 - 2026-11-02 02-overview: The review tests match the formatter, and the Result scan walks backward without a newer library target.
 - 2026-11-02 02-overview: The snapshot test deletes the copied account's child rows, then ends the reader before its pool.
+- 2026-11-03 02-overview: A frame read keeps an Overview patch after a lost response. A chat finish closes the Task id it was given. A failed Overview read keeps the snapshot and the controls.

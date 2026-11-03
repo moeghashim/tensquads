@@ -18,6 +18,9 @@ export interface PendingChatTask {
 	readonly skill: string;
 }
 
+// A chat Result names its Task in the payload. Another agent's Result does not.
+export const chatTaskLink = "task";
+
 export interface AppendedChatEvent {
 	readonly id: string;
 	readonly time: string;

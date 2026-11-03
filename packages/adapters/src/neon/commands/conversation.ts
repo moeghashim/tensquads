@@ -1,5 +1,5 @@
 import type { AccountScope, ConversationTransaction, Message, MessageFrom, PendingChatTask } from "@tensquads/domain";
-import { requireScope } from "@tensquads/domain";
+import { chatTaskLink, requireScope } from "@tensquads/domain";
 import { and, asc, eq, sql } from "drizzle-orm";
 
 import { PENDING_TASK_WINDOW_MS } from "../../pending-window.ts";
@@ -11,6 +11,7 @@ import { appendEvents, type BusCursor, lockCursor, saveCursor } from "./bus.ts";
 export { PENDING_TASK_WINDOW_MS };
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
+type BusRow = typeof busEvents.$inferSelect;
 
 const DOCK_THREAD = "dock";
 
@@ -125,40 +126,66 @@ async function pendingTask(
 	constrainDeadline: (absoluteMs: number) => void,
 	taskId?: string,
 ): Promise<PendingChatTask | null> {
-	const rows = await tx.select().from(busEvents).where(eq(busEvents.accountId, accountId));
-	const generated = rows.filter((row) => /^e\d+$/.test(row.id)).sort((left, right) => left.seq - right.seq);
-	const open = openChatTasks(generated);
-	const match = taskId === undefined ? open.at(-1) : open.find((row) => row.id === taskId);
-	if (!match?.occurredAt || Date.now() - match.occurredAt.getTime() >= PENDING_TASK_WINDOW_MS) {
+	if (taskId !== undefined) {
+		return lockedChatTask(tx, accountId, taskId, constrainDeadline);
+	}
+	const rows = await tx.select().from(busEvents).where(eq(busEvents.accountId, accountId)).orderBy(asc(busEvents.seq));
+	const linked = linkedTaskIds(rows);
+	for (const row of rows) {
+		const pending = unclosedChat(row, linked, constrainDeadline);
+		if (pending) return pending;
+	}
+	return null;
+}
+
+async function lockedChatTask(
+	tx: Tx,
+	accountId: string,
+	taskId: string,
+	constrainDeadline: (absoluteMs: number) => void,
+): Promise<PendingChatTask | null> {
+	const rows = await tx
+		.select()
+		.from(busEvents)
+		.where(and(eq(busEvents.accountId, accountId), eq(busEvents.id, taskId)))
+		.for("update");
+	const row = rows[0];
+	if (!row) return null;
+	const results = await tx
+		.select()
+		.from(busEvents)
+		.where(and(eq(busEvents.accountId, accountId), eq(busEvents.kind, "Result")));
+	return unclosedChat(row, linkedTaskIds(results), constrainDeadline);
+}
+
+function linkedTaskIds(rows: readonly BusRow[]): Set<string> {
+	const linked = new Set<string>();
+	for (const row of rows) {
+		if (row.kind !== "Result") continue;
+		const task = taskLink(row.payload);
+		if (task) linked.add(task);
+	}
+	return linked;
+}
+
+function unclosedChat(
+	row: BusRow,
+	linked: ReadonlySet<string>,
+	constrainDeadline: (absoluteMs: number) => void,
+): PendingChatTask | null {
+	if (row.kind !== "Task" || !isChatPayload(row.payload) || row.occurredAt === null || linked.has(row.id)) {
 		return null;
 	}
-	constrainDeadline(match.occurredAt.getTime() + PENDING_TASK_WINDOW_MS);
-	return { id: match.id, toAgent: match.toAgent, skill: match.skill };
+	const opened = row.occurredAt.getTime();
+	if (Date.now() - opened >= PENDING_TASK_WINDOW_MS) return null;
+	constrainDeadline(opened + PENDING_TASK_WINDOW_MS);
+	return { id: row.id, toAgent: row.toAgent, skill: row.skill };
 }
 
-function openChatTasks(rows: readonly (typeof busEvents.$inferSelect)[]) {
-	const open: (typeof busEvents.$inferSelect)[] = [];
-	for (const row of rows) {
-		if (row.kind === "Task") {
-			open.push(row);
-		} else if (row.kind === "Result") {
-			const index = newestMatch(open, row);
-			if (index !== -1) open.splice(index, 1);
-		}
-	}
-	return open.filter((row) => isChatPayload(row.payload) && row.occurredAt !== null);
-}
-
-function newestMatch(open: readonly (typeof busEvents.$inferSelect)[], result: typeof busEvents.$inferSelect): number {
-	for (let index = open.length - 1; index >= 0; index -= 1) {
-		const task = open[index];
-		if (task && matchesResult(task, result)) return index;
-	}
-	return -1;
-}
-
-function matchesResult(task: typeof busEvents.$inferSelect, result: typeof busEvents.$inferSelect): boolean {
-	return task.skill === result.skill && task.toAgent === result.fromAgent && task.fromAgent === result.toAgent;
+function taskLink(payload: unknown): string | null {
+	if (typeof payload !== "object" || payload === null || !(chatTaskLink in payload)) return null;
+	const value = payload[chatTaskLink];
+	return typeof value === "string" && value.length > 0 ? value : null;
 }
 
 function isChatPayload(payload: unknown): boolean {

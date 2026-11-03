@@ -2,6 +2,7 @@ import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 
 import { advanceWrites, currentWrites } from "#/workspace/approval-count.ts";
 
+import { clearOverviewHold } from "./load.ts";
 import type { OverviewData } from "./types.ts";
 import { type DecisionPatch, presentOverview } from "./view.ts";
 
@@ -66,6 +67,7 @@ export function resetDecisions(): void {
 	reflected.clear();
 	activeKey = null;
 	seenServer = null;
+	clearOverviewHold();
 	advanceWrites();
 	notify();
 }
@@ -134,9 +136,8 @@ function liveKeys(): Set<string> {
 	return live;
 }
 
-// A landed patch stays until a read that started after the write landed.
-// Finishing the write does not drop it. A frame read drops only a write that
-// never landed. The badge counts cards that are still queued or in flight.
+// An Overview patch stays until an Overview read that started after the write.
+// The write may succeed or fail. A frame read changes the badge count only.
 export function reconcileDecisions(serverCount: number, readAt = currentWrites(), dropLanded = true): void {
 	const live = liveKeys();
 	const next: DecisionPatch[] = [];
@@ -151,7 +152,7 @@ export function reconcileDecisions(serverCount: number, readAt = currentWrites()
 			}
 			continue;
 		}
-		if (land !== undefined && (!dropLanded || readAt < land)) {
+		if (!dropLanded || (land !== undefined && readAt < land)) {
 			next.push(patch);
 			continue;
 		}
@@ -249,9 +250,7 @@ async function runBounded(job: Job, gen: number): Promise<DecisionResult> {
 		return emptyResult();
 	}
 	advanceWrites();
-	if (wrote) {
-		landed.set(job.key, currentWrites());
-	}
+	landed.set(job.key, currentWrites());
 	try {
 		const read = await bounded(() => job.refresh());
 		if (gen !== generation) {

@@ -19,6 +19,7 @@ import {
 	readDecisionCount,
 	subscribeOverviewPage,
 } from "./actions.ts";
+import { rememberOverview } from "./load.ts";
 import type { OverviewAgentView, OverviewData } from "./types.ts";
 import { type DecisionPatch, presentOverview } from "./view.ts";
 
@@ -106,6 +107,7 @@ const emptyPatches: readonly DecisionPatch[] = [];
 
 function useFreshOverview(data: OverviewData & { readonly writeAt: number }, noteDecision: (count: number) => void) {
 	useEffect(() => {
+		rememberOverview(data);
 		if (currentWrites() !== data.writeAt) {
 			return;
 		}
