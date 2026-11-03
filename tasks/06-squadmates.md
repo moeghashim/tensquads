@@ -2,6 +2,8 @@
 
 Branch: `06-squadmates`. One pull request. One builder agent. Starts only when `02-agent-detail` (PR 12) is merged. Read `AGENTS.md` first and send the receipt.
 
+Stage A is steps 1 to 3. This branch lands stage A before PR 12 and PR 18 merge. Stage B is steps 4 to 11. It starts only after those pull requests merge. Stage A does not change a product screen, the seed, or `packages/adapters/src/neon/create-workspace.ts`.
+
 ## Goal
 
 Every agent and the master shows its squadmate: a fixed character name from a famous place, and a character drawing whose eyes show the agent's state. Decision 33 in `docs/PLAN.md` governs this task. The reference is https://10squads.com/review/characters and `apps/landing/review-src/squadmates.mjs`. `make verify` returns 0.
