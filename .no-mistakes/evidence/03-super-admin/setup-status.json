@@ -1,0 +1,10 @@
+{
+  "clerkPublishableKeyAvailable": false,
+  "clerkSecretKeyAvailable": false,
+  "testDatabaseUrlAvailable": false,
+  "localAppStarted": true,
+  "isolatedChromiumStarted": true,
+  "authenticatedScenariosBlockedBy": "Real Clerk credentials and authority to provision disposable test users/memberships are unavailable. A local database alone cannot mint the required Clerk organization session. No auth mock was substituted.",
+  "baseline": "Outer executor reported npm ci && npm test exited 1; complete suite not rerun under targeted-test constraint.",
+  "cleanup": "Browser and development server stopped; generated .dev.vars and local Worker state removed; dependencies and pre-existing build retained."
+}

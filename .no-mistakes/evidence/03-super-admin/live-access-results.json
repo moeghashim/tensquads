@@ -1,0 +1,68 @@
+[
+  {
+    "request": "/admin",
+    "landed": "/signin",
+    "title": "Sign in",
+    "platformNavigation": 0
+  },
+  {
+    "request": "/admin/images",
+    "landed": "/signin",
+    "title": "Sign in",
+    "platformNavigation": 0
+  },
+  {
+    "forgedSpecialCookie": true,
+    "request": "/admin",
+    "landed": "/signin",
+    "companyDataVisible": 0
+  },
+  {
+    "forgedSpecialCookie": true,
+    "request": "/admin/images",
+    "landed": "/signin",
+    "companyDataVisible": 0
+  },
+  {
+    "forgedSpecialCookie": true,
+    "request": "/overview",
+    "landed": "/signin",
+    "companyDataVisible": 0
+  },
+  {
+    "forgedSpecialCookie": true,
+    "request": "/rules",
+    "landed": "/signin",
+    "companyDataVisible": 0
+  },
+  {
+    "forgedSpecialCookie": true,
+    "request": "/traffic",
+    "landed": "/signin",
+    "companyDataVisible": 0
+  },
+  {
+    "anonymousServerCalls": [
+      {
+        "name": "loadAdminAccounts",
+        "rejected": true,
+        "redirect": "/signin"
+      },
+      {
+        "name": "loadAdminImages",
+        "rejected": true,
+        "redirect": "/signin"
+      },
+      {
+        "name": "loadAdminAttention",
+        "rejected": true,
+        "redirect": "/signin"
+      },
+      {
+        "name": "openSpecialSession",
+        "rejected": true,
+        "redirect": "/signin"
+      }
+    ]
+  }
+]

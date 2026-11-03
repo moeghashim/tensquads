@@ -1,0 +1,29 @@
+2e85b8f9298c0e268f6db94242f54dbb5b18a0e923f11ca6140076e3dddc512c  AGENTS.md
+1fc58b0cd33d82880ca67d45cc940f326ca062fb6c00911eb6edb3c1d9dec8fc  docs/PLAN.md
+6ad8d325eb6e88f3bc216753b47aaaef17196a503b72a6850e676c00ff23354d  tasks/03-super-admin.md
+4b3b56e139ac5712a036a347f8edb30ad8cf3942fe32c1fce84a4e3b0984bad1  design/Accounts.dc.html
+46ef8d22502913149dd7c51e37b43cd41ed31ebfffe0df5afb227d4cea922ee0  design/AgentImages.dc.html
+376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89  design/Main.dc.html
+ae2c01327e03942c5b47b1e60fef151163aa716456115e280078a8590df2527d  design/inventory/Accounts.json
+aa20d30002fe3117690320ca8ddebfbf2eb4b3f6921cf5d805290ddf8d321203  design/inventory/AgentImages.json
+26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
+903fd1e70cec14942f65914f684b240add1320c26ddbcbb92386fb550692536b  progress.md
+
+OK   Accounts.dc.html
+OK   AgentDetail.dc.html
+OK   AgentImages.dc.html
+OK   Agents.dc.html
+OK   Chat.dc.html
+OK   Home.dc.html
+OK   Main.dc.html
+OK   Onboarding.dc.html
+OK   Rules.dc.html
+OK   SignIn.dc.html
+OK   Traffic.dc.html
+OK   canvas.json
+OK   ds/agent-ui/tokens.json
+canvas https://claude.ai/artifact/B7seDz5psECQTerDG6rfy4 version 1793448823-a766, pulled 2026-10-31
+design/ matches the canvas.
+
+Decisions 1 to 32 read. No question.
+Task records the phase 4 Rollout conflict; no implementation performed in this test phase.
