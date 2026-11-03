@@ -2,7 +2,7 @@ import { type Dispatch, type SetStateAction, useState } from "react";
 
 import { css } from "#/screens/css.ts";
 import { addWorkspaceRule, type RulesPageData, type RulesRule } from "#/server/rules.ts";
-import { useWorkspace } from "#/workspace/context.ts";
+import { useWorkspacePage } from "#/workspace/context.ts";
 import type { RuleForm } from "#/workspace/types.ts";
 
 import { type RulesSnapshotPage, useRulesSnapshot } from "./snapshot.ts";
@@ -108,7 +108,7 @@ export function RulesScreen({ page }: { readonly page: RulesSnapshotPage }) {
 		setSeenEpoch(epoch);
 		setPending([]);
 	}
-	const workspace = useWorkspace();
+	const workspace = useWorkspacePage(page.accountId);
 	const { snapshot, refresh } = useRulesSnapshot(page, workspace.refresh);
 	const rules = [...snapshot.rules, ...pending.map((item) => item.row)];
 	return (
@@ -122,6 +122,7 @@ export function RulesScreen({ page }: { readonly page: RulesSnapshotPage }) {
 					</p>
 				</header>
 				<RuleList
+					accountId={page.accountId}
 					rules={rules}
 					agents={workspace.frame.agents}
 					gateStyle={workspace.helpers.gateStyle}
@@ -132,13 +133,14 @@ export function RulesScreen({ page }: { readonly page: RulesSnapshotPage }) {
 				/>
 				<div style={css(cardRow)}>
 					<NewRule
+						accountId={page.accountId}
 						form={workspace.ruleForm}
 						agents={workspace.frame.agents}
 						setForm={workspace.setRuleForm}
 						setPending={setPending}
 						refresh={refresh}
 					/>
-					<Limits limits={snapshot.limits} refresh={refresh} />
+					<Limits accountId={page.accountId} limits={snapshot.limits} refresh={refresh} />
 				</div>
 			</div>
 		</div>
@@ -146,6 +148,7 @@ export function RulesScreen({ page }: { readonly page: RulesSnapshotPage }) {
 }
 
 function RuleList({
+	accountId,
 	rules,
 	agents,
 	gateStyle,
@@ -154,6 +157,7 @@ function RuleList({
 	refresh,
 	setPending,
 }: {
+	readonly accountId: string;
 	readonly rules: readonly RulesRule[];
 	readonly agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[];
 	readonly gateStyle: (gate: string) => string;
@@ -171,6 +175,7 @@ function RuleList({
 			<div data-loop="rules" data-loop-as="r" style={css("display: contents")}>
 				{rules.map((rule) => (
 					<RuleRow
+						accountId={accountId}
 						key={rule.id}
 						rule={rule}
 						agent={agents.find((item) => item.id === rule.agent)}
@@ -187,6 +192,7 @@ function RuleList({
 }
 
 function RuleRow({
+	accountId,
 	rule,
 	agent,
 	gateStyle,
@@ -195,6 +201,7 @@ function RuleRow({
 	refresh,
 	setPending,
 }: {
+	readonly accountId: string;
 	readonly rule: RulesRule;
 	readonly agent: { readonly id: string; readonly name: string; readonly tint: string } | undefined;
 	readonly gateStyle: (gate: string) => string;
@@ -207,11 +214,10 @@ function RuleRow({
 	readonly refresh: () => Promise<void>;
 	readonly setPending: SetPending;
 }) {
-	const { frame } = useWorkspace();
 	const on = shownRuleOn(rule, loaded);
 	const parts = switchParts(on);
 	const toggle = () => {
-		toggleRow(rule, loaded, frame.accountId, refresh, setPending);
+		toggleRow(rule, loaded, accountId, refresh, setPending);
 	};
 	return (
 		<div style={css(ruleRow)}>
@@ -248,19 +254,20 @@ function RuleRow({
 }
 
 function NewRule({
+	accountId,
 	form,
 	agents,
 	setForm,
 	setPending,
 	refresh,
 }: {
+	readonly accountId: string;
 	readonly form: RuleForm;
 	readonly agents: readonly { readonly id: string; readonly name: string }[];
 	readonly setForm: SetRuleForm;
 	readonly setPending: SetPending;
 	readonly refresh: () => Promise<void>;
 }) {
-	const { frame } = useWorkspace();
 	return (
 		<section aria-label="New rule" style={css(newRuleCard)}>
 			<h2 style={css(heading)}>New rule</h2>
@@ -330,7 +337,7 @@ function NewRule({
 					type="button"
 					data-handler="addRule"
 					data-event="onClick"
-					onClick={() => addRule(form, frame.accountId, setForm, setPending, refresh)}
+					onClick={() => addRule(form, accountId, setForm, setPending, refresh)}
 					style={css(addButton)}
 				>
 					Add rule
@@ -472,13 +479,14 @@ function dropPending(id: symbol, rowId: string, setPending: SetPending) {
 }
 
 function Limits({
+	accountId,
 	limits,
 	refresh,
 }: {
+	readonly accountId: string;
 	readonly limits: RulesPageData["limits"];
 	readonly refresh: () => Promise<void>;
 }) {
-	const { frame } = useWorkspace();
 	return (
 		<section aria-label="Limits" style={css(limitsCard)}>
 			<h2 style={css(heading)}>Limits for every agent</h2>
@@ -500,7 +508,7 @@ function Limits({
 								value={value}
 								data-handler="l.change"
 								data-event="onChange"
-								onChange={(event) => queueLimit(limit.key, Number(event.target.value), frame.accountId, refresh)}
+								onChange={(event) => queueLimit(limit.key, Number(event.target.value), accountId, refresh)}
 								style={css(sliderStyle)}
 							/>
 						</div>

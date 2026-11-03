@@ -260,7 +260,7 @@ function useFrameMessages(frame: WorkspaceFrameData, sending: { current: boolean
 }
 
 function useApprovalCount(frame: WorkspaceFrameData & { readonly writeAt: number }) {
-	const overviewStamp = useRouterState({ select: overviewStampOf });
+	const overviewStamp = useRouterState({ select: (state) => overviewStampOf(state, frame.accountId) });
 	const [clock, setClock] = useState(() => seedApprovalCount(frame.approvalCount));
 	const noteDecision = useCallback((count: number) => {
 		const writeAt = currentWrites();
@@ -282,9 +282,12 @@ function useApprovalCount(frame: WorkspaceFrameData & { readonly writeAt: number
 	return { approvalCount: clock.value, noteDecision };
 }
 
-function overviewStampOf(state: { matches: readonly { routeId: string; loaderData?: unknown }[] }): string | null {
+function overviewStampOf(
+	state: { matches: readonly { routeId: string; loaderData?: unknown }[] },
+	accountId: string,
+): string | null {
 	const match = state.matches.find((item) => item.routeId === "/_workspace/overview");
-	return overviewMatchStamp(match?.loaderData);
+	return overviewMatchStamp(match?.loaderData, accountId);
 }
 
 // The first signed-in id is the account that rendered this document. A later

@@ -137,6 +137,7 @@ function patch(key: string) {
 
 function snapshot(count: number): OverviewData {
 	return {
+		accountId: "demo",
 		greeting: "Good morning, Moe",
 		mission: "",
 		online: "",

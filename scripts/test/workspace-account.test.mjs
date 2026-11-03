@@ -14,14 +14,23 @@ const mocks = {
 		return { validator(fn) { validate = fn; return this; },
 			handler(fn) { return async (options = {}) => fn({ data: validate(options.data) }); } };
 	}`,
-	"react": "export const useSyncExternalStore = () => {};",
+	"react": `export const useSyncExternalStore = () => {};
+		export const createContext = () => ({});
+		export const useContext = () => globalThis.workspaceAccountTest.workspace;
+		export const useRef = (current) => ({ current });`,
 	"@tensquads/adapters": `const state = globalThis.workspaceAccountTest;
 		export const openPostgres = () => ({ db: {}, close: async () => { state.closed++; } });
 		export const accountForClerkUser = async () => ({ id: state.owner });
 		export const createRepositories = () => ({
 			platform: { listAccounts: async () => [{ id: 'demo' }, { id: 'northwind' }] },
 			policy: { listRules: async () => [] },
-			bus: { readStore: async () => state.store, listEvents: async () => [] },
+			squads: { listAgents: async () => [], master: async () => ({ name: "Master" }) },
+			bus: { readStore: async () => { if (state.failRules) throw new Error("Read failed"); return state.store; }, listEvents: async () => [] },
+		});
+		export const readOverviewSnapshot = async (_, scope) => ({
+			accounts: [{ id: scope.accountId, owner: 'Moe', mission: '' }], agents: [], tasksDone: 0,
+			master: { name: 'Master' }, stored: [], revenue: [],
+			inbox: { count: 0, empty: true, emptyText: '', proposals: [], approvals: [] },
 		});`,
 	"@tensquads/kernel": `export class Kernel {
 		constructor() { return new Proxy(this, { get: (_, method) => async (scope) => {
@@ -62,6 +71,11 @@ const { limitDefinitions } = await import(new URL("packages/domain/src/policy/ru
 const queue = await import(new URL("screens/rules/write-queue.ts", web));
 const decisions = await import(new URL("screens/overview/actions.ts", web));
 const { nextWriteFence } = await import(new URL("write-fence.ts", web));
+const { useWorkspacePage } = await import(new URL("workspace/context.ts", web));
+const { loadRulesSnapshot } = await import(new URL("screens/rules/loader.ts", web));
+const { clearOverviewHold, loadHeldOverview, overviewEpoch } = await import(new URL("screens/overview/load.ts", web));
+const { clearFrameHold, loadHeldFrame, frameEpoch } = await import(new URL("workspace/frame-load.ts", web));
+const { currentWrites, advanceWrites, overviewMatchStamp } = await import(new URL("workspace/approval-count.ts", web));
 const writes = [
 	(accountId) => rules.setRuleEnabled({ data: { accountId, id: "r1", on: false, tab: "tab", seq: 1 } }),
 	(accountId) => rules.setRuleLimit({ data: { accountId, key: "policy.daily_ad_cap", value: 200, tab: "tab", seq: 2 } }),
@@ -139,6 +153,76 @@ test("target reset drops queued decisions, patches and approval count without ch
 		assert.deepEqual(decisions.patchSnapshot(), []);
 		assert.equal(decisions.shownApprovalCount(0), 0);
 	} finally {
+		delete globalThis.window;
+	}
+});
+
+test("page loaders and retained snapshots keep their loaded account and reject mixed frames", async () => {
+	globalThis.window = {};
+	try {
+		queue.resetTargetAccount();
+		state.admin = true;
+		state.target = "demo";
+		state.store = Object.fromEntries(limitDefinitions.map((definition) => [definition.key, 100]));
+		state.failRules = false;
+		const rulesPage = await loadRulesSnapshot();
+		const overviewPage = await loadHeldOverview(overviewEpoch(), currentWrites(), () => overview.loadOverview());
+		const trafficPage = await traffic.loadTraffic();
+		for (const page of [rulesPage, overviewPage, trafficPage]) assert.equal(page.accountId, "demo");
+		state.target = "northwind";
+		state.store = {};
+		state.failRules = true;
+		const retainedRules = await loadRulesSnapshot();
+		const retainedOverview = await loadHeldOverview(overviewEpoch(), currentWrites(), async () => {
+			throw new Error("Read failed");
+		});
+		assert.equal(retainedRules.accountId, "demo");
+		assert.equal(retainedRules.limits.length, 3);
+		assert.equal(retainedOverview.accountId, "demo");
+		for (const page of [retainedRules, retainedOverview, trafficPage]) {
+			state.workspace = { frame: { accountId: "demo" } };
+			assert.equal(useWorkspacePage(page.accountId), state.workspace);
+			state.workspace = { frame: { accountId: "northwind" } };
+			assert.throws(() => useWorkspacePage(page.accountId), /The workspace write did not finish/);
+			state.writes = [];
+			await assert.rejects(writes[1](page.accountId), /The workspace write did not finish/);
+			assert.deepEqual(state.writes, []);
+		}
+		assert.equal(overviewMatchStamp({ ...retainedOverview, count: 4 }, "northwind"), null);
+		assert.equal(typeof overviewMatchStamp({ ...retainedOverview, count: 4 }, "demo"), "string");
+		state.failRules = false;
+		const fresh = await loadRulesSnapshot();
+		assert.equal(fresh.accountId, "northwind");
+		assert.deepEqual(fresh.limits, []);
+		assert.equal(useWorkspacePage(fresh.accountId), state.workspace);
+		state.workspace = { frame: { accountId: "demo" } };
+		assert.throws(() => useWorkspacePage(fresh.accountId), /The workspace write did not finish/);
+	} finally {
+		state.failRules = false;
+		clearOverviewHold();
+		delete globalThis.window;
+	}
+});
+
+test("accepting a new frame account clears old optimistic state even during a write", async () => {
+	globalThis.window = {};
+	try {
+		queue.resetTargetAccount();
+		clearFrameHold();
+		const frame = (accountId) => ({ accountId, approvalCount: 0, messages: [] });
+		await loadHeldFrame(frameEpoch(), currentWrites(), async () => frame("demo"));
+		queue.placeRule({ id: "r1", on: true, when: "When", agent: "orders", action: "Then", approval: "Auto" });
+		const writeAt = currentWrites();
+		advanceWrites();
+		const tab = nextWriteFence().tab;
+		const next = await loadHeldFrame(frameEpoch(), writeAt, async () => frame("northwind"));
+		assert.equal(next.accountId, "northwind");
+		assert.deepEqual(queue.rulesWrittenSince(0), { rules: [], limits: [] });
+		assert.equal(nextWriteFence().tab, tab);
+		const retained = await loadHeldFrame(frameEpoch(), currentWrites(), async () => { throw new Error("Read failed"); });
+		assert.equal(retained.accountId, "northwind");
+	} finally {
+		clearFrameHold();
 		delete globalThis.window;
 	}
 });

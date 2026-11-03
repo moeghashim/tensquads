@@ -7,7 +7,7 @@ import { css } from "#/screens/css.ts";
 import { decideMissionOverview, decideOverview } from "#/server/overview.ts";
 import { missionBits } from "#/workspace/agent-view.ts";
 import { currentWrites } from "#/workspace/approval-count.ts";
-import { useRefresh, useWorkspace } from "#/workspace/context.ts";
+import { useRefresh, useWorkspacePage } from "#/workspace/context.ts";
 
 import {
 	acceptOverviewRead,
@@ -116,13 +116,23 @@ function useFreshOverview(data: OverviewData & { readonly writeAt: number }, not
 	}, [data, noteDecision]);
 }
 
-function overviewRefresh(router: ReturnType<typeof useRouter>): DecisionRefresh {
+function overviewRefresh(router: ReturnType<typeof useRouter>, accountId: string): DecisionRefresh {
 	const overview = router.state.matches.find((item) => item.routeId === "/_workspace/overview");
-	if (overview?.status === "success" && overview.loaderData && currentWrites() === overview.loaderData.writeAt) {
+	if (
+		overview?.status === "success" &&
+		overview.loaderData &&
+		overview.loaderData.accountId === accountId &&
+		currentWrites() === overview.loaderData.writeAt
+	) {
 		return { count: overview.loaderData.count, readAt: overview.loaderData.writeAt, dropLanded: true };
 	}
 	const frame = router.state.matches.find((item) => item.routeId === "/_workspace");
-	if (frame?.status === "success" && frame.loaderData && currentWrites() === frame.loaderData.writeAt) {
+	if (
+		frame?.status === "success" &&
+		frame.loaderData &&
+		frame.loaderData.accountId === accountId &&
+		currentWrites() === frame.loaderData.writeAt
+	) {
 		return { count: frame.loaderData.approvalCount, readAt: frame.loaderData.writeAt, dropLanded: false };
 	}
 	throw new Error("The overview did not load.");
@@ -132,7 +142,7 @@ export function OverviewPage({ data }: { readonly data: OverviewData & { readonl
 	const navigate = useNavigate();
 	const refresh = useRefresh();
 	const router = useRouter();
-	const { frame, approvalCount, noteDecision } = useWorkspace();
+	const { approvalCount, noteDecision } = useWorkspacePage(data.accountId);
 	const patches = useSyncExternalStore(subscribeOverviewPage, patchSnapshot, () => emptyPatches);
 	useFreshOverview(data, noteDecision);
 	const shown = presentOverview(data, patches);
@@ -154,19 +164,19 @@ export function OverviewPage({ data }: { readonly data: OverviewData & { readonl
 			},
 			async () => {
 				await refresh();
-				return overviewRefresh(router);
+				return overviewRefresh(router, data.accountId);
 			},
 			() => undefined,
 		);
 	};
 	const decide = (id: string, ok: boolean) => {
 		accept({ key: `spend:${id}`, kind: ok ? "spend-approve" : "spend-decline", id }, (signal) =>
-			decideOverview({ data: { accountId: frame.accountId, id, ok }, signal }),
+			decideOverview({ data: { accountId: data.accountId, id, ok }, signal }),
 		);
 	};
 	const decideMission = (id: string, ok: boolean) => {
 		accept({ key: `mission:${id}`, kind: ok ? "mission-approve" : "mission-revise", id }, (signal) =>
-			decideMissionOverview({ data: { accountId: frame.accountId, id, ok }, signal }),
+			decideMissionOverview({ data: { accountId: data.accountId, id, ok }, signal }),
 		);
 	};
 	return (

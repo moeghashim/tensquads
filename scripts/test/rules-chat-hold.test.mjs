@@ -139,6 +139,7 @@ async function mount(page) {
 				},
 			];
 			window.readRules = async () => ({
+				accountId: "northwind",
 				rules: window.rules.map((row) => ({ ...row })),
 				limits: window.limits.map((row) => ({ ...row })),
 			});

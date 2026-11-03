@@ -39,6 +39,7 @@ export const loadTraffic = createServerFn({ method: "GET" }).handler(async (): P
 			repositories.squads.master(scope),
 		]);
 		return {
+			accountId: scope.accountId,
 			events: orderEventPayloads(events).map((event) => ({ ...event, payload: jsonObject(event.payload) })),
 			store: Object.entries(store).map(([key, value]) => ({ key, value: jsonValue(value) })),
 			agents: agents.map((agent) => ({

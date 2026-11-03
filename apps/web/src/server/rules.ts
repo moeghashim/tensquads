@@ -20,6 +20,7 @@ export interface RulesRule {
 }
 
 export interface RulesPageData {
+	readonly accountId: string;
 	readonly rules: readonly RulesRule[];
 	readonly limits: readonly RulesLimit[];
 }
@@ -35,6 +36,7 @@ export const loadRulesPage = createServerFn({ method: "GET" }).handler(async ():
 			repositories.bus.readStore(scope),
 		]);
 		return {
+			accountId: scope.accountId,
 			rules,
 			limits: limitDefinitions.some((definition) => store[definition.key] === undefined)
 				? []

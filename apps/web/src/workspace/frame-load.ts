@@ -1,5 +1,6 @@
 import { isRedirect } from "@tanstack/react-router";
 
+import { resetTargetAccount } from "#/screens/rules/write-queue.ts";
 import { isSessionRefreshNeeded } from "#/server/session-error.ts";
 import { currentWrites } from "#/workspace/approval-count.ts";
 
@@ -38,7 +39,12 @@ export function rememberFrame(frame: FrameHeld): void {
 
 function acceptFrameLoad(writeAt: number, data: WorkspaceFrameData, epochAtStart: number): FrameHeld {
 	const frame = { ...data, writeAt };
-	if (!inBrowser() || epochAtStart !== epoch || currentWrites() !== writeAt) return frame;
+	if (!inBrowser() || epochAtStart !== epoch) return frame;
+	if (held !== null && held.accountId !== frame.accountId) {
+		resetTargetAccount();
+	} else if (currentWrites() !== writeAt) {
+		return frame;
+	}
 	held = frame;
 	needsRead = false;
 	return frame;

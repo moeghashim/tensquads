@@ -43,7 +43,7 @@ const bundle = await build({
 				const [rules, setRules] = useState([]);
 				const [limits, setLimits] = useState([]);
 				const [readCounter, setReadCounter] = useState(0);
-				const page = useMemo(() => ({ rules, limits, readCounter }), [rules, limits, readCounter]);
+				const page = useMemo(() => ({ accountId: "rules-account", rules, limits, readCounter }), [rules, limits, readCounter]);
 				window.beginRulesRead = () => {
 					const counter = rulesWriteCounter();
 					let resolve, reject;
@@ -53,10 +53,10 @@ const bundle = await build({
 					void done.catch(() => undefined);
 					const reader = {
 						done,
-						finish: () => resolve({ rules, limits }),
+						finish: () => resolve({ accountId: "rules-account", rules, limits }),
 						fail: () => reject(new Error("Read failed")),
-						loadRules: (rows) => { setReadCounter(counter); setRules(rows); resolve({ rules: rows, limits }); },
-						loadLimits: (rows) => { setReadCounter(counter); setLimits(rows); resolve({ rules, limits: rows }); },
+						loadRules: (rows) => { setReadCounter(counter); setRules(rows); resolve({ accountId: "rules-account", rules: rows, limits }); },
+						loadLimits: (rows) => { setReadCounter(counter); setLimits(rows); resolve({ accountId: "rules-account", rules, limits: rows }); },
 					};
 					Object.assign(window, reader);
 					return reader;

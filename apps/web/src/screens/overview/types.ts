@@ -46,6 +46,7 @@ export interface OverviewAgentView {
 }
 
 export interface OverviewData {
+	readonly accountId: string;
 	readonly greeting: string;
 	readonly mission: string;
 	readonly online: string;

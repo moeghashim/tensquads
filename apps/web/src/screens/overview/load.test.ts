@@ -126,6 +126,7 @@ function fail(): Promise<OverviewData> {
 
 function snapshot(count: number, approvalId = "ap1", title = "Refund"): OverviewData {
 	return {
+		accountId: "demo",
 		greeting: "Good morning, Moe",
 		mission: "",
 		online: "",

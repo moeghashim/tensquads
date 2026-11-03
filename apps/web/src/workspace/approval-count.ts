@@ -55,7 +55,8 @@ export function sameCount(current: ApprovalCount, next: ApprovalCount): boolean 
 	return current.value === next.value && current.writeAt === next.writeAt;
 }
 
-export function overviewMatchStamp(data: unknown): string | null {
+export function overviewMatchStamp(data: unknown, accountId: string): string | null {
+	if (!isDataRecord(data) || data.accountId !== accountId) return null;
 	const read = countFields(data);
 	if (read === null) {
 		return null;

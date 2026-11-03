@@ -31,6 +31,7 @@ export async function readOverview(db: AppDatabase, scope: AccountScope): Promis
 		saved: agents.map((agent) => agent.saved),
 	});
 	return {
+		accountId: scope.accountId,
 		greeting: greetingLine(account.owner),
 		mission: blankText(account.mission),
 		online: onlineLine(agents.filter((agent) => agent.on).length, agents.length),

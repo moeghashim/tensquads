@@ -61,6 +61,14 @@ export function useWorkspace(): WorkspaceValue {
 	return value;
 }
 
+export function useWorkspacePage(accountId: string): WorkspaceValue {
+	const workspace = useWorkspace();
+	if (workspace.frame.accountId !== accountId) {
+		throw new Error("The workspace write did not finish.");
+	}
+	return workspace;
+}
+
 export function useRefresh(): () => Promise<void> {
 	return useWorkspace().refresh;
 }
