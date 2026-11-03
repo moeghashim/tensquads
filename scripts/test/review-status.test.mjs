@@ -29,6 +29,8 @@ test("merged history survives deleted and advanced origin branches", (t) => {
 	const { git, merge } = repository(t);
 	const before = git("rev-parse", "HEAD").trim();
 	merge("00-foundation", "Merge phase 0 foundation (#1)");
+	git("update-ref", "-d", "refs/remotes/origin/00-foundation");
+	git("branch", "-D", "00-foundation");
 	merge("02-agents");
 	git("update-ref", "-d", "refs/remotes/origin/02-agents");
 	merge("02-chat");

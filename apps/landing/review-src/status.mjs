@@ -22,6 +22,8 @@ export function readStatus(git, ref) {
 	for (const subject of git("log", "--merges", "--format=%s", ref).split("\n")) {
 		const match = /^Merge pull request #\d+ from moeghashim\/(\S+)$/.exec(subject);
 		if (match) merged.add(match[1]);
+		// Phase 0 merged as "Merge phase 0 foundation (#1)", with no branch name.
+		if (/^Merge phase 0 foundation \(#\d+\)$/.test(subject)) merged.add("00-foundation");
 	}
 	const open = branches(git);
 	const one = (task) => (merged.has(task) ? BUILT : open.has(task) ? PROGRESS : PLANNED);
