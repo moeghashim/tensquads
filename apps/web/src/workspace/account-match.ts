@@ -5,7 +5,7 @@ export interface AccountMatch {
 
 const layoutId = "/_workspace";
 
-export function accountIdOf(data: unknown): string | null {
+function accountIdOf(data: unknown): string | null {
 	if (typeof data !== "object" || data === null || !("accountId" in data)) return null;
 	const accountId = data.accountId;
 	if (typeof accountId !== "string" || accountId.length === 0) return null;

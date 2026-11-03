@@ -128,8 +128,8 @@ test("a removed role ends admin access when the session token refreshes", async 
 		await page.goto("/admin");
 		await expect(page).not.toHaveURL(/\/admin/);
 		await expect(page.getByRole("navigation", { name: "Platform admin" })).toHaveCount(0);
-		const accounts = await page.evaluate(async () => {
-			const loaded = (await import("/src/server/admin.ts")) as {
+		const accounts = await page.evaluate(async (specifier) => {
+			const loaded = (await import(specifier)) as {
 				loadAdminAccounts: () => Promise<unknown>;
 			};
 			try {
@@ -138,7 +138,7 @@ test("a removed role ends admin access when the session token refreshes", async 
 			} catch {
 				return { ok: false, list: false };
 			}
-		});
+		}, "/src/server/admin.ts");
 		expect(accounts.ok).toBe(false);
 		expect(accounts.list).toBe(false);
 	} finally {
@@ -163,13 +163,13 @@ async function setSpecialCookie(page: Page, value: string) {
 async function screenUrls(page: Page, module: string, fn: string) {
 	return page.evaluate(
 		async (screen) => {
-			const frame = (await import("/src/server/workspace.ts")) as { loadWorkspaceFrame: { url: string } };
+			const frame = (await import(screen.specifier)) as { loadWorkspaceFrame: { url: string } };
 			const child = (await import(`/src/server/${screen.module}.ts`)) as Record<string, { url: string }>;
 			const loaded = child[screen.fn];
 			if (!loaded) throw new Error("The screen read is missing.");
 			return { frame: frame.loadWorkspaceFrame.url, child: loaded.url };
 		},
-		{ module, fn },
+		{ module, fn, specifier: "/src/server/workspace.ts" },
 	);
 }
 
