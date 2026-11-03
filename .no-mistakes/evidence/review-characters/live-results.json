@@ -1,0 +1,75 @@
+{
+  "run": "Successful live-driver execution, local Worker at http://127.0.0.1:63328",
+  "results": [
+    {
+      "scenario": "Review index opens complete nine-character proposal",
+      "characters": [
+        "Ten",
+        "Dash",
+        "Juno",
+        "Pop",
+        "Penny",
+        "Stack",
+        "Scout",
+        "Brick",
+        "Lens"
+      ],
+      "result": "pass"
+    },
+    {
+      "scenario": "All nine states, seven sample rows and five avatar sizes render",
+      "states": [
+        "Waiting",
+        "Planning",
+        "Running skill",
+        "Checking",
+        "Done",
+        "Sent back",
+        "Blocked",
+        "Escalated",
+        "Dropped"
+      ],
+      "avatars": 27,
+      "listRows": 7,
+      "sizes": [
+        16,
+        24,
+        32,
+        48,
+        96
+      ],
+      "result": "pass"
+    },
+    {
+      "scenario": "Reduced motion disables blinking",
+      "normalAnimation": "sm-blink",
+      "reducedAnimation": "none",
+      "result": "pass"
+    },
+    {
+      "scenario": "Mobile scrolling",
+      "viewport": 390,
+      "document": 390,
+      "table": 820,
+      "tableBox": 342,
+      "scrollLeft": 478,
+      "result": "pass"
+    },
+    {
+      "scenario": "Back link and direct route",
+      "status": 200,
+      "headers": {
+        "x-robots-tag": "noindex, nofollow",
+        "cache-control": "no-cache"
+      },
+      "result": "pass"
+    },
+    {
+      "scenario": "Holding page excludes proposed characters",
+      "heading": "Hire a squad of AI agents to run your business",
+      "pageErrors": [],
+      "result": "pass"
+    }
+  ],
+  "setup": "Miniflare v5 required hasUserWorker=true and default Worker export in its converted configuration. Earlier setup attempts returned runtime 500; corrected configuration passed all assertions."
+}
