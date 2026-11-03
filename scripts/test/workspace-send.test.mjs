@@ -69,6 +69,16 @@ const bundle = await esbuild.build({
 		{
 			name: "workspace-boundaries",
 			setup(build) {
+				build.onResolve({ filter: /^#\/server\/rules.ts$/ }, ({ path }) => ({
+					path,
+					namespace: "rules-boundary",
+				}));
+				build.onLoad({ filter: /.*/, namespace: "rules-boundary" }, () => ({
+					contents: `
+						export const setRuleEnabled = () => { throw new Error("Unexpected rules write"); };
+						export const setRuleLimit = () => { throw new Error("Unexpected limit write"); };
+					`,
+				}));
 				build.onResolve({ filter: /^#\/server\/workspace.ts$/ }, ({ path }) => ({
 					path,
 					namespace: "boundary",

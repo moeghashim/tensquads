@@ -71,8 +71,14 @@ const bundle = await build({
 				build.onLoad({ filter: /.*/, namespace: "boundary" }, ({ path }) => ({
 					contents: path.endsWith("workspace.ts")
 						? `
-							export const beginWorkspaceSend = ({ data }) => window.beginSend(data);
-							export const finishWorkspaceSend = ({ data }) => window.finishSend(data);
+							export const beginWorkspaceSend = ({ data }) => {
+								if (data.accountId !== window.frame.accountId) throw new Error("Wrong account");
+								return window.beginSend(data.text);
+							};
+							export const finishWorkspaceSend = ({ data }) => {
+								if (data.accountId !== window.frame.accountId) throw new Error("Wrong account");
+								return window.finishSend(data.text);
+							};
 						`
 						: `
 							function asWritten(data, row) {
