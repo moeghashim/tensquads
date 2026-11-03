@@ -138,10 +138,11 @@ for (const kind of ["lim-refund", "lim-ads", "lim-reorder", "rule", "add"] as co
 		expect(gate.reads).toBe(1);
 		// The failed read has to be recorded before the next write, or that write joins it.
 		await expect.poll(() => recoveryGeneration(page)).toBeGreaterThanOrEqual(2);
+		const accepted = await writeCounter(page);
 		await act(page, kind);
-		// The click has to send the write. The read cannot start until the write response arrives.
+		// The click has to send the write. The read starts when the client accepts the response.
 		await expect.poll(() => gate.writesSeen).toBe(2);
-		await expect.poll(() => gate.writesDone, { timeout: 25_000 }).toBe(2);
+		await expect.poll(() => writeCounter(page), { timeout: 25_000 }).toBeGreaterThan(accepted);
 		await expect.poll(() => gate.reads).toBe(2);
 		await ended(page, kind);
 		await delay(500);
@@ -286,7 +287,7 @@ async function ended(page: Page, kind: "lim-refund" | "lim-ads" | "lim-reorder" 
 }
 
 async function failFirstPostAndRead(page: Page, rulesUrl: string) {
-	const gate = { postFailed: false, readFailed: false, reads: 0, writesSeen: 0, writesDone: 0 };
+	const gate = { postFailed: false, readFailed: false, reads: 0, writesSeen: 0 };
 	await page.route("**/*", async (route) => {
 		const request = route.request();
 		const body = request.postData() ?? "";
@@ -294,17 +295,11 @@ async function failFirstPostAndRead(page: Page, rulesUrl: string) {
 			body.includes("policy.") || body.includes("r5") || body.includes("Recovery rule") || body.includes('"on"');
 		if (request.method() === "POST" && request.url().includes("/_serverFn/") && rulesPost) {
 			gate.writesSeen += 1;
-			try {
-				if (!gate.postFailed) {
-					gate.postFailed = true;
-					await route.fulfill({ status: 500, contentType: "text/plain", body: "POST failed" });
-				} else {
-					await route.continue();
-				}
-			} finally {
-				gate.writesDone += 1;
+			if (!gate.postFailed) {
+				gate.postFailed = true;
+				await route.fulfill({ status: 500, contentType: "text/plain", body: "POST failed" });
+				return;
 			}
-			return;
 		}
 		if (request.method() === "GET" && (request.url().split("?")[0] ?? "") === rulesUrl) {
 			gate.reads += 1;
