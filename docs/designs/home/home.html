@@ -185,7 +185,11 @@ p { text-wrap: pretty; }
   .overview, .control, .plans, .roster, .steps, .kpis { grid-template-columns: 1fr; }
   .limits { grid-template-columns: 1fr; }
   .mini { grid-template-columns: 28px auto minmax(0, 1fr) 8px; }
-  .mini .tag { display: none; }
+  .mini > svg { grid-column: 1; grid-row: 1 / span 2; }
+  .mini-name { grid-column: 2; grid-row: 1; }
+  .mini .tag { grid-column: 2; grid-row: 2; justify-self: start; }
+  .mini-last { grid-column: 3; grid-row: 1 / span 2; }
+  .mini .dot { grid-column: 4; grid-row: 1 / span 2; }
   .how { padding: 40px 0; }
   .hero { padding-top: 36px; }
   .brief-bar .btn-dark { width: 100%; }
