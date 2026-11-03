@@ -2,6 +2,8 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 import { css } from "#/screens/css.ts";
+import { resetTargetAccount } from "#/screens/rules/write-queue.ts";
+import { endSpecialSession } from "#/server/admin.ts";
 
 import { agentStatus, initials, masterInitial, ownerText, squadLine } from "./agent-view.ts";
 import { useWorkspace } from "./context.ts";
@@ -21,6 +23,38 @@ export function Sidebar() {
 	const mark = masterInitial(frame.masterName);
 	return (
 		<nav aria-label="Workspace" data-if="notAdmin" style={css(shell)}>
+			{frame.superAdmin ? (
+				<button
+					type="button"
+					className="nav-btn"
+					data-handler="goAdmin"
+					data-event="onClick"
+					onClick={() => {
+						resetTargetAccount();
+						void endSpecialSession()
+							.then(() => navigate({ to: "/admin" }))
+							.catch(() => undefined);
+					}}
+					style={css(
+						"display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 10px; margin-bottom: 4px; border: 0; border-radius: 8px; background: transparent; color: #5d5d5d; font-size: 12px; font-weight: 500; text-align: left",
+					)}
+				>
+					<svg
+						width="14"
+						height="14"
+						viewBox="0 0 16 16"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M10 3 5 8l5 5" />
+					</svg>
+					All companies
+				</button>
+			) : null}
 			<div style={css("display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px")}>
 				<div
 					style={css(
@@ -32,7 +66,7 @@ export function Sidebar() {
 				<div style={css("display: flex; flex-direction: column")}>
 					<span style={css("font-weight: 600; color: #0d0d0d")}>{frame.masterName}</span>
 					<span style={css("font-size: 12px; color: #5d5d5d")}>
-						{squadLine(frame.agents.length, frame.accountName)}
+						{squadLine(frame.squadCount, frame.accountName)}
 					</span>
 				</div>
 			</div>

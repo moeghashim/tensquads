@@ -1,8 +1,10 @@
 import { redirect } from "@tanstack/react-router";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 
+import { databaseUrl } from "./database-url.ts";
 import { requireClerkSession } from "./session.ts";
-import { workerEnv } from "./worker-env.ts";
+import { readSpecialAccount } from "./special-session.ts";
+import { isSuperAdmin } from "./super-admin.ts";
 
 const unfinished = "The workspace write did not finish.";
 
@@ -11,19 +13,12 @@ interface AccountScope {
 	readonly mode: "account";
 }
 
-async function databaseUrl(): Promise<string> {
-	const test = await workerEnv("TEST_DATABASE_URL");
-	if (test.length > 0) {
-		return test;
-	}
-	return workerEnv("NEON_POSTGRES_CONNECTION_STRING");
-}
-
 export async function requireWorkspace<T>(
 	work: (scope: AccountScope, db: WorkspaceDb) => Promise<T>,
 	startedAt?: number,
 ): Promise<T> {
 	const { userId } = await requireClerkSession();
+	const admin = await isSuperAdmin();
 	const connection = await databaseUrl();
 	if (connection.length === 0) {
 		throw new Error("The database is not configured.");
@@ -31,17 +26,37 @@ export async function requireWorkspace<T>(
 	const { openPostgres, accountForClerkUser } = await import("@tensquads/adapters");
 	const database = openPostgres(connection);
 	try {
+		if (startedAt !== undefined && Date.now() >= startedAt + PENDING_TASK_WINDOW_MS) {
+			throw new Error(unfinished);
+		}
+		if (admin) {
+			const target = await specialTarget(readSpecialAccount());
+			if (!target) {
+				throw redirect({ to: "/admin" });
+			}
+			return await work({ accountId: target, mode: "account" }, database.db);
+		}
 		const account = await accountForClerkUser(database.db, userId);
 		if (!account) {
 			throw redirect({ to: "/signup" });
-		}
-		if (startedAt !== undefined && Date.now() >= startedAt + PENDING_TASK_WINDOW_MS) {
-			throw new Error(unfinished);
 		}
 		return await work({ accountId: account.id, mode: "account" }, database.db);
 	} finally {
 		await database.close();
 	}
+}
+
+async function specialTarget(accountId: string | null): Promise<string | null> {
+	if (!accountId) {
+		return null;
+	}
+	const { createRepositories } = await import("@tensquads/adapters");
+	const { withPlatform } = await import("./platform-scope.ts");
+	const found = await withPlatform(async (scope, db) => {
+		const rows = await createRepositories(db).platform.listAccounts(scope);
+		return rows.some((row) => row.id === accountId);
+	});
+	return found ? accountId : null;
 }
 
 type WorkspaceDb = Parameters<typeof readFrame>[0];

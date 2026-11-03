@@ -6,6 +6,10 @@
 	background: rgba(13, 13, 13, 0.08);
 }
 
+.workspace-frame .acct-row:hover {
+	background: rgba(13, 13, 13, 0.04);
+}
+
 .workspace-frame .row-btn:hover {
 	background: rgba(13, 13, 13, 0.05);
 }

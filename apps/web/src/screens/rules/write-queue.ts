@@ -1,7 +1,9 @@
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import { useSyncExternalStore } from "react";
 
+import { clearOverviewHold } from "#/screens/overview/load.ts";
 import { type RulesLimitValue, type RulesRule, type RulesWrite, setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
+import { clearFrameHold } from "#/workspace/frame-load.ts";
 import { confirmRetired, nextWriteFence } from "#/write-fence.ts";
 
 interface Flight<T> {
@@ -50,6 +52,16 @@ export function watchSignedInUser(userId: string | null): void {
 	}
 	if (signedInUser === userId) return;
 	signedInUser = userId;
+	dropAccountState();
+}
+
+// A row click and All companies change the target account without a new Clerk user.
+export function resetTargetAccount(): void {
+	if (typeof window === "undefined") return;
+	dropAccountState();
+}
+
+function dropAccountState(): void {
 	accountEpoch += 1;
 	ruleFlights.clear();
 	limitFlights.clear();
@@ -58,6 +70,8 @@ export function watchSignedInUser(userId: string | null): void {
 	needsRead = false;
 	recoveryGeneration = 0;
 	writeCounter = 0;
+	clearFrameHold();
+	clearOverviewHold();
 	for (const reset of accountResets) reset();
 	queueMicrotask(notify);
 }

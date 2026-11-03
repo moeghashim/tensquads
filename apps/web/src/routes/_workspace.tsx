@@ -29,7 +29,7 @@ function WorkspaceLayout() {
 	const currentSession = useSyncExternalStore(subscribeAgentSession, agentSession, agentSession);
 	if (session !== currentSession) return null;
 	return (
-		<WorkspaceProvider key={session} frame={frame} readAt={readAt}>
+		<WorkspaceProvider key={`${session}:${frame.accountId}`} frame={frame} readAt={readAt}>
 			<WorkspaceShell>
 				<Outlet />
 			</WorkspaceShell>

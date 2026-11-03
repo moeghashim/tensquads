@@ -9,7 +9,12 @@ function validateText(input: unknown): string {
 
 export const loadWorkspaceFrame = createServerFn({ method: "GET" }).handler(async () => {
 	const { readFrame, requireWorkspace } = await import("./workspace-session.ts");
-	return requireWorkspace((scope, db) => readFrame(db, scope));
+	const { isSuperAdmin } = await import("./super-admin.ts");
+	const admin = await isSuperAdmin();
+	return requireWorkspace(async (scope, db) => {
+		const frame = await readFrame(db, scope);
+		return { ...frame, accountId: scope.accountId, superAdmin: admin };
+	});
 });
 
 export const beginWorkspaceSend = createServerFn({ method: "POST" })

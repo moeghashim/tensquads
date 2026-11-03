@@ -139,9 +139,12 @@ function fail(): Promise<WorkspaceFrameData> {
 
 function frame(approvalCount: number, accountName = "Northwind"): WorkspaceFrameData {
 	return {
+		accountId: "northwind",
 		accountName,
 		owner: "Moe",
 		masterName: "Master",
+		squadCount: 0,
+		superAdmin: false,
 		agents: [],
 		approvalCount,
 		messages: [],
