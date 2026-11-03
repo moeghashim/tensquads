@@ -1,6 +1,7 @@
 // One tab id for this page load. The sequence rises for every limit or rule switch.
+// The id is created on the first write. Module startup must not call crypto.
 // A page without crypto.randomUUID still gets one id. The server does not trust the value.
-let tab = randomUuid();
+let tab: string | null = null;
 let seq = 0;
 
 export function nextWriteFence(): { readonly tab: string; readonly seq: number } {
