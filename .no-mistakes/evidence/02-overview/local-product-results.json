@@ -1,0 +1,54 @@
+{
+  "setup": "Actual OverviewPage, WorkspaceProvider, Dock, router, readOverview and Kernel with disposable PostgreSQL 18.6 via local WebSocket proxy. Clerk useAuth is a stable test id; server functions bridge directly to the real kernel. This does not validate real Clerk or HTTP transport.",
+  "results": [
+    {
+      "name": "seeded Overview renders owner greeting, six tiles, fourteen bars and responsive inbox",
+      "result": "pass"
+    },
+    {
+      "name": "held refund write applies one patch and badge across navigation; commit creates one Mandate",
+      "result": "pass"
+    },
+    {
+      "name": "committed refund with held response keeps badge 3 when accepted Overview already reflects it",
+      "result": "pass"
+    },
+    {
+      "name": "failed refund recovers the card and count without a retry loop",
+      "result": "pass"
+    },
+    {
+      "name": "stale Overview started before refund commit cannot restore the card or badge",
+      "result": "pass"
+    },
+    {
+      "name": "held Marketing finish survives refund approval and completes at 333 tasks",
+      "result": "pass"
+    },
+    {
+      "name": "chat-both-traffic preserves Marketing reply and rejects duplicate finishes",
+      "result": "pass"
+    },
+    {
+      "name": "chat-traffic-task preserves Marketing reply and rejects duplicate finishes",
+      "result": "pass"
+    },
+    {
+      "name": "traffic-task-chat-result preserves Marketing reply and rejects duplicate finishes",
+      "result": "pass"
+    },
+    {
+      "name": "mission approval updates the agent and queued declines empty the inbox without extra tasks",
+      "result": "pass"
+    },
+    {
+      "name": "Ask for another shows mission revising and reduces the badge to three",
+      "result": "pass"
+    },
+    {
+      "name": "Overview displays one repeatable-read snapshot while a second client approves between queries",
+      "result": "pass"
+    }
+  ],
+  "errors": []
+}
