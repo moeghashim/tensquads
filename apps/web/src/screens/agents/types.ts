@@ -20,6 +20,7 @@ export interface AgentCardData {
 }
 
 export interface AgentsPageData {
+	readonly accountId: string;
 	readonly masterName: string;
 	readonly agents: readonly AgentCardData[];
 }

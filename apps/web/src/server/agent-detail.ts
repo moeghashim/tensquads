@@ -271,7 +271,10 @@ export const loadAgentDetail = createServerFn({ method: "GET" })
 	.validator(validateAgentId)
 	.handler(async ({ data }) => {
 		const { requireWorkspace } = await import("./workspace-session.ts");
-		return requireWorkspace((scope, db) => loadView(db, scope, data));
+		return requireWorkspace(async (scope, db) => {
+			const view = await loadView(db, scope, data);
+			return { ...view, accountId: scope.accountId };
+		});
 	});
 
 export const setAgentRunning = createServerFn({ method: "POST" })

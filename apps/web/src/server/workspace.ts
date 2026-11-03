@@ -15,6 +15,11 @@ function validateText(input: unknown): { accountId: string; text: string } {
 	return { accountId: input.accountId, text: input.text };
 }
 
+export const loadWorkspaceAccount = createServerFn({ method: "GET" }).handler(async () => {
+	const { requireWorkspace } = await import("./workspace-session.ts");
+	return requireWorkspace(async (scope) => ({ accountId: scope.accountId }));
+});
+
 export const loadWorkspaceFrame = createServerFn({ method: "GET" }).handler(async () => {
 	const { readFrame, requireWorkspace } = await import("./workspace-session.ts");
 	const { isSuperAdmin } = await import("./super-admin.ts");

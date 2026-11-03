@@ -98,6 +98,14 @@ export async function removeCompanyMembership(secret: string, userId: string) {
 	await clerk(secret, `/organizations/${companyOrgId}/memberships/${userId}`, "DELETE");
 }
 
+export async function setCompanyRole(secret: string, userId: string, role: "org:member" | "org:super_admin") {
+	guardUser(userId);
+	const response = await clerk(secret, `/organizations/${companyOrgId}/memberships/${userId}`, "PATCH", { role });
+	if (!response.ok) {
+		throw new Error(`Clerk membership role failed with status ${response.status}.`);
+	}
+}
+
 export async function createForeignOrg(secret: string, userId: string) {
 	guardUser(userId);
 	const response = await fetch("https://api.clerk.com/v1/organizations", {

@@ -9,17 +9,25 @@ import { agentSession, stampAgentRead } from "#/workspace/agent-on.ts";
 import { captureWrites } from "#/workspace/approval-count.ts";
 import { useInspect } from "#/workspace/event-view.ts";
 
+function keptAccountId(view: AgentDetailView): string | null {
+	if (!("accountId" in view)) return null;
+	const accountId = view.accountId;
+	return typeof accountId === "string" && accountId.length > 0 ? accountId : null;
+}
+
 export const Route = createFileRoute("/_workspace/agents/$id")({
 	loader: async ({ params }) => {
 		const writeAt = captureWrites();
 		const readAt = stampAgentRead(params.id);
 		const session = agentSession();
 		try {
-			return { view: await loadAgentDetail({ data: params.id }), readAt, session, kept: false, writeAt };
+			const detail = await loadAgentDetail({ data: params.id });
+			return { view: detail, accountId: detail.accountId, readAt, session, kept: false, writeAt };
 		} catch (error) {
 			if (isRedirect(error) || isSessionRefreshNeeded(error)) throw error;
 			const view = keepFailedAgentRead(params.id, session);
-			if (view) return { view, readAt, session, kept: true, writeAt };
+			const accountId = view ? keptAccountId(view) : null;
+			if (view && accountId) return { view, accountId, readAt, session, kept: true, writeAt };
 			throw error;
 		}
 	},
