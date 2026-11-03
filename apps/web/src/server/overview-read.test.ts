@@ -69,6 +69,25 @@ test("an account with no store shows dashes, zero tasks, and an empty inbox", as
 
 const connection = process.env.TEST_DATABASE_URL ?? "";
 
+async function removeSnapshotAccount(db: ReturnType<typeof openPostgres>["db"], accountId: string) {
+	await db.delete(schema.messages).where(eq(schema.messages.accountId, accountId));
+	await db.delete(schema.threads).where(eq(schema.threads.accountId, accountId));
+	await db.delete(schema.skills).where(eq(schema.skills.accountId, accountId));
+	await db.delete(schema.machines).where(eq(schema.machines.accountId, accountId));
+	await db.delete(schema.agents).where(eq(schema.agents.accountId, accountId));
+	await db.delete(schema.squads).where(eq(schema.squads.accountId, accountId));
+	await db.delete(schema.masters).where(eq(schema.masters.accountId, accountId));
+	await db.delete(schema.rules).where(eq(schema.rules.accountId, accountId));
+	await db.delete(schema.missionProposals).where(eq(schema.missionProposals.accountId, accountId));
+	await db.delete(schema.busEvents).where(eq(schema.busEvents.accountId, accountId));
+	await db.delete(schema.stateEntries).where(eq(schema.stateEntries.accountId, accountId));
+	await db.delete(schema.dailyRevenue).where(eq(schema.dailyRevenue.accountId, accountId));
+	await db.delete(schema.overviewTiles).where(eq(schema.overviewTiles.accountId, accountId));
+	await db.delete(schema.subscriptions).where(eq(schema.subscriptions.accountId, accountId));
+	await db.delete(schema.busCursors).where(eq(schema.busCursors.accountId, accountId));
+	await db.delete(schema.accounts).where(eq(schema.accounts.id, accountId));
+}
+
 test("an Overview stays on one snapshot when another client approves after its first query", {
 	skip: !connection,
 }, async (t) => {
@@ -123,8 +142,14 @@ test("an Overview stays on one snapshot when another client approves after its f
 			`${before.approvals.find((approval) => approval.id === "ap1")?.title} (approved)`,
 		);
 	} finally {
-		await writer.db.delete(schema.accounts).where(eq(schema.accounts.id, accountId));
-		client.release();
-		await Promise.all([pool.end(), writer.close()]);
+		t.mock.restoreAll();
+		try {
+			await removeSnapshotAccount(writer.db, accountId);
+		} finally {
+			await client.query("rollback").catch(() => undefined);
+			client.release();
+			await pool.end();
+			await writer.close();
+		}
 	}
 });
