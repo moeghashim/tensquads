@@ -1,4 +1,12 @@
-import type { AccountScope, Autonomy } from "@tensquads/domain";
+import type {
+	AccountScope,
+	Autonomy,
+	Fenced,
+	StoredAgentOn,
+	StoredAutonomy,
+	StoredSkillOn,
+	WriteFence,
+} from "@tensquads/domain";
 
 import { machineAction } from "../../../domain/src/squads/agent-commands.ts";
 import type { Repositories } from "../ports.ts";
@@ -23,16 +31,54 @@ export async function commitAgentOn(
 }
 
 export interface SquadCommands {
-	setAgentOn(scope: AccountScope, agentId: string, on: boolean, deadlineAt: number): Promise<void>;
-	setSkillOn(scope: AccountScope, agentId: string, skillId: string, on: boolean, deadlineAt: number): Promise<void>;
-	setAutonomy(scope: AccountScope, agentId: string, autonomy: Autonomy, deadlineAt: number): Promise<void>;
+	setAgentOn(
+		scope: AccountScope,
+		agentId: string,
+		on: boolean,
+		fence: WriteFence,
+		deadlineAt: number,
+	): Promise<Fenced<StoredAgentOn>>;
+	setSkillOn(
+		scope: AccountScope,
+		agentId: string,
+		skillId: string,
+		on: boolean,
+		fence: WriteFence,
+		deadlineAt: number,
+	): Promise<Fenced<StoredSkillOn>>;
+	setAutonomy(
+		scope: AccountScope,
+		agentId: string,
+		autonomy: Autonomy,
+		fence: WriteFence,
+		deadlineAt: number,
+	): Promise<Fenced<StoredAutonomy>>;
 	askRevise(scope: AccountScope, agentId: string, deadlineAt: number): Promise<void>;
 }
 
 interface SquadWrites {
-	setAgentOn(scope: AccountScope, agentId: string, on: boolean, deadlineAt?: number): Promise<void>;
-	setSkillOn(scope: AccountScope, agentId: string, skillId: string, on: boolean, deadlineAt?: number): Promise<void>;
-	setAutonomy(scope: AccountScope, agentId: string, autonomy: Autonomy, deadlineAt?: number): Promise<void>;
+	setAgentOn(
+		scope: AccountScope,
+		agentId: string,
+		on: boolean,
+		fence: WriteFence,
+		deadlineAt?: number,
+	): Promise<Fenced<StoredAgentOn>>;
+	setSkillOn(
+		scope: AccountScope,
+		agentId: string,
+		skillId: string,
+		on: boolean,
+		fence: WriteFence,
+		deadlineAt?: number,
+	): Promise<Fenced<StoredSkillOn>>;
+	setAutonomy(
+		scope: AccountScope,
+		agentId: string,
+		autonomy: Autonomy,
+		fence: WriteFence,
+		deadlineAt?: number,
+	): Promise<Fenced<StoredAutonomy>>;
 	askRevise(scope: AccountScope, agentId: string, deadlineAt?: number): Promise<void>;
 }
 
@@ -44,10 +90,11 @@ export function squads(
 		return config.repositories().squads as unknown as SquadWrites;
 	}
 	context.provide("workspaceSquads", {
-		setAgentOn: (scope, agentId, on, deadlineAt) => writes().setAgentOn(scope, agentId, on, deadlineAt),
-		setSkillOn: (scope, agentId, skillId, on, deadlineAt) =>
-			writes().setSkillOn(scope, agentId, skillId, on, deadlineAt),
-		setAutonomy: (scope, agentId, autonomy, deadlineAt) => writes().setAutonomy(scope, agentId, autonomy, deadlineAt),
+		setAgentOn: (scope, agentId, on, fence, deadlineAt) => writes().setAgentOn(scope, agentId, on, fence, deadlineAt),
+		setSkillOn: (scope, agentId, skillId, on, fence, deadlineAt) =>
+			writes().setSkillOn(scope, agentId, skillId, on, fence, deadlineAt),
+		setAutonomy: (scope, agentId, autonomy, fence, deadlineAt) =>
+			writes().setAutonomy(scope, agentId, autonomy, fence, deadlineAt),
 		askRevise: (scope, agentId, deadlineAt) => writes().askRevise(scope, agentId, deadlineAt),
 	});
 }

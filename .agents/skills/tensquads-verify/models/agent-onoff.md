@@ -2,7 +2,7 @@
 
 Off means CPU 0% and uptime "Paused". A skill cannot run when the agent is Off. A change of autonomy does not change on or off. The screen shows Running only while the agent is On. Starting and Stopping each last one step. The screen shows Running for On and Paused for every other phase. It does not show the word Starting. The test adapter sets on inside `start` and `stop`, so Starting and Stopping are not visible. The stored CPU and uptime stay in the machine row. The provider chooses the shown CPU and uptime. An on machine whose stored uptime is "Paused" shows "Just started".
 
-The chart hides Stay, ChangeAutonomy, RunSkill, and EndSkill. Stay changes nothing. ChangeAutonomy changes only the autonomy. RunSkill turns the skill on only while the agent is On. EndSkill turns the skill off. A successful write response supplies the view and ends the wait. Failed and late each start one recovery read. The read ends on its response or its timer and does not loop. A recovery read that started before a later failure does not end that failure. The old read's return or its bound leaves that failure its own read. The model records one later failure, and the successor read is not overtaken. A start reaches On, a stop reaches Paused, and every wait reaches none. Only Boot, Halt, MarkLate, and RefreshTimeout have weak fairness. Read success is not assumed.
+The chart hides Stay, ChangeAutonomy, RunSkill, EndSkill, OpenOlder, CommitNewer, ArriveOlder, ArriveOlderFirst, and CommitAfterOlder. Stay changes nothing. ChangeAutonomy changes only the autonomy. RunSkill turns the skill on only while the agent is On. EndSkill turns the skill off. A successful write response supplies the view and ends the wait. Failed and late each start one recovery read. The read ends on its response or its timer and does not loop. A recovery read that started before a later failure does not end that failure. The old read's return or its bound leaves that failure its own read. The model records one later failure, and the successor read is not overtaken. A newer stored on stays when an older write arrives after it. An older off that arrives first is replaced by the newer on. A start reaches On, a stop reaches Paused, and every wait reaches none. Only Boot, Halt, MarkLate, and RefreshTimeout have weak fairness. Read success is not assumed.
 
 ## When this applies
 
@@ -16,6 +16,8 @@ Run this check when a change touches any of these:
 - `apps/web/src/screens/agent-detail/model.ts`
 - `apps/web/src/screens/agent-detail/write.ts`
 - `apps/web/src/server/agent-detail.ts`
+- `apps/web/src/write-fence.ts`
+- `packages/adapters/src/neon/commands/write-fence.ts`
 - `packages/statecharts/agent-onoff/AgentOnOff.tla`
 - `packages/statecharts/agent-onoff/AgentOnOff.cfg`
 - `packages/statecharts/agent-onoff/view.mjs`
@@ -48,9 +50,9 @@ A model failure is a path of switch on, boot, switch off, halt, a skill while of
 | Check | Covers | Result |
 | --- | --- | --- |
 | `adapters.test.ts` | off shows 0% and Paused, and a paused store shows Just started when on | exit 0 |
-| `/statechart` on `AgentOnOff.tla` | five phases, queue, failed, late, and reload, one later failure during an open recovery, one label pair, a skill only while on, autonomy stays off the switch, start and stop end, and every wait reaches none | TLC reached 264 states and 1713 steps |
+| `/statechart` on `AgentOnOff.tla` | five phases, queue, failed, late, and reload, one later failure during an open recovery, one label pair, a skill only while on, autonomy stays off the switch, start and stop end, every wait reaches none, and a newer stored on survives an older arrival | TLC reached 272 states and 1731 steps |
 
-The checks name no commit, so a later head does not make this note stale. They keep the provider formula and the one-step start and stop. TLC named no broken rule. The rules are TypeOK, OffPaused, StartingPaused, OnRunning, StoppingPaused, PausedHold, ScreenLabel, SkillOff, NoDeadlock, AutonomyStable, WaitEnds, and StaleReadKeepsFailure. The chart draws 10 states and 36 arrows. The view hides 888 steps. The state "A later write failed" uses the Failed color.
+The checks name no commit, so a later head does not make this note stale. They keep the provider formula and the one-step start and stop. TLC named no broken rule. The rules are TypeOK, OffPaused, StartingPaused, OnRunning, StoppingPaused, PausedHold, ScreenLabel, SkillOff, FenceKeepsNewer, NoDeadlock, AutonomyStable, WaitEnds, and StaleReadKeepsFailure. The chart draws 10 states and 36 arrows. The view hides 906 steps. The state "A later write failed" uses the Failed color.
 
 Update this note when the model or the on/off rules change. Record the TLC counts from that run. Do not name a commit. An intended change updates `test-machine.ts`, `agents.ts`, and `AgentOnOff.tla` together.
 
@@ -58,4 +60,4 @@ Update this note when the model or the on/off rules change. Record the TLC count
 
 The model uses one agent, one skill flag, and three autonomy values. CPU is 0% or 22%. Uptime is Paused, Just started, or 18 days. The stored pair is 0% or 22%, and Paused or 18 days. The screen label is Running or Paused. Calls are none, start, or stop. Repeated switches use this finite set. One open recovery can be overtaken by one later failure. The successor read is not overtaken again. The browser check covers a failed stop, a reload, a stale loader, an old recovery over a lost response, the sidebar dot, and the stored row staying at 22% and 18 days while the page shows 0% and Paused.
 
-TLC reached 264 states and 1713 steps with no broken rule, including ScreenLabel, SkillOff, AutonomyStable, WaitEnds, and StaleReadKeepsFailure. The generated chart has 10 states and 36 arrows and hides 888 steps. Starting and Stopping are one step each. The screen does not show those words. The recovery read ends on its timer and does not loop. An older recovery does not end a later failure.
+TLC reached 272 states and 1731 steps with no broken rule, including ScreenLabel, SkillOff, AutonomyStable, WaitEnds, StaleReadKeepsFailure, and FenceKeepsNewer. The generated chart has 10 states and 36 arrows and hides 906 steps. Starting and Stopping are one step each. The screen does not show those words. The recovery read ends on its timer and does not loop. An older recovery does not end a later failure. A newer stored on stays after the older write arrives.

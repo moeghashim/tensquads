@@ -19,20 +19,31 @@ function validateAgentId(input: unknown): string {
 	return input;
 }
 
-interface RunningInput {
+interface FenceInput {
+	readonly tab: string;
+	readonly seq: number;
+	readonly retires: readonly string[];
+}
+
+interface RunningInput extends FenceInput {
 	readonly agentId: string;
 	readonly on: boolean;
 }
 
-interface SkillInput {
+interface SkillInput extends FenceInput {
 	readonly agentId: string;
 	readonly skillId: string;
 	readonly on: boolean;
 }
 
-interface AutonomyInput {
+interface AutonomyInput extends FenceInput {
 	readonly agentId: string;
 	readonly autonomy: Autonomy;
+}
+
+export interface AgentWrite<T> {
+	readonly status: "written" | "superseded";
+	readonly row: T;
 }
 
 function isRecord(input: unknown): input is Record<string, unknown> {
@@ -46,7 +57,8 @@ function validateRunning(input: unknown): RunningInput {
 	if (typeof input.on !== "boolean") {
 		throw new Error("The agent request is not valid.");
 	}
-	return { agentId: input.agentId, on: input.on };
+	const fence = validateFence(input);
+	return { agentId: input.agentId, on: input.on, ...fence };
 }
 
 function validateSkill(input: unknown): SkillInput {
@@ -56,7 +68,8 @@ function validateSkill(input: unknown): SkillInput {
 	if (input.agentId.length === 0 || input.skillId.length === 0 || typeof input.on !== "boolean") {
 		throw new Error("The agent request is not valid.");
 	}
-	return { agentId: input.agentId, skillId: input.skillId, on: input.on };
+	const fence = validateFence(input);
+	return { agentId: input.agentId, skillId: input.skillId, on: input.on, ...fence };
 }
 
 function isAutonomy(value: string): value is Autonomy {
@@ -75,10 +88,64 @@ function validateAutonomy(input: unknown): AutonomyInput {
 	if (typeof input.autonomy !== "string" || !isAutonomy(input.autonomy)) {
 		throw new Error("The agent request is not valid.");
 	}
-	return { agentId: input.agentId, autonomy: input.autonomy };
+	const fence = validateFence(input);
+	return { agentId: input.agentId, autonomy: input.autonomy, ...fence };
+}
+
+function validateFence(input: Record<string, unknown>): FenceInput {
+	const { tab, seq } = input;
+	if (typeof tab !== "string" || tab.length === 0 || tab.length > 80 || tab !== tab.trim()) {
+		throw new Error("The write fence is not valid.");
+	}
+	if (typeof seq !== "number" || !Number.isSafeInteger(seq) || seq < 1) {
+		throw new Error("The write fence is not valid.");
+	}
+	return { tab, seq, retires: validateRetires(input.retires) };
+}
+
+function validateRetires(input: unknown): readonly string[] {
+	if (input === undefined) return [];
+	if (!Array.isArray(input) || input.length > 8) {
+		throw new Error("The write fence is not valid.");
+	}
+	const retires: string[] = [];
+	for (const id of input) {
+		if (typeof id !== "string" || id.length === 0 || id.length > 80 || id !== id.trim()) {
+			throw new Error("The write fence is not valid.");
+		}
+		if (!retires.includes(id)) retires.push(id);
+	}
+	return retires;
 }
 
 const unfinished = "The workspace write did not finish.";
+
+async function writeFenced(
+	agentId: string,
+	run: (
+		kernel: Kernel,
+		scope: AccountScope,
+		deadlineAt: number,
+	) => Promise<{ readonly status: "written" | "superseded" }>,
+): Promise<AgentWrite<AgentDetailView>> {
+	const deadlineAt = Date.now() + PENDING_TASK_WINDOW_MS;
+	const { requireWorkspace } = await import("./workspace-session.ts");
+	return requireWorkspace(async (scope, db) => {
+		if (Date.now() >= deadlineAt) {
+			throw new Error(unfinished);
+		}
+		const { createRepositories } = await import("@tensquads/adapters");
+		const written = await run(new Kernel(createRepositories(db)), scope, deadlineAt);
+		if (Date.now() >= deadlineAt) {
+			throw new Error(unfinished);
+		}
+		const view = await loadView(db, scope, agentId);
+		if (Date.now() >= deadlineAt) {
+			throw new Error(unfinished);
+		}
+		return { status: written.status, row: view };
+	});
+}
 
 async function writeThroughKernel(
 	agentId: string,
@@ -210,24 +277,43 @@ export const loadAgentDetail = createServerFn({ method: "GET" })
 export const setAgentRunning = createServerFn({ method: "POST" })
 	.validator(validateRunning)
 	.handler(async ({ data }) => {
-		return writeThroughKernel(data.agentId, (kernel, scope, deadlineAt) =>
-			kernel.setAgentOn(scope, data.agentId, data.on, deadlineAt),
+		return writeFenced(data.agentId, (kernel, scope, deadlineAt) =>
+			kernel.setAgentOn(
+				scope,
+				data.agentId,
+				data.on,
+				{ tab: data.tab, seq: data.seq, retires: data.retires },
+				deadlineAt,
+			),
 		);
 	});
 
 export const setSkillEnabled = createServerFn({ method: "POST" })
 	.validator(validateSkill)
 	.handler(async ({ data }) => {
-		return writeThroughKernel(data.agentId, (kernel, scope, deadlineAt) =>
-			kernel.setSkillOn(scope, data.agentId, data.skillId, data.on, deadlineAt),
+		return writeFenced(data.agentId, (kernel, scope, deadlineAt) =>
+			kernel.setSkillOn(
+				scope,
+				data.agentId,
+				data.skillId,
+				data.on,
+				{ tab: data.tab, seq: data.seq, retires: data.retires },
+				deadlineAt,
+			),
 		);
 	});
 
 export const setAgentAutonomy = createServerFn({ method: "POST" })
 	.validator(validateAutonomy)
 	.handler(async ({ data }) => {
-		return writeThroughKernel(data.agentId, (kernel, scope, deadlineAt) =>
-			kernel.setAutonomy(scope, data.agentId, data.autonomy, deadlineAt),
+		return writeFenced(data.agentId, (kernel, scope, deadlineAt) =>
+			kernel.setAutonomy(
+				scope,
+				data.agentId,
+				data.autonomy,
+				{ tab: data.tab, seq: data.seq, retires: data.retires },
+				deadlineAt,
+			),
 		);
 	});
 

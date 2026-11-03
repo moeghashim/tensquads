@@ -20,6 +20,7 @@ const modules = {
 	"#/workspace/agent-view.ts": ["agentStatus", "missionBits"],
 	"#/workspace/event-view.ts": ["decorate"],
 	"#/workspace/styles.ts": ["switchParts", "gateStyle", "pill"],
+	"#/write-fence.ts": ["confirmRetired", "nextWriteFence"],
 };
 globalThis.agentWriteTestCall = (module, name, args) => runtime[module][name](...args);
 registerHooks({
@@ -47,7 +48,9 @@ function harness() {
 	const reads = [];
 	const posts = [];
 	let failNext = false;
+	let nextMode = "written";
 	let navigations = 0;
+	const fence = { seq: 0, tab: "tab-a", pending: ["old-tab"] };
 	const server = {
 		id: "support",
 		on: true,
@@ -67,13 +70,21 @@ function harness() {
 	const router = {};
 	function post(key, update) {
 		const failed = failNext;
+		const mode = nextMode;
 		failNext = false;
-		if (!failed) update();
+		nextMode = "written";
+		if (!failed && mode === "written") update();
 		const view = structuredClone(server);
 		return new Promise((resolve, reject) => {
 			posts.push({
 				key,
-				answer: () => (failed ? reject(new Error("Write failed")) : resolve(view)),
+				answer: () => {
+					if (failed) reject(new Error("Write failed"));
+					else if (mode === "invalid") resolve({ error: "The agent request is not valid." });
+					else if (mode === "superseded") resolve({ status: "superseded", row: view });
+					else if (key === "revise") resolve(view);
+					else resolve({ status: "written", row: view });
+				},
 				lose: () => reject(new Error("Response lost")),
 			});
 		});
@@ -122,6 +133,16 @@ function harness() {
 			gateStyle: () => "",
 			pill: () => "",
 		},
+		"#/write-fence.ts": {
+			nextWriteFence: () => {
+				fence.seq += 1;
+				return { tab: fence.tab, seq: fence.seq, retires: fence.pending.slice() };
+			},
+			confirmRetired: (ids) => {
+				const drop = new Set(ids);
+				fence.pending = fence.pending.filter((id) => !drop.has(id));
+			},
+		},
 	};
 	function render() {
 		return useAgentWrites(loader, stamped ?? stampAgentRead(loader.id), loaderSession);
@@ -134,6 +155,13 @@ function harness() {
 		failNextPost() {
 			failNext = true;
 		},
+		supersedeNext() {
+			nextMode = "superseded";
+		},
+		invalidateNext() {
+			nextMode = "invalid";
+		},
+		fence,
 		navigations: () => navigations,
 		newLoader(view, status = "success", readAt, session = agentSession()) {
 			loaderSession = session;
@@ -629,6 +657,47 @@ test("a successful later loader ends recovery", async () => {
 	assert.equal(h.posts.length, 1);
 	assert.equal(h.render().view.skills[0].onStr, "false");
 });
+
+for (const action of ["running", "skill", "autonomy"]) {
+	test(`a superseded ${action} response keeps the server row and confirms the retire list`, async () => {
+		const h = harness();
+		h.supersedeNext();
+		const control = h.render();
+		if (action === "running") control.toggleAgent(false);
+		if (action === "skill") control.toggleSkill("inbox.read", false);
+		if (action === "autonomy") control.pickAutonomy("Full auto");
+		await settle();
+		h.posts.shift().answer();
+		await settle();
+		assert.equal(h.reads.length, 0);
+		assert.equal(h.server.on, true);
+		assert.equal(h.server.skills[0].onStr, "true");
+		assert.equal(h.server.autonomyOpts[0].onStr, "true");
+		assert.deepEqual(h.fence.pending, []);
+		const view = h.render().view;
+		assert.equal(view.on, true);
+		assert.equal(view.skills[0].onStr, "true");
+		assert.equal(view.autonomyOpts[0].onStr, "true");
+	});
+
+	test(`a validation error for ${action} is a failed write and keeps the retire list`, async () => {
+		const h = harness();
+		h.invalidateNext();
+		const before = h.fence.pending.slice();
+		const control = h.render();
+		if (action === "running") control.toggleAgent(false);
+		if (action === "skill") control.toggleSkill("inbox.read", false);
+		if (action === "autonomy") control.pickAutonomy("Full auto");
+		await settle();
+		h.posts.shift().answer();
+		await settle();
+		assert.equal(h.reads.length, 1);
+		assert.deepEqual(h.fence.pending, before);
+		assert.equal(h.server.on, true);
+		assert.equal(h.server.skills[0].onStr, "true");
+		assert.equal(h.render().view.on, true);
+	});
+}
 
 test("SSR renders do not reuse persistent client queues", () => {
 	const browserWindow = globalThis.window;

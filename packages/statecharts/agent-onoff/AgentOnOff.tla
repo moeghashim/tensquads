@@ -20,13 +20,20 @@
 \* # model: apps/web/src/screens/agent-detail/model.ts
 \* # model: apps/web/src/screens/agent-detail/write.ts
 \* # model: apps/web/src/server/agent-detail.ts
+\* # model: apps/web/src/write-fence.ts
+\* # model: packages/adapters/src/neon/commands/write-fence.ts
+\* A newer write that lands while an older write is open keeps the stored on.
+\* The older arrival does not replace it. An older arrival that lands first stores off,
+\* and the newer write then replaces that off.
 
 EXTENDS Integers
 
 VARIABLES
-    phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick, owed, followed
+    phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick, owed, followed,
+    commit, open, storedOn
 vars == <<
-    phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick, owed, followed
+    phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick, owed, followed,
+    commit, open, storedOn
 >>
 
 Phases == {"Off", "Starting", "On", "Stopping", "Paused"}
@@ -53,6 +60,9 @@ TypeOK ==
     /\ calls \in Calls
     /\ owed \in BOOLEAN
     /\ followed \in BOOLEAN
+    /\ commit \in {0, 1, 2}
+    /\ open \in {0, 1}
+    /\ storedOn \in BOOLEAN
     /\ (owed => wait = "reload" /\ followed)
 
 ShownOff == cpu = "0%" /\ uptime = "Paused" /\ label = "Paused" /\ skill = FALSE
@@ -74,7 +84,9 @@ ScreenLabel == (label = "Running") <=> (phase = "On")
 \* A skill runs only while the agent is On. This is the send() rule.
 SkillOff == skill => phase = "On"
 
-clock == UNCHANGED <<wait, tick, owed, followed>>
+fenceIdle == commit = 0 /\ open = 0
+clock == fenceIdle /\ UNCHANGED <<wait, tick, owed, followed, commit, open, storedOn>>
+fenceHold == UNCHANGED <<commit, open, storedOn>>
 machine == UNCHANGED <<phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls>>
 
 Stopped ==
@@ -97,6 +109,7 @@ Running ==
     /\ calls = "none"
 
 Init == (Stopped \/ Running) /\ wait = "none" /\ tick = 0 /\ owed = FALSE /\ followed = FALSE
+    /\ commit = 0 /\ open = 0 /\ storedOn = (phase = "On")
 
 stored == UNCHANGED <<storedCpu, storedUptime, autonomy>>
 
@@ -169,6 +182,8 @@ EnterQueue ==
     /\ tick' = tick
     /\ owed' = FALSE
     /\ followed' = FALSE
+    /\ fenceIdle
+    /\ fenceHold
     /\ machine
 
 MarkFailed ==
@@ -177,6 +192,8 @@ MarkFailed ==
     /\ tick' = tick
     /\ owed' = FALSE
     /\ followed' = FALSE
+    /\ fenceIdle
+    /\ fenceHold
     /\ machine
 
 \* The 30-second write deadline. The row does not change.
@@ -186,6 +203,8 @@ MarkLate ==
     /\ tick' = tick
     /\ owed' = FALSE
     /\ followed' = FALSE
+    /\ fenceIdle
+    /\ fenceHold
     /\ machine
 
 MarkReload ==
@@ -194,6 +213,8 @@ MarkReload ==
     /\ tick' = 0
     /\ owed' = FALSE
     /\ followed' = FALSE
+    /\ fenceIdle
+    /\ fenceHold
     /\ machine
 
 ReadAfterFailure ==
@@ -202,6 +223,8 @@ ReadAfterFailure ==
     /\ tick' = 0
     /\ owed' = FALSE
     /\ followed' = followed
+    /\ fenceIdle
+    /\ fenceHold
     /\ machine
 
 ConfirmRead ==
@@ -211,6 +234,8 @@ ConfirmRead ==
     /\ tick' = 0
     /\ owed' = FALSE
     /\ followed' = FALSE
+    /\ fenceIdle
+    /\ fenceHold
     /\ machine
 
 \* A later write fails while an older recovery read is still open.
@@ -221,6 +246,8 @@ FailDuringRead ==
     /\ owed' = TRUE
     /\ followed' = TRUE
     /\ UNCHANGED <<wait, tick>>
+    /\ fenceIdle
+    /\ fenceHold
     /\ machine
 
 \* The older read returns. It does not end the later failure.
@@ -231,6 +258,8 @@ StaleReadEnds ==
     /\ followed' = TRUE
     /\ wait' = "failed"
     /\ tick' = tick
+    /\ fenceIdle
+    /\ fenceHold
     /\ machine
 
 \* The 30-second recovery bound. An older read's bound does not end a later failure.
@@ -241,6 +270,8 @@ RefreshTimeout ==
        /\ tick' = 0
        /\ owed' = FALSE
        /\ followed' = FALSE
+       /\ fenceIdle
+       /\ fenceHold
        /\ machine
     \/ /\ wait = "reload"
        /\ owed = TRUE
@@ -248,7 +279,49 @@ RefreshTimeout ==
        /\ tick' = tick
        /\ owed' = FALSE
        /\ followed' = TRUE
+       /\ fenceIdle
+       /\ fenceHold
        /\ machine
+
+\* The older write is open. Nothing from this pair is stored yet.
+OpenOlder ==
+    /\ fenceIdle
+    /\ (Stopped \/ Running)
+    /\ wait = "none" /\ tick = 0 /\ owed = FALSE /\ followed = FALSE
+    /\ open' = 1
+    /\ UNCHANGED <<commit, storedOn>>
+    /\ UNCHANGED <<phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick, owed, followed>>
+
+\* The newer on lands while the older write is still open.
+CommitNewer ==
+    /\ open = 1 /\ commit = 0
+    /\ commit' = 2
+    /\ storedOn' = TRUE
+    /\ open' = open
+    /\ UNCHANGED <<phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick, owed, followed>>
+
+\* The older write arrives after a newer one. The stored on stays.
+ArriveOlder ==
+    /\ open = 1 /\ commit >= 1
+    /\ open' = 0
+    /\ UNCHANGED <<commit, storedOn>>
+    /\ UNCHANGED <<phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick, owed, followed>>
+
+\* The older off arrives first.
+ArriveOlderFirst ==
+    /\ open = 1 /\ commit = 0
+    /\ commit' = 1
+    /\ storedOn' = FALSE
+    /\ open' = 0
+    /\ UNCHANGED <<phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick, owed, followed>>
+
+\* The newer on lands after that older off and replaces it.
+CommitAfterOlder ==
+    /\ commit = 1 /\ open = 0
+    /\ commit' = 2
+    /\ storedOn' = TRUE
+    /\ open' = open
+    /\ UNCHANGED <<phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick, owed, followed>>
 
 Stay == UNCHANGED vars
 
@@ -269,6 +342,11 @@ Next ==
     \/ FailDuringRead
     \/ StaleReadEnds
     \/ RefreshTimeout
+    \/ OpenOlder
+    \/ CommitNewer
+    \/ ArriveOlder
+    \/ ArriveOlderFirst
+    \/ CommitAfterOlder
     \/ Stay
 
 WaitEnds ==
@@ -288,5 +366,8 @@ AutonomyStable ==
 \* A recovery read that is already open does not end a later failure.
 StaleReadKeepsFailure ==
     [][(owed = TRUE /\ wait = "reload") => wait' # "none"]_vars
+
+\* A stored on from the newer write stays after the older write arrives.
+FenceKeepsNewer == commit = 2 => storedOn
 
 ====

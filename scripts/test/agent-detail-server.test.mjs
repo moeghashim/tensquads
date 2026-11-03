@@ -23,32 +23,38 @@ function repositories() {
 	};
 }
 class TestKernel {
-	async change(received, deadlineAt, change) {
+	async change(received, fence, deadlineAt, change) {
 		assert.deepEqual(received, scope);
+		assert.equal(typeof fence.tab, "string");
+		assert.equal(fence.seq >= 1, true);
+		state.fences.push(fence);
 		state.deadlines.push(deadlineAt);
 		state.now += state.writeDelay;
 		if (state.now >= deadlineAt) throw new Error("The workspace write did not finish.");
 		change();
+		return { status: "written" };
 	}
-	setAgentOn(received, _id, on, deadlineAt) {
-		return this.change(received, deadlineAt, () => {
+	setAgentOn(received, _id, on, fence, deadlineAt) {
+		return this.change(received, fence, deadlineAt, () => {
 			state.agent.on = on;
 		});
 	}
-	setSkillOn(received, _id, _skill, on, deadlineAt) {
-		return this.change(received, deadlineAt, () => {
+	setSkillOn(received, _id, _skill, on, fence, deadlineAt) {
+		return this.change(received, fence, deadlineAt, () => {
 			state.agent.skills[0].on = on;
 		});
 	}
-	setAutonomy(received, _id, autonomy, deadlineAt) {
-		return this.change(received, deadlineAt, () => {
+	setAutonomy(received, _id, autonomy, fence, deadlineAt) {
+		return this.change(received, fence, deadlineAt, () => {
 			state.agent.autonomy = autonomy;
 		});
 	}
 	askRevise(received, _id, deadlineAt) {
-		return this.change(received, deadlineAt, () => {
-			state.agent.mission = "Revision requested";
-		});
+		assert.deepEqual(received, scope);
+		state.deadlines.push(deadlineAt);
+		state.now += state.writeDelay;
+		if (state.now >= deadlineAt) throw new Error("The workspace write did not finish.");
+		state.agent.mission = "Revision requested";
 	}
 }
 const exports = {
@@ -100,6 +106,7 @@ function setup(t, options = {}) {
 		now: 1000,
 		loads: 0,
 		deadlines: [],
+		fences: [],
 		accountDelay: 0,
 		writeDelay: 0,
 		loadDelay: 0,
@@ -132,16 +139,17 @@ function setup(t, options = {}) {
 	});
 }
 
+const fence = { tab: "tab-1", seq: 1, retires: [] };
 const writes = [
-	["setAgentRunning", { agentId: "support", on: false }, (view) => assert.equal(view.on, false)],
+	["setAgentRunning", { agentId: "support", on: false, ...fence }, (view) => assert.equal(view.on, false)],
 	[
 		"setSkillEnabled",
-		{ agentId: "support", skillId: "inbox.read", on: false },
+		{ agentId: "support", skillId: "inbox.read", on: false, ...fence },
 		(view) => assert.equal(view.skills[0].onStr, "false"),
 	],
 	[
 		"setAgentAutonomy",
-		{ agentId: "support", autonomy: "Full auto" },
+		{ agentId: "support", autonomy: "Full auto", ...fence },
 		(view) => assert.equal(view.autonomyOpts[2].onStr, "true"),
 	],
 	["askAgentRevise", "support", (view) => assert.equal(view.missionText, "Revision requested")],
@@ -149,8 +157,15 @@ const writes = [
 for (const [name, data, check] of writes) {
 	test(`${name} returns its updated scoped view in the POST response`, async (t) => {
 		setup(t);
-		const view = await server[name]({ data });
-		check(view);
+		const result = await server[name]({ data });
+		if (name === "askAgentRevise") {
+			check(result);
+			assert.equal(state.fences.length, 0);
+		} else {
+			assert.equal(result.status, "written");
+			check(result.row);
+			assert.equal(state.fences.length, 1);
+		}
 		assert.equal(state.loads, 1);
 		assert.deepEqual(state.deadlines, [31_000]);
 	});
@@ -165,8 +180,20 @@ for (const [name, data, check] of writes) {
 test("the response load does not get a fresh deadline", async (t) => {
 	setup(t, { writeDelay: 29_000, loadDelay: 2000 });
 	await assert.rejects(
-		server.setAgentRunning({ data: { agentId: "support", on: false } }),
+		server.setAgentRunning({ data: { agentId: "support", on: false, ...fence } }),
 		/The workspace write did not finish/,
 	);
 	assert.deepEqual(state.deadlines, [31_000]);
+});
+
+test("an invalid fence does not call the kernel", async (t) => {
+	setup(t);
+	assert.throws(
+		() => server.setAgentRunning({ data: { agentId: "support", on: false, tab: " ", seq: 1, retires: [] } }),
+		/The write fence is not valid/,
+	);
+	assert.deepEqual(state.deadlines, []);
+	assert.equal(state.fences.length, 0);
+	assert.equal(state.loads, 0);
+	assert.equal(state.agent.on, true);
 });

@@ -5,6 +5,7 @@ import type { Page, Route } from "@playwright/test";
 import { openPostgres, schema } from "@tensquads/adapters";
 import { and, eq } from "drizzle-orm";
 import { setAgentOn } from "../packages/adapters/src/neon/commands/agents.ts";
+import { nextEvent } from "../packages/adapters/src/neon/commands/traffic.ts";
 import { PENDING_TASK_WINDOW_MS } from "../packages/adapters/src/pending-window.ts";
 import { replaceDemoAccount } from "../packages/seed/src/demo-account.ts";
 import { accessibilityViolations } from "./accessibility-helper.ts";
@@ -39,7 +40,14 @@ import {
 	withDb,
 } from "./agent-detail-support.ts";
 import { expectNoHorizontalScroll, secretsFor, skipUnlessMacScreenshot, waitForScreenFonts } from "./support.ts";
-import { deleteWorkspaceAccount, expect, openWorkspace, test, type WorkspaceUser } from "./workspace.ts";
+import {
+	deleteWorkspaceAccount,
+	expect,
+	generatedEvents,
+	openWorkspace,
+	test,
+	type WorkspaceUser,
+} from "./workspace.ts";
 
 const boards = [
 	{ name: "1440", width: 1440, height: 1300 },
@@ -50,6 +58,7 @@ const pendingMission = "No mission yet. Master has proposed one; approve it in t
 const supportMission = "Answer every customer within an hour and keep satisfaction above 4.5.";
 const noTargets = "No targets until the mission is approved.";
 const settled = { timeout: 15_000 };
+const machineFence = { tab: "e2e-machine", seq: 1, retires: [] as const };
 
 function wait(ms: number) {
 	return new Promise((resolve) => {
@@ -98,9 +107,9 @@ test("the switch turns an agent off and shows 0 percent and Paused", async ({ pa
 
 	const stopped = await withDb(async (db) => {
 		const calls: string[] = [];
-		await expect(setAgentOn(db, scopeFor(accountId), "support", false, watchedMachine(calls, true))).rejects.toThrow(
-			/The machine did not stop/,
-		);
+		await expect(
+			setAgentOn(db, scopeFor(accountId), "support", false, machineFence, watchedMachine(calls, true)),
+		).rejects.toThrow(/The machine did not stop/);
 		return calls;
 	});
 	expect(stopped).toEqual(["stop:support"]);
@@ -141,7 +150,7 @@ test("the switch turns an agent off and shows 0 percent and Paused", async ({ pa
 
 	const started = await withDb(async (db) => {
 		const calls: string[] = [];
-		await setAgentOn(db, scopeFor(accountId), "support", true, watchedMachine(calls, false));
+		await setAgentOn(db, scopeFor(accountId), "support", true, machineFence, watchedMachine(calls, false));
 		return calls;
 	});
 	expect(started).toEqual(["start:support"]);
@@ -304,7 +313,7 @@ test("a later frame shows a server on change after an accepted off write", async
 		.click();
 	await expect(page).toHaveURL(/\/traffic$/);
 	await withDb(async (db) => {
-		await setAgentOn(db, scopeFor(accountId), "support", true, watchedMachine([], false));
+		await setAgentOn(db, scopeFor(accountId), "support", true, machineFence, watchedMachine([], false));
 	});
 	await page.evaluate(async () => {
 		const router = (
@@ -1390,6 +1399,86 @@ test("a held chat send and a held agent write both keep their results", async ({
 	await expect(supportDot(page, "Running")).toBeVisible(settled);
 });
 
+test("a held chat finish still writes the reply after support is off and a later bus event", async ({
+	page,
+	workspaceUser,
+	accountId,
+}) => {
+	test.setTimeout(120_000);
+	const reply = "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.";
+	await openAgent(page, workspaceUser, "support");
+	await page.getByRole("button", { name: "M Ask Master" }).click();
+	const tasksBefore = await taskSum(accountId);
+	const marketingBefore = await agentTaskCount(accountId, "marketing");
+	const inventoryBefore = await agentTaskCount(accountId, "inventory");
+	let posts = 0;
+	let finishContinued = 0;
+	let releaseFinish = () => undefined;
+	const finishGate = new Promise<void>((resolve) => {
+		releaseFinish = resolve;
+	});
+	const pattern = /\/_serverFn\//;
+	const holdFinish = async (route: Route) => {
+		if (route.request().method() === "POST" && ++posts === 2) {
+			await finishGate;
+			await route.continue();
+			finishContinued += 1;
+			return;
+		}
+		await route.continue();
+	};
+	await page.route(pattern, holdFinish);
+	try {
+		await page.locator("#dock-input").fill("How did ads do this week?");
+		await page.getByRole("button", { name: "Send" }).click();
+		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible(settled);
+		await expect.poll(() => posts, settled).toBe(2);
+		await squadSwitch(page).click();
+		await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(false);
+		const eventsBeforeBus = await generatedEvents(accountId);
+		await withDb(async (db) => {
+			await nextEvent(db, scopeFor(accountId));
+		});
+		const eventsAfterBus = await generatedEvents(accountId);
+		expect(eventsAfterBus.length).toBe(eventsBeforeBus.length + 1);
+		expect(eventsAfterBus.at(-1)?.body).toBe("Daily stock check");
+		expect(await taskSum(accountId)).toBe(tasksBefore);
+		expect(await agentTaskCount(accountId, "inventory")).toBe(inventoryBefore);
+		expect((await readAgent(accountId, "marketing")).isOn).toBe(true);
+	} finally {
+		releaseFinish();
+		await expect.poll(() => finishContinued, settled).toBe(1);
+		await page.unroute(pattern, holdFinish);
+	}
+	await expect(page.getByText(reply)).toBeVisible(settled);
+	await expect(supportDot(page, "Paused")).toBeVisible();
+	expect((await readAgent(accountId, "support")).isOn).toBe(false);
+	expect(await taskSum(accountId)).toBe(tasksBefore + 1);
+	expect(await agentTaskCount(accountId, "marketing")).toBe(marketingBefore + 1);
+	expect(await agentTaskCount(accountId, "inventory")).toBe(inventoryBefore);
+	const events = await generatedEvents(accountId);
+	expect(events.some((event) => event.kind === "Result" && event.body === reply)).toBe(true);
+});
+
+async function taskSum(accountId: string): Promise<number> {
+	return withDb(async (db) => {
+		const rows = await db.select().from(schema.agents).where(eq(schema.agents.accountId, accountId));
+		return rows.reduce((sum, row) => sum + row.tasks, 0);
+	});
+}
+
+async function agentTaskCount(accountId: string, agentId: string): Promise<number> {
+	return withDb(async (db) => {
+		const rows = await db
+			.select({ tasks: schema.agents.tasks })
+			.from(schema.agents)
+			.where(and(eq(schema.agents.accountId, accountId), eq(schema.agents.id, agentId)));
+		const row = rows[0];
+		if (!row) throw new Error(`No agent ${agentId}.`);
+		return row.tasks;
+	});
+}
+
 async function invalidateAgent(page: Page) {
 	await page.evaluate(async () => {
 		const router = (
@@ -1459,13 +1548,13 @@ async function signInWithTicket(page: Page, ticket: string, userId: string) {
 							}>;
 						};
 					};
-					setActive: (input: { session: string }) => Promise<void>;
+					setActive: (input: { session: string; navigate: () => Promise<void> }) => Promise<void>;
 				};
 			}
 		).Clerk;
 		const result = await clerk.client.signIn.create({ strategy: "ticket", ticket: value });
 		if (result.status !== "complete" || !result.createdSessionId) throw new Error("Ticket sign-in did not complete.");
-		await clerk.setActive({ session: result.createdSessionId });
+		await clerk.setActive({ session: result.createdSessionId, navigate: async () => undefined });
 	}, ticket);
 	await page.waitForFunction((expected) => {
 		const clerk = (window as unknown as { Clerk: { user: { id: string } | null } }).Clerk;

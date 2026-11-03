@@ -1,4 +1,13 @@
-import type { AccountScope, Autonomy, MissionProposal } from "@tensquads/domain";
+import type {
+	AccountScope,
+	Autonomy,
+	Fenced,
+	MissionProposal,
+	StoredAgentOn,
+	StoredAutonomy,
+	StoredSkillOn,
+	WriteFence,
+} from "@tensquads/domain";
 import { askRevise as planRevision, requireScope } from "@tensquads/domain";
 import { and, eq } from "drizzle-orm";
 
@@ -10,6 +19,7 @@ import { createTestMachine, type MachineRecord } from "../../test-machine.ts";
 import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { agents, machines, missionProposals, skills } from "../schema.ts";
+import { claimWriteFence } from "./write-fence.ts";
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 
@@ -28,17 +38,17 @@ function deadlineWindow(deadlineAt: number | undefined): { readonly absolute: nu
 	return { absolute, remaining };
 }
 
-async function commitChange(
+async function commitChange<T>(
 	db: AppDatabase,
 	deadlineAt: number | undefined,
-	work: (tx: Tx) => Promise<void>,
-): Promise<void> {
+	work: (tx: Tx) => Promise<T>,
+): Promise<T> {
 	const window = deadlineWindow(deadlineAt);
-	await workspaceTransaction(
+	return workspaceTransaction(
 		db,
 		async (tx, constrainDeadline) => {
 			constrainDeadline(window.absolute);
-			await work(tx);
+			return work(tx);
 		},
 		{ deadlineMs: window.remaining },
 	);
@@ -98,16 +108,36 @@ async function persistAgentOn(
 	});
 }
 
+async function readAgentOn(tx: Tx, accountId: string, agentId: string): Promise<StoredAgentOn> {
+	const rows = await tx
+		.select({ id: agents.id, on: agents.isOn })
+		.from(agents)
+		.where(and(eq(agents.accountId, accountId), eq(agents.id, agentId)));
+	const row = rows[0];
+	if (!row) {
+		throw new Error(`Agent ${agentId} is missing.`);
+	}
+	return { id: row.id, on: row.on };
+}
+
 export async function setAgentOn(
 	db: AppDatabase,
 	scope: AccountScope,
 	agentId: string,
 	on: boolean,
+	fence: WriteFence,
 	createMachine: MachineFactory = createTestMachine,
 	deadlineAt?: number,
-): Promise<void> {
+): Promise<Fenced<StoredAgentOn>> {
 	const accountId = accountIdOf(scope);
-	await commitChange(db, deadlineAt, (tx) => persistAgentOn(tx, accountId, agentId, on, createMachine));
+	return commitChange(db, deadlineAt, async (tx) => {
+		const claimed = await claimWriteFence(tx, accountId, `${agentId}:running`, fence);
+		if (!claimed) {
+			return { status: "superseded", row: await readAgentOn(tx, accountId, agentId) };
+		}
+		await persistAgentOn(tx, accountId, agentId, on, createMachine);
+		return { status: "written", row: await readAgentOn(tx, accountId, agentId) };
+	});
 }
 
 async function persistSkillOn(tx: Tx, accountId: string, agentId: string, skillId: string, on: boolean): Promise<void> {
@@ -124,16 +154,55 @@ async function persistSkillOn(tx: Tx, accountId: string, agentId: string, skillI
 		.where(and(eq(skills.accountId, accountId), eq(skills.agentId, agentId), eq(skills.id, skillId)));
 }
 
+async function readSkillOn(tx: Tx, accountId: string, agentId: string, skillId: string): Promise<StoredSkillOn> {
+	const rows = await tx
+		.select({ id: skills.id, on: skills.isOn })
+		.from(skills)
+		.where(and(eq(skills.accountId, accountId), eq(skills.agentId, agentId), eq(skills.id, skillId)));
+	const row = rows[0];
+	if (!row) {
+		throw new Error(`No skill ${skillId} for ${agentId}.`);
+	}
+	return { id: row.id, on: row.on };
+}
+
 export async function setSkillOn(
 	db: AppDatabase,
 	scope: AccountScope,
 	agentId: string,
 	skillId: string,
 	on: boolean,
+	fence: WriteFence,
 	deadlineAt?: number,
-): Promise<void> {
+): Promise<Fenced<StoredSkillOn>> {
 	const accountId = accountIdOf(scope);
-	await commitChange(db, deadlineAt, (tx) => persistSkillOn(tx, accountId, agentId, skillId, on));
+	return commitChange(db, deadlineAt, async (tx) => {
+		const claimed = await claimWriteFence(tx, accountId, skillId, fence);
+		if (!claimed) {
+			return { status: "superseded", row: await readSkillOn(tx, accountId, agentId, skillId) };
+		}
+		await persistSkillOn(tx, accountId, agentId, skillId, on);
+		return { status: "written", row: await readSkillOn(tx, accountId, agentId, skillId) };
+	});
+}
+
+function storedAutonomy(value: string): Autonomy {
+	if (value === "Ask first" || value === "Auto under limit" || value === "Full auto") {
+		return value;
+	}
+	throw new Error(`The autonomy ${value} is not valid.`);
+}
+
+async function readAutonomy(tx: Tx, accountId: string, agentId: string): Promise<StoredAutonomy> {
+	const rows = await tx
+		.select({ id: agents.id, autonomy: agents.autonomy })
+		.from(agents)
+		.where(and(eq(agents.accountId, accountId), eq(agents.id, agentId)));
+	const row = rows[0];
+	if (!row) {
+		throw new Error(`Agent ${agentId} is missing.`);
+	}
+	return { id: row.id, autonomy: storedAutonomy(row.autonomy) };
 }
 
 export async function setAutonomy(
@@ -141,14 +210,20 @@ export async function setAutonomy(
 	scope: AccountScope,
 	agentId: string,
 	autonomy: Autonomy,
+	fence: WriteFence,
 	deadlineAt?: number,
-): Promise<void> {
+): Promise<Fenced<StoredAutonomy>> {
 	const accountId = accountIdOf(scope);
-	await commitChange(db, deadlineAt, async (tx) => {
+	return commitChange(db, deadlineAt, async (tx) => {
+		const claimed = await claimWriteFence(tx, accountId, `${agentId}:autonomy`, fence);
+		if (!claimed) {
+			return { status: "superseded", row: await readAutonomy(tx, accountId, agentId) };
+		}
 		await tx
 			.update(agents)
 			.set({ autonomy })
 			.where(and(eq(agents.accountId, accountId), eq(agents.id, agentId)));
+		return { status: "written", row: await readAutonomy(tx, accountId, agentId) };
 	});
 }
 

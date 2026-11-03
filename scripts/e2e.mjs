@@ -3,7 +3,7 @@
 // Playwright workers are process-global. The fence project therefore runs alone.
 import { spawnSync } from "node:child_process";
 
-const held = "a held account read commits no limit";
+const held = "a held account read commits no limit|a read held past the deadline cannot commit the queued writes";
 const fenceProject = "rules-fence";
 
 function run(args) {

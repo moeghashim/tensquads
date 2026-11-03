@@ -55,3 +55,18 @@ export interface Master {
 	readonly accountId: string;
 	readonly name: string;
 }
+
+export interface StoredAgentOn {
+	readonly id: string;
+	readonly on: boolean;
+}
+
+export interface StoredSkillOn {
+	readonly id: string;
+	readonly on: boolean;
+}
+
+export interface StoredAutonomy {
+	readonly id: string;
+	readonly autonomy: Autonomy;
+}

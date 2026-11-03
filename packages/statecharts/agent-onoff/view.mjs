@@ -37,7 +37,17 @@ export const colors = {
 	Reload: "yellow",
 };
 
-const hidden = new Set(["Stay", "ChangeAutonomy", "RunSkill", "EndSkill"]);
+const hidden = new Set([
+	"Stay",
+	"ChangeAutonomy",
+	"RunSkill",
+	"EndSkill",
+	"OpenOlder",
+	"CommitNewer",
+	"ArriveOlder",
+	"ArriveOlderFirst",
+	"CommitAfterOlder",
+]);
 
 const labels = {
 	SwitchOn: "you switch it on",

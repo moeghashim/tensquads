@@ -19,6 +19,7 @@ import {
 } from "#/workspace/agent-on.ts";
 import { agentStatus } from "#/workspace/agent-view.ts";
 import { switchParts } from "#/workspace/styles.ts";
+import { confirmRetired, nextWriteFence } from "#/write-fence.ts";
 import { type AgentDetailView, autonomyStyle, blank } from "./model.ts";
 
 function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
@@ -241,6 +242,36 @@ function agentQueue(owner: object, agentId: string, initialView: AgentDetailView
 const absentSnapshot = () => undefined;
 const absentSubscribe = () => () => undefined;
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null;
+}
+
+function isWrite(value: unknown): value is { status: "written" | "superseded"; row: unknown } {
+	return isRecord(value) && (value.status === "written" || value.status === "superseded");
+}
+
+function isDetail(value: unknown): value is AgentDetailView {
+	return isRecord(value) && typeof value.id === "string" && value.id.length > 0 && typeof value.on === "boolean";
+}
+
+function acceptedDetail(body: unknown, agentId: string): AgentDetailView | null {
+	if (!isWrite(body) || !isDetail(body.row) || body.row.id !== agentId) return null;
+	return body.row;
+}
+
+async function sendControl(
+	agentId: string,
+	send: (fence: { tab: string; seq: number; retires: readonly string[] }) => Promise<unknown>,
+): Promise<AgentDetailView> {
+	const fence = nextWriteFence();
+	const body = await send(fence);
+	const row = acceptedDetail(body, agentId);
+	// A validation error is a 200 with an error payload. The server wrote nothing.
+	if (row) confirmRetired(fence.retires);
+	if (!row) throw new Error("The agent write was not accepted.");
+	return row;
+}
+
 export function useAgentWrites(serverView: AgentDetailView, readAt: number, loaderSession: number, kept = false) {
 	const agentId = serverView.id;
 	const session = useSyncExternalStore(subscribeAgentSession, agentSession, agentSession);
@@ -259,14 +290,26 @@ export function useAgentWrites(serverView: AgentDetailView, readAt: number, load
 		toggleAgent(on: boolean) {
 			enqueue({
 				key: "running",
-				work: (signal) => setAgentRunning({ data: { agentId, on }, signal }),
+				work: (signal) =>
+					sendControl(agentId, (fence) =>
+						setAgentRunning({
+							data: { agentId, on, tab: fence.tab, seq: fence.seq, retires: fence.retires },
+							signal,
+						}),
+					),
 				apply: (view) => runningFace(view, on),
 			});
 		},
 		toggleSkill(skillId: string, on: boolean) {
 			enqueue({
 				key: `skill:${skillId}`,
-				work: (signal) => setSkillEnabled({ data: { agentId, skillId, on }, signal }),
+				work: (signal) =>
+					sendControl(agentId, (fence) =>
+						setSkillEnabled({
+							data: { agentId, skillId, on, tab: fence.tab, seq: fence.seq, retires: fence.retires },
+							signal,
+						}),
+					),
 				apply: (view) => ({
 					...view,
 					skills: view.skills.map((skill) => (skill.id === skillId ? { ...skill, ...switchParts(on) } : skill)),
@@ -276,7 +319,13 @@ export function useAgentWrites(serverView: AgentDetailView, readAt: number, load
 		pickAutonomy(autonomy: Autonomy) {
 			enqueue({
 				key: "autonomy",
-				work: (signal) => setAgentAutonomy({ data: { agentId, autonomy }, signal }),
+				work: (signal) =>
+					sendControl(agentId, (fence) =>
+						setAgentAutonomy({
+							data: { agentId, autonomy, tab: fence.tab, seq: fence.seq, retires: fence.retires },
+							signal,
+						}),
+					),
 				apply: (view) => ({
 					...view,
 					autonomyOpts: view.autonomyOpts.map((option) => ({

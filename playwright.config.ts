@@ -9,17 +9,6 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	retries: 0,
 	reporter: "line",
-	projects: [
-		{
-			name: "parallel",
-			grepInvert: /a read held past the deadline cannot commit the queued writes/,
-		},
-		{
-			name: "account-lock",
-			grep: /a read held past the deadline cannot commit the queued writes/,
-			dependencies: ["parallel"],
-		},
-	],
 	snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
 	expect: {
 		toHaveScreenshot: {
@@ -45,12 +34,12 @@ export default defineConfig({
 	projects: [
 		{
 			name: "app",
-			testIgnore: /rules-fence\.spec\.ts/,
+			testIgnore: /rules-fence\.spec\.ts|agent-fence\.spec\.ts/,
 			fullyParallel: true,
 		},
 		{
 			name: "rules-fence",
-			testMatch: /rules-fence\.spec\.ts/,
+			testMatch: /rules-fence\.spec\.ts|agent-fence\.spec\.ts/,
 			// scripts/e2e.mjs runs this project alone with --workers=1. fullyParallel does not set workers.
 			fullyParallel: false,
 			repeatEach: Number.isInteger(rulesFenceRepeat) && rulesFenceRepeat > 0 ? rulesFenceRepeat : 1,
