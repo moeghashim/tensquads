@@ -1,8 +1,10 @@
+import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync } from "node:fs";
 import type { Page, Request, Route } from "@playwright/test";
 import { openPostgres, schema } from "@tensquads/adapters";
 import { policyVersion } from "@tensquads/domain";
 import { and, asc, eq } from "drizzle-orm";
+import { replaceDemoAccount } from "../packages/seed/src/demo-account.ts";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
@@ -14,9 +16,18 @@ import {
 	waitForHydration,
 	waitForScreenFonts,
 } from "./support.ts";
-import { expect, generatedEvents, installLocalFonts, openWorkspace, test, type WorkspaceUser } from "./workspace.ts";
+import {
+	deleteWorkspaceAccount,
+	expect,
+	generatedEvents,
+	installLocalFonts,
+	openWorkspace,
+	test,
+	type WorkspaceUser,
+} from "./workspace.ts";
 
 const mission = "Never run out of a top-20 product and keep stock under 30 days of cover.";
+const marketingReply = "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.";
 const revisingCopy = 'Master is writing a new proposal. The squad stays on "Mission pending".';
 const emptyInbox = "Nothing waiting. Your squads are working inside their limits.";
 const settled = { timeout: 15_000 };
@@ -531,6 +542,263 @@ test("the side-by-side evidence shows the design and the build", async ({ page, 
 		await stitch(page, design, build, `${dir}/side-by-side-${viewport.name}.png`);
 	}
 });
+
+test("a cached overview keeps the decision until the fresh read lands", async ({ page, workspaceUser }) => {
+	test.setTimeout(90_000);
+	await openWorkspace(page, workspaceUser);
+	await refundCard(page).getByRole("button", { name: "Approve", exact: true }).click();
+	await expect(tasksTile(page)).toContainText("332", settled);
+	await expect(refundCard(page)).toHaveCount(0);
+	await page.locator("main").getByRole("button", { name: "See squad traffic" }).click();
+	await expect(page).toHaveURL(/\/traffic$/);
+	await expect(page.locator("[data-if='isOverview']")).toHaveCount(0);
+	await expect(dockBadge(page)).toHaveText("3");
+	const held = await holdNextOverview(page);
+	try {
+		await page.getByRole("button", { name: "Overview", exact: true }).click();
+		await expect(page).toHaveURL(/\/overview$/);
+		await expect.poll(() => held.held(), { timeout: 20_000 }).toBe(true);
+		await expect(refundCard(page)).toHaveCount(0);
+		await expect(tasksTile(page)).toContainText("332");
+		await expect(dockBadge(page)).toHaveText("3");
+		await expect(inboxCount(page)).toHaveText("3");
+		await held.release();
+		await expect(refundCard(page)).toHaveCount(0);
+		await expect(tasksTile(page)).toContainText("332");
+		await expect(dockBadge(page)).toHaveText("3");
+	} finally {
+		await held.release();
+	}
+});
+
+test("a failed decision does not stay on the next account", async ({ page, workspaceUser }) => {
+	test.setTimeout(90_000);
+	const secrets = secretsFor(["secret", "testDatabase"]);
+	const email = `sq-${randomUUID().slice(0, 8)}+clerk_test@example.com`;
+	const password = `Ts${randomUUID().replaceAll("-", "")}Zq7`;
+	const userId = await createClerkUser(secrets.secret, email, password);
+	const accountId = `overview-b-${randomUUID().slice(0, 8)}`;
+	const postgres = openPostgres(secrets.testDatabase);
+	try {
+		await replaceDemoAccount(postgres.db, accountId, userId);
+	} finally {
+		await postgres.close();
+	}
+	try {
+		await openWorkspace(page, workspaceUser);
+		await page.evaluate(() => {
+			(window as unknown as { __tsDoc?: string }).__tsDoc = "same";
+		});
+		await page.clock.install();
+		const held = await holdFailedRefresh(page);
+		try {
+			await refundCard(page).getByRole("button", { name: "Approve", exact: true }).click();
+			await expect(dockBadge(page)).toHaveText("3");
+			await expect.poll(() => held.held(), { timeout: 20_000 }).toBe(true);
+			await page.clock.fastForward(30_000);
+			await page.clock.resume();
+			await switchAccount(page, email, password);
+			await expect.poll(() => page.evaluate(() => (window as unknown as { __tsDoc?: string }).__tsDoc)).toBe("same");
+			await expect(refundCard(page)).toHaveCount(1, settled);
+			await expect(dockBadge(page)).toHaveText("4", settled);
+			await expect(tasksTile(page)).toContainText("331", settled);
+			await held.release();
+			await expect(refundCard(page)).toHaveCount(1);
+			await expect(dockBadge(page)).toHaveText("4");
+			await expect(tasksTile(page)).toContainText("331");
+		} finally {
+			await held.release();
+		}
+	} finally {
+		await deleteWorkspaceAccount(accountId);
+		await deleteClerkUser(secrets.secret, userId);
+	}
+});
+
+test("a held chat finish still writes the reply after an approval", async ({ page, workspaceUser, accountId }) => {
+	test.setTimeout(90_000);
+	await openWorkspace(page, workspaceUser);
+	await page.getByRole("button", { name: "Chat with the master" }).click();
+	await expect(page).toHaveURL(/\/chat$/);
+	const held = await holdWorkspaceSend(page, "finish");
+	try {
+		await page.locator("#chat-input").fill("How did ads do this week?");
+		await page.getByRole("button", { name: "Send", exact: true }).click();
+		await expect.poll(() => held.held(), { timeout: 20_000 }).toBe(true);
+		await page.getByRole("button", { name: "Overview", exact: true }).click();
+		await expect(page).toHaveURL(/\/overview$/);
+		await refundCard(page).getByRole("button", { name: "Approve", exact: true }).click();
+		await expect(tasksTile(page)).toContainText("332", settled);
+		await held.finish();
+		await expect(page.getByText(marketingReply)).toBeVisible(settled);
+		await expect(tasksTile(page)).toContainText("333", settled);
+		const events = await generatedEvents(accountId);
+		expect(events.map((event) => event.kind)).toContain("Result");
+	} finally {
+		await page.unroute("**/_serverFn/**").catch(() => undefined);
+	}
+});
+
+function tasksTile(page: Page) {
+	return page.locator("main [data-loop='kpis'] > div").filter({ hasText: "Tasks done by squads" });
+}
+
+async function holdNextOverview(page: Page) {
+	const state = { held: false };
+	let open = false;
+	let releaseGate = () => {};
+	const gate = new Promise<void>((resolve) => {
+		releaseGate = resolve;
+	});
+	await page.route("**/_serverFn/**", async (route) => {
+		const request = route.request();
+		if (request.method() !== "GET" || state.held) {
+			await route.continue();
+			return;
+		}
+		const response = await route.fetch();
+		const body = await response.text();
+		if (!body.includes("Tasks done by squads")) {
+			await route.fulfill({ response, body });
+			return;
+		}
+		state.held = true;
+		await gate;
+		await route.fulfill({ response, body });
+	});
+	return {
+		held: () => state.held,
+		release: async () => {
+			if (open) return;
+			open = true;
+			releaseGate();
+		},
+	};
+}
+
+async function holdFailedRefresh(page: Page) {
+	const state = { held: false, posts: 0, gets: 0 };
+	let open = false;
+	let releaseGate = () => {};
+	const gate = new Promise<void>((resolve) => {
+		releaseGate = resolve;
+	});
+	await page.route("**/_serverFn/**", async (route) => {
+		const request = route.request();
+		const body = request.postData() ?? "";
+		if (request.method() === "POST" && body.includes("ap1")) {
+			state.posts += 1;
+			if (state.posts === 1) {
+				await route.fulfill({ status: 500, contentType: "text/plain", body: "no" });
+				return;
+			}
+		}
+		if (request.method() === "GET" && state.posts > 0 && state.gets < 2) {
+			state.gets += 1;
+			state.held = true;
+			const response = await route.fetch();
+			await gate;
+			await route.fulfill({ response }).catch(() => undefined);
+			return;
+		}
+		await route.continue();
+	});
+	return {
+		held: () => state.held,
+		release: async () => {
+			if (open) return;
+			open = true;
+			releaseGate();
+		},
+	};
+}
+
+type BrowserSignIn = {
+	status: string | null;
+	createdSessionId: string | null;
+	create: (params: { identifier: string }) => Promise<BrowserSignIn>;
+	attemptFirstFactor: (params: { strategy: "password"; password: string }) => Promise<BrowserSignIn>;
+	prepareSecondFactor: (params: { strategy: "email_code" }) => Promise<BrowserSignIn>;
+	attemptSecondFactor: (params: { strategy: "email_code"; code: string }) => Promise<BrowserSignIn>;
+};
+
+async function switchAccount(page: Page, email: string, password: string) {
+	await page.evaluate(
+		async ({ email, password }) => {
+			const clerk = (
+				window as unknown as {
+					Clerk?: {
+						signOut: (callback?: () => void) => Promise<void>;
+						setActive: (params: { session: string; navigate: () => Promise<void> }) => Promise<void>;
+						client?: { signIn: BrowserSignIn };
+					};
+				}
+			).Clerk;
+			if (!clerk?.client?.signIn) {
+				throw new Error("Clerk is not loaded.");
+			}
+			await clerk.signOut(() => undefined);
+			const started = await clerk.client.signIn.create({ identifier: email });
+			let attempted = await started.attemptFirstFactor({ strategy: "password", password });
+			if (attempted.status === "needs_client_trust") {
+				await attempted.prepareSecondFactor({ strategy: "email_code" });
+				attempted = await attempted.attemptSecondFactor({ strategy: "email_code", code: "424242" });
+			}
+			if (attempted.status !== "complete" || !attempted.createdSessionId) {
+				throw new Error(`Sign-in status ${attempted.status ?? "empty"}.`);
+			}
+			await clerk.setActive({
+				session: attempted.createdSessionId,
+				navigate: async () => undefined,
+			});
+		},
+		{ email, password },
+	);
+	if (!page.url().endsWith("/overview")) {
+		await page.evaluate(() => {
+			const index = Number((history.state as { __TSR_index?: number } | null)?.__TSR_index ?? 0) + 1;
+			const key = `overview-${index}`;
+			history.pushState({ key, __TSR_key: key, __TSR_index: index }, "", "/overview");
+		});
+	}
+	await expect(page).toHaveURL(/\/overview$/);
+}
+
+async function createClerkUser(secret: string, email: string, password: string) {
+	const response = await fetch("https://api.clerk.com/v1/users", {
+		method: "POST",
+		headers: {
+			Authorization: `Bearer ${secret}`,
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			email_address: [email],
+			password,
+			skip_password_checks: true,
+		}),
+	});
+	if (!response.ok) {
+		throw new Error(`Clerk create user failed with status ${response.status}.`);
+	}
+	const body = (await response.json()) as { id?: string };
+	if (!body.id) {
+		throw new Error("Clerk create user returned no id.");
+	}
+	return body.id;
+}
+
+async function deleteClerkUser(secret: string, userId: string) {
+	if (userId.length === 0) {
+		return;
+	}
+	const response = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
+		method: "DELETE",
+		headers: { Authorization: `Bearer ${secret}` },
+	});
+	if (!response.ok && response.status !== 404) {
+		throw new Error(`Clerk delete user failed with status ${response.status}.`);
+	}
+}
 
 function overviewSection() {
 	const source = readFileSync(new URL("../design/Main.dc.html", import.meta.url), "utf8");

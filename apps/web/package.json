@@ -15,7 +15,7 @@
 		"cf:deploy": "vite build && node ../../scripts/deploy-cloudflare.mjs",
 		"cf:typegen": "wrangler types",
 		"deploy": "npm run cf:deploy",
-		"test": "node --experimental-strip-types --test src/screens/signup/machine.test.ts src/screens/overview/actions.test.ts src/screens/overview/view.test.ts src/server/overview-read.test.ts src/workspace/agent-view.test.ts src/workspace/approval-count.test.ts",
+		"test": "node --experimental-strip-types --test src/screens/signup/machine.test.ts src/screens/overview/actions.test.ts src/screens/overview/actions-account.test.ts src/screens/overview/view.test.ts src/server/overview-read.test.ts src/workspace/agent-view.test.ts src/workspace/approval-count.test.ts",
 		"dev": "node ../../scripts/write-dev-vars.mjs && vite dev --port 3000"
 	},
 	"dependencies": {

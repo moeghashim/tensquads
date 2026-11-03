@@ -4,6 +4,10 @@
 \* A failed write and a late write change no stored decision. The read then
 \* reloads, and a waiting click starts. The 30 second timers are WriteLate
 \* and ReadTimeout. Fairness on those two is the timer.
+\* A click and a settled write each mark the snapshot stale. A read copies
+\* tasks into snapTasks and clears that mark. AcceptRead applies the copy
+\* only when no write happened after the read started. The overlay stays
+\* until that read. The integer counter in the browser is this same order.
 \* # model: packages/domain/src/policy/decide.ts
 \* # model: packages/adapters/src/neon/commands/approvals.ts
 \* # model: apps/web/src/screens/overview/actions.ts
@@ -17,9 +21,10 @@ EXTENDS Integers
 
 CONSTANT EmptyInbox
 
-VARIABLES approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate, wait, inflight, queued, clicks
-vars == <<approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate, wait, inflight, queued, clicks>>
+VARIABLES approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate, wait, inflight, queued, clicks, snapTasks, overlay, stale
+vars == <<approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate, wait, inflight, queued, clicks, snapTasks, overlay, stale>>
 stored == <<approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate>>
+screen == <<snapTasks, overlay, stale>>
 
 InitialTasks == 1
 InitialContribution == 10
@@ -56,6 +61,12 @@ TypeOK ==
     /\ inflight \in Kinds
     /\ queued \in Kinds
     /\ clicks \in 0..3
+    /\ snapTasks \in {InitialTasks, InitialTasks + 1}
+    /\ overlay \in BOOLEAN
+    /\ stale \in BOOLEAN
+
+\* A read that started before a write must not replace the tasks on screen.
+StaleReadRejected == overlay = FALSE => snapTasks = tasks
 
 \* A waiting write has one decision in flight. The other card can wait behind it.
 \* The same card is not in flight and queued.
@@ -83,6 +94,9 @@ Init ==
     /\ inflight = "none"
     /\ queued = "none"
     /\ clicks = 3
+    /\ snapTasks = InitialTasks
+    /\ overlay = FALSE
+    /\ stale = FALSE
 
 SpendApproved ==
     approval = "Approved" => tasks = InitialTasks + 1 /\ last = "title (approved)"
@@ -120,6 +134,9 @@ MandateRecorded == (mandate = TRUE) <=> (approval = "Approved")
 
 Start(kind) ==
     /\ clicks' = clicks - 1
+    /\ stale' = TRUE
+    /\ overlay' = TRUE
+    /\ UNCHANGED snapTasks
     /\ IF wait = "none"
        THEN /\ inflight' = kind
             /\ wait' = "write"
@@ -170,7 +187,9 @@ ApproveSpend ==
     /\ stateKey' = "approved"
     /\ mandate' = TRUE
     /\ wait' = "read"
-    /\ UNCHANGED <<proposal, mission, contribution, fromApproval, inflight, queued, clicks>>
+    /\ stale' = TRUE
+    /\ overlay' = TRUE
+    /\ UNCHANGED <<proposal, mission, contribution, fromApproval, inflight, queued, clicks, snapTasks>>
     /\ badge' = Count(approval', proposal)
     /\ banner' = BannerFor(approval', proposal)
 
@@ -182,7 +201,9 @@ DeclineSpend ==
     /\ events' = events + 1
     /\ stateKey' = "declined"
     /\ wait' = "read"
-    /\ UNCHANGED <<tasks, last, proposal, mission, contribution, fromApproval, mandate, inflight, queued, clicks>>
+    /\ stale' = TRUE
+    /\ overlay' = TRUE
+    /\ UNCHANGED <<tasks, last, proposal, mission, contribution, fromApproval, mandate, inflight, queued, clicks, snapTasks>>
     /\ badge' = Count(approval', proposal)
     /\ banner' = BannerFor(approval', proposal)
 
@@ -195,7 +216,9 @@ ApproveMission ==
     /\ contribution' = 0
     /\ fromApproval' = FALSE
     /\ wait' = "read"
-    /\ UNCHANGED <<approval, tasks, last, events, stateKey, mandate, inflight, queued, clicks>>
+    /\ stale' = TRUE
+    /\ overlay' = TRUE
+    /\ UNCHANGED <<approval, tasks, last, events, stateKey, mandate, inflight, queued, clicks, snapTasks>>
     /\ badge' = Count(approval, proposal')
     /\ banner' = BannerFor(approval, proposal')
 
@@ -206,7 +229,9 @@ DeclineMission ==
     /\ proposal' = "Revising"
     /\ fromApproval' = FALSE
     /\ wait' = "read"
-    /\ UNCHANGED <<approval, tasks, last, mission, contribution, events, stateKey, mandate, inflight, queued, clicks>>
+    /\ stale' = TRUE
+    /\ overlay' = TRUE
+    /\ UNCHANGED <<approval, tasks, last, mission, contribution, events, stateKey, mandate, inflight, queued, clicks, snapTasks>>
     /\ badge' = Count(approval, proposal')
     /\ banner' = BannerFor(approval, proposal')
 
@@ -217,22 +242,28 @@ AskRevise ==
     /\ proposal' = "Revising"
     /\ fromApproval' = TRUE
     /\ wait' = "read"
-    /\ UNCHANGED <<approval, tasks, last, mission, contribution, events, stateKey, mandate, inflight, queued, clicks>>
+    /\ stale' = TRUE
+    /\ overlay' = TRUE
+    /\ UNCHANGED <<approval, tasks, last, mission, contribution, events, stateKey, mandate, inflight, queued, clicks, snapTasks>>
     /\ badge' = Count(approval, proposal')
     /\ banner' = BannerFor(approval, proposal')
 
 \* The write did not commit. The Approval and the Mandate stay as they were.
 WriteFail ==
     /\ wait = "write"
+    /\ stale' = TRUE
+    /\ overlay' = TRUE
     /\ wait' = "read"
     /\ UNCHANGED stored
-    /\ UNCHANGED <<inflight, queued, clicks>>
+    /\ UNCHANGED <<inflight, queued, clicks, snapTasks>>
 
 WriteLate ==
     /\ wait = "write"
+    /\ stale' = TRUE
+    /\ overlay' = TRUE
     /\ wait' = "read"
     /\ UNCHANGED stored
-    /\ UNCHANGED <<inflight, queued, clicks>>
+    /\ UNCHANGED <<inflight, queued, clicks, snapTasks>>
 
 FinishRead ==
     /\ wait = "read"
@@ -245,6 +276,20 @@ FinishRead ==
             /\ queued' = "none"
     /\ UNCHANGED stored
     /\ UNCHANGED clicks
+    /\ UNCHANGED screen
+
+\* The loader copies the tasks it can see. It changes nothing when that copy is current.
+StartRead ==
+    /\ wait = "none"
+    /\ snapTasks' = tasks
+    /\ stale' = FALSE
+    /\ UNCHANGED <<approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate, wait, inflight, queued, clicks, overlay>>
+
+\* A fresh read replaces the screen. A read from before the write does not.
+AcceptRead ==
+    /\ stale = FALSE
+    /\ overlay' = FALSE
+    /\ UNCHANGED <<approval, proposal, tasks, last, mission, contribution, badge, banner, fromApproval, events, stateKey, mandate, wait, inflight, queued, clicks, snapTasks, stale>>
 
 ReadReload == FinishRead
 ReadTimeout == FinishRead
@@ -267,6 +312,8 @@ Next ==
     \/ WriteLate
     \/ ReadReload
     \/ ReadTimeout
+    \/ StartRead
+    \/ AcceptRead
     \/ Idle
 
 WaitEnds == [](wait # "none" => <>(wait = "none"))

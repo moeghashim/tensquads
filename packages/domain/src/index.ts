@@ -19,6 +19,7 @@ export type {
 	ChatEventDraft,
 	ConversationRepository,
 	ConversationTransaction,
+	PendingChatTask,
 } from "./conversation/repository.ts";
 export type { Message, MessageFrom, SendResult, SentTask, Thread } from "./conversation/types.ts";
 export type { Eval, Source, Trigger } from "./inbound.ts";

@@ -1,4 +1,4 @@
-import type { AccountScope, ConversationTransaction, Message, MessageFrom } from "@tensquads/domain";
+import type { AccountScope, ConversationTransaction, Message, MessageFrom, PendingChatTask } from "@tensquads/domain";
 import { requireScope } from "@tensquads/domain";
 import { and, asc, eq, sql } from "drizzle-orm";
 
@@ -32,12 +32,8 @@ export async function conversationTransaction<T>(
 		db,
 		async (tx, constrainDeadline) => {
 			await lockCursor(tx, accountId);
-			const pending = await pendingTask(tx, accountId);
-			if (pending?.occurredAt) {
-				constrainDeadline(pending.occurredAt.getTime() + PENDING_TASK_WINDOW_MS);
-			}
 			return work({
-				pendingTask: async () => pending,
+				pendingTask: (taskId) => pendingTask(tx, accountId, constrainDeadline, taskId),
 				agent: (id) => readAgent(tx, accountId, id),
 				skills: (id) => readSkills(tx, accountId, id),
 				store: () => readStore(tx, accountId),
@@ -123,19 +119,45 @@ async function readStore(tx: Tx, accountId: string): Promise<Record<string, unkn
 	return store;
 }
 
-async function pendingTask(tx: Tx, accountId: string) {
+async function pendingTask(
+	tx: Tx,
+	accountId: string,
+	constrainDeadline: (absoluteMs: number) => void,
+	taskId?: string,
+): Promise<PendingChatTask | null> {
 	const rows = await tx.select().from(busEvents).where(eq(busEvents.accountId, accountId));
-	const generated = rows.filter((row) => /^e\d+$/.test(row.id)).sort((left, right) => right.seq - left.seq);
-	const latest = generated[0];
-	if (
-		latest?.kind !== "Task" ||
-		!isChatPayload(latest.payload) ||
-		!latest.occurredAt ||
-		Date.now() - latest.occurredAt.getTime() >= PENDING_TASK_WINDOW_MS
-	) {
+	const generated = rows.filter((row) => /^e\d+$/.test(row.id)).sort((left, right) => left.seq - right.seq);
+	const open = generated.filter((_row, index) => isOpenChatTask(generated, index));
+	const match = taskId === undefined ? open.at(-1) : open.find((row) => row.id === taskId);
+	if (!match?.occurredAt || Date.now() - match.occurredAt.getTime() >= PENDING_TASK_WINDOW_MS) {
 		return null;
 	}
-	return latest;
+	constrainDeadline(match.occurredAt.getTime() + PENDING_TASK_WINDOW_MS);
+	return { id: match.id, toAgent: match.toAgent, skill: match.skill };
+}
+
+function isOpenChatTask(
+	rows: readonly { readonly kind: string; readonly payload: unknown; readonly occurredAt: Date | null }[],
+	index: number,
+): boolean {
+	const row = rows[index];
+	if (row?.kind !== "Task" || !isChatPayload(row.payload) || !row.occurredAt) {
+		return false;
+	}
+	for (let later = index + 1; later < rows.length; later += 1) {
+		const next = rows[later];
+		if (!next) {
+			continue;
+		}
+		// A later chat task stands between this row and anything after it.
+		if (next.kind === "Task" && isChatPayload(next.payload)) {
+			return true;
+		}
+		if (next.kind === "Result") {
+			return false;
+		}
+	}
+	return true;
 }
 
 function isChatPayload(payload: unknown): boolean {

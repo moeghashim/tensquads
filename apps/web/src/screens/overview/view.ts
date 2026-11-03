@@ -1,6 +1,6 @@
-import { EMPTY_INBOX, proposalTitle } from "@tensquads/domain";
+import { EMPTY_INBOX, proposalTitle, TASKS_DONE_LABEL } from "@tensquads/domain";
 
-import type { OverviewData, OverviewProposalView } from "./types.ts";
+import type { OverviewApprovalView, OverviewData, OverviewProposalView } from "./types.ts";
 
 export type DecisionKind = "spend-approve" | "spend-decline" | "mission-approve" | "mission-revise";
 
@@ -16,7 +16,7 @@ export function presentOverview(data: OverviewData, patches: readonly DecisionPa
 
 function applyPatch(data: OverviewData, patch: DecisionPatch): OverviewData {
 	if (patch.kind === "spend-approve" || patch.kind === "spend-decline") {
-		return dropApproval(data, patch.id);
+		return dropApproval(data, patch.id, patch.kind === "spend-approve");
 	}
 	if (patch.kind === "mission-approve") {
 		return approveMission(data, patch.id);
@@ -24,12 +24,36 @@ function applyPatch(data: OverviewData, patch: DecisionPatch): OverviewData {
 	return reviseMission(data, patch.id);
 }
 
-function dropApproval(data: OverviewData, id: string): OverviewData {
-	if (!data.approvals.some((item) => item.id === id)) {
+function dropApproval(data: OverviewData, id: string, countTask: boolean): OverviewData {
+	const approval = data.approvals.find((item) => item.id === id);
+	if (!approval) {
 		return data;
 	}
 	const approvals = data.approvals.filter((item) => item.id !== id);
-	return finish(data, approvals, data.proposals, data.agents, data.count - 1);
+	const agents = countTask ? noteApproved(data.agents, approval) : data.agents;
+	const tiles = countTask ? noteTasksTile(data.tiles) : data.tiles;
+	return finish({ ...data, tiles }, approvals, data.proposals, agents, data.count - 1);
+}
+
+function noteApproved(agents: OverviewData["agents"], approval: OverviewApprovalView): OverviewData["agents"] {
+	return agents.map((agent) =>
+		agent.name === approval.agentName
+			? { ...agent, tasks: agent.tasks + 1, last: `${approval.title} (approved)` }
+			: agent,
+	);
+}
+
+function noteTasksTile(tiles: OverviewData["tiles"]): OverviewData["tiles"] {
+	return tiles.map((tile) => {
+		if (tile.label !== TASKS_DONE_LABEL) {
+			return tile;
+		}
+		const value = Number(tile.value);
+		if (!Number.isFinite(value)) {
+			return tile;
+		}
+		return { ...tile, value: String(value + 1) };
+	});
 }
 
 function approveMission(data: OverviewData, id: string): OverviewData {

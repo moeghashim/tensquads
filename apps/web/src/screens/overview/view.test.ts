@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { TASKS_DONE_LABEL } from "@tensquads/domain";
+
 import type { OverviewData } from "./types.ts";
 import { presentOverview } from "./view.ts";
 
@@ -29,7 +31,7 @@ function data(): OverviewData {
 		greeting: "Good morning, Moe",
 		mission: "Run the store",
 		online: "4 of 5 squads online",
-		tiles: [],
+		tiles: [{ label: TASKS_DONE_LABEL, value: "331", delta: "This week", deltaColor: "#5d5d5d" }],
 		bars: [],
 		count: 2,
 		empty: false,
@@ -49,6 +51,18 @@ function data(): OverviewData {
 				mission: "",
 				contribution: 10,
 			},
+			{
+				id: "support",
+				name: "Support",
+				role: "Customers",
+				tint: "#000",
+				last: "Checked a refund",
+				tasks: 96,
+				success: "90%",
+				saved: "2h",
+				mission: "",
+				contribution: 10,
+			},
 		],
 		masterName: "Master",
 	};
@@ -61,6 +75,24 @@ test("an approval click removes that card and lowers the count", () => {
 	assert.equal(shown.proposals.length, 1);
 	assert.equal(shown.empty, false);
 	assert.equal(shown.emptyText, "");
+	assert.equal(shown.tiles.find((tile) => tile.label === TASKS_DONE_LABEL)?.value, "332");
+	assert.equal(shown.agents.find((agent) => agent.name === "Support")?.tasks, 97);
+	assert.equal(shown.agents.find((agent) => agent.name === "Support")?.last, "Refund $42 (approved)");
+	assert.equal(shown.agents.find((agent) => agent.name === "Inventory")?.tasks, 31);
+});
+
+test("a mission approval adds no task", () => {
+	const shown = presentOverview(data(), [{ key: "mission:mp1", kind: "mission-approve", id: "mp1" }]);
+	assert.equal(shown.tiles.find((tile) => tile.label === TASKS_DONE_LABEL)?.value, "331");
+	assert.equal(shown.agents.find((agent) => agent.name === "Inventory")?.tasks, 31);
+});
+
+test("a declined approval adds no task", () => {
+	const shown = presentOverview(data(), [{ key: "spend:ap1", kind: "spend-decline", id: "ap1" }]);
+	assert.equal(shown.approvals.length, 0);
+	assert.equal(shown.tiles.find((tile) => tile.label === TASKS_DONE_LABEL)?.value, "331");
+	assert.equal(shown.agents.find((agent) => agent.name === "Support")?.tasks, 96);
+	assert.equal(shown.agents.find((agent) => agent.name === "Support")?.last, "Checked a refund");
 });
 
 test("a mission approval shows the mission on the agent and lowers the count", () => {
@@ -94,4 +126,5 @@ test("a settled server row is not counted twice", () => {
 	const without = { ...server, approvals: [], count: 1 };
 	const shown = presentOverview(without, [{ key: "spend:ap1", kind: "spend-approve", id: "ap1" }]);
 	assert.equal(shown.count, 1);
+	assert.equal(shown.tiles.find((tile) => tile.label === TASKS_DONE_LABEL)?.value, "331");
 });

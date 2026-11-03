@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-
+import { currentWrites } from "#/workspace/approval-count.ts";
 import {
 	badgeCount,
 	type DecisionResult,
@@ -501,7 +501,7 @@ describe("overview decisions", { concurrency: false }, () => {
 				: null;
 			await Promise.resolve();
 			const frame = { approvalCount: 4 };
-			watchServerCount(frame.approvalCount, frame);
+			watchServerCount(frame.approvalCount, frame, currentWrites());
 			assert.equal(
 				patchSnapshot().some((item) => item.key === "refund"),
 				true,

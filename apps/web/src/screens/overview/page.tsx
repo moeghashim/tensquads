@@ -1,13 +1,24 @@
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { blankText, revisingLine } from "@tensquads/domain";
-import { useSyncExternalStore } from "react";
+// biome-ignore lint/style/noRestrictedImports: a cached overview applies its patch after commit
+import { useEffect, useSyncExternalStore } from "react";
 
 import { css } from "#/screens/css.ts";
 import { decideMissionOverview, decideOverview } from "#/server/overview.ts";
 import { missionBits } from "#/workspace/agent-view.ts";
+import { currentWrites } from "#/workspace/approval-count.ts";
 import { useRefresh, useWorkspace } from "#/workspace/context.ts";
 
-import { badgeCount, enqueueDecision, patchSnapshot, readDecisionCount, subscribeOverviewPage } from "./actions.ts";
+import {
+	acceptOverviewRead,
+	badgeCount,
+	type DecisionRefresh,
+	decisionGeneration,
+	enqueueDecision,
+	patchSnapshot,
+	readDecisionCount,
+	subscribeOverviewPage,
+} from "./actions.ts";
 import type { OverviewAgentView, OverviewData } from "./types.ts";
 import { type DecisionPatch, presentOverview } from "./view.ts";
 
@@ -93,19 +104,46 @@ const contents = "display: contents";
 
 const emptyPatches: readonly DecisionPatch[] = [];
 
-export function OverviewPage({ data }: { readonly data: OverviewData }) {
+function useFreshOverview(data: OverviewData & { readonly writeAt: number }, noteDecision: (count: number) => void) {
+	useEffect(() => {
+		if (currentWrites() !== data.writeAt) {
+			return;
+		}
+		noteDecision(data.count);
+		acceptOverviewRead(data.count, data.writeAt);
+	}, [data, noteDecision]);
+}
+
+function overviewRefresh(router: ReturnType<typeof useRouter>): DecisionRefresh {
+	const overview = router.state.matches.find((item) => item.routeId === "/_workspace/overview");
+	if (overview?.status === "success" && overview.loaderData && currentWrites() === overview.loaderData.writeAt) {
+		return { count: overview.loaderData.count, readAt: overview.loaderData.writeAt, dropLanded: true };
+	}
+	const frame = router.state.matches.find((item) => item.routeId === "/_workspace");
+	if (frame?.status === "success" && frame.loaderData && currentWrites() === frame.loaderData.writeAt) {
+		return { count: frame.loaderData.approvalCount, readAt: frame.loaderData.writeAt, dropLanded: false };
+	}
+	throw new Error("The overview did not load.");
+}
+
+export function OverviewPage({ data }: { readonly data: OverviewData & { readonly writeAt: number } }) {
 	const navigate = useNavigate();
 	const refresh = useRefresh();
 	const router = useRouter();
 	const { approvalCount, noteDecision } = useWorkspace();
 	const patches = useSyncExternalStore(subscribeOverviewPage, patchSnapshot, () => emptyPatches);
+	useFreshOverview(data, noteDecision);
 	const shown = presentOverview(data, patches);
 	const accept = (patch: DecisionPatch, work: (signal: AbortSignal) => Promise<unknown>) => {
 		enqueueDecision(
 			patch,
 			approvalCount,
 			async (signal) => {
+				const generation = decisionGeneration();
 				const value = await work(signal);
+				if (generation !== decisionGeneration()) {
+					return value;
+				}
 				const count = readDecisionCount(value);
 				if (count !== null) {
 					noteDecision(count);
@@ -114,11 +152,7 @@ export function OverviewPage({ data }: { readonly data: OverviewData }) {
 			},
 			async () => {
 				await refresh();
-				const match = router.state.matches.find((item) => item.routeId === "/_workspace/overview");
-				if (match?.status === "success" && match.loaderData) return match.loaderData.count;
-				const frame = router.state.matches.find((item) => item.routeId === "/_workspace");
-				if (frame?.status === "success" && frame.loaderData) return frame.loaderData.approvalCount;
-				throw new Error("The overview did not load.");
+				return overviewRefresh(router);
 			},
 			() => undefined,
 		);

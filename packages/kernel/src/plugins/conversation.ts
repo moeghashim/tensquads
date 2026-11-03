@@ -30,7 +30,7 @@ export function conversation(
 			const checked = requireScope(scope);
 			if (checked.mode !== "account") return { kind: "ignored" };
 			return config.repositories().conversation.transaction(checked, async (commands) => {
-				const pending = await commands.pendingTask();
+				const pending = await commands.pendingTask(taskId);
 				if (!pending || pending.id !== taskId) return { kind: "ignored" };
 				const planned = resultFor(pending.toAgent);
 				if (!planned) return { kind: "ignored" };

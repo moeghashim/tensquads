@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/tanstack-react-start";
 import { useRouter, useRouterState } from "@tanstack/react-router";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import {
@@ -5,18 +6,21 @@ import {
 	type ReactNode,
 	type SetStateAction,
 	useCallback,
+	// The frame and a signed-in account change the approval counter after commit.
+	// biome-ignore lint/style/noRestrictedImports: rendering must not change that module state
+	useEffect,
 	useMemo,
 	useRef,
 	useState,
 	useSyncExternalStore,
 } from "react";
 
-import { watchServerCount } from "#/screens/overview/actions.ts";
+import { resetDecisions, watchServerCount } from "#/screens/overview/actions.ts";
 import { refreshTraffic } from "#/screens/traffic/refresh.ts";
 import { beginWorkspaceSend, finishWorkspaceSend } from "#/server/workspace.ts";
 
 import { missionBits } from "./agent-view.ts";
-import { noteDecisionCount, noteFrameCount, seedApprovalCount } from "./approval-count.ts";
+import { currentWrites, noteDecisionCount, noteFrameCount, seedApprovalCount } from "./approval-count.ts";
 import { type StartedTask, useRefresh, useWorkspace, WorkspaceContext } from "./context.ts";
 import { decorate, useInspect } from "./event-view.ts";
 import { runLiveTick } from "./live.ts";
@@ -29,7 +33,7 @@ export function WorkspaceProvider({
 	frame,
 	children,
 }: {
-	readonly frame: WorkspaceFrameData & { readonly readStartedAt: number };
+	readonly frame: WorkspaceFrameData & { readonly writeAt: number };
 	readonly children: ReactNode;
 }) {
 	const router = useRouter();
@@ -200,12 +204,10 @@ function draftValue(text: string | undefined, draft: string): string {
 	return (text ?? draft).trim();
 }
 
-function useFrameAndCount(
-	frame: WorkspaceFrameData & { readonly readStartedAt: number },
-	sending: { current: boolean },
-) {
+function useFrameAndCount(frame: WorkspaceFrameData & { readonly writeAt: number }, sending: { current: boolean }) {
 	const messages = useFrameMessages(frame, sending);
 	const count = useApprovalCount(frame);
+	useAccountBoundary();
 	return { ...messages, ...count };
 }
 
@@ -226,20 +228,51 @@ function useFrameMessages(frame: WorkspaceFrameData, sending: { current: boolean
 	return { messages, setMessages, applyFrame };
 }
 
-function useApprovalCount(frame: WorkspaceFrameData & { readonly readStartedAt: number }) {
+function useApprovalCount(frame: WorkspaceFrameData & { readonly writeAt: number }) {
 	const [clock, setClock] = useState(() => seedApprovalCount(frame.approvalCount));
-	const [seenFrame, setSeenFrame] = useState(frame);
 	const noteDecision = useCallback((count: number) => {
-		const answeredAt = Date.now();
-		setClock((current) => noteDecisionCount(current, count, answeredAt));
+		const writeAt = currentWrites();
+		setClock((current) => noteDecisionCount(current, count, writeAt));
 	}, []);
-	if (frame !== seenFrame) {
-		setSeenFrame(frame);
-		const next = noteFrameCount(clock, frame.approvalCount, frame.readStartedAt);
-		setClock(next);
-		if (next !== clock) watchServerCount(next.value, frame);
-	}
+	useEffect(() => {
+		const live = currentWrites();
+		if (live !== frame.writeAt) {
+			return;
+		}
+		setClock((current) => {
+			const next = noteFrameCount(current, frame.approvalCount, frame.writeAt, currentWrites());
+			if (next.value === current.value && next.writeAt === current.writeAt) {
+				return current;
+			}
+			return next;
+		});
+		watchServerCount(frame.approvalCount, frame, frame.writeAt);
+	}, [frame]);
 	return { approvalCount: clock.value, noteDecision };
+}
+
+// The first signed-in id is the account that rendered this document. A later
+// id, including sign-out, drops the previous account's queue before the next paint.
+function useAccountBoundary() {
+	const { userId, isLoaded } = useAuth();
+	const router = useRouter();
+	const seen = useRef<string | null | undefined>(undefined);
+	useEffect(() => {
+		if (!isLoaded) {
+			return;
+		}
+		const next = userId ?? null;
+		if (seen.current === undefined) {
+			seen.current = next;
+			return;
+		}
+		if (seen.current === next) {
+			return;
+		}
+		seen.current = next;
+		resetDecisions();
+		void router.invalidate({ sync: true });
+	}, [isLoaded, router, userId]);
 }
 
 function InspectBridge({ children }: { readonly children: ReactNode }) {

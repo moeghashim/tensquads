@@ -1,5 +1,7 @@
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 
+import { advanceWrites, currentWrites } from "#/workspace/approval-count.ts";
+
 import type { DecisionPatch } from "./view.ts";
 
 export interface DecisionRow {
@@ -8,17 +10,25 @@ export interface DecisionRow {
 	readonly count: number;
 }
 
+export interface DecisionRefresh {
+	readonly count: number;
+	readonly readAt: number;
+	readonly dropLanded: boolean;
+}
+
 export interface DecisionResult {
 	readonly wrote: boolean;
 	readonly refreshed: boolean;
 	readonly count: number | null;
 	readonly row: DecisionRow | null;
+	readonly readAt: number | null;
+	readonly dropLanded: boolean;
 }
 
 interface Job {
 	readonly key: string;
 	readonly work: (signal: AbortSignal) => Promise<unknown>;
-	readonly refresh: () => Promise<number>;
+	readonly refresh: () => Promise<number | DecisionRefresh>;
 	readonly settled: (result: DecisionResult) => void;
 }
 
@@ -29,9 +39,20 @@ let running = false;
 let generation = 0;
 let target: number | null = null;
 let patches: readonly DecisionPatch[] = [];
+const landed = new Map<string, number>();
 let activeKey: string | null = null;
 let seenServer: object | null = null;
 
+function emptyResult(): DecisionResult {
+	return { wrote: false, refreshed: false, count: null, row: null, readAt: null, dropLanded: false };
+}
+
+export function decisionGeneration(): number {
+	return generation;
+}
+
+// The signed-in account changed, or the user signed out. A read that already
+// started belongs to the previous account, so the counter moves too.
 export function resetDecisions(): void {
 	generation += 1;
 	keys.clear();
@@ -39,8 +60,10 @@ export function resetDecisions(): void {
 	running = false;
 	target = null;
 	patches = [];
+	landed.clear();
 	activeKey = null;
 	seenServer = null;
+	advanceWrites();
 	notify();
 }
 
@@ -78,13 +101,14 @@ export function enqueueDecision(
 	patch: DecisionPatch,
 	serverCount: number,
 	work: (signal: AbortSignal) => Promise<unknown>,
-	refresh: () => Promise<number>,
+	refresh: () => Promise<number | DecisionRefresh>,
 	settled: (result: DecisionResult) => void,
 ): boolean {
 	const key = patch.key;
 	if (keys.has(key) || patches.some((item) => item.key === key)) {
 		return false;
 	}
+	advanceWrites();
 	keys.add(key);
 	patches = [...patches, patch];
 	hold(serverCount);
@@ -107,24 +131,33 @@ function liveKeys(): Set<string> {
 	return live;
 }
 
-// A count from the server drops patches whose writes have finished.
-// A card that is still queued or in flight stays, and the badge is the server
-// count minus those cards. A refresh that returns no count leaves its patch
-// in place, so a second click on that card still sends nothing.
-export function reconcileDecisions(serverCount: number): void {
+// A landed patch stays until a read that started after the write landed.
+// Finishing the write does not drop it. A frame read drops only a write that
+// never landed. The badge counts cards that are still queued or in flight.
+export function reconcileDecisions(serverCount: number, readAt = currentWrites(), dropLanded = true): void {
 	const live = liveKeys();
 	const next: DecisionPatch[] = [];
+	let pending = 0;
 	let dropped = false;
 	for (const patch of patches) {
+		const land = landed.get(patch.key);
 		if (live.has(patch.key)) {
+			next.push(patch);
+			if (land === undefined) {
+				pending += 1;
+			}
+			continue;
+		}
+		if (land !== undefined && (!dropLanded || readAt < land)) {
 			next.push(patch);
 			continue;
 		}
 		keys.delete(patch.key);
+		landed.delete(patch.key);
 		dropped = true;
 	}
-	const nextTarget = next.length === 0 ? null : Math.max(0, serverCount - next.length);
-	if (!dropped && nextTarget === target) {
+	const nextTarget = pending === 0 ? null : Math.max(0, serverCount - pending);
+	if (!dropped && nextTarget === target && next.length === patches.length) {
 		return;
 	}
 	patches = next;
@@ -132,7 +165,7 @@ export function reconcileDecisions(serverCount: number): void {
 	notify();
 }
 
-export function watchServerCount(serverCount: number, token: object): void {
+export function watchServerCount(serverCount: number, token: object, readAt: number): void {
 	if (token === seenServer) {
 		return;
 	}
@@ -145,8 +178,16 @@ export function watchServerCount(serverCount: number, token: object): void {
 		if (patches.every((patch) => liveKeys().has(patch.key))) {
 			return;
 		}
-		reconcileDecisions(serverCount);
+		reconcileDecisions(serverCount, readAt, false);
 	});
+}
+
+// The overview page that is on screen started at readAt. A fresh one replaces the overlay.
+export function acceptOverviewRead(serverCount: number, readAt: number): void {
+	if (currentWrites() !== readAt) {
+		return;
+	}
+	reconcileDecisions(serverCount, readAt, true);
 }
 
 function pump(): void {
@@ -164,15 +205,16 @@ function pump(): void {
 
 async function runJob(job: Job, gen: number): Promise<void> {
 	activeKey = job.key;
-	const result = await runBounded(job);
+	const result = await runBounded(job, gen);
+	if (gen !== generation) {
+		job.settled(emptyResult());
+		return;
+	}
 	if (activeKey === job.key) {
 		activeKey = null;
 	}
-	if (gen !== generation) {
-		return;
-	}
-	if (result.count !== null) {
-		reconcileDecisions(result.count);
+	if (result.count !== null && result.readAt !== null) {
+		reconcileDecisions(result.count, result.readAt, result.dropLanded);
 	}
 	job.settled(result);
 	running = false;
@@ -183,7 +225,7 @@ async function runJob(job: Job, gen: number): Promise<void> {
 	});
 }
 
-async function runBounded(job: Job): Promise<DecisionResult> {
+async function runBounded(job: Job, gen: number): Promise<DecisionResult> {
 	let wrote = true;
 	let row: DecisionRow | null = null;
 	try {
@@ -192,15 +234,29 @@ async function runBounded(job: Job): Promise<DecisionResult> {
 		wrote = false;
 		row = null;
 	}
-	let count: number | null = null;
-	let refreshed = false;
-	try {
-		count = await bounded(() => job.refresh());
-		refreshed = true;
-	} catch {
-		refreshed = false;
+	if (gen !== generation) {
+		return emptyResult();
 	}
-	return { wrote, refreshed, count, row };
+	advanceWrites();
+	if (wrote) {
+		landed.set(job.key, currentWrites());
+	}
+	try {
+		const read = asRefresh(await bounded(() => job.refresh()));
+		if (gen !== generation) {
+			return emptyResult();
+		}
+		return { wrote, refreshed: true, count: read.count, row, readAt: read.readAt, dropLanded: read.dropLanded };
+	} catch {
+		return { wrote, refreshed: false, count: null, row, readAt: null, dropLanded: false };
+	}
+}
+
+function asRefresh(value: number | DecisionRefresh): DecisionRefresh {
+	if (typeof value === "number") {
+		return { count: value, readAt: currentWrites(), dropLanded: true };
+	}
+	return value;
 }
 
 function decisionRow(value: unknown): DecisionRow | null {

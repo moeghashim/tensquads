@@ -267,3 +267,27 @@ test("an abandoned Task expires at 30 seconds and a later send gets its own repl
 		assert.equal(events[2]?.timeText, "11:05");
 	});
 });
+
+test("an approval between a chat task and its finish still writes the reply", async () => {
+	await withCopy("approval-between", async (db, accountId) => {
+		const started = await beginSend(db, scope(accountId), ads);
+		assert.equal(started.kind, "working");
+		if (started.kind !== "working") {
+			return;
+		}
+		await new Kernel(createRepositories(db)).decide(scope(accountId), "ap1", true);
+		assert.equal((await beginSend(db, scope(accountId), "How did ads do this week?")).kind, "ignored");
+		const finished = await finishSend(db, scope(accountId), started.taskId);
+		assert.equal(finished.kind, "replied");
+		if (finished.kind !== "replied") {
+			return;
+		}
+		assert.equal(finished.messages.at(-1)?.text, marketingResult);
+		assert.equal((await finishSend(db, scope(accountId), started.taskId)).kind, "ignored");
+		const events = await generated(db, accountId);
+		assert.deepEqual(
+			events.map(({ kind }) => kind),
+			["Task", "Approval", "Result"],
+		);
+	});
+});
