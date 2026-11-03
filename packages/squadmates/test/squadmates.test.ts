@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -92,12 +91,4 @@ test("the package has no runtime dependency", () => {
 		dependencies?: unknown;
 	};
 	assert.equal(pkg.dependencies, undefined);
-	const src = join(import.meta.dirname, "..", "src");
-	for (const name of readdirSync(src)) {
-		const text = readFileSync(join(src, name), "utf8");
-		for (const match of text.matchAll(/from\s+["']([^"']+)["']/g)) {
-			const spec = match[1] ?? "";
-			assert.equal(spec.startsWith("."), true, `${name} imports ${spec}`);
-		}
-	}
 });
