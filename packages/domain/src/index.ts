@@ -46,12 +46,12 @@ export type { AddRuleCommand, SetLimitCommand, SetRuleOnCommand } from "./policy
 export type {
 	Approval,
 	ApprovalStatus,
+	Fenced,
 	Inbox,
 	Limit,
 	Mandate,
 	MissionProposal,
 	MissionProposalStatus,
-	Fenced,
 	Rule,
 	StoredLimit,
 	WriteFence,

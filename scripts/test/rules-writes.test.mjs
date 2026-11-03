@@ -1396,10 +1396,7 @@ for (const axis of [...snapshotAxes, { kind: "add" }]) {
 			});
 			assert.equal(await page.evaluate(() => window.queue.readNeeded()), true);
 			assert.equal(await page.evaluate(() => window.afterFailure > window.counterBeforeFailure), true);
-			assert.equal(
-				await page.evaluate(() => window.queue.rulesWriteCounter() === window.afterFailure),
-				true,
-			);
+			assert.equal(await page.evaluate(() => window.queue.rulesWriteCounter() === window.afterFailure), true);
 			assert.equal(await page.evaluate(() => window.refreshCalls), 1);
 			await page.evaluate(async () => {
 				const dock = window.beginRulesRead();

@@ -61,7 +61,13 @@ export interface Repositories {
 	};
 	readonly policy: {
 		inbox(scope: AccountScope): Promise<unknown>;
-		setRuleOn(scope: AccountScope, id: string, on: boolean, fence: WriteFence, deadlineAt?: number): Promise<Fenced<Rule>>;
+		setRuleOn(
+			scope: AccountScope,
+			id: string,
+			on: boolean,
+			fence: WriteFence,
+			deadlineAt?: number,
+		): Promise<Fenced<Rule>>;
 		addRule(
 			scope: AccountScope,
 			draft: { readonly when: string; readonly agent: string; readonly action: string; readonly approval: string },
