@@ -1,3 +1,4 @@
+import { isSessionRefreshNeeded } from "#/server/session-error.ts";
 import { currentWrites } from "#/workspace/approval-count.ts";
 
 import type { OverviewData } from "./types.ts";
@@ -55,6 +56,7 @@ export async function loadHeldOverview(
 	try {
 		return acceptOverviewLoad(writeAt, await read(), epochAtStart);
 	} catch (error) {
+		if (isSessionRefreshNeeded(error)) throw error;
 		const kept = retainFailedOverview(epochAtStart);
 		if (!kept) throw error;
 		return kept;

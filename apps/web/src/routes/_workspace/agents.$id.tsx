@@ -4,6 +4,7 @@ import { AgentDetailPage } from "#/screens/agent-detail/AgentDetailPage.tsx";
 import type { AgentDetailView } from "#/screens/agent-detail/model.ts";
 import { keepFailedAgentRead, useAgentWrites } from "#/screens/agent-detail/write.ts";
 import { loadAgentDetail } from "#/server/agent-detail.ts";
+import { isSessionRefreshNeeded } from "#/server/session-error.ts";
 import { agentSession, stampAgentRead } from "#/workspace/agent-on.ts";
 import { captureWrites } from "#/workspace/approval-count.ts";
 import { useInspect } from "#/workspace/event-view.ts";
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/_workspace/agents/$id")({
 		try {
 			return { view: await loadAgentDetail({ data: params.id }), readAt, session, kept: false, writeAt };
 		} catch (error) {
-			if (isRedirect(error)) throw error;
+			if (isRedirect(error) || isSessionRefreshNeeded(error)) throw error;
 			const view = keepFailedAgentRead(params.id, session);
 			if (view) return { view, readAt, session, kept: true, writeAt };
 			throw error;

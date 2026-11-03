@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
+import { isSessionRefreshNeeded, SessionRefreshNeeded } from "#/server/session-error.ts";
 import { advanceWrites, currentWrites } from "#/workspace/approval-count.ts";
 import { resetDecisions } from "./actions.ts";
 import { clearOverviewHold, loadHeldOverview, overviewEpoch, overviewNeedsRead, rememberOverview } from "./load.ts";
@@ -91,6 +92,19 @@ describe("overview read recovery", { concurrency: false }, () => {
 		const kept = await loadHeldOverview(overviewEpoch(), writeAt, async () => fail());
 		assert.strictEqual(kept, accepted);
 		await loadHeldOverview(overviewEpoch(), writeAt, async () => snapshot(3));
+		assert.equal(overviewNeedsRead(), false);
+	});
+
+	test("a session refresh is not kept as the previous snapshot", async () => {
+		clearOverviewHold();
+		await loadHeldOverview(overviewEpoch(), currentWrites(), async () => snapshot(4));
+		await assert.rejects(
+			() =>
+				loadHeldOverview(overviewEpoch(), currentWrites(), () => {
+					throw new SessionRefreshNeeded();
+				}),
+			(error: unknown) => isSessionRefreshNeeded(error),
+		);
 		assert.equal(overviewNeedsRead(), false);
 	});
 
