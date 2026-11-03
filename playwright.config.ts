@@ -1,5 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
+const rulesFenceRepeat = Number(process.env.RULES_FENCE_REPEAT ?? "1");
+
 export default defineConfig({
 	testDir: "e2e",
 	fullyParallel: true,
@@ -28,4 +30,18 @@ export default defineConfig({
 		reuseExistingServer: false,
 		timeout: 120_000,
 	},
+	projects: [
+		{
+			name: "app",
+			testIgnore: /rules-fence\.spec\.ts/,
+			fullyParallel: true,
+		},
+		{
+			name: "rules-fence",
+			testMatch: /rules-fence\.spec\.ts/,
+			// scripts/e2e.mjs runs this project alone with --workers=1. fullyParallel does not set workers.
+			fullyParallel: false,
+			repeatEach: Number.isInteger(rulesFenceRepeat) && rulesFenceRepeat > 0 ? rulesFenceRepeat : 1,
+		},
+	],
 });

@@ -28,7 +28,7 @@
 		"design:check": "node scripts/design-check.mjs",
 		"design:inventory": "node scripts/design-inventory.mjs",
 		"seed": "node --experimental-strip-types packages/seed/src/cli.ts",
-		"e2e": "playwright test",
+		"e2e": "node scripts/e2e.mjs",
 		"statechart:check": "node scripts/statechart-check.mjs"
 	},
 	"devDependencies": {

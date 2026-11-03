@@ -110,6 +110,32 @@ test("a transaction without send options does not set timeouts", async () => {
 	assert.equal((text.match(/lock_timeout/g) ?? []).length, 0);
 	assert.equal((text.match(/statement_timeout/g) ?? []).length, 0);
 	assert.match(text, /pg_advisory_xact_lock/);
+	assert.match(text, /1952804467/);
+});
+
+test("an account fence lock is keyed by that account", async () => {
+	const seen: string[] = [];
+	const db = {
+		async transaction(run: (tx: { execute: (query: unknown) => Promise<void> }) => Promise<unknown>) {
+			return run({
+				async execute(query: unknown) {
+					seen.push(JSON.stringify(query));
+				},
+			});
+		},
+	};
+	assert.equal(
+		await workspaceTransaction(db as never, async () => "ok", {
+			deadlineMs: PENDING_TASK_WINDOW_MS,
+			accountId: "account-a",
+		}),
+		"ok",
+	);
+	const text = seen.join("\n");
+	assert.match(text, /hashtext/);
+	assert.match(text, /account-a/);
+	assert.match(text, /1952804468/);
+	assert.doesNotMatch(text, /1952804467/);
 });
 
 test("a send past the deadline rolls back before commit", async () => {

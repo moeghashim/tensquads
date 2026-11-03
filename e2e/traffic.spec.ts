@@ -135,17 +135,14 @@ test("send next event adds the event, selects it and updates the state table", a
 	});
 	page.on("pageerror", (error) => errors.push(error.message));
 	await openTraffic(page, workspaceUser);
+	await waitForSendHandler(page);
 	await page.getByRole("button", { name: "Send next event" }).click();
 	await expect(page.locator("[data-event-id='e100']")).toContainText(daily);
 	await expect(page.getByRole("complementary", { name: "Message details" })).toContainText(daily);
 	await setStock(accountId, "before-write");
 	await page.reload();
 	await expect(page.getByText("before-write")).toBeVisible();
-	// The stock text is in the server HTML. Wait until the send handler is attached.
-	await page.waitForFunction(() => {
-		const button = document.querySelector("[data-handler='simulate']");
-		return Boolean(button && Object.keys(button).some((key) => key.startsWith("__reactProps")));
-	});
+	await waitForSendHandler(page);
 	await page.getByRole("button", { name: "Send next event" }).click();
 	await expect(page.locator("[data-event-id='e101']")).toContainText(stockText, { timeout: 20_000 });
 	await expect(page.getByRole("complementary", { name: "Message details" })).toContainText(stockText);
@@ -411,6 +408,13 @@ async function trafficViolations(page: Page) {
 		.exclude("section[aria-label='Squad map'] button[style*='#f3f3f3']")
 		.analyze();
 	return [...full.violations, ...scroll.violations, ...contrast.violations];
+}
+
+async function waitForSendHandler(page: Page) {
+	await page.waitForFunction(() => {
+		const button = document.querySelector("[data-handler='simulate']");
+		return Boolean(button && Object.keys(button).some((key) => key.startsWith("__reactProps")));
+	});
 }
 
 async function openTraffic(page: Page, user: { email: string; password: string; userId: string; accountId: string }) {

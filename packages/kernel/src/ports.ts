@@ -1,4 +1,4 @@
-import type { ConversationRepository } from "@tensquads/domain";
+import type { ConversationRepository, Fenced, Rule, StoredLimit, WriteFence } from "@tensquads/domain";
 
 // The five ports. Step 6 supplies every adapter except Decider.
 // Decider stays without an adapter in version 1.
@@ -61,6 +61,25 @@ export interface Repositories {
 	};
 	readonly policy: {
 		inbox(scope: AccountScope): Promise<unknown>;
+		setRuleOn(
+			scope: AccountScope,
+			id: string,
+			on: boolean,
+			fence: WriteFence,
+			deadlineAt?: number,
+		): Promise<Fenced<Rule>>;
+		addRule(
+			scope: AccountScope,
+			draft: { readonly when: string; readonly agent: string; readonly action: string; readonly approval: string },
+			deadlineAt?: number,
+		): Promise<Rule | null>;
+		setLimit(
+			scope: AccountScope,
+			key: string,
+			value: number,
+			fence: WriteFence,
+			deadlineAt?: number,
+		): Promise<Fenced<StoredLimit>>;
 	};
 	readonly catalog: {
 		listImages(scope: AccountScope): Promise<readonly unknown[]>;

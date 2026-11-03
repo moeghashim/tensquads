@@ -14,6 +14,26 @@ export interface Limit {
 	readonly value: number;
 }
 
+// The row a limit write returns. The screen replaces this key in the snapshot.
+export interface StoredLimit {
+	readonly key: string;
+	readonly value: number;
+}
+
+// One browser tab, its rising write number, and earlier tab ids this write retires.
+// The value is not a limit or a rule. A missing list retires nothing. More than eight ids is rejected.
+export interface WriteFence {
+	readonly tab: string;
+	readonly seq: number;
+	readonly retires?: readonly string[];
+}
+
+// superseded means this tab is retired, or this tab already stored an equal or higher sequence.
+export interface Fenced<T> {
+	readonly status: "written" | "superseded";
+	readonly row: T;
+}
+
 export type ApprovalStatus = "Pending" | "Approved" | "Declined";
 
 export interface Approval {

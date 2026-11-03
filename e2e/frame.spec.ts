@@ -67,7 +67,6 @@ test("the sidebar marks the current page and the agent rows show status and open
 	await page.getByRole("button", { name: "Rules and limits" }).click();
 	await expect(page).toHaveURL(/\/rules$/);
 	await expect(page).toHaveTitle("Rules and limits");
-	await expect(page.locator("main")).toHaveText("");
 });
 
 test("the dock shows the badge, opens the panel, and hides on the chat page", async ({ page, workspaceUser }) => {

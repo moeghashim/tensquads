@@ -1,10 +1,11 @@
-import type { AccountScope, SendResult } from "@tensquads/domain";
+import type { AccountScope, Fenced, Rule, SendResult, StoredLimit, WriteFence } from "@tensquads/domain";
 import { Context } from "cordis";
 import { type BusCommands, bus } from "./plugins/bus.ts";
 import type { ConversationCommands } from "./plugins/conversation.ts";
 import { conversation } from "./plugins/conversation.ts";
-
 import { plugins } from "./plugins/index.ts";
+import type { PolicyCommands } from "./plugins/policy.ts";
+import { policy } from "./plugins/policy.ts";
 import {
 	DECIDER_MISSING,
 	type Decider,
@@ -43,6 +44,15 @@ export class Kernel {
 				fibers.push(
 					this.context.plugin(bus, { nextEvent: (scope, deadlineAt) => this.advance(scope, deadlineAt) }),
 				);
+			} else if (plugin === policy) {
+				fibers.push(
+					this.context.plugin(policy, {
+						repositories: () => {
+							if (!this.repositories) throw new Error("Repositories are not configured.");
+							return { policy: this.repositories.policy };
+						},
+					}),
+				);
 			} else {
 				fibers.push(this.context.plugin(plugin));
 			}
@@ -77,6 +87,37 @@ export class Kernel {
 			nextEvent(scope: AccountScope, deadlineAt?: number): Promise<void>;
 		};
 		return port.nextEvent(scope, deadlineAt);
+	}
+
+	async setRuleOn(
+		scope: AccountScope,
+		id: string,
+		on: boolean,
+		fence: WriteFence,
+		deadlineAt?: number,
+	): Promise<Fenced<Rule>> {
+		await this.ready;
+		return (this.context.get("workspacePolicy") as PolicyCommands).setRuleOn(scope, id, on, fence, deadlineAt);
+	}
+
+	async addRule(
+		scope: AccountScope,
+		draft: Parameters<PolicyCommands["addRule"]>[1],
+		deadlineAt?: number,
+	): Promise<Rule | null> {
+		await this.ready;
+		return (this.context.get("workspacePolicy") as PolicyCommands).addRule(scope, draft, deadlineAt);
+	}
+
+	async setLimit(
+		scope: AccountScope,
+		key: string,
+		value: number,
+		fence: WriteFence,
+		deadlineAt?: number,
+	): Promise<Fenced<StoredLimit>> {
+		await this.ready;
+		return (this.context.get("workspacePolicy") as PolicyCommands).setLimit(scope, key, value, fence, deadlineAt);
 	}
 
 	pluginNames(): readonly string[] {

@@ -46,12 +46,15 @@ export type { AddRuleCommand, SetLimitCommand, SetRuleOnCommand } from "./policy
 export type {
 	Approval,
 	ApprovalStatus,
+	Fenced,
 	Inbox,
 	Limit,
 	Mandate,
 	MissionProposal,
 	MissionProposalStatus,
 	Rule,
+	StoredLimit,
+	WriteFence,
 } from "./policy/types.ts";
 export type { RepositoryBag } from "./repositories.ts";
 export type { AccountScope } from "./scope.ts";

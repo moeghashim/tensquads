@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext, type Dispatch, type SetStateAction, useContext } from "react";
 
 import type { missionBits } from "./agent-view.ts";
 import type { decorate } from "./event-view.ts";
@@ -44,7 +44,7 @@ export interface WorkspaceValue {
 	readonly live: boolean;
 	readonly setLive: (value: boolean) => void;
 	readonly ruleForm: RuleForm;
-	readonly setRuleForm: (form: RuleForm) => void;
+	readonly setRuleForm: Dispatch<SetStateAction<RuleForm>>;
 	readonly refresh: () => Promise<void>;
 	readonly inspect: (id: string) => void;
 	readonly helpers: WorkspaceHelpers;
