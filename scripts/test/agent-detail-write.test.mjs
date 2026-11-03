@@ -639,6 +639,28 @@ test("a failed background read keeps the snapshot and the next action reads once
 	assert.equal(h.render().view.skills[0].onStr, "false");
 });
 
+test("an older successful read cannot clear a later plain-loader failure", async () => {
+	const h = harness();
+	h.failNextPost();
+	h.render().toggleAgent(false);
+	await settle();
+	h.posts.shift().answer();
+	await settle();
+	assert.equal(h.reads.length, 1);
+	const before = stampAgentRead("support");
+	const held = keepFailedAgentRead("support", agentSession());
+	assert.ok(held);
+	assert.equal(held.on, true);
+	assert.equal(stampAgentRead("support"), before + 1);
+	h.reads.shift().answer();
+	await settle();
+	assert.equal(h.render().view.on, true);
+	h.render().toggleAgent(true);
+	await settle();
+	assert.equal(h.reads.length, 1);
+	assert.equal(h.posts.length, 1);
+});
+
 test("a successful later loader ends recovery", async () => {
 	const h = harness();
 	h.failNextPost();

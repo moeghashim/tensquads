@@ -57,7 +57,7 @@ export async function conversationTransaction<T>(
 				},
 			});
 		},
-		{ deadlineMs: PENDING_TASK_WINDOW_MS },
+		{ deadlineMs: PENDING_TASK_WINDOW_MS, accountId },
 	);
 }
 

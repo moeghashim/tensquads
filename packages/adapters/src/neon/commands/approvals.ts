@@ -32,6 +32,7 @@ function deadlineWindow(deadlineAt: number | undefined): { readonly absolute: nu
 
 async function commitDecision<T>(
 	db: AppDatabase,
+	accountId: string,
 	deadlineAt: number | undefined,
 	work: (tx: Tx) => Promise<T>,
 ): Promise<T> {
@@ -42,7 +43,7 @@ async function commitDecision<T>(
 			constrainDeadline(window.absolute);
 			return work(tx);
 		},
-		{ deadlineMs: window.remaining },
+		{ deadlineMs: window.remaining, accountId },
 	);
 }
 
@@ -54,7 +55,7 @@ export async function decide(
 	deadlineAt?: number,
 ): Promise<WrittenDecision> {
 	const accountId = accountOf(scope);
-	return commitDecision(db, deadlineAt, async (tx) => {
+	return commitDecision(db, accountId, deadlineAt, async (tx) => {
 		const approval = await oneApproval(tx, accountId, id);
 		if (approval?.status !== "Pending") {
 			return { id, status: approval?.status ?? "Pending", count: await countInbox(tx, accountId) };
@@ -104,7 +105,7 @@ export async function decideMission(
 	deadlineAt?: number,
 ): Promise<WrittenDecision> {
 	const accountId = accountOf(scope);
-	return commitDecision(db, deadlineAt, async (tx) => {
+	return commitDecision(db, accountId, deadlineAt, async (tx) => {
 		const proposal = await oneProposal(tx, accountId, id);
 		if (proposal?.status !== "Proposed") {
 			return { id, status: proposal?.status ?? "Proposed", count: await countInbox(tx, accountId) };

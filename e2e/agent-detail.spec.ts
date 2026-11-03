@@ -1163,10 +1163,9 @@ test("an account switch on the mounted agent route hides the previous account", 
 		});
 		await expect.poll(() => heldRead, settled).toBe(true);
 		await signOutOnAgent(page);
-		await expect(page).toHaveURL(/\/agents\/support$/);
-		await expect(squadSwitch(page)).toHaveCount(0);
+		await expect(page).toHaveURL(/\/signin$/, { timeout: 20_000 });
+		await expect(page.getByLabel("Email")).toBeVisible();
 		await expect(page.getByText(supportMission, { exact: true })).toHaveCount(0);
-		await expect(page.getByRole("navigation", { name: "Workspace" })).toHaveCount(0);
 		await signInOnAgent(page, other);
 		await expect(page).toHaveURL(/\/agents\/support$/);
 		await expect(page.getByText("Account B mission", { exact: true })).toBeVisible(settled);
@@ -1277,11 +1276,11 @@ test("a ticket session switch keeps the agent route isolated from held account r
 		await expect.poll(() => heldRead, settled).toBe(true);
 		const ticket = await signInTicket(other.userId);
 		await signOutOnAgent(page);
-		await expect(page).toHaveURL(/\/agents\/support$/);
-		await expect(squadSwitch(page)).toHaveCount(0);
+		await expect(page).toHaveURL(/\/signin$/, { timeout: 20_000 });
+		await expect(page.getByLabel("Email")).toBeVisible();
 		await expect(page.getByText(supportMission, { exact: true })).toHaveCount(0);
-		await expect(page.getByRole("navigation", { name: "Workspace" })).toHaveCount(0);
 		await signInWithTicket(page, ticket, other.userId);
+		await navigateClient(page, "/agents/support");
 		await expect(page).toHaveURL(/\/agents\/support$/);
 		await expect(page.getByText("Account B mission", { exact: true })).toBeVisible(settled);
 		await expect(page.getByText("Account B message", { exact: true }).first()).toBeVisible();
@@ -1308,7 +1307,7 @@ test("a ticket session switch keeps the agent route isolated from held account r
 		await expect(page.getByText(supportMission, { exact: true })).toHaveCount(0);
 		const afterRelease = await readAgent(other.accountId, "support");
 		expect(afterRelease).toEqual(beforeRelease);
-		expect(routeChanges.every((path) => path === "/agents/support")).toBe(true);
+		expect(routeChanges.every((path) => path === "/agents/support" || path === "/signin")).toBe(true);
 		expect(await page.evaluate(() => (window as unknown as { __agentMark?: string }).__agentMark)).toBe(
 			"same-document",
 		);

@@ -93,15 +93,19 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 			const previous = state.view;
 			try {
 				const view = await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
-				// A read keeps the version from when it started. A newer write wins.
+				// A read keeps the version from when it started. It ends recovery only
+				// when that start is still after the latest write or read failure.
 				if (startedSession !== agentSession()) return;
 				if (started === stampAgentRead(agentId) && state.view === previous) {
 					needsRead = false;
 					accept(view, state.pending);
 				}
 			} catch {
-				// A failed read stops. Only another user action can request it again.
-				if (startedSession === agentSession()) needsRead = true;
+				// A failed read records the same point a failed write does, then stops.
+				if (startedSession === agentSession()) {
+					noteAgentWrite(agentId);
+					needsRead = true;
+				}
 			}
 		} finally {
 			reading = false;
@@ -153,6 +157,7 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 		snapshot: () => state,
 		failRead(): AgentDetailView | null {
 			if (!current()) return null;
+			noteAgentWrite(agentId);
 			needsRead = true;
 			return state.view;
 		},

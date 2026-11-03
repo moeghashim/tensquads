@@ -3,7 +3,7 @@
 \* A skill cannot run when the agent is Off.
 \* A change of autonomy does not change on or off.
 \* The screen shows Running only while the agent is On.
-\* Starting and Stopping each last one step.
+\* A start or stop has a deadline. Fairness is on that deadline, not on the machine finishing.
 \* A click enters the per-agent queue. The queue then fails, lands, or is late.
 \* Late is the 30-second write deadline. A late write does not commit.
 \* A successful write response supplies the view and ends the wait.
@@ -300,6 +300,27 @@ CommitNewer ==
     /\ open' = open
     /\ UNCHANGED <<phase, cpu, uptime, storedCpu, storedUptime, skill, autonomy, label, calls, wait, tick, owed, followed>>
 
+\* The deadline that bounds a start or a stop. It does not pretend the machine finished.
+MachineTimeout ==
+    \/ /\ phase = "Starting"
+       /\ phase' = "Off"
+       /\ calls' = "none"
+       /\ cpu' = "0%"
+       /\ uptime' = "Paused"
+       /\ skill' = FALSE
+       /\ label' = "Paused"
+       /\ stored
+       /\ clock
+    \/ /\ phase = "Stopping"
+       /\ phase' = "Paused"
+       /\ calls' = "none"
+       /\ cpu' = "0%"
+       /\ uptime' = "Paused"
+       /\ skill' = FALSE
+       /\ label' = "Paused"
+       /\ stored
+       /\ clock
+
 \* The older write arrives after a newer one. The stored on stays.
 ArriveOlder ==
     /\ open = 1 /\ commit >= 1
@@ -342,6 +363,7 @@ Next ==
     \/ FailDuringRead
     \/ StaleReadEnds
     \/ RefreshTimeout
+    \/ MachineTimeout
     \/ OpenOlder
     \/ CommitNewer
     \/ ArriveOlder
@@ -350,13 +372,14 @@ Next ==
     \/ Stay
 
 WaitEnds ==
-    /\ [](phase = "Starting" => <>(phase = "On"))
+    /\ [](phase = "Starting" => <>(phase \in {"On", "Off"}))
     /\ [](phase = "Stopping" => <>(phase = "Paused"))
     /\ [](wait # "none" => <>(wait = "none"))
 
 Spec == Init /\ [][Next]_vars
-    /\ WF_vars(Boot) /\ WF_vars(Halt)
-    /\ WF_vars(MarkLate) /\ WF_vars(RefreshTimeout)
+    /\ WF_vars(MarkLate)
+    /\ WF_vars(RefreshTimeout)
+    /\ WF_vars(MachineTimeout)
 
 \* A change of autonomy leaves the phase, the machine, the skill, and the label.
 AutonomyStable ==

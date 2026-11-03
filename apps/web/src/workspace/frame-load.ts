@@ -1,3 +1,5 @@
+import { isRedirect } from "@tanstack/react-router";
+
 import { currentWrites } from "#/workspace/approval-count.ts";
 
 import type { WorkspaceFrameData } from "./types.ts";
@@ -55,6 +57,8 @@ export async function loadHeldFrame(
 	try {
 		return acceptFrameLoad(writeAt, await read(), epochAtStart);
 	} catch (error) {
+		// A signed-out reload is a redirect to /signin. It is not a failed read.
+		if (isRedirect(error)) throw error;
 		const kept = retainFailedFrame(epochAtStart);
 		if (!kept) throw error;
 		return kept;

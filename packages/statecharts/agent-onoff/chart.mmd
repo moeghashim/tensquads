@@ -42,9 +42,10 @@ stateDiagram-v2
   s2 --> s5: the write fails
   s2 --> s6: the deadline passes
   s2 --> s1: the write response arrives
+  s3 --> s0: the start or stop deadline passes
   s3 --> s1: it starts
   s3 --> s2: you queue a change
-  s4 --> s7: it stops
+  s4 --> s7: it stops or the start or stop deadline passes
   s4 --> s2: you queue a change
   s5 --> s0: the recovery wait ends at its bound
   s5 --> s8: one recovery read starts

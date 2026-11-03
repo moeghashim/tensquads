@@ -40,6 +40,7 @@ function deadlineWindow(deadlineAt: number | undefined): { readonly absolute: nu
 
 async function commitChange<T>(
 	db: AppDatabase,
+	accountId: string,
 	deadlineAt: number | undefined,
 	work: (tx: Tx) => Promise<T>,
 ): Promise<T> {
@@ -50,7 +51,7 @@ async function commitChange<T>(
 			constrainDeadline(window.absolute);
 			return work(tx);
 		},
-		{ deadlineMs: window.remaining },
+		{ deadlineMs: window.remaining, accountId },
 	);
 }
 
@@ -130,7 +131,7 @@ export async function setAgentOn(
 	deadlineAt?: number,
 ): Promise<Fenced<StoredAgentOn>> {
 	const accountId = accountIdOf(scope);
-	return commitChange(db, deadlineAt, async (tx) => {
+	return commitChange(db, accountId, deadlineAt, async (tx) => {
 		const claimed = await claimWriteFence(tx, accountId, `${agentId}:running`, fence);
 		if (!claimed) {
 			return { status: "superseded", row: await readAgentOn(tx, accountId, agentId) };
@@ -176,7 +177,7 @@ export async function setSkillOn(
 	deadlineAt?: number,
 ): Promise<Fenced<StoredSkillOn>> {
 	const accountId = accountIdOf(scope);
-	return commitChange(db, deadlineAt, async (tx) => {
+	return commitChange(db, accountId, deadlineAt, async (tx) => {
 		const claimed = await claimWriteFence(tx, accountId, skillId, fence);
 		if (!claimed) {
 			return { status: "superseded", row: await readSkillOn(tx, accountId, agentId, skillId) };
@@ -214,7 +215,7 @@ export async function setAutonomy(
 	deadlineAt?: number,
 ): Promise<Fenced<StoredAutonomy>> {
 	const accountId = accountIdOf(scope);
-	return commitChange(db, deadlineAt, async (tx) => {
+	return commitChange(db, accountId, deadlineAt, async (tx) => {
 		const claimed = await claimWriteFence(tx, accountId, `${agentId}:autonomy`, fence);
 		if (!claimed) {
 			return { status: "superseded", row: await readAutonomy(tx, accountId, agentId) };
@@ -282,5 +283,5 @@ export async function askRevise(
 	deadlineAt?: number,
 ): Promise<void> {
 	const accountId = accountIdOf(scope);
-	await commitChange(db, deadlineAt, (tx) => insertRevision(tx, accountId, agentId, Date.now()));
+	await commitChange(db, accountId, deadlineAt, (tx) => insertRevision(tx, accountId, agentId, Date.now()));
 }

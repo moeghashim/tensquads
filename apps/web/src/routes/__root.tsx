@@ -59,7 +59,9 @@ function ClerkAccountReset({ children }: { readonly children: ReactNode }) {
 		if (wasLoaded) {
 			queueMicrotask(() => {
 				resetAgentClientState();
-				if (next !== null) void router.invalidate({ sync: true });
+				// Sign-out reloads the workspace, and that loader redirects to /signin.
+				// A switch reloads the signed-in account instead of leaving the old page blank.
+				void router.invalidate({ sync: true });
 			});
 		}
 	}

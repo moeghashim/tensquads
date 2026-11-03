@@ -61,6 +61,7 @@ const labels = {
 	ReadAfterFailure: "one recovery read starts",
 	ConfirmRead: "the recovery read returns",
 	RefreshTimeout: "the recovery wait ends at its bound",
+	MachineTimeout: "the start or stop deadline passes",
 	FailDuringRead: "a later write fails during the recovery read",
 	StaleReadEnds: "the old read ends and the later failure remains",
 };
