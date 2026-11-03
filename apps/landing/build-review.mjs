@@ -3,6 +3,7 @@ import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DIAGRAM_CSS, DIAGRAMS, summary } from "./review-src/diagrams.mjs";
+import { QUESTIONS_CSS, questionsHtml } from "./review-src/questions.mjs";
 import { readStatus } from "./review-src/status.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -68,7 +69,7 @@ writeFileSync(
 	join(out, "index.html"),
 	page(
 		"tensquads review",
-		`<h1>tensquads review</h1><p class="note">For team review. Build plan at commit ${sha}. Design canvas version ${manifest.version}. The design files are the originals, and they are interactive.</p><h2>Build plan</h2><a class="card" href="/review/plan">Build plan<span>Decisions, architecture, phases and the proof of concept</span></a><h2>Design</h2>${cards}`,
+		`<h1>tensquads review</h1><p class="note">For team review. Build plan at commit ${sha}. Design canvas version ${manifest.version}. The design files are the originals, and they are interactive.</p><h2>Build plan</h2><a class="card" href="/review/plan">Build plan<span>Decisions, architecture, phases, the proof of concept, and the build status of each part</span></a><h2 id="open-questions">Open questions</h2><p class="note">Not decided yet. Each has a recommended answer for the team to discuss.</p>${QUESTIONS_CSS}${questionsHtml()}<h2>Design</h2>${cards}`,
 	),
 );
 console.log("built", canvas.order.length, "design files from", sha, "manifest", manifest.version);
