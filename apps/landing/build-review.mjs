@@ -2,7 +2,9 @@ import { execFileSync } from "node:child_process";
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { DIAGRAM_CSS, DIAGRAM_NOTE, DIAGRAMS } from "./review-src/diagrams.mjs";
+import { DIAGRAM_CSS, DIAGRAMS, summary } from "./review-src/diagrams.mjs";
+import { QUESTIONS_CSS, questionsHtml } from "./review-src/questions.mjs";
+import { readStatus } from "./review-src/status.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "../..");
@@ -10,6 +12,8 @@ const out = join(here, "public/review");
 const ref = process.argv[2] ?? "HEAD";
 const git = (...args) => execFileSync("git", args, { cwd: root, encoding: "utf8", maxBuffer: 1 << 26 });
 const sha = git("rev-parse", "--short", ref).trim();
+const date = git("log", "-1", "--format=%cs", ref).trim();
+const status = readStatus(git, ref);
 
 rmSync(join(here, "public"), { recursive: true, force: true });
 mkdirSync(join(out, "design"), { recursive: true });
@@ -46,7 +50,7 @@ const plan = git("show", `${ref}:docs/PLAN.md`)
 	.replaceAll("tensquads.co", "10squads.com")
 	.replace(/&#91;embedded content: ([^\\\]·]*?) ·[^\]]*\]/g, (line, name) => {
 		if (!DIAGRAMS[name.trim()]) throw new Error(`No diagram for: ${line}`);
-		return `\n\n${DIAGRAMS[name.trim()].replace(/\n/g, "")}${DIAGRAM_NOTE}\n\n`;
+		return `\n\n${DIAGRAMS[name.trim()](status).replace(/\n/g, "")}\n\n`;
 	});
 if (plan.includes("embedded content")) throw new Error("A diagram placeholder is left in the plan.");
 const planFile = join(here, ".plan.tmp.md");
@@ -55,7 +59,7 @@ const html = execFileSync("npx", ["--yes", "marked@15", "--gfm", "-i", planFile]
 rmSync(planFile);
 writeFileSync(
 	join(out, "plan.html"),
-	page("tensquads build plan", `<p class="note"><a href="/review/">Back to review</a> · Plan at commit ${sha}, with the 10squads.com domain edit.</p>${DIAGRAM_CSS}${html.replaceAll("<table>", '<div class="scroll"><table>').replaceAll("</table>", "</table></div>")}`),
+	page("tensquads build plan", `<p class="note"><a href="/review/">Back to review</a> · Plan at commit ${sha}, with the 10squads.com domain edit.</p>${DIAGRAM_CSS}${html.replace("</h1>", `</h1>${summary(status, sha, date)}`).replaceAll("<table>", '<div class="scroll"><table>').replaceAll("</table>", "</table></div>")}`),
 );
 
 const cards = canvas.order
@@ -65,7 +69,7 @@ writeFileSync(
 	join(out, "index.html"),
 	page(
 		"tensquads review",
-		`<h1>tensquads review</h1><p class="note">For team review. Build plan at commit ${sha}. Design canvas version ${manifest.version}. The design files are the originals, and they are interactive.</p><h2>Build plan</h2><a class="card" href="/review/plan">Build plan<span>Decisions, architecture, phases and the proof of concept</span></a><h2>Design</h2>${cards}`,
+		`<h1>tensquads review</h1><p class="note">For team review. Build plan at commit ${sha}. Design canvas version ${manifest.version}. The design files are the originals, and they are interactive.</p><h2>Build plan</h2><a class="card" href="/review/plan">Build plan<span>Decisions, architecture, phases, the proof of concept, and the build status of each part</span></a><h2 id="open-questions">Open questions</h2><p class="note">Not decided yet. Each has a recommended answer for the team to discuss.</p>${QUESTIONS_CSS}${questionsHtml()}<h2>Design</h2>${cards}`,
 	),
 );
 console.log("built", canvas.order.length, "design files from", sha, "manifest", manifest.version);
