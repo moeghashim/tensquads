@@ -53,7 +53,7 @@ const writeChip =
 const contents = "display: contents";
 
 export function TrafficPage({ data }: { readonly data: TrafficData }) {
-	const { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive } = useWorkspace();
+	const { frame, selEvent, setSelEvent, busFilter, setBusFilter, live, setLive } = useWorkspace();
 	const refresh = useRefresh();
 	const selectedId = selectedEventId(data.events, selEvent);
 	const names = agentNames(data.agents);
@@ -98,7 +98,7 @@ export function TrafficPage({ data }: { readonly data: TrafficData }) {
 							data-handler="simulate"
 							data-event="onClick"
 							onClick={async () => {
-								await sendNextEvent(refresh);
+								await sendNextEvent(refresh, frame.accountId);
 								const id = consumeQueuedEvent();
 								if (id.length > 0) setSelEvent(id);
 							}}

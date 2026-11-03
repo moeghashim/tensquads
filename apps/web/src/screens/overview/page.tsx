@@ -132,7 +132,7 @@ export function OverviewPage({ data }: { readonly data: OverviewData & { readonl
 	const navigate = useNavigate();
 	const refresh = useRefresh();
 	const router = useRouter();
-	const { approvalCount, noteDecision } = useWorkspace();
+	const { frame, approvalCount, noteDecision } = useWorkspace();
 	const patches = useSyncExternalStore(subscribeOverviewPage, patchSnapshot, () => emptyPatches);
 	useFreshOverview(data, noteDecision);
 	const shown = presentOverview(data, patches);
@@ -161,12 +161,12 @@ export function OverviewPage({ data }: { readonly data: OverviewData & { readonl
 	};
 	const decide = (id: string, ok: boolean) => {
 		accept({ key: `spend:${id}`, kind: ok ? "spend-approve" : "spend-decline", id }, (signal) =>
-			decideOverview({ data: { id, ok }, signal }),
+			decideOverview({ data: { accountId: frame.accountId, id, ok }, signal }),
 		);
 	};
 	const decideMission = (id: string, ok: boolean) => {
 		accept({ key: `mission:${id}`, kind: ok ? "mission-approve" : "mission-revise", id }, (signal) =>
-			decideMissionOverview({ data: { id, ok }, signal }),
+			decideMissionOverview({ data: { accountId: frame.accountId, id, ok }, signal }),
 		);
 	};
 	return (

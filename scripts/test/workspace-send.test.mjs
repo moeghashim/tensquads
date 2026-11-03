@@ -85,7 +85,7 @@ const bundle = await esbuild.build({
 				}));
 				build.onLoad({ filter: /.*/, namespace: "boundary" }, () => ({
 					contents: `
-     export const beginWorkspaceSend = ({data}) => window.beginSend(data);
+     export const beginWorkspaceSend = ({data}) => window.beginSend(data.text);
      export const finishWorkspaceSend = ({data, signal}) => {
       if (window.holdFinish) {
        window.finishHeld = true;
@@ -96,7 +96,7 @@ const bundle = await esbuild.build({
         else signal.addEventListener("abort", abort, { once: true });
        });
       }
-      return window.finishSend(data);
+      return window.finishSend(data.text);
      };
     `,
 				}));
@@ -136,7 +136,7 @@ async function withDock(t, run) {
 			return result;
 		});
 		await page.exposeFunction("readFrame", async () => {
-			return readWorkspaceFrame(db, scope);
+			return { ...await readWorkspaceFrame(db, scope), accountId: scope.accountId };
 		});
 		const mount = async () => {
 			await page.setContent('<div id="root"></div>');

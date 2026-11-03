@@ -79,6 +79,7 @@ export function WorkspaceProvider({
 	useMountedFlag(mounted);
 
 	const submit = useSubmit(draft, thinking, {
+		accountId: frame.accountId,
 		mounted,
 		setDraft,
 		setMessages,
@@ -323,9 +324,9 @@ function InspectBridge({ children }: { readonly children: ReactNode }) {
 }
 
 function LiveTimer() {
-	const { live, setSelEvent } = useWorkspace();
+	const { frame, live, setSelEvent } = useWorkspace();
 	const refresh = useRefresh();
-	useLiveClock(live, refreshTraffic(refresh, setSelEvent));
+	useLiveClock(frame.accountId, live, refreshTraffic(refresh, setSelEvent));
 	return null;
 }
 
@@ -346,9 +347,9 @@ function useMountedFlag(mounted: { current: boolean }) {
 	useSyncExternalStore(subscribe, idleSnapshot, idleSnapshot);
 }
 
-function useLiveClock(live: boolean, refresh: () => Promise<void>) {
-	const tick = useRef({ live, refresh });
-	tick.current = { live, refresh };
+function useLiveClock(accountId: string, live: boolean, refresh: () => Promise<void>) {
+	const tick = useRef({ accountId, live, refresh });
+	tick.current = { accountId, live, refresh };
 	// The clock must not notify React. A render here would move the screenshot.
 	const subscribe = useCallback((_onStoreChange: () => void) => {
 		const timer = setInterval(() => {
@@ -362,6 +363,7 @@ function useLiveClock(live: boolean, refresh: () => Promise<void>) {
 }
 
 interface SendHooks {
+	readonly accountId: string;
 	readonly mounted: { current: boolean };
 	readonly setDraft: Dispatch<SetStateAction<string>>;
 	readonly setMessages: (messages: WorkspaceFrameData["messages"]) => void;
@@ -411,7 +413,9 @@ async function sendDraft(value: string, hooks: SendHooks) {
 }
 
 async function performSend(value: string, hooks: SendHooks) {
-	const started = await bounded((signal) => beginWorkspaceSend({ data: value, signal }));
+	const started = await bounded((signal) =>
+		beginWorkspaceSend({ data: { accountId: hooks.accountId, text: value }, signal }),
+	);
 	if (!hooks.mounted.current) {
 		return;
 	}
@@ -443,7 +447,9 @@ async function finishWorkingSend(
 	if (!hooks.mounted.current) {
 		return;
 	}
-	const finished = await bounded((signal) => finishWorkspaceSend({ data: started.taskId, signal }));
+	const finished = await bounded((signal) =>
+		finishWorkspaceSend({ data: { accountId: hooks.accountId, text: started.taskId }, signal }),
+	);
 	if (hooks.mounted.current && finished.kind === "replied") {
 		hooks.setMessages(finished.messages);
 	}

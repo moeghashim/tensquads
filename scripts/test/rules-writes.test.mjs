@@ -67,7 +67,7 @@ const bundle = await build({
 				});
 				return <WorkspaceContext.Provider value={{
 					ruleForm, setRuleForm, refresh: () => { window.beginRulesRead(); return window.refresh(); },
-					frame: { masterName: "Master", agents: [{id: "orders", name: "Orders"}, {id: "support", name: "Support"}] },
+					frame: { accountId: "rules-account", masterName: "Master", agents: [{id: "orders", name: "Orders"}, {id: "support", name: "Support"}] },
 					helpers: { gateStyle, switchParts }
 				}}>
 					<button onClick={() => setShowRules(false)}>Leave rules</button>
@@ -96,7 +96,8 @@ const bundle = await build({
 					contents: `
 					function withoutFence(data) {
 						if (!data || typeof data !== "object") return data;
-						const { tab, seq, retires, ...rest } = data;
+						if (data.accountId !== "rules-account") throw new Error("Wrong account");
+						const { accountId, tab, seq, retires, ...rest } = data;
 						return rest;
 					}
 					function asWritten(data, row) {

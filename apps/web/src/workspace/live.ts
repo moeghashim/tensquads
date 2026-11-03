@@ -1,13 +1,14 @@
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 
 export interface LiveTick {
+	readonly accountId: string;
 	readonly live: boolean;
 	readonly refresh: () => void | Promise<void>;
 }
 
 // The route registers this call. This file cannot import the server function.
 // The dock bundle test compiles this module without the server-function compiler.
-type Advance = (options: { signal: AbortSignal }) => Promise<string>;
+type Advance = (options: { data: string; signal: AbortSignal }) => Promise<string>;
 let advance: Advance | null = null;
 
 export function registerTrafficAdvance(fn: Advance) {
@@ -18,6 +19,7 @@ let pending = false;
 let queuedEventId = "";
 
 interface QueuedClick {
+	readonly accountId: string;
 	readonly refresh: () => void | Promise<void>;
 	readonly resolve: () => void;
 	readonly reject: (error: unknown) => void;
@@ -55,12 +57,12 @@ function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
 	});
 }
 
-async function step(refresh: () => void | Promise<void>): Promise<void> {
+async function step(accountId: string, refresh: () => void | Promise<void>): Promise<void> {
 	let id = "";
 	try {
 		const call = advance;
 		if (!call) throw new Error("Traffic advance is not configured.");
-		id = await bounded((signal) => call({ signal }));
+		id = await bounded((signal) => call({ data: accountId, signal }));
 	} catch {
 		id = "";
 	}
@@ -77,12 +79,12 @@ function pump(): void {
 	const next = clicks.shift();
 	if (!next) return;
 	pending = true;
-	void runOwned(next.refresh, next);
+	void runOwned(next.accountId, next.refresh, next);
 }
 
-async function runOwned(refresh: () => void | Promise<void>, done: QueuedClick | null): Promise<void> {
+async function runOwned(accountId: string, refresh: () => void | Promise<void>, done: QueuedClick | null): Promise<void> {
 	try {
-		await step(refresh);
+		await step(accountId, refresh);
 		done?.resolve();
 	} catch (error) {
 		if (done) {
@@ -102,12 +104,12 @@ async function runOwned(refresh: () => void | Promise<void>, done: QueuedClick |
 export async function runLiveTick(tick: LiveTick): Promise<void> {
 	if (!tick.live || pending || clicks.length > 0) return;
 	pending = true;
-	await runOwned(tick.refresh, null);
+	await runOwned(tick.accountId, tick.refresh, null);
 }
 
-export function sendNextEvent(refresh: () => void | Promise<void>): Promise<void> {
+export function sendNextEvent(refresh: () => void | Promise<void>, accountId: string): Promise<void> {
 	return new Promise((resolve, reject) => {
-		clicks.push({ refresh, resolve, reject });
+		clicks.push({ accountId, refresh, resolve, reject });
 		pump();
 	});
 }

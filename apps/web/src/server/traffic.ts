@@ -53,11 +53,16 @@ export const loadTraffic = createServerFn({ method: "GET" }).handler(async (): P
 	});
 });
 
-export const advanceTraffic = createServerFn({ method: "POST" }).handler(async (): Promise<string> => {
-	const startedAt = Date.now();
-	const { requireWorkspace } = await import("./workspace-session.ts");
-	return requireWorkspace(async (scope, db) => {
-		const { advanceTrafficAccount } = await import("./traffic-step.ts");
-		return advanceTrafficAccount(db, scope, startedAt);
+export const advanceTraffic = createServerFn({ method: "POST" })
+	.validator((input: unknown): string => {
+		if (typeof input !== "string" || input.length === 0) throw new Error("The workspace write did not finish.");
+		return input;
+	})
+	.handler(async ({ data }): Promise<string> => {
+		const startedAt = Date.now();
+		const { requireWorkspace } = await import("./workspace-session.ts");
+		return requireWorkspace(async (scope, db) => {
+			const { advanceTrafficAccount } = await import("./traffic-step.ts");
+			return advanceTrafficAccount(db, scope, startedAt);
+		}, { accountId: data, startedAt });
 	});
-});

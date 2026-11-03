@@ -36,10 +36,12 @@ export const loadRulesPage = createServerFn({ method: "GET" }).handler(async ():
 		]);
 		return {
 			rules,
-			limits: limitDefinitions.map((definition) => ({
-				...definition,
-				value: numberLimit(store[definition.key]),
-			})),
+			limits: limitDefinitions.some((definition) => store[definition.key] === undefined)
+				? []
+				: limitDefinitions.map((definition) => ({
+						...definition,
+						value: numberLimit(store[definition.key]),
+					})),
 		};
 	});
 });
@@ -57,7 +59,7 @@ export interface RulesWrite<T> {
 export const setRuleEnabled = createServerFn({ method: "POST" })
 	.validator(validateRuleOn)
 	.handler(async ({ data }): Promise<RulesWrite<RulesRule>> => {
-		return writeThroughKernel((kernel, scope, deadlineAt) =>
+		return writeThroughKernel(data.accountId, (kernel, scope, deadlineAt) =>
 			kernel.setRuleOn(scope, data.id, data.on, { tab: data.tab, seq: data.seq, retires: data.retires }, deadlineAt),
 		);
 	});
@@ -65,13 +67,13 @@ export const setRuleEnabled = createServerFn({ method: "POST" })
 export const addWorkspaceRule = createServerFn({ method: "POST" })
 	.validator(validateDraft)
 	.handler(async ({ data }): Promise<RulesRule | null> => {
-		return writeThroughKernel((kernel, scope, deadlineAt) => kernel.addRule(scope, data, deadlineAt));
+		return writeThroughKernel(data.accountId, (kernel, scope, deadlineAt) => kernel.addRule(scope, data, deadlineAt));
 	});
 
 export const setRuleLimit = createServerFn({ method: "POST" })
 	.validator(validateLimit)
 	.handler(async ({ data }): Promise<RulesWrite<RulesLimitValue>> => {
-		return writeThroughKernel((kernel, scope, deadlineAt) =>
+		return writeThroughKernel(data.accountId, (kernel, scope, deadlineAt) =>
 			kernel.setLimit(
 				scope,
 				data.key,
@@ -83,6 +85,7 @@ export const setRuleLimit = createServerFn({ method: "POST" })
 	});
 
 async function writeThroughKernel<T>(
+	accountId: string,
 	work: (
 		kernel: {
 			setRuleOn(
@@ -116,7 +119,7 @@ async function writeThroughKernel<T>(
 		const { createRepositories } = await import("@tensquads/adapters");
 		const { Kernel } = await import("@tensquads/kernel");
 		return work(new Kernel(createRepositories(db)), scope, startedAt + PENDING_TASK_WINDOW_MS);
-	}, startedAt);
+	}, { accountId, startedAt });
 }
 
 function numberLimit(value: unknown): number {
@@ -131,20 +134,29 @@ function isRecord(input: unknown): input is Record<string, unknown> {
 }
 
 function validateRuleOn(input: unknown): {
+	readonly accountId: string;
 	readonly id: string;
 	readonly on: boolean;
 	readonly tab: string;
 	readonly seq: number;
 	readonly retires: readonly string[];
 } {
-	if (!isRecord(input) || typeof input.id !== "string" || input.id.length === 0 || typeof input.on !== "boolean") {
+	if (
+		!isRecord(input) ||
+		typeof input.accountId !== "string" ||
+		input.accountId.length === 0 ||
+		typeof input.id !== "string" ||
+		input.id.length === 0 ||
+		typeof input.on !== "boolean"
+	) {
 		throw new Error("The rule change is not valid.");
 	}
 	const fence = validateFence(input);
-	return { id: input.id, on: input.on, tab: fence.tab, seq: fence.seq, retires: fence.retires };
+	return { accountId: input.accountId, id: input.id, on: input.on, tab: fence.tab, seq: fence.seq, retires: fence.retires };
 }
 
 function validateDraft(input: unknown): {
+	readonly accountId: string;
 	readonly when: string;
 	readonly agent: string;
 	readonly action: string;
@@ -152,6 +164,8 @@ function validateDraft(input: unknown): {
 } {
 	if (
 		!isRecord(input) ||
+		typeof input.accountId !== "string" ||
+		input.accountId.length === 0 ||
 		typeof input.when !== "string" ||
 		typeof input.agent !== "string" ||
 		typeof input.action !== "string" ||
@@ -159,21 +173,29 @@ function validateDraft(input: unknown): {
 	) {
 		throw new Error("The new rule is not valid.");
 	}
-	return { when: input.when, agent: input.agent, action: input.action, approval: input.approval };
+	return { accountId: input.accountId, when: input.when, agent: input.agent, action: input.action, approval: input.approval };
 }
 
 function validateLimit(input: unknown): {
+	readonly accountId: string;
 	readonly key: string;
 	readonly value: number;
 	readonly tab: string;
 	readonly seq: number;
 	readonly retires: readonly string[];
 } {
-	if (!isRecord(input) || typeof input.key !== "string" || input.key.length === 0 || typeof input.value !== "number") {
+	if (
+		!isRecord(input) ||
+		typeof input.accountId !== "string" ||
+		input.accountId.length === 0 ||
+		typeof input.key !== "string" ||
+		input.key.length === 0 ||
+		typeof input.value !== "number"
+	) {
 		throw new Error("The limit change is not valid.");
 	}
 	const fence = validateFence(input);
-	return { key: input.key, value: input.value, tab: fence.tab, seq: fence.seq, retires: fence.retires };
+	return { accountId: input.accountId, key: input.key, value: input.value, tab: fence.tab, seq: fence.seq, retires: fence.retires };
 }
 
 function validateFence(input: Record<string, unknown>): {

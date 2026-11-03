@@ -207,10 +207,11 @@ function RuleRow({
 	readonly refresh: () => Promise<void>;
 	readonly setPending: SetPending;
 }) {
+	const { frame } = useWorkspace();
 	const on = shownRuleOn(rule, loaded);
 	const parts = switchParts(on);
 	const toggle = () => {
-		toggleRow(rule, loaded, refresh, setPending);
+		toggleRow(rule, loaded, frame.accountId, refresh, setPending);
 	};
 	return (
 		<div style={css(ruleRow)}>
@@ -259,6 +260,7 @@ function NewRule({
 	readonly setPending: SetPending;
 	readonly refresh: () => Promise<void>;
 }) {
+	const { frame } = useWorkspace();
 	return (
 		<section aria-label="New rule" style={css(newRuleCard)}>
 			<h2 style={css(heading)}>New rule</h2>
@@ -328,7 +330,7 @@ function NewRule({
 					type="button"
 					data-handler="addRule"
 					data-event="onClick"
-					onClick={() => addRule(form, setForm, setPending, refresh)}
+					onClick={() => addRule(form, frame.accountId, setForm, setPending, refresh)}
 					style={css(addButton)}
 				>
 					Add rule
@@ -366,7 +368,7 @@ function shownRuleOn(rule: RulesRule, loaded: boolean): boolean {
 	return shownOn(rule.id, loaded);
 }
 
-function toggleRow(rule: RulesRule, loaded: boolean, refresh: () => Promise<void>, setPending: SetPending) {
+function toggleRow(rule: RulesRule, loaded: boolean, accountId: string, refresh: () => Promise<void>, setPending: SetPending) {
 	const id = rowOwners.get(rule.id);
 	if (id !== undefined && submissions.has(id)) {
 		const next = !(pendingShown.get(id) ?? true);
@@ -375,10 +377,10 @@ function toggleRow(rule: RulesRule, loaded: boolean, refresh: () => Promise<void
 		setPending((items) => items.map((item) => (item.id === id ? { ...item, row: { ...item.row, on: next } } : item)));
 		return;
 	}
-	queueRule(rule.id, !shownOn(rule.id, loaded), refresh);
+	queueRule(rule.id, !shownOn(rule.id, loaded), accountId, refresh);
 }
 
-function addRule(form: RuleForm, setForm: SetRuleForm, setPending: SetPending, refresh: () => Promise<void>) {
+function addRule(form: RuleForm, accountId: string, setForm: SetRuleForm, setPending: SetPending, refresh: () => Promise<void>) {
 	const typed = form.action;
 	const action = typed.trim();
 	if (action.length === 0) {
@@ -407,7 +409,7 @@ function addRule(form: RuleForm, setForm: SetRuleForm, setPending: SetPending, r
 		},
 	]);
 	setForm((current) => ({ ...current, action: "" }));
-	void saveRule(form, submission, setForm, setPending, refresh);
+	void saveRule(form, accountId, submission, setForm, setPending, refresh);
 }
 
 function leftAccount(epoch: number): boolean {
@@ -416,6 +418,7 @@ function leftAccount(epoch: number): boolean {
 
 async function saveRule(
 	form: RuleForm,
+	accountId: string,
 	submission: Submission,
 	setForm: SetRuleForm,
 	setPending: SetPending,
@@ -427,7 +430,7 @@ async function saveRule(
 	try {
 		result = await bounded((signal) =>
 			addWorkspaceRule({
-				data: { when: form.when, agent: form.agent, action: typed, approval: form.approval },
+				data: { accountId, when: form.when, agent: form.agent, action: typed, approval: form.approval },
 				signal,
 			}),
 		);
@@ -455,7 +458,7 @@ async function saveRule(
 	placeRule(result);
 	dropPending(id, rowId, setPending);
 	if (wanted !== undefined && wanted !== result.on) {
-		queueRule(result.id, wanted, refresh);
+		queueRule(result.id, wanted, accountId, refresh);
 		return;
 	}
 	await readIfNeeded(refresh);
@@ -475,6 +478,7 @@ function Limits({
 	readonly limits: RulesPageData["limits"];
 	readonly refresh: () => Promise<void>;
 }) {
+	const { frame } = useWorkspace();
 	return (
 		<section aria-label="Limits" style={css(limitsCard)}>
 			<h2 style={css(heading)}>Limits for every agent</h2>
@@ -496,7 +500,7 @@ function Limits({
 								value={value}
 								data-handler="l.change"
 								data-event="onChange"
-								onChange={(event) => queueLimit(limit.key, Number(event.target.value), refresh)}
+								onChange={(event) => queueLimit(limit.key, Number(event.target.value), frame.accountId, refresh)}
 								style={css(sliderStyle)}
 							/>
 						</div>
