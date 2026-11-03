@@ -1,0 +1,35 @@
+[
+  {
+    "requested": "/admin",
+    "landed": "/signin",
+    "title": "Sign in",
+    "heading": [
+      "Sign in to tensquads"
+    ],
+    "adminNavigation": 0
+  },
+  {
+    "requested": "/admin/images",
+    "landed": "/signin",
+    "title": "Sign in",
+    "heading": [
+      "Sign in to tensquads"
+    ],
+    "adminNavigation": 0
+  },
+  {
+    "requested": "/overview",
+    "landed": "/signin",
+    "title": "Sign in",
+    "heading": [
+      "Sign in to tensquads"
+    ],
+    "adminNavigation": 0
+  },
+  {
+    "requested": "/overview with forged future special-session cookie",
+    "landed": "/signin",
+    "adminNavigation": 0,
+    "northwindVisible": 0
+  }
+]

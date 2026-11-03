@@ -1,0 +1,55 @@
+[
+  {
+    "requested": "/admin",
+    "destination": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  },
+  {
+    "requested": "/admin/images",
+    "destination": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  },
+  {
+    "requested": "/overview",
+    "destination": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  },
+  {
+    "requested": "/chat",
+    "destination": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  },
+  {
+    "requested": "/agents",
+    "destination": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  },
+  {
+    "requested": "/traffic",
+    "destination": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  },
+  {
+    "requested": "/rules",
+    "destination": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  },
+  {
+    "requested": "/agents/orders",
+    "destination": "/signin",
+    "status": 200,
+    "title": "Sign in"
+  },
+  {
+    "action": "visitor forges future Northwind cookie",
+    "destination": "/signin",
+    "northwindVisible": 0
+  }
+]

@@ -1,57 +1,14 @@
 [
   {
     "requested": "/admin",
-    "forgedAccountCookie": false,
-    "url": "http://localhost:3000/signin",
+    "landed": "http://localhost:3000/signin",
     "title": "Sign in",
-    "heading": [
-      "Sign in to tensquads"
-    ],
-    "adminNavigationPresent": false,
-    "targetAccountVisible": false
+    "adminNavigation": 0
   },
   {
     "requested": "/admin/images",
-    "forgedAccountCookie": false,
-    "url": "http://localhost:3000/signin",
+    "landed": "http://localhost:3000/signin",
     "title": "Sign in",
-    "heading": [
-      "Sign in to tensquads"
-    ],
-    "adminNavigationPresent": false,
-    "targetAccountVisible": false
-  },
-  {
-    "requested": "/admin",
-    "forgedAccountCookie": true,
-    "url": "http://localhost:3000/signin",
-    "title": "Sign in",
-    "heading": [
-      "Sign in to tensquads"
-    ],
-    "adminNavigationPresent": false,
-    "targetAccountVisible": false
-  },
-  {
-    "requested": "/admin/images",
-    "forgedAccountCookie": true,
-    "url": "http://localhost:3000/signin",
-    "title": "Sign in",
-    "heading": [
-      "Sign in to tensquads"
-    ],
-    "adminNavigationPresent": false,
-    "targetAccountVisible": false
-  },
-  {
-    "requested": "/overview",
-    "forgedAccountCookie": true,
-    "url": "http://localhost:3000/signin",
-    "title": "Sign in",
-    "heading": [
-      "Sign in to tensquads"
-    ],
-    "adminNavigationPresent": false,
-    "targetAccountVisible": false
+    "adminNavigation": 0
   }
 ]
