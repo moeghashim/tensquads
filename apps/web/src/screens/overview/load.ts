@@ -1,3 +1,5 @@
+import { currentWrites } from "#/workspace/approval-count.ts";
+
 import type { OverviewData } from "./types.ts";
 
 export interface OverviewHeld extends OverviewData {
@@ -27,13 +29,13 @@ export function clearOverviewHold(): void {
 }
 
 export function rememberOverview(page: OverviewHeld): void {
-	if (!inBrowser() || needsRead) return;
+	if (!inBrowser() || needsRead || currentWrites() !== page.writeAt) return;
 	held = page;
 }
 
 function acceptOverviewLoad(writeAt: number, data: OverviewData, epochAtStart: number): OverviewHeld {
 	const page = { ...data, writeAt };
-	if (!inBrowser() || epochAtStart !== epoch) return page;
+	if (!inBrowser() || epochAtStart !== epoch || currentWrites() !== writeAt) return page;
 	held = page;
 	needsRead = false;
 	return page;
