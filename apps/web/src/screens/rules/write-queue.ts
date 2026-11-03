@@ -1,10 +1,9 @@
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import { useSyncExternalStore } from "react";
 
-import { resetDecisions } from "#/screens/overview/actions.ts";
 import { clearOverviewHold } from "#/screens/overview/load.ts";
 import { type RulesLimitValue, type RulesRule, type RulesWrite, setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
-import { clearFrameHold } from "#/workspace/frame-load.ts";
+import { clearFrameHold, onFrameAccountReset } from "#/workspace/frame-load.ts";
 import { confirmRetired, nextWriteFence } from "#/write-fence.ts";
 
 interface Flight<T> {
@@ -22,6 +21,8 @@ let recoveryGeneration = 0;
 let accountEpoch = 0;
 let signedInUser: string | null | undefined;
 const accountResets = new Set<() => void>();
+
+onFrameAccountReset(resetTargetAccount);
 
 export function readNeeded(): boolean {
 	return needsRead;
@@ -59,7 +60,6 @@ export function watchSignedInUser(userId: string | null): void {
 // A row click and All companies change the target account without a new Clerk user.
 export function resetTargetAccount(): void {
 	if (typeof window === "undefined") return;
-	resetDecisions();
 	dropAccountState();
 }
 

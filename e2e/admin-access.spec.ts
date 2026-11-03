@@ -135,7 +135,8 @@ async function createOwner(databaseUrl: string, accountId: string, user: ClerkTe
 async function callAdmin(page: Page) {
 	return page.evaluate(async () => {
 		try {
-			const mod = (await import("/src/server/admin.ts")) as {
+			const specifier = ["", "src", "server", "admin.ts"].join("/");
+			const mod = (await import(specifier)) as {
 				loadAdminAccounts: () => Promise<unknown>;
 			};
 			const accounts = await mod.loadAdminAccounts();
