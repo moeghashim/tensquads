@@ -67,6 +67,7 @@ test("approve adds one task, sets the last line, and writes the Mandate", async 
 }) => {
 	await openWorkspace(page, workspaceUser);
 	await expect(page.locator("[data-if='dockUnread']")).toHaveText("4");
+	const posted = decisionDone(page, "ap1");
 	await page.locator("main").getByRole("button", { name: "Approve", exact: true }).first().click();
 	await expect(
 		page.locator("main [data-loop='kpis'] > div").filter({ hasText: "Tasks done by squads" }),
@@ -76,6 +77,7 @@ test("approve adds one task, sets the last line, and writes the Mandate", async 
 	await expect(support).toContainText("97");
 	await expect(support).toContainText("Refund $42 on #A-1012 (approved)");
 	await expect(page.locator("main").getByRole("button", { name: "Approve", exact: true })).toHaveCount(2);
+	await posted;
 	const events = await generatedEvents(accountId);
 	expect(events.map((event) => event.kind)).toEqual(["Approval"]);
 	const mandate = await mandateFor(accountId, "ap1");
@@ -630,7 +632,9 @@ test("a held chat finish still writes the reply after an approval", async ({ pag
 		await refundCard(page).getByRole("button", { name: "Approve", exact: true }).click();
 		await expect(tasksTile(page)).toContainText("332", settled);
 		await held.finish();
-		await expect(page.getByText(marketingReply)).toBeVisible(settled);
+		await expect(page.getByRole("region", { name: "Chat with the master" }).getByText(marketingReply)).toBeVisible(
+			settled,
+		);
 		await expect(tasksTile(page)).toContainText("333", settled);
 		const events = await generatedEvents(accountId);
 		expect(events.map((event) => event.kind)).toContain("Result");
