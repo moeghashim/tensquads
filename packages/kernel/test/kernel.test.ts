@@ -16,6 +16,16 @@ test("the kernel loads the six plug-ins", () => {
 	assert.equal(kernel.repositories, null);
 });
 
+test("opening an account sends account.opened and writes nothing", async () => {
+	const kernel = new Kernel({
+		get platform() {
+			throw new Error("platform repository");
+		},
+	} as never);
+	const event = await kernel.openAccount({ accountId: "northwind", mode: "account" });
+	assert.deepEqual(event, { type: "account.opened", accountId: "northwind" });
+});
+
 test("the decider has no adapter in version 1", () => {
 	const kernel = new Kernel();
 	assert.throws(() => kernel.decider.decide("Which agent should take this task?", ["orders", "support"]), {

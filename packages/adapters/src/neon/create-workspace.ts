@@ -1,5 +1,5 @@
 import { type AccountScope, requireScope, type WorkspaceCreated, type WorkspaceDraft } from "@tensquads/domain";
-import { eq } from "drizzle-orm";
+import { eq, max } from "drizzle-orm";
 
 import type { AppDatabase } from "./postgres.ts";
 import { accounts, agents, machines, masters, squads, stateEntries, subscriptions } from "./schema.ts";
@@ -55,6 +55,9 @@ async function insertWorkspace(db: AppDatabase, accountId: string, draft: Worksp
 			return { accountId: found.id, created: false };
 		}
 		const now = new Date();
+		const highest = await tx.select({ value: max(accounts.sortOrder) }).from(accounts);
+		const current = highest[0]?.value;
+		const sortOrder = current === null || current === undefined ? 0 : current + 1;
 		await tx.insert(accounts).values({
 			id: accountId,
 			accountId,
@@ -66,10 +69,10 @@ async function insertWorkspace(db: AppDatabase, accountId: string, draft: Worksp
 			agents: draft.agents.length,
 			online: draft.agents.length,
 			tasks: 0,
-			lastActive: "",
-			createdWeek: 0,
+			lastActive: "Just now",
+			createdWeek: 7,
 			mission: draft.mission,
-			sortOrder: 0,
+			sortOrder,
 		});
 		await tx.insert(subscriptions).values({
 			accountId,

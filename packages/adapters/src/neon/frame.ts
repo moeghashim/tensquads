@@ -19,6 +19,7 @@ export interface WorkspaceFrame {
 	readonly accountName: string;
 	readonly owner: string;
 	readonly masterName: string;
+	readonly squadCount: number;
 	readonly agents: readonly FrameAgent[];
 	readonly approvalCount: number;
 	readonly messages: Awaited<ReturnType<typeof listMessages>>;
@@ -90,6 +91,7 @@ export async function readWorkspaceFrame(db: AppDatabase, scope: AccountScope): 
 		accountName: account.name,
 		owner: account.owner,
 		masterName: masterRows[0]?.name ?? "Master",
+		squadCount: account.agents,
 		agents: agentRows,
 		approvalCount: asCount(pending[0]?.total) + asCount(proposed[0]?.total),
 		messages: thread,
