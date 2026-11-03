@@ -3,6 +3,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } fr
 import { createServer } from "node:http";
 import { dirname, extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { charactersPage } from "./review-src/characters.mjs";
 import { DIAGRAM_CSS, DIAGRAMS, summary } from "./review-src/diagrams.mjs";
 import { QUESTIONS_CSS, questionsHtml } from "./review-src/questions.mjs";
 import { readStatus } from "./review-src/status.mjs";
@@ -111,7 +112,8 @@ writeFileSync(
 	join(out, "index.html"),
 	page(
 		"tensquads review",
-		`<h1>tensquads review</h1><p class="note">For team review. Build plan at commit ${sha}. Design canvas version ${manifest.version}.</p><h2>Build plan</h2><a class="card" href="/review/plan">Build plan<span>Decisions, architecture, phases, the proof of concept, and the build status of each part</span></a><h2>Design</h2><a class="card" href="/review/design/">Design<span>${canvas.order.length} screens from the design canvas, with thumbnails</span></a><h2 id="open-questions">Open questions</h2><p class="note">Not decided yet. Each has a recommended answer for the team to discuss.</p>${QUESTIONS_CSS}${questionsHtml()}`,
+		`<h1>tensquads review</h1><p class="note">For team review. Build plan at commit ${sha}. Design canvas version ${manifest.version}.</p><h2>Build plan</h2><a class="card" href="/review/plan">Build plan<span>Decisions, architecture, phases, the proof of concept, and the build status of each part</span></a><h2>Squadmates</h2><a class="card" href="/review/characters">Squadmates<span>Proposal: a name and a character for the master and each agent</span></a><h2>Design</h2><a class="card" href="/review/design/">Design<span>${canvas.order.length} screens from the design canvas, with thumbnails</span></a><h2 id="open-questions">Open questions</h2><p class="note">Not decided yet. Each has a recommended answer for the team to discuss.</p>${QUESTIONS_CSS}${questionsHtml()}`,
 	),
 );
+writeFileSync(join(out, "characters.html"), page("tensquads squadmates", charactersPage()));
 console.log("built", canvas.order.length, "design files from", sha, "manifest", manifest.version);
