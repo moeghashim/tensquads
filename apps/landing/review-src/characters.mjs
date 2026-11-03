@@ -1,5 +1,8 @@
 // The character sheet at /review/characters. A proposal for Moe, not product code.
-import { avatar, SQUADMATE_CSS, SQUADMATES, STATES } from "./squadmates.mjs";
+import { AGENT_LOOP_STATES, SQUADMATE_CSS, SQUADMATES, squadmateMarkup } from "@tensquads/squadmates";
+
+const STATES = AGENT_LOOP_STATES.map((state) => [state.id, state.label, state.hint]);
+const avatar = (mate, state, size) => squadmateMarkup(mate.id, state, size);
 
 const byId = Object.fromEntries(SQUADMATES.map((m) => [m.id, m]));
 

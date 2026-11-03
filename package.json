@@ -9,7 +9,8 @@
 		"packages/adapters",
 		"packages/domain",
 		"packages/kernel",
-		"packages/seed"
+		"packages/seed",
+		"packages/squadmates"
 	],
 	"scripts": {
 		"dco:fix": "git rebase --signoff",
