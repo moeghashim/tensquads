@@ -32,6 +32,11 @@ const revisingCopy = 'Master is writing a new proposal. The squad stays on "Miss
 const emptyInbox = "Nothing waiting. Your squads are working inside their limits.";
 const settled = { timeout: 15_000 };
 
+// A held route can still be fetching when its test ends. Drop it so it cannot fail the run.
+test.afterEach(async ({ page }) => {
+	await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 test("the overview shows the greeting, six tiles, fourteen bars, the inbox and five cards", async ({
 	page,
 	workspaceUser,
