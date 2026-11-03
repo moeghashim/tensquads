@@ -1,0 +1,33 @@
+---
+title: "Image release"
+---
+stateDiagram-v2
+  s0: Stable, No rollout
+  s1: Beta, No rollout
+  s2: Stable, Rolling out
+  s3: Needs attention, No rollout
+  s4: Draft, No rollout
+  s5: Beta, Rolling out
+  s6: Needs attention, Rolling out
+  s7: Draft, Rolling out
+  [*] --> s0
+  s0 --> s1: the status becomes Beta
+  s0 --> s2: a rollout starts
+  s0 --> s3: the status becomes Needs attention
+  s1 --> s0: the status becomes Stable
+  s1 --> s4: the status becomes Draft
+  s1 --> s5: a rollout starts
+  s2 --> s5: the status becomes Beta
+  s2 --> s6: the status becomes Needs attention
+  s3 --> s0: the status becomes Stable
+  s3 --> s6: a rollout starts
+  s4 --> s1: the status becomes Beta
+  s4 --> s7: a rollout starts
+  s5 --> s2: the status becomes Stable
+  s5 --> s7: the status becomes Draft
+  s2 --> s0: every account reaches the new version or the rollout stops after two failed checks
+  s6 --> s2: the status becomes Stable
+  s7 --> s5: the status becomes Beta
+  s5 --> s1: every account reaches the new version or the rollout stops after two failed checks
+  s6 --> s3: every account reaches the new version or the rollout stops after two failed checks
+  s7 --> s4: every account reaches the new version or the rollout stops after two failed checks

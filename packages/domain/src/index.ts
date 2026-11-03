@@ -3,6 +3,22 @@ export type { BusRepository } from "./bus/repository.ts";
 export { type NextEventCommand, planNextEvent, type TrafficCursor } from "./bus/traffic-commands.ts";
 export type { BusEvent, BusKind, StateEntry } from "./bus/types.ts";
 export type { CatalogEvent, ImageSelected } from "./catalog/events.ts";
+export {
+	attentionCount,
+	type ImageCatalogView,
+	type ImageDetailView,
+	type ImageFilter,
+	type ImageFilterChip,
+	type ImageKpi,
+	type ImageRowView,
+	INITIAL_IMAGE,
+	imageCatalogView,
+	NO_OPEN_BUGS,
+	NOT_DEPLOYED,
+	NOTHING_REQUESTED,
+	onLatestLine,
+	updatedThisWeek,
+} from "./catalog/image-view.ts";
 export type { CatalogRepository } from "./catalog/repository.ts";
 export type {
 	AgentImage,
@@ -25,6 +41,23 @@ export {
 export type { Message, MessageFrom, SendResult, SentTask, Thread } from "./conversation/types.ts";
 export type { Eval, Source, Trigger } from "./inbound.ts";
 export { chatSource, chatTrigger, evalChatTrigger } from "./inbound.ts";
+export {
+	type AccountAdminView,
+	type AccountBar,
+	type AccountFilter,
+	type AccountFilterChip,
+	type AccountKpi,
+	type AccountPlanMix,
+	type AccountRowView,
+	accountAdminView,
+	accountFilterStyle,
+	companyInitials,
+	MISSION_MISSING,
+	missionText,
+	money,
+	WEEK_LABELS,
+	weekCounts,
+} from "./platform/admin-view.ts";
 export type { AccountOpened, PlatformEvent } from "./platform/events.ts";
 export type { PlatformRepository } from "./platform/repository.ts";
 export type {
