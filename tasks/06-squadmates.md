@@ -19,7 +19,7 @@ The name belongs to the agent image, not to the account. No customer can change 
 
 | Image id | Character | Named after | Role tag |
 | --- | --- | --- | --- |
-| master | Petra | Petra, Jordan | Master |
+| master | Petra | Petra, Jordan | See step 8's text rule |
 | orders | Pisa | Pisa, Italy | Orders |
 | support | Kyoto | Kyoto, Japan | Support |
 | marketing | Rio | Rio de Janeiro, Brazil | Marketing |
