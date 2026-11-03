@@ -128,7 +128,7 @@ for (const kind of ["lim-refund", "lim-ads", "lim-reorder", "rule", "add"] as co
 		page,
 		workspaceUser,
 	}) => {
-		test.setTimeout(60_000);
+		test.setTimeout(90_000);
 		const rulesUrl = await captureRulesUrl(page, workspaceUser);
 		const gate = await failFirstPostAndRead(page, rulesUrl);
 		await act(page, kind);
@@ -136,7 +136,12 @@ for (const kind of ["lim-refund", "lim-ads", "lim-reorder", "rule", "add"] as co
 		await expect(page.getByRole("heading", { name: "Rules and limits", exact: true })).toBeVisible();
 		await restored(page, kind);
 		expect(gate.reads).toBe(1);
+		// The failed read has to be recorded before the next write, or that write joins it.
+		await expect.poll(() => recoveryGeneration(page)).toBeGreaterThanOrEqual(2);
 		await act(page, kind);
+		// The click has to send the write. The read cannot start until the write response arrives.
+		await expect.poll(() => gate.writesSeen).toBe(2);
+		await expect.poll(() => gate.writesDone, { timeout: 25_000 }).toBe(2);
 		await expect.poll(() => gate.reads).toBe(2);
 		await ended(page, kind);
 		await delay(500);
@@ -281,15 +286,24 @@ async function ended(page: Page, kind: "lim-refund" | "lim-ads" | "lim-reorder" 
 }
 
 async function failFirstPostAndRead(page: Page, rulesUrl: string) {
-	const gate = { postFailed: false, readFailed: false, reads: 0 };
+	const gate = { postFailed: false, readFailed: false, reads: 0, writesSeen: 0, writesDone: 0 };
 	await page.route("**/*", async (route) => {
 		const request = route.request();
 		const body = request.postData() ?? "";
 		const rulesPost =
 			body.includes("policy.") || body.includes("r5") || body.includes("Recovery rule") || body.includes('"on"');
-		if (request.method() === "POST" && request.url().includes("/_serverFn/") && rulesPost && !gate.postFailed) {
-			gate.postFailed = true;
-			await route.fulfill({ status: 500, contentType: "text/plain", body: "POST failed" });
+		if (request.method() === "POST" && request.url().includes("/_serverFn/") && rulesPost) {
+			gate.writesSeen += 1;
+			try {
+				if (!gate.postFailed) {
+					gate.postFailed = true;
+					await route.fulfill({ status: 500, contentType: "text/plain", body: "POST failed" });
+				} else {
+					await route.continue();
+				}
+			} finally {
+				gate.writesDone += 1;
+			}
 			return;
 		}
 		if (request.method() === "GET" && (request.url().split("?")[0] ?? "") === rulesUrl) {
@@ -303,6 +317,13 @@ async function failFirstPostAndRead(page: Page, rulesUrl: string) {
 		await route.continue();
 	});
 	return gate;
+}
+
+async function recoveryGeneration(page: Page) {
+	return page.evaluate(async () => {
+		const queue = await import("/src/screens/rules/write-queue.ts");
+		return queue.rulesRecoveryGeneration();
+	});
 }
 
 function delay(ms: number) {
