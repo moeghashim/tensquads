@@ -1,0 +1,11 @@
+Actual Worker: review-index link opens plan; 6/12 tasks, 5/10 screens, 4/7 workspace tasks; Chat, Agents and Traffic Built; core functional mappings correct.
+390 px: both review pages have no page-level horizontal overflow; screenshots captured.
+built 11 design files from 51627b1 manifest 1793448823-a766
+Foundation only: no functional core box is Built; all four interfaces and four version-1 adapters are Built.
+built 11 design files from 6ed2302 manifest 1793448823-a766
+Deleted Agents branch and advanced Chat branch: all three merged screens stay Built; open Overview In progress, absent Admin Planned; summary 4/12 and workspace 3/7.
+built 11 design files from 51627b1 manifest 1793448823-a766
+Historical ref: later merges are excluded; foundation ref reports 1/12 tasks.
+built 11 design files from 1fe9459 manifest 1793448823-a766
+All tasks merged: 12/12, 10/10 numbered screens plus frame, six Built phases, six Built core areas and Built proof sequence.
+No browser page errors.
