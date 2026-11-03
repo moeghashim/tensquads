@@ -41,7 +41,7 @@ interface AutonomyInput extends FenceInput {
 	readonly autonomy: Autonomy;
 }
 
-export interface AgentWrite<T> {
+interface AgentWrite<T> {
 	readonly status: "written" | "superseded";
 	readonly row: T;
 }
