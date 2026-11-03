@@ -73,7 +73,16 @@ test("core boxes follow their functional tasks while interfaces follow foundatio
 			const state = count === tasks.length ? BUILT : count ? PROGRESS : PLANNED;
 			assert.ok(html.includes(`<div class="bx ${state}"><b>${title}</b>`), `${title}: ${state}`);
 		}
-		for (const title of ["MachineProvider", "EventBus", "IntegrationGateway", "Repositories", "Test machines", "In-memory bus", "Placeholders", "Neon Postgres"]) {
+		for (const title of [
+			"MachineProvider",
+			"EventBus",
+			"IntegrationGateway",
+			"Repositories",
+			"Test machines",
+			"In-memory bus",
+			"Placeholders",
+			"Neon Postgres",
+		]) {
 			assert.ok(html.includes(`<div class="bx built"><b>${title}</b>`), title);
 		}
 	};
