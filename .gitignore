@@ -34,3 +34,6 @@ e2e/.auth/
 .env
 .env.*
 !.env.example
+
+# Impeccable downloads this engine on first run. It is not source.
+.agents/skills/impeccable/scripts/bin/

@@ -22,3 +22,5 @@ Pstack skills were copied from https://github.com/cursor/plugins at commit `4dd1
 - unslop
 
 `tensquads-verify` is local to this repository. It records the Approval code checks, model checks, sync commits, and model bounds. Run it after changes to the inbox decision functions or the Approval model. The automatic statechart gate only watches `packages/statecharts`; it does not detect changes to those domain functions.
+
+Impeccable was installed from https://impeccable.style with `npx impeccable@4.8.0 install --project --providers=codex --no-hooks`. The skill version is 4.8.0, from GitHub tag `skill-v4.8.0` at commit `414603bf14c7a344edb466bb1f85690c77ce8b7d` (https://github.com/pbakaus/impeccable). The folder is `.agents/skills/impeccable`. The engine binary downloads on first run (engine 0.1.18). It is not committed. `.claude/skills` is already a link to `.agents/skills`.
