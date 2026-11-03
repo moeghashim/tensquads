@@ -20,6 +20,46 @@ A super admin signs in with Clerk and sees screens 9 and 10 under the "Platform 
 - The Clerk docs for the TanStack Start SDK: organizations, roles, `auth()` and `has()`. The `sp-clerk` skill
 - Skills: `statechart`, `tdd`, `principle-prove-it-works`, `principle-boundary-discipline`, `tensquads-verify`
 
+## Moe's answers, 3 November 2026
+
+These answers fill gaps in the design. They are final for this task. List them in the pull request.
+
+1. **Which Clerk role is the super admin?** A custom role `org:super_admin` in one company organization. The check always includes the organization id. On the development instance the role exists, with no permissions, and the hobby plan allows it. The platform check uses `org:super_admin`. It does not fall back to `org:admin`.
+2. **How does the server read the role?** A Clerk session has a role only when an organization is active. Sign-in sets the company organization as active when the user is a member. The server then reads `has({ role: "org:super_admin" })` and `orgId`. This makes no Clerk API call on each request.
+3. **Where does each user go?** A visitor with no session goes to `/signin`. An account owner who opens `/admin` or `/admin/images` goes to `/overview`, with no new text. A super admin with no special session goes from `/overview` to `/admin`.
+4. **What form does the special session take, and when does it end?** One HttpOnly, Secure, SameSite=Lax cookie that holds the account id. A POST server function sets it after the super-admin check. The server repeats the check on each request and ignores the cookie for any other user, so the cookie needs no signature and no new secret. The account id must exist. It ends on "All companies", and after one hour. The design has no sign-out control, so add none.
+5. **What can a super admin do in the special session, and what is recorded?** The same writes as the owner, since the workspace sees no difference. Send the existing `account.opened` event through the Kernel. Add no table.
+6. **What does a row click open for an account with no workspace data?** The session always carries the clicked account. Never fall back to Demo store. The eight accounts show the phase 2 workspace with empty lists and no new text, tiles "—" as in decision 25, and `Runs <agents> squads · <name>` from the account row. The design text stays word for word, and the report lists that it is no longer true.
+7. **Whose name shows?** The admin footer shows the Clerk user's name and initials. In a special session the workspace footer shows the target account's `owner`. For Demo store this is the design's text. The super-admin test user is named Moe Ghashim, so the footer matches the design.
+8. **Where does Squads 17 show, and which tiles?** Build the 6 tiles as the design. The "Squads" tile shows 66. Prove 17 with the repository test only, and add no text.
+9. **Are `agents`, `online` and `tasks` on the account row stored?** Keep them as stored per-account fields, because the design reads them and does not compute them. The totals are still sums on each request. Report the difference.
+10. **What about "+9% vs last week"?** Keep the fixed text, because "Figures are demo data." stays on the screen. List it in the final report.
+11. **What about the dated values?** Keep the stored values and the design's logic for `createdWeek`, the week labels "Sep 7" to "Oct 26", `lastActive`, `updated`, `updatedFull` and `age`. List it in the final report.
+12. **How does a new sign-up show in the table?** Write `createdWeek` 7 and `lastActive` "Just now", and put the new account last in the order. Keep the email as `owner`, because sign-up collects no name.
+13. **Which states have no design on these two screens?** No loading state, because the route loader runs before the first paint. A failed load goes to the existing root error handling, with no new text. Zero accounts and zero images are not reachable, so build nothing for them. An image filter with no rows shows the header row only.
+14. **"Nothing requested yet." cannot show with the seed.** Build it, and prove it with a component or unit test and no change to the seed.
+15. **What moves an image into and out of "Needs attention"?** In the model, Stable and Needs attention move both ways with no named cause. Do not derive the status from bugs. The code reads the stored status.
+16. **The rule "every Stable account runs the same version" does not hold for the seed.** Write the rule as "when no rollout is running". Keep the seed.
+17. **How much of rollout is in this phase?** Put the rollout rules in the model as abstract steps. Add no Rollout object and no code. `makeTemplate` and `startFromTemplate` already exist on `MachineProvider`. "Roll out" stays a control that does nothing. Report the phase 4 conflict to Moe. The plan says the Rollout object adds to the build and that "Roll out" leaves the do-nothing list in phase 4, while phase 4 says screens 1 to 10 do not change.
+18. **What does the inventory check compare?** Compare with the `Main.json` entries for these screens. Handlers: `goAdmin`, `goCatalog`, `adm.onQuery`, `f.pick`, `r.open`, `r.pick`. Loops: `adm.kpis`, `adm.bars` (two), `adm.plans`, `adm.filters`, `adm.rows`, `cat.kpis`, `cat.filters`, `cat.rows`, `img.bugs`, `img.features`. Write the list in the test.
+19. **Which page title?** Use the wrapper titles, word for word: "All accounts" and "Agent images".
+20. **Where does the final report go, and when?** `docs/final-report.md`, in this pull request. Give each difference an "Approved by" entry. List decisions 1 to 32. Decisions 29 and 30 were dropped by Moe on 1 November 2026: list them as "Dropped". Decision 31 has no row in the table: list it as "ClickHouse comes after phase 5 (task 05 text only; no row in PLAN.md)". Decision 32 is in PLAN.md.
+21. **May the seed run on the Neon database in `.env`?** No. Seed only the test databases. Never run `saveWorkspace` or any seed against `NEON_POSTGRES_CONNECTION_STRING`.
+
+## Clerk development instance, 3 November 2026
+
+Step 2 is done on the development instance. Record it in the pull request.
+
+- Organizations are on. `force_organization_selection` is false, so an owner's sign-in makes no organization step. A demo owner sign-in still works.
+- The custom role `org:super_admin` exists, with no permissions. The hobby plan allows it.
+- The company organization is `tensquads`, id `org_3Lazia1HC1hdgfY0mAttb1qTWYm`.
+- The super admin is moe@10claws.com, Clerk user `user_3Lazhi4zDFFw28I6hhujdsQrV4W`, name Moe Ghashim. That user is a member of `tensquads` with `org:super_admin`, and was created with `create_organization_enabled: false`.
+- Step 2b is open. The Backend API has no instance setting that stops new users from creating organizations. That dashboard switch is an open item for Moe. The check does not depend on it. The check requires the role and `CLERK_PLATFORM_ORG_ID` together, so a role in any other organization gives nothing. A test user who owns another organization and holds `org:super_admin` or `org:admin` there still cannot reach `/admin`.
+- Step 2e is open. No production instance exists.
+- Step 3: the GitHub repository variable `CLERK_PLATFORM_ORG_ID` is that organization id. CI reads `vars.CLERK_PLATFORM_ORG_ID`. The same value is in the Worker vars. It is not a secret.
+
+Tests make their own Clerk users, plus a test organization or a membership in the company organization, through the Backend API. They remove those after each test. They never change or remove moe@10claws.com, its membership, the `tensquads` organization, or the role.
+
 ## Routes
 
 | Route | Design | Notes |
