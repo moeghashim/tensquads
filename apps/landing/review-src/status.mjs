@@ -19,7 +19,11 @@ const branches = (git, ...args) =>
 
 export function readStatus(git, ref) {
 	const merged = branches(git, "--merged", ref);
-	const open = branches(git, "--no-merged", ref);
+	for (const subject of git("log", "--merges", "--format=%s", ref).split("\n")) {
+		const match = /^Merge pull request #\d+ from moeghashim\/(\S+)$/.exec(subject);
+		if (match) merged.add(match[1]);
+	}
+	const open = branches(git);
 	const one = (task) => (merged.has(task) ? BUILT : open.has(task) ? PROGRESS : PLANNED);
 	// An item with several tasks is Built only when all of them are merged.
 	const of = (tasks) => {

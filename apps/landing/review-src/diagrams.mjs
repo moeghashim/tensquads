@@ -64,18 +64,18 @@ function layers(st) {
 	const f = st.of(["00-foundation"]);
 	const later = st.of(["04-machine-trial"]);
 	const core = [
-		["Platform", "accounts, plans, admin totals"],
-		["Squads and Agents", "agents, skills, autonomy, machine"],
-		["Bus and Shared State", "events, state writes, nextEvent()"],
-		["Policy", "rules, limits, approvals"],
-		["Catalog", "agent images, bugs, features"],
-		["Conversation", "master thread, send(), dock"],
+		["Platform", "accounts, plans, admin totals", ["00-foundation", "03-super-admin"]],
+		["Squads and Agents", "agents, skills, autonomy, machine", ["02-agents", "02-agent-detail"]],
+		["Bus and Shared State", "events, state writes, nextEvent()", ["02-traffic"]],
+		["Policy", "rules, limits, approvals", ["02-overview", "02-rules"]],
+		["Catalog", "agent images, bugs, features", ["03-super-admin"]],
+		["Conversation", "master thread, send(), dock", ["02-frame", "02-chat"]],
 	];
 	return `<div class="dg" role="img" aria-label="Four layers: web app, core, interfaces, adapters, each with its build status.">
 <p class="dg-lead">Each screen uses the core. Machines and services connect through interfaces.</p>
 <div class="bx top ${web}"><b>Web app: TanStack Start on Cloudflare Workers (PI-Starter tooling), Clerk sessions</b><small>Ten screens from the design canvas, three shells: public, workspace, super-admin. ${built} of 10 built.</small><div class="screens">${chips}</div>${pill(web)}</div>
 <div class="dn"></div>
-<div class="frame"><p class="ft">Core: one cordis context. Each domain area is one plug-in.</p><div class="g3">${core.map(([t, s]) => box(f, t, s)).join("")}</div></div>
+<div class="frame"><p class="ft">Core: one cordis context. Each domain area is one plug-in.</p><div class="g3">${core.map(([t, s, tasks]) => box(st.of(tasks), t, s)).join("")}</div></div>
 <div class="dn"></div>
 <div class="frame"><p class="ft">Interfaces: the boundary layer. The domain reaches outside only here.</p><div class="g4">${["MachineProvider", "EventBus", "IntegrationGateway", "Repositories"].map((t) => box(f, t, "")).join("")}</div>
 <p class="dg-note" style="text-align:left">Decider is the fifth interface. It exists, with no adapter in version 1 (decision 19).</p></div>
