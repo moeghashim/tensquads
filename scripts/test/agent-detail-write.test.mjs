@@ -3,6 +3,8 @@ import { registerHooks } from "node:module";
 import { test } from "node:test";
 import { pathToFileURL } from "node:url";
 
+globalThis.window = {};
+
 let runtime;
 const modules = {
 	"@tanstack/react-router": ["useMatch", "useNavigate", "useRouter"],
@@ -38,9 +40,8 @@ const moduleUrl = process.env.AGENT_WRITE_TEST_MODULE
 	? pathToFileURL(process.env.AGENT_WRITE_TEST_MODULE)
 	: new URL("../../apps/web/src/screens/agent-detail/write.ts", import.meta.url);
 const { useAgentWrites } = await import(moduleUrl.href);
-const { stampAgentRead, stampAgentReads, applyAgentOn, agentOnSnapshot, resetAgentClientState } = await import(
-	"../../apps/web/src/workspace/agent-on.ts"
-);
+const { agentSession, stampAgentRead, stampAgentReads, applyAgentOn, agentOnSnapshot, resetAgentClientState } =
+	await import("../../apps/web/src/workspace/agent-on.ts");
 
 function harness() {
 	const reads = [];
@@ -61,6 +62,7 @@ function harness() {
 	};
 	let loader = structuredClone(server);
 	let stamped;
+	let loaderSession = agentSession();
 	const match = { status: "success" };
 	const router = {};
 	function post(key, update) {
@@ -122,7 +124,7 @@ function harness() {
 		},
 	};
 	function render() {
-		return stamped === undefined ? useAgentWrites(loader) : useAgentWrites(loader, stamped);
+		return useAgentWrites(loader, stamped ?? stampAgentRead(loader.id), loaderSession);
 	}
 	return {
 		render,
@@ -133,7 +135,8 @@ function harness() {
 			failNext = true;
 		},
 		navigations: () => navigations,
-		newLoader(view, status = "success", readAt) {
+		newLoader(view, status = "success", readAt, session = agentSession()) {
+			loaderSession = session;
 			loader = structuredClone(view);
 			match.status = status;
 			stamped = readAt;
@@ -501,4 +504,43 @@ test("a reset drops published and pending state, and a late response cannot publ
 	assert.equal(h.server.skills[0].onStr, "false");
 	assert.equal(next.server.on, true);
 	assert.equal(next.server.skills[0].onStr, "true");
+});
+
+for (const outcome of ["success", "recovery"]) {
+	test(`mounted old-session data and a late ${outcome} cannot seed the next account`, async () => {
+		const h = harness();
+		const previousSession = agentSession();
+		const oldLoader = structuredClone(h.server);
+		h.render().toggleAgent(false);
+		await settle();
+		if (outcome === "recovery") {
+			h.posts.shift().lose();
+			await settle();
+		}
+		resetAgentClientState();
+		assert.equal(h.render(), null);
+		h.newLoader({ ...oldLoader, events: ["account B message"], mission: "account B mission" }, "success", 0);
+		assert.equal(h.render().view.on, true);
+		assert.equal(h.render().view.mission, "account B mission");
+		if (outcome === "recovery") h.reads.shift().answer();
+		else h.posts.shift().answer();
+		await settle();
+		assert.equal(agentOnSnapshot().size, 0);
+		assert.deepEqual(h.render().view.events, ["account B message"]);
+		h.newLoader(oldLoader, "success", 0, previousSession);
+		assert.equal(h.render(), null);
+	});
+}
+
+test("SSR renders do not reuse persistent client queues", () => {
+	const browserWindow = globalThis.window;
+	delete globalThis.window;
+	try {
+		const h = harness();
+		assert.deepEqual(h.render().view.events, ["old message"]);
+		h.newLoader({ ...h.server, events: ["new request"] }, "success", -1);
+		assert.deepEqual(h.render().view.events, ["new request"]);
+	} finally {
+		globalThis.window = browserWindow;
+	}
 });

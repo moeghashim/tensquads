@@ -1,6 +1,6 @@
-import { ClerkProvider, useAuth, useUser } from "@clerk/tanstack-react-start";
-import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { type ReactNode, useRef } from "react";
+import { ClerkProvider, useUser } from "@clerk/tanstack-react-start";
+import { createRootRoute, HeadContent, Outlet, Scripts, useRouter } from "@tanstack/react-router";
+import { type ReactNode, useEffect, useState } from "react";
 
 import "#/design/public.css";
 import { watchSignedInUser } from "#/screens/rules/write-queue.ts";
@@ -34,29 +34,34 @@ function RootApp() {
 	}
 	return (
 		<ClerkProvider publishableKey={publishableKey}>
-			<ClerkAccountReset />
-			<Outlet />
-			<SignedInAccount />
+			<ClerkAccountReset>
+				<SignedInAccount />
+				<Outlet />
+			</ClerkAccountReset>
 		</ClerkProvider>
 	);
 }
 
 function SignedInAccount() {
-	const { isLoaded, userId } = useAuth();
-	if (isLoaded) watchSignedInUser(userId ?? null);
+	const { isLoaded, user } = useUser();
+	if (isLoaded) watchSignedInUser(user?.id ?? null);
 	return null;
 }
 
-function ClerkAccountReset() {
+function ClerkAccountReset({ children }: { readonly children: ReactNode }) {
 	const { isLoaded, user } = useUser();
-	const seen = useRef<string | null | undefined>(undefined);
+	const router = useRouter();
 	const next = isLoaded ? (user?.id ?? null) : undefined;
-	if (next !== undefined && seen.current !== next) {
-		const previous = seen.current;
-		seen.current = next;
-		if (previous !== undefined) queueMicrotask(resetAgentClientState);
-	}
-	return null;
+	const [seen, setSeen] = useState(next);
+	useEffect(() => {
+		if (next === undefined || seen === next) return;
+		if (seen !== undefined) {
+			resetAgentClientState();
+			if (next !== null) void router.invalidate({ sync: true });
+		}
+		setSeen(next);
+	}, [next, seen, router]);
+	return seen === next ? children : null;
 }
 
 function RootDocument({ children }: { children: ReactNode }) {

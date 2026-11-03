@@ -187,17 +187,18 @@ function runningFace(view: AgentDetailView, on: boolean): AgentDetailView {
 	};
 }
 
-const queues = new Map<object, Map<string, ReturnType<typeof createQueue>>>();
+let queues = new WeakMap<object, Map<string, ReturnType<typeof createQueue>>>();
 const liveQueues = new Set<ReturnType<typeof createQueue>>();
 
 onAgentClientReset(() => {
 	const open = [...liveQueues];
 	liveQueues.clear();
-	queues.clear();
+	queues = new WeakMap();
 	for (const queue of open) queue.abandon();
 });
 
 function agentQueue(owner: object, agentId: string, initialView: AgentDetailView, session: number) {
+	if (typeof window === "undefined") return createQueue(agentId, initialView);
 	let agents = queues.get(owner);
 	if (!agents) {
 		agents = new Map();
@@ -212,15 +213,21 @@ function agentQueue(owner: object, agentId: string, initialView: AgentDetailView
 	return queue;
 }
 
-export function useAgentWrites(serverView: AgentDetailView, readAt = stampAgentRead(serverView.id)) {
+const absentSnapshot = () => undefined;
+const absentSubscribe = () => () => undefined;
+
+export function useAgentWrites(serverView: AgentDetailView, readAt: number, loaderSession: number) {
 	const agentId = serverView.id;
 	const session = useSyncExternalStore(subscribeAgentSession, agentSession, agentSession);
 	const router = useRouter();
 	const navigate = useNavigate();
 	const match = useMatch({ from: "/_workspace/agents/$id" });
-	const { enqueue, snapshot, subscribe, load } = agentQueue(router, agentId, serverView, session);
-	if (match.status === "success") load(serverView, readAt);
-	const state = useSyncExternalStore(subscribe, snapshot, snapshot);
+	const queue = loaderSession === session ? agentQueue(router, agentId, serverView, session) : undefined;
+	if (match.status === "success") queue?.load(serverView, readAt);
+	const snapshot = queue?.snapshot ?? absentSnapshot;
+	const state = useSyncExternalStore(queue?.subscribe ?? absentSubscribe, snapshot, snapshot);
+	if (!queue || !state) return null;
+	const { enqueue } = queue;
 
 	return {
 		view: state.pending.reduce((view, write) => write.apply(view), state.view),

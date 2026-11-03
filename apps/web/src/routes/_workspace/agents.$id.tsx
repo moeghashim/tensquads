@@ -4,7 +4,7 @@ import { AgentDetailPage } from "#/screens/agent-detail/AgentDetailPage.tsx";
 import type { AgentDetailView } from "#/screens/agent-detail/model.ts";
 import { useAgentWrites } from "#/screens/agent-detail/write.ts";
 import { loadAgentDetail } from "#/server/agent-detail.ts";
-import { stampAgentRead } from "#/workspace/agent-on.ts";
+import { agentSession, stampAgentRead } from "#/workspace/agent-on.ts";
 import { useInspect } from "#/workspace/event-view.ts";
 
 import { captureWrites } from "#/workspace/approval-count.ts";
@@ -16,20 +16,30 @@ export const Route = createFileRoute("/_workspace/agents/$id")({
 	}),
 	loader: async ({ params }) => {
 		const readAt = stampAgentRead(params.id);
-		return { view: await loadAgentDetail({ data: params.id }), readAt };
+		const session = agentSession();
+		return { view: await loadAgentDetail({ data: params.id }), readAt, session };
 	},
 	component: AgentPage,
 });
 
 function AgentPage() {
-	const { view, readAt } = Route.useLoaderData();
-	return <AgentControls key={view.id} view={view} readAt={readAt} />;
+	const { view, readAt, session } = Route.useLoaderData();
+	return <AgentControls key={`${session}:${view.id}`} view={view} readAt={readAt} session={session} />;
 }
 
-function AgentControls({ view, readAt }: { readonly view: AgentDetailView; readonly readAt: number }) {
-	const writes = useAgentWrites(view, readAt);
+function AgentControls({
+	view,
+	readAt,
+	session,
+}: {
+	readonly view: AgentDetailView;
+	readonly readAt: number;
+	readonly session: number;
+}) {
+	const writes = useAgentWrites(view, readAt, session);
 	const inspect = useInspect();
 	const navigate = useNavigate();
+	if (!writes) return null;
 	return (
 		<AgentDetailPage
 			view={writes.view}

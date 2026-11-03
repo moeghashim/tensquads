@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { Pool } from "@neondatabase/serverless";
 import type { Page, Route } from "@playwright/test";
-import { openPostgres } from "@tensquads/adapters";
+import { openPostgres, schema } from "@tensquads/adapters";
+import { and, eq } from "drizzle-orm";
 import { setAgentOn } from "../packages/adapters/src/neon/commands/agents.ts";
 import { PENDING_TASK_WINDOW_MS } from "../packages/adapters/src/pending-window.ts";
 import { replaceDemoAccount } from "../packages/seed/src/demo-account.ts";
@@ -1025,7 +1026,7 @@ test("the agent detail page passes axe and does not scroll sideways", async ({ p
 	}
 });
 
-test("another account in the same tab does not keep the previous account's controls", async ({
+test("an account switch on the mounted agent route hides the previous account", async ({
 	page,
 	workspaceUser,
 	accountId,
@@ -1052,7 +1053,18 @@ test("another account in the same tab does not keep the previous account's contr
 		await route.continue();
 	};
 	try {
+		await withDb(async (db) => {
+			await db
+				.update(schema.agents)
+				.set({ mission: "Account B mission" })
+				.where(and(eq(schema.agents.accountId, other.accountId), eq(schema.agents.id, "support")));
+			await db
+				.update(schema.busEvents)
+				.set({ body: "Account B message" })
+				.where(eq(schema.busEvents.accountId, other.accountId));
+		});
 		await openAgent(page, workspaceUser, "support");
+		await expect(page.getByText(supportMission, { exact: true })).toBeVisible();
 		await page.evaluate(() => {
 			(window as unknown as { __agentMark?: string }).__agentMark = "same-document";
 		});
@@ -1064,13 +1076,16 @@ test("another account in the same tab does not keep the previous account's contr
 		await skill.click();
 		await expect.poll(() => held, settled).toBe(1);
 		await expect(skill).toHaveAttribute("aria-pressed", "false");
-		await signOutToSignIn(page);
-		await signInOnPage(page, other);
-		await page
-			.getByRole("navigation", { name: "Workspace" })
-			.getByRole("button", { name: /Support/ })
-			.click();
+		await signOutOnAgent(page);
 		await expect(page).toHaveURL(/\/agents\/support$/);
+		await expect(squadSwitch(page)).toHaveCount(0);
+		await expect(page.getByText(supportMission, { exact: true })).toHaveCount(0);
+		await expect(page.getByRole("navigation", { name: "Workspace" })).toHaveCount(0);
+		await signInOnAgent(page, other);
+		await expect(page).toHaveURL(/\/agents\/support$/);
+		await expect(page.getByText("Account B mission", { exact: true })).toBeVisible(settled);
+		await expect(page.getByText("Account B message", { exact: true }).first()).toBeVisible();
+		await expect(page.getByText(supportMission, { exact: true })).toHaveCount(0);
 		expect(await page.evaluate(() => (window as unknown as { __agentMark?: string }).__agentMark)).toBe(
 			"same-document",
 		);
@@ -1177,27 +1192,37 @@ test("a held chat send and a held agent write both keep their results", async ({
 	await expect(supportDot(page, "Running")).toBeVisible(settled);
 });
 
-async function signOutToSignIn(page: Page) {
+async function signOutOnAgent(page: Page) {
 	await page.evaluate(async () => {
-		const browserWindow = window as unknown as {
-			Clerk?: { signOut: (done?: () => void) => Promise<void> };
-			__TSR_ROUTER__?: { navigate: (opts: { to: string }) => Promise<void> };
-		};
-		const clerk = browserWindow.Clerk;
-		const router = browserWindow.__TSR_ROUTER__;
-		if (!clerk || !router) throw new Error("The session is missing.");
-		await clerk.signOut(() => {
-			void router.navigate({ to: "/signin" });
-		});
+		const clerk = (window as unknown as { Clerk: { signOut: (done: () => void) => Promise<void> } }).Clerk;
+		await clerk.signOut(() => undefined);
 	});
-	await page.waitForURL("**/signin");
 }
 
-async function signInOnPage(page: Page, user: WorkspaceUser) {
-	await page.getByLabel("Email").fill(user.email);
-	await page.getByLabel("Password").fill(user.password);
-	await page.getByRole("button", { name: "Sign in" }).click();
-	await expect(page).toHaveURL(/\/overview$/, { timeout: 20_000 });
+async function signInOnAgent(page: Page, user: WorkspaceUser) {
+	await page.evaluate(
+		async ({ email, password }) => {
+			const clerk = (
+				window as unknown as {
+					Clerk: {
+						client: {
+							signIn: {
+								create: (input: { strategy: string; identifier: string; password: string }) => Promise<{
+									status: string;
+									createdSessionId: string | null;
+								}>;
+							};
+						};
+						setActive: (input: { session: string; navigate: () => Promise<void> }) => Promise<void>;
+					};
+				}
+			).Clerk;
+			const result = await clerk.client.signIn.create({ strategy: "password", identifier: email, password });
+			if (result.status !== "complete" || !result.createdSessionId) throw new Error("Sign-in did not complete.");
+			await clerk.setActive({ session: result.createdSessionId, navigate: async () => undefined });
+		},
+		{ email: user.email, password: user.password },
+	);
 }
 
 async function temporaryAccount(): Promise<WorkspaceUser> {
