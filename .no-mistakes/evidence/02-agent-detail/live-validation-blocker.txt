@@ -1,7 +1,6 @@
-Real app started with npm run dev -w @tensquads/web on localhost:3000.
-Chromium navigation to /agents/support redirected to /signin (title: Sign in).
-Targeted Playwright invocation: npx playwright test e2e/agent-detail.spec.ts --project=parallel --grep "an old running loader does not replace a newer write"
-Fixture setup stopped before scenario: Error: publishable, secret, testDatabase is missing.
-Credential presence check found no CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY, or TEST_DATABASE_URL.
-No local authentication adapter exists. Local Postgres tools are on PATH, but a disposable database cannot issue a valid Clerk session.
-Provide sandbox Clerk development keys authorized for disposable users. A private Postgres cluster can then be built inside the worktree.
+Live browser observation: GET http://localhost:3000/agents/support redirected to http://localhost:3000/signin; title Sign in. Screenshot: dashboard-access-blocked.png.
+Targeted browser command: npx playwright test e2e/agent-detail.spec.ts --project=parallel --grep 'an account switch on the mounted agent route hides the previous account' --output=/Users/moeghashim/.no-mistakes/evidence/01M6FBDFS3M7S2M0HVB4SH1RX6/playwright
+Fixture stopped before scenario: publishable, secret, testDatabase is missing.
+Credential presence check via scripts/write-dev-vars.mjs localSecrets(): publishable=false; secret=false; testDatabase=false.
+PostgreSQL tools psql, initdb and pg_ctl are on PATH. An isolated local database is possible, but it cannot supply Clerk development accounts or sessions. No auth bypass is supported by requireWorkspace. Mocking Clerk or replacing server functions would not validate the real account-switch flow.
+To enable: provide sandbox CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY authorized for disposable Clerk users; provide TEST_DATABASE_URL for an isolated database, or provision one locally using the available Postgres tools. No operator data or shared service was accessed.
