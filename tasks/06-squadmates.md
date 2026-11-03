@@ -42,6 +42,20 @@ Decision 33 fixes the name for the `hr` image. The reference sheet has no People
 6. Add one React component, `Squadmate`, in `apps/web/src/workspace/`. It renders the package markup. The markup is our own constant with no user text, so one `biome-ignore` for the inner HTML is allowed, with that reason. The SVG has `role="img"` and an `aria-label` with the name and the role.
 7. Show the squadmate in every place that shows the master or an agent: the sidebar (the master header and the agent rows), the dock (header and message tags), Overview (agents at a glance and the approval items), Squads cards, the agent dashboard header, Chat (message tags and hand-offs), Traffic (the hub, the event list and the inspector), Rules (the agent select and the rule rows), and sign-up step 3 (the agents to pick). Do not change the homepage; task 07 owns it.
 8. The text rule. A title or a name shows the character name. Where the design has room for a second label, the design's agent name follows it as a tag, as on the sheet. Where a line is tight, such as an event row, show the 16 or 20 px squadmate and the character name only. Every sentence that says the master's name says "Petra".
+    - The sidebar agent rows, decided by Moe on 3 November 2026: the 24 px squadmate replaces the tint square. The row text is the character name, then the design's agent name as a grey tag, for example "Pisa" then "Orders". The status dot stays. The sidebar header shows Petra in place of the "M" mark and the word "Master".
+    - "Master" is replaced with "Petra" everywhere in the interface, decided by Moe on 3 November 2026. No screen, label, `aria-label`, tag or sentence shows the word "master" or "Master". Where the word names the role, rewrite the sentence around Petra. The known strings:
+
+      | Design text | Build text |
+      | --- | --- |
+      | Master (sidebar header, dock header, message tags, agent lists) | Petra |
+      | Chat with the master (sidebar item and its `aria-label`) | Chat with Petra |
+      | Ask Master (dock button, from `masterName`) | Ask Petra |
+      | Each part of your business gets its own squad: one agent with its tools. A master squad coordinates them, and every squad works toward your mission. | Each part of your business gets its own squad: one agent with its tools. Petra coordinates them, and every squad works toward your mission. |
+      | Ask the master what's going on; it routes the question to the right squad. | Ask Petra what's going on; Petra routes the question to the right squad. |
+      | The master uses this to brief every squad. You can change it later. | Petra uses this to brief every squad. You can change it later. |
+      | The master will propose a mission for each squad | Petra will propose a mission for each squad |
+
+      Search the built screens for "master", case-insensitive, and fix any string this table misses. Code names such as `masterName` stay. Report each changed string in the pull request.
 9. Keep the layout. The squadmate takes the size and the place of the mark it replaces: the initial, the tint dot or the icon. No box moves. At 390 px there is no horizontal scroll.
 10. Update the screenshot baselines. Attach for each changed screen, at 1440 px and 390 px: the design, the build before, and the build after. Moe compares them.
 11. Rebase on `main` last. Append one line to `progress.md` with the commit script.
@@ -51,6 +65,7 @@ Decision 33 fixes the name for the `hr` image. The reference sheet has no People
 - [ ] `packages/squadmates` has the drawing and the table, and `/review/characters` is the same page as before
 - [ ] Every place in step 7 shows the squadmate and the character name
 - [ ] A new workspace's master is Petra, and no screen shows "Master" as a name
+- [ ] The sidebar rows show the squadmate, the character name and the role tag, the sidebar item reads "Chat with Petra", and no screen shows the word "master"
 - [ ] The nine done numbers in `AGENTS.md` are unchanged
 - [ ] Each icon-only squadmate has an accessible name, and Tab still reaches every control
 - [ ] At 390 px there is no horizontal scroll outside the table boxes
