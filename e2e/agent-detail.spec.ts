@@ -1135,6 +1135,123 @@ test("an account switch on the mounted agent route hides the previous account", 
 	}
 });
 
+test("a ticket session switch keeps the agent route isolated from held account responses", async ({
+	page,
+	workspaceUser,
+	accountId,
+}) => {
+	test.setTimeout(120_000);
+	const other = await temporaryAccount();
+	let release = () => undefined;
+	const gate = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	let held = 0;
+	let delivered = 0;
+	let heldRead = false;
+	let deliveredRead = false;
+	const pattern = /\/_serverFn\//;
+	const handler = async (route: Route) => {
+		const request = route.request();
+		if (request.method() === "GET" && serverFnExport(request.url()).startsWith("loadAgentDetail") && !heldRead) {
+			const response = await route.fetch();
+			heldRead = true;
+			await gate;
+			await route.fulfill({ response }).catch(() => undefined);
+			deliveredRead = true;
+			return;
+		}
+		if (request.method() === "POST" && serverFnExport(request.url()).startsWith("setSkillEnabled")) {
+			const response = await route.fetch();
+			held += 1;
+			await gate;
+			await route.fulfill({ response }).catch(() => undefined);
+			delivered += 1;
+			return;
+		}
+		await route.continue();
+	};
+	try {
+		await withDb(async (db) => {
+			await db
+				.update(schema.agents)
+				.set({ mission: "Account B mission" })
+				.where(and(eq(schema.agents.accountId, other.accountId), eq(schema.agents.id, "support")));
+			await db
+				.update(schema.busEvents)
+				.set({ body: "Account B message" })
+				.where(eq(schema.busEvents.accountId, other.accountId));
+		});
+		await openAgent(page, workspaceUser, "support");
+		await expect(page.getByText(supportMission, { exact: true })).toBeVisible();
+		await page.evaluate(() => {
+			(window as unknown as { __agentMark?: string }).__agentMark = "same-document";
+		});
+		await squadSwitch(page).click();
+		await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(false);
+		await expect(supportDot(page, "Paused")).toBeVisible(settled);
+		await page.route(pattern, handler);
+		const skill = skillRow(page, "inbox.read").getByRole("button");
+		await skill.click();
+		await expect.poll(() => held, settled).toBe(1);
+		await expect(skill).toHaveAttribute("aria-pressed", "false");
+		const routeChanges: string[] = [];
+		page.on("framenavigated", (frame) => {
+			if (frame === page.mainFrame()) routeChanges.push(new URL(frame.url()).pathname);
+		});
+		await page.evaluate(() => {
+			const router = (window as unknown as { __TSR_ROUTER__: { invalidate: () => Promise<void> } }).__TSR_ROUTER__;
+			void router.invalidate();
+		});
+		await expect.poll(() => heldRead, settled).toBe(true);
+		const ticket = await signInTicket(other.userId);
+		await signOutOnAgent(page);
+		await expect(page).toHaveURL(/\/agents\/support$/);
+		await expect(squadSwitch(page)).toHaveCount(0);
+		await expect(page.getByText(supportMission, { exact: true })).toHaveCount(0);
+		await expect(page.getByRole("navigation", { name: "Workspace" })).toHaveCount(0);
+		await signInWithTicket(page, ticket, other.userId);
+		await expect(page).toHaveURL(/\/agents\/support$/);
+		await expect(page.getByText("Account B mission", { exact: true })).toBeVisible(settled);
+		await expect(page.getByText("Account B message", { exact: true }).first()).toBeVisible();
+		await expect(page.getByText(supportMission, { exact: true })).toHaveCount(0);
+		expect(await page.evaluate(() => (window as unknown as { __agentMark?: string }).__agentMark)).toBe(
+			"same-document",
+		);
+		await expect(supportDot(page, "Running")).toBeVisible(settled);
+		await expect(supportDot(page, "Paused")).toHaveCount(0);
+		await expect(running(page)).toBeVisible();
+		await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "true");
+		await expect(skillRow(page, "inbox.read").getByRole("button")).toHaveAttribute("aria-pressed", "true");
+		const beforeRelease = await readAgent(other.accountId, "support");
+		expect(beforeRelease.isOn).toBe(true);
+		expect(skillFlag(beforeRelease, "inbox.read")).toBe(true);
+		release();
+		await expect.poll(() => delivered, settled).toBe(1);
+		await expect.poll(() => deliveredRead, settled).toBe(true);
+		await expect(supportDot(page, "Running")).toBeVisible(settled);
+		await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "true");
+		await expect(skillRow(page, "inbox.read").getByRole("button")).toHaveAttribute("aria-pressed", "true", settled);
+		await expect(page.getByText("Account B mission", { exact: true })).toBeVisible();
+		await expect(page.getByText("Account B message", { exact: true }).first()).toBeVisible();
+		await expect(page.getByText(supportMission, { exact: true })).toHaveCount(0);
+		const afterRelease = await readAgent(other.accountId, "support");
+		expect(afterRelease).toEqual(beforeRelease);
+		expect(routeChanges.every((path) => path === "/agents/support")).toBe(true);
+		expect(await page.evaluate(() => (window as unknown as { __agentMark?: string }).__agentMark)).toBe(
+			"same-document",
+		);
+		const first = await readAgent(accountId, "support");
+		expect(first.isOn).toBe(false);
+		expect(skillFlag(first, "inbox.read")).toBe(false);
+	} finally {
+		release();
+		await page.unroute(pattern, handler).catch(() => undefined);
+		await deleteClerkUser(other.userId);
+		await deleteWorkspaceAccount(other.accountId);
+	}
+});
+
 test("a held chat send and a held agent write both keep their results", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(120_000);
 	const reply = "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.";
@@ -1233,6 +1350,46 @@ async function navigateClient(page: Page, to: string) {
 			.__TSR_ROUTER__;
 		await router.navigate({ to: path });
 	}, to);
+}
+
+async function signInTicket(userId: string): Promise<string> {
+	const { secret } = secretsFor(["secret"]);
+	const response = await fetch("https://api.clerk.com/v1/sign_in_tokens", {
+		method: "POST",
+		headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
+		body: JSON.stringify({ user_id: userId }),
+	});
+	if (!response.ok) throw new Error(`Clerk sign-in token failed with status ${response.status}.`);
+	const body = (await response.json()) as { token?: string };
+	if (!body.token) throw new Error("Clerk sign-in token returned no token.");
+	return body.token;
+}
+
+async function signInWithTicket(page: Page, ticket: string, userId: string) {
+	await page.evaluate(async (value) => {
+		const clerk = (
+			window as unknown as {
+				Clerk: {
+					client: {
+						signIn: {
+							create: (input: { strategy: "ticket"; ticket: string }) => Promise<{
+								status: string;
+								createdSessionId: string | null;
+							}>;
+						};
+					};
+					setActive: (input: { session: string }) => Promise<void>;
+				};
+			}
+		).Clerk;
+		const result = await clerk.client.signIn.create({ strategy: "ticket", ticket: value });
+		if (result.status !== "complete" || !result.createdSessionId) throw new Error("Ticket sign-in did not complete.");
+		await clerk.setActive({ session: result.createdSessionId });
+	}, ticket);
+	await page.waitForFunction((expected) => {
+		const clerk = (window as unknown as { Clerk: { user: { id: string } | null } }).Clerk;
+		return clerk.user?.id === expected;
+	}, userId);
 }
 
 async function temporaryAccount(): Promise<WorkspaceUser> {
