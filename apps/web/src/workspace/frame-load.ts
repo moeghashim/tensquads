@@ -1,5 +1,4 @@
 import { isRedirect } from "@tanstack/react-router";
-
 import { isSessionRefreshNeeded } from "#/server/session-error.ts";
 import { currentWrites } from "#/workspace/approval-count.ts";
 

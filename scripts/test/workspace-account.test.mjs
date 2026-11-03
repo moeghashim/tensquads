@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import { registerHooks } from "node:module";
 import test from "node:test";
 import { setImmediate } from "node:timers/promises";
+import { isRedirect } from "@tanstack/react-router";
 
 const root = new URL("../../", import.meta.url);
 const web = new URL("apps/web/src/", root);
 const state = { admin: true, target: "demo", owner: "demo", writes: [], store: {}, closed: 0 };
 globalThis.workspaceAccountTest = state;
 const mocks = {
-	"@tanstack/react-router": "export const redirect = (options) => Object.assign(new Error('Redirect'), options);",
 	"@tanstack/react-start": `export function createServerFn() {
 		let validate = (input) => input;
 		return { validator(fn) { validate = fn; return this; },
@@ -214,6 +214,53 @@ test("page loaders and retained snapshots keep their loaded account and reject m
 		assert.throws(() => useWorkspacePage(fresh.accountId), /The workspace write did not finish/);
 	} finally {
 		state.failRules = false;
+		clearOverviewHold();
+		delete globalThis.window;
+	}
+});
+
+test("workspace retention propagates expired-session redirects and keeps ordinary read failures", async () => {
+	globalThis.window = {};
+	try {
+		queue.resetTargetAccount();
+		clearFrameHold();
+		clearOverviewHold();
+		state.admin = true;
+		state.target = "northwind";
+		state.failRules = false;
+		const readFrame = () =>
+			requireWorkspace(async (scope) => ({ accountId: scope.accountId, approvalCount: 0, messages: [] }));
+		const failedRead = async () => {
+			throw new Error("Read failed");
+		};
+		const loaders = [
+			{
+				load: () => loadHeldFrame(frameEpoch(), currentWrites(), readFrame),
+				fail: () => loadHeldFrame(frameEpoch(), currentWrites(), failedRead),
+			},
+			{
+				load: () => loadHeldOverview(overviewEpoch(), currentWrites(), () => overview.loadOverview()),
+				fail: () => loadHeldOverview(overviewEpoch(), currentWrites(), failedRead),
+			},
+			{ load: () => loadRulesSnapshot(), fail: () => loadRulesSnapshot() },
+		];
+		for (const { load, fail } of loaders) {
+			const held = await load();
+			assert.equal(held.accountId, "northwind");
+			state.target = null;
+			await assert.rejects(load, (error) => isRedirect(error) && error.options.to === "/admin");
+			state.target = "northwind";
+			state.failRules = true;
+			const retained = await fail();
+			assert.strictEqual(retained, held);
+			state.failRules = false;
+			assert.equal((await load()).accountId, "northwind");
+		}
+	} finally {
+		state.failRules = false;
+		state.target = "northwind";
+		queue.resetTargetAccount();
+		clearFrameHold();
 		clearOverviewHold();
 		delete globalThis.window;
 	}

@@ -1,3 +1,4 @@
+import { isRedirect } from "@tanstack/react-router";
 import { loadRulesPage } from "#/server/rules.ts";
 import { isSessionRefreshNeeded } from "#/server/session-error.ts";
 
@@ -34,7 +35,7 @@ export async function loadRulesSnapshot(): Promise<RulesSnapshotPage> {
 		markReadSucceeded(generation, epoch);
 		return shown;
 	} catch (error) {
-		if (isSessionRefreshNeeded(error)) throw error;
+		if (isRedirect(error) || isSessionRefreshNeeded(error)) throw error;
 		if (typeof window === "undefined") {
 			markReadFailed(epoch);
 			throw error;
