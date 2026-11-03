@@ -291,7 +291,7 @@ export const bugs = pgTable("bugs", {
 	sortOrder: integer("sort_order").notNull(),
 });
 
-export const writeFences = pgTable(
+const writeFences = pgTable(
 	"write_fences",
 	{
 		accountId: text("account_id")

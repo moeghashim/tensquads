@@ -9,6 +9,8 @@ import { secretsFor } from "./support.ts";
 import { deleteWorkspaceAccount, expect, openWorkspace, test } from "./workspace.ts";
 
 const adCap = "policy.daily_ad_cap";
+const rulesQueueModule = "/src/screens/rules/write-queue.ts";
+const rulesLoaderModule = "/src/screens/rules/loader.ts";
 
 test("a real Clerk sign-out keeps the next account clear of a held write and a held read", async ({
 	page,
@@ -40,13 +42,16 @@ test("a real Clerk sign-out keeps the next account clear of a held write and a h
 		await expect.poll(() => rulesUrl.current).not.toBe("");
 		await page.clock.install();
 		const parked = await parkReadAndLaterWrite(page, rulesUrl);
-		const started = await page.evaluate(async () => {
-			const queue = await import("/src/screens/rules/write-queue.ts");
-			const loader = await import("/src/screens/rules/loader.ts");
-			const counter = queue.rulesWriteCounter();
-			(window as Window & { __staleRead?: Promise<unknown> }).__staleRead = loader.loadRulesSnapshot();
-			return counter;
-		});
+		const started = await page.evaluate(
+			async (specifiers) => {
+				const queue = await import(specifiers.queue);
+				const loader = await import(specifiers.loader);
+				const counter = queue.rulesWriteCounter();
+				(window as Window & { __staleRead?: Promise<unknown> }).__staleRead = loader.loadRulesSnapshot();
+				return counter;
+			},
+			{ queue: rulesQueueModule, loader: rulesLoaderModule },
+		);
 		expect(started).toBe(0);
 		await expect.poll(() => parked.reads()).toBe(1);
 		await page.locator("#lim-ads").fill("240");
@@ -188,10 +193,10 @@ async function documentMark(page: Page) {
 }
 
 async function writeCounter(page: Page) {
-	return page.evaluate(async () => {
-		const queue = await import("/src/screens/rules/write-queue.ts");
+	return page.evaluate(async (specifier) => {
+		const queue = await import(specifier);
 		return queue.rulesWriteCounter();
-	});
+	}, rulesQueueModule);
 }
 
 async function expectStored(accountId: string, value: number) {

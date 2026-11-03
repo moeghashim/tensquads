@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 
 const invalid = "The write fence is not valid.";
 
-export function parseWriteFence(input: unknown): WriteFence {
+function parseWriteFence(input: unknown): WriteFence {
 	if (!isRecord(input)) {
 		throw new Error(invalid);
 	}

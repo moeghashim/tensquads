@@ -28,9 +28,10 @@ export async function loadRulesSnapshot(): Promise<RulesSnapshotPage> {
 			return currentHeld() ?? Promise.reject(new Error("The signed-in account changed."));
 		}
 		const snapshot = { ...page, readCounter };
-		if (typeof window !== "undefined") held = { epoch, page: snapshot };
+		// A write after this read started owns the screen. Keep and show the snapshot from before that write.
+		const shown = retainSnapshot(epoch, readCounter, snapshot);
 		markReadSucceeded(generation, epoch);
-		return snapshot;
+		return shown;
 	} catch (error) {
 		if (typeof window === "undefined") {
 			markReadFailed(epoch);
@@ -54,4 +55,13 @@ function currentHeld(): RulesSnapshotPage | null {
 function heldPage(epoch: number): RulesSnapshotPage | null {
 	if (held?.epoch !== epoch) return null;
 	return held.page;
+}
+
+function retainSnapshot(epoch: number, readCounter: number, snapshot: RulesSnapshotPage): RulesSnapshotPage {
+	if (typeof window === "undefined") return snapshot;
+	if (rulesWriteCounter() === readCounter) {
+		held = { epoch, page: snapshot };
+		return snapshot;
+	}
+	return heldPage(epoch) ?? snapshot;
 }

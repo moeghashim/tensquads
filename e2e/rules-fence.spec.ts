@@ -8,6 +8,9 @@ import { expect, openWorkspace, test } from "./workspace.ts";
 
 const adCap = "policy.daily_ad_cap";
 const monday = "it is Monday at 8:00";
+const rulesQueueModule = "/src/screens/rules/write-queue.ts";
+const rulesLoaderModule = "/src/screens/rules/loader.ts";
+const fenceStorageKey = "tensquads.writeFence";
 
 test("an older ad cap held before it arrives does not replace the newer cap", async ({
 	page,
@@ -162,8 +165,8 @@ test("a committed ad cap whose response is lost advances the write counter", asy
 	await page.route("**/*", async (route) => {
 		const request = route.request();
 		if (!lost && request.method() === "POST" && (request.postData() ?? "").includes(adCap)) {
-			lost = true;
 			const response = await route.fetch();
+			lost = true;
 			if (!response.ok()) {
 				throw new Error(`The ad cap write failed with status ${response.status()}.`);
 			}
@@ -177,6 +180,184 @@ test("a committed ad cap whose response is lost advances the write counter", asy
 	await expectStored(accountId, adCap, 240);
 	await expect.poll(() => writeCounter(page)).toBeGreaterThan(before);
 });
+
+test("an old read does not replace the snapshot kept after a lost ad cap response", async ({ page, workspaceUser }) => {
+	test.setTimeout(90_000);
+	await openRules(page, workspaceUser);
+	let held: Route | null = null;
+	let oldResponse: Awaited<ReturnType<Route["fetch"]>> | null = null;
+	let rulesUrl = "";
+	let postLost = false;
+	let failReads = false;
+	let failedReads = 0;
+	await page.route("**/*", async (route) => {
+		const request = route.request();
+		if (request.method() === "GET" && request.url().includes("/_serverFn/")) {
+			const url = request.url().split("?")[0] ?? "";
+			if (failReads && url === rulesUrl) {
+				failedReads += 1;
+				await route.fulfill({ status: 500, contentType: "text/plain", body: "read failed" });
+				return;
+			}
+			if (!held) {
+				const response = await route.fetch();
+				const body = await response.text();
+				if (body.includes(adCap)) {
+					held = route;
+					oldResponse = response;
+					rulesUrl = url;
+					return;
+				}
+				await route.fulfill({ response });
+				return;
+			}
+		}
+		if (!postLost && request.method() === "POST" && (request.postData() ?? "").includes(adCap)) {
+			postLost = true;
+			const response = await route.fetch();
+			if (!response.ok()) {
+				throw new Error(`The ad cap write failed with status ${response.status()}.`);
+			}
+			await route.fulfill({ status: 500, contentType: "text/plain", body: "lost response" });
+			return;
+		}
+		await route.continue();
+	});
+	await page.evaluate(async (specifier) => {
+		const loader = await import(specifier);
+		(window as Window & { __oldRead?: Promise<unknown> }).__oldRead = loader.loadRulesSnapshot();
+	}, rulesLoaderModule);
+	await expect.poll(() => held !== null).toBe(true);
+	await page.locator("#lim-ads").fill("240");
+	await expect.poll(() => postLost).toBe(true);
+	await expect
+		.poll(() =>
+			page.evaluate(async (specifier) => {
+				const queue = await import(specifier);
+				return queue.rulesWriteCounter() > 0 && queue.readNeeded() === false;
+			}, rulesQueueModule),
+		)
+		.toBe(true);
+	await expect(page.locator("#lim-ads")).toHaveValue("240");
+	if (!held || !oldResponse) {
+		throw new Error("The old read was not held.");
+	}
+	await held.fulfill({ response: oldResponse });
+	const returned = await page.evaluate(async () => {
+		const snapshot = await (window as Window & { __oldRead?: Promise<{ limits: { key: string; value: number }[] }> })
+			.__oldRead;
+		return snapshot?.limits.find((limit) => limit.key === "policy.daily_ad_cap")?.value;
+	});
+	expect(returned).toBe(240);
+	failReads = true;
+	await page.evaluate(async () => {
+		const router = (
+			window as unknown as {
+				__TSR_ROUTER__?: { invalidate: (options: { sync: boolean }) => Promise<unknown> };
+			}
+		).__TSR_ROUTER__;
+		if (!router) {
+			throw new Error("The router is missing.");
+		}
+		await router.invalidate({ sync: true });
+	});
+	await expect.poll(() => failedReads).toBe(1);
+	await expect(page.locator("#lim-ads")).toHaveValue("240");
+});
+
+test("a reload keeps the tab fence and an older request leaves the newer cap", async ({
+	page,
+	workspaceUser,
+	accountId,
+}) => {
+	test.setTimeout(90_000);
+	await openRules(page, workspaceUser);
+	let old: { url: string; body: string } | null = null;
+	await page.route("**/*", async (route) => {
+		const request = route.request();
+		if (!old && request.method() === "POST" && (request.postData() ?? "").includes(adCap)) {
+			old = { url: request.url(), body: request.postData() ?? "" };
+			return;
+		}
+		await route.continue();
+	});
+	await page.locator("#lim-ads").fill("240");
+	await expect.poll(() => old !== null).toBe(true);
+	await page.unroute("**/*");
+	await page.reload();
+	await expect(page.locator("#lim-ads")).toHaveValue("200");
+	await whenSliderReady(page);
+	await page.locator("#lim-ads").fill("260");
+	await expectStored(accountId, adCap, 260);
+	if (!old) {
+		throw new Error("The old request was not held.");
+	}
+	const response = await page.request.post(old.url, {
+		headers: {
+			"content-type": "application/json",
+			"x-tsr-serverfn": "true",
+			origin: "http://localhost:3000",
+			referer: "http://localhost:3000/rules",
+		},
+		data: old.body,
+	});
+	expect(response.ok()).toBe(true);
+	await expectStored(accountId, adCap, 260);
+});
+
+test("a duplicated tab takes a new fence id and starts its sequence at 1", async ({
+	page,
+	workspaceUser,
+	accountId,
+}) => {
+	test.setTimeout(90_000);
+	await openRules(page, workspaceUser);
+	await page.locator("#lim-ads").fill("240");
+	await expectStored(accountId, adCap, 240);
+	const stored = await page.evaluate((key) => sessionStorage.getItem(key), fenceStorageKey);
+	if (!stored) {
+		throw new Error("The tab fence was not stored.");
+	}
+	const original = JSON.parse(stored) as { tab: string; seq: number };
+	const second = await page.context().newPage();
+	try {
+		await second.addInitScript(
+			([key, value]) => {
+				sessionStorage.setItem(key, value);
+			},
+			[fenceStorageKey, stored] as const,
+		);
+		await second.goto("/rules");
+		await expect(second.locator("#lim-ads")).toHaveValue("240");
+		await expect
+			.poll(async () => {
+				const raw = await second.evaluate((key) => sessionStorage.getItem(key), fenceStorageKey);
+				return raw ? (JSON.parse(raw) as { tab: string }).tab : "";
+			})
+			.not.toBe(original.tab);
+		const stamp = await second.evaluate(async (specifier) => {
+			const fence = await import(specifier);
+			return fence.nextWriteFence();
+		}, "/src/write-fence.ts");
+		expect(stamp.seq).toBe(1);
+		expect(stamp.tab).not.toBe(original.tab);
+		const kept = await page.evaluate((key) => sessionStorage.getItem(key), fenceStorageKey);
+		expect(JSON.parse(kept ?? "{}").tab).toBe(original.tab);
+	} finally {
+		await second.close();
+	}
+});
+
+async function whenSliderReady(page: Page) {
+	await page.waitForFunction(() => {
+		const slider = document.querySelector("#lim-ads");
+		if (!slider) return false;
+		const key = Object.keys(slider).find((name) => name.startsWith("__reactProps"));
+		if (!key) return false;
+		const props = (slider as unknown as Record<string, { onChange?: unknown }>)[key];
+		return typeof props?.onChange === "function";
+	});
+}
 
 async function openRules(page: Page, user: { email: string; password: string }) {
 	await openWorkspace(page, user);
@@ -315,10 +496,10 @@ async function failFirstPostAndRead(page: Page, rulesUrl: string) {
 }
 
 async function recoveryGeneration(page: Page) {
-	return page.evaluate(async () => {
-		const queue = await import("/src/screens/rules/write-queue.ts");
+	return page.evaluate(async (specifier) => {
+		const queue = await import(specifier);
 		return queue.rulesRecoveryGeneration();
-	});
+	}, rulesQueueModule);
 }
 
 function delay(ms: number) {
@@ -328,10 +509,10 @@ function delay(ms: number) {
 }
 
 async function writeCounter(page: Page) {
-	return page.evaluate(async () => {
-		const queue = await import("/src/screens/rules/write-queue.ts");
+	return page.evaluate(async (specifier) => {
+		const queue = await import(specifier);
 		return queue.rulesWriteCounter();
-	});
+	}, rulesQueueModule);
 }
 
 async function expectStored(accountId: string, key: string, value: number) {
