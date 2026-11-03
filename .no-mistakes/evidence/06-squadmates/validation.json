@@ -1,0 +1,126 @@
+{
+  "api": {
+    "petra": {
+      "id": "master",
+      "name": "Petra",
+      "place": "Petra, Jordan",
+      "roleTag": "Master",
+      "role": "Master",
+      "tint": "#e8e8e8",
+      "body": "#1f1f1f",
+      "eye": "#ffffff",
+      "prop": "crown",
+      "line": "Keeps the squad in sync and asks you only when it matters."
+    },
+    "preservedDrawings": 630,
+    "invalidInputs": [
+      {
+        "id": "legal",
+        "error": "UnknownSquadmateError",
+        "message": "Unknown squadmate image: legal"
+      },
+      {
+        "id": "__proto__",
+        "error": "UnknownSquadmateError",
+        "message": "Unknown squadmate image: __proto__"
+      },
+      {
+        "id": "constructor",
+        "error": "UnknownSquadmateError",
+        "message": "Unknown squadmate image: constructor"
+      },
+      {
+        "id": "<script>alert(1)</script>",
+        "error": "UnknownSquadmateError",
+        "message": "Unknown squadmate image: <script>alert(1)</script>"
+      },
+      {
+        "id": "",
+        "error": "UnknownSquadmateError",
+        "message": "Unknown squadmate image: "
+      }
+    ],
+    "invalidStatesRejected": true
+  },
+  "html": {
+    "beforeBytes": 53129,
+    "afterBytes": 54204,
+    "sydneyCardBytes": 1075,
+    "identicalApartFromSydney": true,
+    "beforeSha256": "dd5c80934e237c528961844f7e20e4cfdfba3b88c45fb907acb5b6cc6fe88931",
+    "afterSha256": "01bad0e58241f876f624315a23af53717e1a75bba51fc999832d0f6024d93f85",
+    "headers": {
+      "cache-control": "no-cache",
+      "cf-cache-status": "HIT",
+      "content-encoding": "gzip",
+      "content-type": "text/html; charset=utf-8",
+      "etag": "\"35649330da2a92b2543d694fe5f8c7c4\"",
+      "referrer-policy": "no-referrer",
+      "transfer-encoding": "chunked",
+      "x-content-type-options": "nosniff",
+      "x-robots-tag": "noindex, nofollow"
+    }
+  },
+  "browser": [
+    {
+      "label": "before",
+      "width": 1440,
+      "cards": 9,
+      "stateDrawings": 27,
+      "dimensions": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "tableWidth": 980,
+        "tableContainer": 980,
+        "blink": "none"
+      },
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    {
+      "label": "before",
+      "width": 390,
+      "cards": 9,
+      "stateDrawings": 27,
+      "dimensions": {
+        "width": 390,
+        "scrollWidth": 390,
+        "tableWidth": 820,
+        "tableContainer": 342,
+        "blink": "none"
+      },
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    {
+      "label": "after",
+      "width": 1440,
+      "cards": 10,
+      "stateDrawings": 27,
+      "dimensions": {
+        "width": 1440,
+        "scrollWidth": 1440,
+        "tableWidth": 980,
+        "tableContainer": 980,
+        "blink": "none"
+      },
+      "pageErrors": [],
+      "consoleErrors": []
+    },
+    {
+      "label": "after",
+      "width": 390,
+      "cards": 10,
+      "stateDrawings": 27,
+      "dimensions": {
+        "width": 390,
+        "scrollWidth": 390,
+        "tableWidth": 820,
+        "tableContainer": 342,
+        "blink": "none"
+      },
+      "pageErrors": [],
+      "consoleErrors": []
+    }
+  ]
+}
