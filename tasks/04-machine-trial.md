@@ -16,6 +16,33 @@ Two real adapters exist behind one feature flag. The boat.dev adapter for `Machi
 - The boat docs from `https://docs.boat.dev/llms.txt`: TypeScript SDK, Create sandbox, Get sandbox, List sandbox processes, Stop a sandbox, Resume fork and restore, Delete a sandbox, Saved snapshots, Templates and sizing, Access and credentials, AI credentials, Scopes, Limits and errors, Free trial, Firewall rules, Compliance and uptime
 - The Cloudflare docs for Queues (consumers, pull consumers, dead letter queues, batching and retries) and for Durable Objects (SQLite storage, alarms, WebSocket hibernation)
 
+## Moe's answers, 4 November 2026
+
+The builder does no step 1 work. Items 1, 2, 3 and 21 stay open with Moe.
+
+1. **Paid plan.** Open with Moe.
+2. **API keys.** Open with Moe.
+3. **Credential profile.** Open with Moe.
+4. **noEnv and the environment.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Send `noEnv: true` and `environment: "tensquads-agents"` together. If that pair is refused, send `noEnv: true` alone.
+5. **Async account ports.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. New methods are async and take an `AccountScope`. The old sync ports stay, so the current callers do not move in this pull request.
+6. **Template contents.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. `makeTemplate` starts a machine, writes the image file, saves `tensquads-<imageId>-<version>`, waits until ready, and removes the source.
+7. **Dashboard fields.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Host is `vps-<agentId>-01`, region is `EU`, size is `<vcpu> vCPU · <memoryGB> GB`, CPU is the rounded process share, and uptime is `N days` or "Just started".
+8. **Queue consumer.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. One queue, one Worker consumer, and the Durable Object holds each agent's tasks. Machines use Worker endpoints.
+9. **Dead letter queue.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. `tensquads-bus` and `tensquads-bus-dlq` count as one queue. The same Worker consumes both. This pull request does not create them.
+10. **Machine token.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Send and take are guarded by a signed token for one account and one agent. Tests call them. No token is placed on a machine.
+11. **Neon failure.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The Durable Object saves to its storage first, keeps unwritten rows, and retries with an alarm.
+12. **Write-through scope.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Phase 4 writes `bus_events` and the shared state at run time. The seed stays a setup writer.
+13. **Browser push.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The Durable Object accepts a WebSocket and pushes each new event. The Traffic screen does not connect.
+14. **Roll out.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Roll out and View changelog still do nothing. There is no Rollout object.
+15. **Adapter flag.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. `ADAPTERS` is `test` or `real`, the default is `test`, and both adapters switch together. Production stays on `test`.
+16. **Manual job shape.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. A `machine-trial` input on `ci.yml` runs only when that input is true, and it is not a required check. This pull request does not add the job.
+17. **Cleanup of a failed run.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The live job would label what it makes, time out at 20 minutes, and always remove that label. This pull request does not add the job.
+18. **Port errors.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. One typed port error for each boat error. No automatic retry except the `Idempotency-Key` on start. No screen shows the errors.
+19. **Heartbeat.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The heartbeat, systemd service, and "Restarting" stay out of this task.
+20. **Find a machine.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. No new table. Find the machine with the label filter. The SDK method accepts `label`.
+21. **Host failure and a second region.** Open with Moe.
+22. **Bus proof.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The rules run on Miniflare in `npm test`. The real deploy half waits for the manual job.
+
 ## Steps, in order
 
 Step 1 is for Moe. Steps 2 onward wait for step 1 and for Moe's answers to "Stop and ask". Record each answer in this file under a heading "Moe's answers", as task 01 does, in the first commit.

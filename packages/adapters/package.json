@@ -11,6 +11,7 @@
 		"test": "node --experimental-strip-types test/run.ts"
 	},
 	"dependencies": {
+		"@boatdev/sdk": "1.13.0",
 		"@electric-sql/pglite": "0.5.14",
 		"@neondatabase/serverless": "1.2.0",
 		"@tensquads/domain": "*",
