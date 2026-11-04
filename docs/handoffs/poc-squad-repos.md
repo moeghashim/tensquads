@@ -2,7 +2,7 @@
 
 Date: 31 October 2026. Owner: Moe Ghashim.
 
-Do not start this work yet. Start it when every item in "When to start" is true.
+Do not start a thread until the rules in "When to start" say you may. Gaps 1 to 4 do not block the kit.
 
 ## The request
 
@@ -13,27 +13,39 @@ Moe wants each proof-of-concept agent, except the master, to have:
 
 The two agents are the Market researcher and the Website builder. The master stays in `moeghashim/tensquads`. It runs on Cloudflare (decision 17).
 
-This changes how `tasks/05-proof-of-concept.md` is delivered. It does not change what the proof of concept does.
+Decision 35 changes how phase 5 is delivered. The four task files are `tasks/05-agent-kit.md`, `tasks/05-market-researcher.md`, `tasks/05-website-builder.md`, and `tasks/05-proof-of-concept.md`. The split does not change what the proof of concept does.
 
 ## When to start
 
 - [ ] Tasks 00 to 04 are merged in `moeghashim/tensquads`.
 - [ ] The boat.dev adapter works. It can make a template and start a machine from a template.
-- [ ] The Cloudflare bus adapter works. A machine can send to the Worker endpoint and pull from a queue over HTTP.
-- [ ] Moe answered every item in "Decisions for Moe".
-- [ ] Moe filled every gap in "Gaps in the source documents".
+- [ ] The Cloudflare bus adapter works. A machine sends to `/machine/send` and takes tasks from `/machine/take`. A machine does not pull a Cloudflare queue.
+- [x] Moe answered every item in "Decisions for Moe" on 4 November 2026.
+- [ ] Moe answered gaps 1 to 4. Gap 5 is closed. See "Gaps in the source documents".
 
-If an item is false, stop and tell Moe which one.
+Stop when tasks 00 to 04 are not merged. Stop when an adapter item above is false. Tell Moe which item is false. Gaps 1 to 4 do not stop the kit. Each task file names the step that an open question blocks.
 
 ## Decisions for Moe
 
-Answer these before the first thread starts. Each has one recommended answer.
+Moe answered these on 4 November 2026. He accepted the recommended answer for each item. The record is under "Moe's answers".
 
 1. **Repository names.** Recommended: `moeghashim/tensquads-market-researcher` and `moeghashim/tensquads-website-builder`.
 2. **Visibility.** Recommended: private. An image holds our prompts and skills. A private repository needs access to the kit in item 3.
 3. **Shared code.** Both agents need the same bus contract and the same agent loop. Recommended: a third new repository, `moeghashim/tensquads-agent-kit`. All three consumers pin it to one commit with an npm git dependency. This needs no package registry and keeps one copy of the loop. It is one more repository than Moe asked for.
 4. **Decision record.** Recommended: add this split to the decisions table in `docs/PLAN.md` as a new decision, and record it in `docs/adrs/`. `AGENTS.md` says the architecture is fixed by that table.
 5. **Task file.** Recommended: replace `tasks/05-proof-of-concept.md` with four task files, one for each row in "Who builds what". Its "Done when" list stays the final gate.
+
+## Moe's answers, 4 November 2026
+
+Moe answered "go with the recommendations" for every item above.
+
+1. The repositories are `moeghashim/tensquads-market-researcher` and `moeghashim/tensquads-website-builder`.
+2. Both repositories are private.
+3. `moeghashim/tensquads-agent-kit` holds the shared bus contract and the agent loop. A consumer pins one commit with an npm git dependency.
+4. Decision 35 in `docs/PLAN.md` records the split. `docs/adrs/0002-poc-repositories.md` records it too.
+5. Four task files replace the single phase 5 task. The old "Done when" list stays in `tasks/05-proof-of-concept.md`.
+
+Gap 5 is closed. Where the plan and task 05 disagree on the skill list or on GPT-6 Astra, task 05 wins.
 
 ## Who builds what
 
@@ -47,14 +59,15 @@ Answer these before the first thread starts. Each has one recommended answer.
 Order:
 
 1. The kit thread releases version 0.1.0 first. The contract must exist before the agents use it.
-2. The researcher and builder threads run after that. They can run at the same time.
-3. The main thread runs the full loop last.
+2. The main repository may add the token signer and the heartbeat route before the agent releases.
+3. The researcher and builder threads run after the kit release. They can run at the same time. Unit tests and image releases do not wait for the Durable Object. Live heartbeat checks wait for the main repository to have the heartbeat route.
+4. The main thread runs the full loop last. The full loop, the seed, and the final "Done when" list wait for the kit `0.1.0` commit and both released images.
 
 ## Rules for every repository
 
-These rules come from `AGENTS.md`, `docs/PLAN.md` and `tasks/05-proof-of-concept.md`.
+These rules come from `AGENTS.md`, `docs/PLAN.md`, and the four phase 5 task files.
 
-1. Decisions 16 to 28 still apply. Read them in `docs/PLAN.md`.
+1. Decisions 16 to 28 and decision 35 still apply. Read them in `docs/PLAN.md`. Decision 35 is the repository split.
 2. Each repository copies the PI-Starter checks: strict TypeScript, Biome, husky, `progress.md`, `no-mistakes`, DCO, and `make verify`.
 3. One task, one branch, one pull request. Push with `git push no-mistakes`.
 4. A planner writes the task. A builder builds it. A reviewer who does not see the builder's notes tries to find faults.
@@ -69,7 +82,7 @@ These rules come from `AGENTS.md`, `docs/PLAN.md` and `tasks/05-proof-of-concept
 3. **Hub and spoke.** A squad talks only to the master. The Website builder gets the research report in its Task. It never calls the researcher.
 4. **No state on the machine.** The agent keeps nothing between loops. Every result goes to the bus at once.
 5. **No database access.** An agent never writes to Neon. Only the Durable Object writes (decision 16).
-6. **No keys.** No key enters a machine, a prompt, a log or git. The boat.dev key proxy holds them. The machine gets only `ACCOUNT_ID`, `AGENT_ID` and `IMAGE_TAG`, with `noEnv: true`.
+6. **No keys.** No key enters a machine, a prompt, a log, or git. The boat.dev key proxy holds the keys. Boat reserves the name `AGENT_ID` (`invalid_env`). The machine gets only `ACCOUNT_ID`, `TENSQUADS_AGENT_ID`, and `IMAGE_TAG`, with `noEnv: true`.
 7. **Gates.** A skill with the gate Ask first never runs before an Approval.
 8. **Runtime.** Size `small`, a systemd service, and one heartbeat to the account's Durable Object every minute (decision 17).
 9. **Updates.** A skill is a cordis plug-in, so a skill update needs no restart. Cordis is pinned to one commit, and one small module holds all calls to it (decision 18).
@@ -83,7 +96,7 @@ Build these and nothing else:
 - The Task and Result payloads for both agents.
 - The types for the research report, the brief, the menu or item list, and the page result.
 - The agent loop, with a skill interface and the gates Auto, Ask first and Under limit.
-- The HTTP client for the Worker endpoint and the queue pull.
+- The HTTP client for `POST /machine/send` and `POST /machine/take`. A machine does not pull a Cloudflare queue.
 - The heartbeat.
 - A fake master for tests in the agent repositories.
 
@@ -182,7 +195,7 @@ After publishing, `https://<slug>.10squads.com` must return 200 and the same con
 - [ ] Each skill passes its gate tests against the fake master.
 - [ ] A test proves that an Ask first skill does not run before an Approval.
 - [ ] A test proves that the agent holds no task state between loops.
-- [ ] The image starts on a real boat.dev machine with `noEnv: true`, and its heartbeat reaches the Durable Object.
+- [ ] After the main repository has the heartbeat route, the image starts on a real boat.dev machine with `noEnv: true`, and its heartbeat reaches the Durable Object.
 - [ ] A scan finds no key in git, in logs or in the image.
 
 **The whole proof of concept:**
@@ -191,15 +204,15 @@ After publishing, `https://<slug>.10squads.com` must return 200 and the same con
 
 ## Gaps in the source documents
 
-The handoff needs these. They are not in the repository on 31 October 2026.
+Gaps 1 to 4 were still open on 4 November 2026. Each phase 5 task file that needs one repeats it, with a recommended answer. Do not guess. Gap 5 is closed.
 
-1. **Decision 31.** `tasks/05-proof-of-concept.md` cites it, and the table in `docs/PLAN.md` stops at 28. Task 05 gives the only text: ClickHouse comes after phase 5. Moe dropped decisions 29 and 30 on 1 November 2026. Ignore every reference to them.
-2. **The thirteen events.** Task 05 requires them. `docs/PLAN.md:337` has only a placeholder for the diagram. Task 05 lists eight loop steps, not thirteen events.
-3. **The context.dev links.** Task 05 says the plan links them. The plan does not mention context.dev.
-4. **The screen-by-screen table.** Task 05 says it follows the "Proof of concept" section. The plan has no such table.
-5. **Conflicts between the plan and task 05.** The plan lists fewer skills than task 05, and it does not name GPT-6 Astra. Recommended: task 05 wins.
+1. **Decision 31.** The old task cites it. The decisions table has rows 32, 33, and 34, and it has no row 31. The old task text says ClickHouse comes after phase 5. Moe dropped decisions 29 and 30 on 1 November 2026. Ignore every reference to them. The main task asks this as open question 1.
+2. **The thirteen events.** The main task requires them. The Proof of concept section has a placeholder for the diagram. The loop has eight steps, not thirteen events. The main task asks this as open question 2.
+3. **The context.dev links.** The old task says the plan links them. The plan does not mention context.dev. The researcher task and the main task ask this as an open question.
+4. **The screen-by-screen table.** The old task says it follows the "Proof of concept" section. The plan has no such table. The main task asks this as open question 4.
+5. **Conflicts between the plan and task 05.** Closed on 4 November 2026. The skill list and GPT-6 Astra in the phase 5 task files win. The Proof of concept table now matches those files.
 
-Do not guess at these. Ask Moe.
+Do not guess at gaps 1 to 4. Ask Moe. The recommended answer is in the task file.
 
 ## Prompts to paste
 
@@ -207,16 +220,31 @@ Use one new thread for each repository. Replace `<path>` with the path to this f
 
 **Kit thread:**
 
-> You are the builder for `tensquads-agent-kit`. Read `AGENTS.md` in `moeghashim/tensquads`, then `<path>`, in full. Check "When to start". If an item is false, stop and tell me which one. Create the repository only after you confirm its name and visibility with me. Build "The kit". Release version 0.1.0 with a tag. Do not write master logic or a check.
+> You are the builder for `tensquads-agent-kit`. Read `AGENTS.md` in `moeghashim/tensquads`, then `<path>`, then `tasks/05-agent-kit.md`, in full. Check "When to start". If a start item is false, stop and tell me which one. Decision 35 names the repository and makes it private. Do not ask again. Build "The kit". Release version 0.1.0 with a tag. Do not write master logic or a check.
 
 **Researcher thread:**
 
-> You are the builder for `tensquads-market-researcher`. Read `AGENTS.md` in `moeghashim/tensquads`, then `<path>`, in full. Check "When to start". Confirm that the kit release exists. Create the repository only after you confirm its name and visibility with me. Build the "Market researcher" section on the kit. Stop when a step needs my account, my card or a key, and give me the exact command. Do not change the main repository.
+> You are the builder for `tensquads-market-researcher`. Read `AGENTS.md` in `moeghashim/tensquads`, then `<path>`, then `tasks/05-market-researcher.md`, in full. Check "When to start". Confirm that the kit release exists. Decision 35 names the repository and makes it private. Do not ask again. Build the "Market researcher" section on the kit. Stop when a step needs my account, my card, or a key, and give me the exact command. Do not change the main repository.
 
 **Builder thread:**
 
-> You are the builder for `tensquads-website-builder`. Read `AGENTS.md` in `moeghashim/tensquads`, then `<path>`, in full. Check "When to start". Confirm that the kit release exists. Create the repository only after you confirm its name and visibility with me. Build the "Website builder" section on the kit. Stop when a step needs my account, my card or a key, and give me the exact command. Do not change the main repository.
+> You are the builder for `tensquads-website-builder`. Read `AGENTS.md` in `moeghashim/tensquads`, then `<path>`, then `tasks/05-website-builder.md`, in full. Check "When to start". Confirm that the kit release exists. Decision 35 names the repository and makes it private. Do not ask again. Build the "Website builder" section on the kit. Stop when a step needs my account, my card, or a key, and give me the exact command. Do not change the main repository.
 
 **Main thread:**
 
-> You are the builder for the proof of concept in `moeghashim/tensquads`. Read `AGENTS.md`, then `<path>`, then `tasks/05-proof-of-concept.md`, in full. Build "What stays in `moeghashim/tensquads`". Pin the kit and both released images. Run the full loop on real boat.dev machines. Report each box under "Done when" with evidence.
+> You are the builder for the proof of concept in `moeghashim/tensquads`. Read `AGENTS.md`, then `<path>`, then `tasks/05-proof-of-concept.md`, in full. Build "What stays in `moeghashim/tensquads`". The token signer and the heartbeat route may start before either agent image is released. The full loop, the seed, and the "Done when" list wait for the kit `0.1.0` commit and both released images. Pin the kit and both released images. Run the full loop on real boat.dev machines. Report each box under "Done when" with evidence. Do not build the kit or either agent image here.
+
+## Edits on 4 November 2026
+
+1. Recorded Moe's answers for the five decisions. He accepted every recommendation.
+2. Closed gap 5. The phase 5 task files win on the skill list and on GPT-6 Astra.
+3. Updated gap 1. The decisions table has rows 32, 33, and 34. It still has no row 31. Decisions 29 and 30 stay dropped.
+4. Pointed gaps 1 to 4 at the open questions in the phase 5 task files.
+5. Changed "When to start". A machine sends to `/machine/send` and takes tasks from `/machine/take`. It does not pull a queue.
+6. Changed "When to start" so gaps 1 to 4 do not stop the kit. Marked the decisions item as answered. The opening lines now match that rule.
+7. Agent rule 6 now says `TENSQUADS_AGENT_ID`. Boat reserves `AGENT_ID` (`invalid_env`).
+8. The kit list now names `/machine/send` and `/machine/take`. It no longer says "the queue pull".
+9. Named the four task files in the request, in the rules, and in the prompts.
+10. The prompts no longer ask Moe to confirm the repository name or the visibility. Decision 35 settled both.
+11. Repository rule 1 now includes decision 35.
+12. The main repository may add the token signer and the heartbeat route before the agent releases. Unit tests and image releases do not wait for the Durable Object. Live heartbeat checks wait for the route. The full loop, the seed, and the final "Done when" list still wait for the kit `0.1.0` commit and both released images.

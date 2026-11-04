@@ -43,6 +43,7 @@ The build brief had 11 open questions. Moe answered all of them on 31 October 20
 | 32 | Borrowed from dsh-superagent | Four things from github.com/deepseek-ai/dsh-superagent-prototype, decided on 2 November 2026. (1) Inbound events use the names Source, Trigger and Eval; Eval is a code gate plus a Decider judgement. (2) Each Approval records a Mandate: the rule it matched, the limit at that time, the policy version and who said yes. (3) The Agent loop state model gains Waiting, Blocked and Dropped. (4) The plan keeps a Rejected concepts table |
 | 33 | Squadmates: names and characters | Decided by Moe on 3 November 2026. Each agent image has one fixed character name, taken from a famous place: master Petra, Orders Pisa, Support Kyoto, Marketing Rio, Finance Zurich, Inventory Giza, Market researcher Machu, Website builder Angkor, Analytics Delphi, People Sydney. A customer cannot rename the master or an agent. Each agent shows a character: one round body in the agent's colour, one role accessory, and eyes that show the Agent loop state. The reference drawing is `/review/characters`. This departs from the canvas: where a screen shows the master's name or an agent's mark, the build shows the character name and the character. The design's agent name ("Orders") stays as the role tag. No screen shows the word "master": the interface says "Petra", for example "Chat with Petra" (Moe, 3 November 2026). Task 06 builds it |
 | 34 | Homepage redesign | Decided by Moe on 3 November 2026. Screen 1 gets a new design, made with the impeccable skill, with an inspiring hero that shows the squadmates. Moe approves the new design before it is built. The approved design lives in `docs/designs/home/` and replaces `Home.dc.html` as the reference for screen 1 only. The copy, the New and Existing toggle, the prompt box, the pricing and the path to sign-up stay, unless Moe approves a change. Task 07 builds it |
+| 35 | Proof of concept: repositories | Decided by Moe on 4 November 2026. He accepted the recommendations in `docs/handoffs/poc-squad-repos.md`. The Market researcher is the private repository `moeghashim/tensquads-market-researcher`. The Website builder is the private repository `moeghashim/tensquads-website-builder`. The shared bus contract and the agent loop are the private repository `moeghashim/tensquads-agent-kit`. A consumer pins one commit of the kit with an npm git dependency. The master stays in `moeghashim/tensquads`. Four task files replace the single phase 5 task. `tasks/05-proof-of-concept.md` keeps the final "Done when" list. ADR 0002 records the split |
 
 No question is open. Moe answered items 13 to 15 on 31 October 2026. The web framework changed from Next.js to TanStack Start the same day. TanStack Start reached version 1.0 on 13 October 2026. Its server build is a plain fetch handler, so it runs on a Worker with no adapter. Cloudflare is an official hosting partner. Clerk has an official SDK for it.&#32;
 
@@ -357,7 +358,7 @@ Phase 0 is complete when CI is green, the Cloudflare preview deploys, and the se
 
 ## Proof of concept
 
-The first real agents are three squads: the master, a Market researcher and a Website builder. The user types a business name and picks restaurant or grocer. The researcher finds the competitors and reports how they do. The master writes a brief and asks the user. The builder makes one page from the report and the brief: a menu page for a restaurant, an item list for a grocer. The master asks the user again, then publishes.
+The first real agents are three squads: the master, a Market researcher and a Website builder. The user types a business name and picks restaurant or grocer. The researcher finds the competitors and reports how they do. The master writes a brief and asks the user. The builder makes one page from the report and the brief: a menu page for a restaurant, an item list for a grocer. The master asks the user again, then publishes. Decision 35 splits the work across four task files: `tasks/05-agent-kit.md`, `tasks/05-market-researcher.md`, `tasks/05-website-builder.md`, and `tasks/05-proof-of-concept.md`.
 
 &#91;embedded content: proof of concept · 13 steps, 2 checks, 2 approvals\]
 
@@ -372,11 +373,13 @@ The first real agents are three squads: the master, a Market researcher and a We
 
 **What each squad does.**
 
-| Squad | Skills, with gate | The check that code runs on the Result |
-| --- | --- | --- |
-| Market researcher | `web.search` Auto · `scrapling.read_page` Auto · `market.analyse` Auto · `report.write` Auto | At least three competitors. Each has a URL that returns 200. Each has a price or an offer taken from its page. The report names a gap |
-| Master | `brief.write` Auto · `task.route` Auto · `approval.ask` Auto | The brief is under 150 words and names the gap from the report |
-| Website builder | `site.build` Auto · `site.preview` Auto · `site.publish` Ask first | The preview URL returns 200. The page has the business name. Every menu item or grocery item has a name and a price. No link on the page is broken. The page passes the keyboard and contrast checks |
+| Squad | Model | Skills, with gate | The check that code runs on the Result |
+| --- | --- | --- | --- |
+| Market researcher | A cheaper GPT-6 tier | `web.search` Auto · `maps.competitors` Auto · `scrapling.read_page` Auto · `market.analyse` Auto · `report.write` Auto · `competition.watch` Ask first | At least three competitors. Each has a URL that returns 200. Each has a price or an offer taken from its page. The report names a gap |
+| Master | A cheaper GPT-6 tier | `brief.write` Auto · `task.route` Auto · `approval.ask` Auto · `check.run` Auto | The brief is under 150 words and names the gap from the report |
+| Website builder | GPT-6 Astra | `site.build` Auto · `site.critique` (impeccable) Auto · `site.preview` Auto · `site.publish` Ask first | The preview URL returns 200. The page has the business name. Every menu item or grocery item has a name and a price. No link on the page is broken. The page passes the keyboard and contrast checks |
+
+Moe decided on 4 November 2026 that the phase 5 task files win where this table disagreed with them on the skill list or on GPT-6 Astra. The table now matches those files.
 
 **The business type (decision 28).** The proof of concept is for restaurants or grocers. The user picks one in step 1. The page the builder makes depends on it:
 
