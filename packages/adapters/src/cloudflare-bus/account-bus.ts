@@ -1,7 +1,7 @@
 import type { PublishedEvent } from "@tensquads/kernel";
 
 import { isBusRecord } from "./message.ts";
-import { type PendingBusRow, readBusEvents, readBusHistory, writePending } from "./neon-write.ts";
+import { type PendingBusRow, readBusEvents, readBusHistory, readBusState, writePending } from "./neon-write.ts";
 
 const ALARM_MS = 30_000;
 
@@ -108,7 +108,7 @@ export class AccountBus {
 		const routes = new Map<string, (request: Request) => Promise<Response>>([
 			["/accept", (request: Request) => request.json().then((body: unknown) => this.accept(body))],
 			["/events", (request: Request) => this.events(request)],
-			["/store", async () => Response.json(await this.stateMap())],
+			["/store", (request: Request) => this.store(request)],
 			["/socket", () => Promise.resolve(this.socket())],
 			["/take", (request: Request) => request.json().then((body: unknown) => this.take(body))],
 		]);
@@ -124,16 +124,18 @@ export class AccountBus {
 	private async accept(body: unknown): Promise<Response> {
 		if (!isBusRecord(body)) return new Response("The message was rejected.", { status: 400 });
 		const record = body;
-		const result = await this.storeEvent(record.accountId, record.event);
+		const result = await this.withAccount(record.accountId, () =>
+			this.ctx.storage.transaction((txn) => commitEvent(txn, record.accountId, record.event)),
+		);
 		if (result.event) this.push(result.event);
 		await this.flush();
 		return Response.json({ seen: result.seen, seq: result.seq });
 	}
 
-	private storeEvent(accountId: string, event: PublishedEvent): Promise<AcceptResult> {
+	private withAccount<T>(accountId: string, operation: () => Promise<T>): Promise<T> {
 		const next = this.accepting.then(async () => {
 			await this.initialize(accountId);
-			return this.ctx.storage.transaction((txn) => commitEvent(txn, accountId, event));
+			return operation();
 		});
 		this.accepting = next.then(
 			() => undefined,
@@ -147,6 +149,7 @@ export class AccountBus {
 		if (storedAccount && storedAccount !== accountId) return;
 		if ((await this.ctx.storage.get<number>("seq")) !== undefined) return;
 		const history = this.env.DATABASE_URL ? await readBusHistory(this.env.DATABASE_URL, accountId) : [];
+		const state = this.env.DATABASE_URL ? await readBusState(this.env.DATABASE_URL, accountId) : [];
 		await this.ctx.storage.transaction(async (txn) => {
 			await txn.put("account", accountId);
 			await txn.put(
@@ -154,6 +157,7 @@ export class AccountBus {
 				history.reduce((seq, row) => Math.max(seq, row.seq), 0),
 			);
 			for (const row of history) await txn.put(`seen:${row.event.id}`, true);
+			for (const row of state) await txn.put(`state:${row.key}`, row.value);
 		});
 	}
 
@@ -208,6 +212,17 @@ export class AccountBus {
 	private async storedEvents(): Promise<PublishedEvent[]> {
 		const rows = await listed<PublishedEvent>(this.ctx.storage, "event:");
 		return rows.map((entry) => entry[1]);
+	}
+
+	private async store(request: Request): Promise<Response> {
+		const accountId = request.headers.get("x-account-id") ?? (await this.ctx.storage.get<string>("account"));
+		if (!accountId) return Response.json({});
+		return this.withAccount(accountId, async () => {
+			if ((await this.ctx.storage.get<string>("account")) !== accountId) {
+				return new Response("The message was rejected.", { status: 400 });
+			}
+			return Response.json(await this.stateMap());
+		});
 	}
 
 	private async stateMap(): Promise<Record<string, unknown>> {

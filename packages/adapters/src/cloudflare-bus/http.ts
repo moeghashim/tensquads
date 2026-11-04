@@ -144,7 +144,9 @@ export function createCloudflareBus(
 			return (await response.json()) as PublishedEvent[];
 		},
 		async store(scope) {
-			const response = await stubFetch(env, scope.accountId, "/store");
+			const response = await stubFetch(env, scope.accountId, "/store", {
+				headers: { "x-account-id": scope.accountId },
+			});
 			if (!response.ok) throw notConfigured("The bus is not configured.");
 			return (await response.json()) as Record<string, unknown>;
 		},

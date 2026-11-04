@@ -139,3 +139,20 @@ export async function readBusHistory(connectionString: string, accountId: string
 		await pool.end();
 	}
 }
+
+export async function readBusState(
+	connectionString: string,
+	accountId: string,
+): Promise<{ key: string; value: string }[]> {
+	const { pool, db } = database(connectionString);
+	try {
+		return await db
+			.select({ key: stateEntries.key, value: stateEntries.value })
+			.from(stateEntries)
+			.where(eq(stateEntries.accountId, accountId));
+	} catch (error) {
+		throw hidden(error, connectionString);
+	} finally {
+		await pool.end();
+	}
+}

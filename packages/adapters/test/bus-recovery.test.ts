@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { Pool } from "@neondatabase/serverless";
 import type { PublishedEvent } from "@tensquads/kernel";
-import { AccountBus, type BusStorage } from "../src/cloudflare-bus/account-bus.ts";
+import { AccountBus } from "../src/cloudflare-bus/account-bus.ts";
 import { createCloudflareBus, handleBusQueue, handleMachineRequest } from "../src/cloudflare-bus/http.ts";
 import { writePending } from "../src/cloudflare-bus/neon-write.ts";
 import { signMachineToken } from "../src/cloudflare-bus/token.ts";
 import type { ScriptedBusEvent } from "../src/memory-bus.ts";
 import { busEvents } from "../src/neon/schema.ts";
 import { workerTestBus } from "../src/worker-adapters.ts";
+import { Storage } from "./bus-storage.ts";
 import { openPglite } from "./pglite.ts";
 
 const scope = { accountId: "bus-recovery", mode: "account" } as const;
@@ -39,48 +40,6 @@ function deferred() {
 		resolve = done;
 	});
 	return { promise, resolve };
-}
-
-class Storage implements BusStorage {
-	rows = new Map<string, unknown>();
-	alarm: number | null = null;
-	private tail = Promise.resolve();
-	async get<T>(key: string): Promise<T | undefined> {
-		return structuredClone(this.rows.get(key)) as T | undefined;
-	}
-	async put<T>(key: string, value: T): Promise<void> {
-		this.rows.set(key, structuredClone(value));
-	}
-	async list<T>({ prefix = "" } = {}): Promise<Map<string, T>> {
-		return new Map([...this.rows].filter(([key]) => key.startsWith(prefix))) as Map<string, T>;
-	}
-	transaction<T>(closure: (txn: BusStorage) => Promise<T>): Promise<T> {
-		const next = this.tail.then(async () => {
-			const before = structuredClone(this.rows);
-			const alarm = this.alarm;
-			try {
-				return await closure(this);
-			} catch (error) {
-				this.rows = before;
-				this.alarm = alarm;
-				throw error;
-			}
-		});
-		this.tail = next.then(
-			() => undefined,
-			() => undefined,
-		);
-		return next;
-	}
-	async setAlarm(time: number | Date): Promise<void> {
-		this.alarm = Number(time);
-	}
-	async getAlarm(): Promise<number | null> {
-		return this.alarm;
-	}
-	async deleteAlarm(): Promise<void> {
-		this.alarm = null;
-	}
 }
 
 function bus(storage: Storage, database?: string) {
@@ -217,8 +176,8 @@ test("accept initializes sequence and seen ids once before new events", async (t
 		assert.deepEqual(await (await duplicate).json(), { seen: true, seq: 2 });
 		assert.deepEqual(await (await first).json(), { seen: false, seq: 3 });
 		assert.deepEqual(await (await second).json(), { seen: false, seq: 4 });
-		assert.equal(reads, 1);
-		assert.equal(await storage.get("state:status"), undefined);
+		assert.equal(reads, 2);
+		assert.equal(await storage.get("state:status"), '"seed"');
 		assert.deepEqual(await storage.get("tasks:researcher"), ["new-first", "new-second"]);
 		const restarted = bus(storage, "postgres://fixture/db");
 		const repeat = await accept(restarted, {
@@ -226,7 +185,7 @@ test("accept initializes sequence and seen ids once before new events", async (t
 			event: { ...event, id: "seed-second", set: { status: "poison" } },
 		});
 		assert.deepEqual(await repeat.json(), { seen: true, seq: 4 });
-		assert.equal(reads, 1);
+		assert.equal(reads, 2);
 		assert.deepEqual((await database.client.query("SELECT value FROM state_entries")).rows, [{ value: '"seed"' }]);
 		assert.deepEqual(
 			(
@@ -246,7 +205,7 @@ test("accept initializes sequence and seen ids once before new events", async (t
 			seen: false,
 			seq: 1,
 		});
-		assert.equal(reads, 2);
+		assert.equal(reads, 4);
 	} finally {
 		release.resolve();
 		await database.close();

@@ -36,7 +36,8 @@ export function sourceName(imageId: string, version: string): string {
 }
 
 export function imageFromTemplate(templateId: string): { readonly imageId: string; readonly version: string } {
-	const rest = templateId.startsWith("tensquads-") ? templateId.slice("tensquads-".length) : templateId;
+	if (!templateId.startsWith("tensquads-")) throw new Error("The template id is not valid.");
+	const rest = templateId.slice("tensquads-".length);
 	const split = rest.lastIndexOf("-");
 	if (split <= 0 || split === rest.length - 1) {
 		throw new Error("The template id is not valid.");

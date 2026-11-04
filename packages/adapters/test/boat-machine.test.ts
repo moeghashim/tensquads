@@ -32,6 +32,9 @@ test("uptime text uses one day, many days, and just started", () => {
 	);
 	assert.equal(imageFromTemplate("tensquads-market-researcher-0.1.0").imageId, "market-researcher");
 	assert.equal(imageFromTemplate("tensquads-market-researcher-0.1.0").version, "0.1.0");
+	for (const id of ["market-researcher-0.1.0", "other-market-researcher-0.1.0", "tensquads-", "tensquads-image-"]) {
+		assert.throws(() => imageFromTemplate(id), { message: "The template id is not valid." });
+	}
 });
 
 test("a closed profile and a missing registration never call the machine service", async () => {
