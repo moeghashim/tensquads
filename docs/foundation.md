@@ -1,6 +1,6 @@
 # Phase 0 foundation
 
-This guide describes the code in `00-foundation`. [PLAN.md](PLAN.md) holds the build decisions and later phases. [BRIEF.md](BRIEF.md) remains the original brief. Design copy and inline styles stay authoritative.
+This guide describes the foundation and its adapter interfaces. [PLAN.md](PLAN.md) holds the build decisions and later phases. [BRIEF.md](BRIEF.md) remains the original brief. Design copy and inline styles stay authoritative.
 
 ## Setup and commands
 
@@ -8,9 +8,9 @@ Use Node 24 from `.nvmrc` and npm 11.19.1 from `package.json`. Run `npm ci` from
 
 `npm run dev -w @tensquads/web` serves `http://localhost:3000`. The only route is `/`, with an empty `main` element and the document title `tensquads`. It does not import tokens or icons, call the kernel, or use service credentials. Clerk is provisioned in `.projects/state.json`; its SDK and sign-in flow are not implemented.
 
-Use `npm run build:cloudflare` to build and `npm run preview:cloudflare` to build and run Wrangler locally. Deploy only through `npm run deploy:cloudflare`. That command runs `scripts/deploy-cloudflare.mjs`. The script reads `CLOUDFLARE_WORKERS_API_TOKEN` from `.env` and sets `CLOUDFLARE_API_TOKEN` for that one command. It stops when the token is absent. It then migrates against `NEON_POSTGRES_CONNECTION_STRING` and stops if that migration fails. It deploys only after the migration finishes. It does not print the connection string. It does not use a Wrangler OAuth login. `apps/web/wrangler.jsonc` pins `account_id` and defines one Worker with `nodejs_compat` and observability enabled. It has no Durable Object or Queue binding. Use `npm run typegen:cloudflare` after binding changes. CI builds but does not deploy.
+Use `npm run build:cloudflare` to build and `npm run preview:cloudflare` to build and run Wrangler locally. Deploy only through `npm run deploy:cloudflare`. That command runs `scripts/deploy-cloudflare.mjs`. The script reads `CLOUDFLARE_WORKERS_API_TOKEN` from `.env` and sets `CLOUDFLARE_API_TOKEN` for that one command. It stops when the token is absent. It then migrates against `NEON_POSTGRES_CONNECTION_STRING` and stops if that migration fails. It deploys only after the migration finishes. It does not print the connection string. It does not use a Wrangler OAuth login. `apps/web/wrangler.jsonc` pins `account_id` and defines one Worker with `nodejs_compat` and observability enabled. Its custom entry, `apps/web/src/worker.ts`, keeps the TanStack fetch handler and adds the machine endpoints, Durable Object export, and queue handler. The configuration declares the SQLite Durable Object binding and the work queue and dead-letter queue bindings. Task 04 does not create the queues. Use `npm run typegen:cloudflare` after binding changes. CI builds but does not deploy.
 
-For existing service access, run `stripe projects env --pull` from the repository root with the Stripe Projects CLI. The service slugs are `cloudflare/workers`, `neon/postgres`, and `clerk/auth`. `.projects/state.json` is committed. `.env`, `.env.*` (except `.env.example`), `.projects/vault`, and local Projects state are ignored. There is no committed `.env.example`. Local tests do not need these services.
+For existing service access, run `stripe projects env --pull` from the repository root with the Stripe Projects CLI. The service slugs are `cloudflare/workers`, `neon/postgres`, and `clerk/auth`. `.projects/state.json` is committed. `.env`, `.env.*` (except `.env.example`), `.projects/vault`, and local Projects state are ignored. There is no committed `.env.example`. The Cloudflare bus integration tests need `TEST_DATABASE_URL`. The boat adapter tests use a fake server and need no boat credentials.
 
 Each required-checks job gets its own database. `scripts/ci-test-database.mjs` creates that database from `TEST_DATABASE_URL` on the non-pooled host. The name starts with `ci_` and uses the run id, the attempt, and the OS. The job drops that database at the end. The script does not use the database named by `NEON_POSTGRES_CONNECTION_STRING`, and it refuses a database named `neondb`. The adapter tests late-lock, mandate, and reset-lock run one at a time on that database.
 
@@ -22,7 +22,7 @@ The package workspaces export TypeScript source through their package names:
 | --- | --- |
 | `@tensquads/kernel` | `Kernel` registers six empty cordis plug-ins. `machine`, `bus`, `gateway`, and `repositories` start as `null` and can be assigned adapters. `decider.decide(question, answers)` takes a question and a list of possible answers and returns one answer with a confidence. Version 1 has no adapter, so the call throws `Decider has no adapter in version 1.` |
 | `@tensquads/domain` | Six domain areas with types, events, repository interfaces, scope validation, and pure inbox decision functions |
-| `@tensquads/adapters` | Machine and service test adapters, the memory bus, Drizzle schema, the Neon opener, snapshot replacement, and read repositories |
+| `@tensquads/adapters` | Test adapters, real account adapters selected by `pickWorkerAdapters`, Drizzle schema, the Neon opener, snapshot replacement, and read repositories |
 | `@tensquads/seed` | Committed design extract, `workspaceFromDesign()`, `homepageAgents`, `signupAgents`, and `defaultAgents` |
 | `@tensquads/squadmates` | Character roster, Agent loop states, SVG drawing, and blink styles. See the [package exports](../packages/squadmates/src/index.ts) |
 
@@ -35,6 +35,18 @@ The package workspaces export TypeScript source through their package names:
 `createMemoryBus({ events, script, store, trace? })` implements `EventBus` and adds `store()`. It copies the initial event list and store. It does not replay the seeded writes. `nextEvent()` cycles through the script, appends an event, and applies its optional `set` values to the local store. `writes` lists keys; it does not supply values. An empty script returns `undefined`. The first generated event is `e100` at `11:03`; each step increments the id and clock. The design's first scripted event has no `set`; the second changes the store. This adapter does not persist changes to Neon or deduplicate events.
 
 `traceFor(id)` returns `tr_` plus the first six lowercase hex characters of SHA-256 of the event id. Seeded events and the memory bus use this form. A supplied `trace(id)` function overrides the memory bus default.
+
+### Account adapters
+
+Task 04 adds the async `AccountMachine` and `AccountEventBus` ports in [ports.ts](../packages/kernel/src/ports.ts). Each method takes an `AccountScope`. The sync `MachineProvider` and `EventBus` ports above remain in use by the screens. Selecting real account adapters does not move those screen callers to them. The [task answers](../tasks/04-machine-trial.md#moes-answers-4-november-2026) record the phase limits and changes to the plan.
+
+`pickWorkerAdapters(env)` selects both account adapters together. Only `ADAPTERS=real` selects boat and Cloudflare; a missing or other value selects the account test machine and memory bus. Production stays on `test`. Real selection requires `BOAT_TOKEN`, `BOAT_PROFILE`, `ACCOUNT_BUS`, and `DATABASE_URL`. The database binding is separate from the deployment script's connection string. Secret registration also needs `BOAT_ADMIN_TOKEN` and `BOAT_SECRET_BASE_URL`. See [AdapterEnv](../packages/adapters/src/adapters-flag.ts) for optional client settings. Never put tokens or connection strings in git or on a machine. Credential setup and the live manual job remain pending under task 04.
+
+`createAccountTestMachine()` keeps machines by account and agent. `createAccountMemoryBus()` keeps each account's events and state apart. Its `publish` drops a seen id without applying its writes again. Its simulation skips stored script ids and continues. These are separate factories from the sync adapters above.
+
+The real bus names one `AccountBus` object per account. Before its first acceptance or store read, it restores the Neon sequence, seen ids, and shared state. A new event receives the next sequence and commits its state and task locally in one transaction. A failed Neon write stays pending and an alarm retries it. `events(scope)` reads Neon in sequence order, including seeded history before the first acceptance; pending events appear after write-through succeeds. `store(scope)` reads the object's restored state and includes pending writes. The Cloudflare writer owns write-through for this path; existing screen commands and setup writers remain. [bus-writer.test.ts](../packages/adapters/test/bus-writer.test.ts) records the allowed writer modules.
+
+Machines use `/machine/send` and `/machine/take` with a bearer token signed for their account and agent. The signing key is the Worker secret `MACHINE_TOKEN_KEY`. A send must also name that agent in `event.from`. Tasks wait in the Durable Object for the agent to take them. The queue consumer delivers work to that same acceptance path; a dead letter becomes an Escalation. The object can push new events to a WebSocket, but the Traffic screen does not connect in this phase. Inspection routes require `BUS_INSPECT=1`, which production does not set. [http.ts](../packages/adapters/src/cloudflare-bus/http.ts) owns the request contract.
 
 ## Database and repository scope
 
@@ -132,7 +144,7 @@ GitHub Actions runs `make verify` on Linux and macOS and a separate Cloudflare b
 | Command | What it does |
 | --- | --- |
 | `npm run check` | Check native tools, Biome, file length, and root and workspace types |
-| `npm test` | Run script tests and each workspace's test command. See [package.json](../package.json). Database tests use in-memory PGlite |
+| `npm test` | Run script tests and each workspace's test command. See [package.json](../package.json). Most database tests use in-memory PGlite; Cloudflare bus integration tests use Miniflare and `TEST_DATABASE_URL` |
 | `npm run e2e` | Check the blank page with Chromium, screenshots, and axe, and resolve three token colours |
 | `npm run design:check` | Check the design hashes without writing files |
 | `npm run statechart:check` | Check models when `packages/statecharts` or a named model file differs from `origin/main` |
