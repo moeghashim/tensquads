@@ -5,9 +5,5 @@ export function suitePlan(ci, platform, cpuCount) {
 	if (ci && platform === "darwin") {
 		app.push(`--workers=${Math.max(2, cpuCount)}`);
 	}
-	return [
-		app,
-		["--project", "rules-fence", "--workers=1"],
-		["--project", "app", "--workers=1", "--grep", held],
-	];
+	return [app, ["--project", "rules-fence", "--workers=1"], ["--project", "app", "--workers=1", "--grep", held]];
 }

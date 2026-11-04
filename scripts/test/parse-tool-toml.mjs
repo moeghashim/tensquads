@@ -60,14 +60,19 @@ export function parseToolToml(text) {
 		take("]");
 		if (array) take("]");
 		table = result;
-		for (const name of path.slice(0, -1)) table = (table[name] ??= {});
+		for (const name of path.slice(0, -1)) {
+			table[name] ??= {};
+			table = table[name];
+		}
 		const name = path.at(-1);
 		if (array) {
-			const entries = (table[name] ??= []);
+			table[name] ??= [];
+			const entries = table[name];
 			table = {};
 			entries.push(table);
 		} else {
-			table = (table[name] ??= {});
+			table[name] ??= {};
+			table = table[name];
 		}
 	}
 	return result;
