@@ -6,6 +6,7 @@ import { AccountBus, type BusStorage } from "../src/cloudflare-bus/account-bus.t
 import { createCloudflareBus, handleBusQueue, handleMachineRequest } from "../src/cloudflare-bus/http.ts";
 import { writePending } from "../src/cloudflare-bus/neon-write.ts";
 import { signMachineToken } from "../src/cloudflare-bus/token.ts";
+import type { ScriptedBusEvent } from "../src/memory-bus.ts";
 import { busEvents } from "../src/neon/schema.ts";
 import { workerTestBus } from "../src/worker-adapters.ts";
 import { openPglite } from "./pglite.ts";
@@ -21,6 +22,16 @@ const event: PublishedEvent = {
 	payload: {},
 	writes: [],
 };
+
+const script: ScriptedBusEvent[] = ["First", "Second"].map((text) => ({
+	from: event.from,
+	to: event.to,
+	kind: "Task",
+	skill: event.skill,
+	text,
+	payload: event.payload,
+	writes: event.writes,
+}));
 
 function deferred() {
 	let resolve = () => {};
@@ -86,8 +97,9 @@ test("scoped reads see seeded Neon history before the first accept", async (t) =
 	const target = bus(storage, "postgres://fixture/db");
 	const published: PublishedEvent[] = [];
 	t.mock.method(Pool.prototype, "query", async (config: { text: string; rowMode?: string }, params: unknown[]) => {
-		const result = await database.client.query(config.text, params);
-		return { ...result, rows: config.rowMode === "array" ? result.rows.map(Object.values) : result.rows };
+		const result = await database.client.query<Record<string, unknown>>(config.text, params);
+		const rows = config.rowMode === "array" ? result.rows.map((row) => Object.values(row)) : result.rows;
+		return { ...result, rows };
 	});
 	const namespace = {
 		idFromName: (id: string) => id,
@@ -126,10 +138,7 @@ test("scoped reads see seeded Neon history before the first accept", async (t) =
 				trace: "seed-trace",
 			})),
 		);
-		const adapter = createCloudflareBus(namespace, [
-			{ ...event, text: "First" },
-			{ ...event, text: "Second" },
-		]);
+		const adapter = createCloudflareBus(namespace, script);
 		assert.deepEqual(
 			(await adapter.events(scope)).map(({ id }) => id),
 			["seed", "e100"],
@@ -175,8 +184,9 @@ test("accept initializes sequence and seen ids once before new events", async (t
 		reads += 1;
 		entered.resolve();
 		await release.promise;
-		const result = await database.client.query(config.text, params);
-		return { ...result, rows: config.rowMode === "array" ? result.rows.map(Object.values) : result.rows };
+		const result = await database.client.query<Record<string, unknown>>(config.text, params);
+		const rows = config.rowMode === "array" ? result.rows.map((row) => Object.values(row)) : result.rows;
+		return { ...result, rows };
 	});
 	t.mock.method(Pool.prototype, "connect", async () => ({
 		query: (config: { text: string }, params: unknown[]) => database.client.query(config.text, params),
@@ -356,10 +366,6 @@ test("simulation resumes stored steps, serializes calls, and retries the failed 
 			},
 		}),
 	};
-	const script = [
-		{ ...event, text: "First" },
-		{ ...event, text: "Second" },
-	];
 	const first = createCloudflareBus(namespace, script);
 	assert.equal((await first.nextEvent(scope))?.id, "e100");
 	const recreated = createCloudflareBus(namespace, script);
@@ -388,8 +394,9 @@ test("pending writes recover in order and commit batches atomically", async (t) 
 	let connections = 0;
 	let refuse = false;
 	t.mock.method(Pool.prototype, "query", async (config: { text: string; rowMode?: string }, params: unknown[]) => {
-		const result = await database.client.query(config.text, params);
-		return { ...result, rows: config.rowMode === "array" ? result.rows.map(Object.values) : result.rows };
+		const result = await database.client.query<Record<string, unknown>>(config.text, params);
+		const rows = config.rowMode === "array" ? result.rows.map((row) => Object.values(row)) : result.rows;
+		return { ...result, rows };
 	});
 	t.mock.method(Pool.prototype, "connect", async () => {
 		connections += 1;
@@ -572,10 +579,6 @@ test("a pending duplicate is not a new simulation step and does not advance the 
 			},
 		}),
 	};
-	const script = [
-		{ ...event, text: "First" },
-		{ ...event, text: "Second" },
-	];
 	const first = createCloudflareBus(namespace, script);
 	const recreated = createCloudflareBus(namespace, script);
 	const results = await Promise.all([first.nextEvent(scope), recreated.nextEvent(scope)]);
