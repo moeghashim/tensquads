@@ -32,6 +32,52 @@ const revisingCopy = 'Master is writing a new proposal. The squad stays on "Miss
 const emptyInbox = "Nothing waiting. Your squads are working inside their limits.";
 const settled = { timeout: 15_000 };
 
+// Requests parked here are still open. Abort them before unrouteAll, which would send them on.
+// This worker reuses one account, and the next test reseeds it before it reads the badge.
+const parkedRoutes = new Set<Route>();
+
+async function abortParkedRoutes(): Promise<void> {
+	const routes = [...parkedRoutes];
+	parkedRoutes.clear();
+	for (const route of routes) await route.abort().catch(() => undefined);
+}
+
+test.afterEach(async ({ page }) => {
+	await abortParkedRoutes();
+	await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
+async function fetchParked(route: Route) {
+	parkedRoutes.add(route);
+	try {
+		const response = await route.fetch();
+		if (!parkedRoutes.has(route)) return;
+		return response;
+	} catch (error) {
+		if (!parkedRoutes.has(route)) return;
+		parkedRoutes.delete(route);
+		throw error;
+	}
+}
+
+async function settleParked(route: Route, settle: () => Promise<void>) {
+	if (!parkedRoutes.has(route)) return;
+	parkedRoutes.delete(route);
+	try {
+		await settle();
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "";
+		if (
+			message.includes("already handled") ||
+			message.includes("has been closed") ||
+			message.includes("Target closed")
+		) {
+			return;
+		}
+		throw error;
+	}
+}
+
 test("the overview shows the greeting, six tiles, fourteen bars, the inbox and five cards", async ({
 	page,
 	workspaceUser,
@@ -286,11 +332,8 @@ test("a rejected decision restores the badge after leaving overview", async ({ p
 	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
 	await expect(dockBadge(page)).toHaveText("4");
-	let release = () => {};
-	const gate = new Promise<void>((resolve) => {
-		release = resolve;
-	});
 	let held = false;
+	let heldRoute: Route | undefined;
 	const rejectRefund = async (route: Route) => {
 		const request = route.request();
 		if (request.method() !== "POST" || !(request.postData() ?? "").includes("ap1")) {
@@ -298,8 +341,14 @@ test("a rejected decision restores the badge after leaving overview", async ({ p
 			return;
 		}
 		held = true;
-		await gate;
-		await route.fulfill({ status: 500, contentType: "text/plain", body: "no" });
+		heldRoute = route;
+		parkedRoutes.add(route);
+	};
+	const release = async () => {
+		const route = heldRoute;
+		heldRoute = undefined;
+		if (!route) return;
+		await settleParked(route, () => route.fulfill({ status: 500, contentType: "text/plain", body: "no" }));
 	};
 	await page.route("**/_serverFn/**", rejectRefund);
 	try {
@@ -340,14 +389,15 @@ test("a rejected decision restores the badge after leaving overview", async ({ p
 						},
 						{ timeout: 30_000 },
 					);
-					release();
+					await release();
 					const responses = await Promise.all([rejected, refreshed]);
 					for (const response of responses) expect(await response.finished()).toBeNull();
 				},
 				{ timeout: 30_000 },
 			);
 		} finally {
-			release();
+			await release();
+			await abortParkedRoutes();
 			await page.unroute("**/_serverFn/**", rejectRefund);
 		}
 	}
@@ -577,6 +627,7 @@ test("a cached overview keeps the decision until the fresh read lands", async ({
 		await expect(inboxCount(page)).toHaveText("3");
 	} finally {
 		await held.release();
+		await abortParkedRoutes();
 		await page.unroute("**/_serverFn/**").catch(() => undefined);
 	}
 });
@@ -647,6 +698,7 @@ test("a held chat finish still writes the reply after an approval", async ({ pag
 		const events = await generatedEvents(accountId);
 		expect(events.map((event) => event.kind)).toContain("Result");
 	} finally {
+		await abortParkedRoutes();
 		await page.unroute("**/_serverFn/**").catch(() => undefined);
 	}
 });
@@ -694,6 +746,7 @@ test("a lost approval keeps the screen when the frame and overview reads fail", 
 		await expect(printsCard(page)).toHaveCount(0);
 		await expect(page.locator("[data-handler='ap.approve']")).toHaveCount(1);
 	} finally {
+		await abortParkedRoutes();
 		await page.unroute("**/_serverFn/**").catch(() => undefined);
 	}
 });
@@ -718,6 +771,7 @@ test("a failed frame refresh keeps the squads screen", async ({ page, workspaceU
 		await expect(page.getByText("Something went wrong")).toHaveCount(0);
 		await expect(page.locator("nav[aria-label='Workspace']")).toBeVisible();
 	} finally {
+		await abortParkedRoutes();
 		await page.unroute("**/_serverFn/**").catch(() => undefined);
 	}
 });
@@ -728,44 +782,40 @@ function tasksTile(page: Page) {
 
 async function holdNextOverview(page: Page) {
 	const state = { held: false };
-	let open = false;
-	let releaseGate = () => {};
-	const gate = new Promise<void>((resolve) => {
-		releaseGate = resolve;
-	});
+	let parked: { route: Route; response: Awaited<ReturnType<Route["fetch"]>>; body: string } | undefined;
 	await page.route("**/_serverFn/**", async (route) => {
 		const request = route.request();
-		if (request.method() !== "GET" || state.held) {
+		if (request.method() !== "GET" || state.held || parked) {
 			await route.continue();
 			return;
 		}
-		const response = await route.fetch();
+		const response = await fetchParked(route);
+		if (!response || !parkedRoutes.has(route)) return;
 		const body = await response.text();
+		if (!parkedRoutes.has(route)) return;
 		if (!body.includes("Tasks done by squads")) {
-			await route.fulfill({ response, body });
+			await settleParked(route, () => route.fulfill({ response, body }));
 			return;
 		}
 		state.held = true;
-		await gate;
-		await route.fulfill({ response, body });
+		parked = { route, response, body };
 	});
 	return {
 		held: () => state.held,
 		release: async () => {
-			if (open) return;
-			open = true;
-			releaseGate();
+			const current = parked;
+			if (!current) return;
+			parked = undefined;
+			await settleParked(current.route, () =>
+				current.route.fulfill({ response: current.response, body: current.body }),
+			);
 		},
 	};
 }
 
 async function holdFailedRefresh(page: Page) {
 	const state = { held: false, posts: 0, gets: 0 };
-	let open = false;
-	let releaseGate = () => {};
-	const gate = new Promise<void>((resolve) => {
-		releaseGate = resolve;
-	});
+	const waiting: { route: Route; response: Awaited<ReturnType<Route["fetch"]>> }[] = [];
 	await page.route("**/_serverFn/**", async (route) => {
 		const request = route.request();
 		const body = request.postData() ?? "";
@@ -779,9 +829,9 @@ async function holdFailedRefresh(page: Page) {
 		if (request.method() === "GET" && state.posts > 0 && state.gets < 2) {
 			state.gets += 1;
 			state.held = true;
-			const response = await route.fetch();
-			await gate;
-			await route.fulfill({ response }).catch(() => undefined);
+			const response = await fetchParked(route);
+			if (!response || !parkedRoutes.has(route)) return;
+			waiting.push({ route, response });
 			return;
 		}
 		await route.continue();
@@ -789,9 +839,10 @@ async function holdFailedRefresh(page: Page) {
 	return {
 		held: () => state.held,
 		release: async () => {
-			if (open) return;
-			open = true;
-			releaseGate();
+			const routes = waiting.splice(0);
+			for (const item of routes) {
+				await settleParked(item.route, () => item.route.fulfill({ response: item.response }));
+			}
 		},
 	};
 }
@@ -814,31 +865,35 @@ async function loseCommittedRefresh(page: Page, id: string) {
 		const body = request.postData() ?? "";
 		if (request.method() === "POST" && body.includes(id) && !lost) {
 			lost = true;
-			const response = await route.fetch();
+			const response = await fetchParked(route);
+			if (!response || !parkedRoutes.has(route)) return;
 			await response.text();
-			await route.fulfill({ status: 500, contentType: "text/plain", body: "lost" });
+			if (!parkedRoutes.has(route)) return;
+			await settleParked(route, () => route.fulfill({ status: 500, contentType: "text/plain", body: "lost" }));
 			return;
 		}
 		if (request.method() !== "GET") {
 			await route.continue();
 			return;
 		}
-		const response = await route.fetch();
+		const response = await fetchParked(route);
+		if (!response || !parkedRoutes.has(route)) return;
 		const text = await response.text();
+		if (!parkedRoutes.has(route)) return;
 		const kind = readKind(text);
 		if (kind === "frame") reads.frame += 1;
 		if (kind === "overview") reads.overview += 1;
 		if (lost && kind === "frame" && !failedFrame) {
 			failedFrame = true;
-			await route.fulfill({ status: 500, contentType: "text/plain", body: "no" });
+			await settleParked(route, () => route.fulfill({ status: 500, contentType: "text/plain", body: "no" }));
 			return;
 		}
 		if (lost && kind === "overview" && !failedOverview) {
 			failedOverview = true;
-			await route.fulfill({ status: 500, contentType: "text/plain", body: "no" });
+			await settleParked(route, () => route.fulfill({ status: 500, contentType: "text/plain", body: "no" }));
 			return;
 		}
-		await route.fulfill({ response, body: text });
+		await settleParked(route, () => route.fulfill({ response, body: text }));
 	});
 	return {
 		reads,
@@ -855,18 +910,20 @@ async function failFrameRefresh(page: Page) {
 			await route.continue();
 			return;
 		}
-		const response = await route.fetch();
+		const response = await fetchParked(route);
+		if (!response || !parkedRoutes.has(route)) return;
 		const text = await response.text();
+		if (!parkedRoutes.has(route)) return;
 		if (readKind(text) !== "frame") {
-			await route.fulfill({ response, body: text });
+			await settleParked(route, () => route.fulfill({ response, body: text }));
 			return;
 		}
 		reads.frame += 1;
 		if (fail) {
-			await route.fulfill({ status: 500, contentType: "text/plain", body: "no" });
+			await settleParked(route, () => route.fulfill({ status: 500, contentType: "text/plain", body: "no" }));
 			return;
 		}
-		await route.fulfill({ response, body: text });
+		await settleParked(route, () => route.fulfill({ response, body: text }));
 	});
 	return {
 		reads,
@@ -1169,10 +1226,9 @@ function decisionDone(page: Page, id: string): Promise<unknown> {
 
 async function gatePosts(page: Page, failFirst: boolean) {
 	const bodies: string[] = [];
-	let release = () => {};
-	const gate = new Promise<void>((resolve) => {
-		release = resolve;
-	});
+	const waiting: Route[] = [];
+	let failed: Route | undefined;
+	let open = false;
 	await page.route("**/*", async (route) => {
 		const request = route.request();
 		if (request.method() !== "POST" || !request.url().startsWith("http://localhost:3000")) {
@@ -1180,26 +1236,50 @@ async function gatePosts(page: Page, failFirst: boolean) {
 			return;
 		}
 		bodies.push(request.postData() ?? "");
-		if (failFirst && bodies.length === 1) {
-			await gate;
-			await route.fulfill({ status: 500, contentType: "text/plain", body: "no" });
+		const hold = !open && ((failFirst && bodies.length === 1) || !failFirst);
+		if (hold) {
+			if (failFirst) failed = route;
+			waiting.push(route);
+			parkedRoutes.add(route);
 			return;
-		}
-		if (!failFirst) {
-			await gate;
 		}
 		await route.continue();
 	});
-	return { bodies, posts: () => bodies.length, release };
+	return {
+		bodies,
+		posts: () => bodies.length,
+		release() {
+			open = true;
+			const routes = waiting.splice(0);
+			for (const route of routes) parkedRoutes.delete(route);
+			void releaseGatePosts(routes, failed);
+		},
+	};
+}
+
+async function releaseGatePosts(routes: Route[], failed: Route | undefined) {
+	for (const route of routes) {
+		try {
+			if (route === failed) await route.fulfill({ status: 500, contentType: "text/plain", body: "no" });
+			else await route.continue();
+		} catch (error) {
+			const message = error instanceof Error ? error.message : "";
+			if (
+				message.includes("already handled") ||
+				message.includes("has been closed") ||
+				message.includes("Target closed")
+			) {
+				continue;
+			}
+			throw error;
+		}
+	}
 }
 
 async function holdWorkspaceSend(page: Page, step: "begin" | "finish") {
 	const state = { sends: 0, held: false };
 	let finishRequest: Request | undefined;
-	let release = () => {};
-	const gate = new Promise<void>((resolve) => {
-		release = resolve;
-	});
+	const waiting: Route[] = [];
 	const target = step === "begin" ? 1 : 2;
 	await page.route("**/_serverFn/**", async (route) => {
 		const request = route.request();
@@ -1216,7 +1296,9 @@ async function holdWorkspaceSend(page: Page, step: "begin" | "finish") {
 		if (state.sends === 2) finishRequest = request;
 		if (state.sends === target) {
 			state.held = true;
-			await gate;
+			waiting.push(route);
+			parkedRoutes.add(route);
+			return;
 		}
 		await route.continue();
 	});
@@ -1226,7 +1308,9 @@ async function holdWorkspaceSend(page: Page, step: "begin" | "finish") {
 			const finished = page.waitForResponse((response) => response.request() === finishRequest, {
 				timeout: 30_000,
 			});
-			release();
+			const routes = waiting.splice(0);
+			for (const route of routes) parkedRoutes.delete(route);
+			for (const route of routes) await route.continue().catch(() => undefined);
 			try {
 				await test.step(
 					"wait for the released send and its frame refresh",
@@ -1243,6 +1327,7 @@ async function holdWorkspaceSend(page: Page, step: "begin" | "finish") {
 					{ timeout: 30_000 },
 				);
 			} finally {
+				await abortParkedRoutes();
 				await page.unroute("**/_serverFn/**");
 			}
 		},

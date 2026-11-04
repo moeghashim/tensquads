@@ -1,4 +1,3 @@
-import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
 import { squadById } from "#/screens/signup/catalog.ts";
@@ -36,12 +35,10 @@ async function databaseUrl(): Promise<string> {
 export const createAccount = createServerFn({ method: "POST" })
 	.validator(validateCreateAccount)
 	.handler(async ({ data }) => {
-		const { auth, clerkClient } = await import("@clerk/tanstack-react-start/server");
-		const session = await auth();
-		if (!session.userId) {
-			throw redirect({ to: "/signin" });
-		}
-		const user = await clerkClient().users.getUser(session.userId);
+		const { clerkClient } = await import("@clerk/tanstack-react-start/server");
+		const { requireClerkUser } = await import("./session.ts");
+		const userId = await requireClerkUser();
+		const user = await clerkClient().users.getUser(userId);
 		const primary = user.emailAddresses.find((item) => item.id === user.primaryEmailAddressId);
 		const email = accountEmail(primary, user.emailAddresses);
 		const agents = workspaceAgents(data.agentIds);
@@ -56,7 +53,7 @@ export const createAccount = createServerFn({ method: "POST" })
 			return await repositories.platform.createWorkspace(
 				{ accountId: crypto.randomUUID(), mode: "account" },
 				{
-					clerkUserId: session.userId,
+					clerkUserId: userId,
 					email,
 					name: data.name,
 					mission: data.mission,

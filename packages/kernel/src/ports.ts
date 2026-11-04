@@ -25,6 +25,8 @@ export interface MachineProvider {
 	uptime(agentId: string): string;
 	egress(agentId: string): readonly string[];
 	secrets(agentId: string): readonly string[];
+	start(agentId: string): void;
+	stop(agentId: string): void;
 	makeTemplate(imageId: string): MachineTemplate;
 	startFromTemplate(templateId: string, agentId: string): StartedMachine;
 }

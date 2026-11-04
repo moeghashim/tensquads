@@ -1,0 +1,83 @@
+---
+title: "Agent on and off"
+---
+stateDiagram-v2
+  state "Legend" as legend {
+    lg0: Off
+    lg1: Starting
+    lg2: On
+    lg3: Stopping
+    lg4: Paused
+    lg5: Queued
+    lg6: Failed
+    lg7: Late
+    lg8: Reload
+  }
+  class lg0 tan
+  class lg1 orange
+  class lg2 teal
+  class lg3 yellow
+  class lg4 blue
+  class lg5 purple
+  class lg6 pink
+  class lg7 orange
+  class lg8 yellow
+  s0: Off
+  s1: On
+  s2: Queued
+  s3: Starting
+  s4: Stopping
+  s5: Failed
+  s6: Late
+  s7: Paused
+  s8: Reload
+  s9: A later write failed
+  [*] --> s0
+  [*] --> s1
+  s0 --> s2: you queue a change
+  s0 --> s3: you switch it on
+  s1 --> s2: you queue a change
+  s1 --> s4: you switch it off
+  s2 --> s0: the write response arrives
+  s2 --> s5: the write fails
+  s2 --> s6: the deadline passes
+  s2 --> s1: the write response arrives
+  s3 --> s0: the start or stop deadline passes
+  s3 --> s1: it starts
+  s3 --> s2: you queue a change
+  s4 --> s7: it stops or the start or stop deadline passes
+  s4 --> s2: you queue a change
+  s5 --> s0: the recovery wait ends at its bound
+  s5 --> s8: one recovery read starts
+  s6 --> s0: the recovery wait ends at its bound
+  s6 --> s8: one recovery read starts
+  s5 --> s1: the recovery wait ends at its bound
+  s6 --> s1: the recovery wait ends at its bound
+  s7 --> s2: you queue a change
+  s7 --> s3: you switch it on
+  s2 --> s3: the write response arrives
+  s2 --> s4: the write response arrives
+  s8 --> s0: the recovery read returns or the recovery wait ends at its bound
+  s8 --> s9: a later write fails during the recovery read
+  s8 --> s1: the recovery read returns or the recovery wait ends at its bound
+  s2 --> s7: the write response arrives
+  s5 --> s3: the recovery wait ends at its bound
+  s6 --> s3: the recovery wait ends at its bound
+  s5 --> s4: the recovery wait ends at its bound
+  s6 --> s4: the recovery wait ends at its bound
+  s9 --> s5: the old read ends and the later failure remains
+  s5 --> s7: the recovery wait ends at its bound
+  s6 --> s7: the recovery wait ends at its bound
+  s8 --> s3: the recovery read returns or the recovery wait ends at its bound
+  s8 --> s4: the recovery read returns or the recovery wait ends at its bound
+  s8 --> s7: the recovery read returns or the recovery wait ends at its bound
+  class s0 tan
+  class s1 teal
+  class s2 purple
+  class s3 orange
+  class s4 yellow
+  class s5 pink
+  class s6 orange
+  class s7 blue
+  class s8 yellow
+  class s9 pink

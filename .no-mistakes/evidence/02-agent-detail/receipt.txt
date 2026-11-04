@@ -1,0 +1,38 @@
+02-agent-detail receipt
+
+Files read, SHA-256:
+
+2e85b8f9298c0e268f6db94242f54dbb5b18a0e923f11ca6140076e3dddc512c  AGENTS.md
+afea3c45c89da2bd0514baf7e2dba2a2f27b17443690fb36eef554efce6a6eac  docs/PLAN.md
+26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
+09b7e96a34f6f1c69fdf3a43f465f8c9626a53a27c0787ec0b61747a1c80039b  tasks/02-agent-detail.md
+7b72581686e9de32b4f63c9354998d4e4b6e02fb062eb3fe4f6c02aba8cdd576  tasks/02-frame.md
+d7e5726fecb8516861a7fdc9a6e1eb86b8aa848740c0d7ef4354dbe6cb5a0cb5  design/AgentDetail.dc.html
+376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89  design/Main.dc.html
+f7aa6029ba79a7c520d20620e832ccf60e81b102629e4a777dbec9842393e7b6  design/inventory/AgentDetail.json
+908b77171516041419df52e593618a985f42028d0482f765b6f96aeac5da78d5  progress.md
+f951dfa8268d911f99f26783ee16f5686402ab3caa25b014819ab139ceb7c9fd  packages/adapters/src/test-machine.ts
+8ebe0a26cec1b7a68ad92322c6380596dd2bc9b2d26b1289f032cfe4c45ca5a7  packages/kernel/src/ports.ts
+4b9116f91bc226b3235ccad0c161fa2eb4dc087ea11bd4a66c6fc5439e10ed45  packages/domain/src/policy/decide.ts
+
+node scripts/design-check.mjs
+OK   Accounts.dc.html
+OK   AgentDetail.dc.html
+OK   AgentImages.dc.html
+OK   Agents.dc.html
+OK   Chat.dc.html
+OK   Home.dc.html
+OK   Main.dc.html
+OK   Onboarding.dc.html
+OK   Rules.dc.html
+OK   SignIn.dc.html
+OK   Traffic.dc.html
+OK   canvas.json
+OK   ds/agent-ui/tokens.json
+canvas https://claude.ai/artifact/B7seDz5psECQTerDG6rfy4 version 1793448823-a766, pulled 2026-10-31
+design/ matches the canvas.
+Exit code: 0
+
+Decisions 1 to 32 read. No question.
+
+No unmapped brief or design line. The pull request reports the squad words, the route, and the Cloudflare slug.

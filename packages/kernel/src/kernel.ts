@@ -1,9 +1,13 @@
 import type {
 	AccountScope,
+	Autonomy,
 	Fenced,
 	Rule,
 	SendResult,
+	StoredAgentOn,
+	StoredAutonomy,
 	StoredLimit,
+	StoredSkillOn,
 	WriteFence,
 	WrittenDecision,
 } from "@tensquads/domain";
@@ -15,6 +19,7 @@ import { plugins } from "./plugins/index.ts";
 import type { PolicyCommands } from "./plugins/policy.ts";
 import { policy } from "./plugins/policy.ts";
 import type { PolicyApprovalCommands } from "./plugins/policy-approvals.ts";
+import { type SquadCommands, squads } from "./plugins/squads.ts";
 import {
 	DECIDER_MISSING,
 	type Decider,
@@ -62,6 +67,15 @@ export class Kernel {
 						},
 					}),
 				);
+			} else if (plugin === squads) {
+				fibers.push(
+					this.context.plugin(squads, {
+						repositories: () => {
+							if (!this.repositories) throw new Error("Repositories are not configured.");
+							return this.repositories;
+						},
+					}),
+				);
 			} else {
 				fibers.push(this.context.plugin(plugin));
 			}
@@ -82,6 +96,62 @@ export class Kernel {
 	async finishSend(scope: AccountScope, taskId: string): Promise<SendResult> {
 		await this.ready;
 		return (this.context.get("workspaceConversation") as ConversationCommands).finishSend(scope, taskId);
+	}
+
+	// fallow-ignore-next-line unused-class-member
+	async setAgentOn(
+		scope: AccountScope,
+		agentId: string,
+		on: boolean,
+		fence: WriteFence,
+		deadlineAt: number,
+	): Promise<Fenced<StoredAgentOn>> {
+		await this.ready;
+		return (this.context.get("workspaceSquads") as SquadCommands).setAgentOn(scope, agentId, on, fence, deadlineAt);
+	}
+
+	// fallow-ignore-next-line unused-class-member
+	async setSkillOn(
+		scope: AccountScope,
+		agentId: string,
+		skillId: string,
+		on: boolean,
+		fence: WriteFence,
+		deadlineAt: number,
+	): Promise<Fenced<StoredSkillOn>> {
+		await this.ready;
+		return (this.context.get("workspaceSquads") as SquadCommands).setSkillOn(
+			scope,
+			agentId,
+			skillId,
+			on,
+			fence,
+			deadlineAt,
+		);
+	}
+
+	// fallow-ignore-next-line unused-class-member
+	async setAutonomy(
+		scope: AccountScope,
+		agentId: string,
+		autonomy: Autonomy,
+		fence: WriteFence,
+		deadlineAt: number,
+	): Promise<Fenced<StoredAutonomy>> {
+		await this.ready;
+		return (this.context.get("workspaceSquads") as SquadCommands).setAutonomy(
+			scope,
+			agentId,
+			autonomy,
+			fence,
+			deadlineAt,
+		);
+	}
+
+	// fallow-ignore-next-line unused-class-member
+	async askRevise(scope: AccountScope, agentId: string, deadlineAt: number): Promise<void> {
+		await this.ready;
+		return (this.context.get("workspaceSquads") as SquadCommands).askRevise(scope, agentId, deadlineAt);
 	}
 
 	async nextEvent(scope: AccountScope, deadlineAt?: number): Promise<void> {

@@ -1,10 +1,11 @@
-import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
-import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { ClerkProvider, useUser } from "@clerk/tanstack-react-start";
+import { createRootRoute, HeadContent, Outlet, Scripts, useRouter } from "@tanstack/react-router";
+import { type ReactNode, useRef } from "react";
 
 import "#/design/public.css";
 import { watchSignedInUser } from "#/screens/rules/write-queue.ts";
 import { getPublishableKey } from "#/server/publishable-key.ts";
+import { resetAgentClientState } from "#/workspace/agent-on.ts";
 
 export const Route = createRootRoute({
 	loader: () => getPublishableKey(),
@@ -33,16 +34,38 @@ function RootApp() {
 	}
 	return (
 		<ClerkProvider publishableKey={publishableKey}>
-			<SignedInAccount />
-			<Outlet />
+			<ClerkAccountReset>
+				<SignedInAccount />
+				<Outlet />
+			</ClerkAccountReset>
 		</ClerkProvider>
 	);
 }
 
 function SignedInAccount() {
-	const { isLoaded, userId } = useAuth();
-	if (isLoaded) watchSignedInUser(userId ?? null);
+	const { isLoaded, user } = useUser();
+	if (isLoaded) watchSignedInUser(user?.id ?? null);
 	return null;
+}
+
+function ClerkAccountReset({ children }: { readonly children: ReactNode }) {
+	const { isLoaded, user } = useUser();
+	const router = useRouter();
+	const next = isLoaded ? (user?.id ?? null) : undefined;
+	const previous = useRef(next);
+	if (next !== undefined && previous.current !== next) {
+		const wasLoaded = previous.current !== undefined;
+		previous.current = next;
+		if (wasLoaded) {
+			queueMicrotask(() => {
+				resetAgentClientState();
+				// Sign-out reloads the workspace, and that loader redirects to /signin.
+				// A switch reloads the signed-in account instead of leaving the old page blank.
+				void router.invalidate({ sync: true });
+			});
+		}
+	}
+	return children;
 }
 
 function RootDocument({ children }: { children: ReactNode }) {

@@ -1,7 +1,7 @@
 import { redirect } from "@tanstack/react-router";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 
-import { requireClerkUser } from "./session.ts";
+import { requireClerkSession } from "./session.ts";
 import { workerEnv } from "./worker-env.ts";
 
 const unfinished = "The workspace write did not finish.";
@@ -23,7 +23,7 @@ export async function requireWorkspace<T>(
 	work: (scope: AccountScope, db: WorkspaceDb) => Promise<T>,
 	startedAt?: number,
 ): Promise<T> {
-	const userId = await requireClerkUser();
+	const { userId } = await requireClerkSession();
 	const connection = await databaseUrl();
 	if (connection.length === 0) {
 		throw new Error("The database is not configured.");

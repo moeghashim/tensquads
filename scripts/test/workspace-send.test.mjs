@@ -17,6 +17,7 @@ const bundle = await esbuild.build({
    import React from "react";
    import { createRoot } from "react-dom/client";
    import { createRootRoute, createRoute, createRouter, createMemoryHistory, Outlet, RouterProvider } from "@tanstack/react-router";
+   import { stampAgentReads } from "./apps/web/src/workspace/agent-on.ts";
    import { WorkspaceProvider } from "./apps/web/src/workspace/provider.tsx";
    import { Dock } from "./apps/web/src/workspace/dock.tsx";
    import { useWorkspace } from "./apps/web/src/workspace/context.ts";
@@ -30,17 +31,21 @@ const bundle = await esbuild.build({
    const workspaceRoute = createRoute({
     getParentRoute: () => rootRoute, id: "_workspace",
     loader: async () => {
+     const readAt = stampAgentReads();
      const writeAt = captureWrites();
      if (window.holdLoader) await new Promise(resolve => { window.releaseLoader = resolve; });
      if (window.nextLoaderFrame) {
       const frame = window.nextLoaderFrame;
       window.nextLoaderFrame = undefined;
-      return { ...frame, writeAt };
+      return { frame: { ...frame, writeAt }, readAt, writeAt, approvalCount: frame.approvalCount };
      }
      const frame = await window.readFrame();
-     return { ...frame, writeAt };
+     return { frame: { ...frame, writeAt }, readAt, writeAt, approvalCount: frame.approvalCount };
     },
-    component: () => <WorkspaceProvider frame={workspaceRoute.useLoaderData()}><Probe /></WorkspaceProvider>,
+    component: () => {
+     const data = workspaceRoute.useLoaderData();
+     return <WorkspaceProvider frame={data.frame} readAt={data.readAt}><Probe /></WorkspaceProvider>;
+    },
    });
    const overview = createRoute({getParentRoute: () => workspaceRoute, path: "/overview"});
    const router = createRouter({routeTree: rootRoute.addChildren([workspaceRoute.addChildren([overview])]),

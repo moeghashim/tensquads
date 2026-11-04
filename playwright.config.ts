@@ -4,6 +4,7 @@ const rulesFenceRepeat = Number(process.env.RULES_FENCE_REPEAT ?? "1");
 
 export default defineConfig({
 	testDir: "e2e",
+	timeout: 120_000,
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: 0,
@@ -33,12 +34,12 @@ export default defineConfig({
 	projects: [
 		{
 			name: "app",
-			testIgnore: /rules-fence\.spec\.ts/,
+			testIgnore: /rules-fence\.spec\.ts|agent-fence\.spec\.ts/,
 			fullyParallel: true,
 		},
 		{
 			name: "rules-fence",
-			testMatch: /rules-fence\.spec\.ts/,
+			testMatch: /rules-fence\.spec\.ts|agent-fence\.spec\.ts/,
 			// scripts/e2e.mjs runs this project alone with --workers=1. fullyParallel does not set workers.
 			fullyParallel: false,
 			repeatEach: Number.isInteger(rulesFenceRepeat) && rulesFenceRepeat > 0 ? rulesFenceRepeat : 1,

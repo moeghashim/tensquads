@@ -13,8 +13,7 @@ import { PENDING_TASK_WINDOW_MS } from "../src/pending-window.ts";
 const ads = "How did ads do this week?";
 const reply = "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.";
 const connection = process.env.TEST_DATABASE_URL ?? "";
-const lockKey = "SELECT pg_try_advisory_lock(1952804467, 1)";
-const unlockKey = "SELECT pg_advisory_unlock(1952804467, 1)";
+const fenceLockClass = 1952804468;
 
 function delay(ms: number): Promise<void> {
 	return new Promise((resolve) => {
@@ -51,14 +50,21 @@ async function retryLockWait<T>(run: () => Promise<T>): Promise<T> {
 	}
 }
 
-async function holdLock(client: PoolClient): Promise<void> {
+async function holdLock(client: PoolClient, accountId: string): Promise<void> {
 	const deadline = Date.now() + 90_000;
 	for (;;) {
-		const acquired = await client.query<{ pg_try_advisory_lock: boolean }>(lockKey);
+		const acquired = await client.query<{ pg_try_advisory_lock: boolean }>(
+			"SELECT pg_try_advisory_lock($1, hashtext($2))",
+			[fenceLockClass, accountId],
+		);
 		if (acquired.rows[0]?.pg_try_advisory_lock) return;
-		if (Date.now() >= deadline) throw new Error("the workspace lock stayed busy");
+		if (Date.now() >= deadline) throw new Error("the account fence lock stayed busy");
 		await delay(250);
 	}
+}
+
+async function releaseLock(client: PoolClient, accountId: string): Promise<void> {
+	await client.query("SELECT pg_advisory_unlock($1, hashtext($2))", [fenceLockClass, accountId]);
 }
 
 type Begin = { kind: string; taskId?: string; messages?: readonly { text: string }[] };
@@ -134,16 +140,16 @@ test("a lock held past the window does not block the next send", {
 		await retryLockWait(() => replaceDemoAccount(opened.db, accountId, `clerk-${suffix}`));
 		const scope = { accountId, mode: "account" as const };
 		const kernel = new Kernel(createRepositories(opened.db));
-		await holdLock(client);
+		await holdLock(client, accountId);
 		locked = true;
 		const late = await abandonedBegin(kernel, scope);
 		assert.notEqual(late.kind, "working");
 		assert.notEqual(late.kind, "pending");
-		await client.query(unlockKey);
+		await releaseLock(client, accountId);
 		locked = false;
 		await replyAfter(kernel, scope);
 	} finally {
-		if (locked) await client.query(unlockKey).catch(() => undefined);
+		if (locked) await releaseLock(client, accountId).catch(() => undefined);
 		client.release();
 		await holder.end();
 		await removeAccount(opened.db, accountId);

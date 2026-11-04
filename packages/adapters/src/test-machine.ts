@@ -15,10 +15,14 @@ export interface MachineRecord {
 // Off means CPU 0% and uptime "Paused". An on machine whose stored uptime is "Paused"
 // reports "Just started" (Main.dc.html:1267). Version 1 does not roll out an image.
 // makeTemplate and startFromTemplate only answer the MachineProvider methods.
-export function createTestMachine(rows: readonly MachineRecord[]): MachineProvider {
-	const byId = new Map(rows.map((row) => [row.id, row]));
+interface LiveMachine extends MachineRecord {
+	on: boolean;
+}
 
-	function row(agentId: string): MachineRecord {
+export function createTestMachine(rows: readonly MachineRecord[]): MachineProvider {
+	const byId = new Map<string, LiveMachine>(rows.map((row) => [row.id, { ...row }]));
+
+	function row(agentId: string): LiveMachine {
 		const found = byId.get(agentId);
 		if (!found) {
 			throw new Error(`No machine for ${agentId}.`);
@@ -40,6 +44,12 @@ export function createTestMachine(rows: readonly MachineRecord[]): MachineProvid
 		},
 		egress: (agentId) => row(agentId).egress,
 		secrets: (agentId) => row(agentId).secrets,
+		start(agentId) {
+			row(agentId).on = true;
+		},
+		stop(agentId) {
+			row(agentId).on = false;
+		},
 		makeTemplate: (imageId) => ({ id: `template-${imageId}` }),
 		startFromTemplate: (templateId, agentId) => ({ templateId, agentId }),
 	};

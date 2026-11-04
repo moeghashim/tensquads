@@ -191,10 +191,14 @@ test("the script starts again after eight events", async () => {
 
 function assertOneTransaction(queries: readonly string[]) {
 	const locks = queries.filter((query) => query.includes("pg_advisory_xact_lock"));
-	assert.equal(locks.length, 1);
+	assert.equal(locks[0], "SELECT pg_advisory_xact_lock_shared(1952804467, 1)");
+	assert.match(locks[1] ?? "", /^SELECT pg_advisory_xact_lock\(1952804468, hashtext\('/);
+	assert.equal(locks.length, 2);
 	const insertAt = queries.findIndex((query) => /insert into "?bus_events"?/i.test(query));
 	const stateAt = queries.findIndex((query) => /(?:insert into|update) "?state_entries"?/i.test(query));
 	assert.ok(insertAt >= 0 && stateAt > insertAt);
+	const firstLock = queries.findIndex((query) => query.includes("pg_advisory_xact_lock"));
+	assert.ok(firstLock >= 0 && firstLock < insertAt);
 	assert.equal(
 		queries.slice(insertAt + 1, stateAt).some((query) => query.includes("pg_advisory_xact_lock")),
 		false,

@@ -15,6 +15,18 @@ Branch: `02-agent-detail`. One pull request. One builder agent. Starts only when
 - `tasks/02-frame.md`: "Files for parallel work", "Tests that need two screens"
 - `packages/adapters/src/test-machine.ts`, `packages/kernel/src/ports.ts`, `packages/domain/src/policy/decide.ts` (read only)
 
+## Orchestrator decisions
+
+Moe delegated these build questions. Each item uses the recommended answer. These decisions are final for this screen.
+
+1. An unknown agent id goes to `/agents`.
+2. The agent loop model stays out of phase 2.
+3. The test adapter passes Starting and Stopping in one step. The screen shows Running for On and Paused for the rest. The screen does not show the word Starting.
+4. "A skill cannot run when Off" covers `send()` only. `nextEvent()` is a replay.
+5. All skills off follows the code and uses the first skill. This screen does not change `send()`.
+6. Leave `accounts.online`.
+7. A new account dashboard uses frame item 14. A blank value shows "—". An empty list shows its heading and no rows. The "Pending approval" mission text stays unchanged.
+
 ## Steps, in order
 
 1. Add this task file in the first commit. Get Moe's answers to "Stop and ask" before step 2.

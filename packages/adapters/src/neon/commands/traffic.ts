@@ -116,6 +116,6 @@ export async function nextEvent(db: AppDatabase, scope: AccountScope, deadlineAt
 			constrainDeadline(absolute);
 			await writeNextEvent(tx, checked.accountId);
 		},
-		{ deadlineMs: remaining },
+		{ deadlineMs: remaining, accountId: checked.accountId },
 	);
 }

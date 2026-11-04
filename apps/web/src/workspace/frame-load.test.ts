@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
+import { isRedirect, redirect } from "@tanstack/react-router";
 import { resetDecisions } from "#/screens/overview/actions.ts";
+import { isSessionRefreshNeeded, SessionRefreshNeeded } from "#/server/session-error.ts";
 import { advanceWrites, currentWrites } from "#/workspace/approval-count.ts";
 import { clearFrameHold, frameEpoch, frameNeedsRead, loadHeldFrame, rememberFrame } from "./frame-load.ts";
 import type { WorkspaceFrameData } from "./types.ts";
@@ -92,6 +94,31 @@ describe("workspace frame recovery", { concurrency: false }, () => {
 		assert.strictEqual(kept, accepted);
 		await loadHeldFrame(frameEpoch(), writeAt, async () => frame(3));
 		assert.equal(frameNeedsRead(), false);
+	});
+
+	test("a session refresh is not kept as the previous frame", async () => {
+		clearFrameHold();
+		await loadHeldFrame(frameEpoch(), currentWrites(), async () => frame(4));
+		await assert.rejects(
+			() =>
+				loadHeldFrame(frameEpoch(), currentWrites(), () => {
+					throw new SessionRefreshNeeded();
+				}),
+			(error: unknown) => isSessionRefreshNeeded(error),
+		);
+		assert.equal(frameNeedsRead(), false);
+	});
+
+	test("a sign-in redirect is not kept as the previous frame", async () => {
+		clearFrameHold();
+		await loadHeldFrame(frameEpoch(), currentWrites(), async () => frame(4));
+		await assert.rejects(
+			() =>
+				loadHeldFrame(frameEpoch(), currentWrites(), () => {
+					throw redirect({ to: "/signin" });
+				}),
+			(error: unknown) => isRedirect(error),
+		);
 	});
 
 	test("signing out drops the held frame", async () => {

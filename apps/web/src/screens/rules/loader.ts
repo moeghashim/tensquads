@@ -1,4 +1,5 @@
 import { loadRulesPage } from "#/server/rules.ts";
+import { isSessionRefreshNeeded } from "#/server/session-error.ts";
 
 import type { RulesSnapshotPage } from "./snapshot.ts";
 import {
@@ -33,6 +34,7 @@ export async function loadRulesSnapshot(): Promise<RulesSnapshotPage> {
 		markReadSucceeded(generation, epoch);
 		return shown;
 	} catch (error) {
+		if (isSessionRefreshNeeded(error)) throw error;
 		if (typeof window === "undefined") {
 			markReadFailed(epoch);
 			throw error;

@@ -93,4 +93,15 @@ export type {
 } from "./squads/agent-commands.ts";
 export type { AgentToggled, SquadsEvent } from "./squads/events.ts";
 export type { SquadsRepository } from "./squads/repository.ts";
-export type { Agent, Autonomy, Machine, Master, Skill, SkillGate, Squad } from "./squads/types.ts";
+export type {
+	Agent,
+	Autonomy,
+	Machine,
+	Master,
+	Skill,
+	SkillGate,
+	Squad,
+	StoredAgentOn,
+	StoredAutonomy,
+	StoredSkillOn,
+} from "./squads/types.ts";

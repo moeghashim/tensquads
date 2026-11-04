@@ -19,6 +19,7 @@ import { resetDecisions, watchServerCount } from "#/screens/overview/actions.ts"
 import { refreshTraffic } from "#/screens/traffic/refresh.ts";
 import { beginWorkspaceSend, finishWorkspaceSend } from "#/server/workspace.ts";
 
+import { agentOnSnapshot, applyAgentOn, subscribeAgentOn } from "./agent-on.ts";
 import { missionBits } from "./agent-view.ts";
 import {
 	currentWrites,
@@ -40,9 +41,11 @@ const replyWaitMs = 1400;
 
 export function WorkspaceProvider({
 	frame,
+	readAt,
 	children,
 }: {
 	readonly frame: WorkspaceFrameData & { readonly writeAt: number };
+	readonly readAt: Readonly<Record<string, number>>;
 	readonly children: ReactNode;
 }) {
 	const router = useRouter();
@@ -64,7 +67,11 @@ export function WorkspaceProvider({
 		setStartedTask,
 	} = useWorkspaceControls(frame);
 	const sending = useRef(false);
-	const { messages, setMessages, applyFrame, approvalCount, noteDecision } = useFrameAndCount(frame, sending);
+	const { messages, setMessages, applyFrame, approvalCount, noteDecision, shownFrame } = useFrameAndCount(
+		frame,
+		readAt,
+		sending,
+	);
 
 	const mounted = useRef(true);
 	const refresh = useCallback(() => router.invalidate({ sync: true }), [router]);
@@ -86,7 +93,7 @@ export function WorkspaceProvider({
 
 	const value = useMemo(
 		() => ({
-			frame,
+			frame: shownFrame,
 			draft,
 			setDraft,
 			dockOpen,
@@ -116,8 +123,8 @@ export function WorkspaceProvider({
 			busFilter,
 			dockOpen,
 			draft,
-			frame,
 			live,
+			shownFrame,
 			messages,
 			noteDecision,
 			pending,
@@ -201,7 +208,7 @@ function useFrameRefresh(router: ReturnType<typeof useRouter>, refresh: () => Pr
 		await bounded(() => refresh());
 		const match = router.state.matches.find((item) => item.routeId === "/_workspace");
 		if (match?.status !== "success" || !match.loaderData) throw new Error("The workspace frame did not load.");
-		return match.loaderData;
+		return match.loaderData.frame;
 	}, [refresh, router]);
 }
 
@@ -213,14 +220,25 @@ function draftValue(text: string | undefined, draft: string): string {
 	return (text ?? draft).trim();
 }
 
-function useFrameAndCount(frame: WorkspaceFrameData & { readonly writeAt: number }, sending: { current: boolean }) {
+function useFrameAndCount(
+	frame: WorkspaceFrameData & { readonly writeAt: number },
+	readAt: Readonly<Record<string, number>>,
+	sending: { current: boolean },
+) {
 	useEffect(() => {
 		rememberFrame(frame);
 	}, [frame]);
+	const shownFrame = useShownAgents(frame, readAt);
 	const messages = useFrameMessages(frame, sending);
 	const count = useApprovalCount(frame);
 	useAccountBoundary();
-	return { ...messages, ...count };
+	return { ...messages, ...count, shownFrame };
+}
+
+function useShownAgents(frame: WorkspaceFrameData, readAt: Readonly<Record<string, number>>): WorkspaceFrameData {
+	const published = useSyncExternalStore(subscribeAgentOn, agentOnSnapshot, agentOnSnapshot);
+	const agents = applyAgentOn(frame.agents, published, readAt);
+	return agents === frame.agents ? frame : { ...frame, agents };
 }
 
 function useFrameMessages(frame: WorkspaceFrameData, sending: { current: boolean }) {
