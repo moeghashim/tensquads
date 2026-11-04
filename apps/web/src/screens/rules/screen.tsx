@@ -2,7 +2,6 @@ import { type Dispatch, type SetStateAction, useState } from "react";
 
 import { css } from "#/screens/css.ts";
 import { addWorkspaceRule, type RulesPageData, type RulesRule } from "#/server/rules.ts";
-import { isSessionRefreshNeeded } from "#/server/session-error.ts";
 import { useWorkspacePage } from "#/workspace/context.ts";
 import type { RuleForm } from "#/workspace/types.ts";
 
@@ -436,10 +435,6 @@ function leftAccount(epoch: number): boolean {
 	return epoch !== rulesAccountEpoch();
 }
 
-function leaveRuleSave(error: unknown, epoch: number): boolean {
-	return leftAccount(epoch) || isSessionRefreshNeeded(error);
-}
-
 async function saveRule(
 	form: RuleForm,
 	accountId: string,
@@ -458,8 +453,8 @@ async function saveRule(
 				signal,
 			}),
 		);
-	} catch (error) {
-		if (leaveRuleSave(error, epoch)) return;
+	} catch {
+		if (leftAccount(epoch)) return;
 		noteUncertainWrite(epoch);
 		markReadFailed(epoch);
 		dropPending(id, rowId, setPending);

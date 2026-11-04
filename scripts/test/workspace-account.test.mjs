@@ -460,10 +460,24 @@ test("an agent command for a different displayed account does not reach the kern
 		await assert.rejects(command(), /The workspace write did not finish/);
 		assert.deepEqual(state.writes, []);
 	}
-	state.writes = [];
-	await agent.setAgentRunning({ data: { agentId: "support", on: false, ...fence, seq: 4 } }).catch(() => undefined);
-	assert.equal(state.writes.length, 1);
-	assert.equal(state.writes[0].accountId, "northwind");
+	const missing = [
+		() => agent.setAgentRunning({ data: { agentId: "support", on: false, ...fence, seq: 4 } }),
+		() =>
+			agent.setSkillEnabled({
+				data: { agentId: "support", skillId: "inbox.read", on: false, ...fence, seq: 5 },
+			}),
+		() =>
+			agent.setAgentAutonomy({
+				data: { agentId: "support", autonomy: "Ask first", ...fence, seq: 6 },
+			}),
+		() => agent.askAgentRevise({ data: { agentId: "support" } }),
+		() => agent.askAgentRevise({ data: "support" }),
+	];
+	for (const command of missing) {
+		state.writes = [];
+		await assert.rejects(command(), /The agent request is not valid/);
+		assert.deepEqual(state.writes, []);
+	}
 	state.writes = [];
 	await agent
 		.setAgentRunning({ data: { accountId: "northwind", agentId: "support", on: true, ...fence, seq: 5 } })
@@ -489,7 +503,7 @@ test("the account picker clears a published agent overlay", async () => {
 	}
 });
 
-test("a refresh-needed rules write keeps the pending limit and does not replay it", async () => {
+test("a refresh-needed rules write shows the stored limit and does not replay it", async () => {
 	globalThis.window = {};
 	try {
 		queue.resetTargetAccount();
@@ -502,8 +516,8 @@ test("a refresh-needed rules write keeps the pending limit and does not replay i
 		assert.equal(queue.shownLimit("policy.daily_ad_cap", 200), 260);
 		for (let i = 0; i < 15; i += 1) await setImmediate();
 		assert.equal(result, undefined);
-		assert.equal(reads, 0);
-		assert.equal(queue.shownLimit("policy.daily_ad_cap", 200), 260);
+		assert.equal(reads, 1);
+		assert.equal(queue.shownLimit("policy.daily_ad_cap", 200), 200);
 		assert.deepEqual(queue.rulesWrittenSince(0).limits, []);
 		assert.equal(state.writes.length, 0);
 	} finally {

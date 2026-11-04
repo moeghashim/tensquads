@@ -3,7 +3,6 @@ import { useSyncExternalStore } from "react";
 import { resetAgentAccountState } from "#/screens/agent-detail/account-reset.ts";
 import { clearOverviewHold } from "#/screens/overview/load.ts";
 import { type RulesLimitValue, type RulesRule, type RulesWrite, setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
-import { isSessionRefreshNeeded } from "#/server/session-error.ts";
 import { bounded } from "#/workspace/bounded.ts";
 import { clearFrameHold, onFrameAccountReset } from "#/workspace/frame-load.ts";
 import { confirmRetired, nextWriteFence } from "#/write-fence.ts";
@@ -12,7 +11,6 @@ interface Flight<T> {
 	shown: T;
 	sending: boolean;
 	queued: T | null;
-	held: boolean;
 }
 
 const ruleFlights = new Map<string, Flight<boolean>>();
@@ -184,47 +182,22 @@ export function isRulesRule(value: unknown): value is RulesRule {
 function queueValue<T>(map: Map<string, Flight<T>>, key: string, next: T): Flight<T> | null {
 	const flight = map.get(key);
 	if (!flight) {
-		const created = { shown: next, sending: false, queued: null, held: false };
+		const created = { shown: next, sending: false, queued: null };
 		map.set(key, created);
 		return created;
 	}
-	if (resumeHeld(flight, next)) return flight;
 	flight.shown = next;
 	flight.queued = next;
 	notify();
 	return null;
 }
 
-function resumeHeld<T>(flight: Flight<T>, next: T): boolean {
-	if (!flight.held || flight.sending) return false;
-	flight.held = false;
-	flight.shown = next;
-	flight.queued = null;
-	notify();
-	return true;
-}
-
-async function sentOrHeld<T>(
-	send: (value: T, signal: AbortSignal) => Promise<T | null>,
-	sent: T,
-	epoch: number,
-	flight: Flight<T>,
-): Promise<T | null | undefined> {
+async function sentOrHeld<T>(send: (value: T, signal: AbortSignal) => Promise<T | null>, sent: T): Promise<T | null> {
 	try {
 		return await bounded((signal) => send(sent, signal));
-	} catch (error) {
-		if (holdRefreshFailure(error, epoch, flight)) return undefined;
+	} catch {
 		return null;
 	}
-}
-
-function holdRefreshFailure<T>(error: unknown, epoch: number, flight: Flight<T>): boolean {
-	if (!isSessionRefreshNeeded(error) || !sameAccount(epoch)) return false;
-	flight.sending = false;
-	flight.queued = null;
-	flight.held = true;
-	notify();
-	return true;
 }
 
 async function sendRule(id: string, value: boolean, accountId: string, signal: AbortSignal): Promise<boolean | null> {
@@ -276,8 +249,7 @@ async function run<T>(
 		flight.queued = null;
 		flight.sending = true;
 		notify();
-		const returned = await sentOrHeld(send, sent, epoch, flight);
-		if (returned === undefined) return;
+		const returned = await sentOrHeld(send, sent);
 		if (!sameAccount(epoch)) return;
 		if (returned === null) {
 			noteUncertainWrite(epoch);
@@ -318,7 +290,7 @@ function shownValue<T>(map: Map<string, Flight<T>>, key: string, loaded: T): T {
 	if (!flight) {
 		return loaded;
 	}
-	if (flight.sending || flight.queued !== null || flight.held) {
+	if (flight.sending || flight.queued !== null) {
 		return flight.shown;
 	}
 	map.delete(key);

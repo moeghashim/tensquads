@@ -28,20 +28,20 @@ interface FenceInput {
 interface RunningInput extends FenceInput {
 	readonly agentId: string;
 	readonly on: boolean;
-	readonly accountId?: string;
+	readonly accountId: string;
 }
 
 interface SkillInput extends FenceInput {
 	readonly agentId: string;
 	readonly skillId: string;
 	readonly on: boolean;
-	readonly accountId?: string;
+	readonly accountId: string;
 }
 
 interface AutonomyInput extends FenceInput {
 	readonly agentId: string;
 	readonly autonomy: Autonomy;
-	readonly accountId?: string;
+	readonly accountId: string;
 }
 
 interface AgentWrite<T> {
@@ -95,16 +95,14 @@ function validateAutonomy(input: unknown): AutonomyInput {
 	return { agentId: input.agentId, autonomy: input.autonomy, ...fence, ...displayedAccount(input) };
 }
 
-function displayedAccount(input: Record<string, unknown>): { readonly accountId?: string } {
-	if (!Object.hasOwn(input, "accountId")) return {};
+function displayedAccount(input: Record<string, unknown>): { readonly accountId: string } {
 	if (typeof input.accountId !== "string" || input.accountId.length === 0) {
 		throw new Error("The agent request is not valid.");
 	}
 	return { accountId: input.accountId };
 }
 
-function validateRevise(input: unknown): { readonly agentId: string; readonly accountId?: string } {
-	if (typeof input === "string") return { agentId: validateAgentId(input) };
+function validateRevise(input: unknown): { readonly agentId: string; readonly accountId: string } {
 	if (!isRecord(input)) throw new Error("The agent request is not valid.");
 	return { agentId: validateAgentId(input.agentId), ...displayedAccount(input) };
 }
@@ -145,14 +143,16 @@ function throwIfLate(deadlineAt: number): void {
 
 async function commitAgentWrite<T>(
 	agentId: string,
-	accountId: string | undefined,
+	accountId: string,
 	run: KernelRun<T>,
 ): Promise<{ readonly result: T; readonly view: AgentDetailView }> {
 	const startedAt = Date.now();
 	const deadlineAt = startedAt + PENDING_TASK_WINDOW_MS;
 	const { requireWorkspace } = await import("./workspace-session.ts");
-	const write = accountId === undefined ? undefined : { accountId, startedAt };
-	return requireWorkspace((scope, db) => finishAgentWrite(scope, db, agentId, deadlineAt, run), write);
+	return requireWorkspace((scope, db) => finishAgentWrite(scope, db, agentId, deadlineAt, run), {
+		accountId,
+		startedAt,
+	});
 }
 
 async function finishAgentWrite<T>(
@@ -173,18 +173,14 @@ async function finishAgentWrite<T>(
 
 async function writeFenced(
 	agentId: string,
-	accountId: string | undefined,
+	accountId: string,
 	run: KernelRun<{ readonly status: "written" | "superseded" }>,
 ): Promise<AgentWrite<AgentDetailView>> {
 	const written = await commitAgentWrite(agentId, accountId, run);
 	return { status: written.result.status, row: written.view };
 }
 
-async function writeThroughKernel(
-	agentId: string,
-	accountId: string | undefined,
-	run: KernelRun<void>,
-): Promise<AgentDetailView> {
+async function writeThroughKernel(agentId: string, accountId: string, run: KernelRun<void>): Promise<AgentDetailView> {
 	const written = await commitAgentWrite(agentId, accountId, run);
 	return written.view;
 }

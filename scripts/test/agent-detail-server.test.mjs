@@ -140,19 +140,24 @@ function setup(t, options = {}) {
 }
 
 const fence = { tab: "tab-1", seq: 1, retires: [] };
+const accountId = scope.accountId;
 const writes = [
-	["setAgentRunning", { agentId: "support", on: false, ...fence }, (view) => assert.equal(view.on, false)],
+	["setAgentRunning", { accountId, agentId: "support", on: false, ...fence }, (view) => assert.equal(view.on, false)],
 	[
 		"setSkillEnabled",
-		{ agentId: "support", skillId: "inbox.read", on: false, ...fence },
+		{ accountId, agentId: "support", skillId: "inbox.read", on: false, ...fence },
 		(view) => assert.equal(view.skills[0].onStr, "false"),
 	],
 	[
 		"setAgentAutonomy",
-		{ agentId: "support", autonomy: "Full auto", ...fence },
+		{ accountId, agentId: "support", autonomy: "Full auto", ...fence },
 		(view) => assert.equal(view.autonomyOpts[2].onStr, "true"),
 	],
-	["askAgentRevise", "support", (view) => assert.equal(view.missionText, "Revision requested")],
+	[
+		"askAgentRevise",
+		{ accountId, agentId: "support" },
+		(view) => assert.equal(view.missionText, "Revision requested"),
+	],
 ];
 for (const [name, data, check] of writes) {
 	test(`${name} returns its updated scoped view in the POST response`, async (t) => {
@@ -180,7 +185,7 @@ for (const [name, data, check] of writes) {
 test("the response load does not get a fresh deadline", async (t) => {
 	setup(t, { writeDelay: 29_000, loadDelay: 2000 });
 	await assert.rejects(
-		server.setAgentRunning({ data: { agentId: "support", on: false, ...fence } }),
+		server.setAgentRunning({ data: { accountId, agentId: "support", on: false, ...fence } }),
 		/The workspace write did not finish/,
 	);
 	assert.deepEqual(state.deadlines, [31_000]);

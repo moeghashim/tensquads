@@ -18,9 +18,36 @@ const bundle = await build({
 			window.nextWriteFence = nextWriteFence;
 			import { loadRulesSnapshot } from "./apps/web/src/screens/rules/loader.ts";
 			import * as queue from "./apps/web/src/screens/rules/write-queue.ts";
+			import { createSessionRefresh } from "./apps/web/src/session/refresh-controller.ts";
 			window.queue = queue;
 			window.loadRulesSnapshot = loadRulesSnapshot;
 			window.calls = [];
+			window.refreshCounts = { token: 0, reload: 0, signIn: 0 };
+			window.refreshControl = createSessionRefresh({
+				token: async () => {
+					window.refreshCounts.token += 1;
+					return "fresh";
+				},
+				reload: () => {
+					window.refreshCounts.reload += 1;
+					window.doReload?.();
+				},
+				signIn: () => {
+					window.refreshCounts.signIn += 1;
+				},
+			});
+			window.callWrite = async (data, signal) => {
+				const control = window.refreshControl;
+				const id = control.begin();
+				try {
+					return await window.send(data, signal);
+				} catch (error) {
+					await control.finish(error, "POST", id);
+					throw error;
+				} finally {
+					control.end(id);
+				}
+			};
 			window.ruleRow = (data, id = "r100") => ({
 				id: data.id || id,
 				when: data.when ? data.when.charAt(0).toLowerCase() + data.when.slice(1) : "a new order arrives",
@@ -106,7 +133,7 @@ const bundle = await build({
 						return row;
 					}
 					async function settle(data, signal) {
-						const row = await window.send(data, signal);
+						const row = await window.callWrite(data, signal);
 						if (row && typeof row === "object" && Object.hasOwn(row, "error")) {
 							throw new Error(String(row.error).replace(/^Error: /, ""));
 						}
@@ -115,7 +142,7 @@ const bundle = await build({
 					export const loadRulesPage = () => window.readSource();
 					export const setRuleEnabled = async ({data, signal}) => settle(withoutFence(data), signal);
 					export const setRuleLimit = async ({data, signal}) => settle(withoutFence(data), signal);
-					export const addWorkspaceRule = async ({data, signal}) => window.send(withoutFence(data), signal);
+					export const addWorkspaceRule = async ({data, signal}) => window.callWrite(withoutFence(data), signal);
 				`,
 				}));
 			},
@@ -1709,5 +1736,68 @@ test("signing out and into another account drops rules state and ignores the old
 		assert.equal(await page.evaluate(() => window.queue.rulesRecoveryGeneration()), afterSwitch.generation);
 		assert.equal(await page.evaluate(() => window.refreshCalls), afterSwitch.refreshCalls);
 		assert.deepEqual(await page.evaluate(() => window.queue.rulesWrittenSince(0)), { rules: [], limits: [] });
+	});
+});
+
+test("a refresh-needed limit shows the stored value after the token refresh and reload", async () => {
+	await withPage(async (page) => {
+		await page.evaluate(() => window.mount());
+		await page.getByRole("heading", { name: "Rules and limits" }).waitFor();
+		await page.evaluate(() => {
+			window.stored = [
+				{
+					id: "lim-ads",
+					key: "policy.daily_ad_cap",
+					label: "Total ad spend per day",
+					min: 0,
+					max: 1000,
+					step: 10,
+					value: 200,
+				},
+			];
+			window.loadLimits(window.stored);
+			window.doReload = () => {
+				window.beginRulesRead().loadLimits(window.stored);
+			};
+			window.send = async (data) => {
+				window.calls.push(data);
+				throw new Error("The session needs a refresh.");
+			};
+		});
+		await expect(page.locator("#lim-ads")).toHaveValue("200");
+		await page.locator("#lim-ads").evaluate((input) => {
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "260");
+			input.dispatchEvent(new Event("input", { bubbles: true }));
+			input.dispatchEvent(new Event("change", { bubbles: true }));
+		});
+		await expect.poll(() => page.evaluate(() => window.refreshCounts.reload)).toBe(1);
+		await expect(page.locator("#lim-ads")).toHaveValue("200");
+		assert.deepEqual(await page.evaluate(() => window.refreshCounts), { token: 1, reload: 1, signIn: 0 });
+		assert.equal(await page.evaluate(() => window.calls.length), 1);
+		assert.equal(await page.evaluate(() => window.stored[0].value), 200);
+	});
+});
+
+test("a refresh-needed add removes the rejected rule and restores the draft", async () => {
+	await withPage(async (page) => {
+		await page.evaluate(() => window.mount());
+		await page.getByRole("heading", { name: "Rules and limits" }).waitFor();
+		await page.evaluate(() => {
+			window.doReload = () => {
+				window.beginRulesRead().loadRules([]);
+			};
+			window.send = async (data) => {
+				window.calls.push(data);
+				throw new Error("The session needs a refresh.");
+			};
+		});
+		const draft = page.getByPlaceholder("What the agent should do");
+		await draft.fill("Review phantom rule");
+		await page.getByRole("button", { name: "Add rule", exact: true }).click();
+		await expect.poll(() => page.evaluate(() => window.refreshCounts.reload)).toBe(1);
+		await expect(draft).toHaveValue("Review phantom rule");
+		await expect(page.getByText("Review phantom rule", { exact: true })).toHaveCount(0);
+		assert.deepEqual(await page.evaluate(() => window.refreshCounts), { token: 1, reload: 1, signIn: 0 });
+		assert.equal(await page.evaluate(() => window.calls.length), 1);
 	});
 });
