@@ -203,9 +203,17 @@ test("the last slider value is the one that is stored", async ({ page, workspace
 	await expect.poll(() => held.length).toBe(1);
 	await setSlider(page, "#lim-refund", "80");
 	await expect(page.locator("#lim-refund")).toHaveValue("80");
-	await held[0]?.continue();
+	const first = held[0];
+	if (!first) {
+		throw new Error("The first limit write was not held.");
+	}
+	await releaseHeld(first);
 	await expect.poll(() => held.length).toBe(2);
-	await held[1]?.continue();
+	const last = held[1];
+	if (!last) {
+		throw new Error("The last limit write was not held.");
+	}
+	await releaseHeld(last);
 	await expectStored(accountId, "policy.refund_auto_limit", 80);
 	await page.reload();
 	await expect(page.locator("#lim-refund")).toHaveValue("80");
@@ -454,6 +462,12 @@ async function holdPosts(page: Page, key: string) {
 		held.push(route);
 	});
 	return held;
+}
+
+// continue() returns before the server responds. The next write starts only after that response.
+async function releaseHeld(route: Route) {
+	const response = await route.fetch();
+	await route.fulfill({ response });
 }
 
 function limitsOf(payload: Record<string, unknown> | undefined) {
