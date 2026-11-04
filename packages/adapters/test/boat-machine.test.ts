@@ -184,6 +184,25 @@ test("a template save removes the source and a repeat does not start another", a
 	}
 });
 
+test("start from a template resumes a stopped machine", async () => {
+	const fake = await startFakeBoat();
+	try {
+		const adapter = machine(fake);
+		const template = await adapter.makeTemplate(scope, "market-researcher", "0.1.0");
+		await adapter.startFromTemplate(scope, template.id, "orders");
+		await adapter.stop(scope, "orders");
+		const creates = fake.creates;
+		const again = await adapter.startFromTemplate(scope, template.id, "orders");
+		assert.deepEqual(again, { templateId: template.id, agentId: "orders" });
+		assert.equal(fake.creates, creates);
+		const row = fake.machines().find((item) => item.name === "vps-orders-01");
+		assert.equal(row?.state, "running");
+		assert.equal(await adapter.uptime(scope, "orders"), "3 days");
+	} finally {
+		await fake.close();
+	}
+});
+
 test("a failed template save still removes the source", async () => {
 	const fake = await startFakeBoat();
 	try {

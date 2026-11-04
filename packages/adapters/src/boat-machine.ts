@@ -391,7 +391,10 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 					startKey(scope.accountId, agentId, tag),
 				);
 				await waitReady(ctx, created.id);
-			} else if (!off(existing.state) && !LIVE.has(existing.state)) {
+			} else if (off(existing.state)) {
+				await call(() => ctx.machine.resume({ sandboxId: existing.id }));
+				await waitReady(ctx, existing.id);
+			} else if (!LIVE.has(existing.state)) {
 				await waitReady(ctx, existing.id);
 			}
 			return { templateId, agentId };
