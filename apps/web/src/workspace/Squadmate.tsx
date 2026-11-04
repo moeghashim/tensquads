@@ -53,7 +53,7 @@ export function RouteFaces({
 	readonly to: string;
 	readonly masterName: string;
 	readonly names: Readonly<Record<string, string>>;
-	readonly onFor?: (id: string) => boolean;
+	readonly onFor: (id: string) => boolean;
 }) {
 	return (
 		<span style={css("display: inline-flex; align-items: center; gap: 4px")}>
@@ -64,9 +64,9 @@ export function RouteFaces({
 	);
 }
 
-function faceOn(id: string, onFor: ((id: string) => boolean) | undefined): boolean {
+function faceOn(id: string, onFor: (id: string) => boolean): boolean {
 	if (id === "master") return true;
-	return onFor?.(id) ?? true;
+	return onFor(id);
 }
 
 function Face({

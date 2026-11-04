@@ -32,7 +32,13 @@ export function ChatPage({ threadId, events }: { readonly threadId: string; read
 					onDraft={setDraft}
 					onSubmit={submit}
 				/>
-				<HandOffs masterName={frame.masterName} events={handoffs} names={names} onInspect={inspect} />
+				<HandOffs
+					masterName={frame.masterName}
+					events={handoffs}
+					names={names}
+					onFor={(id) => frame.agents.find((agent) => agent.id === id)?.on ?? true}
+					onInspect={inspect}
+				/>
 			</div>
 		</div>
 	);
@@ -203,11 +209,13 @@ function HandOffs({
 	masterName,
 	events,
 	names,
+	onFor,
 	onInspect,
 }: {
 	readonly masterName: string;
 	readonly events: readonly ChatHandOff[];
 	readonly names: Readonly<Record<string, string>>;
+	readonly onFor: (id: string) => boolean;
 	readonly onInspect: (id: string) => void;
 }) {
 	return (
@@ -228,6 +236,7 @@ function HandOffs({
 						event={event}
 						masterName={masterName}
 						names={names}
+						onFor={onFor}
 						onInspect={onInspect}
 					/>
 				))}
@@ -240,11 +249,13 @@ function HandOffButton({
 	event,
 	masterName,
 	names,
+	onFor,
 	onInspect,
 }: {
 	readonly event: ChatHandOff;
 	readonly masterName: string;
 	readonly names: Readonly<Record<string, string>>;
+	readonly onFor: (id: string) => boolean;
 	readonly onInspect: (id: string) => void;
 }) {
 	return (
@@ -260,7 +271,7 @@ function HandOffButton({
 		>
 			<span style={css("display: flex; gap: 6px; align-items: center; font-size: 12px; color: #5d5d5d")}>
 				<span style={css(kindStyle(event.kind))}>{event.kind}</span>
-				<RouteFaces from={event.from} to={event.to} masterName={masterName} names={names} /> · {event.time}
+				<RouteFaces from={event.from} to={event.to} masterName={masterName} names={names} onFor={onFor} /> · {event.time}
 			</span>
 			<span style={css("font-size: 13px")}>{event.text}</span>
 		</button>

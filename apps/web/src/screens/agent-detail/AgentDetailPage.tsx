@@ -418,7 +418,13 @@ function Messages({
 						<span style={css(`${mono}; font-size: 12px; color: #5d5d5d; width: 44px`)}>{event.time}</span>
 						<span style={css(event.kindStyle)}>{event.kind}</span>
 						<span style={css("font-size: 12px; color: #5d5d5d")}>
-							<RouteFaces from={event.from} to={event.to} masterName={view.masterName} names={view.names} />
+							<RouteFaces
+								from={event.from}
+								to={event.to}
+								masterName={view.masterName}
+								names={view.names}
+								onFor={(id) => id !== view.id || view.on}
+							/>
 						</span>
 						<span style={css("flex: 1; min-width: 200px; font-size: 13px")}>{event.text}</span>
 					</button>
