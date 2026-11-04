@@ -1,0 +1,21 @@
+[WebServer] (node:46370) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+WARM / 200 25
+WARM /signup 200 56
+WARM /signin 200 25
+WARM /overview 307 33
+WARM /agents 307 14
+WARM /agents/support 307 28
+WARM /traffic 307 29
+WARM /rules 307 44
+WARM /chat 307 16
+
+Running 1 test using 1 worker
+
+(node:46427) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/1] [app] › e2e/signin.spec.ts:14:1 › an empty sign-in shows the design error
+  1 passed (5.0s)

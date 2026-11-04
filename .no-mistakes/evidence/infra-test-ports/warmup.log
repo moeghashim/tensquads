@@ -1,0 +1,22 @@
+RUN warmup http://localhost:29669
+RUN warmup http://localhost:25042
+WARM / 200 36
+WARM /signup 200 86
+WARM /signin 200 30
+WARM /overview 307 34
+WARM /agents 307 19
+WARM /agents/support 307 47
+WARM /traffic 307 38
+WARM /rules 307 73
+WARM /chat 307 24
+WARM / 200 1095
+WARM /signup 200 55
+WARM /signin 200 24
+WARM /overview 307 25
+WARM /agents 307 14
+WARM /agents/support 307 22
+WARM /traffic 307 32
+WARM /rules 307 45
+WARM /chat 307 50
+http://localhost:29669 title=tensquads homepage heading=Hire a squad of AI agents to run your business screenshot=home-29669.png
+http://localhost:25042 title=tensquads homepage heading=Hire a squad of AI agents to run your business screenshot=home-25042.png

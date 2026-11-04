@@ -1,0 +1,11 @@
+Current schema migration completed while another session held the exclusive global lock.
+Both stale migrators waited behind the shared writer lock.
+After release both migrations completed; DDL audit contains exactly one revision COMMENT: [{"command":"ALTER TABLE","n":24},{"command":"COMMENT","n":1},{"command":"CREATE FUNCTION","n":1},{"command":"CREATE INDEX","n":1},{"command":"CREATE TABLE","n":24},{"command":"CREATE TRIGGER","n":1},{"command":"DROP TRIGGER","n":1}]
+The losing migrator re-read the revision and did not replay the schema.
+browser-A entered 1793819765048
+browser-B entered 1793819765048
+browser-B exited 1793819766551
+browser-A exited 1793819766551
+global-lock-tests entered 1793819766622
+global-lock-tests exited 1793819766674
+Shared browser lanes overlapped; exclusive global-lock lane entered after both exited.

@@ -1,0 +1,40 @@
+[WebServer] (node:52761) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+WARM / 200 24
+WARM /signup 200 50
+WARM /signin 200 22
+WARM /overview 307 23
+WARM /agents 307 14
+WARM /agents/support 307 22
+WARM /traffic 307 32
+WARM /rules 307 48
+WARM /chat 307 46
+
+Running 1 test using 1 worker
+
+(node:52808) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/1] [app] › e2e/rules.spec.ts:301:1 › the rules inventory matches the rendered design
+  1) [app] › e2e/rules.spec.ts:301:1 › the rules inventory matches the rendered design ─────────────
+
+    Error: publishable, secret is missing.
+
+       at support.ts:334
+
+      332 | 		return secrets;
+      333 | 	}
+    > 334 | 	throw new Error(`${missing.join(", ")} is missing.`);
+          | 	      ^
+      335 | }
+      336 |
+        at secretsFor (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6KZB4CV27SEBFR2FEWTCWC1/e2e/support.ts:334:8)
+        at Object.base.extend.workspaceUser.scope (/Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6KZB4CV27SEBFR2FEWTCWC1/e2e/workspace.ts:43:20)
+
+    Error Context: ../../../evidence/01M6KZB4CV27SEBFR2FEWTCWC1/rules-results/rules-the-rules-inventory-matches-the-rendered-design-app/error-context.md
+
+
+  1 failed
+    [app] › e2e/rules.spec.ts:301:1 › the rules inventory matches the rendered design ──────────────

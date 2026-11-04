@@ -1,0 +1,4 @@
+RUN warmup http://localhost:29669
+RUN warmup http://localhost:25042
+http://localhost:29669 title=tensquads homepage heading=Hire a squad of AI agents to run your business screenshot=home-29669.png
+http://localhost:25042 title=tensquads homepage heading=Hire a squad of AI agents to run your business screenshot=home-25042.png

@@ -1,0 +1,8 @@
+Existing Vite server http://localhost:29669/ responded 200.
+Auto port selection returned 29669; preferred worktree port 29669.
+Explicit occupied Vite port returned 29669 instead of rejecting.
+IPv4 occupied port correctly rejected.
+Out-of-range override 65536 rejected.
+CI with no override chose 3000.
+COMMAND   PID       USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+node    38590 moeghashim   36u  IPv6 0xde2d983c898688d0      0t0  TCP [::1]:29669 (LISTEN)
