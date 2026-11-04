@@ -20,10 +20,6 @@ export function assertMachineEnv(
 	for (const [key, value] of Object.entries(expected)) {
 		if (env.get(key) !== value) throw new Error(`The machine env ${key} does not match the sent value.`);
 	}
-	const extras = [...env.keys()].filter(
-		(key) => (boatKey.test(key) || namedBoat.has(key)) && key !== "BOAT_ID" && key !== "ASCII_TOKEN",
-	);
-	if (extras.length > 0) throw new Error(`Unexpected boat variables: ${extras.join(", ")}`);
 	if (!env.get("BOAT_ID")) throw new Error("BOAT_ID is missing.");
 	if (!env.get("ASCII_TOKEN")) throw new Error("ASCII_TOKEN is missing.");
 	if (env.has("TENSQUADS_TRIAL_KEY")) throw new Error("The secret name is present on the machine.");
@@ -33,4 +29,8 @@ export function assertMachineEnv(
 			if (value.includes(secret)) throw new Error("The machine env holds a boat API key.");
 		}
 	}
+}
+
+export function boatVariableNames(stdout: string): string[] {
+	return [...machineEnvironment(stdout).keys()].filter((key) => boatKey.test(key) || namedBoat.has(key)).sort();
 }

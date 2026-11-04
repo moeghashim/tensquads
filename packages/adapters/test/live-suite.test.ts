@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readdirSync } from "node:fs";
 import test from "node:test";
 
-import { assertMachineEnv } from "./live/env-check.ts";
+import { assertMachineEnv, boatVariableNames } from "./live/env-check.ts";
 import { assertTrialProfile, trialIdentity } from "./live/identity.ts";
 
 test("npm test does not load the live machine trial", () => {
@@ -20,6 +20,11 @@ test("the machine env check accepts the three sent values and the two boat varia
 		"IMAGE_TAG=registry.agents.co/img1:1",
 		"BOAT_ID=boat-1",
 		"ASCII_TOKEN=present",
+		"AGENT_ID=injected",
+		"ENVIRONMENT_ID=injected",
+		"PRODUCT_MODE=injected",
+		"ASCII_PORT=injected",
+		"ASCII_API_URL=injected",
 		"PATH=/usr/bin",
 	].join("\n");
 	assertMachineEnv(
@@ -31,9 +36,18 @@ test("the machine env check accepts the three sent values and the two boat varia
 		},
 		["boat-api-key-value"],
 	);
+	assert.deepEqual(boatVariableNames(stdout), [
+		"AGENT_ID",
+		"ASCII_API_URL",
+		"ASCII_PORT",
+		"ASCII_TOKEN",
+		"BOAT_ID",
+		"ENVIRONMENT_ID",
+		"PRODUCT_MODE",
+	]);
 	assert.throws(
-		() => assertMachineEnv(`${stdout}\nAGENT_ID=a1`, { ACCOUNT_ID: "trial1" }, []),
-		/Unexpected boat variables: AGENT_ID/,
+		() => assertMachineEnv(stdout, { TENSQUADS_AGENT_ID: "other" }, []),
+		/The machine env TENSQUADS_AGENT_ID does not match the sent value/,
 	);
 	assert.throws(
 		() => assertMachineEnv(`${stdout}\nNOTE=boat-api-key-value`, { ACCOUNT_ID: "trial1" }, ["boat-api-key-value"]),

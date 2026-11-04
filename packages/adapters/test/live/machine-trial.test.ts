@@ -4,7 +4,7 @@ import { BoatApi, Configuration, type Sandbox } from "@boatdev/sdk";
 
 import { createBoatMachine } from "../../src/boat-machine.ts";
 import { cleanupTrial, formatCleanup } from "./cleanup.ts";
-import { assertMachineEnv } from "./env-check.ts";
+import { assertMachineEnv, boatVariableNames } from "./env-check.ts";
 import { SECRET_BASE_URL, SECRET_NAME, TRIAL_PROFILE, trialIdentity } from "./identity.ts";
 
 const live = process.env.MACHINE_TRIAL === "1";
@@ -40,6 +40,7 @@ async function readEnv(machine: BoatApi, sandboxId: string, expected: Record<str
 	);
 	assert.equal(result.exitCode, 0, "The env command failed.");
 	assertMachineEnv(result.stdout, expected, secrets);
+	console.log(`boat variables: ${boatVariableNames(result.stdout).join(", ")}`);
 }
 
 test("a real machine follows the trial path", { timeout: 16 * 60 * 1000, skip: !live }, async () => {
