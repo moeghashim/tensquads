@@ -24,13 +24,10 @@ import {
 } from "./boat-fields.ts";
 
 const LIVE = new Set(["ready", "idle", "running"]);
+const OFF = new Set(["archived", "archiving"]);
 
-function paused(state: string): boolean {
-	return state === "stopped" || state === "stopping";
-}
-
-function stopped(state: string): boolean {
-	return state === "stopped";
+function off(state: string): boolean {
+	return OFF.has(state);
 }
 const REGION = "EU";
 const ENVIRONMENT = "tensquads-agents";
@@ -58,7 +55,6 @@ interface BoatContext {
 	readonly secretBaseUrl: string | undefined;
 	readonly now: () => Date;
 	readonly wait: BoatWait;
-	readonly hosts: Map<string, string[]>;
 }
 
 function client(token: string, options: BoatMachineOptions): BoatApi {
@@ -244,6 +240,13 @@ function shownCpu(percents: readonly number[], vcpu: number | undefined): string
 	return cpuText(percents, vcpu && vcpu > 0 ? vcpu : 1);
 }
 
+async function profileApis(ctx: BoatContext): Promise<readonly string[]> {
+	const admin = ctx.admin;
+	if (!admin) throw notConfigured("The secret registration is not configured.");
+	const listed = await call(() => admin.listCredentialProfiles());
+	return listed.profiles.find((profile) => profile.name === ctx.profileName)?.customApis ?? [];
+}
+
 export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 	if (!options.token || !options.profileName) throw notConfigured();
 	if (options.profileName === "default") throw notConfigured("The default profile is closed.");
@@ -254,14 +257,7 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 		secretBaseUrl: options.secretBaseUrl,
 		now: options.now ?? (() => new Date()),
 		wait: options.wait ?? { intervalMs: 2_000, timeoutMs: 300_000 },
-		hosts: new Map(),
 	};
-
-	async function remember(scope: AccountScope, baseUrl: string): Promise<void> {
-		const host = hostOf(baseUrl);
-		const current = ctx.hosts.get(scope.accountId) ?? [];
-		if (!current.includes(host)) ctx.hosts.set(scope.accountId, [...current, host]);
-	}
 
 	return {
 		async host(scope, agentId) {
@@ -292,19 +288,19 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 		},
 		async egress(scope, agentId) {
 			await requireMachine(ctx, scope, agentId);
-			return ctx.hosts.get(scope.accountId) ?? [];
+			const names = await profileApis(ctx);
+			if (names.length === 0) return [];
+			if (!ctx.secretBaseUrl) throw notConfigured("The secret registration is not configured.");
+			return [hostOf(ctx.secretBaseUrl)];
 		},
 		async secrets(scope, agentId) {
 			await requireMachine(ctx, scope, agentId);
-			const admin = ctx.admin;
-			if (!admin) throw notConfigured("The secret registration is not configured.");
-			const listed = await call(() => admin.listCredentialProfiles());
-			return listed.profiles.find((profile) => profile.name === ctx.profileName)?.customApis ?? [];
+			return profileApis(ctx);
 		},
 		async start(scope, agentId, tag) {
 			const existing = await findMachine(ctx, scope, agentId);
 			if (existing) {
-				if (!paused(existing.state) && !LIVE.has(existing.state)) {
+				if (!off(existing.state) && !LIVE.has(existing.state)) {
 					await waitReady(ctx, existing.id);
 				}
 				return;
@@ -322,12 +318,12 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 		},
 		async stop(scope, agentId) {
 			const row = await requireMachine(ctx, scope, agentId);
-			if (stopped(row.state)) return;
+			if (row.state === "archived") return;
 			await call(() => ctx.machine.stop({ sandboxId: row.id }), true);
 			await until(
 				ctx,
-				async () => (await call(() => ctx.machine.get({ sandboxId: row.id }))).sandbox.state,
-				stopped,
+				async () => (await call(() => ctx.machine.get({ sandboxId: row.id }))).sandbox.stop?.status ?? "",
+				(status) => status === "completed",
 			);
 		},
 		async resume(scope, agentId) {
@@ -339,7 +335,7 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 			const row = await requireMachine(ctx, scope, agentId);
 			await removeById(ctx, row.id);
 		},
-		async registerSecret(scope, name) {
+		async registerSecret(_scope, name) {
 			const admin = ctx.admin;
 			if (!admin || !ctx.secretBaseUrl) throw notConfigured("The secret registration is not configured.");
 			const baseUrl = ctx.secretBaseUrl;
@@ -350,7 +346,6 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 					setCustomApiRequest: { value: "configured", baseUrl },
 				}),
 			);
-			await remember(scope, baseUrl);
 		},
 		async removeSecret(_scope, name) {
 			const admin = ctx.admin;
@@ -392,7 +387,7 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 					startKey(scope.accountId, agentId, tag),
 				);
 				await waitReady(ctx, created.id);
-			} else if (!LIVE.has(existing.state)) {
+			} else if (!off(existing.state) && !LIVE.has(existing.state)) {
 				await waitReady(ctx, existing.id);
 			}
 			return { templateId, agentId };

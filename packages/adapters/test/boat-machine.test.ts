@@ -120,9 +120,12 @@ test("stop shows paused with no process read, and resume keeps the disk", async 
 		assert.equal(await adapter.uptime(scope, "orders"), "Paused");
 		assert.equal(fake.processCalls, before);
 		const stopped = fake.machines()[0];
+		assert.equal(stopped?.state, "archived");
 		assert.equal(stopped?.disk, true);
 		assert.equal(stopped?.ip, null);
 		assert.equal(stopped?.processCount, 0);
+		await adapter.start(scope, "orders", tag);
+		assert.equal(fake.creates, 1);
 		await adapter.resume(scope, "orders");
 		const resumed = fake.machines()[0];
 		assert.equal(resumed?.state, "running");
@@ -201,12 +204,16 @@ test("secret registration uses the admin token and returns names only", async ()
 	try {
 		const adapter = machine(fake);
 		await adapter.start(scope, "orders", tag);
+		assert.deepEqual(await adapter.egress(scope, "orders"), []);
 		await adapter.registerSecret(scope, "shop");
 		assert.equal(fake.secretCalls.at(-1)?.kind, "admin");
 		assert.equal(fake.secretCalls.at(-1)?.valuePresent, true);
 		assert.deepEqual(await adapter.secrets(scope, "orders"), ["shop"]);
 		assert.deepEqual(await adapter.egress(scope, "orders"), ["example.com"]);
+		const fresh = machine(fake);
+		assert.deepEqual(await fresh.egress(scope, "orders"), ["example.com"]);
 		await adapter.removeSecret(scope, "shop");
+		assert.deepEqual(await fresh.egress(scope, "orders"), []);
 		assert.deepEqual(await adapter.secrets(scope, "orders"), []);
 		const rendered = JSON.stringify(fake.secretCalls);
 		assert.equal(rendered.includes("configured"), false);

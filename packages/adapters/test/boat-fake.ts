@@ -34,6 +34,8 @@ interface StoredMachine {
 	createdAt: string;
 	gets: number;
 	processes: { pid: number; command: string; cpuPercent: number }[];
+	stopId: string | null;
+	stopStatus: string | null;
 }
 
 interface StoredTemplate {
@@ -100,6 +102,20 @@ function sandboxJson(row: StoredMachine, state: string): unknown {
 		createdAt: row.createdAt,
 		environment: row.environment,
 		ttlSeconds: null,
+		stop: stopJson(row),
+	};
+}
+
+function stopJson(row: StoredMachine): unknown {
+	if (!row.stopId || !row.stopStatus) return null;
+	const ended = row.stopStatus === "completed" || row.stopStatus === "superseded";
+	return {
+		id: row.stopId,
+		status: row.stopStatus,
+		requestedAt: row.createdAt,
+		lastAttemptAt: null,
+		error: null,
+		endedAt: ended ? row.createdAt : null,
 	};
 }
 
@@ -177,12 +193,13 @@ export async function startFakeBoat(): Promise<FakeBoat> {
 			row.state = "running";
 			return "running";
 		}
-		if (row.state === "stopping") {
-			row.state = "stopped";
+		if (row.state === "archiving") {
+			row.state = "archived";
+			row.stopStatus = "completed";
 			row.ip = null;
 			row.processes = [];
 			row.processCount = 0;
-			return "stopped";
+			return "archived";
 		}
 		if (row.state === "starting") {
 			row.state = "running";
@@ -325,6 +342,8 @@ export async function startFakeBoat(): Promise<FakeBoat> {
 			environment: typeof body.environment === "string" ? body.environment : null,
 			gets: 0,
 			processes: [{ pid: 1, command: "agent", cpuPercent: 40 }],
+			stopId: null,
+			stopStatus: null,
 		};
 		machines.set(id, row);
 		if (idempotency) byKey.set(idempotency, id);
@@ -369,15 +388,20 @@ export async function startFakeBoat(): Promise<FakeBoat> {
 			return;
 		}
 		if (name === "stop") {
-			row.state = "stopping";
-			send(response, 200, {
+			row.stopId ??= `stop-${id}`;
+			row.state = "archiving";
+			row.stopStatus = "pending";
+			send(response, 202, {
 				ok: true,
 				type: "sandbox.stop",
 				id,
-				status: "stopping",
-				sandbox: sandboxJson(row, "stopping"),
+				status: "pending",
+				sandbox: sandboxJson(row, "archiving"),
 			});
 			return;
+		}
+		if (row.stopStatus === "pending" || row.stopStatus === "failing" || row.stopStatus === "completed") {
+			row.stopStatus = "superseded";
 		}
 		row.state = "starting";
 		send(response, 200, {
