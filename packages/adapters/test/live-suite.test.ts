@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readdirSync } from "node:fs";
 import test from "node:test";
 
-import { assertMachineEnv, boatVariableNames } from "./live/env-check.ts";
+import { assertMachineEnv, boatVariableNames, environmentNames } from "./live/env-check.ts";
 import { assertTrialProfile, trialIdentity } from "./live/identity.ts";
 
 test("npm test does not load the live machine trial", () => {
@@ -13,7 +13,7 @@ test("npm test does not load the live machine trial", () => {
 	assert.equal(readdirSync(new URL("./live", import.meta.url)).includes("machine-trial.test.ts"), true);
 });
 
-test("the machine env check accepts the three sent values and the injected boat variables", () => {
+test("the machine env check accepts sent values, injected boat variables, and baseline names", () => {
 	const sent = {
 		ACCOUNT_ID: "trial1",
 		TENSQUADS_AGENT_ID: "a1",
@@ -31,7 +31,11 @@ test("the machine env check accepts the three sent values and the injected boat 
 		"ASCII_PORT=injected",
 		"ASCII_API_URL=injected",
 	].join("\n");
-	assertMachineEnv(stdout, sent, ["boat-api-key-value"]);
+	const system = ["HOME", "LANG", "PATH", "PWD", "SHELL", "USER"];
+	const withSystem = `${stdout}\n${system.map((name) => `${name}=present`).join("\n")}`;
+	assertMachineEnv(stdout, sent, ["boat-api-key-value"], []);
+	assertMachineEnv(withSystem, sent, ["boat-api-key-value"], system);
+	assert.deepEqual(environmentNames("PATH=/usr/bin\nHOME=/home\n\nNOT_A_PAIR\n"), ["HOME", "PATH"]);
 	assert.deepEqual(boatVariableNames(stdout), [
 		"AGENT_ID",
 		"ASCII_API_URL",
@@ -42,20 +46,29 @@ test("the machine env check accepts the three sent values and the injected boat 
 		"PRODUCT_MODE",
 	]);
 	assert.throws(
-		() => assertMachineEnv(stdout, { TENSQUADS_AGENT_ID: "other" }, []),
+		() => assertMachineEnv(stdout, { TENSQUADS_AGENT_ID: "other" }, [], []),
 		/The machine env TENSQUADS_AGENT_ID does not match the sent value/,
 	);
 	assert.throws(
-		() => assertMachineEnv(`${stdout}\nNOTE=boat-api-key-value`, { ACCOUNT_ID: "trial1" }, ["boat-api-key-value"]),
+		() =>
+			assertMachineEnv(`${stdout}\nNOTE=boat-api-key-value`, { ACCOUNT_ID: "trial1" }, ["boat-api-key-value"], []),
 		/The machine env holds a boat API key\./,
 	);
 	assert.throws(
-		() => assertMachineEnv(`${stdout}\nTENSQUADS_TRIAL_KEY=configured`, sent, []),
+		() => assertMachineEnv(`${stdout}\nPATH=boat-api-key-value`, sent, ["boat-api-key-value"], ["PATH"]),
+		/The machine env holds a boat API key\./,
+	);
+	assert.throws(
+		() => assertMachineEnv(`${stdout}\nTENSQUADS_TRIAL_KEY=configured`, sent, [], ["TENSQUADS_TRIAL_KEY"]),
 		/The secret name is present on the machine\./,
 	);
 	assert.throws(
-		() => assertMachineEnv(`${stdout}\nPATH=/usr/bin`, sent, []),
+		() => assertMachineEnv(`${stdout}\nPATH=/usr/bin`, sent, [], []),
 		/The machine env has an unexpected variable: PATH\./,
+	);
+	assert.throws(
+		() => assertMachineEnv(`${withSystem}\nHOSTNAME=box`, sent, [], system),
+		/The machine env has an unexpected variable: HOSTNAME\./,
 	);
 });
 

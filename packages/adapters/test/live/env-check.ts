@@ -18,12 +18,18 @@ function machineEnvironment(stdout: string): Map<string, string> {
 	return env;
 }
 
+export function environmentNames(stdout: string): string[] {
+	return [...machineEnvironment(stdout).keys()].sort();
+}
+
 export function assertMachineEnv(
 	stdout: string,
 	expected: Readonly<Record<string, string>>,
 	secrets: readonly string[],
+	baselineNames: readonly string[],
 ): void {
 	const env = machineEnvironment(stdout);
+	const baseline = new Set(baselineNames);
 	for (const [key, value] of Object.entries(expected)) {
 		if (env.get(key) !== value) throw new Error(`The machine env ${key} does not match the sent value.`);
 	}
@@ -38,7 +44,9 @@ export function assertMachineEnv(
 		}
 	}
 	const sent = new Set(Object.keys(expected));
-	const extra = [...env.keys()].filter((key) => !sent.has(key) && !injectedBoat.includes(key)).sort();
+	const extra = [...env.keys()]
+		.filter((key) => !sent.has(key) && !injectedBoat.includes(key) && !baseline.has(key))
+		.sort();
 	if (extra.length > 0) throw new Error(`The machine env has an unexpected variable: ${extra.join(", ")}.`);
 }
 

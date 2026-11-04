@@ -1,10 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { BoatApi, Configuration, type Sandbox } from "@boatdev/sdk";
+import {
+	BoatApi,
+	Configuration,
+	type CreateSandboxRequest,
+	ResponseError,
+	type Sandbox,
+	waitUntilReady,
+} from "@boatdev/sdk";
 
 import { createBoatMachine } from "../../src/boat-machine.ts";
 import { cleanupTrial, formatCleanup } from "./cleanup.ts";
-import { assertMachineEnv, boatVariableNames } from "./env-check.ts";
+import { assertMachineEnv, boatVariableNames, environmentNames } from "./env-check.ts";
 import { SECRET_BASE_URL, SECRET_NAME, TRIAL_PROFILE, trialIdentity } from "./identity.ts";
 
 const live = process.env.MACHINE_TRIAL === "1";
@@ -31,7 +38,7 @@ function finishedCommand(result: Awaited<ReturnType<BoatApi["command"]>>): { exi
 	return { exitCode: result.exitCode, stdout: result.stdout };
 }
 
-async function readEnv(machine: BoatApi, sandboxId: string, expected: Record<string, string>, secrets: string[]) {
+async function commandStdout(machine: BoatApi, sandboxId: string): Promise<string> {
 	const result = finishedCommand(
 		await machine.command({
 			sandboxId,
@@ -39,8 +46,72 @@ async function readEnv(machine: BoatApi, sandboxId: string, expected: Record<str
 		}),
 	);
 	assert.equal(result.exitCode, 0, "The env command failed.");
-	assertMachineEnv(result.stdout, expected, secrets);
-	console.log(`boat variables: ${boatVariableNames(result.stdout).join(", ")}`);
+	return result.stdout;
+}
+
+async function createBaseline(machine: BoatApi, runId: string): Promise<Sandbox> {
+	const body: CreateSandboxRequest = {
+		type: "small",
+		noEnv: true,
+		ttlSeconds: null,
+		environment: TRIAL_PROFILE,
+		env: {},
+		labels: { run: runId },
+		name: `baseline-${runId}`,
+	};
+	const idempotencyKey = `baseline-${runId}`;
+	try {
+		return (await machine.create({ idempotencyKey, createSandboxRequest: body })).sandbox;
+	} catch (error) {
+		if (!(error instanceof ResponseError) || error.response.status !== 400) throw error;
+		await error.response.text().catch(() => "");
+		const { environment: _environment, ...withoutEnvironment } = body;
+		return (await machine.create({ idempotencyKey, createSandboxRequest: withoutEnvironment })).sandbox;
+	}
+}
+
+async function deleteBaseline(machine: BoatApi, id: string): Promise<void> {
+	try {
+		const started = await machine.deleteSandbox({ sandboxId: id, xAsciiConfirmDelete: id });
+		const deadline = Date.now() + 180_000;
+		for (;;) {
+			const current = await machine.getDeletionOperation({ operationId: started.operation.id });
+			if (current.operation.status === "completed") return;
+			if (Date.now() >= deadline) throw new Error("The baseline machine is still deleting.");
+			await new Promise((resolve) => setTimeout(resolve, 2_000));
+		}
+	} catch (error) {
+		if (error instanceof ResponseError && error.response.status === 404) return;
+		if (error instanceof Error && error.message === "The baseline machine is still deleting.") throw error;
+		throw new Error("The baseline machine could not be removed.");
+	}
+}
+
+async function baselineNames(machine: BoatApi, runId: string): Promise<readonly string[]> {
+	const created = await createBaseline(machine, runId);
+	try {
+		await waitUntilReady(machine, created.id, { intervalMs: 2_000, timeoutMs: 180_000 });
+		const names = environmentNames(await commandStdout(machine, created.id));
+		console.log(`baseline variables: ${names.join(", ")}`);
+		return names;
+	} finally {
+		await deleteBaseline(machine, created.id);
+	}
+}
+
+async function readEnv(
+	machine: BoatApi,
+	sandboxId: string,
+	expected: Record<string, string>,
+	secrets: string[],
+	baseline: readonly string[],
+) {
+	const stdout = await commandStdout(machine, sandboxId);
+	assertMachineEnv(stdout, expected, secrets, baseline);
+	const allowed = new Set(baseline);
+	const diff = environmentNames(stdout).filter((name) => !allowed.has(name));
+	console.log(`env diff: ${diff.join(", ")}`);
+	console.log(`boat variables: ${boatVariableNames(stdout).join(", ")}`);
 }
 
 test("a real machine follows the trial path", { timeout: 16 * 60 * 1000, skip: !live }, async () => {
@@ -59,6 +130,8 @@ test("a real machine follows the trial path", { timeout: 16 * 60 * 1000, skip: !
 	});
 	const secrets = [token, adminToken];
 	try {
+		const baseline = await baselineNames(machine, trial.runId);
+		console.log("done: baseline");
 		const template = await adapter.makeTemplate(trial.scope, trial.imageId, trial.version);
 		assert.equal(template.id, trial.templateId);
 		console.log("done: template");
@@ -87,6 +160,7 @@ test("a real machine follows the trial path", { timeout: 16 * 60 * 1000, skip: !
 			row.id,
 			{ ACCOUNT_ID: trial.accountId, TENSQUADS_AGENT_ID: trial.agentId, IMAGE_TAG: trial.tag },
 			secrets,
+			baseline,
 		);
 		console.log("done: env");
 		await adapter.registerSecret(trial.scope, SECRET_NAME);
@@ -97,6 +171,7 @@ test("a real machine follows the trial path", { timeout: 16 * 60 * 1000, skip: !
 			row.id,
 			{ ACCOUNT_ID: trial.accountId, TENSQUADS_AGENT_ID: trial.agentId, IMAGE_TAG: trial.tag },
 			secrets,
+			baseline,
 		);
 		console.log("done: secret name");
 		await adapter.stop(trial.scope, trial.agentId);
