@@ -1,2 +1,5 @@
 [tools]
 java = "temurin-25"
+# The model tests call `mise where` for this jar. They do not install it.
+# A cache that has only Java still gets the jar from `mise install`.
+"http:tla2tools" = { version = "1.7.4", url = "https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar", checksum = "sha256:936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88" }

@@ -1,10 +1,11 @@
 // The held account read locks the accounts table for 32 seconds.
 // A parallel worker times out on that lock, so this test runs after the others.
 // Playwright workers are process-global. The fence project therefore runs alone.
+// GitHub macOS runners have 3 CPUs. Playwright's default is 50% of the CPUs,
+// and floor(3 * 0.5) is 1. One worker runs the app project for 27 to 39 minutes.
 import { spawnSync } from "node:child_process";
-
-const held = "a held account read commits no limit|a read held past the deadline cannot commit the queued writes";
-const fenceProject = "rules-fence";
+import { cpus } from "node:os";
+import { suitePlan } from "./e2e-plan.mjs";
 
 function run(args) {
 	const result = spawnSync("playwright", ["test", ...args], { stdio: "inherit" });
@@ -20,7 +21,5 @@ if (extra.length > 0) {
 	process.exit(run(extra));
 }
 
-const suite = run(["--project", "app", "--grep-invert", held]);
-const fence = run(["--project", fenceProject, "--workers=1"]);
-const locked = run(["--project", "app", "--workers=1", "--grep", held]);
-process.exit(suite === 0 && fence === 0 && locked === 0 ? 0 : 1);
+const results = suitePlan(Boolean(process.env.CI), process.platform, cpus().length).map(run);
+process.exit(results.every((status) => status === 0) ? 0 : 1);
