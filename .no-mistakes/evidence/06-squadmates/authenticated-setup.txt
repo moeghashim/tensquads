@@ -1,0 +1,6 @@
+Targeted existing test: e2e/frame.spec.ts:37 — sidebar navigation and agent status
+Setup stopped before browser scenario: publishable, secret, testDatabase is missing.
+No Clerk or database calls were made.
+Live requests to /overview, /chat, /agents, /agents/support, /traffic, and /rules all redirected to /signin.
+An isolated Clerk development instance and dedicated TEST_DATABASE_URL are required.
+The product has no local authentication provider; replacing auth or mounting screens with mocked context would not exercise the running authenticated product.
