@@ -70,7 +70,8 @@ This repository does not run the check. The Result must still carry the evidence
 4. Prove that `competition.watch` does not run before an Approval.
 5. Prove that the agent keeps no task state between loops.
 6. Stop when a step needs Moe's account, card, or a key. Give Moe the exact command. Do not paste a key.
-7. After open questions 1 and 2 are answered, start the image on a real boat.dev machine with `noEnv: true`. The heartbeat must reach the Durable Object.
+7. Release the image. Unit tests and the image release do not wait for the Durable Object.
+8. After open questions 1 and 2 are answered and the main repository has the heartbeat route, start the image on a real boat.dev machine with `noEnv: true`. The heartbeat must reach the Durable Object.
 
 ## Done when
 
@@ -78,7 +79,7 @@ This repository does not run the check. The Result must still carry the evidence
 - [ ] Each skill passes its gate tests against the fake master
 - [ ] A test proves that `competition.watch` does not run before an Approval
 - [ ] A test proves that the agent holds no task state between loops
-- [ ] The image starts on a real boat.dev machine with `noEnv: true`, and its heartbeat reaches the Durable Object
+- [ ] After the main repository has the heartbeat route, the image starts on a real boat.dev machine with `noEnv: true`, and its heartbeat reaches the Durable Object
 - [ ] A scan finds no key in git, in logs, or in the image
 
 ## Do not

@@ -1,6 +1,6 @@
 # Task 05 — Proof of concept (phase 5, main repository)
 
-Branch: `05-proof-of-concept` in `moeghashim/tensquads`. One pull request. Starts only when tasks 00 to 04 are merged, and when the kit and both agent images are released. Read `AGENTS.md` first and send the receipt.
+Branch: `05-proof-of-concept` in `moeghashim/tensquads`. One pull request. Starts only when tasks 00 to 04 are merged. The token signer and the heartbeat route may start before either agent image is released. The full loop, the seed, and the "Done when" list wait for the kit `0.1.0` commit and both released images. Read `AGENTS.md` first and send the receipt.
 
 This file is the main-repository task. It replaces the old single phase 5 task for this repository. The kit, the Market researcher, and the Website builder are the other three phase 5 files. The "Done when" list below is the final gate for the whole proof of concept.
 
@@ -33,7 +33,7 @@ The master runs on Cloudflare as the account Durable Object and a Worker (decisi
 
 Agent ids stay `market` and `website`. On a screen, the character names are Machu and Angkor (decision 33). The role tags stay "Market researcher" and "Website builder".
 
-Pin `@tensquads/agent-kit` to the `0.1.0` commit. Pin both released images.
+Before the full loop and the seed, pin `@tensquads/agent-kit` to the `0.1.0` commit. Pin both released images.
 
 ## Facts from task 04
 

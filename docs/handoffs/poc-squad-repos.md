@@ -59,8 +59,9 @@ Gap 5 is closed. Where the plan and task 05 disagree on the skill list or on GPT
 Order:
 
 1. The kit thread releases version 0.1.0 first. The contract must exist before the agents use it.
-2. The researcher and builder threads run after that. They can run at the same time.
-3. The main thread runs the full loop last.
+2. The main repository may add the token signer and the heartbeat route before the agent releases.
+3. The researcher and builder threads run after the kit release. They can run at the same time. Unit tests and image releases do not wait for the Durable Object. Live heartbeat checks wait for the main repository to have the heartbeat route.
+4. The main thread runs the full loop last. The full loop, the seed, and the final "Done when" list wait for the kit `0.1.0` commit and both released images.
 
 ## Rules for every repository
 
@@ -194,7 +195,7 @@ After publishing, `https://<slug>.10squads.com` must return 200 and the same con
 - [ ] Each skill passes its gate tests against the fake master.
 - [ ] A test proves that an Ask first skill does not run before an Approval.
 - [ ] A test proves that the agent holds no task state between loops.
-- [ ] The image starts on a real boat.dev machine with `noEnv: true`, and its heartbeat reaches the Durable Object.
+- [ ] After the main repository has the heartbeat route, the image starts on a real boat.dev machine with `noEnv: true`, and its heartbeat reaches the Durable Object.
 - [ ] A scan finds no key in git, in logs or in the image.
 
 **The whole proof of concept:**
@@ -231,7 +232,7 @@ Use one new thread for each repository. Replace `<path>` with the path to this f
 
 **Main thread:**
 
-> You are the builder for the proof of concept in `moeghashim/tensquads`. Read `AGENTS.md`, then `<path>`, then `tasks/05-proof-of-concept.md`, in full. Build "What stays in `moeghashim/tensquads`". Pin the kit and both released images. Run the full loop on real boat.dev machines. Report each box under "Done when" with evidence. Do not build the kit or either agent image here.
+> You are the builder for the proof of concept in `moeghashim/tensquads`. Read `AGENTS.md`, then `<path>`, then `tasks/05-proof-of-concept.md`, in full. Build "What stays in `moeghashim/tensquads`". The token signer and the heartbeat route may start before either agent image is released. The full loop, the seed, and the "Done when" list wait for the kit `0.1.0` commit and both released images. Pin the kit and both released images. Run the full loop on real boat.dev machines. Report each box under "Done when" with evidence. Do not build the kit or either agent image here.
 
 ## Edits on 4 November 2026
 
@@ -246,3 +247,4 @@ Use one new thread for each repository. Replace `<path>` with the path to this f
 9. Named the four task files in the request, in the rules, and in the prompts.
 10. The prompts no longer ask Moe to confirm the repository name or the visibility. Decision 35 settled both.
 11. Repository rule 1 now includes decision 35.
+12. The main repository may add the token signer and the heartbeat route before the agent releases. Unit tests and image releases do not wait for the Durable Object. Live heartbeat checks wait for the route. The full loop, the seed, and the final "Done when" list still wait for the kit `0.1.0` commit and both released images.
