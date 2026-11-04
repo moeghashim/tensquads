@@ -16,6 +16,8 @@ export {
 	workingReply,
 } from "./plugins/index.ts";
 export {
+	type AccountEventBus,
+	type AccountMachine,
 	type AccountScope,
 	type BusEventRecord,
 	DECIDER_MISSING,
@@ -23,6 +25,11 @@ export {
 	type Decision,
 	type EventBus,
 	type IntegrationGateway,
+	MachineFault,
+	type MachineFaultCode,
 	type MachineProvider,
+	type MachineTemplate,
+	type PublishedEvent,
 	type Repositories,
+	type StartedMachine,
 } from "./ports.ts";
