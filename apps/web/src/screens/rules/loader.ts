@@ -25,6 +25,8 @@ export async function loadRulesSnapshot(): Promise<RulesSnapshotPage> {
 	const epoch = rulesAccountEpoch();
 	try {
 		const snapshot = await readRulesPage(readCounter, epoch);
+		// The account changed while this read was in flight. The snapshot belongs to the new epoch already.
+		if (staleEpoch(epoch)) return snapshot;
 		// A write after this read started owns the screen. Keep and show the snapshot from before that write.
 		const shown = retainSnapshot(epoch, readCounter, snapshot);
 		markReadSucceeded(generation, epoch);
@@ -100,6 +102,7 @@ function heldPage(epoch: number): RulesSnapshotPage | null {
 
 function retainSnapshot(epoch: number, readCounter: number, snapshot: RulesSnapshotPage): RulesSnapshotPage {
 	if (typeof window === "undefined") return snapshot;
+	if (staleEpoch(epoch)) return snapshot;
 	if (rulesWriteCounter() === readCounter) {
 		held = { epoch, page: snapshot };
 		return snapshot;

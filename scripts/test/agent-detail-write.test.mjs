@@ -800,3 +800,43 @@ test("SSR renders do not reuse persistent client queues", () => {
 		globalThis.window = browserWindow;
 	}
 });
+
+test("an accepted agent overlay clears when the target account changes", async () => {
+	resetAgentClientState();
+	clearFrameHold();
+	await showAccount("demo");
+	const h = harness();
+	h.server.accountId = "demo";
+	h.newLoader(h.server);
+	h.render().toggleAgent(false);
+	await settle();
+	h.posts.shift().answer();
+	await settle();
+	assert.equal(agentOnSnapshot().get("support"), false);
+	await showAccount("target");
+	assert.equal(agentOnSnapshot().size, 0);
+});
+
+test("clearing the held frame before a target switch abandons the agent queue", async () => {
+	resetAgentClientState();
+	clearFrameHold();
+	await showAccount("demo");
+	const h = harness();
+	h.server.accountId = "demo";
+	h.server.missionText = "DEMO";
+	h.newLoader(h.server);
+	h.render().toggleAgent(false);
+	await settle();
+	const late = h.posts[0];
+	clearFrameHold();
+	await showAccount("target");
+	h.newLoader(
+		{ ...h.server, accountId: "target", missionText: "TARGET", on: true },
+		"success",
+		stampAgentRead("support"),
+	);
+	late.answer();
+	await settle();
+	assert.equal(h.render().view.missionText, "TARGET");
+	assert.equal(h.render().view.on, true);
+});

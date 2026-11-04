@@ -14,6 +14,8 @@ const state = {
 	store: {},
 	closed: 0,
 	refreshError: null,
+	sessionError: null,
+	readGate: null,
 	holdWrite: null,
 	holdAccount: "",
 	limitWrite: null,
@@ -37,6 +39,7 @@ const mocks = {
 			policy: { listRules: async () => [] },
 			squads: { listAgents: async () => [], master: async () => ({ name: "Master" }) },
 			bus: { readStore: async () => {
+				if (state.readGate) { const gate = state.readGate; state.readGate = null; await gate; }
 				if (state.refreshError) throw state.refreshError;
 				if (state.failRules) throw new Error("Read failed");
 				return state.store;
@@ -61,7 +64,7 @@ const mocks = {
 		} }); }
 	}`,
 	"./session.ts":
-		"export const requireClerkUser = async () => 'owner'; export const requireClerkSession = async () => ({ userId: 'owner', organizationId: null, role: null });",
+		"export const requireClerkUser = async () => 'owner'; export const requireClerkSession = async () => { if (globalThis.workspaceAccountTest.sessionError) throw globalThis.workspaceAccountTest.sessionError; return { userId: 'owner', organizationId: null, role: null }; };",
 	"./super-admin.ts": "export const isSuperAdmin = async () => globalThis.workspaceAccountTest.admin;",
 	"./database-url.ts": "export const databaseUrl = async () => 'test';",
 	"./special-session.ts": "export const readSpecialAccount = () => globalThis.workspaceAccountTest.target;",
@@ -86,12 +89,16 @@ const hooks = registerHooks({
 });
 
 const rules = await import(new URL("server/rules.ts", web));
+const agent = await import(new URL("server/agent-detail.ts", web));
+const { SessionRefreshNeeded } = await import(new URL("server/session-error.ts", web));
 const overview = await import(new URL("server/overview.ts", web));
 const chat = await import(new URL("server/workspace.ts", web));
 const traffic = await import(new URL("server/traffic.ts", web));
 const { requireWorkspace } = await import(new URL("server/workspace-session.ts", web));
 const { limitDefinitions } = await import(new URL("packages/domain/src/policy/rule-commands.ts", root));
 const queue = await import(new URL("screens/rules/write-queue.ts", web));
+await import(new URL("screens/agent-detail/write.ts", web));
+const { publishAgentOn, agentOnSnapshot, resetAgentClientState } = await import(new URL("workspace/agent-on.ts", web));
 const decisions = await import(new URL("screens/overview/actions.ts", web));
 const { nextWriteFence } = await import(new URL("write-fence.ts", web));
 const { useWorkspacePage } = await import(new URL("workspace/context.ts", web));
@@ -428,6 +435,114 @@ test("accepting a new frame account clears old optimistic state even during a wr
 		assert.equal(retained.accountId, "northwind");
 	} finally {
 		clearFrameHold();
+		delete globalThis.window;
+	}
+});
+
+test("an agent command for a different displayed account does not reach the kernel", async () => {
+	state.admin = true;
+	state.target = "northwind";
+	const fence = { tab: "review", seq: 1, retires: [] };
+	const commands = [
+		() => agent.setAgentRunning({ data: { accountId: "demo", agentId: "support", on: false, ...fence } }),
+		() =>
+			agent.setSkillEnabled({
+				data: { accountId: "demo", agentId: "support", skillId: "inbox.read", on: false, ...fence, seq: 2 },
+			}),
+		() =>
+			agent.setAgentAutonomy({
+				data: { accountId: "demo", agentId: "support", autonomy: "Ask first", ...fence, seq: 3 },
+			}),
+		() => agent.askAgentRevise({ data: { accountId: "demo", agentId: "support" } }),
+	];
+	for (const command of commands) {
+		state.writes = [];
+		await assert.rejects(command(), /The workspace write did not finish/);
+		assert.deepEqual(state.writes, []);
+	}
+	state.writes = [];
+	await agent.setAgentRunning({ data: { agentId: "support", on: false, ...fence, seq: 4 } }).catch(() => undefined);
+	assert.equal(state.writes.length, 1);
+	assert.equal(state.writes[0].accountId, "northwind");
+	state.writes = [];
+	await agent
+		.setAgentRunning({ data: { accountId: "northwind", agentId: "support", on: true, ...fence, seq: 5 } })
+		.catch(() => undefined);
+	assert.equal(state.writes.length, 1);
+	assert.equal(state.writes[0].method, "setAgentOn");
+	assert.equal(state.writes[0].accountId, "northwind");
+});
+
+test("the account picker clears a published agent overlay", async () => {
+	globalThis.window = {};
+	try {
+		resetAgentClientState();
+		queue.resetTargetAccount();
+		publishAgentOn("support", false);
+		assert.equal(agentOnSnapshot().get("support"), false);
+		queue.resetTargetAccount();
+		assert.equal(agentOnSnapshot().size, 0);
+	} finally {
+		resetAgentClientState();
+		queue.resetTargetAccount();
+		delete globalThis.window;
+	}
+});
+
+test("a refresh-needed rules write keeps the pending limit and does not replay it", async () => {
+	globalThis.window = {};
+	try {
+		queue.resetTargetAccount();
+		state.writes = [];
+		state.sessionError = new SessionRefreshNeeded();
+		let reads = 0;
+		const result = queue.queueLimit("policy.daily_ad_cap", 260, "demo", async () => {
+			reads += 1;
+		});
+		assert.equal(queue.shownLimit("policy.daily_ad_cap", 200), 260);
+		for (let i = 0; i < 15; i += 1) await setImmediate();
+		assert.equal(result, undefined);
+		assert.equal(reads, 0);
+		assert.equal(queue.shownLimit("policy.daily_ad_cap", 200), 260);
+		assert.deepEqual(queue.rulesWrittenSince(0).limits, []);
+		assert.equal(state.writes.length, 0);
+	} finally {
+		state.sessionError = null;
+		state.writes = [];
+		queue.resetTargetAccount();
+		delete globalThis.window;
+	}
+});
+
+test("a late old-account rules read does not erase the new account snapshot", async () => {
+	globalThis.window = {};
+	try {
+		queue.resetTargetAccount();
+		state.admin = true;
+		state.target = "demo";
+		state.failRules = false;
+		state.store = {};
+		await loadRulesSnapshot();
+		let release = () => {};
+		state.readGate = new Promise((resolve) => {
+			release = resolve;
+		});
+		const old = loadRulesSnapshot();
+		await setImmediate();
+		queue.resetTargetAccount();
+		state.target = "northwind";
+		const fresh = await loadRulesSnapshot();
+		assert.equal(fresh.accountId, "northwind");
+		release();
+		await old;
+		state.failRules = true;
+		const kept = await loadRulesSnapshot();
+		assert.equal(kept.accountId, "northwind");
+	} finally {
+		state.failRules = false;
+		state.readGate = null;
+		state.target = "demo";
+		queue.resetTargetAccount();
 		delete globalThis.window;
 	}
 });

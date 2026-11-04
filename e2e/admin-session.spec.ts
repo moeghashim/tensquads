@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Page, Route } from "@playwright/test";
 
 import { specialAccountCookie, specialAccountValue } from "../apps/web/src/server/special-account.ts";
 import {
@@ -144,36 +144,111 @@ test("a removed role is gone once the 65 second bound has passed", async ({ page
 	try {
 		await addCompanySuperAdmin(secrets.secret, user.userId);
 		await openAdmin(page, user);
-		const lifetime = await page.evaluate(async () => {
-			const clerk = (window as { Clerk: { session: { getToken: () => Promise<string> } } }).Clerk;
-			const token = await clerk.session.getToken();
-			const part = token.split(".")[1] ?? "";
-			const padded = part.replaceAll("-", "+").replaceAll("_", "/") + "=".repeat((4 - (part.length % 4)) % 4);
-			const payload = JSON.parse(atob(padded)) as { iat?: number; exp?: number };
-			return { iat: payload.iat ?? 0, exp: payload.exp ?? 0 };
-		});
-		expect(lifetime.exp - lifetime.iat).toBe(60);
+		const captured = await captureSessionToken(page);
+		expect(captured.exp - captured.iat).toBe(60);
+		const accountsUrl = await adminAccountsUrl(page);
 		await setCompanyRole(secrets.secret, user.userId, "org:member");
+		const seen = { count: 0 };
+		await page.route(/\/_serverFn\//, async (route) => {
+			await replayCapturedSession(route, accountsUrl, captured.token, seen);
+		});
+		const beforeAccept = seen.count;
+		const accepted = await deniedAccounts(page);
+		expect(seen.count).toBe(beforeAccept + 1);
+		expect(accepted.ok).toBe(true);
+		expect(accepted.list).toBe(true);
 		// The bound is 65 seconds: the 60-second token plus Clerk's 5-second clock allowance.
 		// One second past that bound, the captured token must be rejected. This wait is that assertion.
 		const roleRemovalBoundMs = 65_000;
-		const remaining = lifetime.iat * 1000 + roleRemovalBoundMs + 1_000 - Date.now();
+		const remaining = captured.iat * 1000 + roleRemovalBoundMs + 1_000 - Date.now();
 		if (remaining > 0) {
 			await new Promise((resolve) => {
 				setTimeout(resolve, remaining);
 			});
 		}
-		await page.goto("/admin");
-		await expect(page).not.toHaveURL(/\/admin/);
-		await expect(page.getByRole("navigation", { name: "Platform admin" })).toHaveCount(0);
-		const accounts = await deniedAccounts(page);
-		expect(accounts.ok).toBe(false);
-		expect(accounts.list).toBe(false);
+		const beforeRefuse = seen.count;
+		const refused = await deniedAccounts(page);
+		expect(seen.count).toBe(beforeRefuse + 1);
+		expect(refused.ok).toBe(false);
+		expect(refused.list).toBe(false);
 	} finally {
 		await removeCompanyMembership(secrets.secret, user.userId);
 		await deleteTestUser(secrets.secret, user.userId);
 	}
 });
+
+async function captureSessionToken(page: Page): Promise<{ token: string; iat: number; exp: number }> {
+	const captured = await page.evaluate(async () => {
+		const clerk = (
+			window as {
+				Clerk: { session: { getToken: (options: { skipCache: boolean }) => Promise<string | null> } };
+			}
+		).Clerk;
+		const token = await clerk.session.getToken({ skipCache: true });
+		if (typeof token !== "string" || token.length === 0) return null;
+		const part = token.split(".")[1] ?? "";
+		const padded = part.replaceAll("-", "+").replaceAll("_", "/") + "=".repeat((4 - (part.length % 4)) % 4);
+		const payload = JSON.parse(atob(padded)) as { iat?: number; exp?: number };
+		return { token, iat: payload.iat ?? 0, exp: payload.exp ?? 0 };
+	});
+	if (!captured) throw new Error("The session token is missing.");
+	return captured;
+}
+
+async function adminAccountsUrl(page: Page): Promise<string> {
+	const url = await page.evaluate(async (specifier: string) => {
+		const loaded = (await import(specifier)) as { loadAdminAccounts: { url: string } };
+		return loaded.loadAdminAccounts.url;
+	}, "/src/server/admin.ts");
+	if (url.length === 0) throw new Error("The accounts read is missing.");
+	return url;
+}
+
+async function replayCapturedSession(route: Route, accountsUrl: string, token: string, seen: { count: number }) {
+	const request = route.request();
+	const path = request.url().split("?")[0] ?? "";
+	if (request.method() !== "GET" || !path.includes(accountsUrl)) {
+		await route.continue();
+		return;
+	}
+	seen.count += 1;
+	const headers = { ...request.headers() };
+	headers.cookie = sessionCookie(headers.cookie, token);
+	delete headers.authorization;
+	const response = await route.fetch({ headers, maxRedirects: 0 });
+	if (response.status() >= 300 && response.status() < 400) {
+		await route.fulfill({ status: 401, body: "" });
+		return;
+	}
+	await route.fulfill({ response });
+}
+
+function sessionCookie(header: string | undefined, token: string): string {
+	const parts = (header ?? "")
+		.split(";")
+		.map((part) => part.trim())
+		.filter((part) => part.length > 0);
+	let replaced = false;
+	const kept: string[] = [];
+	for (const part of parts) {
+		const name = cookieName(part);
+		if (name === "__refresh" || name.startsWith("__refresh_")) continue;
+		if (name === "__session" || name.startsWith("__session_")) {
+			kept.push(`${name}=${token}`);
+			replaced = true;
+			continue;
+		}
+		kept.push(part);
+	}
+	if (!replaced) kept.push(`__session=${token}`);
+	return kept.join("; ");
+}
+
+function cookieName(part: string): string {
+	const split = part.indexOf("=");
+	if (split <= 0) return "";
+	return part.slice(0, split);
+}
 
 async function deniedAccounts(page: Page) {
 	return page.evaluate(async (specifier: string) => {

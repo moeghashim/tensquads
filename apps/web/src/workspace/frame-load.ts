@@ -9,6 +9,7 @@ export interface FrameHeld extends WorkspaceFrameData {
 }
 
 let held: FrameHeld | null = null;
+let previousAccountId: string | null = null;
 let needsRead = false;
 let epoch = 0;
 const accountResets = new Set<() => void>();
@@ -34,6 +35,7 @@ export function frameNeedsRead(): boolean {
 }
 
 export function clearFrameHold(): void {
+	if (held) previousAccountId = held.accountId;
 	held = null;
 	needsRead = false;
 	epoch += 1;
@@ -47,12 +49,14 @@ export function rememberFrame(frame: FrameHeld): void {
 function acceptFrameLoad(writeAt: number, data: WorkspaceFrameData, epochAtStart: number): FrameHeld {
 	const frame = { ...data, writeAt };
 	if (!inBrowser() || epochAtStart !== epoch) return frame;
-	if (held !== null && held.accountId !== frame.accountId) {
+	const previous = held?.accountId ?? previousAccountId;
+	if (previous !== null && previous !== frame.accountId) {
 		for (const reset of accountResets) reset();
 	} else if (currentWrites() !== writeAt) {
 		return frame;
 	}
 	held = frame;
+	previousAccountId = frame.accountId;
 	needsRead = false;
 	return frame;
 }

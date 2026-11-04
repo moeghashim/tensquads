@@ -1,6 +1,7 @@
 import { useMatch, useNavigate, useRouter } from "@tanstack/react-router";
 import type { Autonomy } from "@tensquads/domain";
 import { useSyncExternalStore } from "react";
+import { onAgentAccountReset } from "#/screens/agent-detail/account-reset.ts";
 import {
 	askAgentRevise,
 	loadAgentDetail,
@@ -10,6 +11,7 @@ import {
 } from "#/server/agent-detail.ts";
 import {
 	agentSession,
+	clearPublishedAgentOn,
 	noteAgentWrite,
 	onAgentClientReset,
 	publishAgentOn,
@@ -238,10 +240,12 @@ function abandonAgentQueues(): void {
 	openReads.clear();
 	queues = new WeakMap();
 	for (const queue of open) queue.abandon();
+	clearPublishedAgentOn();
 }
 
 onAgentClientReset(abandonAgentQueues);
 onFrameAccountReset(abandonAgentQueues);
+onAgentAccountReset(abandonAgentQueues);
 
 export function keepFailedAgentRead(agentId: string, session: number): AgentDetailView | null {
 	if (typeof window === "undefined") return null;
@@ -276,6 +280,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isWrite(value: unknown): value is { status: "written" | "superseded"; row: unknown } {
 	return isRecord(value) && (value.status === "written" || value.status === "superseded");
+}
+
+function commanded<T extends object>(accountId: string | undefined, data: T): T & { accountId?: string } {
+	if (accountId === undefined) return data;
+	return { accountId, ...data };
 }
 
 function isDetail(value: unknown): value is AgentDetailView {
@@ -316,12 +325,19 @@ export function useAgentWrites(serverView: AgentDetailView, readAt: number, load
 	return {
 		view: state.pending.reduce((view, write) => write.apply(view), state.view),
 		toggleAgent(on: boolean) {
+			const accountId = state.view.accountId;
 			enqueue({
 				key: "running",
 				work: (signal) =>
 					sendControl(agentId, (fence) =>
 						setAgentRunning({
-							data: { agentId, on, tab: fence.tab, seq: fence.seq, retires: fence.retires },
+							data: commanded(accountId, {
+								agentId,
+								on,
+								tab: fence.tab,
+								seq: fence.seq,
+								retires: fence.retires,
+							}),
 							signal,
 						}),
 					),
@@ -329,12 +345,20 @@ export function useAgentWrites(serverView: AgentDetailView, readAt: number, load
 			});
 		},
 		toggleSkill(skillId: string, on: boolean) {
+			const accountId = state.view.accountId;
 			enqueue({
 				key: `skill:${skillId}`,
 				work: (signal) =>
 					sendControl(agentId, (fence) =>
 						setSkillEnabled({
-							data: { agentId, skillId, on, tab: fence.tab, seq: fence.seq, retires: fence.retires },
+							data: commanded(accountId, {
+								agentId,
+								skillId,
+								on,
+								tab: fence.tab,
+								seq: fence.seq,
+								retires: fence.retires,
+							}),
 							signal,
 						}),
 					),
@@ -345,12 +369,19 @@ export function useAgentWrites(serverView: AgentDetailView, readAt: number, load
 			});
 		},
 		pickAutonomy(autonomy: Autonomy) {
+			const accountId = state.view.accountId;
 			enqueue({
 				key: "autonomy",
 				work: (signal) =>
 					sendControl(agentId, (fence) =>
 						setAgentAutonomy({
-							data: { agentId, autonomy, tab: fence.tab, seq: fence.seq, retires: fence.retires },
+							data: commanded(accountId, {
+								agentId,
+								autonomy,
+								tab: fence.tab,
+								seq: fence.seq,
+								retires: fence.retires,
+							}),
 							signal,
 						}),
 					),
@@ -365,9 +396,14 @@ export function useAgentWrites(serverView: AgentDetailView, readAt: number, load
 			});
 		},
 		askRevise() {
+			const accountId = state.view.accountId;
 			enqueue({
 				key: "revise",
-				work: (signal) => askAgentRevise({ data: agentId, signal }),
+				work: (signal) =>
+					askAgentRevise({
+						data: accountId === undefined ? agentId : { agentId, accountId },
+						signal,
+					}),
 				apply: (view) => view,
 			});
 			void navigate({ to: "/overview" });
