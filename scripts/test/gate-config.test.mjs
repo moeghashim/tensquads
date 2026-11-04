@@ -42,6 +42,22 @@ test("no-mistakes makes no commits and does not declare a sign-off trailer", () 
 	assert.equal(/^\s*trailers\s*:/m.test(text), false);
 });
 
+test("mise.toml pins the TLC jar the model tests resolve", () => {
+	const toml = readFileSync(new URL("mise.toml", root), "utf8");
+	const lock = readFileSync(new URL("mise.lock", root), "utf8");
+	assert.match(toml, /"http:tla2tools"/);
+	assert.match(toml, /tla2tools\.jar/);
+	assert.match(toml, /sha256:936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88/);
+	assert.match(lock, /\[\[tools\."http:tla2tools"\]\]/);
+});
+
+test("the macOS app project uses one Playwright worker per CPU", () => {
+	const text = readFileSync(new URL("scripts/e2e.mjs", root), "utf8");
+	assert.match(text, /process\.platform === "darwin"/);
+	assert.match(text, /--workers=\$\{Math\.max\(2, cpus\(\)\.length\)\}/);
+	assert.match(text, /--workers=1/);
+});
+
 test("the mise cache is saved by actions/cache and keyed by the lock hash", () => {
 	const job = workflow.jobs["required-checks"];
 	const cache = job.steps.find((step) => String(step.uses ?? "").startsWith("actions/cache@"));

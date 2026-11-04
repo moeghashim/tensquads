@@ -114,6 +114,9 @@ jobs:
       # --locked. This lock has no Java URL, so the tools install with
       # `mise install` and actions/cache stores them. The key includes the
       # lock hash (PLAN) and the OS, so Linux and macOS do not share a JDK.
+      # mise.toml also pins the TLC jar. A hit that has only Java still
+      # installs the jar. Dependabot keeps its own cache, and the macOS copy
+      # was saved without the jar.
       - name: Restore mise tools
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
