@@ -134,6 +134,44 @@ test("the mise cache is saved by actions/cache and keyed by the lock hash", () =
 	assert.equal(mise.with.cache, false);
 });
 
+test("the machine trial is a manual job and the bus trial stays off", () => {
+	assert.equal(workflow.on.workflow_dispatch.inputs.machine_trial.type, "boolean");
+	assert.equal(workflow.on.workflow_dispatch.inputs.machine_trial.default, false);
+	assert.equal(workflow.on.workflow_dispatch.inputs.bus_trial.type, "boolean");
+	assert.equal(workflow.on.workflow_dispatch.inputs.bus_trial.default, false);
+	assert.equal(workflow.on.pull_request.branches.includes("main"), true);
+	assert.equal(workflow.on.push.branches.includes("main"), true);
+	const machine = workflow.jobs["machine-trial"];
+	assert.equal(machine["timeout-minutes"], 20);
+	assert.match(machine.if, /workflow_dispatch/);
+	assert.match(machine.if, /inputs\.machine_trial/);
+	assert.equal(
+		machine.steps.some((step) => step.if === "always()" && String(step.run).includes("live/cleanup.ts")),
+		true,
+	);
+	assert.equal(
+		machine.steps.some(
+			(step) =>
+				String(step.run).includes("packages/adapters/test/live/machine-trial.test.ts") &&
+				String(step.env?.MACHINE_TRIAL) === "1",
+		),
+		true,
+	);
+	const bus = workflow.jobs["bus-trial"];
+	assert.match(bus.if, /inputs\.bus_trial/);
+	assert.equal(
+		bus.steps.some((step) => step.if === "always()"),
+		true,
+	);
+	const summary = Object.values(workflow.jobs).find(
+		(candidate) => candidate.name === "Required checks" && !candidate.strategy,
+	);
+	assert.equal(summary.needs.includes("machine-trial"), false);
+	assert.equal(summary.needs.includes("bus-trial"), false);
+	assert.match(workflow.concurrency.group, /workflow_dispatch/);
+	assert.match(String(workflow.concurrency["cancel-in-progress"]), /workflow_dispatch/);
+});
+
 test("stable Required checks job fails closed for failed, skipped or cancelled dependencies", () => {
 	const job = Object.values(workflow.jobs).find(
 		(candidate) => candidate.name === "Required checks" && !candidate.strategy,

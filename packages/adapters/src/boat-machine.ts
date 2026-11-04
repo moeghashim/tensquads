@@ -50,6 +50,7 @@ export interface BoatMachineOptions {
 	readonly now?: () => Date;
 	readonly wait?: BoatWait;
 	readonly secretBaseUrl?: string;
+	readonly runId?: string;
 }
 
 interface BoatContext {
@@ -59,6 +60,7 @@ interface BoatContext {
 	readonly secretBaseUrl: string | undefined;
 	readonly now: () => Date;
 	readonly wait: BoatWait;
+	readonly runId: string | undefined;
 }
 
 function client(token: string, options: BoatMachineOptions): BoatApi {
@@ -132,6 +134,10 @@ async function until(ctx: BoatContext, read: () => Promise<string>, done: (state
 		if (Date.now() >= deadline) throw machineFault("unavailable");
 		await delay(ctx.wait.intervalMs);
 	}
+}
+
+function labelled(labels: Record<string, string>, runId: string | undefined): Record<string, string> {
+	return runId ? { ...labels, run: runId } : labels;
 }
 
 function createBody(
@@ -253,7 +259,9 @@ async function profileApis(ctx: BoatContext): Promise<readonly string[]> {
 
 export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 	if (!options.token || !options.profileName) throw notConfigured();
-	if (options.profileName === "default") throw notConfigured("The default profile is closed.");
+	if (options.profileName === "default" || options.profileName === "moe@10claws.com") {
+		throw notConfigured("The default profile is closed.");
+	}
 	const ctx: BoatContext = {
 		machine: client(options.token, options),
 		admin: options.adminToken ? client(options.adminToken, options) : null,
@@ -261,6 +269,7 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 		secretBaseUrl: options.secretBaseUrl,
 		now: options.now ?? (() => new Date()),
 		wait: options.wait ?? { intervalMs: 2_000, timeoutMs: 300_000 },
+		runId: options.runId,
 	};
 
 	return {
@@ -311,11 +320,11 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 			}
 			const created = await createOnce(
 				ctx,
-				createBody(hostName(agentId), machineEnv(scope.accountId, agentId, tag), {
-					account: scope.accountId,
-					agent: agentId,
-					image: tag,
-				}),
+				createBody(
+					hostName(agentId),
+					machineEnv(scope.accountId, agentId, tag),
+					labelled({ account: scope.accountId, agent: agentId, image: tag }, ctx.runId),
+				),
 				startKey(scope.accountId, agentId, tag),
 			);
 			await waitReady(ctx, created.id);
@@ -366,7 +375,7 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 				createBody(
 					sourceName(imageId, version),
 					{ ACCOUNT_ID: scope.accountId, IMAGE_TAG: tag },
-					{ account: scope.accountId, image: tag },
+					labelled({ account: scope.accountId, image: tag }, ctx.runId),
 				),
 				templateKey(scope.accountId, imageId, version),
 			);
@@ -384,7 +393,7 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 						...createBody(
 							hostName(agentId),
 							machineEnv(scope.accountId, agentId, tag),
-							{ account: scope.accountId, agent: agentId, image: tag },
+							labelled({ account: scope.accountId, agent: agentId, image: tag }, ctx.runId),
 							templateId,
 						),
 					},

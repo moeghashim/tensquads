@@ -40,16 +40,18 @@ test("uptime text uses one day, many days, and just started", () => {
 test("a closed profile and a missing registration never call the machine service", async () => {
 	const fake = await startFakeBoat();
 	try {
-		assert.throws(
-			() =>
-				createBoatMachine({
-					token: fake.machineToken,
-					basePath: fake.basePath,
-					profileName: "default",
-					fetchApi: fetch,
-				}),
-			(error: unknown) => error instanceof MachineFault && error.message === "The default profile is closed.",
-		);
+		for (const profileName of ["default", "moe@10claws.com"]) {
+			assert.throws(
+				() =>
+					createBoatMachine({
+						token: fake.machineToken,
+						basePath: fake.basePath,
+						profileName,
+						fetchApi: fetch,
+					}),
+				(error: unknown) => error instanceof MachineFault && error.message === "The default profile is closed.",
+			);
+		}
 		const adapter = createBoatMachine({
 			token: fake.machineToken,
 			basePath: fake.basePath,
@@ -93,6 +95,29 @@ test("start is idempotent and maps the dashboard fields", async () => {
 		assert.equal(await adapter.cpu(scope, "orders"), "20%");
 		assert.equal(await adapter.uptime(scope, "orders"), "3 days");
 		assert.equal(Object.hasOwn(adapter, "autonomy"), false);
+	} finally {
+		await fake.close();
+	}
+});
+
+test("a run id is a label on the machine and on the template source", async () => {
+	const fake = await startFakeBoat();
+	try {
+		const adapter = createBoatMachine({
+			token: fake.machineToken,
+			adminToken: fake.adminToken,
+			basePath: fake.basePath,
+			profileName: "tensquads-agents",
+			secretBaseUrl: "https://example.com",
+			fetchApi: fetch,
+			wait,
+			runId: "41877304107",
+		});
+		await adapter.start(scope, "orders", tag);
+		assert.equal(fake.machines()[0]?.labels.run, "41877304107");
+		await adapter.makeTemplate(scope, "img41877304107", "1");
+		const source = fake.machines().find((row) => row.name.startsWith("tpl-"));
+		assert.equal(source?.labels.run, "41877304107");
 	} finally {
 		await fake.close();
 	}

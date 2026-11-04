@@ -18,11 +18,11 @@ Two real adapters exist behind one feature flag. The boat.dev adapter for `Machi
 
 ## Moe's answers, 4 November 2026
 
-The builder does no step 1 work. Items 1, 2, 3 and 21 stay open with Moe.
+The builder does no step 1 work. Item 21 stays open with Moe. Items 1, 2 and 3 were done by Moe on 4 November 2026.
 
-1. **Paid plan.** Open with Moe.
-2. **API keys.** Open with Moe.
-3. **Credential profile.** Open with Moe.
+1. **Paid plan.** Done by Moe on 4 November 2026. The boat plan is Standard.
+2. **API keys.** Done by Moe on 4 November 2026. `BOAT_API_KEY` and `BOAT_ADMIN_API_KEY` are in `.env` and in GitHub Actions secrets. The API key was rotated on 4 November 2026.
+3. **Credential profile.** Done by Moe on 4 November 2026. The profile `tensquads-agents` exists and is empty. `default` and `moe@10claws.com` stay untouched.
 4. **noEnv and the environment.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Send `noEnv: true` and `environment: "tensquads-agents"` together. If that pair is refused, send `noEnv: true` alone.
 5. **Async account ports.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. New methods are async and take an `AccountScope`. The old sync ports stay, so the current callers do not move in this pull request.
 6. **Template contents.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. `makeTemplate` starts a machine, writes the image file, saves `tensquads-<imageId>-<version>`, waits until ready, and removes the source.
@@ -35,13 +35,13 @@ The builder does no step 1 work. Items 1, 2, 3 and 21 stay open with Moe.
 13. **Browser push.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The Durable Object accepts a WebSocket and pushes each new event. The Traffic screen does not connect.
 14. **Roll out.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Roll out and View changelog still do nothing. There is no Rollout object.
 15. **Adapter flag.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. `ADAPTERS` is `test` or `real`, the default is `test`, and both adapters switch together. Production stays on `test`.
-16. **Manual job shape.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. A `machine-trial` input on `ci.yml` runs only when that input is true, and it is not a required check. This pull request does not add the job.
-17. **Cleanup of a failed run.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The live job would label what it makes, time out at 20 minutes, and always remove that label. This pull request does not add the job.
+16. **Manual job shape.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. A `machine-trial` input on `ci.yml` runs only when that input is true, and it is not a required check. The manual job is in this pull request, after Moe finished step 1 on 4 November 2026.
+17. **Cleanup of a failed run.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The live job labels what it makes with the run id, times out at 20 minutes, and always removes that label. The job fails if anything is left. The manual job is in this pull request, after Moe finished step 1 on 4 November 2026.
 18. **Port errors.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. One typed port error for each boat error. No automatic retry except the `Idempotency-Key` on start. No screen shows the errors.
 19. **Heartbeat.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The heartbeat, systemd service, and "Restarting" stay out of this task.
 20. **Find a machine.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. No new table. Find the machine with the label filter. The SDK method accepts `label`.
 21. **Host failure and a second region.** Open with Moe.
-22. **Bus proof.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The rules run on Miniflare in `npm test`. The real deploy half waits for the manual job.
+22. **Bus proof.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The rules run on Miniflare in `npm test`. The real deploy half is the `bus_trial` input, default false. It was not run on 4 November 2026 because GitHub has no Cloudflare token yet.
 
 AGENT_ID is reserved by boat (invalid_env). The machine gets TENSQUADS_AGENT_ID. Decided by the orchestrator under Moe's delegation, 4 November 2026.
 
