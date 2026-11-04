@@ -1,0 +1,17 @@
+[
+  {
+    "requested": "/overview",
+    "landed": "/signin",
+    "forgedAccountCookie": "northwind with current timestamp"
+  },
+  {
+    "requested": "/admin",
+    "landed": "/signin",
+    "forgedAccountCookie": "northwind with current timestamp"
+  },
+  {
+    "requested": "/admin/images",
+    "landed": "/signin",
+    "forgedAccountCookie": "northwind with current timestamp"
+  }
+]

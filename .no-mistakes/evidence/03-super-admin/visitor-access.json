@@ -1,14 +1,14 @@
 [
   {
     "requested": "/admin",
-    "landed": "http://localhost:3000/signin",
+    "landed": "/signin",
     "title": "Sign in",
-    "adminNavigation": 0
+    "adminNavigationVisible": false
   },
   {
     "requested": "/admin/images",
-    "landed": "http://localhost:3000/signin",
+    "landed": "/signin",
     "title": "Sign in",
-    "adminNavigation": 0
+    "adminNavigationVisible": false
   }
 ]
