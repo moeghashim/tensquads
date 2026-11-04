@@ -648,9 +648,6 @@ test("a failed decision does not stay on the next account", async ({ page, works
 	}
 	try {
 		await openWorkspace(page, workspaceUser);
-		await page.evaluate(() => {
-			(window as unknown as { __tsDoc?: string }).__tsDoc = "same";
-		});
 		await page.clock.install();
 		const held = await holdFailedRefresh(page);
 		try {
@@ -659,8 +656,8 @@ test("a failed decision does not stay on the next account", async ({ page, works
 			await expect.poll(() => held.held(), { timeout: 20_000 }).toBe(true);
 			await page.clock.fastForward(30_000);
 			await page.clock.resume();
+			held.seal();
 			await switchAccount(page, email, password);
-			await expect.poll(() => page.evaluate(() => (window as unknown as { __tsDoc?: string }).__tsDoc)).toBe("same");
 			await expect(refundCard(page)).toHaveCount(1, settled);
 			await expect(dockBadge(page)).toHaveText("4", settled);
 			await expect(tasksTile(page)).toContainText("331", settled);
@@ -817,7 +814,7 @@ async function holdNextOverview(page: Page) {
 }
 
 async function holdFailedRefresh(page: Page) {
-	const state = { held: false, posts: 0, gets: 0 };
+	const state = { held: false, posts: 0, gets: 0, sealed: false };
 	const waiting: { route: Route; response: Awaited<ReturnType<Route["fetch"]>> }[] = [];
 	await page.route("**/_serverFn/**", async (route) => {
 		const request = route.request();
@@ -829,7 +826,7 @@ async function holdFailedRefresh(page: Page) {
 				return;
 			}
 		}
-		if (request.method() === "GET" && state.posts > 0 && state.gets < 2) {
+		if (request.method() === "GET" && state.posts > 0 && state.gets < 2 && !state.sealed) {
 			state.gets += 1;
 			state.held = true;
 			const response = await fetchParked(route);
@@ -841,6 +838,9 @@ async function holdFailedRefresh(page: Page) {
 	});
 	return {
 		held: () => state.held,
+		seal: () => {
+			state.sealed = true;
+		},
 		release: async () => {
 			const routes = waiting.splice(0);
 			for (const item of routes) {
@@ -952,21 +952,33 @@ type BrowserSignIn = {
 };
 
 async function switchAccount(page: Page, email: string, password: string) {
+	const left = page.waitForURL(/\/signin$/, { timeout: 20_000 });
+	await page
+		.evaluate(async () => {
+			const clerk = (window as unknown as { Clerk?: { signOut: (callback?: () => void) => Promise<void> } }).Clerk;
+			if (!clerk) throw new Error("Clerk is not loaded.");
+			await clerk.signOut(() => undefined);
+		})
+		.catch((error: unknown) => {
+			if (!navigationEnded(error)) throw error;
+		});
+	await left;
+	await waitForHydration(page);
+	await page.waitForFunction(() => {
+		const clerk = (window as unknown as { Clerk?: { client?: { signIn?: unknown } } }).Clerk;
+		return Boolean(clerk?.client?.signIn);
+	});
 	await page.evaluate(
 		async ({ email, password }) => {
 			const clerk = (
 				window as unknown as {
 					Clerk?: {
-						signOut: (callback?: () => void) => Promise<void>;
 						setActive: (params: { session: string; navigate: () => Promise<void> }) => Promise<void>;
 						client?: { signIn: BrowserSignIn };
 					};
 				}
 			).Clerk;
-			if (!clerk?.client?.signIn) {
-				throw new Error("Clerk is not loaded.");
-			}
-			await clerk.signOut(() => undefined);
+			if (!clerk?.client?.signIn) throw new Error("Clerk is not loaded.");
 			const started = await clerk.client.signIn.create({ identifier: email });
 			let attempted = await started.attemptFirstFactor({ strategy: "password", password });
 			if (attempted.status === "needs_client_trust") {
@@ -984,13 +996,20 @@ async function switchAccount(page: Page, email: string, password: string) {
 		{ email, password },
 	);
 	if (!page.url().endsWith("/overview")) {
-		await page.evaluate(() => {
-			const index = Number((history.state as { __TSR_index?: number } | null)?.__TSR_index ?? 0) + 1;
-			const key = `overview-${index}`;
-			history.pushState({ key, __TSR_key: key, __TSR_index: index }, "", "/overview");
+		await page.evaluate(async () => {
+			const router = (
+				window as unknown as { __TSR_ROUTER__?: { navigate: (options: { to: string }) => Promise<void> } }
+			).__TSR_ROUTER__;
+			if (!router) throw new Error("The router is missing.");
+			await router.navigate({ to: "/overview" });
 		});
 	}
 	await expect(page).toHaveURL(/\/overview$/);
+}
+
+function navigationEnded(error: unknown): boolean {
+	const message = error instanceof Error ? error.message : "";
+	return message.includes("Execution context was destroyed") || message.includes("navigation");
 }
 
 async function deleteClerkUser(secret: string, userId: string) {

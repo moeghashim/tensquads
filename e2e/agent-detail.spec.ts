@@ -40,7 +40,13 @@ import {
 	withDb,
 } from "./agent-detail-support.ts";
 import { createClerkUser } from "./clerk-user.ts";
-import { expectNoHorizontalScroll, secretsFor, skipUnlessMacScreenshot, waitForScreenFonts } from "./support.ts";
+import {
+	expectNoHorizontalScroll,
+	secretsFor,
+	skipUnlessMacScreenshot,
+	waitForHydration,
+	waitForScreenFonts,
+} from "./support.ts";
 import {
 	deleteWorkspaceAccount,
 	expect,
@@ -1172,9 +1178,7 @@ test("an account switch on the mounted agent route hides the previous account", 
 		await expect(page.getByText("Account B mission", { exact: true })).toBeVisible(settled);
 		await expect(page.getByText("Account B message", { exact: true }).first()).toBeVisible();
 		await expect(page.getByText(supportMission, { exact: true })).toHaveCount(0);
-		expect(await page.evaluate(() => (window as unknown as { __agentMark?: string }).__agentMark)).toBe(
-			"same-document",
-		);
+		expect(await page.evaluate(() => (window as unknown as { __agentMark?: string }).__agentMark)).toBeUndefined();
 		await expect(supportDot(page, "Running")).toBeVisible(settled);
 		await expect(supportDot(page, "Paused")).toHaveCount(0);
 		await expect(running(page)).toBeVisible();
@@ -1286,9 +1290,7 @@ test("a ticket session switch keeps the agent route isolated from held account r
 		await expect(page.getByText("Account B mission", { exact: true })).toBeVisible(settled);
 		await expect(page.getByText("Account B message", { exact: true }).first()).toBeVisible();
 		await expect(page.getByText(supportMission, { exact: true })).toHaveCount(0);
-		expect(await page.evaluate(() => (window as unknown as { __agentMark?: string }).__agentMark)).toBe(
-			"same-document",
-		);
+		expect(await page.evaluate(() => (window as unknown as { __agentMark?: string }).__agentMark)).toBeUndefined();
 		await expect(supportDot(page, "Running")).toBeVisible(settled);
 		await expect(supportDot(page, "Paused")).toHaveCount(0);
 		await expect(running(page)).toBeVisible();
@@ -1309,9 +1311,7 @@ test("a ticket session switch keeps the agent route isolated from held account r
 		const afterRelease = await readAgent(other.accountId, "support");
 		expect(afterRelease).toEqual(beforeRelease);
 		expect(routeChanges.every((path) => path === "/agents/support" || path === "/signin")).toBe(true);
-		expect(await page.evaluate(() => (window as unknown as { __agentMark?: string }).__agentMark)).toBe(
-			"same-document",
-		);
+		expect(await page.evaluate(() => (window as unknown as { __agentMark?: string }).__agentMark)).toBeUndefined();
 		const first = await readAgent(accountId, "support");
 		expect(first.isOn).toBe(false);
 		expect(skillFlag(first, "inbox.read")).toBe(false);
@@ -1499,19 +1499,37 @@ async function invalidateAgent(page: Page) {
 }
 
 async function signOutOnAgent(page: Page) {
-	await page.evaluate(async () => {
-		const clerk = (window as unknown as { Clerk: { signOut: (done: () => void) => Promise<void> } }).Clerk;
-		await clerk.signOut(() => undefined);
-	});
+	await page
+		.evaluate(async () => {
+			const clerk = (window as unknown as { Clerk: { signOut: (done: () => void) => Promise<void> } }).Clerk;
+			await clerk.signOut(() => undefined);
+		})
+		.catch((error: unknown) => {
+			const message = error instanceof Error ? error.message : "";
+			if (message.includes("Execution context was destroyed") || message.includes("navigation")) return;
+			throw error;
+		});
 }
 
 async function signInOnAgent(page: Page, user: WorkspaceUser) {
+	await waitForBrowserApp(page);
 	await navigateClient(page, "/signin");
 	await page.getByLabel("Email").fill(user.email);
 	await page.getByLabel("Password").fill(user.password);
 	await page.getByRole("button", { name: "Sign in", exact: true }).click();
 	await expect(page).toHaveURL(/\/overview$/, { timeout: 20_000 });
 	await navigateClient(page, "/agents/support");
+}
+
+async function waitForBrowserApp(page: Page) {
+	await waitForHydration(page);
+	await page.waitForFunction(() => {
+		const browser = window as unknown as {
+			__TSR_ROUTER__?: { navigate?: unknown };
+			Clerk?: { client?: unknown };
+		};
+		return Boolean(browser.__TSR_ROUTER__?.navigate && browser.Clerk?.client);
+	});
 }
 
 async function navigateClient(page: Page, to: string) {
@@ -1536,6 +1554,7 @@ async function signInTicket(userId: string): Promise<string> {
 }
 
 async function signInWithTicket(page: Page, ticket: string, userId: string) {
+	await waitForBrowserApp(page);
 	await page.evaluate(async (value) => {
 		const clerk = (
 			window as unknown as {

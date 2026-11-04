@@ -16,6 +16,7 @@ export function registerTrafficAdvance(fn: Advance) {
 }
 
 let pending = false;
+let retired = false;
 let queuedEventId = "";
 
 interface QueuedClick {
@@ -26,6 +27,15 @@ interface QueuedClick {
 }
 
 const clicks: QueuedClick[] = [];
+
+export function retireLiveQueue(): void {
+	retired = true;
+	clicks.length = 0;
+}
+
+function stopped(): boolean {
+	return retired;
+}
 
 function noteSelection(id: string) {
 	if (id.length > 0) queuedEventId = id;
@@ -39,15 +49,23 @@ export function consumeQueuedEvent(): string {
 
 // Advance and refresh each wait up to 30 seconds, so one step can take 60.
 async function step(accountId: string, refresh: () => void | Promise<void>): Promise<void> {
-	let id = "";
+	const id = await advancedId(accountId);
+	if (stopped()) return;
+	noteSelection(id);
+	await refreshed(refresh);
+}
+
+async function advancedId(accountId: string): Promise<string> {
 	try {
 		const call = advance;
 		if (!call) throw new Error("Traffic advance is not configured.");
-		id = await bounded((signal) => call({ data: accountId, signal }));
+		return await bounded((signal) => call({ data: accountId, signal }));
 	} catch {
-		id = "";
+		return "";
 	}
-	noteSelection(id);
+}
+
+async function refreshed(refresh: () => void | Promise<void>): Promise<void> {
 	try {
 		await bounded(async () => refresh());
 	} catch {
@@ -56,7 +74,7 @@ async function step(accountId: string, refresh: () => void | Promise<void>): Pro
 }
 
 function pump(): void {
-	if (pending) return;
+	if (stopped() || pending) return;
 	const next = clicks.shift();
 	if (!next) return;
 	pending = true;
@@ -70,6 +88,7 @@ async function runOwned(
 ): Promise<void> {
 	try {
 		await step(accountId, refresh);
+		if (stopped()) return;
 		done?.resolve();
 	} catch (error) {
 		if (done) {
@@ -87,12 +106,13 @@ async function runOwned(
 }
 
 export async function runLiveTick(tick: LiveTick): Promise<void> {
-	if (!tick.live || pending || clicks.length > 0) return;
+	if (stopped() || !tick.live || pending || clicks.length > 0) return;
 	pending = true;
 	await runOwned(tick.accountId, tick.refresh, null);
 }
 
 export function sendNextEvent(refresh: () => void | Promise<void>, accountId: string): Promise<void> {
+	if (stopped()) return new Promise(() => undefined);
 	return new Promise((resolve, reject) => {
 		clicks.push({ accountId, refresh, resolve, reject });
 		pump();
