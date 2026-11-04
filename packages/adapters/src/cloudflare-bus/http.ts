@@ -6,6 +6,7 @@ import { chooseAdapters } from "../adapter-choice.ts";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { traceFor } from "../trace.ts";
 import { takeTestTask, workerTestBus } from "../worker-adapters.ts";
+import { isBusRecord, isNonEmptyString, isObject } from "./message.ts";
 import { verifyMachineToken } from "./token.ts";
 
 export interface BusNamespace {
@@ -70,10 +71,13 @@ async function deliver(env: WorkerBindings, accountId: string, event: PublishedE
 
 export async function handleBusQueue(batch: BusBatch, env: WorkerBindings): Promise<void> {
 	for (const message of batch.messages) {
-		const body = message.body as { accountId?: string; event?: PublishedEvent };
-		if (body.accountId && batch.queue === "tensquads-bus-dlq")
-			await deliver(env, body.accountId, escalation(message.id));
-		else if (body.accountId && body.event) await deliver(env, body.accountId, body.event);
+		const body = message.body;
+		if (!isObject(body) || !isNonEmptyString(body.accountId)) throw new Error("The message was rejected.");
+		if (batch.queue === "tensquads-bus-dlq") await deliver(env, body.accountId, escalation(message.id));
+		else {
+			if (!isBusRecord(body)) throw new Error("The message was rejected.");
+			await deliver(env, body.accountId, body.event);
+		}
 		message.ack();
 	}
 }
@@ -95,14 +99,17 @@ async function authorized(
 export async function handleMachineRequest(request: Request, env: WorkerBindings): Promise<Response | null> {
 	const url = new URL(request.url);
 	if (url.pathname !== "/machine/send" && url.pathname !== "/machine/take") return null;
-	const body = (await request.json()) as { accountId?: string; agentId?: string; event?: PublishedEvent };
-	const accountId = body.accountId ?? "";
-	const agentId = body.agentId ?? "";
+	const body: unknown = await request.json().catch(() => null);
+	if (!isObject(body) || !isNonEmptyString(body.accountId) || !isNonEmptyString(body.agentId)) {
+		return new Response("The message was rejected.", { status: 400 });
+	}
+	const accountId = body.accountId;
+	const agentId = body.agentId;
 	const rejected = await authorized(request, env, accountId, agentId);
 	if (rejected) return rejected;
 	const scope = { accountId, mode: "account" } as const;
 	if (url.pathname === "/machine/send") {
-		if (!body.event) return new Response("The bus is not configured.", { status: 503 });
+		if (!isBusRecord(body)) return new Response("The message was rejected.", { status: 400 });
 		await deliver(env, accountId, body.event);
 		return Response.json({ ok: true });
 	}
@@ -118,6 +125,7 @@ export function createCloudflareBus(
 	script: readonly ScriptedBusEvent[] = [],
 ): AccountEventBus {
 	const cursors = new Map<string, TrafficCursor>();
+	const advancing = new Map<string, Promise<void>>();
 	const env = { ADAPTERS: "real", ACCOUNT_BUS: namespace } satisfies WorkerBindings;
 
 	async function publish(scope: AccountScope, event: PublishedEvent): Promise<void> {
@@ -137,13 +145,29 @@ export function createCloudflareBus(
 		},
 		publish,
 		async nextEvent(scope) {
-			const current = cursors.get(scope.accountId) ?? opened;
-			const existing = await this.events(scope);
-			const plan = planNextEvent(existing, script, current, traceFor);
-			if (!plan) return undefined;
-			cursors.set(scope.accountId, plan.cursor);
-			await publish(scope, plan.event);
-			return plan.event;
+			const next = (advancing.get(scope.accountId) ?? Promise.resolve()).then(async () => {
+				let current = cursors.get(scope.accountId) ?? opened;
+				const existing = await this.events(scope);
+				const ids = new Set(existing.map((event) => event.id));
+				while (ids.has(`e${current.seq}`)) {
+					current = { seq: current.seq + 1, clock: current.clock + 1, scriptIndex: current.scriptIndex + 1 };
+				}
+				const plan = planNextEvent(existing, script, current, traceFor);
+				if (!plan) return undefined;
+				await publish(scope, plan.event);
+				cursors.set(scope.accountId, plan.cursor);
+				return plan.event;
+			});
+			const tail = next.then(
+				() => undefined,
+				() => undefined,
+			);
+			advancing.set(scope.accountId, tail);
+			try {
+				return await next;
+			} finally {
+				if (advancing.get(scope.accountId) === tail) advancing.delete(scope.accountId);
+			}
 		},
 	};
 }

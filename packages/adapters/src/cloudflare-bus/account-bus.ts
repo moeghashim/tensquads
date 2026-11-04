@@ -1,5 +1,6 @@
 import type { PublishedEvent } from "@tensquads/kernel";
 
+import { isBusRecord } from "./message.ts";
 import { type PendingBusRow, readBusEvents, writePending } from "./neon-write.ts";
 
 const ALARM_MS = 30_000;
@@ -11,6 +12,7 @@ export interface BusStorage {
 	transaction<T>(closure: (txn: BusStorage) => Promise<T>): Promise<T>;
 	setAlarm(scheduledTime: number | Date): Promise<void>;
 	getAlarm(): Promise<number | null>;
+	deleteAlarm(): Promise<void>;
 }
 
 export interface BusState {
@@ -72,12 +74,14 @@ async function commitEvent(txn: BusStorage, accountId: string, event: PublishedE
 	await rememberTask(txn, event);
 	const pending = (await txn.get<PendingBusRow[]>("pending")) ?? [];
 	await txn.put("pending", [...pending, { seq, event }]);
+	await txn.setAlarm(Date.now() + ALARM_MS);
 	return { seen: false, seq, event };
 }
 
 export class AccountBus {
 	private readonly ctx: BusState;
 	private readonly env: BusObjectEnv;
+	private flushing: Promise<void> = Promise.resolve();
 
 	constructor(ctx: BusState, env: BusObjectEnv) {
 		this.ctx = ctx;
@@ -113,13 +117,12 @@ export class AccountBus {
 	}
 
 	private async accept(body: unknown): Promise<Response> {
-		const record = body as { accountId?: string; event?: PublishedEvent };
-		if (!record.accountId || !record.event?.id) return new Response("The bus is not configured.", { status: 503 });
+		if (!isBusRecord(body)) return new Response("The message was rejected.", { status: 400 });
+		const record = body;
 		const result = await this.storeEvent(record.accountId, record.event);
-		if (result.seen || !result.event) return Response.json({ seen: true, seq: result.seq });
-		this.push(result.event);
+		if (result.event) this.push(result.event);
 		await this.flush();
-		return Response.json({ seen: false, seq: result.seq });
+		return Response.json({ seen: result.seen, seq: result.seq });
 	}
 
 	private storeEvent(accountId: string, event: PublishedEvent): Promise<AcceptResult> {
@@ -131,7 +134,13 @@ export class AccountBus {
 		for (const socket of this.ctx.getWebSockets()) socket.send(text);
 	}
 
-	private async flush(): Promise<void> {
+	private flush(): Promise<void> {
+		const next = this.flushing.then(() => this.flushPending());
+		this.flushing = next.catch(() => undefined);
+		return next;
+	}
+
+	private async flushPending(): Promise<void> {
 		const pending = (await this.ctx.storage.get<PendingBusRow[]>("pending")) ?? [];
 		const accountId = await this.ctx.storage.get<string>("account");
 		if (pending.length === 0 || !accountId || !this.env.DATABASE_URL) {
@@ -147,10 +156,10 @@ export class AccountBus {
 		const written = new Set(pending.map((row) => row.event.id));
 		await this.ctx.storage.transaction(async (txn) => {
 			const current = (await txn.get<PendingBusRow[]>("pending")) ?? [];
-			await txn.put(
-				"pending",
-				current.filter((row) => !written.has(row.event.id)),
-			);
+			const remaining = current.filter((row) => !written.has(row.event.id));
+			await txn.put("pending", remaining);
+			if (remaining.length === 0) await txn.deleteAlarm();
+			else await txn.setAlarm(Date.now() + ALARM_MS);
 		});
 	}
 

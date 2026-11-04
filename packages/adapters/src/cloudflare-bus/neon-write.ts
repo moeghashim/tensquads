@@ -57,27 +57,29 @@ export async function writePending(
 ): Promise<void> {
 	const { pool, db } = database(connectionString);
 	try {
-		for (const row of rows) {
-			await db
-				.insert(busEvents)
-				.values({
-					accountId,
-					id: row.event.id,
-					timeText: row.event.time ?? "",
-					occurredAt: null,
-					fromAgent: row.event.from,
-					toAgent: row.event.to,
-					kind: row.event.kind,
-					skill: row.event.skill,
-					body: row.event.text,
-					payload: { ...row.event.payload },
-					writes: [...row.event.writes],
-					trace: row.event.trace ?? traceFor(row.event.id),
-					seq: row.seq,
-				})
-				.onConflictDoNothing();
-			await writeState(db, accountId, row.seq, row.event.set);
-		}
+		await db.transaction(async (txn) => {
+			for (const row of rows) {
+				await txn
+					.insert(busEvents)
+					.values({
+						accountId,
+						id: row.event.id,
+						timeText: row.event.time ?? "",
+						occurredAt: null,
+						fromAgent: row.event.from,
+						toAgent: row.event.to,
+						kind: row.event.kind,
+						skill: row.event.skill,
+						body: row.event.text,
+						payload: { ...row.event.payload },
+						writes: [...row.event.writes],
+						trace: row.event.trace ?? traceFor(row.event.id),
+						seq: row.seq,
+					})
+					.onConflictDoNothing();
+				await writeState(txn, accountId, row.seq, row.event.set);
+			}
+		});
 	} catch (error) {
 		throw hidden(error, connectionString);
 	} finally {
@@ -86,7 +88,7 @@ export async function writePending(
 }
 
 async function writeState(
-	db: ReturnType<typeof database>["db"],
+	db: Parameters<Parameters<ReturnType<typeof database>["db"]["transaction"]>[0]>[0],
 	accountId: string,
 	seq: number,
 	values: Readonly<Record<string, unknown>> | undefined,
