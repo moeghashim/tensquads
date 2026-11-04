@@ -63,6 +63,7 @@ export function parseToolToml(text) {
 		for (const name of path.slice(0, -1)) {
 			table[name] ??= {};
 			table = table[name];
+			if (Array.isArray(table)) table = table.at(-1);
 		}
 		const name = path.at(-1);
 		if (array) {

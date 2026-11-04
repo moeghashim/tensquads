@@ -52,7 +52,43 @@ test("mise.toml pins the TLC jar the model tests resolve", () => {
 		url: "https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar",
 		checksum: "sha256:936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88",
 	});
-	assert.deepEqual(lock.tools["http:tla2tools"], [{ version: "1.7.4", backend: "http:tla2tools" }]);
+	const entry = lock.tools["http:tla2tools"][0];
+	assert.equal(entry.version, "1.7.4");
+	assert.equal(entry.backend, "http:tla2tools");
+	for (const platform of Object.values(entry.platforms ?? {})) {
+		assert.equal(platform.url, "https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar");
+	}
+});
+
+test("tool TOML nested tables belong to the most recent array entry", () => {
+	const parsed = parseToolToml(`
+[[tools."http:tla2tools"]]
+version = "1.7.3"
+[[tools."http:tla2tools"]]
+version = "1.7.4"
+[tools."http:tla2tools".platforms.linux-x64]
+url = "https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar"
+checksum = "blake3:example"
+[[tools."http:tla2tools".mirrors]]
+url = "https://example.com/tla2tools.jar"
+`);
+	assert.deepEqual(parsed, {
+		tools: {
+			"http:tla2tools": [
+				{ version: "1.7.3" },
+				{
+					version: "1.7.4",
+					platforms: {
+						"linux-x64": {
+							url: "https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar",
+							checksum: "blake3:example",
+						},
+					},
+					mirrors: [{ url: "https://example.com/tla2tools.jar" }],
+				},
+			],
+		},
+	});
 });
 
 test("tool TOML comments cannot supply tool settings", () => {
