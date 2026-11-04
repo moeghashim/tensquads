@@ -1,14 +1,13 @@
-2e85b8f9298c0e268f6db94242f54dbb5b18a0e923f11ca6140076e3dddc512c  AGENTS.md
-1fc58b0cd33d82880ca67d45cc940f326ca062fb6c00911eb6edb3c1d9dec8fc  docs/PLAN.md
-6ad8d325eb6e88f3bc216753b47aaaef17196a503b72a6850e676c00ff23354d  tasks/03-super-admin.md
+5adf729df822f1720846b15b4f8260954e71afbbd46b58b377764d7b48981b14  AGENTS.md
+c3e3ce2f0fce07b7e7ba7374c10215b62742bbd598f61c8610710ccfc92c4f9e  docs/PLAN.md
+cb8d95b5dceba734b9bdd98542f2b06e04a154e74ee60c03a6995be3b07823f2  tasks/03-super-admin.md
 4b3b56e139ac5712a036a347f8edb30ad8cf3942fe32c1fce84a4e3b0984bad1  design/Accounts.dc.html
 46ef8d22502913149dd7c51e37b43cd41ed31ebfffe0df5afb227d4cea922ee0  design/AgentImages.dc.html
 376a049be727e5b219596abf2a515d98bf8924468fa3a59da3cebd5d181fec89  design/Main.dc.html
-ae2c01327e03942c5b47b1e60fef151163aa716456115e280078a8590df2527d  design/inventory/Accounts.json
-aa20d30002fe3117690320ca8ddebfbf2eb4b3f6921cf5d805290ddf8d321203  design/inventory/AgentImages.json
+deccce08d6932c707935dd44be6fd089e3a27d9c514e067d576129632117d5ec  design/inventory/Main.json
 26e17194bc30ddedee19464134087e69feeee379dc12e56b0a2126a9d827954d  docs/BRIEF.md
-903fd1e70cec14942f65914f684b240add1320c26ddbcbb92386fb550692536b  progress.md
-
+a30d96f3363b6ded8c9881cc02f82b7972145dc04aeae7b0500288dd3dad05f4  progress.md
+2be6bce5152d0e4a9f1edf45461a2a5602546f5a88f049af4a9d636ade85b7cf  apps/web/src/design/OVERRIDES.md
 OK   Accounts.dc.html
 OK   AgentDetail.dc.html
 OK   AgentImages.dc.html
@@ -24,6 +23,3 @@ OK   canvas.json
 OK   ds/agent-ui/tokens.json
 canvas https://claude.ai/artifact/B7seDz5psECQTerDG6rfy4 version 1793448823-a766, pulled 2026-10-31
 design/ matches the canvas.
-
-Decisions 1 to 32 read. No question.
-Task records the phase 4 Rollout conflict; no implementation performed in this test phase.

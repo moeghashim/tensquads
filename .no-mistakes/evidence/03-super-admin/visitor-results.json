@@ -1,35 +1,48 @@
 [
   {
-    "requested": "/admin",
-    "landed": "/signin",
-    "title": "Sign in",
+    "path": "/admin",
+    "url": "http://localhost:3001/signin",
+    "status": 200,
     "heading": [
       "Sign in to tensquads"
     ],
-    "adminNavigation": 0
+    "adminNavigationVisible": false
   },
   {
-    "requested": "/admin/images",
-    "landed": "/signin",
-    "title": "Sign in",
+    "path": "/admin/images",
+    "url": "http://localhost:3001/signin",
+    "status": 200,
     "heading": [
       "Sign in to tensquads"
     ],
-    "adminNavigation": 0
+    "adminNavigationVisible": false
   },
   {
-    "requested": "/overview",
-    "landed": "/signin",
-    "title": "Sign in",
-    "heading": [
-      "Sign in to tensquads"
-    ],
-    "adminNavigation": 0
+    "action": "signed-out request with forged account cookie",
+    "url": "http://localhost:3001/signin"
   },
   {
-    "requested": "/overview with forged future special-session cookie",
-    "landed": "/signin",
-    "adminNavigation": 0,
-    "northwindVisible": 0
+    "serverFunction": "loadAdminAccounts",
+    "redirectTo": "/signin",
+    "type": "Response",
+    "message": "[object Response]"
+  },
+  {
+    "serverFunction": "loadAdminImages",
+    "redirectTo": "/signin",
+    "type": "Response",
+    "message": "[object Response]"
+  },
+  {
+    "serverFunction": "loadAdminAttention",
+    "redirectTo": "/signin",
+    "type": "Response",
+    "message": "[object Response]"
+  },
+  {
+    "serverFunction": "openSpecialSession",
+    "redirectTo": "/signin",
+    "type": "Response",
+    "message": "[object Response]"
   }
 ]
