@@ -145,6 +145,8 @@ async function bundleWithMeta(entryPoints) {
 		bundle: true,
 		format: "esm",
 		platform: "neutral",
+		// A package with module and main, and no exports map, still has to be scanned.
+		mainFields: ["module", "main"],
 		target: "es2024",
 		conditions: ["workerd", "worker", "browser"],
 		outfile,
