@@ -1,8 +1,8 @@
-import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import { useSyncExternalStore } from "react";
 
 import { clearOverviewHold } from "#/screens/overview/load.ts";
 import { type RulesLimitValue, type RulesRule, type RulesWrite, setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
+import { bounded } from "#/workspace/bounded.ts";
 import { clearFrameHold, onFrameAccountReset } from "#/workspace/frame-load.ts";
 import { confirmRetired, nextWriteFence } from "#/write-fence.ts";
 
@@ -321,23 +321,4 @@ function notify(): void {
 	}
 }
 
-export function bounded<T>(runWork: (signal: AbortSignal) => Promise<T>): Promise<T> {
-	const controller = new AbortController();
-	let timer: ReturnType<typeof setTimeout> | undefined;
-	const timeout = new Promise<never>((_resolve, reject) => {
-		timer = setTimeout(() => {
-			controller.abort();
-			reject(new DOMException("The operation was aborted.", "AbortError"));
-		}, PENDING_TASK_WINDOW_MS);
-	});
-	const work = Promise.resolve().then(() => runWork(controller.signal));
-	void work.then(
-		() => undefined,
-		() => undefined,
-	);
-	return Promise.race([work, timeout]).finally(() => {
-		if (timer !== undefined) {
-			clearTimeout(timer);
-		}
-	});
-}
+export { bounded };

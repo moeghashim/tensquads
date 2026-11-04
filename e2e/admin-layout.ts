@@ -30,9 +30,14 @@ export function expectNear(actual: number, expected: number, label: string) {
 }
 
 function expectBox(actual: Box | undefined, expected: Box | undefined, label: string) {
-	expectNear(actual?.width ?? 0, expected?.width ?? 0, `${label} width`);
-	expectNear(actual?.x ?? 0, expected?.x ?? 0, `${label} x`);
-	expectNear(actual?.y ?? 0, expected?.y ?? 0, `${label} y`);
+	expectNear(boxField(actual, "width"), boxField(expected, "width"), `${label} width`);
+	expectNear(boxField(actual, "x"), boxField(expected, "x"), `${label} x`);
+	expectNear(boxField(actual, "y"), boxField(expected, "y"), `${label} y`);
+}
+
+function boxField(box: Box | undefined, key: keyof Box): number {
+	if (!box) return 0;
+	return box[key];
 }
 
 function expectBoxes(built: readonly Box[], design: readonly Box[], name: string) {
@@ -80,71 +85,107 @@ export function expectImages(built: ImagesLayout, design: ImagesLayout, name: st
 }
 
 export async function measureAccounts(page: Page): Promise<AccountsLayout> {
-	return page.evaluate(() => {
-		const boxOf = (element: Element) => {
-			const box = element.getBoundingClientRect();
-			return { x: box.x, y: box.y, width: box.width, right: box.right };
-		};
-		const tiles = [...document.querySelectorAll("main [data-loop='adm.kpis'] > div")];
-		const track = document.querySelector("section[aria-label='New accounts'] > div:nth-child(2)");
-		const bars = track ? [...track.querySelectorAll("[data-loop='adm.bars'] > div")] : [];
-		const cards = ["New accounts", "Plan mix"].map((label) =>
-			document.querySelector(`section[aria-label='${label}']`),
-		);
-		const nav = document.querySelector("nav[aria-label='Platform admin']");
-		const main = document.querySelector("main");
-		const wide = wideChild("All accounts");
-		const tileGap = tiles.length > 1 ? boxOf(tiles[1] ?? tiles[0]).x - boxOf(tiles[0]).right : 0;
-		const cardGap = cards[0] && cards[1] ? boxOf(cards[1]).x - boxOf(cards[0]).right : 0;
-		return {
-			nav: nav ? boxOf(nav) : { x: 0, y: 0, width: 0 },
-			main: main ? boxOf(main) : { x: 0, y: 0, width: 0 },
-			tiles: tiles.map(boxOf),
-			bars: bars.map(boxOf),
-			cards: cards.filter((card): card is Element => card !== null).map(boxOf),
-			trackHeight: track ? track.getBoundingClientRect().height : 0,
-			tileGap,
-			cardGap,
-			tableWidth: wide ? wide.getBoundingClientRect().width : 0,
-		};
-
-		function wideChild(label: string) {
-			const section = document.querySelector(`section[aria-label='${label}']`);
-			const scroll = section
-				? [...section.querySelectorAll("div")].find((node) => getComputedStyle(node).overflowX === "auto")
-				: undefined;
-			return scroll?.firstElementChild ?? null;
-		}
-	});
+	return page.evaluate(readAdminLayout, "accounts") as Promise<AccountsLayout>;
 }
 
 export async function measureImages(page: Page): Promise<ImagesLayout> {
-	return page.evaluate(() => {
-		const boxOf = (element: Element) => {
-			const box = element.getBoundingClientRect();
-			return { x: box.x, y: box.y, width: box.width, right: box.right };
+	return page.evaluate(readAdminLayout, "images") as Promise<ImagesLayout>;
+}
+
+function readAdminLayout(mode: "accounts" | "images"): AccountsLayout | ImagesLayout {
+	if (mode === "images") return imagesLayout();
+	return accountsLayout();
+
+	function accountsLayout(): AccountsLayout {
+		const tiles = loopChildren("main [data-loop='adm.kpis'] > div");
+		const track = document.querySelector("section[aria-label='New accounts'] > div:nth-child(2)");
+		const bars = trackChildren(track, "[data-loop='adm.bars'] > div");
+		const cards = ["New accounts", "Plan mix"].map((label) => sectionByLabel(label));
+		const wide = scrollChild(sectionByLabel("All accounts"));
+		return {
+			nav: boxOrEmpty(document.querySelector("nav[aria-label='Platform admin']")),
+			main: boxOrEmpty(document.querySelector("main")),
+			tiles: tiles.map(readBox),
+			bars: bars.map(readBox),
+			cards: present(cards).map(readBox),
+			trackHeight: elementHeight(track),
+			tileGap: pairGap(tiles[0], tiles[1]),
+			cardGap: pairGap(cards[0], cards[1]),
+			tableWidth: elementWidth(wide),
 		};
-		const tiles = [...document.querySelectorAll("main [data-loop='cat.kpis'] > div")];
+	}
+
+	function imagesLayout(): ImagesLayout {
+		const tiles = loopChildren("main [data-loop='cat.kpis'] > div");
 		const list = document.querySelector("section[aria-label='Images']");
 		const aside = document.querySelector("aside[aria-label='Image details']");
-		const nav = document.querySelector("nav[aria-label='Platform admin']");
-		const main = document.querySelector("main");
-		const section = document.querySelector("section[aria-label='Images']");
-		const scroll = section
-			? [...section.querySelectorAll("div")].find((node) => getComputedStyle(node).overflowX === "auto")
-			: undefined;
-		const wide = scroll?.firstElementChild ?? null;
-		const tileGap = tiles.length > 1 ? boxOf(tiles[1] ?? tiles[0]).x - boxOf(tiles[0]).right : 0;
-		const splitGap = list && aside ? boxOf(aside).x - boxOf(list).right : 0;
+		const wide = scrollChild(list);
 		return {
-			nav: nav ? boxOf(nav) : { x: 0, y: 0, width: 0 },
-			main: main ? boxOf(main) : { x: 0, y: 0, width: 0 },
-			tiles: tiles.map(boxOf),
-			list: list ? boxOf(list) : { x: 0, y: 0, width: 0 },
-			aside: aside ? boxOf(aside) : { x: 0, y: 0, width: 0 },
-			tileGap,
-			splitGap,
-			tableWidth: wide ? wide.getBoundingClientRect().width : 0,
+			nav: boxOrEmpty(document.querySelector("nav[aria-label='Platform admin']")),
+			main: boxOrEmpty(document.querySelector("main")),
+			tiles: tiles.map(readBox),
+			list: boxOrEmpty(list),
+			aside: boxOrEmpty(aside),
+			tileGap: pairGap(tiles[0], tiles[1]),
+			splitGap: pairGap(list, aside),
+			tableWidth: elementWidth(wide),
 		};
-	});
+	}
+
+	function readBox(element: Element) {
+		const box = element.getBoundingClientRect();
+		return { x: box.x, y: box.y, width: box.width, right: box.right };
+	}
+
+	function boxOrEmpty(element: Element | null): Box {
+		if (!element) return { x: 0, y: 0, width: 0 };
+		return readBox(element);
+	}
+
+	function pairGap(left: Element | null | undefined, right: Element | null | undefined) {
+		if (!left || !right) return 0;
+		return readBox(right).x - readBox(left).right;
+	}
+
+	function loopChildren(selector: string) {
+		return [...document.querySelectorAll(selector)];
+	}
+
+	function sectionByLabel(label: string) {
+		return document.querySelector(`section[aria-label='${label}']`);
+	}
+
+	function trackChildren(track: Element | null, selector: string) {
+		if (!track) return [];
+		return [...track.querySelectorAll(selector)];
+	}
+
+	function present(cards: (Element | null)[]): Element[] {
+		const found: Element[] = [];
+		for (const card of cards) {
+			if (card) found.push(card);
+		}
+		return found;
+	}
+
+	function elementHeight(element: Element | null) {
+		if (!element) return 0;
+		return element.getBoundingClientRect().height;
+	}
+
+	function elementWidth(element: Element | null) {
+		if (!element) return 0;
+		return element.getBoundingClientRect().width;
+	}
+
+	function scrollChild(section: Element | null) {
+		if (!section) return null;
+		return firstScrollChild(section);
+	}
+
+	function firstScrollChild(section: Element) {
+		const scroll = [...section.querySelectorAll("div")].find((node) => getComputedStyle(node).overflowX === "auto");
+		if (!scroll) return null;
+		return scroll.firstElementChild;
+	}
 }

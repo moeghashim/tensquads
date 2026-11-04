@@ -2,7 +2,7 @@
 
 Screen 10 is in this pull request. Phases 1 and 2 are already on main. Each difference below has an approval. Nothing else ships as a difference from the design.
 
-Pull request 12 is open. It is not merged. This report does not include it.
+Pull request 12 is merged, 3 November 2026. This report includes it.
 
 ## Decisions
 
@@ -58,7 +58,7 @@ These stay as the design or the recorded answer left them.
 - An empty chat message, or a second send while the first is working, does nothing. Task 02-frame. Pull request 9 records the same rule: a blank trim is ignored, and a second send waits. Merged 2 November 2026.
 - A blank action on the new-rule form adds no rule. Task 02-rules. The design's `addRule` does this.
 - A rule starts no task. The Rules screen has no delete control and no edit control. Pull request 11, merged 3 November 2026. The design is the source: the rules run no action in version 1.
-- The Squads list has no on/off switch. Skill chips are not buttons. Pull request 8, merged 2 November 2026. The design list has no switch. The switch belongs to task 02-agent-detail, which is pull request 12 and is not merged.
+- The Squads list has no on/off switch. Skill chips are not buttons. Pull request 8, merged 2 November 2026. The design list has no switch. The agent page switch is a real control. Pull request 12, merged 3 November 2026.
 - There is no sign-out control. Pull request 6, merged 2 November 2026. The design has none. Pull request 11's account-switch test calls `window.Clerk.signOut()` because the screen has no control.
 - "Roll out <nextVersion>" does nothing. On the seed the button reads "Roll out 2.1.1". Moe, 3 November 2026, answer 17 in `tasks/03-super-admin.md`.
 - "View changelog" does nothing. Moe, 3 November 2026, answer 17 in `tasks/03-super-admin.md`.
@@ -110,9 +110,9 @@ Token differences: none.
 
 ### Pull request 6, merged 2 November 2026
 
-- The message list has `tabindex="0"` so the keyboard can reach the scrollable region. The design file has no tabindex. The resting screenshots did not change for that attribute. The focus ring is the existing 2 px `#0169cc` rule with a 2 px offset. The pull request records this difference and names no separate approver.
+- The message list has `tabindex="0"` so the keyboard can reach the scrollable region. The design file has no tabindex. The resting screenshots did not change for that attribute. The focus ring is the existing 2 px `#0169cc` rule with a 2 px offset. Approved by the orchestrator under Moe's delegation, 2 November 2026.
 - `page-has-heading-one` is disabled only on the blank frame. Later screen tasks add the heading.
-- The docs say `cloudflare/worker`. The live slug is `cloudflare/workers`. The plan stays as written. The same sentence is in pull requests 7, 8, 10, 11, and 13.
+- The docs say `cloudflare/worker`. The live slug is `cloudflare/workers`. The plan stays as written. The same sentence is in pull requests 7, 8, 10, 11, 12, and 13.
 - The 30 second gate uses the stored absolute `occurredAt`. The displayed clock stays at minute resolution. The server gives up sooner, at 9999 ms per attempt. Decision 17. The orchestrator approved a clock mock for that expiry: "No Moe or project rule forbids it."
 - Moe chose one conversation thread id, `dock`. The `main` thread row is removed. The squad id `main` stays a squad.
 - A Mandate is made when a person says yes. Pending or Declined has none. Approved has exactly one. The Approve action stayed in a later task.
@@ -155,10 +155,35 @@ Token differences: no design token, colour, type size, or font weight was change
 
 - The form label says Agent. Other design text says Squads. The label stays Agent. Task 02-rules. The design is the source.
 - The route is `/rules`. The brief says `/app/rules`.
-- `e2e/frame.spec.ts` expects the Rules page after the Rules click. The pull request says that change was approved. It does not name the approver.
+- `e2e/frame.spec.ts` expects the Rules page after the Rules click. Approved by the orchestrator under Moe's delegation, 3 November 2026.
 - The Monday rule stays off. The model keeps the reorder point at 1 and the reorder limit at $500.
 
 Token differences: none. The sliders keep `accent-color: #181818`.
+
+### Pull request 12, merged 3 November 2026
+
+Moe delegated the build questions in `tasks/02-agent-detail.md`. Each item uses the recommended answer. These decisions are final for this screen. The merged head is `1c6d3d64dc0296d0246d6e1a443474db3c81e882`.
+
+Pull request 12 names no do-nothing control. The agent page on/off switch, the skill switches, and the autonomy picker write through the kernel. The Squads list still has no switch.
+
+- An unknown agent id goes to `/agents`.
+- The agent loop model stays out of phase 2.
+- The screen shows two status labels. Running is On. Paused is every other state. The test adapter passes Starting and Stopping in one step. The screen does not show "Starting".
+- "A skill cannot run when Off" covers `send()` only. `nextEvent()` is a replay.
+- All skills off follows the code and uses the first skill. This screen does not change `send()`.
+- `accounts.online` stays the stored count. The agent switch does not change it.
+- A new account dashboard uses frame item 14. A blank value shows "—". An empty list shows its heading and no rows. The mission text "Pending approval" stays.
+- The design says "Squad running", "Sandbox", and "All squads". The brief says agent and machine. The build follows the design. Task 02-agent-detail step 8.
+- A session read that needs a new token throws "The session needs a refresh." The browser refreshes that token on GET and then retries the read. A POST does not refresh.
+- Clerk accepts a session token only when its `azp` is `https://tensquads.moe-678.workers.dev` or `http://localhost:3000`.
+- Agent, chat, traffic, and approval writes take the per-account lock `pg_advisory_xact_lock(1952804468, hashtext(accountId))`. Rules writes already passed the account. `writeAccount`, `deleteWorkspaceAccount`, and `applyMigration` stay on the global exclusive lock.
+- Running, skills, and autonomy claim the shared write fence. `askRevise` sends no fence. A superseded write returns the current row. A validation error keeps the retire list. A failed or timed-out write keeps the snapshot, advances the write counter, and reads once. A successful read clears recovery only when it started after the latest failure. A newer write stays ahead of an older arrival.
+- Sign-out reloads the workspace, and that loader redirects to `/signin`. While the session stamp differs, the parent renders nothing.
+- A start or stop is bounded by `MachineTimeout`. Fairness is only that timeout, the refresh timeout, and the mark-late timeout, each alone.
+- The chat finish stays the one already on main.
+- The docs say `cloudflare/worker`. The live slug is `cloudflare/workers`. The plan stays as written.
+
+Token differences: none. TLC on the agent on/off model reached 296 states and 1974 steps. The chart draws 10 states and 37 arrows.
 
 ### Pull request 13, merged 2 November 2026
 
@@ -189,7 +214,7 @@ Approved in `tasks/03-super-admin.md`, unless a line names another date.
 - Answer 12, new sign-up metadata: a new account writes `createdWeek` 7 and `lastActive` "Just now", and it goes last in the order. The owner stays the email, because sign-up collects no name.
 - The admin colours that fail contrast stay the design colours. Axe excludes only these named elements: `admin-coming-next` ("Usage and billing", "Platform health", "Admin users"), `admin-online-pill` ("53 squads online now"), and `admin-offline-count` (an online count of `0 / N`, colour `#8f8f8f`).
 - The special-session cookie stays unsigned. Answer 4 says a verified super admin's cookie is the only one that counts, so it needs no signature and no new secret. The value is the account id, a dot, and the open time. The server rejects it more than one hour after that time. A forged time only extends that admin's own view.
-- A removed `org:super_admin` role ends at the next session-token refresh. This development instance mints a session token whose `exp` minus `iat` is 60 seconds, measured on 3 November 2026. The server does not call the Clerk Backend API on each request. Approved by the orchestrator under Moe's delegation, 3 November 2026.
+- A removed `org:super_admin` role is gone at most 65 seconds after the token was minted: one 60-second session token plus Clerk's 5-second clock allowance. This development instance mints a session token whose `exp` minus `iat` is 60 seconds, measured on 3 November 2026. Clerk's verifier adds the 5-second allowance. The server does not call the Clerk Backend API on each request. Approved by the orchestrator under Moe's delegation, 3 November 2026.
 
 ### Preview check
 

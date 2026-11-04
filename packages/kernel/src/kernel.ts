@@ -100,7 +100,6 @@ export class Kernel {
 		return (this.context.get("workspaceConversation") as ConversationCommands).finishSend(scope, taskId);
 	}
 
-	// fallow-ignore-next-line unused-class-member
 	async setAgentOn(
 		scope: AccountScope,
 		agentId: string,

@@ -39,6 +39,7 @@ import {
 	watchedMachine,
 	withDb,
 } from "./agent-detail-support.ts";
+import { createClerkUser } from "./clerk-user.ts";
 import { expectNoHorizontalScroll, secretsFor, skipUnlessMacScreenshot, waitForScreenFonts } from "./support.ts";
 import {
 	deleteWorkspaceAccount,
@@ -1565,22 +1566,15 @@ async function temporaryAccount(): Promise<WorkspaceUser> {
 	const secrets = secretsFor(["secret", "testDatabase"]);
 	const email = `sq-${randomUUID().slice(0, 8)}@example.com`;
 	const password = `Ts${randomUUID().replaceAll("-", "")}Zq7`;
-	const response = await fetch("https://api.clerk.com/v1/users", {
-		method: "POST",
-		headers: { Authorization: `Bearer ${secrets.secret}`, "Content-Type": "application/json" },
-		body: JSON.stringify({ email_address: [email], password, skip_password_checks: true }),
-	});
-	if (!response.ok) throw new Error(`Clerk create user failed with status ${response.status}.`);
-	const body = (await response.json()) as { id?: string };
-	if (!body.id) throw new Error("Clerk create user returned no id.");
+	const userId = await createClerkUser(secrets.secret, email, password);
 	const accountId = `frame-b-${randomUUID().slice(0, 8)}`;
 	const postgres = openPostgres(secrets.testDatabase);
 	try {
-		await replaceDemoAccount(postgres.db, accountId, body.id);
+		await replaceDemoAccount(postgres.db, accountId, userId);
 	} finally {
 		await postgres.close();
 	}
-	return { email, password, userId: body.id, accountId };
+	return { email, password, userId, accountId };
 }
 
 async function deleteClerkUser(userId: string) {

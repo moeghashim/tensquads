@@ -7,8 +7,9 @@ import { test as base, expect, secretsFor } from "./support.ts";
 
 export const test = base.extend({
 	reseed: [
-		// biome-ignore lint/correctness/noEmptyPattern: Playwright requires the empty fixture pattern.
-		async ({}, use) => {
+		async ({ browserName }, use) => {
+			// Playwright reads this argument as a fixture list, so it has to be a destructuring pattern.
+			if (browserName.length === 0) throw new Error("Playwright did not name the browser.");
 			await reseedAdminDatabase();
 			await use();
 		},

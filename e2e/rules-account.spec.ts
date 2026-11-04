@@ -5,6 +5,7 @@ import { openPostgres, schema } from "@tensquads/adapters";
 import { eq } from "drizzle-orm";
 import { replaceDemoAccount } from "../packages/seed/src/demo-account.ts";
 
+import { createClerkUser } from "./clerk-user.ts";
 import { secretsFor } from "./support.ts";
 import { deleteWorkspaceAccount, expect, openWorkspace, test } from "./workspace.ts";
 
@@ -221,29 +222,6 @@ async function storedLimit(accountId: string) {
 	} finally {
 		await postgres.close();
 	}
-}
-
-async function createClerkUser(secret: string, email: string, password: string) {
-	const response = await fetch("https://api.clerk.com/v1/users", {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${secret}`,
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			email_address: [email],
-			password,
-			skip_password_checks: true,
-		}),
-	});
-	if (!response.ok) {
-		throw new Error(`Clerk create user failed with status ${response.status}.`);
-	}
-	const body = (await response.json()) as { id?: string };
-	if (!body.id) {
-		throw new Error("Clerk create user returned no id.");
-	}
-	return body.id;
 }
 
 async function deleteClerkUser(secret: string, userId: string) {

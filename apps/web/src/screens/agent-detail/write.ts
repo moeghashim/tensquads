@@ -1,5 +1,4 @@
 import { useMatch, useNavigate, useRouter } from "@tanstack/react-router";
-import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import type { Autonomy } from "@tensquads/domain";
 import { useSyncExternalStore } from "react";
 import {
@@ -18,30 +17,11 @@ import {
 	subscribeAgentSession,
 } from "#/workspace/agent-on.ts";
 import { agentStatus } from "#/workspace/agent-view.ts";
+import { bounded } from "#/workspace/bounded.ts";
+import { frameAccountId, onFrameAccountReset } from "#/workspace/frame-load.ts";
 import { switchParts } from "#/workspace/styles.ts";
 import { confirmRetired, nextWriteFence } from "#/write-fence.ts";
 import { type AgentDetailView, autonomyStyle, blank } from "./model.ts";
-
-function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
-	const controller = new AbortController();
-	let timer: ReturnType<typeof setTimeout> | undefined;
-	const timeout = new Promise<never>((_resolve, reject) => {
-		timer = setTimeout(() => {
-			controller.abort();
-			reject(new DOMException("The operation was aborted.", "AbortError"));
-		}, PENDING_TASK_WINDOW_MS);
-	});
-	const work = Promise.resolve().then(() => run(controller.signal));
-	void work.then(
-		() => undefined,
-		() => undefined,
-	);
-	return Promise.race([work, timeout]).finally(() => {
-		if (timer !== undefined) {
-			clearTimeout(timer);
-		}
-	});
-}
 
 interface Write {
 	readonly key: string;
@@ -67,6 +47,10 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 
 	function current(): boolean {
 		return bound === agentSession();
+	}
+
+	function sameFrame(view: AgentDetailView): boolean {
+		return view.accountId === undefined || view.accountId === frameAccountId();
 	}
 
 	function publish(next: Snapshot) {
@@ -95,24 +79,78 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 				const view = await bounded((signal) => loadAgentDetail({ data: agentId, signal }));
 				// A read keeps the version from when it started. It ends recovery only
 				// when that start is still after the latest write or read failure.
-				if (startedSession !== agentSession()) return;
+				if (startedSession !== agentSession() || !current() || !sameFrame(view)) return;
 				if (started === stampAgentRead(agentId) && state.view === previous) {
 					needsRead = false;
 					accept(view, state.pending);
 				}
 			} catch {
 				// A failed read records the same point a failed write does, then stops.
-				if (startedSession === agentSession()) {
+				if (startedSession === agentSession() && current()) {
 					noteAgentWrite(agentId);
 					needsRead = true;
 				}
 			}
 		} finally {
 			reading = false;
-			if (startedSession === agentSession() && again) {
+			if (startedSession === agentSession() && current() && again) {
 				again = false;
 				void read();
 			}
+		}
+	}
+
+	function sessionMatches(startedSession: number): boolean {
+		return startedSession === agentSession() && current();
+	}
+
+	function pendingWithout(write: Write): readonly Write[] {
+		const pending: Write[] = [];
+		for (const value of state.pending) {
+			if (value !== write) pending.push(value);
+		}
+		return pending;
+	}
+
+	function recordAccepted(write: Write, view: AgentDetailView): void {
+		noteAgentWrite(agentId);
+		accept(view, pendingWithout(write));
+	}
+
+	function recordFailed(write: Write): void {
+		noteAgentWrite(agentId);
+		publish({ ...state, pending: pendingWithout(write) });
+		void read();
+	}
+
+	async function keptResponse(write: Write, startedSession: number): Promise<boolean> {
+		const view = await bounded(write.work);
+		if (!sessionMatches(startedSession)) return false;
+		if (!sameFrame(view)) return false;
+		recordAccepted(write, view);
+		return true;
+	}
+
+	function failedResponse(write: Write, startedSession: number): boolean {
+		if (!sessionMatches(startedSession)) return false;
+		recordFailed(write);
+		return true;
+	}
+
+	async function finishWrite(write: Write): Promise<boolean> {
+		const startedSession = agentSession();
+		try {
+			return await keptResponse(write, startedSession);
+		} catch {
+			return failedResponse(write, startedSession);
+		}
+	}
+
+	async function drainQueued(): Promise<void> {
+		let write = queue.shift();
+		while (write) {
+			if (!(await finishWrite(write))) return;
+			write = queue.shift();
 		}
 	}
 
@@ -120,25 +158,7 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 		if (busy || !current()) return;
 		busy = true;
 		try {
-			let write = queue.shift();
-			while (write) {
-				const startedSession = agentSession();
-				try {
-					const view = await bounded(write.work);
-					if (startedSession !== agentSession()) return;
-					noteAgentWrite(agentId);
-					accept(
-						view,
-						state.pending.filter((value) => value !== write),
-					);
-				} catch {
-					if (startedSession !== agentSession()) return;
-					noteAgentWrite(agentId);
-					publish({ ...state, pending: state.pending.filter((value) => value !== write) });
-					void read();
-				}
-				write = queue.shift();
-			}
+			await drainQueued();
 		} finally {
 			busy = false;
 		}
@@ -212,13 +232,16 @@ let queues = new WeakMap<object, Map<string, ReturnType<typeof createQueue>>>();
 const liveQueues = new Set<ReturnType<typeof createQueue>>();
 const openReads = new Map<string, ReturnType<typeof createQueue>>();
 
-onAgentClientReset(() => {
+function abandonAgentQueues(): void {
 	const open = [...liveQueues];
 	liveQueues.clear();
 	openReads.clear();
 	queues = new WeakMap();
 	for (const queue of open) queue.abandon();
-});
+}
+
+onAgentClientReset(abandonAgentQueues);
+onFrameAccountReset(abandonAgentQueues);
 
 export function keepFailedAgentRead(agentId: string, session: number): AgentDetailView | null {
 	if (typeof window === "undefined") return null;

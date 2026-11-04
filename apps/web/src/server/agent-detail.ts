@@ -120,54 +120,48 @@ function validateRetires(input: unknown): readonly string[] {
 
 const unfinished = "The workspace write did not finish.";
 
-async function writeFenced(
-	agentId: string,
-	run: (
-		kernel: Kernel,
-		scope: AccountScope,
-		deadlineAt: number,
-	) => Promise<{ readonly status: "written" | "superseded" }>,
-): Promise<AgentWrite<AgentDetailView>> {
-	const deadlineAt = Date.now() + PENDING_TASK_WINDOW_MS;
-	const { requireWorkspace } = await import("./workspace-session.ts");
-	return requireWorkspace(async (scope, db) => {
-		if (Date.now() >= deadlineAt) {
-			throw new Error(unfinished);
-		}
-		const { createRepositories } = await import("@tensquads/adapters");
-		const written = await run(new Kernel(createRepositories(db)), scope, deadlineAt);
-		if (Date.now() >= deadlineAt) {
-			throw new Error(unfinished);
-		}
-		const view = await loadView(db, scope, agentId);
-		if (Date.now() >= deadlineAt) {
-			throw new Error(unfinished);
-		}
-		return { status: written.status, row: view };
-	});
+type KernelRun<T> = (kernel: Kernel, scope: AccountScope, deadlineAt: number) => Promise<T>;
+
+function throwIfLate(deadlineAt: number): void {
+	if (Date.now() >= deadlineAt) throw new Error(unfinished);
 }
 
-async function writeThroughKernel(
+async function commitAgentWrite<T>(
 	agentId: string,
-	run: (kernel: Kernel, scope: AccountScope, deadlineAt: number) => Promise<void>,
-): Promise<AgentDetailView> {
+	run: KernelRun<T>,
+): Promise<{ readonly result: T; readonly view: AgentDetailView }> {
 	const deadlineAt = Date.now() + PENDING_TASK_WINDOW_MS;
 	const { requireWorkspace } = await import("./workspace-session.ts");
-	return requireWorkspace(async (scope, db) => {
-		if (Date.now() >= deadlineAt) {
-			throw new Error(unfinished);
-		}
-		const { createRepositories } = await import("@tensquads/adapters");
-		await run(new Kernel(createRepositories(db)), scope, deadlineAt);
-		if (Date.now() >= deadlineAt) {
-			throw new Error(unfinished);
-		}
-		const view = await loadView(db, scope, agentId);
-		if (Date.now() >= deadlineAt) {
-			throw new Error(unfinished);
-		}
-		return view;
-	});
+	return requireWorkspace((scope, db) => finishAgentWrite(scope, db, agentId, deadlineAt, run));
+}
+
+async function finishAgentWrite<T>(
+	scope: AccountScope,
+	db: AppDatabase,
+	agentId: string,
+	deadlineAt: number,
+	run: KernelRun<T>,
+): Promise<{ readonly result: T; readonly view: AgentDetailView }> {
+	throwIfLate(deadlineAt);
+	const { createRepositories } = await import("@tensquads/adapters");
+	const result = await run(new Kernel(createRepositories(db)), scope, deadlineAt);
+	throwIfLate(deadlineAt);
+	const loaded = await loadView(db, scope, agentId);
+	throwIfLate(deadlineAt);
+	return { result, view: { ...loaded, accountId: scope.accountId } };
+}
+
+async function writeFenced(
+	agentId: string,
+	run: KernelRun<{ readonly status: "written" | "superseded" }>,
+): Promise<AgentWrite<AgentDetailView>> {
+	const written = await commitAgentWrite(agentId, run);
+	return { status: written.result.status, row: written.view };
+}
+
+async function writeThroughKernel(agentId: string, run: KernelRun<void>): Promise<AgentDetailView> {
+	const written = await commitAgentWrite(agentId, run);
+	return written.view;
 }
 
 function machineRecord(agent: Agent) {

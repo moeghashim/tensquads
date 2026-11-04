@@ -47,6 +47,9 @@ export async function createWorkspace(
 
 async function insertWorkspace(db: AppDatabase, accountId: string, draft: WorkspaceDraft): Promise<WorkspaceCreated> {
 	return db.transaction(async (tx) => {
+		// The shared global lock, then this Clerk user. A new account id would not
+		// serialize two creates for the same user, and a read before the lock deadlocks a migration.
+		await takeWriterLock((statement) => tx.execute(sql.raw(statement)), draft.clerkUserId);
 		const existing = await tx
 			.select({ id: accounts.id })
 			.from(accounts)
@@ -55,7 +58,6 @@ async function insertWorkspace(db: AppDatabase, accountId: string, draft: Worksp
 		if (found) {
 			return { accountId: found.id, created: false };
 		}
-		await takeWriterLock((statement) => tx.execute(sql.raw(statement)), accountId);
 		const now = new Date();
 		const highest = await tx.select({ value: max(accounts.sortOrder) }).from(accounts);
 		const current = highest[0]?.value;

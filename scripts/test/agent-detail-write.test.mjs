@@ -1,13 +1,38 @@
 import assert from "node:assert/strict";
 import { registerHooks } from "node:module";
-import { test } from "node:test";
+import { test as nodeTest } from "node:test";
 import { pathToFileURL } from "node:url";
+
+// The write module keeps one published on/off map and one queue list.
+// These tests share that module, so they take turns.
+let turn = Promise.resolve();
+function test(name, options, fn) {
+	if (typeof options === "function") {
+		fn = options;
+		options = undefined;
+	}
+	const body = async (context) => {
+		const earlier = turn;
+		let release = () => {};
+		turn = new Promise((resolve) => {
+			release = resolve;
+		});
+		await earlier;
+		try {
+			await fn(context);
+		} finally {
+			release();
+		}
+	};
+	if (options) return nodeTest(name, options, body);
+	return nodeTest(name, body);
+}
 
 globalThis.window = {};
 
 let runtime;
 const modules = {
-	"@tanstack/react-router": ["useMatch", "useNavigate", "useRouter"],
+	"@tanstack/react-router": ["useMatch", "useNavigate", "useRouter", "isRedirect"],
 	"@tensquads/adapters/pending-window": ["PENDING_TASK_WINDOW_MS"],
 	react: ["useSyncExternalStore"],
 	"#/server/agent-detail.ts": [
@@ -43,6 +68,8 @@ const moduleUrl = process.env.AGENT_WRITE_TEST_MODULE
 const { keepFailedAgentRead, useAgentWrites } = await import(moduleUrl.href);
 const { agentSession, stampAgentRead, stampAgentReads, applyAgentOn, agentOnSnapshot, resetAgentClientState } =
 	await import("../../apps/web/src/workspace/agent-on.ts");
+const { clearFrameHold, frameEpoch, loadHeldFrame } = await import("../../apps/web/src/workspace/frame-load.ts");
+const { currentWrites } = await import("../../apps/web/src/workspace/approval-count.ts");
 
 function harness() {
 	const reads = [];
@@ -569,6 +596,46 @@ for (const on of [false, true]) {
 		assert.equal(applyAgentOn(later, agentOnSnapshot(), laterReadAt), later);
 	});
 }
+
+function accountFrame(accountId) {
+	return {
+		accountId,
+		accountName: accountId,
+		owner: "Moe",
+		masterName: "Master",
+		squadCount: 1,
+		superAdmin: false,
+		agents: [],
+		approvalCount: 0,
+		messages: [],
+	};
+}
+
+async function showAccount(accountId) {
+	await loadHeldFrame(frameEpoch(), currentWrites(), async () => accountFrame(accountId));
+}
+
+test("a special-account change drops the agent queue and a late response cannot replace the new mission", async () => {
+	resetAgentClientState();
+	clearFrameHold();
+	await showAccount("demo");
+	const h = harness();
+	h.server.accountId = "demo";
+	h.server.missionText = "DEMO MISSION";
+	h.newLoader(h.server);
+	h.render().toggleAgent(false);
+	await settle();
+	const late = h.posts[0];
+	await showAccount("target");
+	h.newLoader({ ...h.server, accountId: "target", missionText: "TARGET B MISSION", on: true }, "success", 0);
+	assert.equal(h.render().view.missionText, "TARGET B MISSION");
+	assert.equal(h.render().view.on, true);
+	late.answer();
+	await settle();
+	assert.equal(h.render().view.missionText, "TARGET B MISSION");
+	assert.equal(h.render().view.on, true);
+	assert.equal(agentOnSnapshot().has("support"), false);
+});
 
 test("a reset drops published and pending state, and a late response cannot publish it", async () => {
 	const h = harness();

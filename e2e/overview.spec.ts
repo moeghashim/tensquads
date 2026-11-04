@@ -8,6 +8,7 @@ import { replaceDemoAccount } from "../packages/seed/src/demo-account.ts";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
+import { createClerkUser } from "./clerk-user.ts";
 import {
 	readInventory,
 	secretsFor,
@@ -990,29 +991,6 @@ async function switchAccount(page: Page, email: string, password: string) {
 		});
 	}
 	await expect(page).toHaveURL(/\/overview$/);
-}
-
-async function createClerkUser(secret: string, email: string, password: string) {
-	const response = await fetch("https://api.clerk.com/v1/users", {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${secret}`,
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			email_address: [email],
-			password,
-			skip_password_checks: true,
-		}),
-	});
-	if (!response.ok) {
-		throw new Error(`Clerk create user failed with status ${response.status}.`);
-	}
-	const body = (await response.json()) as { id?: string };
-	if (!body.id) {
-		throw new Error("Clerk create user returned no id.");
-	}
-	return body.id;
 }
 
 async function deleteClerkUser(secret: string, userId: string) {

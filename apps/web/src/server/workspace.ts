@@ -1,24 +1,25 @@
 import { createServerFn } from "@tanstack/react-start";
 
 function validateText(input: unknown): { accountId: string; text: string } {
-	if (
-		typeof input !== "object" ||
-		input === null ||
-		!("accountId" in input) ||
-		typeof input.accountId !== "string" ||
-		input.accountId.length === 0 ||
-		!("text" in input) ||
-		typeof input.text !== "string"
-	) {
+	const record = textRecord(input);
+	const accountId = record.accountId;
+	const text = record.text;
+	if (!nonEmpty(accountId) || typeof text !== "string") {
 		throw new Error("The send request is not valid.");
 	}
-	return { accountId: input.accountId, text: input.text };
+	return { accountId, text };
 }
 
-export const loadWorkspaceAccount = createServerFn({ method: "GET" }).handler(async () => {
-	const { requireWorkspace } = await import("./workspace-session.ts");
-	return requireWorkspace(async (scope) => ({ accountId: scope.accountId }));
-});
+function textRecord(input: unknown): Record<string, unknown> {
+	if (typeof input !== "object" || input === null) {
+		throw new Error("The send request is not valid.");
+	}
+	return input as Record<string, unknown>;
+}
+
+function nonEmpty(value: unknown): value is string {
+	return typeof value === "string" && value.length > 0;
+}
 
 export const loadWorkspaceFrame = createServerFn({ method: "GET" }).handler(async () => {
 	const { readFrame, requireWorkspace } = await import("./workspace-session.ts");

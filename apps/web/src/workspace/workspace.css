@@ -25,7 +25,3 @@
 	outline: 2px solid #0169cc;
 	outline-offset: 2px;
 }
-
-.workspace-frame #dock-input:focus-visible {
-	outline-offset: 4px;
-}

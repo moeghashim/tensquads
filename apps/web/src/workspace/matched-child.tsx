@@ -11,7 +11,7 @@ export function MatchedChild({ frameAccountId }: { readonly frameAccountId: stri
 	const router = useRouter();
 	const childAccountId = useRouterState({ select: (state) => workspaceChildAccount(state.matches) });
 	const tried = useRef<string | null>(null);
-	const matched = childAccountId === null || childAccountId === frameAccountId;
+	const matched = accountsMatch(childAccountId, frameAccountId);
 	if (matched) tried.current = null;
 	const pending = nextReread(userId ?? null, frameAccountId, childAccountId, tried.current);
 	useOneReread(pending, () => {
@@ -20,6 +20,10 @@ export function MatchedChild({ frameAccountId }: { readonly frameAccountId: stri
 	});
 	if (!matched) return null;
 	return <Outlet />;
+}
+
+function accountsMatch(childAccountId: string | null, frameAccountId: string): boolean {
+	return childAccountId === null || childAccountId === frameAccountId;
 }
 
 function emptySnapshot(): null {

@@ -1,6 +1,5 @@
 import { useAuth } from "@clerk/tanstack-react-start";
 import { useRouter, useRouterState } from "@tanstack/react-router";
-import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import {
 	type Dispatch,
 	type ReactNode,
@@ -30,6 +29,7 @@ import {
 	sameCount,
 	seedApprovalCount,
 } from "./approval-count.ts";
+import { bounded } from "./bounded.ts";
 import { type StartedTask, useRefresh, useWorkspace, WorkspaceContext } from "./context.ts";
 import { decorate, useInspect } from "./event-view.ts";
 import { rememberFrame } from "./frame-load.ts";
@@ -377,25 +377,6 @@ interface SendHooks {
 	readonly refreshFrame: () => Promise<WorkspaceFrameData>;
 	readonly sending: { current: boolean };
 	readonly applyFrame: (frame: WorkspaceFrameData) => void;
-}
-
-function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
-	const controller = new AbortController();
-	let timer: ReturnType<typeof setTimeout> | undefined;
-	const timeout = new Promise<never>((_resolve, reject) => {
-		timer = setTimeout(() => {
-			controller.abort();
-			reject(new DOMException("The operation was aborted.", "AbortError"));
-		}, PENDING_TASK_WINDOW_MS);
-	});
-	const work = Promise.resolve().then(() => run(controller.signal));
-	void work.then(
-		() => undefined,
-		() => undefined,
-	);
-	return Promise.race([work, timeout]).finally(() => {
-		if (timer !== undefined) clearTimeout(timer);
-	});
 }
 
 async function sendDraft(value: string, hooks: SendHooks) {

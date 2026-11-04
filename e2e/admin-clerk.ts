@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 
 import type { Page } from "@playwright/test";
 
+import { clerkPostId, createClerkUser } from "./clerk-user.ts";
+
 export const companyOrgId = "org_3Lazia1HC1hdgfY0mAttb1qTWYm";
 
 const companyUserId = "user_3Lazhi4zDFFw28I6hhujdsQrV4W";
@@ -47,29 +49,9 @@ export async function createTestUser(
 	const email = `sq-${randomUUID().slice(0, 8)}@example.com`;
 	guardUser("pending", email);
 	const password = `Ts${randomUUID().replaceAll("-", "")}Zq7`;
-	const response = await fetch("https://api.clerk.com/v1/users", {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${secret}`,
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			email_address: [email],
-			password,
-			skip_password_checks: true,
-			first_name: name?.firstName,
-			last_name: name?.lastName,
-		}),
-	});
-	if (!response.ok) {
-		throw new Error(`Clerk create user failed with status ${response.status}.`);
-	}
-	const body = (await response.json()) as { id?: string };
-	if (!body.id) {
-		throw new Error("Clerk create user returned no id.");
-	}
-	guardUser(body.id, email);
-	return { email, password, userId: body.id };
+	const userId = await createClerkUser(secret, email, password, name);
+	guardUser(userId, email);
+	return { email, password, userId };
 }
 
 export async function deleteTestUser(secret: string, userId: string) {
@@ -108,26 +90,15 @@ export async function setCompanyRole(secret: string, userId: string, role: "org:
 
 export async function createForeignOrg(secret: string, userId: string) {
 	guardUser(userId);
-	const response = await fetch("https://api.clerk.com/v1/organizations", {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${secret}`,
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			name: `foreign-${randomUUID().slice(0, 8)}`,
-			created_by: userId,
-		}),
-	});
-	if (!response.ok) {
-		throw new Error(`Clerk create organization failed with status ${response.status}.`);
-	}
-	const body = (await response.json()) as { id?: string };
-	if (!body.id) {
-		throw new Error("Clerk create organization returned no id.");
-	}
-	guardOrg(body.id);
-	const patched = await fetch(`https://api.clerk.com/v1/organizations/${body.id}/memberships/${userId}`, {
+	const orgId = await clerkPostId(
+		secret,
+		"/organizations",
+		{ name: `foreign-${randomUUID().slice(0, 8)}`, created_by: userId },
+		"Clerk create organization failed with status",
+		"Clerk create organization returned no id.",
+	);
+	guardOrg(orgId);
+	const patched = await fetch(`https://api.clerk.com/v1/organizations/${orgId}/memberships/${userId}`, {
 		method: "PATCH",
 		headers: {
 			Authorization: `Bearer ${secret}`,
@@ -138,7 +109,7 @@ export async function createForeignOrg(secret: string, userId: string) {
 	if (!patched.ok) {
 		throw new Error(`Clerk membership role failed with status ${patched.status}.`);
 	}
-	return body.id;
+	return orgId;
 }
 
 export async function deleteForeignOrg(secret: string, orgId: string) {

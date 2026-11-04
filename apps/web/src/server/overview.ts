@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
+import type { AccountScope } from "@tensquads/domain";
+import type { Kernel } from "@tensquads/kernel";
 
 interface DecisionBody {
 	readonly accountId: string;
@@ -34,40 +36,36 @@ export const loadOverview = createServerFn({ method: "GET" }).handler(async () =
 
 export const decideOverview = createServerFn({ method: "POST" })
 	.validator(validateDecision)
-	.handler(async ({ data }) => {
-		const startedAt = Date.now();
-		const { requireWorkspace } = await import("./workspace-session.ts");
-		return requireWorkspace(
-			async (scope, db) => {
-				const { createRepositories } = await import("@tensquads/adapters");
-				const { Kernel } = await import("@tensquads/kernel");
-				return new Kernel(createRepositories(db)).decide(
-					scope,
-					data.id,
-					data.ok,
-					startedAt + PENDING_TASK_WINDOW_MS,
-				);
-			},
-			{ accountId: data.accountId, startedAt },
-		);
-	});
+	.handler(overviewDecision("decide"));
 
 export const decideMissionOverview = createServerFn({ method: "POST" })
 	.validator(validateDecision)
-	.handler(async ({ data }) => {
+	.handler(overviewDecision("decideMission"));
+
+function overviewDecision(kind: "decide" | "decideMission") {
+	return async ({ data }: { data: DecisionBody }) => {
 		const startedAt = Date.now();
 		const { requireWorkspace } = await import("./workspace-session.ts");
 		return requireWorkspace(
 			async (scope, db) => {
 				const { createRepositories } = await import("@tensquads/adapters");
 				const { Kernel } = await import("@tensquads/kernel");
-				return new Kernel(createRepositories(db)).decideMission(
-					scope,
-					data.id,
-					data.ok,
-					startedAt + PENDING_TASK_WINDOW_MS,
-				);
+				const kernel = new Kernel(createRepositories(db));
+				const deadline = startedAt + PENDING_TASK_WINDOW_MS;
+				return runOverviewDecision(kind, kernel, scope, data, deadline);
 			},
 			{ accountId: data.accountId, startedAt },
 		);
-	});
+	};
+}
+
+function runOverviewDecision(
+	kind: "decide" | "decideMission",
+	kernel: Kernel,
+	scope: AccountScope,
+	data: DecisionBody,
+	deadline: number,
+) {
+	if (kind === "decideMission") return kernel.decideMission(scope, data.id, data.ok, deadline);
+	return kernel.decide(scope, data.id, data.ok, deadline);
+}

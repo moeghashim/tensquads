@@ -8,6 +8,7 @@ const serial = [
 	"test/rules-deadline.test.ts",
 	"test/agent-lock.test.ts",
 	"test/writer-lock.test.ts",
+	"test/create-lock.test.ts",
 ];
 const remaining = readdirSync("test")
 	.filter((name) => name.endsWith(".test.ts"))

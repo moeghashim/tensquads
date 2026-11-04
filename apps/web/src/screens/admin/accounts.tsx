@@ -1,24 +1,15 @@
 import { useNavigate } from "@tanstack/react-router";
-import { type Account, type AccountFilter, accountAdminView, accountFilterStyle } from "@tensquads/domain";
+import { type Account, type AccountFilter, accountAdminView } from "@tensquads/domain";
 import { useState } from "react";
 
+import { AdminFilterButtons, AdminIntro, AdminKpiSection, RightLabel } from "#/screens/admin/chrome.tsx";
 import { css } from "#/screens/css.ts";
 import { resetTargetAccount } from "#/screens/rules/write-queue.ts";
 import { openSpecialSession } from "#/server/admin.ts";
 
 const column = "display: flex; flex-direction: column; gap: 24px";
-const header = "display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between";
-const heading =
-	"margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d";
-const sub = "margin: 4px 0 0; color: #5d5d5d";
-const pillRow = "display: flex; gap: 8px; flex-wrap: wrap";
-const demoPill =
-	"height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(13,13,13,.08); font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; color: #5d5d5d";
 const onlinePill =
 	"height: 22px; padding: 0 8px; border-radius: 999px; background: #04b84c14; color: #008635; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center";
-const tiles = "display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px";
-const tile =
-	"background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 16px; display: flex; flex-direction: column; gap: 6px";
 const split = "display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch";
 const card =
 	"background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 20px; display: flex; flex-direction: column; gap: 16px";
@@ -37,37 +28,16 @@ export function AccountsScreen({ accounts }: { readonly accounts: readonly Accou
 	return (
 		<div data-if="isAdmin" style={css("display: contents")}>
 			<div style={css(column)}>
-				<header style={css(header)}>
-					<div>
-						<h1 style={css(heading)}>Companies</h1>
-						<p style={css(sub)}>
-							Every company on the platform, with its mission and the squads it runs. Figures are demo data.
-						</p>
-					</div>
-					<div style={css(pillRow)}>
-						<span style={css(demoPill)}>Demo data</span>
-						<span data-design-contrast="admin-online-pill" style={css(onlinePill)}>
-							{view.agentsOnline} squads online now
-						</span>
-					</div>
-				</header>
-				<section aria-label="Platform totals" style={css(tiles)}>
-					<div data-loop="adm.kpis" data-loop-as="k" style={css("display: contents")}>
-						{view.kpis.map((kpi) => (
-							<div key={kpi.label} style={css(tile)}>
-								<span style={css("font-size: 12px; color: #5d5d5d")}>{kpi.label}</span>
-								<span
-									style={css(
-										"font-size: 24px; line-height: 30px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d",
-									)}
-								>
-									{kpi.value}
-								</span>
-								<span style={css(`font-size: 12px; color: ${kpi.deltaColor}`)}>{kpi.delta}</span>
-							</div>
-						))}
-					</div>
-				</section>
+				<AdminIntro
+					title="Companies"
+					detail="Every company on the platform, with its mission and the squads it runs. Figures are demo data."
+					pill={{
+						text: `${view.agentsOnline} squads online now`,
+						style: onlinePill,
+						contrast: "admin-online-pill",
+					}}
+				/>
+				<AdminKpiSection label="Platform totals" loop="adm.kpis" kpis={view.kpis} />
 				<div style={css(split)}>
 					<section aria-label="New accounts" style={css(`${card}; flex: 3 1 420px; min-width: 0; gap: 16px`)}>
 						<div
@@ -175,19 +145,7 @@ export function AccountsScreen({ accounts }: { readonly accounts: readonly Accou
 								)}
 							/>
 							<div data-loop="adm.filters" data-loop-as="f" style={css("display: contents")}>
-								{view.filters.map((chip) => (
-									<button
-										key={chip.id}
-										type="button"
-										data-handler="f.pick"
-										data-event="onClick"
-										aria-pressed={chip.on ? "true" : "false"}
-										onClick={() => setFilter(chip.id)}
-										style={css(accountFilterStyle(chip.on))}
-									>
-										{chip.label}
-									</button>
-								))}
+								<AdminFilterButtons filters={view.filters} onPick={setFilter} />
 							</div>
 						</div>
 					</div>
@@ -199,10 +157,10 @@ export function AccountsScreen({ accounts }: { readonly accounts: readonly Accou
 								<span>Plan</span>
 								<span>Subscription</span>
 								<span>Started</span>
-								<span style={css("text-align: right")}>All-time value</span>
-								<span style={css("text-align: right")}>Squads</span>
-								<span style={css("text-align: right")}>Online</span>
-								<span style={css("text-align: right")}>Tasks, 7d</span>
+								<RightLabel>All-time value</RightLabel>
+								<RightLabel>Squads</RightLabel>
+								<RightLabel>Online</RightLabel>
+								<RightLabel>Tasks, 7d</RightLabel>
 								<span>Last active</span>
 								<span>Status</span>
 							</div>

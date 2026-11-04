@@ -6,7 +6,18 @@ import { isRedirect } from "@tanstack/react-router";
 
 const root = new URL("../../", import.meta.url);
 const web = new URL("apps/web/src/", root);
-const state = { admin: true, target: "demo", owner: "demo", writes: [], store: {}, closed: 0, refreshError: null };
+const state = {
+	admin: true,
+	target: "demo",
+	owner: "demo",
+	writes: [],
+	store: {},
+	closed: 0,
+	refreshError: null,
+	holdWrite: null,
+	holdAccount: "",
+	limitWrite: null,
+};
 globalThis.workspaceAccountTest = state;
 const mocks = {
 	"@tanstack/react-start": `export function createServerFn() {
@@ -38,7 +49,14 @@ const mocks = {
 		});`,
 	"@tensquads/kernel": `export class Kernel {
 		constructor() { return new Proxy(this, { get: (_, method) => async (scope) => {
-			globalThis.workspaceAccountTest.writes.push({ method, accountId: scope.accountId });
+			const state = globalThis.workspaceAccountTest;
+			if (method === "setLimit" && state.holdWrite && scope.accountId === state.holdAccount) {
+				const held = state.holdWrite;
+				state.holdWrite = null;
+				await held;
+			}
+			state.writes.push({ method, accountId: scope.accountId });
+			if (method === "setLimit" && state.limitWrite) return state.limitWrite;
 			return { count: 0 };
 		} }); }
 	}`,
@@ -136,6 +154,54 @@ test("missing policy values yield no limits while three stored values yield thre
 		[1, 2, 3],
 	);
 	assert.deepEqual(state.store, stored);
+});
+
+test("a held rules limit does not land after the frame account changes", async () => {
+	globalThis.window = {};
+	let release = () => {};
+	try {
+		clearFrameHold();
+		queue.resetTargetAccount();
+		state.admin = true;
+		state.target = "demo";
+		state.holdAccount = "demo";
+		state.limitWrite = { status: "written", row: { key: "policy.daily_ad_cap", value: 260 } };
+		const frame = (accountId) => ({
+			accountId,
+			accountName: accountId,
+			owner: "Moe",
+			masterName: "Master",
+			squadCount: 1,
+			superAdmin: true,
+			agents: [],
+			approvalCount: 0,
+			messages: [],
+		});
+		await loadHeldFrame(frameEpoch(), currentWrites(), async () => frame("demo"));
+		state.holdWrite = new Promise((resolve) => {
+			release = resolve;
+		});
+		queue.queueLimit("policy.daily_ad_cap", 260, "demo", async () => {});
+		await setImmediate();
+		assert.equal(queue.shownLimit("policy.daily_ad_cap", 200), 260);
+		state.target = "northwind";
+		await loadHeldFrame(frameEpoch(), currentWrites(), async () => frame("northwind"));
+		assert.equal(queue.shownLimit("policy.daily_ad_cap", 200), 200);
+		release();
+		await setImmediate();
+		await setImmediate();
+		assert.equal(queue.shownLimit("policy.daily_ad_cap", 200), 200);
+		assert.deepEqual(queue.rulesWrittenSince(0), { rules: [], limits: [] });
+	} finally {
+		release();
+		state.holdWrite = null;
+		state.holdAccount = "";
+		state.limitWrite = null;
+		state.target = "demo";
+		queue.resetTargetAccount();
+		clearFrameHold();
+		delete globalThis.window;
+	}
 });
 
 test("target reset drops queued decisions, patches and approval count without changing the fence tab", async () => {

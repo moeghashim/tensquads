@@ -25,6 +25,10 @@ export function frameEpoch(): number {
 	return epoch;
 }
 
+export function frameAccountId(): string | null {
+	return held?.accountId ?? null;
+}
+
 export function frameNeedsRead(): boolean {
 	return needsRead;
 }
