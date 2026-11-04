@@ -32,6 +32,10 @@ function off(state: string): boolean {
 const REGION = "EU";
 const ENVIRONMENT = "tensquads-agents";
 
+function machineEnv(accountId: string, agentId: string, tag: string): Record<string, string> {
+	return { ACCOUNT_ID: accountId, TENSQUADS_AGENT_ID: agentId, IMAGE_TAG: tag };
+}
+
 export interface BoatWait {
 	readonly intervalMs: number;
 	readonly timeoutMs: number;
@@ -307,11 +311,11 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 			}
 			const created = await createOnce(
 				ctx,
-				createBody(
-					hostName(agentId),
-					{ ACCOUNT_ID: scope.accountId, AGENT_ID: agentId, IMAGE_TAG: tag },
-					{ account: scope.accountId, agent: agentId, image: tag },
-				),
+				createBody(hostName(agentId), machineEnv(scope.accountId, agentId, tag), {
+					account: scope.accountId,
+					agent: agentId,
+					image: tag,
+				}),
 				startKey(scope.accountId, agentId, tag),
 			);
 			await waitReady(ctx, created.id);
@@ -379,7 +383,7 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 					{
 						...createBody(
 							hostName(agentId),
-							{ ACCOUNT_ID: scope.accountId, AGENT_ID: agentId, IMAGE_TAG: tag },
+							machineEnv(scope.accountId, agentId, tag),
 							{ account: scope.accountId, agent: agentId, image: tag },
 							templateId,
 						),

@@ -80,7 +80,8 @@ test("start is idempotent and maps the dashboard fields", async () => {
 		const row = fake.machines()[0];
 		assert.ok(row);
 		assert.equal(row.env.ACCOUNT_ID, "acct-1");
-		assert.equal(row.env.AGENT_ID, "orders");
+		assert.equal(row.env.TENSQUADS_AGENT_ID, "orders");
+		assert.equal(row.env.AGENT_ID, undefined);
 		assert.equal(row.env.IMAGE_TAG, tag);
 		assert.equal(row.environment, "tensquads-agents");
 		assert.equal(row.labels.account, "acct-1");
@@ -165,13 +166,17 @@ test("a template save removes the source and a repeat does not start another", a
 		assert.equal(fake.creates, 1);
 		assert.equal(fake.machines()[0]?.deleted, true);
 		assert.equal(fake.machines()[0]?.file, "market-researcher\n0.1.0\n");
+		assert.equal(fake.machines()[0]?.env.TENSQUADS_AGENT_ID, undefined);
 		assert.equal(fake.machines()[0]?.env.AGENT_ID, undefined);
 		const second = await adapter.makeTemplate(scope, "market-researcher", "0.1.0");
 		assert.equal(second.id, first.id);
 		assert.equal(fake.creates, 1);
 		const started = await adapter.startFromTemplate(scope, first.id, "orders");
 		assert.deepEqual(started, { templateId: first.id, agentId: "orders" });
-		assert.equal(fake.machines().find((row) => row.name === "vps-orders-01")?.from, first.id);
+		const startedRow = fake.machines().find((row) => row.name === "vps-orders-01");
+		assert.equal(startedRow?.from, first.id);
+		assert.equal(startedRow?.env.TENSQUADS_AGENT_ID, "orders");
+		assert.equal(startedRow?.env.AGENT_ID, undefined);
 		await adapter.removeTemplate(scope, first.id);
 		assert.equal(fake.template(first.id), undefined);
 	} finally {

@@ -43,6 +43,8 @@ The builder does no step 1 work. Items 1, 2, 3 and 21 stay open with Moe.
 21. **Host failure and a second region.** Open with Moe.
 22. **Bus proof.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The rules run on Miniflare in `npm test`. The real deploy half waits for the manual job.
 
+AGENT_ID is reserved by boat (invalid_env). The machine gets TENSQUADS_AGENT_ID. Decided by the orchestrator under Moe's delegation, 4 November 2026.
+
 ## Steps, in order
 
 Step 1 is for Moe. Steps 2 onward wait for step 1 and for Moe's answers to "Stop and ask". Record each answer in this file under a heading "Moe's answers", as task 01 does, in the first commit.
@@ -57,7 +59,7 @@ Step 1 is for Moe. Steps 2 onward wait for step 1 and for Moe's answers to "Stop
 3. Change the ports in `packages/kernel/src/ports.ts` as item 5 settles. Change `test-machine` and `memory-bus` to match them. Off still means CPU 0% and uptime "Paused". Update every caller. No screen may show a change. Run `make verify`. It must return 0 before the next step. Commit this step alone.
 4. Add the feature flag as item 15 settles. One place in the Worker picks the adapters. The default picks `test-machine` and `memory-bus`. A test proves the default. Another test proves that a missing flag picks the test adapters.
 5. Build `packages/adapters/src/boat-machine.ts`. Load the `boundary-discipline` and `make-operations-idempotent` skills first. The boat words stay in this file. No sandbox, snapshot or credential word crosses the port. Write the tests first, with the `tdd` skill, against a fake boat HTTP server. Build these methods:
-   - **Start.** Send `type: "small"`, `noEnv: true`, `ttlSeconds: null`, and `env` with `ACCOUNT_ID`, `AGENT_ID` and `IMAGE_TAG` only. Send the environment as item 4 settles. Send `labels` for the account, the agent and the image. The plan says "tags". Boat calls them labels. Send an `Idempotency-Key`. A repeat start for the same agent must not make a second machine. Then wait for ready with `waitUntilReady`.
+   - **Start.** Send `type: "small"`, `noEnv: true`, `ttlSeconds: null`, and `env` with `ACCOUNT_ID`, `TENSQUADS_AGENT_ID` and `IMAGE_TAG` only. Send the environment as item 4 settles. Send `labels` for the account, the agent and the image. The plan says "tags". Boat calls them labels. Send an `Idempotency-Key`. A repeat start for the same agent must not make a second machine. Then wait for ready with `waitUntilReady`.
    - **Stop.** Call stop. A stop returns at `stopping`, so poll until the state is `stopped`. A stopped machine shows CPU 0% and uptime "Paused" with no call to boat metrics.
    - **Start again.** Call resume. Then wait for ready. The disk comes back. Memory, processes and the IP address do not.
    - **Read fields.** Map the fields as item 7 settles. `size` is `<vcpu> vCPU · <memoryGB> GB`.
@@ -82,7 +84,7 @@ Step 1 is for Moe. Steps 2 onward wait for step 1 and for Moe's answers to "Stop
     1. Make a template.
     2. Start from the template with `noEnv: true`, labels and `ttlSeconds: null`.
     3. Read `host`, `region`, `size`, `cpu`, `uptime`, `egress` and `secrets`.
-    4. Run `env` on the machine. Assert that `ACCOUNT_ID`, `AGENT_ID` and `IMAGE_TAG` have the sent values, that `BOAT_ID` and `ASCII_TOKEN` are the only other boat variables, and that the secret name and the boat API key are not there.
+    4. Run `env` on the machine. Assert that `ACCOUNT_ID`, `TENSQUADS_AGENT_ID` and `IMAGE_TAG` have the sent values, that `BOAT_ID` and `ASCII_TOKEN` are the only other boat variables, and that the secret name and the boat API key are not there.
     5. Register one secret name. Assert that the name reads back, and that a new read of `env` on the machine does not have it.
     6. Stop. Assert CPU 0% and uptime "Paused".
     7. Start again. Assert the state is on, and that the file from the template is still there.
@@ -102,7 +104,7 @@ Step 1 is for Moe. Steps 2 onward wait for step 1 and for Moe's answers to "Stop
 
 - [ ] The manual job passes on the branch against a real boat machine. The run link is in the pull request
 - [ ] The live test proves each of these on a real machine: start with `noEnv: true` and labels, stop, start again, read of the dashboard fields, one secret name registered, make a template, start from a template, remove
-- [ ] The live test proves that the machine holds `ACCOUNT_ID`, `AGENT_ID` and `IMAGE_TAG`, and no secret value
+- [ ] The live test proves that the machine holds `ACCOUNT_ID`, `TENSQUADS_AGENT_ID` and `IMAGE_TAG`, and no secret value
 - [ ] A stopped machine shows CPU 0% and uptime "Paused"
 - [ ] The manual job leaves no machine, no template and no secret name behind. Evidence: the output of the cleanup check
 - [ ] The Worker tests prove the three bus rules: a seen id is dropped, the traffic list sorts by sequence number, and a message that fails all retries makes one Escalation event
