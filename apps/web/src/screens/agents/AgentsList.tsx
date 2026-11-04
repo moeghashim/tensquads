@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 
 import { css } from "#/screens/css.ts";
 import { agentStatus, missionBits, ownerText, skillChips } from "#/workspace/agent-view.ts";
+import { RoleTag, Squadmate } from "#/workspace/Squadmate.tsx";
 
 import type { AgentCardData } from "./types.ts";
 
@@ -13,7 +14,6 @@ const grid = "display: grid; grid-template-columns: repeat(auto-fit, minmax(280p
 const card =
 	"text-align: left; border: 0; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 18px; display: flex; flex-direction: column; gap: 12px; color: #282828";
 const titleRow = "display: flex; gap: 10px; align-items: center; width: 100%";
-const swatch = "width: 32px; height: 32px; border-radius: 8px";
 const nameColumn = "display: flex; flex-direction: column; flex: 1";
 const nameText = "font-weight: 600; font-size: 15px; color: #0d0d0d";
 const roleText = "font-size: 12px; color: #5d5d5d";
@@ -82,9 +82,12 @@ function AgentCard({
 			style={css(card)}
 		>
 			<div style={css(titleRow)}>
-				<span style={css(`${swatch}; background: ${agent.tint}`)} />
+				<Squadmate id={agent.id} on={agent.on} size={32} decorative />
 				<div style={css(nameColumn)}>
-					<span style={css(nameText)}>{agent.name}</span>
+					<span style={css(nameText)}>
+						{agent.name}
+						<RoleTag id={agent.id} />
+					</span>
 					<span style={css(roleText)}>{agent.role}</span>
 				</div>
 				<span style={css(status.statusStyle)}>{status.statusLabel}</span>

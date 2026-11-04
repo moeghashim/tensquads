@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
+import { agentNames, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import {
 	expectLabeledInputs,
 	expectNamedButtons,
@@ -18,9 +19,9 @@ import {
 } from "./support.ts";
 import { expect, installLocalFonts, openWorkspace, test } from "./workspace.ts";
 
-const pendingLine = "Mission pending. Master has proposed one; approve it in the inbox.";
+const pendingLine = "Mission pending. Petra has proposed one; approve it in the inbox.";
 const sandboxLine =
-	"Each squad is one agent with its own tools. It runs alone in its own sandbox server, with only its own skills, keys and network access. Squads work together only through Master, and each one has a mission it is scored on.";
+	"Each squad is one agent with its own tools. It runs alone in its own sandbox server, with only its own skills, keys and network access. Squads work together only through Petra, and each one has a mission it is scored on.";
 const taskCounts = [142, 96, 38, 24, 31] as const;
 const dash = "—";
 
@@ -151,7 +152,7 @@ test("the agents list matches the rendered design inventory", async ({ page, wor
 		const design = await sectionInventory(designPage, "[data-if='isAgentList']");
 		const built = await sectionInventory(page, "[data-if='isAgentList']");
 		expect(design.texts).toContain("Squads");
-		expect(design.texts).toContain(sandboxLine);
+		expect(design.texts).toContain(sandboxLine.replace("Petra", "Master"));
 		expect(design.handlers).toHaveLength(5);
 		expectMatch(design, built);
 	} finally {
@@ -339,7 +340,7 @@ function expectMatch(
 		links: unknown[];
 	},
 ) {
-	const diff = compareInventory(design, built);
+	const diff = compareInventory(rewriteBuiltInventory(design, agentNames), built);
 	expect(diff.extraTexts).toEqual([]);
 	expect(diff.missingTexts).toEqual([]);
 	expect(diff.extraHandlers).toEqual([]);

@@ -157,3 +157,16 @@ export const SQUADMATES = [
 ] as const satisfies readonly Squadmate[];
 
 export type SquadmateId = (typeof SQUADMATES)[number]["id"];
+
+const byId = new Map<string, Squadmate>(SQUADMATES.map((mate) => [mate.id, mate]));
+
+// The stored row keeps the design name. A read returns the character name.
+export function characterName(imageId: string): string | null {
+	return byId.get(imageId)?.name ?? null;
+}
+
+// Petra's product tag is "Master". A screen does not show that word, so this returns null for her.
+export function shownRoleTag(imageId: string): string | null {
+	if (imageId === "master") return null;
+	return byId.get(imageId)?.roleTag ?? null;
+}

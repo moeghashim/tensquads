@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { compareInventory, type inventoryHtml } from "../scripts/design-inventory.mjs";
 import { allowFor } from "../scripts/inventory-allow.mjs";
 import { renderDesign } from "../scripts/render-design.mjs";
+import { agentNames, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import { expect, readInventory, test } from "./support.ts";
 
 const root = new URL("..", import.meta.url).pathname;
@@ -34,7 +35,8 @@ async function expectInventory(
 ) {
 	const canvas = await page.context().newPage();
 	try {
-		const expected = await renderDesign(canvas, readInventory(name), state, allowFor(name));
+		const rendered = await renderDesign(canvas, readInventory(name), state, allowFor(name));
+		const expected = name === "Onboarding" ? rewriteBuiltInventory(rendered, agentNames) : rendered;
 		const diff = compareInventory(expected, built);
 		expect(diff.extraTexts).toEqual([]);
 		expect(diff.missingTexts).toEqual([]);

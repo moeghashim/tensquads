@@ -3,7 +3,8 @@ import { type Dispatch, type SetStateAction, useState } from "react";
 import { css } from "#/screens/css.ts";
 import { addWorkspaceRule, type RulesPageData, type RulesRule } from "#/server/rules.ts";
 import { useWorkspacePage } from "#/workspace/context.ts";
-import type { RuleForm } from "#/workspace/types.ts";
+import { RoleTag, Squadmate } from "#/workspace/Squadmate.tsx";
+import type { FrameAgent, RuleForm } from "#/workspace/types.ts";
 
 import { type RulesSnapshotPage, useRulesSnapshot } from "./snapshot.ts";
 import {
@@ -159,7 +160,7 @@ function RuleList({
 }: {
 	readonly accountId: string;
 	readonly rules: readonly RulesRule[];
-	readonly agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[];
+	readonly agents: readonly FrameAgent[];
 	readonly gateStyle: (gate: string) => string;
 	readonly switchParts: (on: boolean) => {
 		readonly switchBg: string;
@@ -203,7 +204,7 @@ function RuleRow({
 }: {
 	readonly accountId: string;
 	readonly rule: RulesRule;
-	readonly agent: { readonly id: string; readonly name: string; readonly tint: string } | undefined;
+	readonly agent: FrameAgent | undefined;
 	readonly gateStyle: (gate: string) => string;
 	readonly switchParts: (on: boolean) => {
 		readonly switchBg: string;
@@ -230,10 +231,11 @@ function RuleRow({
 				</span>
 			</div>
 			<span style={css(agentChip)}>
-				{agent ? (
-					<span style={css(`width: 12px; height: 12px; border-radius: 3px; background: ${agent.tint}`)} />
-				) : null}
-				{agent?.name ?? rule.agent}
+				{agent ? <Squadmate id={agent.id} on={agent.on} size={16} decorative /> : null}
+				<span>
+					{agent?.name ?? rule.agent}
+					{agent ? <RoleTag id={agent.id} /> : null}
+				</span>
 			</span>
 			<span style={css(gateStyle(rule.approval))}>{rule.approval}</span>
 			<button
@@ -263,11 +265,12 @@ function NewRule({
 }: {
 	readonly accountId: string;
 	readonly form: RuleForm;
-	readonly agents: readonly { readonly id: string; readonly name: string }[];
+	readonly agents: readonly FrameAgent[];
 	readonly setForm: SetRuleForm;
 	readonly setPending: SetPending;
 	readonly refresh: () => Promise<void>;
 }) {
+	const picked = agents.find((agent) => agent.id === form.agent);
 	return (
 		<section aria-label="New rule" style={css(newRuleCard)}>
 			<h2 style={css(heading)}>New rule</h2>
@@ -286,19 +289,26 @@ function NewRule({
 				</label>
 				<label style={css(fieldLabel)}>
 					Agent
-					<select
-						value={form.agent}
-						data-handler="onAgent"
-						data-event="onChange"
-						onChange={(event) => setForm({ ...form, agent: event.target.value })}
-						style={css(selectStyle)}
-					>
-						<OptionLoop
-							list="agentOpts"
-							options={agents.map((agent) => agent.name)}
-							values={agents.map((agent) => agent.id)}
-						/>
-					</select>
+					<span style={css("position: relative; display: block")}>
+						{picked ? (
+							<span style={css("position: absolute; left: 8px; top: 8px; display: flex; pointer-events: none")}>
+								<Squadmate id={picked.id} on={picked.on} size={16} decorative />
+							</span>
+						) : null}
+						<select
+							value={form.agent}
+							data-handler="onAgent"
+							data-event="onChange"
+							onChange={(event) => setForm({ ...form, agent: event.target.value })}
+							style={css(`${selectStyle}; box-sizing: border-box; width: 100%; padding-left: 28px`)}
+						>
+							<OptionLoop
+								list="agentOpts"
+								options={agents.map((agent) => agent.name)}
+								values={agents.map((agent) => agent.id)}
+							/>
+						</select>
+					</span>
 				</label>
 				<label style={css(fieldLabel)}>
 					Then

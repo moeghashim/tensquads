@@ -136,7 +136,9 @@ function snapshot(count: number, approvalId = "ap1", title = "Refund"): Overview
 		empty: false,
 		emptyText: "",
 		proposals: [],
-		approvals: [{ id: approvalId, agentName: "Support", tint: "", amount: "$42", title, detail: "" }],
+		approvals: [
+			{ id: approvalId, agentId: "support", agentName: "Support", tint: "", amount: "$42", title, detail: "" },
+		],
 		agents: [],
 		masterName: "Master",
 	};

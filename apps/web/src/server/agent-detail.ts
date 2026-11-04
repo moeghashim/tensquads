@@ -278,7 +278,7 @@ async function loadView(db: AppDatabase, scope: AccountScope, agentId: string) {
 		secrets: machine.secrets(agent.id),
 	};
 	return agentDetailView(
-		detailSource(agent, shown, events, agentNames(agents), master?.name ?? "Master", company?.mission ?? ""),
+		detailSource(agent, shown, events, agentNames(agents), master?.name ?? "Petra", company?.mission ?? ""),
 	);
 }
 

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createMemoryBus, createRepositories, saveWorkspace, squadId, traceFor } from "@tensquads/adapters";
 import { type AgentImage, assembleTiles, type BusEvent, EMPTY_INBOX, TASKS_DONE_LABEL } from "@tensquads/domain";
+import { characterName } from "@tensquads/squadmates";
 import { sql } from "drizzle-orm";
 import { extractDesign } from "../../../scripts/extract-design.mjs";
 import { openPglite } from "../../adapters/test/pglite.ts";
@@ -98,7 +99,7 @@ test("the seed computes the nine numbers", async () => {
 		assert.equal(thread?.messages.length, 5);
 		const store = await repos.bus.readStore(demo);
 		assert.equal(store["policy.refund_auto_limit"], 50);
-		assert.equal((await repos.squads.master(demo))?.name, "Master");
+		assert.equal((await repos.squads.master(demo))?.name, "Petra");
 	} finally {
 		await opened.close();
 	}
@@ -131,7 +132,7 @@ test("the repository matches the design extract, field by field, in design order
 			await repos.squads.listSquads(demo),
 			squads.filter((squad) => squad.accountId === "demo"),
 		);
-		assert.deepEqual(await repos.squads.listAgents(demo), design.seed.agents);
+		assert.deepEqual(await repos.squads.listAgents(demo), shownNames(design.seed.agents));
 		assert.deepEqual(await repos.bus.listEvents(demo), design.seed.bus);
 		const store = await repos.bus.readStore(demo);
 		assert.deepEqual(store, design.seed.store);
@@ -143,7 +144,7 @@ test("the repository matches the design extract, field by field, in design order
 		assert.deepEqual(await repos.policy.listMissionProposals(demo), design.seed.missionProposals);
 		assert.deepEqual((await repos.conversation.thread(demo))?.messages, design.seed.chat);
 		assert.deepEqual(await repos.platform.dailyRevenue(demo), revenue);
-		assert.deepEqual(await repos.catalog.listImages(platform), design.seed.images);
+		assert.deepEqual(await repos.catalog.listImages(platform), shownNames(design.seed.images));
 
 		await reverseSort(opened.db);
 		assert.deepEqual(await repos.platform.listPlans(platform), [...plans].reverse());
@@ -152,7 +153,7 @@ test("the repository matches the design extract, field by field, in design order
 			[...accounts].reverse().map((account) => ({ ...account, squads: [...account.squads].reverse() })),
 		);
 		assert.deepEqual(await repos.squads.listSquads(platform), [...squads].reverse());
-		assert.deepEqual(await repos.squads.listAgents(demo), reverseAgents(design.seed.agents));
+		assert.deepEqual(await repos.squads.listAgents(demo), shownNames(reverseAgents(design.seed.agents)));
 		assert.deepEqual(await repos.bus.listEvents(demo), [...design.seed.bus].reverse());
 		assert.deepEqual(Object.keys(await repos.bus.readStore(demo)), [...Object.keys(design.seed.store)].reverse());
 		assert.deepEqual(await repos.policy.listRules(demo), [...design.seed.rules].reverse());
@@ -160,7 +161,7 @@ test("the repository matches the design extract, field by field, in design order
 		assert.deepEqual(await repos.policy.listMissionProposals(demo), [...design.seed.missionProposals].reverse());
 		assert.deepEqual((await repos.conversation.thread(demo))?.messages, [...design.seed.chat].reverse());
 		assert.deepEqual(await repos.platform.dailyRevenue(demo), [...revenue].reverse());
-		assert.deepEqual(await repos.catalog.listImages(platform), reverseImages(design.seed.images));
+		assert.deepEqual(await repos.catalog.listImages(platform), shownNames(reverseImages(design.seed.images)));
 	} finally {
 		await opened.close();
 	}
@@ -191,6 +192,10 @@ async function reverseSort(db: { execute: (query: ReturnType<typeof sql>) => Pro
 		await db.execute(sql`UPDATE ${sql.identifier(table)} SET sort_order = -sort_order`);
 	}
 	await db.execute(sql`UPDATE bus_events SET seq = -seq`);
+}
+
+function shownNames<T extends { readonly id: string; readonly name: string }>(rows: readonly T[]): T[] {
+	return rows.map((row) => ({ ...row, name: characterName(row.id) ?? row.name }));
 }
 
 function reverseAgents(agents: readonly (typeof design.seed.agents)[number][]) {

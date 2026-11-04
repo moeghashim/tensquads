@@ -14,6 +14,7 @@ export interface OverviewBarView {
 
 export interface OverviewProposalView {
 	readonly id: string;
+	readonly agentId: string;
 	readonly agentName: string;
 	readonly tint: string;
 	readonly title: string;
@@ -25,6 +26,7 @@ export interface OverviewProposalView {
 
 export interface OverviewApprovalView {
 	readonly id: string;
+	readonly agentId: string;
 	readonly agentName: string;
 	readonly tint: string;
 	readonly amount: string;
@@ -37,6 +39,7 @@ export interface OverviewAgentView {
 	readonly name: string;
 	readonly role: string;
 	readonly tint: string;
+	readonly on: boolean;
 	readonly last: string;
 	readonly tasks: number;
 	readonly success: string;

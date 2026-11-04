@@ -4,8 +4,10 @@ import test from "node:test";
 
 import {
 	AGENT_LOOP_STATES,
+	characterName,
 	SQUADMATE_CSS,
 	SQUADMATES,
+	shownRoleTag,
 	squadmateMarkup,
 	UnknownSquadmateError,
 	UnknownSquadmateStateError,
@@ -31,6 +33,11 @@ test("the roster is the task table", () => {
 	);
 	assert.equal(SQUADMATES.find((mate) => mate.id === "master")?.role, "Master");
 	assert.equal(SQUADMATES.find((mate) => mate.id === "hr")?.prop, "badge");
+	assert.equal(characterName("orders"), "Pisa");
+	assert.equal(characterName("master"), "Petra");
+	assert.equal(characterName("not-a-squadmate"), null);
+	assert.equal(shownRoleTag("orders"), "Orders");
+	assert.equal(shownRoleTag("master"), null);
 });
 
 test("the nine Agent loop states stay in model order", () => {

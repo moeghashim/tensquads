@@ -3,6 +3,7 @@ import type { Page } from "@playwright/test";
 import { compareInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
+import { rewriteFrameInventory } from "./squadmate-copy.ts";
 import {
 	expectLabeledInputs,
 	expectNamedButtons,
@@ -18,7 +19,7 @@ import { expect, generatedEvents, installLocalFonts, mainSection, openWorkspace,
 const marketingResult = "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.";
 const noAgent =
 	"That one I can answer myself, no agent needed. Ask me about orders, refunds, ads, profit or stock and I will hand it to the right agent.";
-const paused = "That is a job for the Inventory agent, but it is paused. Turn it on in Agents and ask me again.";
+const paused = "That is a job for the Giza agent, but it is paused. Turn it on in Agents and ask me again.";
 // Parallel resets share the workspace lock with each send, so a full run waits longer than one send.
 const dockReplyTimeout = 30_000;
 
@@ -43,7 +44,7 @@ test("the sidebar marks the current page and the agent rows show status and open
 	await expect(page.getByText("Runs 5 squads · Demo store")).toBeVisible();
 	await expect(page.getByText("Moe Ghashim")).toBeVisible();
 	const overview = page.getByRole("button", { name: "Overview" });
-	const chat = page.getByRole("button", { name: "Chat with the master" });
+	const chat = page.getByRole("button", { name: "Chat with Petra" });
 	await expect(overview).toHaveCSS("font-weight", "600");
 	await expect(overview).toHaveCSS("color", "rgb(13, 13, 13)");
 	await expect(chat).toHaveCSS("font-weight", "400");
@@ -73,7 +74,7 @@ test("the sidebar marks the current page and the agent rows show status and open
 
 test("the dock shows the badge, opens the panel, and hides on the chat page", async ({ page, workspaceUser }) => {
 	await openWorkspace(page, workspaceUser);
-	const launcher = page.getByRole("button", { name: "Ask Master" });
+	const launcher = page.getByRole("button", { name: "Ask Petra" });
 	await expect(launcher).toHaveAttribute("aria-expanded", "false");
 	await expect(page.locator("[data-if='dockUnread']")).toHaveText("4");
 	await expect(page.getByText("Did the tracking for #A-1007 go through?")).toHaveCount(0);
@@ -86,12 +87,12 @@ test("the dock shows the badge, opens the panel, and hides on the chat page", as
 	await page.locator("#dock-input").fill("keep this");
 	await page.getByRole("button", { name: "Rules and limits" }).click();
 	await expect(page.locator("#dock-input")).toHaveValue("keep this");
-	await page.getByRole("button", { name: "Chat with the master" }).click();
+	await page.getByRole("button", { name: "Chat with Petra" }).click();
 	await expect(page).toHaveURL(/\/chat$/);
-	await expect(page).toHaveTitle("Chat with the master");
-	await expect(page.getByRole("button", { name: "Ask Master" })).toHaveCount(0);
+	await expect(page).toHaveTitle("Chat with Petra");
+	await expect(page.getByRole("button", { name: "Ask Petra" })).toHaveCount(0);
 	await expect(page.getByRole("button", { name: "Hide chat" })).toHaveCount(0);
-	await expect(page.getByRole("heading", { level: 1, name: "Master" })).toBeVisible();
+	await expect(page.getByRole("heading", { level: 1, name: "Petra" })).toBeVisible();
 	await page.getByRole("button", { name: "Overview" }).click();
 	await expect(page.locator("#dock-input")).toHaveValue("keep this");
 });
@@ -103,13 +104,13 @@ test("a dock message shows the bubble, the working line, the reply, and writes t
 }) => {
 	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
-	await page.getByRole("button", { name: "Ask Master" }).click();
+	await page.getByRole("button", { name: "Ask Petra" }).click();
 	await page.locator("#dock-input").fill("How did ads do this week?");
 	await page.getByRole("button", { name: "Send" }).click();
 	const chat = page.locator("[data-loop='dockChat']");
 	await expect(chat.getByText("How did ads do this week?")).toBeVisible({ timeout: dockReplyTimeout });
-	await expect(chat.getByText("Passing this to the Marketing agent. I will report back here.")).toBeVisible();
-	await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
+	await expect(chat.getByText("Passing this to the Rio agent. I will report back here.")).toBeVisible();
+	await expect(page.getByText("Rio agent is working on it…")).toBeVisible();
 	await expect(chat.getByText(marketingResult)).toBeVisible({ timeout: dockReplyTimeout });
 	await expect(page.getByText("Did the tracking for #A-1007 go through?")).toHaveCount(0);
 	await expect(page.locator("[data-loop='dockChat'] > div")).toHaveCount(6);
@@ -124,7 +125,7 @@ test("a dock message shows the bubble, the working line, the reply, and writes t
 test("a message with no agent gets the master answer and no event", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
-	await page.getByRole("button", { name: "Ask Master" }).click();
+	await page.getByRole("button", { name: "Ask Petra" }).click();
 	await page.getByRole("button", { name: "How did ads do this week?" }).waitFor();
 	await page.locator("#dock-input").fill("Hello there");
 	await page.getByRole("button", { name: "Send" }).click();
@@ -137,7 +138,7 @@ test("a message with no agent gets the master answer and no event", async ({ pag
 test("a message to a paused agent gets the paused answer and no event", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
-	await page.getByRole("button", { name: "Ask Master" }).click();
+	await page.getByRole("button", { name: "Ask Petra" }).click();
 	await page.locator("#dock-input").fill("Is anything low on stock?");
 	await page.getByRole("button", { name: "Send" }).click();
 	await expect(page.getByText(paused)).toBeVisible({ timeout: dockReplyTimeout });
@@ -148,7 +149,7 @@ test("a message to a paused agent gets the paused answer and no event", async ({
 test("an empty message or a second send does nothing", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
-	await page.getByRole("button", { name: "Ask Master" }).click();
+	await page.getByRole("button", { name: "Ask Petra" }).click();
 	await page.locator("#dock-input").fill("   ");
 	await page.locator("#dock-input").press("Enter");
 	await expect(page.locator("[data-loop='dockChat'] > div")).toHaveCount(5);
@@ -169,7 +170,7 @@ test("an empty message or a second send does nothing", async ({ page, workspaceU
 test("the closed and open frame match the sidebar and dock inventory", async ({ page, workspaceUser }) => {
 	await openWorkspace(page, workspaceUser);
 	await expectSame(page, false);
-	await page.getByRole("button", { name: "Ask Master" }).click();
+	await page.getByRole("button", { name: "Ask Petra" }).click();
 	await expectSame(page, true);
 });
 
@@ -179,7 +180,7 @@ test("the frame has no accessibility violations", async ({ page, workspaceUser }
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		// The screen body is blank. Its heading arrives with the screen task. A heading here would add text.
 		expect(await accessibilityViolations(page, ["page-has-heading-one"])).toEqual([]);
-		await page.getByRole("button", { name: "Ask Master" }).click();
+		await page.getByRole("button", { name: "Ask Petra" }).click();
 		expect(await accessibilityViolations(page, ["page-has-heading-one"])).toEqual([]);
 		await page.getByRole("button", { name: "Hide chat" }).click();
 	}
@@ -192,7 +193,7 @@ test("the frame names its controls and fits the width", async ({ page, workspace
 		await expectNamedButtons(page);
 		await expectLabeledInputs(page);
 		await expectNoHorizontalScroll(page);
-		await page.getByRole("button", { name: "Ask Master" }).click();
+		await page.getByRole("button", { name: "Ask Petra" }).click();
 		await expectNamedButtons(page);
 		await expectLabeledInputs(page);
 		await expectNoHorizontalScroll(page);
@@ -207,7 +208,7 @@ test("the keyboard reaches the dock, shows the focus ring, and Enter sends", asy
 }) => {
 	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
-	await page.getByRole("button", { name: "Ask Master" }).click();
+	await page.getByRole("button", { name: "Ask Petra" }).click();
 	await expect(page.getByRole("button", { name: "Hide chat" })).toBeFocused();
 	await page.keyboard.press("Shift+Tab");
 	const send = page.getByRole("button", { name: "Send" });
@@ -226,7 +227,7 @@ test("the keyboard reaches the dock, shows the focus ring, and Enter sends", asy
 
 test("the message list focus ring is 2 px blue with a 2 px offset", async ({ page, workspaceUser }) => {
 	await openWorkspace(page, workspaceUser);
-	await page.getByRole("button", { name: "Ask Master" }).click();
+	await page.getByRole("button", { name: "Ask Petra" }).click();
 	await page.getByRole("button", { name: "Close chat" }).focus();
 	await page.keyboard.press("Tab");
 	const ring = await page.evaluate(() => {
@@ -258,7 +259,7 @@ test("the side-by-side evidence shows the design and the build", async ({ page, 
 		const closedBuild = await shot(page);
 		const closedDesign = await designShot(page, viewport.width, viewport.height, false);
 		await stitch(page, closedDesign, closedBuild, `${dir}/side-by-side-${viewport.name}.png`);
-		await page.getByRole("button", { name: "Ask Master" }).click();
+		await page.getByRole("button", { name: "Ask Petra" }).click();
 		await waitForScreenFonts(page);
 		const openBuild = await shot(page);
 		const openDesign = await designShot(page, viewport.width, viewport.height, true);
@@ -269,7 +270,7 @@ test("the side-by-side evidence shows the design and the build", async ({ page, 
 
 test("the frame boxes match the rendered design at 1440 and 390", async ({ page, workspaceUser }) => {
 	await openWorkspace(page, workspaceUser);
-	await page.getByRole("button", { name: "Ask Master" }).click();
+	await page.getByRole("button", { name: "Ask Petra" }).click();
 	for (const viewport of viewports) {
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		await waitForScreenFonts(page);
@@ -295,7 +296,7 @@ test("the frame matches the macOS screenshot baselines", async ({ page, workspac
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		await waitForScreenFonts(page);
 		await expect(page).toHaveScreenshot(`frame-closed-${viewport.name}.png`, { fullPage: true });
-		await page.getByRole("button", { name: "Ask Master" }).click();
+		await page.getByRole("button", { name: "Ask Petra" }).click();
 		await waitForScreenFonts(page);
 		await expect(page).toHaveScreenshot(`frame-open-${viewport.name}.png`, { fullPage: true });
 		await page.getByRole("button", { name: "Hide chat" }).click();
@@ -324,7 +325,7 @@ function expectMatch(
 		links: unknown[];
 	},
 ) {
-	const diff = compareInventory(design, built);
+	const diff = compareInventory(rewriteFrameInventory(design), built);
 	expect(diff.extraTexts).toEqual([]);
 	expect(diff.missingTexts).toEqual([]);
 	expect(diff.extraHandlers).toEqual([]);
@@ -467,7 +468,9 @@ async function measureFrame(page: Page) {
 			const box = element.getBoundingClientRect();
 			return { x: box.x, y: box.y, width: box.width, height: box.height, right: box.right, bottom: box.bottom };
 		};
-		const panelElement = document.querySelector("section[aria-label='Chat with the master']");
+		const panelElement = document.querySelector(
+			"section[aria-label='Chat with Petra'], section[aria-label='Chat with the master']",
+		);
 		const panel = panelElement ? boxOf(panelElement) : null;
 		const nav = document.querySelector("nav[aria-label='Workspace']");
 		const rows = nav

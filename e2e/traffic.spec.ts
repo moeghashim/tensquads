@@ -6,6 +6,7 @@ import { openPostgres, schema } from "@tensquads/adapters";
 import { and, asc, eq } from "drizzle-orm";
 import { compareInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
+import { chipsThenOptions, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import {
 	expectLabeledInputs,
 	expectNamedButtons,
@@ -42,7 +43,7 @@ test("traffic shows the hub, the chips, the list, the inspector, the state table
 	await expect(page.getByRole("region", { name: "Squad map" })).toBeVisible();
 	await expect(page.getByRole("region", { name: "Message log" })).toBeVisible();
 	await expect(page.getByRole("complementary", { name: "Message details" })).toBeVisible();
-	await expect(page.getByRole("heading", { name: "Shared state held by Master" })).toBeVisible();
+	await expect(page.getByRole("heading", { name: "Shared state held by Petra" })).toBeVisible();
 	await expect(
 		page.locator("[data-loop='filters']").getByRole("button", { name: "All agents", exact: true }),
 	).toBeVisible();
@@ -78,7 +79,7 @@ test("an event click fills the inspector", async ({ page, workspaceUser }) => {
 	await openTraffic(page, workspaceUser);
 	await page.locator("[data-loop='busView']").getByText(financeText).click();
 	const details = page.getByRole("complementary", { name: "Message details" });
-	await expect(details.getByText("Finance → Master")).toBeVisible();
+	await expect(details.getByText("Zurich → Petra")).toBeVisible();
 	await expect(details.locator("dd", { hasText: /^quickbooks\.pnl$/ })).toBeVisible();
 	await expect(details.locator("dd", { hasText: /^tr_faa0ac$/ })).toBeVisible();
 	await expect(
@@ -154,7 +155,7 @@ test("send next event adds the event, selects it and updates the state table", a
 test("a filter chip filters the list and All agents clears it", async ({ page, workspaceUser }) => {
 	await openTraffic(page, workspaceUser);
 	const chips = page.locator("[data-loop='filters']");
-	await chips.getByRole("button", { name: "Orders", exact: true }).click();
+	await chips.getByRole("button", { name: "Pisa", exact: true }).click();
 	await expect(page.locator("[data-loop='busView']").getByText(financeText)).toHaveCount(0);
 	await expect(page.locator("[data-loop='busView']").getByText(sweatshirt)).toBeVisible();
 	await chips.getByRole("button", { name: "All agents", exact: true }).click();
@@ -200,7 +201,7 @@ test("an empty bus shows blank inspector values and None", async ({ page, worksp
 	).toHaveText("None");
 	await expect(details.locator("pre")).toHaveText("");
 	await expect(details.getByRole("heading", { name: "Message" }).locator("xpath=..").locator("span")).toHaveCount(0);
-	await expect(page.getByRole("heading", { name: "Shared state held by Master" })).toBeVisible();
+	await expect(page.getByRole("heading", { name: "Shared state held by Petra" })).toBeVisible();
 	await expect(page.getByText("policy.refund_auto_limit")).toBeVisible();
 });
 
@@ -247,7 +248,7 @@ test("the traffic boxes match the rendered design at 1440 and 390", async ({ pag
 
 test("the traffic inventory matches the flow view", async ({ page, workspaceUser }) => {
 	await openTraffic(page, workspaceUser);
-	const design = await designInventory(page);
+	const design = rewriteBuiltInventory(await designInventory(page), chipsThenOptions);
 	const built = await flowInventory(page);
 	const diff = compareInventory(design, built);
 	expect(diff.extraTexts).toEqual([]);
@@ -406,6 +407,7 @@ async function trafficViolations(page: Page) {
 	const contrast = await new AxeBuilder({ page })
 		.withRules(["color-contrast"])
 		.exclude("section[aria-label='Squad map'] button[style*='#f3f3f3']")
+		.exclude("[data-design-contrast='squadmate-role-tag']")
 		.analyze();
 	return [...full.violations, ...scroll.violations, ...contrast.violations];
 }

@@ -61,7 +61,7 @@ const boards = [
 	{ name: "390", width: 390, height: 1300 },
 ] as const;
 
-const pendingMission = "No mission yet. Master has proposed one; approve it in the inbox on the Overview.";
+const pendingMission = "No mission yet. Petra has proposed one; approve it in the inbox on the Overview.";
 const supportMission = "Answer every customer within an hour and keep satisfaction above 4.5.";
 const noTargets = "No targets until the mission is approved.";
 const settled = { timeout: 15_000 };
@@ -76,7 +76,7 @@ function wait(ms: number) {
 test("the dashboard shows every section for one agent", async ({ page, workspaceUser }) => {
 	test.setTimeout(60_000);
 	await openAgent(page, workspaceUser, "support");
-	await expect(page.getByRole("heading", { level: 1, name: "Support squad" })).toBeVisible();
+	await expect(page.getByRole("heading", { level: 1, name: "Kyoto squad" })).toBeVisible();
 	await expect(page.getByRole("button", { name: "All squads", exact: true })).toBeVisible();
 	for (const name of ["Mission", "Squad numbers", "Skills", "Sandbox", "Messages"]) {
 		await expect(page.getByRole("region", { name })).toBeVisible();
@@ -95,7 +95,7 @@ test("the dashboard shows every section for one agent", async ({ page, workspace
 	await expect(messages).toHaveCount(3);
 	await expect(messages.nth(0)).toContainText("10:55");
 	await expect(messages.nth(0)).toContainText("Escalation");
-	await expect(messages.nth(0)).toContainText("Support → Master");
+	await expect(messages.nth(0)).toContainText("Kyoto → Petra");
 	await expect(messages.nth(1)).toContainText("10:44");
 	await expect(messages.nth(1)).toContainText("Relay");
 	await expect(messages.nth(2)).toContainText("10:43");
@@ -533,7 +533,7 @@ test("pending agent writes survive leaving and returning to the dashboard", asyn
 		await expect(page).toHaveURL(/\/agents$/);
 		await page
 			.getByRole("navigation", { name: "Workspace" })
-			.getByRole("button", { name: "Support Running", exact: true })
+			.getByRole("button", { name: "Kyoto Support Running", exact: true })
 			.click();
 		await expect(page).toHaveURL(/\/agents\/support$/);
 		await expect(skill).toHaveAttribute("aria-pressed", "false");
@@ -589,7 +589,7 @@ test("revision shares the per-agent queue and still opens overview", async ({ pa
 	try {
 		await skillRow(page, "inbox.read").getByRole("button").click();
 		await expect.poll(() => held.posts.length).toBe(1);
-		await page.getByRole("button", { name: "Ask Master to revise" }).click();
+		await page.getByRole("button", { name: "Ask Petra to revise" }).click();
 		await expect(page).toHaveURL(/\/overview$/);
 		await wait(1_000);
 		expect(held.posts).toHaveLength(1);
@@ -696,11 +696,11 @@ test("a confirmed skill write survives a later loader failure", async ({ page, w
 			.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.read"), settled)
 			.toBe(false);
 		await expect(button).toHaveAttribute("aria-pressed", "false");
-		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Kyoto squad", exact: true })).toBeVisible();
 		await wait(PENDING_TASK_WINDOW_MS + 1_000);
 		expect(reads).toBe(0);
 		await expect(button).toHaveAttribute("aria-pressed", "false");
-		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Kyoto squad", exact: true })).toBeVisible();
 	} finally {
 		await page.unroute(pattern, handler);
 	}
@@ -730,11 +730,11 @@ test("a committed skill write stays on screen when the read fails", async ({ pag
 			.poll(async () => skillFlag(await readAgent(accountId, "support"), "inbox.read"), settled)
 			.toBe(false);
 		await expect(button).toHaveAttribute("aria-pressed", "false");
-		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Kyoto squad", exact: true })).toBeVisible();
 		await wait(PENDING_TASK_WINDOW_MS + 1_000);
 		expect(reads).toBe(0);
 		await expect(button).toHaveAttribute("aria-pressed", "false");
-		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Kyoto squad", exact: true })).toBeVisible();
 	} finally {
 		await page.unroute(pattern, handler);
 	}
@@ -779,10 +779,10 @@ test("a failed off write recovers the successful held on response", async ({ pag
 		await expect.poll(() => posts, settled).toBe(2);
 		await expect(button).toHaveAttribute("aria-pressed", "true", settled);
 		expect(skillFlag(await readAgent(accountId, "support"), "inbox.read")).toBe(true);
-		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Kyoto squad", exact: true })).toBeVisible();
 		await wait(PENDING_TASK_WINDOW_MS + 1_000);
 		await expect(button).toHaveAttribute("aria-pressed", "true");
-		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Kyoto squad", exact: true })).toBeVisible();
 	} finally {
 		release();
 		await page.unroute(pattern, handler);
@@ -834,11 +834,11 @@ test("a held recovery read cannot undo a successful off response", async ({ page
 		release();
 		await expect.poll(() => released, settled).toBe(true);
 		await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "false");
-		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Kyoto squad", exact: true })).toBeVisible();
 		await wait(PENDING_TASK_WINDOW_MS + 1_000);
 		await expect(squadSwitch(page)).toHaveAttribute("aria-pressed", "false");
 		expect((await readAgent(accountId, "support")).isOn).toBe(false);
-		await expect(page.getByRole("heading", { name: "Support squad", exact: true })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Kyoto squad", exact: true })).toBeVisible();
 	} finally {
 		release();
 		await page.unroute(pattern, handler);
@@ -852,7 +852,7 @@ test("revise opens overview while its write and a skill write are held", async (
 	try {
 		await skillRow(page, "inbox.read").getByRole("button").click();
 		await expect.poll(() => held.posts.length).toBe(1);
-		await page.getByRole("button", { name: "Ask Master to revise" }).click();
+		await page.getByRole("button", { name: "Ask Petra to revise" }).click();
 		await expect(page).toHaveURL(/\/overview$/);
 		await wait(1_000);
 		expect(held.posts).toHaveLength(1);
@@ -955,7 +955,7 @@ test("ask to revise adds one proposal and opens overview, and a repeat adds none
 	test.setTimeout(90_000);
 	await openAgent(page, workspaceUser, "support");
 	expect(await readAgent(accountId, "support")).toMatchObject({ proposals: [] });
-	await page.getByRole("button", { name: "Ask Master to revise" }).click();
+	await page.getByRole("button", { name: "Ask Petra to revise" }).click();
 	await expect(page).toHaveURL(/\/overview$/, settled);
 	await expect(page).toHaveTitle("tensquads workspace");
 	await expect.poll(async () => (await readAgent(accountId, "support")).proposals.length, settled).toBe(1);
@@ -966,7 +966,7 @@ test("ask to revise adds one proposal and opens overview, and a repeat adds none
 	expect(created[0]?.id).toMatch(/^mp-support-\d+$/);
 	await page.goto("/agents/support");
 	await expect(page).toHaveTitle("Agent dashboard");
-	await page.getByRole("button", { name: "Ask Master to revise" }).click();
+	await page.getByRole("button", { name: "Ask Petra to revise" }).click();
 	await expect(page).toHaveURL(/\/overview$/, settled);
 	const repeat = (await readAgent(accountId, "support")).proposals;
 	expect(repeat).toEqual(created);
@@ -977,7 +977,7 @@ test("ask to revise adds one proposal and opens overview, and a repeat adds none
 	expect(before.map((proposal) => ({ id: proposal.id, status: proposal.status }))).toEqual([
 		{ id: "mp-inventory", status: "Proposed" },
 	]);
-	await page.getByRole("button", { name: "Ask Master to revise" }).click();
+	await page.getByRole("button", { name: "Ask Petra to revise" }).click();
 	await expect(page).toHaveURL(/\/overview$/, settled);
 	const after = (await readAgent(accountId, "inventory")).proposals;
 	expect(after.map((proposal) => ({ id: proposal.id, status: proposal.status }))).toEqual([
@@ -1329,7 +1329,7 @@ test("a held chat send and a held agent write both keep their results", async ({
 	const ownReply =
 		"That one I can answer myself, no agent needed. Ask me about orders, refunds, ads, profit or stock and I will hand it to the right agent.";
 	await openAgent(page, workspaceUser, "support");
-	await page.getByRole("button", { name: "M Ask Master" }).click();
+	await page.getByRole("button", { name: /^Ask Petra( \d+)?$/ }).click();
 	let posts = 0;
 	let finishContinued = 0;
 	let releaseFinish = () => undefined;
@@ -1350,7 +1350,7 @@ test("a held chat send and a held agent write both keep their results", async ({
 	try {
 		await page.locator("#dock-input").fill("How did ads do this week?");
 		await page.getByRole("button", { name: "Send" }).click();
-		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible(settled);
+		await expect(page.getByText("Rio agent is working on it…")).toBeVisible(settled);
 		await expect.poll(() => posts, settled).toBe(2);
 		await squadSwitch(page).click();
 		await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(false);
@@ -1407,7 +1407,7 @@ test("a held chat finish still writes the reply after support is off and a later
 	test.setTimeout(120_000);
 	const reply = "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.";
 	await openAgent(page, workspaceUser, "support");
-	await page.getByRole("button", { name: "M Ask Master" }).click();
+	await page.getByRole("button", { name: /^Ask Petra( \d+)?$/ }).click();
 	const tasksBefore = await taskSum(accountId);
 	const marketingBefore = await agentTaskCount(accountId, "marketing");
 	const inventoryBefore = await agentTaskCount(accountId, "inventory");
@@ -1431,7 +1431,7 @@ test("a held chat finish still writes the reply after support is off and a later
 	try {
 		await page.locator("#dock-input").fill("How did ads do this week?");
 		await page.getByRole("button", { name: "Send" }).click();
-		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible(settled);
+		await expect(page.getByText("Rio agent is working on it…")).toBeVisible(settled);
 		await expect.poll(() => posts, settled).toBe(2);
 		await squadSwitch(page).click();
 		await expect.poll(async () => (await readAgent(accountId, "support")).isOn, settled).toBe(false);

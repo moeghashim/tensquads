@@ -151,7 +151,7 @@ async function withDock(t, run) {
 		const mount = async () => {
 			await page.setContent('<div id="root"></div>');
 			await page.addScriptTag({ content: bundle.outputFiles[0].text });
-			await page.getByRole("button", { name: "Ask Master" }).click();
+			await page.getByRole("button", { name: "Ask Petra" }).click();
 		};
 		await mount();
 		await run({ page, db, scope, faults, mount });
@@ -168,7 +168,7 @@ async function send(page) {
 }
 
 async function advanceReply(page) {
-	await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
+	await expect(page.getByText("Rio agent is working on it…")).toBeVisible();
 	await page.clock.fastForward(1400);
 }
 
@@ -198,7 +198,7 @@ test("reload during Working retains the first Task and a later send replies", as
 	await withDock(t, async ({ page, db, scope, mount }) => {
 		await page.clock.install();
 		await send(page);
-		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
+		await expect(page.getByText("Rio agent is working on it…")).toBeVisible();
 		await page.reload();
 		await mount();
 		await expect(page.locator("#pending")).toHaveText("false");
@@ -230,7 +230,7 @@ test("a lost finish response recovers the saved reply and approval count", async
 		await page.clock.install();
 		faults.finish = true;
 		await send(page);
-		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
+		await expect(page.getByText("Rio agent is working on it…")).toBeVisible();
 		await page.evaluate(() => {
 			window.holdLoader = true;
 		});
@@ -258,7 +258,7 @@ test("a failed recovery read releases the send guard and older loaders cannot re
 		await expect(page.locator("#pending")).toHaveText("false");
 		const older = await readWorkspaceFrame(db, scope);
 		await send(page);
-		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
+		await expect(page.getByText("Rio agent is working on it…")).toBeVisible();
 		await page.evaluate((frame) => {
 			window.nextLoaderFrame = frame;
 			return window.router.invalidate({ sync: true });
@@ -287,7 +287,7 @@ test("saved bubbles stay while invalidation completes before the loader frame is
 		});
 		await page.waitForFunction(() => !window.router.state.isLoading);
 		await send(page);
-		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
+		await expect(page.getByText("Rio agent is working on it…")).toBeVisible();
 		await page.evaluate(() => {
 			window.holdLoader = true;
 		});
@@ -328,7 +328,7 @@ test("a finish request that never settles releases the guard and accepts another
 		const readsBefore = await page.evaluate(() => window.reads);
 		await page.clock.fastForward(PENDING_TASK_WINDOW_MS);
 		await expect(page.locator("#pending")).toHaveText("false");
-		await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0);
+		await expect(page.getByText("Rio agent is working on it…")).toHaveCount(0);
 		const readsAfter = await page.evaluate(() => window.reads);
 		assert.ok(readsAfter > readsBefore);
 		t.mock.timers.tick(PENDING_TASK_WINDOW_MS + 1);
@@ -355,7 +355,7 @@ test("a begin request that never settles releases the guard and accepts another 
 		await expect(page.locator("#pending")).toHaveText("true");
 		await page.clock.fastForward(PENDING_TASK_WINDOW_MS);
 		await expect(page.locator("#pending")).toHaveText("false");
-		await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0);
+		await expect(page.getByText("Rio agent is working on it…")).toHaveCount(0);
 		await page.evaluate(() => {
 			window.beginSend = window.realBegin;
 		});
@@ -381,10 +381,10 @@ test("a refresh that never settles releases the guard and accepts another send",
 		await advanceReply(page);
 		await expect.poll(() => page.evaluate(() => window.refreshHeld)).toBe(true);
 		await expect(page.locator("#pending")).toHaveText("true");
-		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
+		await expect(page.getByText("Rio agent is working on it…")).toBeVisible();
 		await page.clock.fastForward(PENDING_TASK_WINDOW_MS);
 		await expect(page.locator("#pending")).toHaveText("false");
-		await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0);
+		await expect(page.getByText("Rio agent is working on it…")).toHaveCount(0);
 		await page.evaluate(() => {
 			window.router.invalidate = window.realInvalidate;
 		});
@@ -399,7 +399,7 @@ test("a failed refresh keeps returned messages and permits another send", async 
 	await withDock(t, async ({ page }) => {
 		await page.clock.install();
 		await send(page);
-		await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
+		await expect(page.getByText("Rio agent is working on it…")).toBeVisible();
 		await page.evaluate(() => {
 			window.rejectRefresh = true;
 		});

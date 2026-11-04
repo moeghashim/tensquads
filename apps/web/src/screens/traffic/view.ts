@@ -142,7 +142,7 @@ export function liveDot(live: boolean): string {
 export function filterStyle(on: boolean): string {
 	const background = on ? "#181818" : "rgba(13,13,13,.06)";
 	const color = on ? "#fff" : "#282828";
-	return `height: 28px; padding: 0 12px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 500; background: ${background}; color: ${color}`;
+	return `height: 28px; padding: 0 12px; border: 0; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; background: ${background}; color: ${color}`;
 }
 
 export function hubLine(selected: boolean): string {

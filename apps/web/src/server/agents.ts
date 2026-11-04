@@ -11,7 +11,7 @@ export const loadAgentsPage = createServerFn({ method: "GET" }).handler(async ()
 		const agents = await squads.listAgents(scope);
 		return {
 			accountId: scope.accountId,
-			masterName: master?.name ?? "Master",
+			masterName: master?.name ?? "Petra",
 			agents: agents.map(toCard),
 		};
 	});

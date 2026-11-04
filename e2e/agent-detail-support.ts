@@ -4,6 +4,7 @@ import { type AppDatabase, createTestMachine, type MachineRecord, openPostgres, 
 import { and, eq } from "drizzle-orm";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
+import { detailHeading, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import { readInventory, secretsFor, waitForScreenFonts } from "./support.ts";
 import { expect, installLocalFonts, openWorkspace, type WorkspaceUser } from "./workspace.ts";
 
@@ -120,7 +121,7 @@ export function expectMatch(
 		links: unknown[];
 	},
 ) {
-	const diff = compareInventory(design, built);
+	const diff = compareInventory(rewriteBuiltInventory(design, detailHeading), built);
 	expect(diff.extraTexts).toEqual([]);
 	expect(diff.missingTexts).toEqual([]);
 	expect(diff.extraHandlers).toEqual([]);
@@ -412,7 +413,7 @@ export function squadsNav(page: Page) {
 export function supportDot(page: Page, status: "Running" | "Paused") {
 	return page
 		.getByRole("navigation", { name: "Workspace" })
-		.getByRole("button", { name: `Support ${status}`, exact: true })
+		.getByRole("button", { name: `Kyoto Support ${status}`, exact: true })
 		.getByRole("img", { name: status });
 }
 

@@ -4,6 +4,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 import { chromium } from "@playwright/test";
+import { agentNames, rewriteBuiltInventory } from "../../e2e/squadmate-copy.ts";
 import { compareInventory, inventoryHtml } from "../design-inventory.mjs";
 import { allowFor } from "../inventory-allow.mjs";
 import { renderDesign } from "../render-design.mjs";
@@ -94,7 +95,8 @@ test("built screen inventories match each rendered design state and reject occur
 			await page.addScriptTag({ content: bundle.outputFiles[0].text });
 			await page.getByText("tensquads", { exact: true }).first().waitFor();
 			const compare = async (state = {}) => {
-				const expected = await renderDesign(canvas, design, state, allowFor(name));
+				const rendered = await renderDesign(canvas, design, state, allowFor(name));
+				const expected = name === "Onboarding" ? rewriteBuiltInventory(rendered, agentNames) : rendered;
 				const actual = await capture(page);
 				assert.deepEqual(compareInventory(expected, actual), emptyDiff);
 				return { expected, actual };

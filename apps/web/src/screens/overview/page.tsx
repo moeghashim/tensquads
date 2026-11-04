@@ -8,6 +8,7 @@ import { decideMissionOverview, decideOverview } from "#/server/overview.ts";
 import { missionBits } from "#/workspace/agent-view.ts";
 import { currentWrites } from "#/workspace/approval-count.ts";
 import { useRefresh, useWorkspacePage } from "#/workspace/context.ts";
+import { RoleTag, Squadmate } from "#/workspace/Squadmate.tsx";
 
 import {
 	acceptOverviewRead,
@@ -258,8 +259,16 @@ export function OverviewPage({ data }: { readonly data: OverviewData & { readonl
 							{shown.proposals.map((item, index) => (
 								<div key={item.id} style={css(proposal)}>
 									<div style={css(row)}>
-										<span style={css(tint(item.tint))} />
-										<span style={css(squad)}>{blankText(item.agentName)} squad</span>
+										<Squadmate
+											id={item.agentId}
+											on={agentOn(shown.agents, item.agentId)}
+											size={20}
+											decorative
+										/>
+										<span style={css(squad)}>
+											{blankText(item.agentName)}
+											<RoleTag id={item.agentId} /> squad
+										</span>
 										<span style={css(badge)}>Mission</span>
 									</div>
 									<div style={css(title)}>{item.title}</div>
@@ -317,8 +326,16 @@ export function OverviewPage({ data }: { readonly data: OverviewData & { readonl
 							{shown.approvals.map((item) => (
 								<div key={item.id} style={css(approval)}>
 									<div style={css(row)}>
-										<span style={css(tint(item.tint))} />
-										<span style={css(squad)}>{blankText(item.agentName)} squad</span>
+										<Squadmate
+											id={item.agentId}
+											on={agentOn(shown.agents, item.agentId)}
+											size={20}
+											decorative
+										/>
+										<span style={css(squad)}>
+											{blankText(item.agentName)}
+											<RoleTag id={item.agentId} /> squad
+										</span>
 										<span style={css(amount)}>{blankText(item.amount)}</span>
 									</div>
 									<div style={css(title)}>{blankText(item.title)}</div>
@@ -399,11 +416,12 @@ function AgentCard({
 	return (
 		<button type="button" data-handler="a.open" data-event="onClick" onClick={onOpen} style={css(card)}>
 			<div style={css(cardHead)}>
-				<span style={css(icon(agent.tint))}>
-					<AgentIcon />
-				</span>
+				<Squadmate id={agent.id} on={agent.on} size={28} decorative />
 				<div style={css(nameCol)}>
-					<span style={css(nameStyle)}>{blankText(agent.name)}</span>
+					<span style={css(nameStyle)}>
+						{blankText(agent.name)}
+						<RoleTag id={agent.id} />
+					</span>
 					<span style={css(roleStyle)}>{blankText(agent.role)}</span>
 				</div>
 			</div>
@@ -432,30 +450,8 @@ function AgentCard({
 	);
 }
 
-function AgentIcon() {
-	return (
-		<svg
-			width="16"
-			height="16"
-			viewBox="0 0 16 16"
-			fill="none"
-			stroke="#0d0d0d"
-			strokeWidth="1.5"
-			strokeLinecap="round"
-			aria-hidden="true"
-		>
-			<rect x="3" y="5" width="10" height="8" rx="2" />
-			<path d="M8 2.5V5M6 9h0M10 9h0" />
-		</svg>
-	);
-}
-
-function tint(color: string) {
-	return `width: 18px; height: 18px; border-radius: 5px; background: ${color}`;
-}
-
-function icon(color: string) {
-	return `width: 28px; height: 28px; border-radius: 8px; background: ${color}; display: flex; align-items: center; justify-content: center`;
+function agentOn(agents: readonly { readonly id: string; readonly on: boolean }[], id: string): boolean {
+	return agents.find((agent) => agent.id === id)?.on ?? true;
 }
 
 function missionLine(color: string) {

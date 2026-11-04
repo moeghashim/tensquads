@@ -17,6 +17,7 @@ const designContrastFaults = [
 	"admin-coming-next",
 	"admin-online-pill",
 	"admin-offline-count",
+	"squadmate-role-tag",
 ] as const;
 
 export async function accessibilityViolations(page: Page, disabledRules: readonly string[] = []) {

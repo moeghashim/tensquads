@@ -44,7 +44,7 @@ test("sign-up starts at business type and pre-selects the design squads", async 
 	await expect(page.getByText("Tell us about the business you want to start")).toBeVisible();
 	await expect(page.getByText("What will you sell, and to whom?")).toBeVisible();
 	await page.getByRole("button", { name: "Choose my squads" }).click();
-	await expect(page.getByText("3 squads and one master squad will be created.")).toBeVisible();
+	await expect(page.getByText("3 squads and Petra's squad will be created.")).toBeVisible();
 	await expect(page.getByRole("button", { name: /Drafts your launch campaign/ })).toHaveAttribute(
 		"aria-pressed",
 		"true",
@@ -75,7 +75,7 @@ test("an existing business shows its fields and four starter squads", async ({ p
 	await expect(under).toHaveAttribute("aria-pressed", "true");
 	await expect(mid).toHaveAttribute("aria-pressed", "false");
 	await page.getByRole("button", { name: "Choose my squads" }).click();
-	await expect(page.getByText("4 squads and one master squad will be created.")).toBeVisible();
+	await expect(page.getByText("4 squads and Petra's squad will be created.")).toBeVisible();
 	await expect(page.getByRole("button", { name: /Syncs tracking and chases the maker/ })).toHaveAttribute(
 		"aria-pressed",
 		"true",
@@ -114,7 +114,7 @@ test("the account step reuses the sign-in fields and blocks empty input", async 
 	await expect(page.getByRole("alert")).toHaveText("Enter your email and password to sign in.");
 	await expect(page).toHaveURL(/\/signup$/);
 	await page.getByRole("button", { name: "Back" }).click();
-	await expect(page.getByText("3 squads and one master squad will be created.")).toBeVisible();
+	await expect(page.getByText("3 squads and Petra's squad will be created.")).toBeVisible();
 });
 
 test("sign-up controls have labels", async ({ page }) => {
