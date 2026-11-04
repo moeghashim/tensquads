@@ -9,6 +9,7 @@ The chart hides Stay, ChangeAutonomy, RunSkill, EndSkill, OpenOlder, CommitNewer
 Run this check when a change touches any of these:
 
 - `packages/adapters/src/test-machine.ts`
+- `packages/adapters/src/boat-machine.ts`
 - `packages/kernel/src/ports.ts`
 - `packages/kernel/src/plugins/squads.ts`
 - `packages/adapters/src/neon/commands/agents.ts`
