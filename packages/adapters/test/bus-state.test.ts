@@ -48,10 +48,12 @@ test("store restores scoped Neon state once and keeps seeded keys after publicat
 		},
 	};
 	try {
-		await database.client.query(
-			`INSERT INTO accounts (id, account_id, name, owner, email, tint, agents, online, tasks, last_active, created_week, mission, sort_order) VALUES ($1, $1, '', '', '', '', 0, 0, 0, '', 0, '', 0)`,
-			[scope.accountId],
-		);
+		for (const accountId of [scope.accountId, "other-account"]) {
+			await database.client.query(
+				`INSERT INTO accounts (id, account_id, name, owner, email, tint, agents, online, tasks, last_active, created_week, mission, sort_order) VALUES ($1, $1, '', '', '', '', 0, 0, 0, '', 0, '', 0)`,
+				[accountId],
+			);
+		}
 		const seeded = { limit: 20, status: "ready", detail: { active: true }, absent: null };
 		await database.db.insert(stateEntries).values([
 			...Object.entries(seeded).map(([key, value]) => ({
