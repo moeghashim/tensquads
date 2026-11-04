@@ -3,6 +3,8 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { parse } from "yaml";
+import { suitePlan } from "../e2e-plan.mjs";
+import { parseToolToml } from "./parse-tool-toml.mjs";
 
 const root = new URL("../../", import.meta.url);
 const gate = parse(readFileSync(new URL(".no-mistakes.yaml", root), "utf8"));
@@ -43,20 +45,46 @@ test("no-mistakes makes no commits and does not declare a sign-off trailer", () 
 });
 
 test("mise.toml pins the TLC jar the model tests resolve", () => {
-	const toml = readFileSync(new URL("mise.toml", root), "utf8");
-	const lock = readFileSync(new URL("mise.lock", root), "utf8");
-	assert.match(toml, /"http:tla2tools"/);
-	assert.match(toml, /tla2tools\.jar/);
-	assert.match(toml, /sha256:936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88/);
-	assert.match(lock, /\[\[tools\."http:tla2tools"\]\]/);
+	const toml = parseToolToml(readFileSync(new URL("mise.toml", root), "utf8"));
+	const lock = parseToolToml(readFileSync(new URL("mise.lock", root), "utf8"));
+	assert.deepEqual(toml.tools["http:tla2tools"], {
+		version: "1.7.4",
+		url: "https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar",
+		checksum: "sha256:936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88",
+	});
+	assert.deepEqual(lock.tools["http:tla2tools"], [{ version: "1.7.4", backend: "http:tla2tools" }]);
 });
 
-test("the macOS app project uses one Playwright worker per CPU", () => {
-	const text = readFileSync(new URL("scripts/e2e.mjs", root), "utf8");
-	assert.match(text, /process\.platform === "darwin"/);
-	assert.match(text, /--workers=\$\{Math\.max\(2, cpus\(\)\.length\)\}/);
-	assert.match(text, /--workers=1/);
+test("tool TOML comments cannot supply tool settings", () => {
+	for (const file of ["mise.toml", "mise.lock"]) {
+		const text = readFileSync(new URL(file, root), "utf8");
+		const comments = text
+			.split("\n")
+			.map((line) => `# ${line}`)
+			.join("\n");
+		assert.deepEqual(parseToolToml(comments), {});
+		assert.deepEqual(parseToolToml(`${comments}\n[tools]\njava = "temurin-25" # ignored`), {
+			tools: { java: "temurin-25" },
+		});
+	}
 });
+
+for (const [ci, platform, cpuCount, workers] of [
+	[true, "darwin", 3, ["--workers=3"]],
+	[true, "darwin", 1, ["--workers=2"]],
+	[false, "darwin", 3, []],
+	[true, "linux", 3, []],
+	[false, "linux", 3, []],
+]) {
+	test(`Playwright suite plan: ci=${ci}, platform=${platform}, cpus=${cpuCount}`, () => {
+		const held = "a held account read commits no limit|a read held past the deadline cannot commit the queued writes";
+		assert.deepEqual(suitePlan(ci, platform, cpuCount), [
+			["--project", "app", "--grep-invert", held, ...workers],
+			["--project", "rules-fence", "--workers=1"],
+			["--project", "app", "--workers=1", "--grep", held],
+		]);
+	});
+}
 
 test("the mise cache is saved by actions/cache and keyed by the lock hash", () => {
 	const job = workflow.jobs["required-checks"];
