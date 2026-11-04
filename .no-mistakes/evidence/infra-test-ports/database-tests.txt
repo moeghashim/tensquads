@@ -1,0 +1,11 @@
+✔ a migration waits for an approval and neither side deadlocks (543.24875ms)
+✔ one account's writers exclude each other (276.044375ms)
+✔ two creates of one account do not interleave (317.726416ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10633.478792

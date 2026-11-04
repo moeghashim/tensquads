@@ -1,0 +1,24 @@
+Concurrent verify commands: A -> B -> C
+SIGKILL holder: successor-ran; exit status propagated: 23
+Explicit occupied 127.0.0.1:61029 rejected
+Ready worker reuses 127.0.0.1:61029
+Explicit occupied ::1:61030 rejected
+Ready worker reuses ::1:61030
+Automatic selection skips occupied ::1:35932 -> 35933
+Separate worker process inherits selected port 35933
+Current schema migrates while a live writer holds shared global lock
+Database lane persisted execution log:
+S1 start
+S2 start
+S1 end
+S2 end
+X start
+X end
+
+Selected Vite port 35933
+Worker reuses real Vite server port: 35933
+Two independent connections migrated the fresh database successfully
+Replacing account isolated-b completed while isolated-a fence remained held
+Same database: isolated-b replacement completed while isolated-a fence remained held
+Persisted account: [{"id":"isolated-b","clerk_user_id":"disposable-b"}]
+CI selected without probing occupied port: 3000

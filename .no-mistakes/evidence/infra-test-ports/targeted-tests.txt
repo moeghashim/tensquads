@@ -1,0 +1,17 @@
+✔ a set port is used and an invalid port is rejected (29.052709ms)
+✔ CI keeps port 3000 when the variable is unset (0.106375ms)
+✔ the worktree port is stable and a busy port is skipped (0.299208ms)
+✔ a chosen port that is already in use fails (0.408459ms)
+✔ an occupied ::1 port is skipped (23.22025ms)
+✔ a worker reuses a ready port while the server listens on ::1 (0.175083ms)
+✔ a ready marker does not bypass port validation (0.087458ms)
+✔ two commands on one lock file do not overlap (1382.536709ms)
+✔ SIGKILL of a holder releases the lock (91.034333ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1557.438625
