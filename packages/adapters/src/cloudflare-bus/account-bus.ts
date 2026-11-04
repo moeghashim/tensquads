@@ -91,7 +91,6 @@ export class AccountBus {
 	}
 
 	// The runtime calls fetch. No module in this repo calls it.
-	// fallow-ignore-next-line unused-class-member
 	async fetch(request: Request): Promise<Response> {
 		const handler = this.routes().get(new URL(request.url).pathname);
 		if (!handler) return new Response("missing", { status: 404 });
@@ -99,7 +98,6 @@ export class AccountBus {
 	}
 
 	// The runtime calls alarm. No module in this repo calls it.
-	// fallow-ignore-next-line unused-class-member
 	async alarm(): Promise<void> {
 		await this.flush();
 	}

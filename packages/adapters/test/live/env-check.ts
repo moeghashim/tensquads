@@ -1,7 +1,7 @@
 const boatKey = /^(BOAT_|ASCII_)/;
 const namedBoat = new Set(["AGENT_ID", "ENVIRONMENT_ID", "PRODUCT_MODE", "SERVICE_PREVIEW_TOKEN"]);
 
-export function machineEnvironment(stdout: string): Map<string, string> {
+function machineEnvironment(stdout: string): Map<string, string> {
 	const env = new Map<string, string>();
 	for (const line of stdout.split("\n")) {
 		const index = line.indexOf("=");
