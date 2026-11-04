@@ -167,7 +167,7 @@ export function agentDetailView(source: AgentDetailSource): AgentDetailView {
 		kpis: source.kpis.map(([label, value]) => ({ label: blank(label), value: blank(value) })),
 		skills: source.skills.map((skill) => ({
 			id: skill.id,
-			desc: blank(skill.desc),
+			desc: blank(skill.desc.replaceAll("the master", source.masterName)),
 			gate: skill.gate,
 			gateStyle: gateStyle(skill.gate),
 			runs: skill.runs,

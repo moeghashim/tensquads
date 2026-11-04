@@ -220,5 +220,6 @@ function rewriteProse(text: string): string {
 		.replaceAll("The master uses this to brief every squad.", "Petra uses this to brief every squad.")
 		.replaceAll("The master will propose a mission for each squad", "Petra will propose a mission for each squad")
 		.replaceAll("and one master squad will be created.", "and Petra's squad will be created.")
+		.replaceAll("the master", "Petra")
 		.replaceAll(/\bMaster\b/g, "Petra");
 }

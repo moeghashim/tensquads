@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { chromium, expect } from "@playwright/test";
 import { build } from "esbuild";
+import { detailHeading, rewriteBuiltInventory } from "../../e2e/squadmate-copy.ts";
 
 const bundle = await build({
 	stdin: {
@@ -77,6 +78,7 @@ test("route faces follow current agent state in both directions and keep Petra a
 		page.on("pageerror", (error) => errors.push(error.message));
 		await page.setContent('<div id="root"></div>');
 		await page.addScriptTag({ content: bundle.outputFiles[0].text });
+		await expect(page.getByText("Ask Orders for status through Petra", { exact: true })).toBeVisible();
 		for (const on of [true, false, true]) {
 			await expect(page.getByRole("button", { name: "Squad running", exact: true })).toHaveAttribute(
 				"aria-pressed",
@@ -123,4 +125,19 @@ test("route faces follow current agent state in both directions and keep Petra a
 	} finally {
 		await browser.close();
 	}
+});
+
+test("detail inventory rewrites the master phrase in prose without changing other lowercase words", () => {
+	const text = "Ask Orders for status through the master";
+	const inventory = {
+		texts: [text, "Master", "master", "mastery"],
+		handlers: [{ tag: "button", event: "onClick", handler: "pick", text }],
+		links: [{ href: "/agents/support", text }],
+		loops: [],
+	};
+	const actual = rewriteBuiltInventory(inventory, detailHeading);
+	assert.deepEqual(actual.texts, ["Ask Orders for status through Petra", "Petra", "master", "mastery"]);
+	assert.equal(actual.handlers[0].text, "Ask Orders for status through Petra");
+	assert.equal(actual.links[0].text, "Ask Orders for status through Petra");
+	assert.equal(inventory.texts[0], text);
 });
