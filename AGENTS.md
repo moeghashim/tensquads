@@ -9,7 +9,7 @@ tensquads is a SaaS product. A small business runs its operations through a squa
 ## The three sources, in order of authority
 
 1. `design/` — the design files. The design is the source of truth. Every pixel value, colour, radius, font size, text string, data field and behaviour comes from here. `design/MANIFEST.json` names the canvas version. `node scripts/design-check.mjs` proves the copy matches the canvas. Never edit a file under `design/`. If the check fails, stop and ask Moe to pull the canvas again.
-2. `docs/PLAN.md` — the build plan. It holds the decisions table. Every decision there is final. Decisions 1 to 34 answer every open question in the brief. If a decision and the design disagree, the design wins for what a screen shows, and the decision wins for how the system is built. Decisions 33 and 34 are the exceptions: Moe changed what the screens show, so there the decision wins. If you cannot tell which applies, ask.
+2. `docs/PLAN.md` — the build plan. It holds the decisions table. Every decision there is final. Decisions 1 to 35 answer every open question in the brief. If a decision and the design disagree, the design wins for what a screen shows, and the decision wins for how the system is built. Decisions 33 and 34 are the exceptions: Moe changed what the screens show, so there the decision wins. If you cannot tell which applies, ask.
 3. `docs/BRIEF.md` — the original build brief. It holds the screen list, the data model, the behaviour list, the design tokens and the definition of done. Where the brief and the design disagree on a word (for example "agents" against "squads"), the design wins. Report the difference in your pull request; do not fix it.
 
 ## Read order, every session
@@ -29,7 +29,7 @@ Before you write any code, send one message with:
 
 1. The files you read, each with its SHA-256 hash.
 2. The output of `node scripts/design-check.mjs`.
-3. The line "Decisions 1 to 34 read. No question." Or, if you have a question, a numbered list. Each question has a recommended answer. Then stop and wait.
+3. The line "Decisions 1 to 35 read. No question." Or, if you have a question, a numbered list. Each question has a recommended answer. Then stop and wait.
 4. Any line in the brief or the design that you cannot map to a task, with the file and the line.
 
 Moe answers, or says "go". Then you start.
@@ -52,7 +52,7 @@ Stop and ask Moe, in a numbered list with a recommended answer for each item, wh
 - A state the design does not show: an empty list, an error, a loading state. Decisions 8, 25 and 26 cover the three known ones. Any other is a question.
 - A conflict between two design files.
 - A style value in the design that is not in the token list.
-- A reason to reopen one of the 34 decisions.
+- A reason to reopen one of the 35 decisions.
 - Anything the task file does not cover.
 
 Never guess. Never design. A guess that looks right is still a fault.
