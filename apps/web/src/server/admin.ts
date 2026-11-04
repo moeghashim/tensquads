@@ -39,7 +39,8 @@ export const loadAdminImages = createServerFn({ method: "GET" }).handler(async (
 export const openSpecialSession = createServerFn({ method: "POST" })
 	.validator(accountId)
 	.handler(async ({ data }) => {
-		const { createRepositories } = await import("@tensquads/adapters");
+		const { createRepositories, workspaceTransaction } = await import("@tensquads/adapters");
+		const { PENDING_TASK_WINDOW_MS } = await import("@tensquads/adapters/pending-window");
 		const { Kernel } = await import("@tensquads/kernel");
 		const { withPlatform } = await import("./platform-scope.ts");
 		const found = await withPlatform(async (scope, db) => {
@@ -48,7 +49,13 @@ export const openSpecialSession = createServerFn({ method: "POST" })
 			if (!rows.some((row) => row.id === data)) {
 				return false;
 			}
-			await new Kernel(repositories).openAccount({ accountId: data, mode: "account" });
+			await workspaceTransaction(
+				db,
+				async () => {
+					await new Kernel(repositories).openAccount({ accountId: data, mode: "account" });
+				},
+				{ accountId: data, deadlineMs: PENDING_TASK_WINDOW_MS },
+			);
 			return true;
 		});
 		if (!found) {

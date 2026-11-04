@@ -6,7 +6,7 @@ import { isRedirect } from "@tanstack/react-router";
 
 const root = new URL("../../", import.meta.url);
 const web = new URL("apps/web/src/", root);
-const state = { admin: true, target: "demo", owner: "demo", writes: [], store: {}, closed: 0 };
+const state = { admin: true, target: "demo", owner: "demo", writes: [], store: {}, closed: 0, refreshError: null };
 globalThis.workspaceAccountTest = state;
 const mocks = {
 	"@tanstack/react-start": `export function createServerFn() {
@@ -25,7 +25,11 @@ const mocks = {
 			platform: { listAccounts: async () => [{ id: 'demo' }, { id: 'northwind' }] },
 			policy: { listRules: async () => [] },
 			squads: { listAgents: async () => [], master: async () => ({ name: "Master" }) },
-			bus: { readStore: async () => { if (state.failRules) throw new Error("Read failed"); return state.store; }, listEvents: async () => [] },
+			bus: { readStore: async () => {
+				if (state.refreshError) throw state.refreshError;
+				if (state.failRules) throw new Error("Read failed");
+				return state.store;
+			}, listEvents: async () => [] },
 		});
 		export const readOverviewSnapshot = async (_, scope) => ({
 			accounts: [{ id: scope.accountId, owner: 'Moe', mission: '' }], agents: [], tasksDone: 0,
@@ -38,7 +42,8 @@ const mocks = {
 			return { count: 0 };
 		} }); }
 	}`,
-	"./session.ts": "export const requireClerkUser = async () => 'owner';",
+	"./session.ts":
+		"export const requireClerkUser = async () => 'owner'; export const requireClerkSession = async () => ({ userId: 'owner', organizationId: null, role: null });",
 	"./super-admin.ts": "export const isSuperAdmin = async () => globalThis.workspaceAccountTest.admin;",
 	"./database-url.ts": "export const databaseUrl = async () => 'test';",
 	"./special-session.ts": "export const readSpecialAccount = () => globalThis.workspaceAccountTest.target;",
@@ -258,6 +263,76 @@ test("workspace retention propagates expired-session redirects and keeps ordinar
 		}
 	} finally {
 		state.failRules = false;
+		state.target = "northwind";
+		queue.resetTargetAccount();
+		clearFrameHold();
+		clearOverviewHold();
+		delete globalThis.window;
+	}
+});
+
+test("workspace retention propagates a session refresh and does not keep it", async () => {
+	const { SessionRefreshNeeded, isSessionRefreshNeeded } = await import(new URL("server/session-error.ts", web));
+	globalThis.window = {};
+	try {
+		queue.resetTargetAccount();
+		clearFrameHold();
+		clearOverviewHold();
+		state.admin = true;
+		state.target = "northwind";
+		state.failRules = false;
+		state.refreshError = null;
+		const refresh = new SessionRefreshNeeded();
+		const readFrame = () =>
+			requireWorkspace(async (scope) => ({ accountId: scope.accountId, approvalCount: 0, messages: [] }));
+		const loaders = [
+			{
+				load: () => loadHeldFrame(frameEpoch(), currentWrites(), readFrame),
+				refresh: () =>
+					loadHeldFrame(frameEpoch(), currentWrites(), async () => {
+						throw refresh;
+					}),
+				fail: () =>
+					loadHeldFrame(frameEpoch(), currentWrites(), async () => {
+						throw new Error("Read failed");
+					}),
+			},
+			{
+				load: () => loadHeldOverview(overviewEpoch(), currentWrites(), () => overview.loadOverview()),
+				refresh: () =>
+					loadHeldOverview(overviewEpoch(), currentWrites(), async () => {
+						throw refresh;
+					}),
+				fail: () =>
+					loadHeldOverview(overviewEpoch(), currentWrites(), async () => {
+						throw new Error("Read failed");
+					}),
+			},
+			{
+				load: () => loadRulesSnapshot(),
+				refresh: () => {
+					state.refreshError = refresh;
+					return loadRulesSnapshot();
+				},
+				fail: () => {
+					state.refreshError = null;
+					state.failRules = true;
+					return loadRulesSnapshot();
+				},
+			},
+		];
+		for (const loader of loaders) {
+			const held = await loader.load();
+			assert.equal(held.accountId, "northwind");
+			await assert.rejects(loader.refresh, (error) => isSessionRefreshNeeded(error));
+			state.refreshError = null;
+			const retained = await loader.fail();
+			assert.strictEqual(retained, held);
+			state.failRules = false;
+		}
+	} finally {
+		state.failRules = false;
+		state.refreshError = null;
 		state.target = "northwind";
 		queue.resetTargetAccount();
 		clearFrameHold();

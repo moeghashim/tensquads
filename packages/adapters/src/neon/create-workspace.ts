@@ -1,6 +1,7 @@
 import { type AccountScope, requireScope, type WorkspaceCreated, type WorkspaceDraft } from "@tensquads/domain";
-import { eq, max } from "drizzle-orm";
+import { eq, max, sql } from "drizzle-orm";
 
+import { takeWriterLock } from "./lock.ts";
 import type { AppDatabase } from "./postgres.ts";
 import { accounts, agents, machines, masters, squads, stateEntries, subscriptions } from "./schema.ts";
 
@@ -54,6 +55,7 @@ async function insertWorkspace(db: AppDatabase, accountId: string, draft: Worksp
 		if (found) {
 			return { accountId: found.id, created: false };
 		}
+		await takeWriterLock((statement) => tx.execute(sql.raw(statement)), accountId);
 		const now = new Date();
 		const highest = await tx.select({ value: max(accounts.sortOrder) }).from(accounts);
 		const current = highest[0]?.value;

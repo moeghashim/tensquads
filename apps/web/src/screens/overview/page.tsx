@@ -130,7 +130,7 @@ function overviewRefresh(router: ReturnType<typeof useRouter>, accountId: string
 	if (
 		frame?.status === "success" &&
 		frame.loaderData &&
-		frame.loaderData.accountId === accountId &&
+		frame.loaderData.frame.accountId === accountId &&
 		currentWrites() === frame.loaderData.writeAt
 	) {
 		return { count: frame.loaderData.approvalCount, readAt: frame.loaderData.writeAt, dropLanded: false };
