@@ -14,10 +14,15 @@ export interface BusNamespace {
 	get(id: unknown): { fetch(input: Request | string | URL, init?: RequestInit): Promise<Response> };
 }
 
+export interface QueueProducer {
+	send(message: { accountId: string; event: PublishedEvent }): Promise<void>;
+}
+
 export interface WorkerBindings {
 	readonly ADAPTERS?: string;
 	readonly MACHINE_TOKEN_KEY?: string;
 	readonly ACCOUNT_BUS?: BusNamespace;
+	readonly BUS_QUEUE?: QueueProducer;
 	readonly DATABASE_URL?: string;
 }
 
@@ -113,7 +118,13 @@ export async function handleMachineRequest(request: Request, env: WorkerBindings
 	if (url.pathname === "/machine/send") {
 		if (!isBusRecord(body)) return new Response("The message was rejected.", { status: 400 });
 		if (body.event.from !== agentId) return new Response("The token was rejected.", { status: 401 });
-		await deliver(env, accountId, body.event);
+		if (chooseAdapters(env.ADAPTERS) !== "real") {
+			await workerTestBus().publish(scope, body.event);
+		} else if (!env.BUS_QUEUE) {
+			throw notConfigured("The bus is not configured.");
+		} else {
+			await env.BUS_QUEUE.send({ accountId, event: body.event });
+		}
 		return Response.json({ ok: true });
 	}
 	if (chooseAdapters(env.ADAPTERS) !== "real") {
@@ -126,12 +137,17 @@ export async function handleMachineRequest(request: Request, env: WorkerBindings
 export function createCloudflareBus(
 	namespace: BusNamespace,
 	script: readonly ScriptedBusEvent[] = [],
+	queue?: QueueProducer,
 ): AccountEventBus {
 	const cursors = new Map<string, TrafficCursor>();
 	const advancing = new Map<string, Promise<void>>();
-	const env = { ADAPTERS: "real", ACCOUNT_BUS: namespace } satisfies WorkerBindings;
+	const env = { ADAPTERS: "real", ACCOUNT_BUS: namespace, BUS_QUEUE: queue } satisfies WorkerBindings;
 
 	async function publish(scope: AccountScope, event: PublishedEvent): Promise<void> {
+		if (queue) {
+			await queue.send({ accountId: scope.accountId, event });
+			return;
+		}
 		await deliver(env, scope.accountId, event);
 	}
 
@@ -161,6 +177,11 @@ export function createCloudflareBus(
 				}
 				const plan = planNextEvent(existing, script, current, traceFor);
 				if (!plan) return undefined;
+				if (queue) {
+					await queue.send({ accountId: scope.accountId, event: plan.event });
+					cursors.set(scope.accountId, plan.cursor);
+					return plan.event;
+				}
 				const seen = await deliver(env, scope.accountId, plan.event);
 				if (seen) return undefined;
 				cursors.set(scope.accountId, plan.cursor);

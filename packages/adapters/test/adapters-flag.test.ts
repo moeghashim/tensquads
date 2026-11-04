@@ -43,7 +43,7 @@ test("real adapters are built only when the flag and the config are present", ()
 			fetch: () => Promise.reject(new Error("fetched")),
 		}),
 	};
-	const adapters = pickWorkerAdapters({
+	const real = {
 		ADAPTERS: "real",
 		BOAT_TOKEN: "machine-token-fixture",
 		BOAT_ADMIN_TOKEN: "admin-token-fixture",
@@ -51,6 +51,14 @@ test("real adapters are built only when the flag and the config are present", ()
 		DATABASE_URL: "postgres://example.test/db",
 		ACCOUNT_BUS: namespace,
 		fetchApi,
+	} as const;
+	assert.throws(
+		() => pickWorkerAdapters(real),
+		(error: unknown) => error instanceof MachineFault && error.message === "The bus is not configured.",
+	);
+	const adapters = pickWorkerAdapters({
+		...real,
+		BUS_QUEUE: { async send() {} },
 	});
 	assert.equal(typeof adapters.machine.start, "function");
 	assert.equal(fetched, false);

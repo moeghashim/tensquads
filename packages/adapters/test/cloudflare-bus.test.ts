@@ -175,7 +175,14 @@ function workerConfig(databaseUrl: string, tokenKey?: string) {
 		},
 		exports: { AccountBus: { type: "durable-object" as const, storage: "sqlite" as const } },
 		triggers: [
-			{ type: "queue" as const, name: "tensquads-bus", deadLetterQueue: "tensquads-bus-dlq", maxRetries: 3 },
+			{
+				type: "queue" as const,
+				name: "tensquads-bus",
+				deadLetterQueue: "tensquads-bus-dlq",
+				maxRetries: 3,
+				maxBatchSize: 1,
+				maxBatchTimeout: 0,
+			},
 			{ type: "queue" as const, name: "tensquads-bus-dlq" },
 		],
 	};
@@ -395,6 +402,13 @@ test("a machine token sends and takes one task and a bad token is rejected", { s
 		headers,
 	);
 	assert.equal(sent.status, 200, await bodyText(sent));
+	const started = Date.now();
+	for (;;) {
+		const queued = await readJson<PublishedEvent[]>(mf, id, "/local-events");
+		if (queued.some((row) => row.id === "task-1")) break;
+		assert.ok(Date.now() - started < 2_000, "the queued machine send was not accepted");
+		await new Promise((resolve) => setTimeout(resolve, 10));
+	}
 	await publish(mf, id, published("other-task", { to: "clerk", kind: "Task" }));
 	const first = await send(mf, "/machine/take", { accountId: id, agentId: agent }, headers);
 	const taken = JSON.parse(await bodyText(first)) as PublishedEvent[];

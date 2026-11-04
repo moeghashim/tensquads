@@ -446,7 +446,28 @@ test("machine sends bind the sender in both adapter modes and preserve queue sen
 				fetch: (input: Request | string | URL, init?: RequestInit) => target.fetch(new Request(input, init)),
 			}),
 		};
-		const env = { ADAPTERS: mode, ACCOUNT_BUS: namespace, MACHINE_TOKEN_KEY: key };
+		const queued: string[] = [];
+		const env = {
+			ADAPTERS: mode,
+			ACCOUNT_BUS: namespace,
+			MACHINE_TOKEN_KEY: key,
+			...(mode === "real"
+				? {
+						BUS_QUEUE: {
+							async send(body: { accountId: string; event: PublishedEvent }) {
+								queued.push(body.event.id);
+								await handleBusQueue(
+									{
+										queue: "tensquads-bus",
+										messages: [{ id: `send-${body.event.id}`, body, ack() {} }],
+									},
+									env,
+								);
+							},
+						},
+					}
+				: {}),
+		};
 		async function send(from: string) {
 			return handleMachineRequest(
 				new Request("https://worker/machine/send", {
@@ -474,6 +495,7 @@ test("machine sends bind the sender in both adapter modes and preserve queue sen
 		}
 		assert.equal(storage.rows.size, 0);
 		assert.equal((await send("researcher"))?.status, 200);
+		if (mode === "real") assert.deepEqual(queued, ["real-researcher"]);
 		await handleBusQueue(
 			{
 				queue: "tensquads-bus",
