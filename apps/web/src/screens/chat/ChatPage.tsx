@@ -271,7 +271,8 @@ function HandOffButton({
 		>
 			<span style={css("display: flex; gap: 6px; align-items: center; font-size: 12px; color: #5d5d5d")}>
 				<span style={css(kindStyle(event.kind))}>{event.kind}</span>
-				<RouteFaces from={event.from} to={event.to} masterName={masterName} names={names} onFor={onFor} /> · {event.time}
+				<RouteFaces from={event.from} to={event.to} masterName={masterName} names={names} onFor={onFor} /> ·{" "}
+				{event.time}
 			</span>
 			<span style={css("font-size: 13px")}>{event.text}</span>
 		</button>

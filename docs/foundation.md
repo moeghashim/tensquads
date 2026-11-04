@@ -16,7 +16,7 @@ Each required-checks job gets its own database. `scripts/ci-test-database.mjs` c
 
 ## Packages and ports
 
-The four package workspaces export TypeScript source through their package names:
+The package workspaces export TypeScript source through their package names:
 
 | Package | Interface |
 | --- | --- |
@@ -24,6 +24,7 @@ The four package workspaces export TypeScript source through their package names
 | `@tensquads/domain` | Six domain areas with types, events, repository interfaces, scope validation, and pure inbox decision functions |
 | `@tensquads/adapters` | Machine and service test adapters, the memory bus, Drizzle schema, the Neon opener, snapshot replacement, and read repositories |
 | `@tensquads/seed` | Committed design extract, `workspaceFromDesign()`, `homepageAgents`, `signupAgents`, and `defaultAgents` |
+| `@tensquads/squadmates` | Character roster, Agent loop states, SVG drawing, and blink styles. See the [package exports](../packages/squadmates/src/index.ts) |
 
 `packages/statecharts` is a model directory, not an npm workspace. The exact cordis version and update rule are in [ADR 0001](adrs/0001-cordis-pin.md). The kernel exposes minimal repository ports; `RepositoryBag` in the domain package describes the full read interface.
 
@@ -54,6 +55,8 @@ const totals = await repos.platform.totals(platform);
 `db` above is an open database from either opener. Both modes require a non-empty `accountId`. A missing scope, empty id, or invalid mode throws `MissingAccountScopeError`. Account mode filters tenant reads by that id. Platform mode reads across accounts. Scope is a data boundary, not authentication; a caller must authorize platform access before constructing that scope. Auth and the super-admin session come later.
 
 Plans, agent images, bugs, and feature requests are shared platform data. They have no `account_id` and are returned for either valid scope. Other tables have `account_id`. SQL names such as `is_on`, `last_text`, `description`, `from_agent`, and `rule_when` map back to the design names `on`, `last`, `desc`, `from`, and `when` in the domain objects.
+
+Stored names keep the design values. Repository reads for agents, images, and the master return character names through [shown-name.ts](../packages/adapters/src/neon/shown-name.ts). The frame and conversation reads use the same mapping. An unknown agent or image id keeps its stored name. The seed and workspace creation keep their stored names; a new workspace displays the mapped name. [Task 06](../tasks/06-squadmates.md) owns the product drawing and copy rules.
 
 | Repository | Reads |
 | --- | --- |
@@ -129,7 +132,7 @@ GitHub Actions runs `make verify` on Linux and macOS and a separate Cloudflare b
 | Command | What it does |
 | --- | --- |
 | `npm run check` | Check native tools, Biome, file length, and root and workspace types |
-| `npm test` | Run script, kernel, domain, adapter, and seed tests. Database tests use in-memory PGlite |
+| `npm test` | Run script tests and each workspace's test command. See [package.json](../package.json). Database tests use in-memory PGlite |
 | `npm run e2e` | Check the blank page with Chromium, screenshots, and axe, and resolve three token colours |
 | `npm run design:check` | Check the design hashes without writing files |
 | `npm run statechart:check` | Check models when `packages/statecharts` or a named model file differs from `origin/main` |
