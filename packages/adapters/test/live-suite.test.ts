@@ -70,6 +70,16 @@ test("the machine env check accepts sent values, injected boat variables, and ba
 		() => assertMachineEnv(`${withSystem}\nHOSTNAME=box`, sent, [], system),
 		/The machine env has an unexpected variable: HOSTNAME\./,
 	);
+	const shellState = ["OLDPWD", "PWD", "SHLVL", "_"].map((name) => `${name}=present`).join("\n");
+	assertMachineEnv(`${stdout}\n${shellState}`, sent, ["boat-api-key-value"], []);
+	assert.throws(
+		() => assertMachineEnv(`${stdout}\n${shellState}\nHOSTNAME=box`, sent, [], []),
+		/The machine env has an unexpected variable: HOSTNAME\./,
+	);
+	assert.throws(
+		() => assertMachineEnv(`${stdout}\nOLDPWD=boat-api-key-value`, sent, ["boat-api-key-value"], []),
+		/The machine env holds a boat API key\./,
+	);
 });
 
 test("the trial identity refuses a closed profile and a short run id", () => {

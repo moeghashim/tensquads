@@ -8,6 +8,9 @@ const injectedBoat = [
 	"PRODUCT_MODE",
 ];
 
+// OLDPWD, PWD, SHLVL, and _ are shell state. They change as commands run, so a fresh machine cannot name them.
+const shellState = new Set(["OLDPWD", "PWD", "SHLVL", "_"]);
+
 function machineEnvironment(stdout: string): Map<string, string> {
 	const env = new Map<string, string>();
 	for (const line of stdout.split("\n")) {
@@ -45,7 +48,7 @@ export function assertMachineEnv(
 	}
 	const sent = new Set(Object.keys(expected));
 	const extra = [...env.keys()]
-		.filter((key) => !sent.has(key) && !injectedBoat.includes(key) && !baseline.has(key))
+		.filter((key) => !sent.has(key) && !injectedBoat.includes(key) && !baseline.has(key) && !shellState.has(key))
 		.sort();
 	if (extra.length > 0) throw new Error(`The machine env has an unexpected variable: ${extra.join(", ")}.`);
 }
