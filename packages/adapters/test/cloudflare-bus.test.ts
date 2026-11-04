@@ -451,15 +451,23 @@ test("the socket receives the new event", { skip: skipped }, async () => {
 });
 
 test("a refused database keeps the event and sets an alarm", { skip: skipped, timeout: 20_000 }, async () => {
-	const mf = await boot(refuseUrl, "machine-token-fixture");
-	const id = account();
+	const { id } = await prepared();
+	const mf = await boot(connection, "machine-token-fixture");
 	try {
+		await publish(mf, id, published("initialized"));
+		await mf.setOptions({
+			log: new NoOpLog(),
+			workers: [{ config: workerConfig(refuseUrl, "machine-token-fixture") }],
+		});
 		const result = await publish(mf, id, published("held"));
 		assert.equal(result.seen, false);
 		const alarm = await readJson<{ alarm: number | null }>(mf, id, "/alarm");
 		assert.equal(typeof alarm.alarm, "number");
 		const events = await readJson<PublishedEvent[]>(mf, id, "/local-events");
-		assert.equal(events[0]?.id, "held");
+		assert.deepEqual(
+			events.map((event) => event.id),
+			["initialized", "held"],
+		);
 	} finally {
 		await mf.dispose();
 	}

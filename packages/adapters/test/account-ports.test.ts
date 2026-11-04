@@ -82,3 +82,34 @@ test("two accounts do not share a bus sequence and a seen id changes nothing", a
 	assert.equal(otherFirst?.id, "e100");
 	assert.equal((await bus.events(scope)).length, before);
 });
+
+test("account simulation skips seeded and published ids and keeps advancing", async () => {
+	const step = {
+		from: "master",
+		to: "orders",
+		kind: "Task" as const,
+		skill: "orders.watch",
+		text: "Watch",
+		payload: {},
+		writes: ["orders"],
+		set: { orders: "open" },
+	};
+	for (const seeded of [false, true]) {
+		const bus = createAccountMemoryBus({
+			events: seeded ? [{ ...step, id: "e100" }] : [],
+			script: [step, { ...step, text: "Next" }],
+		});
+		if (!seeded) await bus.publish(scope, { ...step, id: "e101" });
+		const first = await bus.nextEvent(scope);
+		const second = await bus.nextEvent(scope);
+		assert.equal(first?.id, seeded ? "e101" : "e102");
+		assert.equal(second?.id, seeded ? "e102" : "e103");
+		assert.equal(first?.text, "Next");
+		assert.equal(second?.text, "Watch");
+		assert.equal(first?.time, "11:04");
+		assert.equal(second?.time, "11:05");
+		assert.equal(new Set((await bus.events(scope)).map(({ id }) => id)).size, 3);
+		assert.deepEqual(await bus.store(scope), { orders: "open" });
+		assert.equal((await bus.nextEvent(other))?.id, seeded ? "e101" : "e100");
+	}
+});

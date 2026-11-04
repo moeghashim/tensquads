@@ -127,6 +127,11 @@ export function createAccountMemoryBus(
 		},
 		async nextEvent(scope) {
 			const current = state(scope);
+			while (current.seen.has(`e${current.seq}`)) {
+				current.seq += 1;
+				current.clock += 1;
+				current.scriptIndex += 1;
+			}
 			const plan = planNextEvent(
 				current.events,
 				script,

@@ -126,14 +126,23 @@ test("scoped reads see seeded Neon history before the first accept", async (t) =
 				trace: "seed-trace",
 			})),
 		);
-		const adapter = createCloudflareBus(namespace, [{ ...event, text: "First" }, { ...event, text: "Second" }]);
-		assert.deepEqual((await adapter.events(scope)).map(({ id }) => id), ["seed", "e100"]);
+		const adapter = createCloudflareBus(namespace, [
+			{ ...event, text: "First" },
+			{ ...event, text: "Second" },
+		]);
+		assert.deepEqual(
+			(await adapter.events(scope)).map(({ id }) => id),
+			["seed", "e100"],
+		);
 		assert.equal(storage.rows.size, 0);
 		assert.deepEqual(await adapter.events({ accountId: "empty-account", mode: "account" }), []);
 		assert.equal((await adapter.nextEvent(scope))?.id, "e101");
 		assert.equal(published[0]?.text, "Second");
 		await storage.put("account", scope.accountId);
-		assert.deepEqual((await adapter.events(scope)).map(({ id }) => id), ["seed", "e100"]);
+		assert.deepEqual(
+			(await adapter.events(scope)).map(({ id }) => id),
+			["seed", "e100"],
+		);
 		assert.equal((await target.fetch(new Request("https://bus/events"))).status, 200);
 		await assert.rejects(adapter.events({ accountId: "other-account", mode: "account" }));
 	} finally {
@@ -155,6 +164,105 @@ const malformed: unknown[] = [
 	...[{}, null, "key", [1]].map((writes) => ({ accountId: scope.accountId, event: { ...event, writes } })),
 	...["time", "trace"].map((key) => ({ accountId: scope.accountId, event: { ...event, [key]: 1 } })),
 ];
+
+test("accept initializes sequence and seen ids once before new events", async (t) => {
+	const database = await openPglite();
+	const storage = new Storage();
+	const entered = deferred();
+	const release = deferred();
+	let reads = 0;
+	t.mock.method(Pool.prototype, "query", async (config: { text: string; rowMode?: string }, params: unknown[]) => {
+		reads += 1;
+		entered.resolve();
+		await release.promise;
+		const result = await database.client.query(config.text, params);
+		return { ...result, rows: config.rowMode === "array" ? result.rows.map(Object.values) : result.rows };
+	});
+	t.mock.method(Pool.prototype, "connect", async () => ({
+		query: (config: { text: string }, params: unknown[]) => database.client.query(config.text, params),
+		release() {},
+	}));
+	try {
+		for (const accountId of [scope.accountId, "fresh-account", "other-account"]) {
+			await database.client.query(
+				`INSERT INTO accounts (id, account_id, name, owner, email, tint, agents, online, tasks, last_active, created_week, mission, sort_order) VALUES ($1, $1, '', '', '', '', 0, 0, 0, '', 0, '', 0)`,
+				[accountId],
+			);
+		}
+		await writePending("postgres://fixture/db", scope.accountId, [
+			{ seq: 1, event: { ...event, id: "seed-first", set: { status: "seed" } } },
+			{ seq: 2, event: { ...event, id: "seed-second" } },
+		]);
+		await writePending("postgres://fixture/db", "other-account", [{ seq: 20, event }]);
+		const target = bus(storage, "postgres://fixture/db");
+		const duplicate = accept(target, {
+			accountId: scope.accountId,
+			event: { ...event, id: "seed-first", set: { status: "poison" } },
+		});
+		await entered.promise;
+		assert.equal(storage.rows.size, 0);
+		const first = accept(target, { accountId: scope.accountId, event: { ...event, id: "new-first" } });
+		const second = accept(target, { accountId: scope.accountId, event: { ...event, id: "new-second" } });
+		release.resolve();
+		assert.deepEqual(await (await duplicate).json(), { seen: true, seq: 2 });
+		assert.deepEqual(await (await first).json(), { seen: false, seq: 3 });
+		assert.deepEqual(await (await second).json(), { seen: false, seq: 4 });
+		assert.equal(reads, 1);
+		assert.equal(await storage.get("state:status"), undefined);
+		assert.deepEqual(await storage.get("tasks:researcher"), ["new-first", "new-second"]);
+		const restarted = bus(storage, "postgres://fixture/db");
+		const repeat = await accept(restarted, {
+			accountId: scope.accountId,
+			event: { ...event, id: "seed-second", set: { status: "poison" } },
+		});
+		assert.deepEqual(await repeat.json(), { seen: true, seq: 4 });
+		assert.equal(reads, 1);
+		assert.deepEqual((await database.client.query("SELECT value FROM state_entries")).rows, [{ value: '"seed"' }]);
+		assert.deepEqual(
+			(
+				await database.client.query("SELECT id, seq FROM bus_events WHERE account_id = $1 ORDER BY seq", [
+					scope.accountId,
+				])
+			).rows,
+			[
+				{ id: "seed-first", seq: 1 },
+				{ id: "seed-second", seq: 2 },
+				{ id: "new-first", seq: 3 },
+				{ id: "new-second", seq: 4 },
+			],
+		);
+		const fresh = bus(new Storage(), "postgres://fixture/db");
+		assert.deepEqual(await (await accept(fresh, { accountId: "fresh-account", event })).json(), {
+			seen: false,
+			seq: 1,
+		});
+		assert.equal(reads, 2);
+	} finally {
+		release.resolve();
+		await database.close();
+	}
+});
+
+test("failed history initialization accepts nothing and can be retried", async (t) => {
+	const storage = new Storage();
+	let refuse = true;
+	t.mock.method(Pool.prototype, "query", async () => {
+		if (refuse) throw new Error("Database refused.");
+		return { rows: [] };
+	});
+	t.mock.method(Pool.prototype, "connect", async () => {
+		throw new Error("Database refused.");
+	});
+	const target = bus(storage, "postgres://fixture/db");
+	await assert.rejects(accept(target, { accountId: scope.accountId, event }));
+	assert.equal(storage.rows.size, 0);
+	refuse = false;
+	assert.deepEqual(await (await accept(target, { accountId: scope.accountId, event })).json(), {
+		seen: false,
+		seq: 1,
+	});
+	assert.equal(typeof storage.alarm, "number");
+});
 
 test("invalid records never reach durable storage or queue acknowledgement", async () => {
 	const storage = new Storage();
@@ -279,6 +387,10 @@ test("pending writes recover in order and commit batches atomically", async (t) 
 	let maximum = 0;
 	let connections = 0;
 	let refuse = false;
+	t.mock.method(Pool.prototype, "query", async (config: { text: string; rowMode?: string }, params: unknown[]) => {
+		const result = await database.client.query(config.text, params);
+		return { ...result, rows: config.rowMode === "array" ? result.rows.map(Object.values) : result.rows };
+	});
 	t.mock.method(Pool.prototype, "connect", async () => {
 		connections += 1;
 		active += 1;
@@ -441,6 +553,7 @@ test("inspection routes require the exact test binding and store stays available
 
 test("a pending duplicate is not a new simulation step and does not advance the cursor", async (t) => {
 	const storage = new Storage();
+	t.mock.method(Pool.prototype, "query", async () => ({ rows: [] }));
 	t.mock.method(Pool.prototype, "connect", async () => {
 		throw new Error("Database refused.");
 	});

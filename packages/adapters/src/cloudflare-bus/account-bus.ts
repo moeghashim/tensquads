@@ -1,7 +1,7 @@
 import type { PublishedEvent } from "@tensquads/kernel";
 
 import { isBusRecord } from "./message.ts";
-import { type PendingBusRow, readBusEvents, writePending } from "./neon-write.ts";
+import { type PendingBusRow, readBusEvents, readBusHistory, writePending } from "./neon-write.ts";
 
 const ALARM_MS = 30_000;
 
@@ -82,6 +82,7 @@ async function commitEvent(txn: BusStorage, accountId: string, event: PublishedE
 export class AccountBus {
 	private readonly ctx: BusState;
 	private readonly env: BusObjectEnv;
+	private accepting: Promise<void> = Promise.resolve();
 	private flushing: Promise<void> = Promise.resolve();
 
 	constructor(ctx: BusState, env: BusObjectEnv) {
@@ -130,7 +131,30 @@ export class AccountBus {
 	}
 
 	private storeEvent(accountId: string, event: PublishedEvent): Promise<AcceptResult> {
-		return this.ctx.storage.transaction((txn) => commitEvent(txn, accountId, event));
+		const next = this.accepting.then(async () => {
+			await this.initialize(accountId);
+			return this.ctx.storage.transaction((txn) => commitEvent(txn, accountId, event));
+		});
+		this.accepting = next.then(
+			() => undefined,
+			() => undefined,
+		);
+		return next;
+	}
+
+	private async initialize(accountId: string): Promise<void> {
+		const storedAccount = await this.ctx.storage.get<string>("account");
+		if (storedAccount && storedAccount !== accountId) return;
+		if ((await this.ctx.storage.get<number>("seq")) !== undefined) return;
+		const history = this.env.DATABASE_URL ? await readBusHistory(this.env.DATABASE_URL, accountId) : [];
+		await this.ctx.storage.transaction(async (txn) => {
+			await txn.put("account", accountId);
+			await txn.put(
+				"seq",
+				history.reduce((seq, row) => Math.max(seq, row.seq), 0),
+			);
+			for (const row of history) await txn.put(`seen:${row.event.id}`, true);
+		});
 	}
 
 	private push(event: PublishedEvent): void {

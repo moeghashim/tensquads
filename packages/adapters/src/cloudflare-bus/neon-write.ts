@@ -107,6 +107,10 @@ async function writeState(
 }
 
 export async function readBusEvents(connectionString: string, accountId: string): Promise<PublishedEvent[]> {
+	return (await readBusHistory(connectionString, accountId)).map((row) => row.event);
+}
+
+export async function readBusHistory(connectionString: string, accountId: string): Promise<PendingBusRow[]> {
 	const { pool, db } = database(connectionString);
 	try {
 		const rows = await db
@@ -115,16 +119,19 @@ export async function readBusEvents(connectionString: string, accountId: string)
 			.where(eq(busEvents.accountId, accountId))
 			.orderBy(asc(busEvents.seq));
 		return rows.map((row) => ({
-			id: row.id,
-			from: row.fromAgent,
-			to: row.toAgent,
-			kind: row.kind,
-			skill: row.skill,
-			text: row.body,
-			payload: row.payload,
-			writes: row.writes,
-			time: row.timeText,
-			trace: row.trace,
+			seq: row.seq,
+			event: {
+				id: row.id,
+				from: row.fromAgent,
+				to: row.toAgent,
+				kind: row.kind,
+				skill: row.skill,
+				text: row.body,
+				payload: row.payload,
+				writes: row.writes,
+				time: row.timeText,
+				trace: row.trace,
+			},
 		}));
 	} catch (error) {
 		throw hidden(error, connectionString);
