@@ -6,6 +6,7 @@ import { AccountBus, type BusStorage } from "../src/cloudflare-bus/account-bus.t
 import { createCloudflareBus, handleBusQueue, handleMachineRequest } from "../src/cloudflare-bus/http.ts";
 import { writePending } from "../src/cloudflare-bus/neon-write.ts";
 import { signMachineToken } from "../src/cloudflare-bus/token.ts";
+import { busEvents } from "../src/neon/schema.ts";
 import { workerTestBus } from "../src/worker-adapters.ts";
 import { openPglite } from "./pglite.ts";
 
@@ -78,6 +79,67 @@ function bus(storage: Storage, database?: string) {
 function accept(target: AccountBus, body: unknown) {
 	return target.fetch(new Request("https://bus/accept", { method: "POST", body: JSON.stringify(body) }));
 }
+
+test("scoped reads see seeded Neon history before the first accept", async (t) => {
+	const database = await openPglite();
+	const storage = new Storage();
+	const target = bus(storage, "postgres://fixture/db");
+	const published: PublishedEvent[] = [];
+	t.mock.method(Pool.prototype, "query", async (config: { text: string; rowMode?: string }, params: unknown[]) => {
+		const result = await database.client.query(config.text, params);
+		return { ...result, rows: config.rowMode === "array" ? result.rows.map(Object.values) : result.rows };
+	});
+	const namespace = {
+		idFromName: (id: string) => id,
+		get: () => ({
+			async fetch(input: Request | string | URL, init?: RequestInit) {
+				const request = new Request(input, init);
+				if (new URL(request.url).pathname === "/accept") {
+					published.push(((await request.json()) as { event: PublishedEvent }).event);
+					return Response.json({ seen: false });
+				}
+				return target.fetch(request);
+			},
+		}),
+	};
+	try {
+		for (const accountId of [scope.accountId, "other-account"]) {
+			await database.client.query(
+				`INSERT INTO accounts (id, account_id, name, owner, email, tint, agents, online, tasks, last_active, created_week, mission, sort_order) VALUES ($1, $1, '', '', '', '', 0, 0, 0, '', 0, '', 0)`,
+				[accountId],
+			);
+		}
+		await database.db.insert(busEvents).values(
+			[
+				{ accountId: scope.accountId, id: "e100", seq: 2, timeText: "00:01" },
+				{ accountId: scope.accountId, id: "seed", seq: 1, timeText: "23:59" },
+				{ accountId: "other-account", id: "foreign", seq: 1, timeText: "12:00" },
+			].map((row) => ({
+				...row,
+				fromAgent: event.from,
+				toAgent: event.to,
+				kind: event.kind,
+				skill: event.skill,
+				body: event.text,
+				payload: {},
+				writes: [],
+				trace: "seed-trace",
+			})),
+		);
+		const adapter = createCloudflareBus(namespace, [{ ...event, text: "First" }, { ...event, text: "Second" }]);
+		assert.deepEqual((await adapter.events(scope)).map(({ id }) => id), ["seed", "e100"]);
+		assert.equal(storage.rows.size, 0);
+		assert.deepEqual(await adapter.events({ accountId: "empty-account", mode: "account" }), []);
+		assert.equal((await adapter.nextEvent(scope))?.id, "e101");
+		assert.equal(published[0]?.text, "Second");
+		await storage.put("account", scope.accountId);
+		assert.deepEqual((await adapter.events(scope)).map(({ id }) => id), ["seed", "e100"]);
+		assert.equal((await target.fetch(new Request("https://bus/events"))).status, 200);
+		await assert.rejects(adapter.events({ accountId: "other-account", mode: "account" }));
+	} finally {
+		await database.close();
+	}
+});
 
 const malformed: unknown[] = [
 	null,

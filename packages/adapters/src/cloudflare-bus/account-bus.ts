@@ -106,7 +106,7 @@ export class AccountBus {
 	private routes(): Map<string, (request: Request) => Promise<Response>> {
 		const routes = new Map<string, (request: Request) => Promise<Response>>([
 			["/accept", (request: Request) => request.json().then((body: unknown) => this.accept(body))],
-			["/events", () => this.events()],
+			["/events", (request: Request) => this.events(request)],
 			["/store", async () => Response.json(await this.stateMap())],
 			["/socket", () => Promise.resolve(this.socket())],
 			["/take", (request: Request) => request.json().then((body: unknown) => this.take(body))],
@@ -167,8 +167,12 @@ export class AccountBus {
 		});
 	}
 
-	private async events(): Promise<Response> {
-		const accountId = await this.ctx.storage.get<string>("account");
+	private async events(request: Request): Promise<Response> {
+		const storedAccount = await this.ctx.storage.get<string>("account");
+		const accountId = request.headers.get("x-account-id") ?? storedAccount;
+		if (storedAccount && storedAccount !== accountId) {
+			return new Response("The message was rejected.", { status: 400 });
+		}
 		if (!accountId || !this.env.DATABASE_URL) return Response.json([]);
 		try {
 			return Response.json(await readBusEvents(this.env.DATABASE_URL, accountId));
