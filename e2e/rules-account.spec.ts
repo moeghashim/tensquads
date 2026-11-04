@@ -54,7 +54,13 @@ test("a real Clerk sign-out keeps the next account clear of a held write and a h
 		);
 		expect(started).toBe(0);
 		await expect.poll(() => parked.reads()).toBe(1);
+		// The default poll is 5s. The write response itself often takes longer, so wait for it first.
+		const written = page.waitForResponse((response) => {
+			const request = response.request();
+			return request.method() === "POST" && (request.postData() ?? "").includes(adCap);
+		});
 		await page.locator("#lim-ads").fill("240");
+		expect((await written).ok()).toBe(true);
 		await expectStored(accountId, 240);
 		await expect(page.locator("#lim-ads")).toHaveValue("240");
 		parked.holdWrites = true;
