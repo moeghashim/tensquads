@@ -1,0 +1,16 @@
+{"action":"Start twice through the pinned SDK against loopback HTTP","observed":{"created":1,"fields":{"host":"vps-orders-01","region":"EU","size":"2 vCPU · 4 GB","cpu":"20%","uptime":"3 days"},"sentEnv":{"ACCOUNT_ID":"disposable-account","AGENT_ID":"orders","IMAGE_TAG":"registry.agents.co/market-researcher:0.1.0"},"labels":{"account":"disposable-account","agent":"orders","image":"registry.agents.co/market-researcher:0.1.0"}}}
+{"action":"Stop and read the paused machine","observed":{"cpu":"0%","uptime":"Paused","additionalMetricCalls":0}}
+{"action":"Resume the stopped machine","observed":{"host":"vps-orders-01","region":"EU","size":"2 vCPU · 4 GB","cpu":"0%","uptime":"3 days"}}
+{"action":"Register a custom API and read only its name","observed":{"names":["shop"],"egress":["example.com"]}}
+{"action":"Remove the registered custom API","observed":{"names":[]}}
+{"action":"Save the image template and remove its source","observed":{"template":{"id":"tensquads-market-researcher-0.1.0"},"source":[{"deleted":true,"env":{"ACCOUNT_ID":"disposable-account","IMAGE_TAG":"registry.agents.co/market-researcher:0.1.0"},"file":"market-researcher\n0.1.0\n"}]}}
+{"action":"Attempt an unprefixed template id","observed":{"id":"market-researcher-0.1.0","error":"The template id is not valid."}}
+{"action":"Attempt an unprefixed template id","observed":{"id":"other-market-researcher-0.1.0","error":"The template id is not valid."}}
+{"action":"Start from a template","observed":{"templateId":"tensquads-market-researcher-0.1.0","agentId":"researcher"}}
+{"action":"Remove machines and template","observed":{"machines":[{"name":"vps-orders-01","deleted":true},{"name":"tpl-market-researcher-0-1-0","deleted":true},{"name":"vps-researcher-01","deleted":true}],"templateRemoved":true}}
+{"action":"Receive a service error with a secret in its body","observed":{"code":"rate_limited","message":"The machine service is busy. Try again later."}}
+{"action":"Select adapters without external credentials","observed":{"flag":"(missing)","host":"vps-test-agent-01"}}
+{"action":"Select adapters without external credentials","observed":{"flag":"test","host":"vps-test-agent-01"}}
+{"action":"Select adapters without external credentials","observed":{"flag":"REAL","host":"vps-test-agent-01"}}
+{"action":"Select adapters without external credentials","observed":{"flag":"realish","host":"vps-test-agent-01"}}
+{"action":"Select exact real without credentials","observed":{"error":"The machine service is not configured."}}

@@ -1,0 +1,21 @@
+✔ parallel events keep one sequence and a repeat changes nothing (353.047042ms)
+✔ two accounts do not share a sequence (143.731584ms)
+✔ one accept writes every key and events sort by sequence (113.076625ms)
+✔ nextEvent writes one row through the same accept path (81.95525ms)
+✔ a dead letter makes one escalation and a repeat delivery makes no second row (93.687917ms)
+✔ a machine token sends and takes one task and a bad token is rejected (95.75225ms)
+✔ the socket receives the new event (84.687541ms)
+✔ a refused database keeps the event and sets an alarm (274.034875ms)
+✔ a missing token key refuses the machine call (64.123166ms)
+✔ live seeded account restores scoped state, drops seeded tasks, and continues at sequence 3 (200.03875ms)
+✔ live sender forgery is rejected and inspection needs the exact binding (316.504542ms)
+✔ live retry alarm persists a held simulation step and duplicate is not a new step (467.932584ms)
+✔ live queue producer delivers a task and exhausted retries create one escalation (289.956041ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3166.302041

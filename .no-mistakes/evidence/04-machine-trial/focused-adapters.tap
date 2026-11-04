@@ -1,0 +1,37 @@
+✔ the account test machine starts once and pauses on stop (3.57625ms)
+✔ two accounts do not share a bus sequence and a seen id changes nothing (1.143666ms)
+✔ account simulation skips seeded and published ids and keeps advancing (0.421083ms)
+✔ the adapter flag defaults to test (0.638083ms)
+✔ real adapters are built only when the flag and the config are present (0.539833ms)
+✔ uptime text uses one day, many days, and just started (1.049458ms)
+✔ a closed profile and a missing registration never call the machine service (6.604458ms)
+✔ start is idempotent and maps the dashboard fields (39.388208ms)
+✔ a refused environment is sent again without that field (16.347833ms)
+✔ stop shows paused with no process read, and resume keeps the disk (13.88425ms)
+✔ remove waits until the delete operation completes (13.289625ms)
+✔ a template save removes the source and a repeat does not start another (26.092ms)
+✔ a failed template save still removes the source (11.276208ms)
+✔ secret registration uses the admin token and returns names only (11.033333ms)
+✔ service errors become port errors and hide the body (7.352084ms)
+✔ a refused stop and expired data use their own port errors (7.670458ms)
+✔ the label filter accepts a comma-joined value (6.96075ms)
+✔ scoped reads see seeded Neon history before the first accept (981.387166ms)
+✔ accept initializes sequence and seen ids once before new events (494.507375ms)
+✔ failed history initialization accepts nothing and can be retried (0.729792ms)
+✔ invalid records never reach durable storage or queue acknowledgement (1.4735ms)
+✔ signed machine sends reject malformed records and envelopes (4.584375ms)
+✔ rejected queue messages still become one dead-letter escalation (0.178167ms)
+✔ simulation resumes stored steps, serializes calls, and retries the failed step (0.465041ms)
+✔ pending writes recover in order and commit batches atomically (617.815958ms)
+✔ machine sends bind the sender in both adapter modes and preserve queue senders (1.913542ms)
+✔ inspection routes require the exact test binding and store stays available (1.130333ms)
+✔ a pending duplicate is not a new simulation step and does not advance the cursor (1.396333ms)
+✔ store restores scoped Neon state once and keeps seeded keys after publication (1008.015708ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2636.077084

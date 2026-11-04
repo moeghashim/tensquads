@@ -1,0 +1,26 @@
+file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6K1KRBS575JSZJ19KBMAD1N/packages/adapters/test/cloudflare-bus.test.ts:23
+if (connection.length === 0 && !skipped) throw new Error("TEST_DATABASE_URL is missing.");
+                                               ^
+
+Error: TEST_DATABASE_URL is missing.
+    at file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6K1KRBS575JSZJ19KBMAD1N/packages/adapters/test/cloudflare-bus.test.ts:23:48
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.21.0
+✖ packages/adapters/test/cloudflare-bus.test.ts (673.930375ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 677.650292
+
+✖ failing tests:
+
+test at packages/adapters/test/cloudflare-bus.test.ts:1:1
+✖ packages/adapters/test/cloudflare-bus.test.ts (673.930375ms)
+  'test failed'

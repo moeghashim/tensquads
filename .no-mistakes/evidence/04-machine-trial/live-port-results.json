@@ -1,0 +1,188 @@
+{
+  "machine": {
+    "dependency": "disposable fake boat HTTP service; real adapter and SDK",
+    "template": {
+      "id": "tensquads-market-researcher-0.1.0"
+    },
+    "fields": {
+      "host": "vps-orders-01",
+      "region": "EU",
+      "size": "2 vCPU · 4 GB",
+      "cpu": "20%",
+      "uptime": "3 days"
+    },
+    "stopped": {
+      "cpu": "0%",
+      "uptime": "Paused"
+    },
+    "names": [
+      "trial-name"
+    ],
+    "egress": [
+      "example.com"
+    ],
+    "invalidTemplate": "The template id is not valid.",
+    "deleted": [
+      {
+        "name": "tpl-market-researcher-0-1-0",
+        "deleted": true,
+        "environment": "tensquads-agents",
+        "env": {
+          "ACCOUNT_ID": "isolated-trial",
+          "IMAGE_TAG": "registry.agents.co/market-researcher:0.1.0"
+        },
+        "labels": {
+          "account": "isolated-trial",
+          "image": "registry.agents.co/market-researcher:0.1.0"
+        }
+      },
+      {
+        "name": "vps-orders-01",
+        "deleted": true,
+        "environment": "tensquads-agents",
+        "env": {
+          "ACCOUNT_ID": "isolated-trial",
+          "AGENT_ID": "orders",
+          "IMAGE_TAG": "registry.agents.co/market-researcher:0.1.0"
+        },
+        "labels": {
+          "account": "isolated-trial",
+          "agent": "orders",
+          "image": "registry.agents.co/market-researcher:0.1.0"
+        }
+      }
+    ],
+    "remainingNames": []
+  },
+  "faults": [
+    {
+      "status": 429,
+      "code": "rate_limited",
+      "message": "The machine service is busy. Try again later."
+    },
+    {
+      "status": 429,
+      "code": "limit_reached",
+      "message": "The account has reached its machine limit."
+    },
+    {
+      "status": 402,
+      "code": "billing_required",
+      "message": "The account needs a paid plan before this machine can start."
+    },
+    {
+      "status": 503,
+      "code": "out_of_capacity",
+      "message": "No machine is free right now."
+    }
+  ],
+  "flag:undefined": {
+    "uptime": "Paused"
+  },
+  "flag:test": {
+    "uptime": "Paused"
+  },
+  "flag:REAL": {
+    "uptime": "Paused"
+  },
+  "flag:realish": {
+    "uptime": "Paused"
+  },
+  "flag:": {
+    "uptime": "Paused"
+  },
+  "exactReal": {
+    "code": "unavailable",
+    "message": "The machine service is not configured."
+  },
+  "memory": {
+    "first": {
+      "id": "e101",
+      "time": "11:04",
+      "from": "master",
+      "to": "orders",
+      "kind": "Task",
+      "skill": "watch",
+      "text": "Watch",
+      "payload": {},
+      "writes": [
+        "status"
+      ],
+      "trace": "tr_f9decc",
+      "set": {
+        "status": "ready"
+      }
+    },
+    "second": {
+      "id": "e102",
+      "time": "11:05",
+      "from": "master",
+      "to": "orders",
+      "kind": "Task",
+      "skill": "watch",
+      "text": "Watch",
+      "payload": {},
+      "writes": [
+        "status"
+      ],
+      "trace": "tr_5789f6",
+      "set": {
+        "status": "ready"
+      }
+    },
+    "store": {
+      "status": "ready"
+    },
+    "events": [
+      {
+        "from": "master",
+        "to": "orders",
+        "kind": "Task",
+        "skill": "watch",
+        "text": "Watch",
+        "payload": {},
+        "writes": [
+          "status"
+        ],
+        "set": {
+          "status": "ready"
+        },
+        "id": "e100"
+      },
+      {
+        "id": "e101",
+        "time": "11:04",
+        "from": "master",
+        "to": "orders",
+        "kind": "Task",
+        "skill": "watch",
+        "text": "Watch",
+        "payload": {},
+        "writes": [
+          "status"
+        ],
+        "trace": "tr_f9decc",
+        "set": {
+          "status": "ready"
+        }
+      },
+      {
+        "id": "e102",
+        "time": "11:05",
+        "from": "master",
+        "to": "orders",
+        "kind": "Task",
+        "skill": "watch",
+        "text": "Watch",
+        "payload": {},
+        "writes": [
+          "status"
+        ],
+        "trace": "tr_5789f6",
+        "set": {
+          "status": "ready"
+        }
+      }
+    ]
+  }
+}

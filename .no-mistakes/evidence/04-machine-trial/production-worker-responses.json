@@ -1,0 +1,22 @@
+{
+  "homepage": {
+    "status": 200,
+    "contentType": "text/html; charset=utf-8"
+  },
+  "send": {
+    "status": 200,
+    "body": "{\"ok\":true}"
+  },
+  "take": {
+    "status": 200,
+    "body": "[{\"id\":\"task\",\"from\":\"orders\",\"to\":\"orders\",\"kind\":\"Task\",\"skill\":\"test\",\"text\":\"Isolated task\",\"payload\":{},\"writes\":[]}]"
+  },
+  "takeAgain": {
+    "status": 200,
+    "body": "[]"
+  },
+  "forged": {
+    "status": 401,
+    "body": "The token was rejected."
+  }
+}

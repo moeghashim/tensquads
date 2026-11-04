@@ -1,0 +1,9 @@
+{
+  "baseline": "Outer executor reported npm ci && npm test exit 1. Targeted original cloudflare-bus test reproduced missing TEST_DATABASE_URL. No full suite rerun.",
+  "setup": "Workspace-local embedded-postgres@18.6.0-beta.19; PostgreSQL 18.6 bound to 127.0.0.1:55439, local WebSocket/TCP bridge bound to 127.0.0.1:55440. Both real product and real SQL driver used unchanged runtime code. Only test-entry driver configuration points Neon WebSockets at the bridge.",
+  "database": "TEST_DATABASE_URL points only to disposable phase_tests database. Real Neon service not used; CI still owns validation with its configured database.",
+  "machine": "Real machine adapter and SDK called disposable fake HTTP service required by task. No real boat API was called.",
+  "isolation": "No Cloudflare resources, deployments, API keys, global installations, or operator data. Disposable account row count is zero after tests.",
+  "scope": "No UI code changes. Production SSR homepage HTML captured as integration evidence. No broad suite, linters, formatters, or static analysis run.",
+  "drivers": "Saved disposable testing drivers. Recreate them at their original worktree paths to rerun; dependencies embedded-postgres are workspace-local. Runtime source was never changed."
+}

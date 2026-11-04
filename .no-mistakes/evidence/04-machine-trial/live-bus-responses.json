@@ -1,0 +1,249 @@
+{
+  "seeded": {
+    "events": [
+      {
+        "id": "seed-one",
+        "from": "master",
+        "to": "researcher",
+        "kind": "Task",
+        "skill": "research",
+        "text": "Look at the market.",
+        "payload": {},
+        "writes": [],
+        "time": "12:00",
+        "trace": "tr_9b9c83"
+      },
+      {
+        "id": "seed-two",
+        "from": "master",
+        "to": "researcher",
+        "kind": "Task",
+        "skill": "research",
+        "text": "Look at the market.",
+        "payload": {},
+        "writes": [],
+        "time": "12:00",
+        "trace": "tr_63377d"
+      }
+    ],
+    "before": {
+      "absent": null,
+      "detail": {
+        "active": true
+      },
+      "limit": 20,
+      "status": "ready"
+    },
+    "repeat": {
+      "seen": true,
+      "seq": 2
+    },
+    "result": {
+      "seen": false,
+      "seq": 3
+    },
+    "after": {
+      "absent": null,
+      "detail": {
+        "active": true
+      },
+      "limit": 30,
+      "new": [
+        1,
+        2
+      ],
+      "status": "ready"
+    },
+    "crossAccountStatus": 400,
+    "persisted": [
+      {
+        "accountId": "bus-7cc0e153",
+        "id": "seed-one",
+        "timeText": "12:00",
+        "occurredAt": null,
+        "fromAgent": "master",
+        "toAgent": "researcher",
+        "kind": "Task",
+        "skill": "research",
+        "body": "Look at the market.",
+        "payload": {},
+        "writes": [],
+        "trace": "tr_9b9c83",
+        "seq": 1
+      },
+      {
+        "accountId": "bus-7cc0e153",
+        "id": "seed-two",
+        "timeText": "12:00",
+        "occurredAt": null,
+        "fromAgent": "master",
+        "toAgent": "researcher",
+        "kind": "Task",
+        "skill": "research",
+        "body": "Look at the market.",
+        "payload": {},
+        "writes": [],
+        "trace": "tr_63377d",
+        "seq": 2
+      },
+      {
+        "accountId": "bus-7cc0e153",
+        "id": "new",
+        "timeText": "12:00",
+        "occurredAt": null,
+        "fromAgent": "master",
+        "toAgent": "researcher",
+        "kind": "Task",
+        "skill": "research",
+        "body": "Look at the market.",
+        "payload": {},
+        "writes": [],
+        "trace": "tr_11507a",
+        "seq": 3
+      }
+    ]
+  },
+  "security": {
+    "forgedSenderStatus": 401,
+    "inspection": {
+      "0": {
+        "/seq": 404,
+        "/alarm": 404,
+        "/local-store": 404,
+        "/local-events": 404,
+        "/store": 200
+      },
+      "1": {
+        "/seq": 200,
+        "/alarm": 200,
+        "/local-store": 200,
+        "/local-events": 200,
+        "/store": 200
+      },
+      "undefined": {
+        "/seq": 404,
+        "/alarm": 404,
+        "/local-store": 404,
+        "/local-events": 404,
+        "/store": 200
+      },
+      "true": {
+        "/seq": 404,
+        "/alarm": 404,
+        "/local-store": 404,
+        "/local-events": 404,
+        "/store": 200
+      }
+    }
+  },
+  "recovery": {
+    "firstStep": {
+      "id": "e100",
+      "time": "11:03",
+      "from": "master",
+      "to": "researcher",
+      "kind": "Task",
+      "skill": "recover",
+      "text": "Held",
+      "payload": {},
+      "writes": [
+        "held"
+      ],
+      "trace": "tr_0cac87",
+      "set": {
+        "held": true
+      }
+    },
+    "alarm": {
+      "alarm": 1793789455975
+    },
+    "duplicate": null,
+    "alarmPersisted": [
+      {
+        "accountId": "bus-951e6511",
+        "id": "initialized",
+        "timeText": "12:00",
+        "occurredAt": null,
+        "fromAgent": "master",
+        "toAgent": "researcher",
+        "kind": "Task",
+        "skill": "research",
+        "body": "Look at the market.",
+        "payload": {},
+        "writes": [],
+        "trace": "tr_19559f",
+        "seq": 1
+      },
+      {
+        "accountId": "bus-951e6511",
+        "id": "e100",
+        "timeText": "11:03",
+        "occurredAt": null,
+        "fromAgent": "master",
+        "toAgent": "researcher",
+        "kind": "Task",
+        "skill": "recover",
+        "body": "Held",
+        "payload": {},
+        "writes": [
+          "held"
+        ],
+        "trace": "tr_0cac87",
+        "seq": 2
+      }
+    ],
+    "nextStep": {
+      "id": "e101",
+      "time": "11:04",
+      "from": "master",
+      "to": "researcher",
+      "kind": "Task",
+      "skill": "recover",
+      "text": "Held",
+      "payload": {},
+      "writes": [
+        "held"
+      ],
+      "trace": "tr_f9decc",
+      "set": {
+        "held": true
+      }
+    }
+  },
+  "queue": {
+    "rows": [
+      {
+        "accountId": "bus-11d6cbcb",
+        "id": "from-real-local-queue",
+        "timeText": "12:00",
+        "occurredAt": null,
+        "fromAgent": "master",
+        "toAgent": "researcher",
+        "kind": "Task",
+        "skill": "research",
+        "body": "Look at the market.",
+        "payload": {},
+        "writes": [],
+        "trace": "tr_6b13cd",
+        "seq": 1
+      },
+      {
+        "accountId": "bus-11d6cbcb",
+        "id": "dead-0e1b4310a97db25b2bc10a45fc86b049",
+        "timeText": "",
+        "occurredAt": null,
+        "fromAgent": "bus",
+        "toAgent": "master",
+        "kind": "Escalation",
+        "skill": "bus.retry",
+        "body": "A message failed all retries.",
+        "payload": {
+          "messageId": "0e1b4310a97db25b2bc10a45fc86b049"
+        },
+        "writes": [],
+        "trace": "tr_52976d",
+        "seq": 2
+      }
+    ]
+  }
+}
