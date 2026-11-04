@@ -1,0 +1,70 @@
+[
+  {
+    "action": "Visit /admin without a session",
+    "url": "http://localhost:3000/signin",
+    "visible": "Sign in to tensquads",
+    "adminNavigation": false
+  },
+  {
+    "action": "Visit /admin/images without a session",
+    "url": "http://localhost:3000/signin",
+    "visible": "Sign in to tensquads",
+    "adminNavigation": false
+  },
+  {
+    "action": "Visit /admin with forged special-session cookie and no Clerk session",
+    "url": "http://localhost:3000/signin",
+    "authorized": false
+  },
+  {
+    "action": "Visit /admin/images with forged special-session cookie and no Clerk session",
+    "url": "http://localhost:3000/signin",
+    "authorized": false
+  },
+  {
+    "action": "Visit /overview with forged special-session cookie and no Clerk session",
+    "url": "http://localhost:3000/signin",
+    "authorized": false
+  },
+  {
+    "action": "Invoke admin reads and special-session POST directly without authentication",
+    "calls": [
+      {
+        "name": "loadAdminAccounts",
+        "resolved": false,
+        "redirect": "/signin",
+        "message": null,
+        "keys": [
+          "options"
+        ]
+      },
+      {
+        "name": "loadAdminImages",
+        "resolved": false,
+        "redirect": "/signin",
+        "message": null,
+        "keys": [
+          "options"
+        ]
+      },
+      {
+        "name": "loadAdminAttention",
+        "resolved": false,
+        "redirect": "/signin",
+        "message": null,
+        "keys": [
+          "options"
+        ]
+      },
+      {
+        "name": "openSpecialSession",
+        "resolved": false,
+        "redirect": "/signin",
+        "message": null,
+        "keys": [
+          "options"
+        ]
+      }
+    ]
+  }
+]

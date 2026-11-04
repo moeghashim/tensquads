@@ -1,0 +1,28 @@
+Target: 92ae91c19876ff4df452078a654763c8c1a0bbfd
+Baseline npm ci && npm test was reported successful by the outer executor.
+
+Live product: npm run dev -w @tensquads/web, http://localhost:3000, isolated headless Chromium context.
+Driver: live-admin-check.mjs. Product responses: live-admin-results.json.
+Both admin routes redirect visitors to the rendered Sign in screen.
+Forged ts_special_account=northwind.<current milliseconds> does not grant a signed-out visitor access to /admin, /admin/images, or /overview.
+Direct browser invocation of loadAdminAccounts, loadAdminImages, loadAdminAttention, and openSpecialSession({data:'northwind'}) returns /signin redirects without data.
+Screenshots: visitor-admin.png, visitor-images.png (1440), visitor-forged-cookie-390.png.
+These observations exercise the no-credentials configuration. They do not prove Clerk's authenticated owner or organization-role checks.
+
+Targeted executable checks passed:
+node --test scripts/test/workspace-account.test.mjs scripts/test/rules-writes.test.mjs scripts/test/agent-detail-write.test.mjs
+node --experimental-strip-types --test apps/web/src/server/special-account.test.ts apps/web/src/screens/signin/activate-org.test.ts apps/web/src/workspace/account-match.test.ts packages/domain/test/admin-view.test.ts packages/seed/test/admin-view.test.ts
+These checks are not live product scenarios.
+
+Authenticated attempt:
+./node_modules/.bin/playwright test --config .phase-test.config.ts --project admin --workers=1 e2e/admin-accounts.spec.ts --grep 'search by company name, owner, and email'
+Temporary config inherited playwright.config.ts and used the running local server, with outputDir in this evidence directory.
+The reseed fixture stopped with "testDatabase is missing." before exercising the product.
+localSecrets() reported publishable, secret, neon, and testDatabase absent. No operator data or shared services were used.
+Attempted disposable database: initdb -D .phase-test-db -A trust -U phase_test --no-locale
+Result: initdb requires postgres, which is absent from its installation. No database directory was created. No host search or installation was performed.
+A workspace-local database package could supply storage but cannot supply a valid Clerk identity or instance keys. The product offers no local authenticated adapter; replacing Clerk or bypassing guards would test a stub instead of authorization.
+To drive remaining scenarios, supply a disposable Clerk development instance's publishable and secret keys with org:super_admin and matching CLERK_PLATFORM_ORG_ID, plus an isolated TEST_DATABASE_URL. Do not supply production or shared operator data.
+No authenticated admin layout screenshots were obtainable. Existing committed screenshots were not treated as evidence for this run.
+
+Cleanup: stopped development server; deleted temporary Playwright configuration and generated apps/web/.dev.vars. No source or test files changed.
