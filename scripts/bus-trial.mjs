@@ -8,7 +8,6 @@ import { pathToFileURL } from "node:url";
 const root = resolve(import.meta.dirname, "..");
 const webDirectory = resolve(root, "apps/web");
 const wranglerBin = resolve(root, "node_modules/wrangler/bin/wrangler.js");
-const accountId = "678c5a795f40f7e9f33b8a71248cc829";
 const blocked = [
 	"CLOUDFLARE_API_TOKEN",
 	"CF_API_TOKEN",
@@ -31,8 +30,11 @@ export function busTrialPlan(env) {
 	if (env.BUS_TRIAL !== "1") return { ok: false, message: "The bus trial is off." };
 	const runId = env.GITHUB_RUN_ID ?? "";
 	if (!/^\d{6,}$/.test(runId)) return { ok: false, message: "The run id is not valid." };
-	if (!env.CLOUDFLARE_WORKERS_API_TOKEN?.trim()) {
-		return { ok: false, message: "CLOUDFLARE_WORKERS_API_TOKEN is absent." };
+	if (!env.CLOUDFLARE_API_TOKEN?.trim()) {
+		return { ok: false, message: "CLOUDFLARE_API_TOKEN is absent." };
+	}
+	if (!env.CLOUDFLARE_ACCOUNT_ID?.trim()) {
+		return { ok: false, message: "CLOUDFLARE_ACCOUNT_ID is absent." };
 	}
 	if (!env.TEST_DATABASE_URL?.trim()) return { ok: false, message: "TEST_DATABASE_URL is absent." };
 	const databaseUrl = env.TEST_DATABASE_URL.trim();
@@ -56,14 +58,15 @@ export function busTrialPlan(env) {
 		eventId: `trial-${runId}`,
 		databaseUrl,
 		boatToken: env.BOAT_API_KEY?.trim() ?? "",
-		cloudflareToken: env.CLOUDFLARE_WORKERS_API_TOKEN.trim(),
+		cloudflareToken: env.CLOUDFLARE_API_TOKEN.trim(),
+		cloudflareAccountId: env.CLOUDFLARE_ACCOUNT_ID.trim(),
 	};
 }
 
 export function trialConfig(sourceText, plan) {
 	const config = JSON.parse(sourceText.replace(/^\s*\/\/.*$/gm, ""));
 	if (config.name !== "tensquads") throw new Error("The worker config is not the project worker.");
-	if (config.account_id !== accountId) throw new Error("The worker config is not the project account.");
+	if (config.account_id !== plan.cloudflareAccountId) throw new Error("The worker config is not the project account.");
 	config.name = plan.workerName;
 	config.vars = {
 		...config.vars,
@@ -89,11 +92,11 @@ export function redact(text, secrets) {
 	return out;
 }
 
-export function childEnv(parent, token) {
+export function childEnv(parent, plan) {
 	const env = { ...parent };
 	for (const key of blocked) delete env[key];
-	env.CLOUDFLARE_API_TOKEN = token;
-	env.CLOUDFLARE_ACCOUNT_ID = accountId;
+	env.CLOUDFLARE_API_TOKEN = plan.cloudflareToken;
+	env.CLOUDFLARE_ACCOUNT_ID = plan.cloudflareAccountId;
 	env.CI = "true";
 	return env;
 }
@@ -198,7 +201,7 @@ function realRun(plan) {
 		const result = spawnSync(process.execPath, [wranglerBin, ...args], {
 			cwd: webDirectory,
 			encoding: "utf8",
-			env: childEnv(process.env, plan.cloudflareToken),
+			env: childEnv(process.env, plan),
 		});
 		const hidden = secretsOf(plan, "");
 		if ((result.status ?? 1) !== 0) {
@@ -213,7 +216,7 @@ async function realCleanup(plan) {
 		spawnSync(process.execPath, [wranglerBin, ...args], {
 			cwd: webDirectory,
 			encoding: "utf8",
-			env: childEnv(process.env, plan.cloudflareToken),
+			env: childEnv(process.env, plan),
 		});
 	};
 	if (plan.workerName === "tensquads" || !plan.workerName.startsWith("tensquads-trial-")) {
@@ -226,13 +229,13 @@ async function realCleanup(plan) {
 	const queues = spawnSync(process.execPath, [wranglerBin, "queues", "list"], {
 		cwd: webDirectory,
 		encoding: "utf8",
-		env: childEnv(process.env, plan.cloudflareToken),
+		env: childEnv(process.env, plan),
 	});
 	const listed = queues.stdout ?? "";
 	const worker = spawnSync(process.execPath, [wranglerBin, "deployments", "status", "--name", plan.workerName], {
 		cwd: webDirectory,
 		encoding: "utf8",
-		env: childEnv(process.env, plan.cloudflareToken),
+		env: childEnv(process.env, plan),
 	});
 	const left = [];
 	if (listed.includes(plan.queue)) left.push(plan.queue);

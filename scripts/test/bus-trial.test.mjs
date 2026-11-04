@@ -11,7 +11,8 @@ const source = readFileSync(new URL("apps/web/wrangler.jsonc", root), "utf8");
 const env = {
 	BUS_TRIAL: "1",
 	GITHUB_RUN_ID: "41877304107",
-	CLOUDFLARE_WORKERS_API_TOKEN: "cf-token-value",
+	CLOUDFLARE_API_TOKEN: "cf-token-value",
+	CLOUDFLARE_ACCOUNT_ID: "678c5a795f40f7e9f33b8a71248cc829",
 	TEST_DATABASE_URL: "postgres://example.test/trial",
 	BOAT_API_KEY: "boat-api-key-value",
 	NEON_POSTGRES_CONNECTION_STRING: "postgres://example.test/live",
@@ -20,10 +21,8 @@ const env = {
 test("the bus trial stays off unless its input is set", () => {
 	assert.equal(busTrialPlan({}).message, "The bus trial is off.");
 	assert.equal(busTrialPlan({ ...env, BUS_TRIAL: "0" }).message, "The bus trial is off.");
-	assert.equal(
-		busTrialPlan({ ...env, CLOUDFLARE_WORKERS_API_TOKEN: " " }).message,
-		"CLOUDFLARE_WORKERS_API_TOKEN is absent.",
-	);
+	assert.equal(busTrialPlan({ ...env, CLOUDFLARE_API_TOKEN: " " }).message, "CLOUDFLARE_API_TOKEN is absent.");
+	assert.equal(busTrialPlan({ ...env, CLOUDFLARE_ACCOUNT_ID: " " }).message, "CLOUDFLARE_ACCOUNT_ID is absent.");
 	assert.equal(
 		busTrialPlan({ ...env, TEST_DATABASE_URL: env.NEON_POSTGRES_CONNECTION_STRING }).message,
 		"The bus trial must not use the live database.",
@@ -54,12 +53,15 @@ test("wrangler output and the child environment do not carry the trial secrets",
 			PATH: "/usr/bin",
 			NEON_POSTGRES_CONNECTION_STRING: env.NEON_POSTGRES_CONNECTION_STRING,
 			CLOUDFLARE_API_KEY: "personal-key",
+			CLOUDFLARE_WORKERS_API_TOKEN: "other-token",
 			BOAT_API_KEY: env.BOAT_API_KEY,
 			TEST_DATABASE_URL: env.TEST_DATABASE_URL,
 		},
-		plan.cloudflareToken,
+		plan,
 	);
 	assert.equal(child.CLOUDFLARE_API_TOKEN, plan.cloudflareToken);
+	assert.equal(child.CLOUDFLARE_ACCOUNT_ID, plan.cloudflareAccountId);
+	assert.equal(child.CLOUDFLARE_WORKERS_API_TOKEN, undefined);
 	assert.equal(child.NEON_POSTGRES_CONNECTION_STRING, undefined);
 	assert.equal(child.BOAT_API_KEY, undefined);
 	assert.equal(child.TEST_DATABASE_URL, undefined);

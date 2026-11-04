@@ -163,6 +163,12 @@ test("the machine trial is a manual job and the bus trial stays off", () => {
 		bus.steps.some((step) => step.if === "always()"),
 		true,
 	);
+	for (const step of bus.steps) {
+		if (!step.env) continue;
+		assert.equal(step.env.CLOUDFLARE_API_TOKEN, "$" + "{{ secrets.CLOUDFLARE_API_TOKEN }}");
+		assert.equal(step.env.CLOUDFLARE_ACCOUNT_ID, "$" + "{{ vars.CLOUDFLARE_ACCOUNT_ID }}");
+		assert.equal(step.env.CLOUDFLARE_WORKERS_API_TOKEN, undefined);
+	}
 	const summary = Object.values(workflow.jobs).find(
 		(candidate) => candidate.name === "Required checks" && !candidate.strategy,
 	);

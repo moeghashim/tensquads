@@ -13,7 +13,12 @@ test("npm test does not load the live machine trial", () => {
 	assert.equal(readdirSync(new URL("./live", import.meta.url)).includes("machine-trial.test.ts"), true);
 });
 
-test("the machine env check accepts the three sent values and the two boat variables", () => {
+test("the machine env check accepts the three sent values and the injected boat variables", () => {
+	const sent = {
+		ACCOUNT_ID: "trial1",
+		TENSQUADS_AGENT_ID: "a1",
+		IMAGE_TAG: "registry.agents.co/img1:1",
+	};
 	const stdout = [
 		"ACCOUNT_ID=trial1",
 		"TENSQUADS_AGENT_ID=a1",
@@ -25,17 +30,8 @@ test("the machine env check accepts the three sent values and the two boat varia
 		"PRODUCT_MODE=injected",
 		"ASCII_PORT=injected",
 		"ASCII_API_URL=injected",
-		"PATH=/usr/bin",
 	].join("\n");
-	assertMachineEnv(
-		stdout,
-		{
-			ACCOUNT_ID: "trial1",
-			TENSQUADS_AGENT_ID: "a1",
-			IMAGE_TAG: "registry.agents.co/img1:1",
-		},
-		["boat-api-key-value"],
-	);
+	assertMachineEnv(stdout, sent, ["boat-api-key-value"]);
 	assert.deepEqual(boatVariableNames(stdout), [
 		"AGENT_ID",
 		"ASCII_API_URL",
@@ -52,6 +48,14 @@ test("the machine env check accepts the three sent values and the two boat varia
 	assert.throws(
 		() => assertMachineEnv(`${stdout}\nNOTE=boat-api-key-value`, { ACCOUNT_ID: "trial1" }, ["boat-api-key-value"]),
 		/The machine env holds a boat API key\./,
+	);
+	assert.throws(
+		() => assertMachineEnv(`${stdout}\nTENSQUADS_TRIAL_KEY=configured`, sent, []),
+		/The secret name is present on the machine\./,
+	);
+	assert.throws(
+		() => assertMachineEnv(`${stdout}\nPATH=/usr/bin`, sent, []),
+		/The machine env has an unexpected variable: PATH\./,
 	);
 });
 

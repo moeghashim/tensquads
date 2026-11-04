@@ -1,5 +1,12 @@
-const boatKey = /^(BOAT_|ASCII_)/;
-const namedBoat = new Set(["AGENT_ID", "ENVIRONMENT_ID", "PRODUCT_MODE", "SERVICE_PREVIEW_TOKEN"]);
+const injectedBoat = [
+	"AGENT_ID",
+	"ASCII_API_URL",
+	"ASCII_PORT",
+	"ASCII_TOKEN",
+	"BOAT_ID",
+	"ENVIRONMENT_ID",
+	"PRODUCT_MODE",
+];
 
 function machineEnvironment(stdout: string): Map<string, string> {
 	const env = new Map<string, string>();
@@ -20,8 +27,9 @@ export function assertMachineEnv(
 	for (const [key, value] of Object.entries(expected)) {
 		if (env.get(key) !== value) throw new Error(`The machine env ${key} does not match the sent value.`);
 	}
-	if (!env.get("BOAT_ID")) throw new Error("BOAT_ID is missing.");
-	if (!env.get("ASCII_TOKEN")) throw new Error("ASCII_TOKEN is missing.");
+	for (const key of injectedBoat) {
+		if (!env.get(key)) throw new Error(`${key} is missing.`);
+	}
 	if (env.has("TENSQUADS_TRIAL_KEY")) throw new Error("The secret name is present on the machine.");
 	for (const secret of secrets) {
 		if (secret.length < 12) continue;
@@ -29,8 +37,11 @@ export function assertMachineEnv(
 			if (value.includes(secret)) throw new Error("The machine env holds a boat API key.");
 		}
 	}
+	const sent = new Set(Object.keys(expected));
+	const extra = [...env.keys()].filter((key) => !sent.has(key) && !injectedBoat.includes(key)).sort();
+	if (extra.length > 0) throw new Error(`The machine env has an unexpected variable: ${extra.join(", ")}.`);
 }
 
 export function boatVariableNames(stdout: string): string[] {
-	return [...machineEnvironment(stdout).keys()].filter((key) => boatKey.test(key) || namedBoat.has(key)).sort();
+	return [...machineEnvironment(stdout).keys()].filter((key) => injectedBoat.includes(key)).sort();
 }

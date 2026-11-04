@@ -23,7 +23,7 @@ The builder does no step 1 work. Item 21 stays open with Moe. Items 1, 2 and 3 w
 1. **Paid plan.** Done by Moe on 4 November 2026. The boat plan is Standard.
 2. **API keys.** Done by Moe on 4 November 2026. `BOAT_API_KEY` and `BOAT_ADMIN_API_KEY` are in `.env` and in GitHub Actions secrets. The API key was rotated on 4 November 2026.
 3. **Credential profile.** Done by Moe on 4 November 2026. The profile `tensquads-agents` exists and is empty. `default` and `moe@10claws.com` stay untouched.
-4. **noEnv and the environment.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Send `noEnv: true` and `environment: "tensquads-agents"` together. If that pair is refused, send `noEnv: true` alone.
+4. **noEnv and the environment.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Send `noEnv: true` and `environment: "tensquads-agents"` together. If that pair is refused, send `noEnv: true` alone. The live run on 4 November 2026 kept the pair. The sandbox read `sandbox.environment=tensquads-agents`, `sandbox.ttlSeconds=null`, and `noEnv=absent`. Boat injects `AGENT_ID`, `ASCII_API_URL`, `ASCII_PORT`, `ASCII_TOKEN`, `BOAT_ID`, `ENVIRONMENT_ID`, and `PRODUCT_MODE`.
 5. **Async account ports.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. New methods are async and take an `AccountScope`. The old sync ports stay, so the current callers do not move in this pull request.
 6. **Template contents.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. `makeTemplate` starts a machine, writes the image file, saves `tensquads-<imageId>-<version>`, waits until ready, and removes the source.
 7. **Dashboard fields.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Host is `vps-<agentId>-01`, region is `EU`, size is `<vcpu> vCPU · <memoryGB> GB`, CPU is the rounded process share, and uptime is `N days` or "Just started".
@@ -41,7 +41,7 @@ The builder does no step 1 work. Item 21 stays open with Moe. Items 1, 2 and 3 w
 19. **Heartbeat.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The heartbeat, systemd service, and "Restarting" stay out of this task.
 20. **Find a machine.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. No new table. Find the machine with the label filter. The SDK method accepts `label`.
 21. **Host failure and a second region.** Open with Moe.
-22. **Bus proof.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The rules run on Miniflare in `npm test`. The real deploy half is the `bus_trial` input, default false. It was not run on 4 November 2026 because GitHub has no Cloudflare token yet.
+22. **Bus proof.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The rules run on Miniflare in `npm test`. The real deploy half is the `bus_trial` input, default false. The job reads GitHub secret `CLOUDFLARE_API_TOKEN` and variable `CLOUDFLARE_ACCOUNT_ID`. It was not run. The token is Workers Scripts Edit and Queues Edit until Moe raises Workers to product-level Admin.
 
 AGENT_ID is reserved by boat (invalid_env). The machine gets TENSQUADS_AGENT_ID. Decided by the orchestrator under Moe's delegation, 4 November 2026.
 
