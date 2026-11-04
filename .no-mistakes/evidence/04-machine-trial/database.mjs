@@ -1,0 +1,21 @@
+import { PGlite } from '@electric-sql/pglite';
+import { PGLiteSocketServer } from './package/dist/index.js';
+import { WebSocketServer } from 'ws';
+import net from 'node:net';
+const db = await PGlite.create();
+const server = new PGLiteSocketServer({db, host:'127.0.0.1',port:15432,maxConnections:200});
+await server.start();
+const sockets = new Set();
+const proxy = new WebSocketServer({host:'127.0.0.1',port:15433});
+proxy.on('connection', ws => {
+ const tcp = net.connect({host:'127.0.0.1',port:15432});
+ sockets.add(ws); sockets.add(tcp);
+ ws.on('message', data => tcp.write(data));
+ tcp.on('data', data => { if(ws.readyState===1) ws.send(data); });
+ ws.on('close',()=>{tcp.destroy();sockets.delete(ws);});
+ tcp.on('close',()=>{ws.close();sockets.delete(tcp);});
+ tcp.on('error',()=>ws.close());
+ ws.on('error',()=>tcp.destroy());
+});
+console.log('Disposable PGlite PostgreSQL socket :15432 and WebSocket proxy :15433 ready');
+process.on('SIGTERM',async()=>{for(const s of sockets) s.destroy?.();for(const s of proxy.clients)s.terminate();proxy.close();await server.stop();await db.close();process.exit(0);});

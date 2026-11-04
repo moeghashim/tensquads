@@ -1,0 +1,16 @@
+--- miniflare/dist/src/workers/queues/broker.worker.js
++++ disposable-copy/dist/src/workers/queues/broker.worker.js
+@@ -252,11 +252,12 @@
+     } catch (e) {
+       endTime = Date.now(), await this.logWithLevel(LogLevel.ERROR, String(e)), response = exceptionQueueResponse;
+     }
++    await this.logWithLevel(LogLevel.WARN, "PHASE QUEUE RESULT " + JSON.stringify(response));
+     let retryAll = response.retryBatch.retry || response.outcome !== "ok", retryMessages = new Map(
+       response.retryMessages?.map((r) => [r.msgId, r.delaySeconds])
+     ), globalDelay = response.retryBatch.delaySeconds ?? consumer.retryDelay ?? 0, failedMessages = 0, toDeadLetterQueue = [];
+     for (let message of batch)
+-      if (retryAll || retryMessages.has(message.id))
++      if (!response.explicitAcks.includes(message.id) && (retryAll || retryMessages.has(message.id)))
+         if (failedMessages++, message.incrementFailedAttempts() < maxAttempts) {
+           await this.logWithLevel(
+             LogLevel.DEBUG,

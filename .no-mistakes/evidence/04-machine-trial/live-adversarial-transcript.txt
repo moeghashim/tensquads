@@ -1,0 +1,37 @@
+{"request":"[object Request]","method":"GET","status":200,"response":"[{\"id\":\"seed\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"12:00\",\"trace\":\"tr_19b258\"},{\"id\":\"e100\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"12:00\",\"trace\":\"tr_0cac87\"}]"}
+{"request":"[object Request]","method":"GET","status":200,"response":"{\"limit\":20,\"status\":\"ready\"}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":true,\"seq\":2}"}
+{"request":"[object Request]","method":"GET","status":200,"response":"[{\"id\":\"seed\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"12:00\",\"trace\":\"tr_19b258\"},{\"id\":\"e100\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"12:00\",\"trace\":\"tr_0cac87\"}]"}
+{"request":"[object Request]","method":"GET","status":200,"response":"{\"seen\":false,\"seq\":3}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":4}"}
+{"request":"[object Request]","method":"GET","status":200,"response":"{\"added\":true,\"limit\":20,\"status\":\"ready\"}"}
+{"persistedAccount":"bus-6c6c542c","events":[{"id":"seed","seq":1,"kind":"Task"},{"id":"e100","seq":2,"kind":"Task"},{"id":"e101","seq":3,"kind":"Task"},{"id":"additional","seq":4,"kind":"Task"}]}
+{"request":"http://localhost/machine/take","method":"POST","status":200,"response":"[{\"id\":\"e101\",\"time\":\"11:04\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Next\",\"payload\":{},\"writes\":[],\"trace\":\"tr_f9decc\"},{\"id\":\"additional\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"12:00\",\"set\":{\"added\":true}}]"}
+{"request":"[object Request]","method":"GET","status":200,"response":"{\"added\":true,\"limit\":20,\"status\":\"ready\"}"}
+{"request":"[object Request]","method":"GET","status":200,"response":"[{\"id\":\"seed\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"12:00\",\"trace\":\"tr_19b258\"},{\"id\":\"e100\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"12:00\",\"trace\":\"tr_0cac87\"},{\"id\":\"e101\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Next\",\"payload\":{},\"writes\":[],\"time\":\"11:04\",\"trace\":\"tr_f9decc\"},{\"id\":\"additional\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"12:00\",\"trace\":\"tr_7b4767\"}]"}
+{"scenario":"seed restoration","account":"bus-6c6c542c","state":{"added":true,"limit":20,"status":"ready"},"eventIds":["seed","e100","e101","additional"]}
+✔ live seeded history and state survive duplicate and new publication (702.268417ms)
+{"request":"http://localhost/machine/send","method":"POST","status":401,"response":"The token was rejected."}
+{"request":"http://localhost/machine/send","method":"POST","status":401,"response":"The token was rejected."}
+{"request":"http://localhost/machine/send","method":"POST","status":400,"response":"The message was rejected."}
+{"request":"http://localhost/machine/send","method":"POST","status":400,"response":"The message was rejected."}
+{"request":"http://localhost/machine/send","method":"POST","status":400,"response":"The message was rejected."}
+{"request":"http://localhost/machine/send","method":"POST","status":400,"response":"The message was rejected."}
+{"persistedAccount":"bus-82b14dc4","events":[]}
+✔ live signed requests reject sender impersonation and malformed payloads (9.818375ms)
+{"mode":"missing","sendStatus":200,"taken":[{"id":"default-task","from":"researcher","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}]}
+{"mode":"test","sendStatus":200,"taken":[{"id":"default-task","from":"researcher","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}]}
+✔ live default and explicit test mode send and take without real service configuration (135.496583ms)
+{"path":"/seq","status":404,"body":"missing"}
+{"path":"/alarm","status":404,"body":"missing"}
+{"path":"/local-store","status":404,"body":"missing"}
+{"path":"/local-events","status":404,"body":"missing"}
+✔ live inspection endpoints stay hidden without test binding (132.796625ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1691.752416

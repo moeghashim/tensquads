@@ -1,0 +1,47 @@
+[mf:debug] Skipping registration of Worker tensquads as a Worker with this name is already registered in the dev registry by another process
+[mf:info] Ready on http://127.0.0.1:58635
+{"persistedAccount":"bus-0ba949fc","events":[]}
+[mf:warn] PHASE QUEUE RESULT {"outcome":"ok","ackAll":false,"retryBatch":{"retry":false},"explicitAcks":["863aa181f4d3433388f6f17ee175127e"],"retryMessages":[]}
+[mf:info] QUEUE tensquads-bus 1/1 (45ms)
+[mf:warn] PHASE QUEUE RESULT {"outcome":"exception","ackAll":false,"retryBatch":{"retry":false},"explicitAcks":["5e6f65cf37a08a910347a542c12379b1"],"retryMessages":[]}
+[mf:debug] Retrying message "5e6f65cf37a08a910347a542c12379b1" on queue "tensquads-bus"...
+[mf:debug] Retrying message "792c048bb025db8f8ac676e6e866715e" on queue "tensquads-bus"...
+[mf:info] QUEUE tensquads-bus 0/2 (1ms)
+[mf:warn] PHASE QUEUE RESULT {"outcome":"exception","ackAll":false,"retryBatch":{"retry":false},"explicitAcks":["5e6f65cf37a08a910347a542c12379b1"],"retryMessages":[]}
+[mf:warn] Moving message "5e6f65cf37a08a910347a542c12379b1" on queue "tensquads-bus" to dead letter queue "tensquads-bus-dlq" after 2 failed attempts...
+[mf:warn] Moving message "792c048bb025db8f8ac676e6e866715e" on queue "tensquads-bus" to dead letter queue "tensquads-bus-dlq" after 2 failed attempts...
+[mf:info] QUEUE tensquads-bus 0/2 (1ms)
+[mf:warn] PHASE QUEUE RESULT {"outcome":"ok","ackAll":false,"retryBatch":{"retry":false},"explicitAcks":["5e6f65cf37a08a910347a542c12379b1","792c048bb025db8f8ac676e6e866715e"],"retryMessages":[]}
+[mf:info] QUEUE tensquads-bus-dlq 2/2 (15ms)
+{"persistedAccount":"bus-0ba949fc","events":[{"id":"queue-live","seq":1,"kind":"Task"},{"id":"dead-5e6f65cf37a08a910347a542c12379b1","seq":2,"kind":"Escalation"},{"id":"dead-792c048bb025db8f8ac676e6e866715e","seq":3,"kind":"Escalation"}]}
+[mf:info] GET /observed 200 OK (3ms)
+QUEUE OBSERVATIONS [{"queue":"tensquads-bus","messages":[{"id":"863aa181f4d3433388f6f17ee175127e","body":{"accountId":"bus-0ba949fc","event":{"id":"queue-live","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}},"attempts":1}]},{"queue":"tensquads-bus","messages":[{"id":"5e6f65cf37a08a910347a542c12379b1","body":{"accountId":"bus-0ba949fc","event":{"id":"queue-live","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}},"attempts":1},{"id":"792c048bb025db8f8ac676e6e866715e","body":{"accountId":"bus-0ba949fc","event":{"writes":{}}},"attempts":1}]},{"error":"Error: The message was rejected."},{"queue":"tensquads-bus","messages":[{"id":"5e6f65cf37a08a910347a542c12379b1","body":{"accountId":"bus-0ba949fc","event":{"id":"queue-live","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}},"attempts":2},{"id":"792c048bb025db8f8ac676e6e866715e","body":{"accountId":"bus-0ba949fc","event":{"writes":{}}},"attempts":2}]},{"error":"Error: The message was rejected."},{"queue":"tensquads-bus-dlq","messages":[{"id":"5e6f65cf37a08a910347a542c12379b1","body":{"accountId":"bus-0ba949fc","event":{"id":"queue-live","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}},"attempts":1},{"id":"792c048bb025db8f8ac676e6e866715e","body":{"accountId":"bus-0ba949fc","event":{"writes":{}}},"attempts":1}]}]
+✖ live actual queue delivers once and exhausted malformed message becomes escalation (1123.985917ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1746.966209
+
+✖ failing tests:
+
+test at packages/adapters/test/.phase-live.test.ts:571:1
+✖ live actual queue delivers once and exhausted malformed message becomes escalation (1123.985917ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6KM1PN4Z7FC8RDAEPEXPD20/packages/adapters/test/.phase-live.test.ts:586:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

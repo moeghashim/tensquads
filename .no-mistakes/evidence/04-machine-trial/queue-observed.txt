@@ -1,0 +1,32 @@
+{"persistedAccount":"bus-f8b93a4e","events":[]}
+{"persistedAccount":"bus-f8b93a4e","events":[{"id":"queue-live","seq":1,"kind":"Task"},{"id":"dead-6824ab54621e12ad930aa4596cca62dd","seq":2,"kind":"Escalation"},{"id":"dead-bbe221c95048ab8f9b2dd66919e3fabf","seq":3,"kind":"Escalation"}]}
+QUEUE OBSERVATIONS [{"queue":"tensquads-bus","messages":[{"id":"f2e4526bdaac6b81418948ffb1d0ecba","body":{"accountId":"bus-f8b93a4e","event":{"id":"queue-live","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}},"attempts":1}]},{"queue":"tensquads-bus","messages":[{"id":"6824ab54621e12ad930aa4596cca62dd","body":{"accountId":"bus-f8b93a4e","event":{"id":"queue-live","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}},"attempts":1},{"id":"bbe221c95048ab8f9b2dd66919e3fabf","body":{"accountId":"bus-f8b93a4e","event":{"writes":{}}},"attempts":1}]},{"error":"Error: The message was rejected."},{"queue":"tensquads-bus","messages":[{"id":"6824ab54621e12ad930aa4596cca62dd","body":{"accountId":"bus-f8b93a4e","event":{"id":"queue-live","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}},"attempts":2},{"id":"bbe221c95048ab8f9b2dd66919e3fabf","body":{"accountId":"bus-f8b93a4e","event":{"writes":{}}},"attempts":2}]},{"error":"Error: The message was rejected."},{"queue":"tensquads-bus-dlq","messages":[{"id":"6824ab54621e12ad930aa4596cca62dd","body":{"accountId":"bus-f8b93a4e","event":{"id":"queue-live","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}},"attempts":1},{"id":"bbe221c95048ab8f9b2dd66919e3fabf","body":{"accountId":"bus-f8b93a4e","event":{"writes":{}}},"attempts":1}]}]
+✖ live actual queue delivers once and exhausted malformed message becomes escalation (872.834084ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1430.296167
+
+✖ failing tests:
+
+test at packages/adapters/test/.phase-live.test.ts:571:1
+✖ live actual queue delivers once and exhausted malformed message becomes escalation (872.834084ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6KM1PN4Z7FC8RDAEPEXPD20/packages/adapters/test/.phase-live.test.ts:586:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

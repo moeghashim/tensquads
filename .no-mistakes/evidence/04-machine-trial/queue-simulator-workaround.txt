@@ -1,0 +1,26 @@
+[mf:debug] Skipping registration of Worker tensquads as a Worker with this name is already registered in the dev registry by another process
+[mf:info] Ready on http://127.0.0.1:58834
+{"persistedAccount":"bus-9edda40d","events":[]}
+[mf:warn] PHASE QUEUE RESULT {"outcome":"ok","ackAll":false,"retryBatch":{"retry":false},"explicitAcks":["a3afcb400120626a457f7d9ee6792234"],"retryMessages":[]}
+[mf:info] QUEUE tensquads-bus 1/1 (18ms)
+[mf:warn] PHASE QUEUE RESULT {"outcome":"exception","ackAll":false,"retryBatch":{"retry":false},"explicitAcks":["229509ff876eb7c80c4e0a3039c4743c"],"retryMessages":[]}
+[mf:debug] Retrying message "a58f6c02f51b521f48b1e91eadec49bf" on queue "tensquads-bus"...
+[mf:info] QUEUE tensquads-bus 1/2 (1ms)
+[mf:warn] PHASE QUEUE RESULT {"outcome":"exception","ackAll":false,"retryBatch":{"retry":false},"explicitAcks":[],"retryMessages":[]}
+[mf:warn] Moving message "a58f6c02f51b521f48b1e91eadec49bf" on queue "tensquads-bus" to dead letter queue "tensquads-bus-dlq" after 2 failed attempts...
+[mf:info] QUEUE tensquads-bus 0/1 (0ms)
+[mf:warn] PHASE QUEUE RESULT {"outcome":"ok","ackAll":false,"retryBatch":{"retry":false},"explicitAcks":["a58f6c02f51b521f48b1e91eadec49bf"],"retryMessages":[]}
+[mf:info] QUEUE tensquads-bus-dlq 1/1 (6ms)
+{"persistedAccount":"bus-9edda40d","events":[{"id":"queue-live","seq":1,"kind":"Task"},{"id":"dead-a58f6c02f51b521f48b1e91eadec49bf","seq":2,"kind":"Escalation"}]}
+[mf:info] GET /observed 200 OK (2ms)
+QUEUE OBSERVATIONS [{"queue":"tensquads-bus","messages":[{"id":"a3afcb400120626a457f7d9ee6792234","body":{"accountId":"bus-9edda40d","event":{"id":"queue-live","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}},"attempts":1}]},{"queue":"tensquads-bus","messages":[{"id":"229509ff876eb7c80c4e0a3039c4743c","body":{"accountId":"bus-9edda40d","event":{"id":"queue-live","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}},"attempts":1},{"id":"a58f6c02f51b521f48b1e91eadec49bf","body":{"accountId":"bus-9edda40d","event":{"writes":{}}},"attempts":1}]},{"error":"Error: The message was rejected."},{"queue":"tensquads-bus","messages":[{"id":"a58f6c02f51b521f48b1e91eadec49bf","body":{"accountId":"bus-9edda40d","event":{"writes":{}}},"attempts":2}]},{"error":"Error: The message was rejected."},{"queue":"tensquads-bus-dlq","messages":[{"id":"a58f6c02f51b521f48b1e91eadec49bf","body":{"accountId":"bus-9edda40d","event":{"writes":{}}},"attempts":1}]}]
+{"scenario":"actual queue and dead letter","persisted":[{"id":"queue-live","seq":1,"kind":"Task","text":"Look at the market."},{"id":"dead-a58f6c02f51b521f48b1e91eadec49bf","seq":2,"kind":"Escalation","text":"A message failed all retries."}]}
+✔ live actual queue delivers once and exhausted malformed message becomes escalation (626.487875ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1143.649458

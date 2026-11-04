@@ -1,0 +1,62 @@
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":1}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":2}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":3}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":4}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":5}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":6}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":7}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":8}"}
+{"persistedAccount":"bus-cd1d6eb1","events":[{"id":"p-0","seq":1,"kind":"Task"},{"id":"p-1","seq":2,"kind":"Task"},{"id":"p-2","seq":3,"kind":"Task"},{"id":"p-3","seq":4,"kind":"Task"},{"id":"p-4","seq":5,"kind":"Task"},{"id":"p-5","seq":6,"kind":"Task"},{"id":"p-6","seq":7,"kind":"Task"},{"id":"p-7","seq":8,"kind":"Task"}]}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":true,\"seq\":8}"}
+{"request":"http://localhost/read?account=bus-cd1d6eb1&path=%2Flocal-store","method":"GET","status":200,"response":"{}"}
+{"persistedAccount":"bus-cd1d6eb1","events":[{"id":"p-0","seq":1,"kind":"Task"},{"id":"p-1","seq":2,"kind":"Task"},{"id":"p-2","seq":3,"kind":"Task"},{"id":"p-3","seq":4,"kind":"Task"},{"id":"p-4","seq":5,"kind":"Task"},{"id":"p-5","seq":6,"kind":"Task"},{"id":"p-6","seq":7,"kind":"Task"},{"id":"p-7","seq":8,"kind":"Task"}]}
+✔ parallel events keep one sequence and a repeat changes nothing (287.356584ms)
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":1}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":1}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":2}"}
+{"request":"http://localhost/read?account=bus-d161f491&path=%2Fseq","method":"GET","status":200,"response":"{\"seq\":2}"}
+{"request":"http://localhost/read?account=bus-43dbec83&path=%2Fseq","method":"GET","status":200,"response":"{\"seq\":1}"}
+{"persistedAccount":"bus-d161f491","events":[{"id":"a1","seq":1,"kind":"Task"},{"id":"a2","seq":2,"kind":"Task"}]}
+{"persistedAccount":"bus-43dbec83","events":[{"id":"b1","seq":1,"kind":"Task"}]}
+✔ two accounts do not share a sequence (43.661625ms)
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":1}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":2}"}
+{"request":"http://localhost/read?account=bus-b24e5d9c&path=%2Fevents","method":"GET","status":200,"response":"[{\"id\":\"late\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[\"alpha\",\"beta\"],\"time\":\"23:59\",\"trace\":\"tr_089001\"},{\"id\":\"early\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"00:01\",\"trace\":\"tr_f40883\"}]"}
+{"request":"http://localhost/read?account=bus-b24e5d9c&path=%2Fstore","method":"GET","status":200,"response":"{\"alpha\":\"one\",\"beta\":2}"}
+✔ one accept writes every key and events sort by sequence (37.894ms)
+{"request":"http://localhost/next","method":"POST","status":200,"response":"{\"id\":\"e100\",\"time\":\"11:03\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{\"topic\":\"prints\"},\"writes\":[\"topic\"],\"trace\":\"tr_0cac87\",\"set\":{\"topic\":\"prints\"}}"}
+{"persistedAccount":"bus-897fd3d5","events":[{"id":"e100","seq":1,"kind":"Task"}]}
+✔ nextEvent writes one row through the same accept path (23.783917ms)
+{"request":"http://localhost/queue","method":"POST","status":200,"response":"ok"}
+{"request":"http://localhost/queue","method":"POST","status":200,"response":"ok"}
+{"request":"http://localhost/queue","method":"POST","status":200,"response":"ok"}
+{"request":"http://localhost/queue","method":"POST","status":200,"response":"ok"}
+{"persistedAccount":"bus-007dbff8","events":[{"id":"once","seq":1,"kind":"Task"},{"id":"dead-m1","seq":2,"kind":"Escalation"}]}
+✔ a dead letter makes one escalation and a repeat delivery makes no second row (26.143625ms)
+{"request":"http://localhost/machine/send","method":"POST","status":200,"response":"{\"ok\":true}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":2}"}
+{"request":"http://localhost/machine/take","method":"POST","status":200,"response":"[{\"id\":\"task-1\",\"from\":\"researcher\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"12:00\"}]"}
+{"request":"http://localhost/machine/take","method":"POST","status":200,"response":"[]"}
+{"request":"http://localhost/read?account=ac.me-cc3928&path=%2Flocal-events","method":"GET","status":200,"response":"[{\"id\":\"task-1\",\"from\":\"researcher\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"12:00\"},{\"id\":\"other-task\",\"from\":\"master\",\"to\":\"clerk\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"12:00\"}]"}
+{"persistedAccount":"ac.me-cc3928","events":[{"id":"task-1","seq":1,"kind":"Task"},{"id":"other-task","seq":2,"kind":"Task"}]}
+{"request":"http://localhost/machine/send","method":"POST","status":401,"response":"The token was rejected."}
+{"request":"http://localhost/machine/take","method":"POST","status":401,"response":"The token was rejected."}
+✔ a machine token sends and takes one task and a bad token is rejected (29.992875ms)
+{"request":"http://localhost/socket?account=bus-b017fe5a","method":"GET","status":101,"response":"WebSocket connected"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":1}"}
+✔ the socket receives the new event (17.76325ms)
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":1}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":2}"}
+{"request":"http://localhost/read?account=bus-3b633ebf&path=%2Falarm","method":"GET","status":200,"response":"{\"alarm\":1793808077454}"}
+{"request":"http://localhost/read?account=bus-3b633ebf&path=%2Flocal-events","method":"GET","status":200,"response":"[{\"id\":\"initialized\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"12:00\"},{\"id\":\"held\",\"from\":\"master\",\"to\":\"researcher\",\"kind\":\"Task\",\"skill\":\"research\",\"text\":\"Look at the market.\",\"payload\":{},\"writes\":[],\"time\":\"12:00\"}]"}
+✔ a refused database keeps the event and sets an alarm (149.798375ms)
+{"request":"http://localhost/machine/send","method":"POST","status":503,"response":"The machine service is not configured."}
+✔ a missing token key refuses the machine call (62.589375ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1150.35075

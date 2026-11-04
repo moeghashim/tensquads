@@ -1,0 +1,97 @@
+{"persistedAccount":"bus-ed881bde","events":[]}
+{"persistedAccount":"bus-ed881bde","events":[{"id":"queue-live","seq":1,"kind":"Task"},{"id":"dead-5a2e246fdbcb1be5a7728d074781273f","seq":2,"kind":"Escalation"},{"id":"dead-f3b320a212eee4d9d88ba5a60656a0e4","seq":3,"kind":"Escalation"}]}
+✖ live actual queue delivers once and exhausted malformed message becomes escalation (1021.041959ms)
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":1}"}
+{"request":"http://localhost/publish","method":"POST","status":200,"response":"{\"seen\":false,\"seq\":2}"}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"}]}
+{"persistedAccount":"bus-b60da10f","events":[{"id":"before-outage","seq":1,"kind":"Task"},{"id":"during-outage","seq":2,"kind":"Task"}]}
+{"scenario":"alarm recovery","persisted":[{"id":"before-outage","seq":1},{"id":"during-outage","seq":2}],"state":[{"accountId":"bus-b60da10f","key":"recovered","value":"true","sortOrder":2}]}
+✔ live alarm retries retained writes after database service returns (30674.814666ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32449.247875
+
+✖ failing tests:
+
+test at packages/adapters/test/.phase-live.test.ts:571:1
+✖ live actual queue delivers once and exhausted malformed message becomes escalation (1021.041959ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6KM1PN4Z7FC8RDAEPEXPD20/packages/adapters/test/.phase-live.test.ts:585:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
