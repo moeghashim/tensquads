@@ -23,6 +23,7 @@ export interface BusState {
 
 export interface BusObjectEnv {
 	readonly DATABASE_URL?: string;
+	readonly BUS_INSPECT?: string;
 }
 
 interface AcceptResult {
@@ -103,17 +104,20 @@ export class AccountBus {
 	}
 
 	private routes(): Map<string, (request: Request) => Promise<Response>> {
-		return new Map([
+		const routes = new Map<string, (request: Request) => Promise<Response>>([
 			["/accept", (request: Request) => request.json().then((body: unknown) => this.accept(body))],
 			["/events", () => this.events()],
 			["/store", async () => Response.json(await this.stateMap())],
 			["/socket", () => Promise.resolve(this.socket())],
 			["/take", (request: Request) => request.json().then((body: unknown) => this.take(body))],
-			["/seq", async () => Response.json({ seq: (await this.ctx.storage.get<number>("seq")) ?? 0 })],
-			["/alarm", async () => Response.json({ alarm: await this.ctx.storage.getAlarm() })],
-			["/local-store", async () => Response.json(await this.stateMap())],
-			["/local-events", async () => Response.json(await this.storedEvents())],
 		]);
+		if (this.env.BUS_INSPECT === "1") {
+			routes.set("/seq", async () => Response.json({ seq: (await this.ctx.storage.get<number>("seq")) ?? 0 }));
+			routes.set("/alarm", async () => Response.json({ alarm: await this.ctx.storage.getAlarm() }));
+			routes.set("/local-store", async () => Response.json(await this.stateMap()));
+			routes.set("/local-events", async () => Response.json(await this.storedEvents()));
+		}
+		return routes;
 	}
 
 	private async accept(body: unknown): Promise<Response> {

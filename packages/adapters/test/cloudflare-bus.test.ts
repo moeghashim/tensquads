@@ -167,6 +167,7 @@ function workerConfig(databaseUrl: string, tokenKey?: string) {
 		},
 		env: {
 			ADAPTERS: { type: "text" as const, value: "real" },
+			BUS_INSPECT: { type: "text" as const, value: "1" },
 			DATABASE_URL: { type: "text" as const, value: databaseUrl },
 			ACCOUNT_BUS: { type: "durable-object" as const, worker: "tensquads", exportName: "AccountBus" },
 			BUS_QUEUE: { type: "queue" as const, name: "tensquads-bus" },
@@ -390,7 +391,7 @@ test("a machine token sends and takes one task and a bad token is rejected", { s
 	const sent = await send(
 		mf,
 		"/machine/send",
-		{ accountId: id, agentId: agent, event: published("task-1", { to: agent }) },
+		{ accountId: id, agentId: agent, event: published("task-1", { from: agent, to: agent }) },
 		headers,
 	);
 	assert.equal(sent.status, 200, await bodyText(sent));

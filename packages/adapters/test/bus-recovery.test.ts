@@ -292,3 +292,130 @@ test("pending writes recover in order and commit batches atomically", async (t) 
 		await database.close();
 	}
 });
+
+test("machine sends bind the sender in both adapter modes and preserve queue senders", async () => {
+	const machineScope = { accountId: "sender-boundary", mode: "account" } as const;
+	const key = "sender-key";
+	const token = await signMachineToken(key, machineScope.accountId, "researcher", Math.floor(Date.now() / 1000) + 60);
+	for (const mode of ["test", "real"]) {
+		const storage = new Storage();
+		const target = bus(storage);
+		const namespace = {
+			idFromName: (id: string) => id,
+			get: () => ({
+				fetch: (input: Request | string | URL, init?: RequestInit) => target.fetch(new Request(input, init)),
+			}),
+		};
+		const env = { ADAPTERS: mode, ACCOUNT_BUS: namespace, MACHINE_TOKEN_KEY: key };
+		async function send(from: string) {
+			return handleMachineRequest(
+				new Request("https://worker/machine/send", {
+					method: "POST",
+					headers: { authorization: `Bearer ${token}` },
+					body: JSON.stringify({
+						accountId: machineScope.accountId,
+						agentId: "researcher",
+						event: {
+							...event,
+							id: `${mode}-${from}`,
+							from,
+							kind: "Approval",
+							set: { "policy.refund_auto_limit": 999999 },
+						},
+					}),
+				}),
+				env,
+			);
+		}
+		for (const from of ["master", "bus"]) {
+			const rejected = await send(from);
+			assert.equal(rejected?.status, 401);
+			assert.equal(await rejected?.text(), "The token was rejected.");
+		}
+		assert.equal(storage.rows.size, 0);
+		assert.equal((await send("researcher"))?.status, 200);
+		await handleBusQueue(
+			{
+				queue: "tensquads-bus",
+				messages: [
+					{
+						id: "queue-bus",
+						body: { accountId: machineScope.accountId, event: { ...event, id: "queue-bus", from: "bus" } },
+						ack() {},
+					},
+				],
+			},
+			env,
+		);
+		if (mode === "real") {
+			assert.equal((await storage.get<PublishedEvent>("event:1"))?.from, "researcher");
+			assert.equal((await storage.get<PublishedEvent>("event:2"))?.from, "bus");
+			assert.equal(await storage.get("state:policy.refund_auto_limit"), "999999");
+		} else {
+			assert.deepEqual(
+				(await workerTestBus().events(machineScope)).map(({ from }) => from),
+				["researcher", "bus"],
+			);
+		}
+	}
+});
+
+test("inspection routes require the exact test binding and store stays available", async () => {
+	const storage = new Storage();
+	await accept(bus(storage), { accountId: scope.accountId, event });
+	for (const inspect of [undefined, "0", "true", "1"]) {
+		const target = new AccountBus(
+			{ storage, acceptWebSocket() {}, getWebSockets: () => [] },
+			{ BUS_INSPECT: inspect },
+		);
+		for (const path of ["/seq", "/alarm", "/local-store", "/local-events"]) {
+			const response = await target.fetch(new Request(`https://bus${path}`));
+			assert.equal(response.status, inspect === "1" ? 200 : 404);
+			if (inspect === "1" && path === "/local-events") assert.deepEqual(await response.json(), [event]);
+		}
+		assert.equal((await target.fetch(new Request("https://bus/store"))).status, 200);
+	}
+});
+
+test("a pending duplicate is not a new simulation step and does not advance the cursor", async (t) => {
+	const storage = new Storage();
+	t.mock.method(Pool.prototype, "connect", async () => {
+		throw new Error("Database refused.");
+	});
+	const target = bus(storage, "postgres://fixture/db");
+	let visible = false;
+	const namespace = {
+		idFromName: (id: string) => id,
+		get: () => ({
+			async fetch(input: Request | string | URL, init?: RequestInit) {
+				if (String(input).endsWith("/events")) {
+					return Response.json(
+						visible ? [...(await storage.list<PublishedEvent>({ prefix: "event:" })).values()] : [],
+					);
+				}
+				return target.fetch(new Request(input, init));
+			},
+		}),
+	};
+	const script = [
+		{ ...event, text: "First" },
+		{ ...event, text: "Second" },
+	];
+	const first = createCloudflareBus(namespace, script);
+	const recreated = createCloudflareBus(namespace, script);
+	const results = await Promise.all([first.nextEvent(scope), recreated.nextEvent(scope)]);
+	assert.deepEqual(
+		results.filter(Boolean).map((row) => row?.id),
+		["e100"],
+	);
+	assert.equal(results.filter((row) => row === undefined).length, 1);
+	assert.equal(await recreated.nextEvent(scope), undefined);
+	assert.equal(await storage.get("seq"), 1);
+	assert.equal(typeof storage.alarm, "number");
+	visible = true;
+	const next = await recreated.nextEvent(scope);
+	assert.equal(next?.id, "e101");
+	assert.equal(next?.text, "Second");
+	assert.equal(next?.time, "11:04");
+	assert.equal(await storage.get("seq"), 2);
+});

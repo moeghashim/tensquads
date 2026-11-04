@@ -57,16 +57,18 @@ async function stubFetch(env: WorkerBindings, accountId: string, path: string, i
 	return namespace.get(namespace.idFromName(accountId)).fetch(`https://bus${path}`, init);
 }
 
-async function deliver(env: WorkerBindings, accountId: string, event: PublishedEvent): Promise<void> {
+async function deliver(env: WorkerBindings, accountId: string, event: PublishedEvent): Promise<boolean> {
 	if (chooseAdapters(env.ADAPTERS) !== "real") {
 		await workerTestBus().publish({ accountId, mode: "account" }, event);
-		return;
+		return false;
 	}
 	const response = await stubFetch(env, accountId, "/accept", {
 		method: "POST",
 		body: JSON.stringify({ accountId, event }),
 	});
 	if (!response.ok) throw notConfigured("The bus is not configured.");
+	const result = (await response.json()) as { seen: boolean };
+	return result.seen;
 }
 
 export async function handleBusQueue(batch: BusBatch, env: WorkerBindings): Promise<void> {
@@ -110,6 +112,7 @@ export async function handleMachineRequest(request: Request, env: WorkerBindings
 	const scope = { accountId, mode: "account" } as const;
 	if (url.pathname === "/machine/send") {
 		if (!isBusRecord(body)) return new Response("The message was rejected.", { status: 400 });
+		if (body.event.from !== agentId) return new Response("The token was rejected.", { status: 401 });
 		await deliver(env, accountId, body.event);
 		return Response.json({ ok: true });
 	}
@@ -154,7 +157,8 @@ export function createCloudflareBus(
 				}
 				const plan = planNextEvent(existing, script, current, traceFor);
 				if (!plan) return undefined;
-				await publish(scope, plan.event);
+				const seen = await deliver(env, scope.accountId, plan.event);
+				if (seen) return undefined;
 				cursors.set(scope.accountId, plan.cursor);
 				return plan.event;
 			});
