@@ -1,0 +1,76 @@
+[
+  {
+    "viewport": 1440,
+    "visibleRoleLabels": [
+      "Orders",
+      "Support",
+      "Marketing",
+      "Finance",
+      "Inventory",
+      "Market researcher",
+      "Website builder"
+    ],
+    "drawn": [
+      "Angkor",
+      "Delphi",
+      "Giza",
+      "Kyoto",
+      "Machu",
+      "Petra",
+      "Pisa",
+      "Rio",
+      "Zurich"
+    ],
+    "prices": [
+      "$49",
+      "$149",
+      "$399"
+    ],
+    "layout": {
+      "width": 1440,
+      "scroll": 1440,
+      "font": "\"Familjen Grotesk\", Inter, sans-serif",
+      "loaded": true
+    },
+    "approvalButtons": "No content, URL, or network changes"
+  },
+  {
+    "viewport": 390,
+    "visibleRoleLabels": [
+      "Orders",
+      "Support",
+      "Marketing",
+      "Finance",
+      "Inventory",
+      "Market researcher",
+      "Website builder"
+    ],
+    "drawn": [
+      "Angkor",
+      "Delphi",
+      "Giza",
+      "Kyoto",
+      "Machu",
+      "Petra",
+      "Pisa",
+      "Rio",
+      "Zurich"
+    ],
+    "prices": [
+      "$49",
+      "$149",
+      "$399"
+    ],
+    "layout": {
+      "width": 390,
+      "scroll": 390,
+      "font": "\"Familjen Grotesk\", Inter, sans-serif",
+      "loaded": true
+    },
+    "approvalButtons": "No content, URL, or network changes"
+  },
+  {
+    "repeatedToggle": "Typed draft retained; Existing business selected",
+    "pageErrors": []
+  }
+]
