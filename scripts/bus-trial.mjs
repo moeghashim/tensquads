@@ -157,6 +157,26 @@ export async function deleteRows(sql, account) {
 	return events.length + state.length + accounts.length;
 }
 
+async function assertTrialResponse(response, url, host, hidden) {
+	if (response.ok) return;
+	const detail = redact(typeof response.text === "function" ? await response.text().catch(() => "") : "", hidden)
+		.replace(/\s+/g, " ")
+		.slice(0, 120);
+	let location = "";
+	try {
+		const header = response.headers?.get?.("location") ?? "";
+		if (header) {
+			const parsed = new URL(header, url);
+			location = ` location=${parsed.host}${parsed.pathname}`;
+		}
+	} catch {
+		location = "";
+	}
+	throw new Error(
+		`The trial send failed with status ${response.status} for ${host}.${location}${detail ? ` ${detail}` : ""}`,
+	);
+}
+
 export async function executeBusTrial(plan, deps) {
 	const machineKey = randomBytes(32).toString("hex");
 	const hidden = secretsOf(plan, machineKey);
@@ -209,24 +229,7 @@ export async function executeBusTrial(plan, deps) {
 			headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
 			body: JSON.stringify({ accountId: plan.accountId, agentId: plan.agentId, event }),
 		});
-		if (!response.ok) {
-			const detail = redact(typeof response.text === "function" ? await response.text().catch(() => "") : "", hidden)
-				.replace(/\s+/g, " ")
-				.slice(0, 120);
-			let location = "";
-			try {
-				const header = response.headers?.get?.("location") ?? "";
-				if (header) {
-					const parsed = new URL(header, url);
-					location = ` location=${parsed.host}${parsed.pathname}`;
-				}
-			} catch {
-				location = "";
-			}
-			throw new Error(
-				`The trial send failed with status ${response.status} for ${host}.${location}${detail ? ` ${detail}` : ""}`,
-			);
-		}
+		await assertTrialResponse(response, url, host, hidden);
 		if (!(await deps.waitForEvent(plan.databaseUrl, plan.accountId, plan.eventId))) {
 			throw new Error("The trial event did not reach the database.");
 		}

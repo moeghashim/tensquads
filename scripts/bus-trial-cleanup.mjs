@@ -9,7 +9,7 @@ export function isTrialQueue(name) {
 	return /^tensquads-bus-\d{6,}$/.test(name) || /^tensquads-bus-dlq-\d{6,}$/.test(name);
 }
 
-export function trialRunId(name) {
+function trialRunId(name) {
 	return (
 		/^tensquads-trial-(\d{6,})$/.exec(name)?.[1] ??
 		/^tensquads-bus-dlq-(\d{6,})$/.exec(name)?.[1] ??
@@ -39,11 +39,7 @@ function groupFor(groups, runId) {
 	return group;
 }
 
-export function cleanupTargets(plan, scripts, queues, now = Date.now()) {
-	const groups = new Map();
-	const current = groupFor(groups, plan.runId);
-	current.worker = plan.workerName;
-	current.queues = [plan.queue, plan.deadLetter];
+function addStaleWorkers(groups, plan, scripts, now) {
 	for (const script of scripts) {
 		if (PRODUCTION.has(script.name) || !isTrialWorker(script.name)) continue;
 		const runId = trialRunId(script.name);
@@ -51,6 +47,9 @@ export function cleanupTargets(plan, scripts, queues, now = Date.now()) {
 		const group = groupFor(groups, runId);
 		if (group) group.worker = script.name;
 	}
+}
+
+function addStaleQueues(groups, plan, queues, now) {
 	for (const queue of queues) {
 		if (PRODUCTION.has(queue.name) || !isTrialQueue(queue.name)) continue;
 		const runId = trialRunId(queue.name);
@@ -58,6 +57,15 @@ export function cleanupTargets(plan, scripts, queues, now = Date.now()) {
 		const group = groupFor(groups, runId);
 		if (group && !group.queues.includes(queue.name)) group.queues.push(queue.name);
 	}
+}
+
+function cleanupTargets(plan, scripts, queues, now = Date.now()) {
+	const groups = new Map();
+	const current = groupFor(groups, plan.runId);
+	current.worker = plan.workerName;
+	current.queues = [plan.queue, plan.deadLetter];
+	addStaleWorkers(groups, plan, scripts, now);
+	addStaleQueues(groups, plan, queues, now);
 	for (const group of groups.values()) {
 		if (!group.worker) group.worker = `tensquads-trial-${group.runId}`;
 		assertDeletable(group.worker, "worker");
@@ -128,27 +136,31 @@ async function deleteResource(api, path, failures) {
 	failures.push(failureCode(response));
 }
 
+async function removeConsumers(api, root, worker, queue, failures) {
+	const listed = await api({ method: "GET", path: `${root}/queues/${queue.id}/consumers` });
+	if (!listed.success) {
+		if (!gone(listed)) failures.push(failureCode(listed));
+		return;
+	}
+	for (const consumer of Array.isArray(listed.result) ? listed.result : []) {
+		if (consumer.script_name !== worker) {
+			if (consumer.script_name) failures.push(`consumer:${consumer.script_name}`);
+			continue;
+		}
+		if (!safeId(consumer.consumer_id ?? "")) {
+			failures.push("code:bad-id");
+			continue;
+		}
+		await deleteResource(api, `${root}/queues/${queue.id}/consumers/${consumer.consumer_id}`, failures);
+	}
+}
+
 async function removeOne(api, root, group, queuesByName, failures) {
 	const queues = orderedQueues(group.queues);
 	for (const name of queues) {
 		const queue = queuesByName.get(name);
 		if (!queue || !safeId(queue.id)) continue;
-		const listed = await api({ method: "GET", path: `${root}/queues/${queue.id}/consumers` });
-		if (!listed.success) {
-			if (!gone(listed)) failures.push(failureCode(listed));
-			continue;
-		}
-		for (const consumer of Array.isArray(listed.result) ? listed.result : []) {
-			if (consumer.script_name !== group.worker) {
-				if (consumer.script_name) failures.push(`consumer:${consumer.script_name}`);
-				continue;
-			}
-			if (!safeId(consumer.consumer_id ?? "")) {
-				failures.push("code:bad-id");
-				continue;
-			}
-			await deleteResource(api, `${root}/queues/${queue.id}/consumers/${consumer.consumer_id}`, failures);
-		}
+		await removeConsumers(api, root, group.worker, queue, failures);
 	}
 	await deleteResource(api, `${root}/workers/scripts/${encodeURIComponent(group.worker)}?force=true`, failures);
 	for (const name of queues) {
