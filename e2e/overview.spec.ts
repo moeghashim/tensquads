@@ -787,12 +787,16 @@ function tasksTile(page: Page) {
 	return page.locator("main [data-loop='kpis'] > div").filter({ hasText: "Tasks done by squads" });
 }
 
+// One click on Overview starts two overview reads about half a second apart. The read
+// that finishes last is not always the one the screen is waiting on. Hold every overview
+// body, and fulfill each one on release. Releasing only the last arrival can answer the
+// abandoned read and leave Traffic on screen.
 async function holdNextOverview(page: Page) {
-	const state = { held: false };
-	let parked: { route: Route; response: Awaited<ReturnType<Route["fetch"]>>; body: string } | undefined;
+	const state = { held: false, released: false };
+	const parked: { route: Route; response: Awaited<ReturnType<Route["fetch"]>>; body: string }[] = [];
 	await page.route("**/_serverFn/**", async (route) => {
 		const request = route.request();
-		if (request.method() !== "GET" || state.held || parked) {
+		if (request.method() !== "GET") {
 			await route.continue();
 			return;
 		}
@@ -800,22 +804,21 @@ async function holdNextOverview(page: Page) {
 		if (!response || !parkedRoutes.has(route)) return;
 		const body = await response.text();
 		if (!parkedRoutes.has(route)) return;
-		if (!body.includes("Tasks done by squads")) {
+		if (!body.includes("Tasks done by squads") || state.released) {
 			await settleParked(route, () => route.fulfill({ response, body }));
 			return;
 		}
 		state.held = true;
-		parked = { route, response, body };
+		parked.push({ route, response, body });
 	});
 	return {
 		held: () => state.held,
 		release: async () => {
-			const current = parked;
-			if (!current) return;
-			parked = undefined;
-			await settleParked(current.route, () =>
-				current.route.fulfill({ response: current.response, body: current.body }),
-			);
+			state.released = true;
+			const current = parked.splice(0);
+			for (const item of current) {
+				await settleParked(item.route, () => item.route.fulfill({ response: item.response, body: item.body }));
+			}
 		},
 	};
 }
