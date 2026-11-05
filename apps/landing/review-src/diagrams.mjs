@@ -51,7 +51,7 @@ const css = `<style>
 
 const pill = (s) => `<span class="pill ${s}">${LABEL[s]}</span>`;
 const box = (s, title, sub, extra = "") => `<div class="bx ${s}"><b>${title}</b>${sub ? `<small>${sub}</small>` : ""}${extra}${pill(s)}</div>`;
-const legend = `<div class="legend">${pill(BUILT)}${pill(PROGRESS)}${pill(PLANNED)}<span>Status comes from git: a task is built when its branch is merged into main.</span></div>`;
+const legend = `<div class="legend">${pill(BUILT)}${pill(PROGRESS)}${pill(PLANNED)}<span>Status comes from git: a task is built when its pull request is merged. Tasks in other repositories are read from GitHub.</span></div>`;
 
 function layers(st) {
 	const web = st.of(SCREENS.flatMap(([, , t]) => t));
