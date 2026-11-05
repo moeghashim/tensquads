@@ -10,6 +10,7 @@ export const bundle = await build({
 		loader: "tsx",
 	},
 	bundle: true,
+	loader: { ".css": "empty", ".woff2": "empty" },
 	write: false,
 	format: "iife",
 	jsx: "automatic",
