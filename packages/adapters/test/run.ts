@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 
 const serial = [
+	"test/bus-writer.test.ts",
 	"test/late-lock.test.ts",
 	"test/mandate.test.ts",
 	"test/reset-lock.test.ts",

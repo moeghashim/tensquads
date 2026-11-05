@@ -142,6 +142,7 @@ test("the machine trial is a manual job and the bus trial stays off", () => {
 	assert.equal(workflow.on.pull_request.branches.includes("main"), true);
 	assert.equal(workflow.on.push.branches.includes("main"), true);
 	const machine = workflow.jobs["machine-trial"];
+	assert.deepEqual(machine.concurrency, { group: "machine-trial", "cancel-in-progress": false });
 	assert.equal(machine["timeout-minutes"], 20);
 	assert.match(machine.if, /workflow_dispatch/);
 	assert.match(machine.if, /inputs\.machine_trial/);
@@ -158,6 +159,7 @@ test("the machine trial is a manual job and the bus trial stays off", () => {
 		true,
 	);
 	const bus = workflow.jobs["bus-trial"];
+	assert.equal(bus.concurrency, undefined);
 	assert.match(bus.if, /inputs\.bus_trial/);
 	assert.equal(
 		bus.steps.some((step) => step.if === "always()"),

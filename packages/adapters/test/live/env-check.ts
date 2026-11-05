@@ -39,7 +39,9 @@ export function assertMachineEnv(
 	for (const key of injectedBoat) {
 		if (!env.get(key)) throw new Error(`${key} is missing.`);
 	}
-	if (env.has("TENSQUADS_TRIAL_KEY")) throw new Error("The secret name is present on the machine.");
+	if ([...env.keys()].some((key) => key === "TENSQUADS_TRIAL_KEY" || key.startsWith("TENSQUADS_TRIAL_KEY_"))) {
+		throw new Error("The secret name is present on the machine.");
+	}
 	for (const secret of secrets) {
 		if (secret.length === 0) continue;
 		for (const value of env.values()) {

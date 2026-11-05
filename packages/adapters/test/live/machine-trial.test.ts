@@ -13,7 +13,7 @@ import {
 import { createBoatMachine } from "../../src/boat-machine.ts";
 import { cleanupTrial, formatCleanup } from "./cleanup.ts";
 import { assertMachineEnv, boatVariableNames, environmentNames } from "./env-check.ts";
-import { SECRET_BASE_URL, SECRET_NAME, TRIAL_PROFILE, trialIdentity } from "./identity.ts";
+import { SECRET_BASE_URL, TRIAL_PROFILE, trialIdentity, trialSecretName } from "./identity.ts";
 
 const live = process.env.MACHINE_TRIAL === "1";
 
@@ -165,8 +165,8 @@ test("a real machine follows the trial path", { timeout: 16 * 60 * 1000, skip: !
 		);
 		console.log("done: env");
 		const secretValue = randomBytes(16).toString("hex");
-		await adapter.registerSecret(trial.scope, SECRET_NAME, secretValue);
-		assert.deepEqual(await adapter.secrets(trial.scope, trial.agentId), [SECRET_NAME]);
+		await adapter.registerSecret(trial.scope, trialSecretName(trial.runId), secretValue);
+		assert.deepEqual(await adapter.secrets(trial.scope, trial.agentId), [trialSecretName(trial.runId)]);
 		assert.deepEqual(await adapter.egress(trial.scope, trial.agentId), ["example.com"]);
 		await readEnv(
 			machine,
@@ -194,7 +194,7 @@ test("a real machine follows the trial path", { timeout: 16 * 60 * 1000, skip: !
 		);
 		console.log("done: machine removed");
 		await adapter.removeTemplate(trial.scope, trial.templateId);
-		await adapter.removeSecret(trial.scope, SECRET_NAME);
+		await adapter.removeSecret(trial.scope, trialSecretName(trial.runId));
 		console.log("done: template and secret removed");
 	} finally {
 		const report = await cleanupTrial(machine, admin, trial);

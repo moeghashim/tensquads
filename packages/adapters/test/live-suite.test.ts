@@ -3,7 +3,7 @@ import { readdirSync } from "node:fs";
 import test from "node:test";
 
 import { assertMachineEnv, boatVariableNames, environmentNames } from "./live/env-check.ts";
-import { assertTrialProfile, trialIdentity } from "./live/identity.ts";
+import { assertTrialProfile, trialIdentity, trialSecretName } from "./live/identity.ts";
 
 test("npm test does not load the live machine trial", () => {
 	const names = readdirSync(new URL(".", import.meta.url), { withFileTypes: true })
@@ -62,10 +62,14 @@ test("the machine env check accepts sent values, injected boat variables, and ba
 		() => assertMachineEnv(`${stdout}\nPATH=/usr/bin:configured`, sent, ["configured"], ["PATH"]),
 		/The machine env holds a boat API key\./,
 	);
-	assert.throws(
-		() => assertMachineEnv(`${stdout}\nTENSQUADS_TRIAL_KEY=configured`, sent, [], ["TENSQUADS_TRIAL_KEY"]),
-		/The secret name is present on the machine\./,
-	);
+	for (const name of ["TENSQUADS_TRIAL_KEY", "TENSQUADS_TRIAL_KEY_123456"]) {
+		for (const baseline of [[], [name]]) {
+			assert.throws(
+				() => assertMachineEnv(`${stdout}\n${name}=configured`, sent, [], baseline),
+				/The secret name is present on the machine\./,
+			);
+		}
+	}
 	assert.throws(
 		() => assertMachineEnv(`${stdout}\nPATH=/usr/bin`, sent, [], []),
 		/The machine env has an unexpected variable: PATH\./,
@@ -90,6 +94,8 @@ test("the trial identity refuses a closed profile and a short run id", () => {
 	assert.throws(() => assertTrialProfile("default"), /The trial profile is closed/);
 	assert.throws(() => assertTrialProfile("moe@10claws.com"), /The trial profile is closed/);
 	assert.throws(() => trialIdentity("12"), /The run id is not valid/);
+	assert.throws(() => trialSecretName("12"), /The run id is not valid/);
+	assert.equal(trialSecretName("123456"), "TENSQUADS_TRIAL_KEY_123456");
 	const trial = trialIdentity("41877304107");
 	assert.equal(trial.templateId, "tensquads-img41877304107-1");
 	assert.equal(trial.tag, "registry.agents.co/img41877304107:1");

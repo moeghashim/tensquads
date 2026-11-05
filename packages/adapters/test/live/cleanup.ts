@@ -3,7 +3,7 @@ import { pathToFileURL } from "node:url";
 
 import { BoatApi, Configuration, ResponseError } from "@boatdev/sdk";
 
-import { assertTrialProfile, SECRET_NAME, TRIAL_PROFILE, type TrialIdentity, trialIdentity } from "./identity.ts";
+import { assertTrialProfile, TRIAL_PROFILE, type TrialIdentity, trialIdentity, trialSecretName } from "./identity.ts";
 
 interface ListedSandbox {
 	readonly id: string;
@@ -62,12 +62,11 @@ async function removeMachine(machine: BoatApi, id: string): Promise<void> {
 async function removeSecret(admin: BoatApi, trial: TrialIdentity): Promise<void> {
 	assertTrialProfile(TRIAL_PROFILE);
 	try {
-		await admin.deleteCredentialProfileCustomApi({ profile: TRIAL_PROFILE, name: SECRET_NAME });
+		await admin.deleteCredentialProfileCustomApi({ profile: TRIAL_PROFILE, name: trialSecretName(trial.runId) });
 	} catch (error) {
 		if (missing(error)) return;
 		throw new Error("The trial secret name could not be removed.");
 	}
-	void trial;
 }
 
 async function customApiNames(admin: BoatApi): Promise<readonly string[]> {
@@ -103,7 +102,7 @@ export async function cleanupTrial(machine: BoatApi, admin: BoatApi, trial: Tria
 	return {
 		sandboxes: leftMachines.map((row) => row.name || row.id),
 		snapshots: leftSnapshots.map((snapshot) => snapshot.name),
-		customApis: [...apis],
+		customApis: apis.filter((name) => name === trialSecretName(trial.runId)),
 	};
 }
 

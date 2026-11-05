@@ -172,6 +172,9 @@ jobs:
         run: node scripts/ci-test-database.mjs drop
 
   machine-trial:
+    concurrency:
+      group: machine-trial
+      cancel-in-progress: false
     name: Machine trial
     if: github.event_name == 'workflow_dispatch' && inputs.machine_trial
     runs-on: ubuntu-latest
