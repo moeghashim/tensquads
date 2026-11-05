@@ -23,8 +23,47 @@ export async function clerkPublishableKey(): Promise<string> {
 	return key;
 }
 
+const serverFnPrefix = "/_serverFn/";
+const machineSend = "/machine/send";
+const machineTake = "/machine/take";
+
 export function clerkDocumentGet(request: Request): boolean {
-	if (request.method !== "GET") return false;
+	if (request.method !== "GET" || handlerRequest(request)) return false;
+	return documentDestination(request);
+}
+
+// TanStack decodes a pathname only after this check. A handler is excluded first.
+function handlerRequest(request: Request): boolean {
+	const pathname = pathnameBeforeNormalization(request.url);
+	if (pathname.length === 0 || isHandlerPath(pathname)) return true;
+	return decodedHandlerPath(pathname);
+}
+
+function pathnameBeforeNormalization(url: string): string {
+	try {
+		return new URL(url).pathname;
+	} catch {
+		return "";
+	}
+}
+
+function isHandlerPath(pathname: string): boolean {
+	if (pathname.startsWith(serverFnPrefix)) return true;
+	return pathname === machineSend || pathname === machineTake;
+}
+
+function decodedHandlerPath(pathname: string): boolean {
+	if (!pathname.includes("%")) return false;
+	let decoded = pathname;
+	try {
+		decoded = decodeURI(pathname);
+	} catch {
+		return true;
+	}
+	return decoded !== pathname && isHandlerPath(decoded);
+}
+
+function documentDestination(request: Request): boolean {
 	const dest = request.headers.get("sec-fetch-dest");
 	if (dest === "document" || dest === "iframe") return true;
 	if (dest) return false;
@@ -71,20 +110,36 @@ function cookieSuffix(publishableKey: string): Promise<string> {
 function omitOrphanSuffix(header: string, publishableKey: string, suffix: string): string {
 	const parts = cookieParts(header);
 	const values = firstValues(parts);
+	if (!orphanDevBrowser(values, suffix)) return header;
+	if (!ownedMatchingSession(values, publishableKey, suffix)) return header;
+	if (!activeMatchingClient(values, suffix)) return header;
+	return withoutSuffixedSession(parts, suffix, header);
+}
+
+function orphanDevBrowser(values: ReadonlyMap<string, string>, suffix: string): boolean {
 	const devBrowser = values.get(devBrowserCookie) ?? "";
-	const suffixedDevBrowser = values.get(`${devBrowserCookie}_${suffix}`) ?? "";
-	if (devBrowser.length === 0 || suffixedDevBrowser.length > 0) return header;
+	if (devBrowser.length === 0) return false;
+	const suffixed = values.get(`${devBrowserCookie}_${suffix}`) ?? "";
+	return suffixed.length === 0;
+}
+
+function ownedMatchingSession(values: ReadonlyMap<string, string>, publishableKey: string, suffix: string): boolean {
 	const session = values.get(sessionCookie) ?? "";
-	const suffixedSession = values.get(`${sessionCookie}_${suffix}`) ?? "";
-	if (session.length === 0 || session !== suffixedSession || !sessionBelongsToKey(session, publishableKey)) {
-		return header;
-	}
+	if (session.length === 0) return false;
+	if (session !== (values.get(`${sessionCookie}_${suffix}`) ?? "")) return false;
+	return sessionBelongsToKey(session, publishableKey);
+}
+
+function activeMatchingClient(values: ReadonlyMap<string, string>, suffix: string): boolean {
 	const clientUat = values.get(clientUatCookie) ?? "";
-	const suffixedClientUat = values.get(`${clientUatCookie}_${suffix}`) ?? "";
-	if (clientUat.length === 0 || clientUat === "0" || clientUat !== suffixedClientUat) return header;
-	const kept = parts.filter(
-		(part) => part.name !== `${sessionCookie}_${suffix}` && part.name !== `${clientUatCookie}_${suffix}`,
-	);
+	if (clientUat.length === 0 || clientUat === "0") return false;
+	return clientUat === (values.get(`${clientUatCookie}_${suffix}`) ?? "");
+}
+
+function withoutSuffixedSession(parts: readonly CookiePart[], suffix: string, header: string): string {
+	const sessionName = `${sessionCookie}_${suffix}`;
+	const clientName = `${clientUatCookie}_${suffix}`;
+	const kept = parts.filter((part) => part.name !== sessionName && part.name !== clientName);
 	if (kept.length === parts.length) return header;
 	return joinKept(kept);
 }

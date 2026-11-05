@@ -25,6 +25,21 @@ describe("development document cookies", () => {
 		assert.equal(clerkDocumentGet(post), false);
 	});
 
+	it("does not rewrite a document GET to a server function", async () => {
+		const header = await badHeader();
+		const call = get("/_serverFn/test", { cookie: header });
+		assert.equal(clerkDocumentGet(call), false);
+		assert.equal(await documentRequestForClerk(call, publishable), call);
+		const encoded = get("/%5FserverFn/test", { cookie: header });
+		assert.equal(clerkDocumentGet(encoded), false);
+		assert.equal(await documentRequestForClerk(encoded, publishable), encoded);
+		for (const path of ["/machine/send", "/machine/take"]) {
+			const machine = get(path, { cookie: header });
+			assert.equal(clerkDocumentGet(machine), false);
+			assert.equal(await documentRequestForClerk(machine, publishable), machine);
+		}
+	});
+
 	it("leaves a production request and a complete development request unchanged", async () => {
 		const header = await badHeader();
 		const document = get("/admin", { cookie: header });
