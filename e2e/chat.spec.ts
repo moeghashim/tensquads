@@ -20,7 +20,6 @@ import {
 } from "./support.ts";
 import { expect, installLocalFonts, openWorkspace, test } from "./workspace.ts";
 
-// One worker. A second database worker holds the advisory lock, and the fixture teardown stops at 30 seconds.
 test.describe.configure({ mode: "serial" });
 
 const marketingResult = "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.";
