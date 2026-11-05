@@ -63,13 +63,11 @@ export function busTrialPlan(env) {
 	};
 }
 
-export function trialConfig(sourceText, plan, workerDirectory = "") {
+export function trialConfig(sourceText, plan) {
 	const config = JSON.parse(sourceText.replace(/^\s*\/\/.*$/gm, ""));
 	if (config.name !== "tensquads") throw new Error("The worker config is not the project worker.");
 	if (config.account_id !== plan.cloudflareAccountId) throw new Error("The worker config is not the project account.");
 	config.name = plan.workerName;
-	// The trial config lives in a temp directory. Wrangler resolves main from that file, so a relative src/worker.ts is not found.
-	if (workerDirectory) config.main = resolve(workerDirectory, config.main);
 	config.vars = {
 		...config.vars,
 		ADAPTERS: "real",
@@ -134,11 +132,13 @@ export async function executeBusTrial(plan, deps) {
 	const hidden = secretsOf(plan, machineKey);
 	const say = (text) => deps.log(redact(text, hidden));
 	let failure = "";
+	if (deps.build) await deps.build();
+	const sourceText = deps.readSource ? deps.readSource() : deps.source;
 	const directory = deps.tempDir();
-	const configPath = resolve(directory, "wrangler.trial.jsonc");
+	const configPath = deps.configPath ?? resolve(directory, "wrangler.trial.json");
 	const secretsPath = resolve(directory, "secrets.json");
 	try {
-		writeFileSync(configPath, JSON.stringify(trialConfig(deps.source, plan, deps.workerDirectory), null, 2));
+		writeFileSync(configPath, JSON.stringify(trialConfig(sourceText, plan), null, 2));
 		writeFileSync(
 			secretsPath,
 			JSON.stringify({
@@ -196,6 +196,19 @@ export async function executeBusTrial(plan, deps) {
 	}
 	say(`bus-trial run=${plan.runId} event=${plan.eventId}`);
 	return 0;
+}
+
+function realBuild() {
+	const env = { ...process.env };
+	for (const key of blocked) delete env[key];
+	const result = spawnSync(process.execPath, [resolve(root, "node_modules/vite/bin/vite.js"), "build"], {
+		cwd: webDirectory,
+		encoding: "utf8",
+		env,
+	});
+	if ((result.status ?? 1) !== 0) {
+		throw new Error(redact(result.stderr || result.stdout || "The worker build failed.", []));
+	}
 }
 
 function realRun(plan) {
@@ -258,10 +271,11 @@ async function main() {
 		console.log(`bus-cleanup-check run=${plan.runId} left=${left.join(",") || "none"}`);
 		return left.length === 0 ? 0 : 1;
 	}
-	const source = readFileSync(resolve(webDirectory, "wrangler.jsonc"), "utf8");
+	const builtConfig = resolve(webDirectory, "dist/server/wrangler.json");
 	return executeBusTrial(plan, {
-		source,
-		workerDirectory: webDirectory,
+		build: realBuild,
+		readSource: () => readFileSync(builtConfig, "utf8"),
+		configPath: resolve(webDirectory, "dist/server/wrangler.trial.json"),
 		log: (text) => console.log(text),
 		tempDir: () => mkdtempSync(resolve(tmpdir(), "tensquads-bus-trial-")),
 		run: realRun(plan),
