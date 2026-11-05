@@ -584,7 +584,10 @@ describe("overview decisions", { concurrency: false }, () => {
 			const result = await first;
 			assert.equal(result.refreshNeeded, true);
 			assert.equal(shownApprovalCount(2), 1);
-			assert.deepEqual(patchSnapshot().map((item) => item.key), ["marketing"]);
+			assert.deepEqual(
+				patchSnapshot().map((item) => item.key),
+				["marketing"],
+			);
 		} finally {
 			release();
 			await second;
