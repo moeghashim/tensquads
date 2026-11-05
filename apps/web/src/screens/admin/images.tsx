@@ -128,9 +128,13 @@ export function ImagesScreen({ images }: { readonly images: readonly AgentImage[
 									<Squadmate id={detail.id} on size={20} />
 								</span>
 								<div style={css("display: flex; flex-direction: column; min-width: 0; flex: 1")}>
-									<h2 style={css("margin: 0; font-size: 18px; font-weight: 600; color: #0d0d0d")}>
+									<h2
+										style={css(
+											"margin: 0; height: 20px; line-height: 20px; overflow: hidden; font-size: 18px; font-weight: 600; color: #0d0d0d",
+										)}
+									>
 										{detail.name}
-										<RoleTag id={detail.id} />
+										<RoleTag id={detail.id} lockLine />
 									</h2>
 									<span style={css("font-size: 13px; color: #5d5d5d")}>{detail.role}</span>
 								</div>

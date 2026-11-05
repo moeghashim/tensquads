@@ -23,6 +23,7 @@ export type ImagesLayout = {
 	tileGap: number;
 	splitGap: number;
 	tableWidth: number;
+	headingHeight: number;
 };
 
 export function expectNear(actual: number, expected: number, label: string) {
@@ -82,6 +83,7 @@ export function expectImages(built: ImagesLayout, design: ImagesLayout, name: st
 	expectNear(built.tileGap, design.tileGap, `${name} tile gap`);
 	expectNear(built.splitGap, design.splitGap, `${name} split gap`);
 	expectNear(built.tableWidth, design.tableWidth, `${name} table width`);
+	expectNear(built.headingHeight, design.headingHeight, `${name} detail heading height`);
 }
 
 export async function measureAccounts(page: Page): Promise<AccountsLayout> {
@@ -129,6 +131,7 @@ function readAdminLayout(mode: "accounts" | "images"): AccountsLayout | ImagesLa
 			tileGap: pairGap(tiles[0], tiles[1]),
 			splitGap: pairGap(list, aside),
 			tableWidth: elementWidth(wide),
+			headingHeight: elementHeight(document.querySelector("aside[aria-label='Image details'] h2")),
 		};
 	}
 

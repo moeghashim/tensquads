@@ -327,10 +327,10 @@ function HubNode({
 				style={css(hubStyle(agent.on, selected))}
 			>
 				<span style={css("display: flex; gap: 8px; align-items: center")}>
-					<Squadmate id={agent.id} on={agent.on} size={20} decorative />
+					<Squadmate id={agent.id} on={agent.on} size={14} decorative />
 					<strong style={css("color: #0d0d0d")}>
 						{agent.name}
-						<RoleTag id={agent.id} />
+						<RoleTag id={agent.id} lockLine />
 					</strong>
 				</span>
 				<span style={css("font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5d5d5d")}>

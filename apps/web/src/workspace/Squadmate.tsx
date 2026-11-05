@@ -29,13 +29,15 @@ export function Squadmate({
 	);
 }
 
-export function RoleTag({ id }: { readonly id: string }) {
+export function RoleTag({ id, lockLine = false }: { readonly id: string; readonly lockLine?: boolean }) {
 	const tag = shownRoleTag(id);
 	if (!tag) return null;
+	// The tag takes the parent's line and does not grow it. 1lh is that line-height.
+	const line = lockLine ? "display: inline-block; line-height: inherit; height: 1lh; vertical-align: baseline" : "";
 	return (
 		<span
 			data-design-contrast="squadmate-role-tag"
-			style={css("margin-left: 6px; font-size: 12px; font-weight: 400; color: #8f8f8f")}
+			style={css(`margin-left: 6px; font-size: 12px; font-weight: 400; color: #8f8f8f; ${line}`)}
 		>
 			{tag}
 		</span>

@@ -242,6 +242,11 @@ test("the traffic boxes match the rendered design at 1440 and 390", async ({ pag
 			expectNear(built.listX, design.listX, `${board.name} list x`);
 			expectNear(built.inspectorX, design.inspectorX, `${board.name} inspector x`);
 			expectNear(built.masterHeight, design.masterHeight, `${board.name} master card height`);
+			expectNear(built.hubHeight, design.hubHeight, `${board.name} squad map height`);
+			expect(built.nodeHeights.length).toBe(design.nodeHeights.length);
+			for (const [index, height] of built.nodeHeights.entries()) {
+				expectNear(height, design.nodeHeights[index] ?? 0, `${board.name} hub node ${index} height`);
+			}
 			expect(built.routeWidths.length).toBeGreaterThan(0);
 			expect(design.routeWidths.length).toBeGreaterThan(0);
 			for (const [index, width] of design.routeWidths.entries()) {
@@ -639,6 +644,8 @@ async function measureTraffic(page: Page) {
 			listX: listBox.x,
 			inspectorX: boxOf(inspector).x,
 			hubChildren: hub.children.length,
+			hubHeight: boxOf(hub).height,
+			nodeHeights: [...hub.querySelectorAll("button")].map((button) => boxOf(button).height),
 			masterHeight: master.height,
 			routeWidths,
 		};
