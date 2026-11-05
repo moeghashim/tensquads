@@ -13,9 +13,6 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	retries: 0,
 	reporter: "line",
-	// Compile each screen before the first test. A cold route can leave the
-	// document request unanswered.
-	globalSetup: "./e2e/global-setup.ts",
 	snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
 	expect: {
 		toHaveScreenshot: {
