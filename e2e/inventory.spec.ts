@@ -35,7 +35,10 @@ async function expectInventory(
 	built: ReturnType<typeof builtInventory>,
 	state: Record<string, unknown> = {},
 ) {
-	const expected = name === "Home" ? approvedHome : await canvasInventory(page, name, state);
+	const expected =
+		name === "Home"
+			? { ...approvedHome, handlers: (await canvasInventory(page, "Home", state)).handlers }
+			: await canvasInventory(page, name, state);
 	const diff = compareInventory(expected, built);
 	expect(diff.extraTexts).toEqual([]);
 	expect(diff.missingTexts).toEqual([]);
@@ -49,7 +52,7 @@ async function expectInventory(
 
 async function canvasInventory(
 	page: import("@playwright/test").Page,
-	name: "Onboarding" | "SignIn",
+	name: "Home" | "Onboarding" | "SignIn",
 	state: Record<string, unknown>,
 ) {
 	const canvas = await page.context().newPage();

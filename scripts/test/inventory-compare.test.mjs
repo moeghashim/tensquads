@@ -105,8 +105,22 @@ test("built screen inventories match each rendered design state and reject occur
 				}
 				const rendered =
 					name === "Home" ? await capture(canvas) : await renderDesign(canvas, design, state, allowFor(name));
-				const expected = name === "Onboarding" ? rewriteBuiltInventory(rendered, agentNames) : rendered;
+				const expected =
+					name === "Onboarding"
+						? rewriteBuiltInventory(rendered, agentNames)
+						: name === "Home"
+							? {
+									...rendered,
+									handlers: (await renderDesign(canvas, design, state, allowFor(name))).handlers,
+								}
+							: rendered;
 				const actual = await capture(page);
+				if (name === "Home") {
+					const prompt = actual.handlers.find((handler) => handler.handler === "onDraft");
+					assert.equal(prompt?.tag, "textarea");
+					assert.equal(prompt?.event, "onChange");
+					assert.equal(prompt?.text, "hero-prompt");
+				}
 				assert.deepEqual(compareInventory(expected, actual), emptyDiff);
 				return { expected, actual };
 			};

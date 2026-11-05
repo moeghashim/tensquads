@@ -347,6 +347,24 @@ html:has(.home-page) {
 	width: 100%;
 }
 
+.home-page .roster-row > .mate,
+.home-page .more > .mate {
+	width: 72px;
+	height: 72px;
+	flex: none;
+}
+
+.home-page .roster-row > .mate {
+	align-self: start;
+}
+
+.home-page .roster-row > .mate svg,
+.home-page .more > .mate svg {
+	width: 72px;
+	height: 72px;
+	max-width: none;
+}
+
 .home-page .swatch b {
 	font-size: 18px;
 	line-height: 22px;

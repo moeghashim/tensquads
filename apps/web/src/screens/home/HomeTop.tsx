@@ -71,7 +71,7 @@ export function HomeTop({
 						<article className="swatch petra">
 							<Mate id="master" state="idle" size={148} />
 							<div>
-								<b>Petra</b>
+								<b>{characterName("master")}</b>
 								<span className="role">Master</span>
 							</div>
 						</article>
@@ -85,7 +85,7 @@ export function HomeTop({
 						))}
 						<article className="swatch" style={{ background: "#e7efff" }}>
 							<Mate id="analytics" state="planning" size={88} />
-							<b>Delphi</b>
+							<b>{characterName("analytics")}</b>
 							<span className="role">Analytics</span>
 							<span className="last">New: Analytics agent in beta</span>
 						</article>
@@ -97,10 +97,22 @@ export function HomeTop({
 						}}
 					>
 						<div className="kinds">
-							<button type="button" aria-pressed={kind === "new"} onClick={() => onKind("new")}>
+							<button
+								type="button"
+								aria-pressed={kind === "new"}
+								data-handler="k.pick"
+								data-event="onClick"
+								onClick={() => onKind("new")}
+							>
 								New business
 							</button>
-							<button type="button" aria-pressed={kind === "existing"} onClick={() => onKind("existing")}>
+							<button
+								type="button"
+								aria-pressed={kind === "existing"}
+								data-handler="k.pick"
+								data-event="onClick"
+								onClick={() => onKind("existing")}
+							>
 								Existing business
 							</button>
 						</div>
@@ -112,12 +124,20 @@ export function HomeTop({
 							rows={3}
 							placeholder={placeholderFor(kind)}
 							value={draft}
+							data-handler="onDraft"
+							data-event="onChange"
 							onChange={(event) => onDraft(event.target.value)}
 						/>
 						<div className="brief-bar">
 							<div className="examples">
 								{examples.map((label) => (
-									<button key={label} type="button" onClick={() => onDraft(label)}>
+									<button
+										key={label}
+										type="button"
+										data-handler="ex.pick"
+										data-event="onClick"
+										onClick={() => onDraft(label)}
+									>
 										{label}
 									</button>
 								))}
@@ -153,7 +173,7 @@ export function HomeTop({
 						<div className="side">
 							<div className="side-who">
 								<Mate id="master" state="idle" size={26} />
-								<span>Petra</span>
+								<span>{characterName("master")}</span>
 								<span className="tag">Master</span>
 							</div>
 							<div className="side-on">Overview</div>
