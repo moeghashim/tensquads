@@ -5,19 +5,16 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 
-function adaptersMode(): string {
-	const source = readFileSync(fileURLToPath(new URL("./wrangler.jsonc", import.meta.url)), "utf8");
-	return /"ADAPTERS"\s*:\s*"([^"]*)"/.exec(source)?.[1] ?? "test";
-}
+import { adaptersMode, masterStubId } from "./adapters-mode.ts";
 
 function masterStubPlugin(): Plugin {
 	const stub = fileURLToPath(new URL("../../packages/adapters/src/cloudflare-bus/master-stub.ts", import.meta.url));
+	const source = readFileSync(fileURLToPath(new URL("./wrangler.jsonc", import.meta.url)), "utf8");
 	return {
 		name: "master-stub",
 		enforce: "pre",
-		resolveId(source) {
-			if (adaptersMode() === "real" || !source.endsWith("master-live.ts")) return null;
-			return stub;
+		resolveId(imported) {
+			return masterStubId(adaptersMode(source, process.env.CLOUDFLARE_ENV), imported, stub);
 		},
 	};
 }

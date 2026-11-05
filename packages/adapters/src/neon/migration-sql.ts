@@ -326,4 +326,12 @@ CREATE TABLE IF NOT EXISTS retired_tabs (
   PRIMARY KEY (account_id, tab),
   CHECK (char_length(tab) > 0)
 );
+
+CREATE TABLE IF NOT EXISTS approval_deliveries (
+  account_id text NOT NULL,
+  approval_id text NOT NULL,
+  event jsonb NOT NULL,
+  PRIMARY KEY (account_id, approval_id),
+  FOREIGN KEY (account_id, approval_id) REFERENCES approvals (account_id, id) ON DELETE CASCADE
+);
 `;

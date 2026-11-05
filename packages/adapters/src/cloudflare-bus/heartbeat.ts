@@ -51,7 +51,17 @@ export async function recordBeat(storage: HeartbeatStorage, agentId: string, at:
 	const map = (await storage.get<Record<string, HeartbeatBeat>>(HEARTBEATS)) ?? {};
 	map[agentId] = { at };
 	await storage.put(HEARTBEATS, map);
-	await arm(storage, at + MISSED_MS, at);
+	const due = earliestDue(map);
+	if (due !== null) await arm(storage, due, at);
+}
+
+function earliestDue(map: Readonly<Record<string, HeartbeatBeat>>): number | null {
+	let next: number | null = null;
+	for (const beat of Object.values(map)) {
+		const due = dueOf(beat);
+		if (due !== null) next = earlier(next, due);
+	}
+	return next;
 }
 
 function resumeFor(env: HeartbeatEnv): Resume | undefined {

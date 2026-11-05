@@ -2,9 +2,7 @@ import type { PublishedEvent } from "@tensquads/kernel";
 
 import { chooseAdapters } from "../../adapter-choice.ts";
 import { type BusNamespace, createCloudflareBus } from "../../cloudflare-bus/http.ts";
-
-const briefAsk = "Build the site with this brief?";
-const publishAsk = "Publish the site?";
+import { briefAsk, publishAsk } from "./master-ask.ts";
 
 export interface UserMasterEvent {
 	readonly id: string;

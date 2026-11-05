@@ -17,7 +17,15 @@ import { setLimit } from "../src/neon/commands/rules.ts";
 import { nextEvent } from "../src/neon/commands/traffic.ts";
 import type { AppDatabase } from "../src/neon/postgres.ts";
 import { saveWorkspace, writeAccount } from "../src/neon/save.ts";
-import { accounts, agents, approvals, busCursors, busEvents, stateEntries } from "../src/neon/schema.ts";
+import {
+	accounts,
+	agents,
+	approvalDeliveries,
+	approvals,
+	busCursors,
+	busEvents,
+	stateEntries,
+} from "../src/neon/schema.ts";
 import type { AccountSnapshot } from "../src/neon/snapshot.ts";
 
 test("real mode bus writes go through the durable object", async () => {
@@ -90,13 +98,21 @@ function recordingDatabase() {
 	const tx = {
 		insert(table: unknown) {
 			if (isBusTable(table)) counts.inserts += 1;
-			return query();
+			if (table !== approvalDeliveries) return query();
+			return {
+				values(value: Record<string, unknown>) {
+					const current = rows.get(approvalDeliveries) ?? [];
+					rows.set(approvalDeliveries, [...current, value]);
+					return query();
+				},
+			};
 		},
 		update(table: unknown) {
 			if (isBusTable(table)) counts.updates += 1;
 			return query();
 		},
-		delete(_table: unknown) {
+		delete(table: unknown) {
+			if (table === approvalDeliveries) rows.set(approvalDeliveries, []);
 			return query();
 		},
 		select() {
@@ -110,7 +126,14 @@ function recordingDatabase() {
 	const db = {
 		...tx,
 		async transaction<T>(work: (transaction: typeof tx) => Promise<T>): Promise<T> {
-			return work(tx);
+			const saved = rows.get(approvalDeliveries);
+			try {
+				return await work(tx);
+			} catch (error) {
+				if (saved === undefined) rows.delete(approvalDeliveries);
+				else rows.set(approvalDeliveries, saved);
+				throw error;
+			}
 		},
 	};
 	return { db: db as unknown as AppDatabase, tx, counts };
@@ -240,7 +263,7 @@ test("real mode routes traffic through the object and refuses other bus writers"
 			await assert.rejects(write, { message: "A bus write in real mode must go through the Durable Object." }, name);
 			assert.deepEqual(counts, { inserts: 0, updates: 0 }, name);
 		}
-		await assert.rejects(() => decide(db, scope, "p1", true), { message: "The bus is not configured." });
+		await assert.rejects(() => decide(db, scope, "p1", true), /An Approval matches a rule\./);
 		await assert.rejects(() => decide(db, scope, "p1", false), { message: "The bus is not configured." });
 		assert.deepEqual(counts, { inserts: 0, updates: 0 });
 		const delivered: { from: string; to: string; kind: string }[] = [];
@@ -251,6 +274,7 @@ test("real mode routes traffic through the object and refuses other bus writers"
 		assert.equal(delivered[0]?.from, "user");
 		assert.equal(delivered[0]?.to, "master");
 		assert.equal(delivered[0]?.kind, "Declined");
+		const beforeYes = delivered.length;
 		await assert.rejects(
 			() =>
 				decide(db, scope, "p1", true, undefined, async (_accountId, event) => {
@@ -258,9 +282,7 @@ test("real mode routes traffic through the object and refuses other bus writers"
 				}),
 			/An Approval matches a rule\./,
 		);
-		assert.equal(delivered[1]?.from, "user");
-		assert.equal(delivered[1]?.to, "master");
-		assert.equal(delivered[1]?.kind, "Approval");
+		assert.equal(delivered.length, beforeYes);
 		assert.deepEqual(counts, { inserts: 0, updates: 0 });
 	} finally {
 		if (previous === undefined) delete process.env.ADAPTERS;

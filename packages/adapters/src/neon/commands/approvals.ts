@@ -15,8 +15,10 @@ import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { accounts, agents, approvals, missionProposals, rules, stateEntries } from "../schema.ts";
 import { type DeliverUserEvent, deliverUserToMaster, userMasterEvent } from "./approval-bus.ts";
+import { flushDeliveries, recordDelivery } from "./approval-delivery.ts";
 import { appendEvents } from "./bus.ts";
 import { createMandate } from "./mandates.ts";
+import { masterAsk } from "./master-ask.ts";
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 
@@ -58,7 +60,7 @@ export async function decide(
 	deliver: DeliverUserEvent = deliverUserToMaster,
 ): Promise<WrittenDecision> {
 	const accountId = accountOf(scope);
-	return commitDecision(db, accountId, deadlineAt, async (tx) => {
+	const decision = await commitDecision(db, accountId, deadlineAt, async (tx) => {
 		const approval = await oneApproval(tx, accountId, id);
 		if (approval?.status !== "Pending") {
 			return { id, status: approval?.status ?? "Pending", count: await countInbox(tx, accountId) };
@@ -79,7 +81,12 @@ export async function decide(
 				.where(and(eq(agents.accountId, accountId), eq(agents.id, agent.id)));
 		}
 		if (chooseAdapters(process.env.ADAPTERS) === "real") {
-			await deliver(accountId, userMasterEvent({ id: approval.id, ok, title: approval.title, by: name, at }));
+			await recordDelivery(
+				tx,
+				accountId,
+				approval.id,
+				userMasterEvent({ id: approval.id, ok, title: approval.title, by: name, at }),
+			);
 		} else {
 			await appendEvents(
 				tx,
@@ -99,9 +106,11 @@ export async function decide(
 				at,
 			);
 		}
-		if (ok) await recordMandate(tx, scope, accountId, approval, name, at);
+		if (ok && !masterAsk(approval.title)) await recordMandate(tx, scope, accountId, approval, name, at);
 		return { id, status: next.approval.status, count: await countInbox(tx, accountId) };
 	});
+	if (chooseAdapters(process.env.ADAPTERS) === "real") await flushDeliveries(db, accountId, deliver);
+	return decision;
 }
 
 export async function decideMission(

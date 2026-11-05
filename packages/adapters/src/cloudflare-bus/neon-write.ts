@@ -3,7 +3,8 @@ import type { PublishedEvent } from "@tensquads/kernel";
 import { asc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { chooseAdapters } from "../adapter-choice.ts";
-import { busEvents, stateEntries } from "../neon/schema.ts";
+import { askDetail, siteAgent } from "../neon/commands/master-ask.ts";
+import { approvals, busEvents, stateEntries } from "../neon/schema.ts";
 import { traceFor } from "../trace.ts";
 
 const directWrite = "A bus write in real mode must go through the Durable Object.";
@@ -123,7 +124,7 @@ function hidden(error: unknown, connectionString: string): Error {
 function database(connectionString: string) {
 	sockets();
 	const pool = new Pool({ connectionString, max: 1, connectionTimeoutMillis: 2_000 });
-	return { pool, db: drizzle(pool, { schema: { busEvents, stateEntries } }) };
+	return { pool, db: drizzle(pool, { schema: { busEvents, stateEntries, approvals } }) };
 }
 
 export async function writePending(
@@ -154,6 +155,7 @@ export async function writePending(
 					})
 					.onConflictDoNothing();
 				await writeState(txn, accountId, row.seq, row.event.set);
+				await projectAsk(txn, accountId, row.seq, row.event);
 			}
 		});
 	} catch (error) {
@@ -161,6 +163,29 @@ export async function writePending(
 	} finally {
 		await pool.end();
 	}
+}
+
+async function projectAsk(
+	db: Parameters<Parameters<ReturnType<typeof database>["db"]["transaction"]>[0]>[0],
+	accountId: string,
+	seq: number,
+	event: PublishedEvent,
+): Promise<void> {
+	const detail = askDetail(event);
+	if (detail === null) return;
+	await db
+		.insert(approvals)
+		.values({
+			accountId,
+			id: event.id,
+			agent: siteAgent,
+			title: event.text,
+			detail,
+			amount: "",
+			status: "Pending",
+			sortOrder: seq,
+		})
+		.onConflictDoNothing();
 }
 
 async function writeState(
