@@ -41,6 +41,11 @@ export {
 export type { Message, MessageFrom, SendResult, SentTask, Thread } from "./conversation/types.ts";
 export type { Eval, Source, Trigger } from "./inbound.ts";
 export { chatSource, chatTrigger, evalChatTrigger } from "./inbound.ts";
+export { checkBrief, checkPage, checkPublished, checkResearch, wordCount } from "./master/checks.ts";
+export { digestOf } from "./master/digest.ts";
+export { createMaster } from "./master/loop.ts";
+export { PROOF_PREVIEW_URL, proofStory } from "./master/proof.ts";
+export type { BusinessRequest, CheckOutcome, PageAudit, PocMandate, ResearchReport } from "./master/types.ts";
 export {
 	type AccountAdminView,
 	type AccountBar,

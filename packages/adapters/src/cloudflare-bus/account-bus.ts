@@ -3,7 +3,8 @@ import type { PublishedEvent } from "@tensquads/kernel";
 
 import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { traceFor } from "../trace.ts";
-import { isBusRecord, isNonEmptyString, isObject } from "./message.ts";
+import { alarmAfterFlush, HEARTBEAT_ALARM, type HeartbeatEnv, recordBeat, sweepHeartbeats } from "./heartbeat.ts";
+import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
 import { type PendingBusRow, readBusEvents, readBusHistory, readBusState, writePending } from "./neon-write.ts";
 
 const ALARM_MS = 30_000;
@@ -31,7 +32,7 @@ export interface BusState {
 	getWebSockets(): WebSocket[];
 }
 
-export interface BusObjectEnv {
+export interface BusObjectEnv extends HeartbeatEnv {
 	readonly DATABASE_URL?: string;
 	readonly BUS_INSPECT?: string;
 }
@@ -220,6 +221,7 @@ export class AccountBus {
 	// The runtime calls alarm. No module in this repo calls it.
 	async alarm(): Promise<void> {
 		await this.flush();
+		await this.serialize(() => sweepHeartbeats(this.ctx.storage, this.env));
 	}
 
 	private routes(): Map<string, (request: Request) => Promise<Response>> {
@@ -230,6 +232,7 @@ export class AccountBus {
 			["/store", (request: Request) => this.store(request)],
 			["/socket", () => Promise.resolve(this.socket())],
 			["/take", (request: Request) => request.json().then((body: unknown) => this.take(body))],
+			["/heartbeat", (request: Request) => this.heartbeat(request)],
 		]);
 		if (this.env.BUS_INSPECT === "1") {
 			routes.set("/seq", async () => Response.json({ seq: (await this.ctx.storage.get<number>("seq")) ?? 0 }));
@@ -329,8 +332,10 @@ export class AccountBus {
 			const current = (await txn.get<PendingBusRow[]>("pending")) ?? [];
 			const remaining = current.filter((row) => !written.has(row.event.id));
 			await txn.put("pending", remaining);
-			if (remaining.length === 0) await txn.deleteAlarm();
-			else await txn.setAlarm(Date.now() + ALARM_MS);
+			const due = await txn.get(HEARTBEAT_ALARM);
+			const next = alarmAfterFlush(remaining.length, due, Date.now(), ALARM_MS);
+			if (next === null) await txn.deleteAlarm();
+			else await txn.setAlarm(next);
 		});
 	}
 
@@ -369,6 +374,16 @@ export class AccountBus {
 		const store: Record<string, unknown> = {};
 		for (const [key, value] of rows) store[key.slice("state:".length)] = JSON.parse(value) as unknown;
 		return store;
+	}
+
+	private async heartbeat(request: Request): Promise<Response> {
+		const read = await readAgentBody(request);
+		if (!read) return new Response("The message was rejected.", { status: 400 });
+		const stored = await this.ctx.storage.get<string>("account");
+		if (stored && stored !== read.accountId) return new Response("The message was rejected.", { status: 400 });
+		const at = this.env.now?.() ?? Date.now();
+		await this.withAccount(read.accountId, () => recordBeat(this.ctx.storage, read.agentId, at));
+		return Response.json({ ok: true });
 	}
 
 	private async take(body: unknown): Promise<Response> {

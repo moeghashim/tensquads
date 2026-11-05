@@ -1,3 +1,5 @@
+import { hmacSign, sameBytes } from "./hmac.ts";
+
 function encode(bytes: Uint8Array): string {
 	let binary = "";
 	for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -12,24 +14,6 @@ function decode(value: string): Uint8Array {
 	return bytes;
 }
 
-async function sign(secret: string, payload: string): Promise<Uint8Array> {
-	const key = await crypto.subtle.importKey(
-		"raw",
-		new TextEncoder().encode(secret),
-		{ name: "HMAC", hash: "SHA-256" },
-		false,
-		["sign"],
-	);
-	return new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload)));
-}
-
-function same(left: Uint8Array, right: Uint8Array): boolean {
-	if (left.length !== right.length) return false;
-	let diff = 0;
-	for (let index = 0; index < left.length; index += 1) diff |= (left[index] ?? 0) ^ (right[index] ?? 0);
-	return diff === 0;
-}
-
 export async function signMachineToken(
 	secret: string,
 	accountId: string,
@@ -37,7 +21,7 @@ export async function signMachineToken(
 	exp: number,
 ): Promise<string> {
 	const payload = `${accountId}.${agentId}.${exp}`;
-	const signature = await sign(secret, payload);
+	const signature = await hmacSign(secret, payload);
 	return `${encode(new TextEncoder().encode(payload))}.${encode(signature)}`;
 }
 
@@ -69,5 +53,41 @@ export async function verifyMachineToken(
 	} catch {
 		return false;
 	}
-	return same(signature, await sign(secret, payload));
+	return sameBytes(signature, await hmacSign(secret, payload));
+}
+
+const TOKEN_TTL_SECONDS = 60 * 60;
+
+export const MACHINE_TOKEN_ENV = "TENSQUADS_MACHINE_TOKEN";
+export const MACHINE_TOKEN_BASE_URL_ENV = "TENSQUADS_MACHINE_TOKEN_BASE_URL";
+export const MACHINE_TOKEN_PLACEHOLDER = "placeholder";
+
+export interface MachineTokenDelivery {
+	readonly authorization: string;
+	readonly placeholderEnv: string;
+	readonly placeholder: string;
+	readonly baseUrlEnv: string;
+}
+
+async function issueMachineToken(secret: string, accountId: string, agentId: string, nowMs: number): Promise<string> {
+	const exp = Math.floor(nowMs / 1000) + TOKEN_TTL_SECONDS;
+	return signMachineToken(secret, accountId, agentId, exp);
+}
+
+// The machine receives the placeholder. Boat substitutes the signed token.
+export async function machineTokenDelivery(
+	env: { readonly MACHINE_TOKEN_KEY?: string },
+	accountId: string,
+	agentId: string,
+	nowMs: number,
+): Promise<MachineTokenDelivery> {
+	if (!env.MACHINE_TOKEN_KEY) throw new Error("The machine service is not configured.");
+	const token = await issueMachineToken(env.MACHINE_TOKEN_KEY, accountId, agentId, nowMs);
+	if (token === MACHINE_TOKEN_PLACEHOLDER) throw new Error("The machine service is not configured.");
+	return {
+		authorization: `Bearer ${token}`,
+		placeholderEnv: MACHINE_TOKEN_ENV,
+		placeholder: MACHINE_TOKEN_PLACEHOLDER,
+		baseUrlEnv: MACHINE_TOKEN_BASE_URL_ENV,
+	};
 }

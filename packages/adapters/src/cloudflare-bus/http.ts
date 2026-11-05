@@ -4,8 +4,9 @@ import { MachineFault } from "@tensquads/kernel";
 import { chooseAdapters } from "../adapter-choice.ts";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { takeTestTask, workerTestBus } from "../worker-adapters.ts";
-import { isBusRecord, isNonEmptyString, isObject } from "./message.ts";
-import { verifyMachineToken } from "./token.ts";
+import { changeEvent, verifyContextSignature } from "./change.ts";
+import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
+import { type MachineTokenDelivery, machineTokenDelivery, verifyMachineToken } from "./token.ts";
 
 export interface BusNamespace {
 	idFromName(name: string): unknown;
@@ -23,6 +24,8 @@ export interface WorkerBindings {
 	readonly BUS_QUEUE?: QueueProducer;
 	readonly BUS_DEAD_LETTER?: string;
 	readonly DATABASE_URL?: string;
+	readonly CONTEXT_WEBHOOK_SECRET?: string;
+	readonly now?: () => number;
 }
 
 export interface BusMessage {
@@ -104,35 +107,140 @@ async function authorized(
 	return null;
 }
 
-export async function handleMachineRequest(request: Request, env: WorkerBindings): Promise<Response | null> {
-	const url = new URL(request.url);
-	if (url.pathname !== "/machine/send" && url.pathname !== "/machine/take") return null;
-	const body: unknown = await request.json().catch(() => null);
-	if (!isObject(body) || !isNonEmptyString(body.accountId) || !isNonEmptyString(body.agentId)) {
-		return new Response("The message was rejected.", { status: 400 });
+function rejected(): Response {
+	return new Response("The message was rejected.", { status: 400 });
+}
+
+function notReady(): Response {
+	return new Response("The machine service is not configured.", { status: 503 });
+}
+
+export async function credentialForMachine(
+	env: WorkerBindings,
+	accountId: string,
+	agentId: string,
+	nowMs = Date.now(),
+): Promise<MachineTokenDelivery> {
+	return machineTokenDelivery(env, accountId, agentId, nowMs);
+}
+
+async function handleHeartbeat(request: Request, env: WorkerBindings): Promise<Response> {
+	if (request.method !== "POST") return rejected();
+	const read = await readAgentBody(request);
+	if (!read) return rejected();
+	const denied = await authorized(request, env, read.accountId, read.agentId);
+	if (denied) return denied;
+	if (!env.ACCOUNT_BUS) return notReady();
+	const response = await stubFetch(env, read.accountId, "/heartbeat", {
+		method: "POST",
+		body: JSON.stringify({ accountId: read.accountId, agentId: read.agentId }),
+	});
+	if (!response.ok) return notReady();
+	return Response.json({ ok: true });
+}
+
+async function seenTestEvent(accountId: string, eventId: string): Promise<boolean> {
+	const events = await workerTestBus().events({ accountId, mode: "account" });
+	return events.some((event) => event.id === eventId);
+}
+
+function headerValue(request: Request, name: string): string {
+	return request.headers.get(name) ?? "";
+}
+
+function eventFromRaw(raw: string): ReturnType<typeof changeEvent> {
+	try {
+		return changeEvent(JSON.parse(raw) as unknown);
+	} catch {
+		return null;
 	}
-	const accountId = body.accountId;
-	const agentId = body.agentId;
-	const rejected = await authorized(request, env, accountId, agentId);
-	if (rejected) return rejected;
+}
+
+async function verifiedChange(
+	request: Request,
+	env: WorkerBindings,
+): Promise<{ accountId: string; event: PublishedEvent } | Response> {
+	if (request.method !== "POST") return rejected();
+	const accountId = new URL(request.url).searchParams.get("account") ?? "";
+	const secret = env.CONTEXT_WEBHOOK_SECRET;
+	if (!isNonEmptyString(accountId)) return rejected();
+	if (!secret) return notReady();
+	const raw = await request.text();
+	const signed = await verifyContextSignature(
+		secret,
+		headerValue(request, "x-context-signature"),
+		raw,
+		env.now?.() ?? Date.now(),
+	);
+	if (!signed) return rejected();
+	if (headerValue(request, "x-context-event") !== "change.detected") return rejected();
+	const event = eventFromRaw(raw);
+	if (!event) return rejected();
+	const contextId = headerValue(request, "x-context-id");
+	if (contextId.length > 0 && contextId !== event.id) return rejected();
+	return { accountId, event };
+}
+
+async function publishChange(env: WorkerBindings, accountId: string, event: PublishedEvent): Promise<Response> {
 	const scope = { accountId, mode: "account" } as const;
-	if (url.pathname === "/machine/send") {
-		if (!isBusRecord(body)) return new Response("The message was rejected.", { status: 400 });
-		if (body.event.from !== agentId) return new Response("The token was rejected.", { status: 401 });
-		if (chooseAdapters(env.ADAPTERS) !== "real") {
-			await workerTestBus().publish(scope, body.event);
-		} else if (!env.BUS_QUEUE) {
-			throw notConfigured("The bus is not configured.");
-		} else {
-			await env.BUS_QUEUE.send({ accountId, event: body.event });
-		}
+	if (chooseAdapters(env.ADAPTERS) !== "real") {
+		if (await seenTestEvent(accountId, event.id)) return Response.json({ ok: true, seen: true });
+		await workerTestBus().publish(scope, event);
 		return Response.json({ ok: true });
 	}
+	try {
+		const seen = await deliver(env, accountId, event);
+		return Response.json(seen ? { ok: true, seen: true } : { ok: true });
+	} catch {
+		return notReady();
+	}
+}
+
+async function handleChange(request: Request, env: WorkerBindings): Promise<Response> {
+	const verified = await verifiedChange(request, env);
+	if (verified instanceof Response) return verified;
+	return publishChange(env, verified.accountId, verified.event);
+}
+
+async function sendMachine(
+	env: WorkerBindings,
+	accountId: string,
+	agentId: string,
+	body: Record<string, unknown>,
+): Promise<Response> {
+	if (!isBusRecord(body)) return rejected();
+	if (body.event.from !== agentId) return new Response("The token was rejected.", { status: 401 });
+	const scope = { accountId, mode: "account" } as const;
+	if (chooseAdapters(env.ADAPTERS) !== "real") {
+		await workerTestBus().publish(scope, body.event);
+	} else if (!env.BUS_QUEUE) {
+		throw notConfigured("The bus is not configured.");
+	} else {
+		await env.BUS_QUEUE.send({ accountId, event: body.event });
+	}
+	return Response.json({ ok: true });
+}
+
+async function takeMachine(env: WorkerBindings, accountId: string, agentId: string): Promise<Response> {
+	const scope = { accountId, mode: "account" } as const;
 	if (chooseAdapters(env.ADAPTERS) !== "real") {
 		const events = await workerTestBus().events(scope);
 		return Response.json(takeTestTask(accountId, agentId, events));
 	}
 	return stubFetch(env, accountId, "/take", { method: "POST", body: JSON.stringify({ agentId }) });
+}
+
+export async function handleMachineRequest(request: Request, env: WorkerBindings): Promise<Response | null> {
+	const url = new URL(request.url);
+	if (url.pathname === "/machine/heartbeat") return handleHeartbeat(request, env);
+	if (url.pathname === "/change.detected") return handleChange(request, env);
+	if (url.pathname !== "/machine/send" && url.pathname !== "/machine/take") return null;
+	const read = await readAgentBody(request);
+	if (!read) return rejected();
+	const denied = await authorized(request, env, read.accountId, read.agentId);
+	if (denied) return denied;
+	if (url.pathname === "/machine/send") return sendMachine(env, read.accountId, read.agentId, read.body);
+	return takeMachine(env, read.accountId, read.agentId);
 }
 
 export function createCloudflareBus(

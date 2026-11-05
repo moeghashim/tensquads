@@ -1,3 +1,4 @@
+import { messageParts } from "#/screens/chat/message-parts.ts";
 import { css } from "#/screens/css.ts";
 import type { ChatHandOff } from "#/server/chat.ts";
 import { type StartedTask, useWorkspace } from "#/workspace/context.ts";
@@ -310,8 +311,25 @@ function ChatBubble({
 					</span>
 				</div>
 			)}
-			<div style={css(bubbleStyle(message.from))}>{message.text}</div>
+			<div style={css(bubbleStyle(message.from))}>
+				<MessageText text={message.text} />
+			</div>
 		</div>
+	);
+}
+
+function MessageText({ text }: { readonly text: string }) {
+	const parts = messageParts(text);
+	const only = parts.length === 1 ? parts[0] : undefined;
+	if (only?.kind === "text") return text;
+	return parts.map((part) =>
+		part.kind === "link" ? (
+			<a key={`link:${part.start}`} href={part.href} style={css("color: inherit")}>
+				{part.href}
+			</a>
+		) : (
+			<span key={`text:${part.start}`}>{part.value}</span>
+		),
 	);
 }
 

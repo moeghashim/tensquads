@@ -144,6 +144,7 @@ function bundleWorker(): Promise<string> {
 			platform: "neutral",
 			target: "es2024",
 			conditions: ["workerd", "worker", "browser"],
+			mainFields: ["module", "main"],
 			outfile: join(directory, "index.js"),
 			legalComments: "none",
 			logLevel: "silent",
