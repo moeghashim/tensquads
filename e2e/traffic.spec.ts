@@ -6,6 +6,7 @@ import { openPostgres, schema } from "@tensquads/adapters";
 import { and, asc, eq } from "drizzle-orm";
 import { compareInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
+import { squadmateRoleTagContrast } from "./accessibility-helper.ts";
 import { chipsThenOptions, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import {
 	expectLabeledInputs,
@@ -240,6 +241,15 @@ test("the traffic boxes match the rendered design at 1440 and 390", async ({ pag
 			expectNear(built.listWidth, design.listWidth, `${board.name} list width`);
 			expectNear(built.listX, design.listX, `${board.name} list x`);
 			expectNear(built.inspectorX, design.inspectorX, `${board.name} inspector x`);
+			expectNear(built.masterHeight, design.masterHeight, `${board.name} master card height`);
+			expect(built.routeWidths.length).toBeGreaterThan(0);
+			expect(design.routeWidths.length).toBeGreaterThan(0);
+			for (const [index, width] of design.routeWidths.entries()) {
+				expectNear(width, 150, `${board.name} design route ${index} width`);
+			}
+			for (const [index, width] of built.routeWidths.entries()) {
+				expectNear(width, 150, `${board.name} route ${index} width`);
+			}
 		} finally {
 			await designPage.close();
 		}
@@ -397,6 +407,7 @@ test("the side-by-side evidence shows the design and the build", async ({ page, 
 });
 
 // The design pre scrolls and is not a tab stop. The off Inventory node is opacity 0.6, so its text falls under 4.5:1.
+// squadmateRoleTagContrast: tasks/06-squadmates.md line 47 keeps gray-400 (#8f8f8f) on these role tags.
 async function trafficViolations(page: Page) {
 	const skipped = ["color-contrast", "scrollable-region-focusable"];
 	const full = await new AxeBuilder({ page }).disableRules(skipped).analyze();
@@ -407,7 +418,7 @@ async function trafficViolations(page: Page) {
 	const contrast = await new AxeBuilder({ page })
 		.withRules(["color-contrast"])
 		.exclude("section[aria-label='Squad map'] button[style*='#f3f3f3']")
-		.exclude("[data-design-contrast='squadmate-role-tag']")
+		.exclude(`[data-design-contrast='${squadmateRoleTagContrast}']`)
 		.analyze();
 	return [...full.violations, ...scroll.violations, ...contrast.violations];
 }
@@ -594,8 +605,12 @@ async function measureTraffic(page: Page) {
 		const hubContent = hub.clientWidth - pixels(hubStyle.paddingLeft) - pixels(hubStyle.paddingRight);
 		const stem = boxOf(needed(hub.children[1] ?? null, "stem"));
 		const bar = boxOf(needed(hub.children[2] ?? null, "bar"));
+		const master = boxOf(needed(hub.children[0] ?? null, "master card"));
 		const row = needed(document.querySelector("[data-loop='busView'] button"), "event row");
 		const parts = [...row.children];
+		const routeWidths = [...document.querySelectorAll("[data-loop='busView'] button")].map(
+			(event) => boxOf(needed(event.children[2] ?? null, "route")).width,
+		);
 		const eventGap = boxOf(needed(parts[1] ?? null, "kind")).x - boxOf(needed(parts[0] ?? null, "time")).right;
 		const list = needed(document.querySelector("section[aria-label='Message log']"), "list");
 		const inspector = needed(document.querySelector("aside[aria-label='Message details']"), "inspector");
@@ -624,6 +639,8 @@ async function measureTraffic(page: Page) {
 			listX: listBox.x,
 			inspectorX: boxOf(inspector).x,
 			hubChildren: hub.children.length,
+			masterHeight: master.height,
+			routeWidths,
 		};
 	});
 }

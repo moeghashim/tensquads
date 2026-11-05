@@ -216,6 +216,7 @@ interface DetailBoxes {
 	readonly sandbox: Box | null;
 	readonly squadSwitch: Box | null;
 	readonly skillSwitch: Box | null;
+	readonly routeWidths: readonly number[];
 }
 
 function expectNear(actual: number, expected: number, label: string) {
@@ -266,6 +267,10 @@ export function expectDetail(built: DetailBoxes, design: DetailBoxes, name: stri
 	expectNear(built.squadSwitch?.height ?? 0, design.squadSwitch?.height ?? 0, `${name} squad switch height`);
 	expectNear(built.skillSwitch?.width ?? 0, design.skillSwitch?.width ?? 0, `${name} skill switch width`);
 	expectNear(built.skillSwitch?.height ?? 0, design.skillSwitch?.height ?? 0, `${name} skill switch height`);
+	expect(built.routeWidths.length).toBeGreaterThan(0);
+	for (const [index, width] of built.routeWidths.entries()) {
+		expectNear(width, 150, `${name} route ${index} width`);
+	}
 }
 
 function expectBox(built: Box | null, design: Box | null, label: string) {
@@ -316,6 +321,11 @@ export async function measureDetail(page: Page): Promise<DetailBoxes> {
 			sandbox: findBox("section[aria-label='Sandbox']"),
 			squadSwitch: findBox("button[aria-label='Squad running']"),
 			skillSwitch: findBox("button[aria-label='Skill enabled']"),
+			routeWidths: [...document.querySelectorAll("section[aria-label='Messages'] button")].map((event) => {
+				const route = event.children[2];
+				if (!route) throw new Error("route");
+				return boxOf(route).width;
+			}),
 		};
 	});
 }

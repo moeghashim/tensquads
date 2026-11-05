@@ -36,7 +36,7 @@ const ruleCard =
 const hubSection =
 	"background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 24px 20px; display: flex; flex-direction: column; align-items: center";
 const masterCard =
-	"background: #181818; color: #fff; border-radius: 16px; padding: 12px 18px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 220px";
+	"position: relative; background: #181818; color: #fff; border-radius: 16px; padding: 12px 18px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 220px; max-width: 100%";
 const hubGrid = "width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px";
 const split = "display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start";
 const logSection =
@@ -124,12 +124,12 @@ export function TrafficPage({ data }: { readonly data: TrafficData }) {
 					<div style={css(masterCard)}>
 						<span
 							style={css(
-								"width: 36px; height: 36px; border-radius: 999px; background: #fff; display: inline-flex; align-items: center; justify-content: center",
+								"position: absolute; left: 50%; top: 12px; transform: translate(-50%, -100%); width: 36px; height: 36px; border-radius: 999px; background: #fff; display: inline-flex; align-items: center; justify-content: center",
 							)}
 						>
 							<Squadmate id="master" on size={32} />
 						</span>
-						<span style={css("font-weight: 600; margin-top: 6px")}>{data.masterName} squad</span>
+						<span style={css("font-weight: 600")}>{data.masterName} squad</span>
 						<span style={css("font-size: 12px; color: #cdcdcd")}>
 							Routes every message · holds shared state · scores missions · checks rules
 						</span>
@@ -194,7 +194,7 @@ export function TrafficPage({ data }: { readonly data: TrafficData }) {
 													{event.time}
 												</span>
 												<span style={css(view.kindStyle)}>{event.kind}</span>
-												<span style={css("font-size: 12px; color: #414141; flex: none")}>
+												<span style={css("font-size: 12px; color: #414141; width: 150px; flex: none")}>
 													<RouteFaces
 														from={event.from}
 														to={event.to}

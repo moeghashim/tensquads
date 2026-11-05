@@ -136,3 +136,18 @@ for (const viewport of viewports) {
 		await expect(page).toHaveScreenshot(`signup-${viewport.name}.png`, { fullPage: true });
 	});
 }
+
+for (const viewport of viewports) {
+	test(`sign-up squads at ${viewport.name}`, async ({ page }) => {
+		skipUnlessMacScreenshot();
+		await page.setViewportSize({ width: viewport.width, height: viewport.height });
+		await page.goto("/signup");
+		await page.getByRole("button", { name: /A new business/ }).click();
+		await page.getByRole("button", { name: "Choose my squads" }).click();
+		await expect(page.getByRole("heading", { name: "Your first squads for your business" })).toBeVisible();
+		await waitForScreenFonts(page);
+		await page.evaluate(() => document.fonts.ready);
+		await expectNoHorizontalScroll(page);
+		await expect(page).toHaveScreenshot(`signup-squads-${viewport.name}.png`, { fullPage: true });
+	});
+}

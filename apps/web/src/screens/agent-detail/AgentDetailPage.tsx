@@ -417,7 +417,7 @@ function Messages({
 					>
 						<span style={css(`${mono}; font-size: 12px; color: #5d5d5d; width: 44px`)}>{event.time}</span>
 						<span style={css(event.kindStyle)}>{event.kind}</span>
-						<span style={css("font-size: 12px; color: #5d5d5d")}>
+						<span style={css("font-size: 12px; color: #5d5d5d; width: 150px; flex: none")}>
 							<RouteFaces
 								from={event.from}
 								to={event.to}
