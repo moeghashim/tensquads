@@ -1,111 +1,73 @@
 {
   "signup": [
     {
-      "kind": "new",
-      "names": [
-        "\n\n\n\n\n\n\nPisaOrders · Fulfilment and trackingReady for your first order",
-        "\n\n\n\n\n\n\nKyotoSupport · Customer inbox and refundsReplies in your voice, refunds under a limit you set",
-        "\n\n\n\n\n\n\nRioMarketing · Ads, social and emailDrafts your launch campaign and first posts",
-        "\n\n\n\n\n\n\nZurichFinance · Payouts, costs and profitWeekly profit summary, bills matched to orders",
-        "\n\n\n\n\n\n\nGizaInventory · Stock and suppliersAdd once you hold stock",
-        "\n\n\n\n\n\n\nMachuMarket researcher · Competitors and positioningFinds your competitors before you launch",
-        "\n\n\n\n\n\n\nAngkorWebsite builder · Landing pages and site updatesBuilds your first landing page from the market report"
-      ],
-      "selected": [
-        "\n\n\n\n\n\n\nPisaOrders · Fulfilment and trackingReady for your first order",
-        "\n\n\n\n\n\n\nKyotoSupport · Customer inbox and refundsReplies in your voice, refunds under a limit you set",
-        "\n\n\n\n\n\n\nRioMarketing · Ads, social and emailDrafts your launch campaign and first posts"
-      ],
-      "keyboardReached": [
-        "Pisa",
-        "Kyoto",
-        "Rio",
-        "Zurich",
-        "Giza",
-        "Machu",
-        "Angkor"
-      ],
-      "roleTagColor": "#8f8f8f",
-      "decorativeFaces": true,
-      "headBlinkRules": 1,
-      "noHorizontalScroll": [
-        1440,
-        390
-      ],
-      "captures": [
-        "/Users/moeghashim/.no-mistakes/evidence/01M6M72YKE2Q67QNDJA3VQDYA0/signup-new-1440.png",
-        "/Users/moeghashim/.no-mistakes/evidence/01M6M72YKE2Q67QNDJA3VQDYA0/signup-new-390.png"
-      ]
+      "width": 1440,
+      "names": 7,
+      "drawings": 7,
+      "scroll": {
+        "width": 1440,
+        "scroll": 1440
+      },
+      "zeroSquadGuard": "blocked account form"
     },
     {
-      "kind": "existing",
-      "names": [
-        "\n\n\n\n\n\n\nPisaOrders · Fulfilment and trackingSyncs tracking and chases the maker",
-        "\n\n\n\n\n\n\nKyotoSupport · Customer inbox and refundsReplies in your voice, refunds under a limit you set",
-        "\n\n\n\n\n\n\nRioMarketing · Ads, social and emailWatches ad spend and return",
-        "\n\n\n\n\n\n\nZurichFinance · Payouts, costs and profitWeekly profit summary, bills matched to orders",
-        "\n\n\n\n\n\n\nGizaInventory · Stock and suppliersFlags low stock and drafts reorders",
-        "\n\n\n\n\n\n\nMachuMarket researcher · Competitors and positioningWatches how your competitors price and sell",
-        "\n\n\n\n\n\n\nAngkorWebsite builder · Landing pages and site updatesUpdates your site from the market report"
-      ],
-      "selected": [
-        "\n\n\n\n\n\n\nPisaOrders · Fulfilment and trackingSyncs tracking and chases the maker",
-        "\n\n\n\n\n\n\nKyotoSupport · Customer inbox and refundsReplies in your voice, refunds under a limit you set",
-        "\n\n\n\n\n\n\nZurichFinance · Payouts, costs and profitWeekly profit summary, bills matched to orders",
-        "\n\n\n\n\n\n\nGizaInventory · Stock and suppliersFlags low stock and drafts reorders"
-      ],
-      "keyboardReached": [
-        "Pisa",
-        "Kyoto",
-        "Rio",
-        "Zurich",
-        "Giza",
-        "Machu",
-        "Angkor"
-      ],
-      "roleTagColor": "#8f8f8f",
-      "decorativeFaces": true,
-      "headBlinkRules": 1,
-      "noHorizontalScroll": [
-        1440,
-        390
-      ],
-      "captures": [
-        "/Users/moeghashim/.no-mistakes/evidence/01M6M72YKE2Q67QNDJA3VQDYA0/signup-existing-1440.png",
-        "/Users/moeghashim/.no-mistakes/evidence/01M6M72YKE2Q67QNDJA3VQDYA0/signup-existing-390.png"
-      ]
+      "width": 390,
+      "names": 7,
+      "drawings": 7,
+      "scroll": {
+        "width": 390,
+        "scroll": 390
+      },
+      "zeroSquadGuard": "blocked account form"
     }
   ],
-  "guard": {
-    "url": "http://localhost:3106/signup",
-    "message": "Pick at least one squad to start. Every squad starts in ask-first mode; you loosen the limits once you trust it. Petra will propose a mission for each squad; you approve them in your inbox.",
-    "accountFormAbsent": true
+  "review": {
+    "names": [
+      "Petra",
+      "Pisa",
+      "Kyoto",
+      "Rio",
+      "Zurich",
+      "Giza",
+      "Machu",
+      "Angkor",
+      "Delphi",
+      "Sydney"
+    ],
+    "states": [
+      "",
+      "WaitingNothing to do now. Blinks slowly.",
+      "PlanningLooks up while it plans.",
+      "Running skillLooks at the work.",
+      "CheckingSquints while the code check runs.",
+      "DoneThe check passed.",
+      "Sent backThe check failed once. Looks down.",
+      "BlockedWaits for a person. Holds no machine.",
+      "EscalatedSecond fail. Needs you now.",
+      "DroppedNothing to do at all. Asleep."
+    ],
+    "unchangedCards": [
+      "Petra",
+      "Pisa",
+      "Kyoto",
+      "Rio",
+      "Zurich",
+      "Giza",
+      "Machu",
+      "Angkor",
+      "Delphi"
+    ],
+    "unchangedStateDrawings": 27,
+    "animation": "sm-blink",
+    "reducedMotionAnimation": "none"
   },
-  "workspaceAccess": [
-    {
-      "requested": "/overview",
-      "landed": "http://localhost:3106/signin"
-    },
-    {
-      "requested": "/chat",
-      "landed": "http://localhost:3106/signin"
-    },
-    {
-      "requested": "/agents",
-      "landed": "http://localhost:3106/signin"
-    },
-    {
-      "requested": "/agents/support",
-      "landed": "http://localhost:3106/signin"
-    },
-    {
-      "requested": "/traffic",
-      "landed": "http://localhost:3106/signin"
-    },
-    {
-      "requested": "/rules",
-      "landed": "http://localhost:3106/signin"
-    }
-  ],
-  "errors": []
+  "workspace": {
+    "/overview": "redirected to /signin; no Clerk session configured",
+    "/agents": "redirected to /signin; no Clerk session configured",
+    "/agents/support": "redirected to /signin; no Clerk session configured",
+    "/chat": "redirected to /signin; no Clerk session configured",
+    "/traffic": "redirected to /signin; no Clerk session configured",
+    "/rules": "redirected to /signin; no Clerk session configured"
+  },
+  "pageErrors": []
 }
