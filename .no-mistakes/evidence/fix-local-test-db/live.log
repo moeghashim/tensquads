@@ -1,0 +1,11 @@
+(node:16579) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6N74AZ41EF2YTTCN8C0QPTE/.local-test-db/live.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6N74AZ41EF2YTTCN8C0QPTE/.local-test-db/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Fresh simultaneous migrate(): both finish; one current revision persisted; accounts table exists: [ { name: 'accounts' } ]
+Current migrate() completes while global exclusive lock held: 4 ms; revision 8b8773ae30862433555466cc3cef99b83f07cffb7451effeef6ab3080f39c9ac
+Reset B commits while account A fence is held; reset A remains pending. Stored B agents: [ { n: 5 } ]
+Releasing A fence lets reset A finish; both accounts retain five seeded agents.
+Two stale migrations finish; DDL audit records one migration function replacement: 1 ; revision current.
+Injected ALTER TABLE failure rejects migrate(); revision remains stale; accounts still present: [ { n: 2 } ]
+After removing fault, retry succeeds and persists current revision.

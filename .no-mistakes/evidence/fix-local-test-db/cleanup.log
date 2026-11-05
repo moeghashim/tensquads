@@ -1,0 +1,10 @@
+
+Running 1 test using 1 worker
+
+(node:16852) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+While A fence held: cleanup B committed, A remains: [ { id: 'cleanup-a' } ]
+After release: cleanup A committed; unrelated accounts retained: [ { id: 'account-a' }, { id: 'account-b' } ]
+  ✓  1 .local-test-db/cleanup.spec.ts:7:1 › cleanup B finishes while A is locked; cleanup A waits then deletes only A (295ms)
+
+  1 passed (1.1s)
