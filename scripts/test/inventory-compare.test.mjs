@@ -95,15 +95,16 @@ test("built screen inventories match each rendered design state and reject occur
 			await page.addScriptTag({ content: bundle.outputFiles[0].text });
 			await page.getByText("tensquads", { exact: true }).first().waitFor();
 			if (name === "Home") {
-				await canvas.setContent(readFileSync("docs/designs/home/home.html", "utf8"), { waitUntil: "domcontentloaded" });
+				await canvas.setContent(readFileSync("docs/designs/home/home.html", "utf8"), {
+					waitUntil: "domcontentloaded",
+				});
 			}
 			const compare = async (state = {}) => {
 				if (name === "Home" && state.kind) {
 					await canvas.getByRole("button", { name: "New business", exact: true }).click();
 				}
-				const rendered = name === "Home"
-					? await capture(canvas)
-					: await renderDesign(canvas, design, state, allowFor(name));
+				const rendered =
+					name === "Home" ? await capture(canvas) : await renderDesign(canvas, design, state, allowFor(name));
 				const expected = name === "Onboarding" ? rewriteBuiltInventory(rendered, agentNames) : rendered;
 				const actual = await capture(page);
 				assert.deepEqual(compareInventory(expected, actual), emptyDiff);
