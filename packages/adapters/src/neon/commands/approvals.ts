@@ -14,7 +14,12 @@ import { PENDING_TASK_WINDOW_MS } from "../../pending-window.ts";
 import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { accounts, agents, approvals, missionProposals, rules, stateEntries } from "../schema.ts";
-import { type DeliverUserEvent, deliverUserToMaster, userMasterEvent } from "./approval-bus.ts";
+import {
+	type DeliverUserEvent,
+	deliverUserToMaster,
+	type ScheduleDeliveryRetry,
+	userMasterEvent,
+} from "./approval-bus.ts";
 import { flushDeliveries, recordDelivery } from "./approval-delivery.ts";
 import { appendEvents } from "./bus.ts";
 import { createMandate } from "./mandates.ts";
@@ -58,6 +63,7 @@ export async function decide(
 	ok: boolean,
 	deadlineAt?: number,
 	deliver: DeliverUserEvent = deliverUserToMaster,
+	scheduleRetry?: ScheduleDeliveryRetry,
 ): Promise<WrittenDecision> {
 	const accountId = accountOf(scope);
 	const decision = await commitDecision(db, accountId, deadlineAt, async (tx) => {
@@ -109,7 +115,15 @@ export async function decide(
 		if (ok && !masterAsk(approval.title)) await recordMandate(tx, scope, accountId, approval, name, at);
 		return { id, status: next.approval.status, count: await countInbox(tx, accountId) };
 	});
-	if (chooseAdapters(process.env.ADAPTERS) === "real") await flushDeliveries(db, accountId, deliver);
+	if (chooseAdapters(process.env.ADAPTERS) === "real") {
+		try {
+			await flushDeliveries(db, accountId, deliver);
+		} catch (error) {
+			// The decision stays committed. Arm the alarm, then report the failure.
+			if (scheduleRetry) await scheduleRetry(accountId).catch(() => undefined);
+			throw error;
+		}
+	}
 	return decision;
 }
 

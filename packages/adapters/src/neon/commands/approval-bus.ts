@@ -49,6 +49,19 @@ export function userMasterEvent(input: {
 	};
 }
 
+export type ScheduleDeliveryRetry = (accountId: string) => Promise<void>;
+
+// A failed send arms the account alarm. The alarm drains the pending rows.
+export async function scheduleDeliveryRetry(accountId: string, namespace?: BusNamespace): Promise<void> {
+	if (chooseAdapters(process.env.ADAPTERS) !== "real") return;
+	if (!namespace) throw new Error(missingBus);
+	const id = namespace.idFromName(accountId);
+	await namespace.get(id).fetch("https://bus/deliveries/retry", {
+		method: "POST",
+		body: JSON.stringify({ accountId }),
+	});
+}
+
 export async function deliverUserToMaster(
 	accountId: string,
 	event: UserMasterEvent,

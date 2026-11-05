@@ -38,7 +38,7 @@ import { asc, eq, sql } from "drizzle-orm";
 
 import type { BusNamespace } from "../cloudflare-bus/http.ts";
 import { askRevise, setAgentOn, setAutonomy, setSkillOn } from "./commands/agents.ts";
-import { type DeliverUserEvent, deliverUserToMaster } from "./commands/approval-bus.ts";
+import { type DeliverUserEvent, deliverUserToMaster, scheduleDeliveryRetry } from "./commands/approval-bus.ts";
 import { decide, decideMission } from "./commands/approvals.ts";
 import { conversationTransaction } from "./commands/conversation.ts";
 import { createMandate, mandate } from "./commands/mandates.ts";
@@ -122,7 +122,8 @@ export function createRepositories(db: AppDatabase, namespace?: BusNamespace): R
 			listApprovals: (scope) => listApprovals(db, scope),
 			listMissionProposals: (scope) => listProposals(db, scope),
 			inbox: (scope) => readInbox(db, scope),
-			decide: (scope, id, ok, deadlineAt) => decide(db, scope, id, ok, deadlineAt, deliver),
+			decide: (scope, id, ok, deadlineAt) =>
+				decide(db, scope, id, ok, deadlineAt, deliver, (accountId) => scheduleDeliveryRetry(accountId, namespace)),
 			decideMission: (scope, id, ok, deadlineAt) => decideMission(db, scope, id, ok, deadlineAt),
 			setRuleOn: (scope, id, on, fence, deadlineAt) => setRuleOn(db, scope, id, on, fence, deadlineAt),
 			addRule: (scope, draft, deadlineAt) => addRule(db, scope, draft, deadlineAt),

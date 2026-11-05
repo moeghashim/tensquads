@@ -4,9 +4,12 @@ import type { AppDatabase } from "@tensquads/adapters";
 import { and, eq } from "drizzle-orm";
 
 import { replaceDemoAccount } from "../../seed/src/demo-account.ts";
+import { AccountBus } from "../src/cloudflare-bus/account-bus.ts";
 import type { DeliverUserEvent, UserMasterEvent } from "../src/neon/commands/approval-bus.ts";
+import { deliveryBackoffMs, retryApprovalDeliveries } from "../src/neon/commands/approval-delivery.ts";
 import { decide } from "../src/neon/commands/approvals.ts";
 import { schema } from "../src/neon/schema.ts";
+import { Storage } from "./bus-storage.ts";
 import { openPglite } from "./pglite.ts";
 
 function scope(accountId: string) {
@@ -154,6 +157,47 @@ test("a master ask is approved without a policy rule and reaches the master", as
 		await decide(db, scope(accountId), "m-01", true, undefined, deliver);
 		assert.equal(delivered.length, 1);
 	});
+});
+
+test("the alarm trigger retries a failed send exactly once, with no decide call", async () => {
+	await withDemo("alarm", async (db, accountId) => {
+		const received: string[] = [];
+		let calls = 0;
+		const deliver: DeliverUserEvent = async (_accountId, event) => {
+			calls += 1;
+			if (calls === 1) throw new Error("The bus write failed.");
+			if (!received.includes(event.id)) received.push(event.id);
+		};
+		await assert.rejects(() => decide(db, scope(accountId), "ap1", true, undefined, deliver));
+		assert.equal(await status(db, accountId, "ap1"), "Approved");
+		assert.equal((await deliveries(db, accountId)).length, 1);
+		assert.equal(received.length, 0);
+
+		const storage = new Storage();
+		await storage.put("account", accountId);
+		const bus = new AccountBus(
+			{ storage, acceptWebSocket() {}, getWebSockets: () => [] },
+			{
+				ADAPTERS: "real",
+				retryDeliveries: (id) => retryApprovalDeliveries(db, id, deliver),
+			},
+		);
+		await bus.alarm();
+		assert.equal(calls, 2);
+		assert.deepEqual(received, ["user-ap1"]);
+		assert.equal((await deliveries(db, accountId)).length, 0);
+
+		await bus.alarm();
+		assert.equal(calls, 2);
+		assert.deepEqual(received, ["user-ap1"]);
+	});
+});
+
+test("the delivery backoff is bounded", () => {
+	assert.equal(deliveryBackoffMs(0), 1_000);
+	assert.equal(deliveryBackoffMs(1), 2_000);
+	assert.equal(deliveryBackoffMs(2), 4_000);
+	assert.equal(deliveryBackoffMs(100), 60_000);
 });
 
 function eqAccount(accountId: string) {

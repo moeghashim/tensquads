@@ -2,13 +2,21 @@ import { planNextEvent, type TrafficCursor } from "@tensquads/domain";
 import type { PublishedEvent } from "@tensquads/kernel";
 import { chooseAdapters } from "../adapter-choice.ts";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
+import { deliveryBackoffMs } from "../neon/commands/approval-delivery.ts";
 import { traceFor } from "../trace.ts";
 import { alarmAfterFlush, HEARTBEAT_ALARM, type HeartbeatEnv, recordBeat, sweepHeartbeats } from "./heartbeat.ts";
 import { writeMasterCommit } from "./master-commit.ts";
 import { finishMaster, MASTER_DONE, MASTER_OPEN, masterEvent, retryOpenMaster } from "./master-retry.ts";
 import { prepareMaster } from "./master-step.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
-import { type PendingBusRow, readBusEvents, readBusHistory, readBusState, writePending } from "./neon-write.ts";
+import {
+	drainApprovalDeliveries,
+	type PendingBusRow,
+	readBusEvents,
+	readBusHistory,
+	readBusState,
+	writePending,
+} from "./neon-write.ts";
 
 const ALARM_MS = 30_000;
 
@@ -63,6 +71,9 @@ export interface BusObjectEnv extends HeartbeatEnv {
 	readonly BROWSER?: unknown;
 	readonly OPENAI_API_KEY?: string;
 	readonly MASTER_MODEL?: string;
+	// A test can drain pending approval deliveries without a live database.
+	// It returns the number of rows left. The alarm runs it again later.
+	readonly retryDeliveries?: (accountId: string) => Promise<number>;
 }
 
 interface AcceptResult {
@@ -259,7 +270,48 @@ export class AccountBus {
 		await this.serialize(async () => {
 			await sweepHeartbeats(this.ctx.storage, this.env);
 			await retryOpenMaster(this.ctx.storage, this.env, (accountId, event) => this.runMaster(accountId, event));
+			await this.drainDeliveries();
 		});
+	}
+
+	// A failed first send arms this route. The alarm then drains the rows.
+	private async armDeliveryRetry(request: Request): Promise<Response> {
+		const body: unknown = await request.json().catch(() => null);
+		if (!isObject(body) || !isNonEmptyString(body.accountId)) {
+			return new Response("The message was rejected.", { status: 400 });
+		}
+		const stored = await this.ctx.storage.get<string>("account");
+		if (stored && stored !== body.accountId) return new Response("The message was rejected.", { status: 400 });
+		await this.ctx.storage.put("account", body.accountId);
+		await this.ctx.storage.put("delivery-attempt", 0);
+		const now = this.env.now?.() ?? Date.now();
+		await this.ctx.storage.setAlarm(now + deliveryBackoffMs(0));
+		return Response.json({ ok: true });
+	}
+
+	private async drainDeliveries(): Promise<void> {
+		if (chooseAdapters(this.env.ADAPTERS) !== "real") return;
+		const accountId = await this.ctx.storage.get<string>("account");
+		if (!accountId) return;
+		let remaining: number;
+		try {
+			if (this.env.retryDeliveries) remaining = await this.env.retryDeliveries(accountId);
+			else if (this.env.DATABASE_URL) {
+				remaining = await drainApprovalDeliveries(this.env.DATABASE_URL, accountId, async (event) => {
+					await this.acceptStored(accountId, event);
+				});
+			} else return;
+		} catch {
+			remaining = 1;
+		}
+		const now = this.env.now?.() ?? Date.now();
+		if (remaining > 0) {
+			const attempt = (await this.ctx.storage.get<number>("delivery-attempt")) ?? 0;
+			await this.ctx.storage.put("delivery-attempt", attempt + 1);
+			await this.ctx.storage.setAlarm(now + deliveryBackoffMs(attempt));
+			return;
+		}
+		await this.ctx.storage.delete("delivery-attempt");
 	}
 
 	private routes(): Map<string, (request: Request) => Promise<Response>> {
@@ -271,6 +323,7 @@ export class AccountBus {
 			["/socket", () => Promise.resolve(this.socket())],
 			["/take", (request: Request) => request.json().then((body: unknown) => this.take(body))],
 			["/heartbeat", (request: Request) => this.heartbeat(request)],
+			["/deliveries/retry", (request: Request) => this.armDeliveryRetry(request)],
 			["/monitor", (request: Request) => this.monitor(request)],
 		]);
 		if (this.env.BUS_INSPECT === "1") {
@@ -298,29 +351,23 @@ export class AccountBus {
 		return Response.json({ accepted: true, event: result.event });
 	}
 
+	// The caller holds the serial lock. A repeat event id changes nothing.
+	private async acceptStored(accountId: string, event: PublishedEvent): Promise<AcceptResult> {
+		await this.initialize(accountId);
+		const mark = masterEvent(event) && chooseAdapters(this.env.ADAPTERS) === "real";
+		const stored = await commitDurable(this.ctx.storage, accountId, event, undefined, undefined, mark);
+		if (stored.event) this.push(stored.event);
+		const owner = await this.ctx.storage.get<string>("account");
+		if (owner === accountId) {
+			await finishMaster(this.ctx.storage, this.env, event, !stored.seen, (item) => this.runMaster(accountId, item));
+		}
+		return stored;
+	}
+
 	private async accept(body: unknown): Promise<Response> {
 		if (!isBusRecord(body)) return new Response("The message was rejected.", { status: 400 });
 		const record = body;
-		const result = await this.serialize(async () => {
-			await this.initialize(record.accountId);
-			const mark = masterEvent(record.event) && chooseAdapters(this.env.ADAPTERS) === "real";
-			const stored = await commitDurable(
-				this.ctx.storage,
-				record.accountId,
-				record.event,
-				undefined,
-				undefined,
-				mark,
-			);
-			if (stored.event) this.push(stored.event);
-			const owner = await this.ctx.storage.get<string>("account");
-			if (owner === record.accountId) {
-				await finishMaster(this.ctx.storage, this.env, record.event, !stored.seen, (event) =>
-					this.runMaster(record.accountId, event),
-				);
-			}
-			return stored;
-		});
+		const result = await this.serialize(() => this.acceptStored(record.accountId, record.event));
 		await this.flush();
 		return Response.json({ seen: result.seen, seq: result.seq });
 	}

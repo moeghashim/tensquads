@@ -1,10 +1,10 @@
 import { neonConfig, Pool } from "@neondatabase/serverless";
 import type { PublishedEvent } from "@tensquads/kernel";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { chooseAdapters } from "../adapter-choice.ts";
 import { askDetail, siteAgent } from "../neon/commands/master-ask.ts";
-import { approvals, busEvents, stateEntries } from "../neon/schema.ts";
+import { approvalDeliveries, approvals, busEvents, stateEntries } from "../neon/schema.ts";
 import { traceFor } from "../trace.ts";
 
 const directWrite = "A bus write in real mode must go through the Durable Object.";
@@ -124,7 +124,42 @@ function hidden(error: unknown, connectionString: string): Error {
 function database(connectionString: string) {
 	sockets();
 	const pool = new Pool({ connectionString, max: 1, connectionTimeoutMillis: 2_000 });
-	return { pool, db: drizzle(pool, { schema: { busEvents, stateEntries, approvals } }) };
+	return { pool, db: drizzle(pool, { schema: { busEvents, stateEntries, approvals, approvalDeliveries } }) };
+}
+
+// The alarm drains pending approval deliveries from Neon. Each row keeps its
+// event id, so a repeat send is dropped at the receiver. A row is deleted
+// only after its send succeeds. The count left tells the alarm to run again.
+export async function drainApprovalDeliveries(
+	connectionString: string,
+	accountId: string,
+	deliver: (event: PublishedEvent) => Promise<void>,
+): Promise<number> {
+	const { pool, db } = database(connectionString);
+	try {
+		const rows = await db
+			.select()
+			.from(approvalDeliveries)
+			.where(eq(approvalDeliveries.accountId, accountId))
+			.orderBy(asc(approvalDeliveries.approvalId));
+		let remaining = 0;
+		for (const row of rows) {
+			try {
+				await deliver(row.event as PublishedEvent);
+			} catch {
+				remaining += 1;
+				continue;
+			}
+			await db
+				.delete(approvalDeliveries)
+				.where(and(eq(approvalDeliveries.accountId, accountId), eq(approvalDeliveries.approvalId, row.approvalId)));
+		}
+		return remaining;
+	} catch (error) {
+		throw hidden(error, connectionString);
+	} finally {
+		await pool.end();
+	}
 }
 
 export async function writePending(
