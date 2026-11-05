@@ -1,4 +1,4 @@
-// The character sheet at /review/characters. A proposal for Moe, not product code.
+// The character sheet at /review/characters.
 import { AGENT_LOOP_STATES, SQUADMATE_CSS, SQUADMATES, squadmateMarkup } from "@tensquads/squadmates";
 
 const STATES = AGENT_LOOP_STATES.map((state) => [state.id, state.label, state.hint]);
