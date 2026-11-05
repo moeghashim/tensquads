@@ -47,7 +47,7 @@ The package name is `@tensquads/agent-kit` (decision 12).
 4. Add the report, brief, menu or item list, and page-result types.
 5. Add the agent loop. The loop takes a task. It plans. It runs one skill at a time through its gate. It collects evidence. It sends one Result. Then it returns to the start (decision 20). The states Waiting, Blocked, and Dropped exist (decision 32). The loop keeps no task state of its own.
 6. Add the HTTP client. It calls `POST /machine/send` and `POST /machine/take`. It sends the signed token. It does not pull a Cloudflare queue.
-7. Add the heartbeat client. It sends one message a minute (decision 17). The path is open question 2. Unit tests may call a fake route until Moe answers.
+7. Add the heartbeat client. It sends one message a minute (decision 17). The path is `POST /machine/heartbeat` (open question 2, answered).
 8. Add the fake master. It accepts a Result. It does not grade the Result.
 9. Tag the release `0.1.0`. Consumers pin the commit of that tag. They do not pin the tag name. The dependency is an npm git dependency on that commit.
 10. A later contract change is a new version. Update each consumer in its own pull request.
@@ -76,4 +76,4 @@ The package name is `@tensquads/agent-kit` (decision 12).
 Do not guess. Stop the step that needs the answer. The other steps may proceed.
 
 1. **How a machine gets the signed token.** Answered by Moe on 5 November 2026: the Worker signs the token with the Worker secret `MACHINE_TOKEN_KEY`, for one account and one agent. The boat.dev key proxy holds the token. The machine reads it from the proxy at call time. It is not an environment variable, and the image does not contain it.
-2. **The heartbeat path.** The plan says one message a minute to the account Durable Object. It names no URL. A machine calls the Worker, not the Durable Object. *Recommended:* `POST /machine/heartbeat` with the same token. The body names the account and `TENSQUADS_AGENT_ID`. The main task owns the Worker route. This client calls that route.
+2. **The heartbeat path.** Answered by Moe on 5 November 2026: `POST /machine/heartbeat`, with the same signed token, once a minute. The body names the account and `TENSQUADS_AGENT_ID`. The main repository owns the route and the Durable Object records the time. After three missed minutes the master resumes the machine.

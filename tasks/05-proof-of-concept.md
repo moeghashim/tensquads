@@ -23,7 +23,7 @@ Where the plan and this file disagree on the skill list or on GPT-6 Astra, this 
 
 - The master skills: `brief.write`, `task.route`, `approval.ask`, and `check.run`. The model is a cheaper GPT-6 tier. All four gates are Auto.
 - Every check below. An agent repository holds no check that decides a pass.
-- The Durable Object side of the heartbeat. Three missed heartbeats resume the machine (decision 17). The path is open question 6.
+- The Durable Object side of the heartbeat. Three missed heartbeats resume the machine (decision 17). The path is `POST /machine/heartbeat` (open question 6, answered).
 - The `change.detected` Worker route. A test webhook becomes one bus event to the master.
 - The proof-of-concept seed account, with the two squads, their skills, and their events. The event list is open question 2.
 - The two images on the Agent images screen, version `0.1.0`, status Beta. The ids are `market` and `website`.
@@ -143,4 +143,4 @@ Do not guess. Stop the step that needs the answer. The other steps may proceed.
    - Accounts: the seed adds one proof-of-concept account. The layout does not change.
    - Agent images: two images, version `0.1.0`, status Beta. The layout does not change.
 5. **How a machine gets the signed token.** Answered by Moe on 5 November 2026: the Worker signs the token with the Worker secret `MACHINE_TOKEN_KEY`, for one account and one agent. The boat.dev key proxy holds the token. The machine reads it from the proxy at call time. It is not an environment variable, and the image does not contain it.
-6. **The heartbeat route.** Same question as `tasks/05-agent-kit.md` question 2. This repository owns the Worker route and the three-miss resume. *Recommended:* accept `POST /machine/heartbeat`. The Durable Object records the time. After three missed minutes, it resumes the machine.
+6. **The heartbeat route.** Answered by Moe on 5 November 2026: `POST /machine/heartbeat`, with the same signed token, once a minute. The body names the account and `TENSQUADS_AGENT_ID`. The main repository owns the route and the Durable Object records the time. After three missed minutes the master resumes the machine.
