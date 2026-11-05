@@ -1,0 +1,482 @@
+{
+  "results": [
+    {
+      "name": "planned",
+      "total": 0,
+      "cards": [
+        {
+          "title": "0 Foundation",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "0 Foundation\ncopy, set up, core, schema, seed, tokens, verify passes\nPlanned"
+        },
+        {
+          "title": "1 Public",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "1 Public\nscreens 1, 2, sign-in form, sign-up makes an account\nPlanned"
+        },
+        {
+          "title": "2 Workspace",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "2 Workspace\nframe, dock, screens 3 to 8 in order\n0 of 7 tasks merged\nPlanned"
+        },
+        {
+          "title": "3 Admin",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "3 Admin\nscreens 9, 10, open an account, admin role\nPlanned"
+        },
+        {
+          "title": "4 Machines",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "4 Machines\nboat.dev and bus adapters behind the interfaces\nPlanned"
+        },
+        {
+          "title": "5 Proof",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "5 Proof\nagent kit, researcher, builder, then three squads with two approvals\n0 of 4 tasks merged\nPlanned"
+        },
+        {
+          "title": "6 Squadmates",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "6 Squadmates\na name and a character for Petra and each agent\nPlanned"
+        },
+        {
+          "title": "7 Homepage",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "7 Homepage\nnew screen 1: Moe approves the design, then the build\nPlanned"
+        }
+      ],
+      "phaseGridOverflowsAt390": false,
+      "warningCount": 3
+    },
+    {
+      "name": "mixed",
+      "total": 4,
+      "cards": [
+        {
+          "title": "0 Foundation",
+          "state": "Built",
+          "class": "bx built",
+          "text": "0 Foundation\ncopy, set up, core, schema, seed, tokens, verify passes\nBuilt"
+        },
+        {
+          "title": "1 Public",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "1 Public\nscreens 1, 2, sign-in form, sign-up makes an account\nPlanned"
+        },
+        {
+          "title": "2 Workspace",
+          "state": "In progress",
+          "class": "bx progress",
+          "text": "2 Workspace\nframe, dock, screens 3 to 8 in order\n1 of 7 tasks merged\nIn progress"
+        },
+        {
+          "title": "3 Admin",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "3 Admin\nscreens 9, 10, open an account, admin role\nPlanned"
+        },
+        {
+          "title": "4 Machines",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "4 Machines\nboat.dev and bus adapters behind the interfaces\nPlanned"
+        },
+        {
+          "title": "5 Proof",
+          "state": "In progress",
+          "class": "bx progress",
+          "text": "5 Proof\nagent kit, researcher, builder, then three squads with two approvals\n2 of 4 tasks merged\nIn progress"
+        },
+        {
+          "title": "6 Squadmates",
+          "state": "In progress",
+          "class": "bx progress",
+          "text": "6 Squadmates\na name and a character for Petra and each agent\nIn progress"
+        },
+        {
+          "title": "7 Homepage",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "7 Homepage\nnew screen 1: Moe approves the design, then the build\nPlanned"
+        }
+      ],
+      "phaseGridOverflowsAt390": false,
+      "warningCount": 0
+    },
+    {
+      "name": "external-merged",
+      "total": 6,
+      "cards": [
+        {
+          "title": "0 Foundation",
+          "state": "Built",
+          "class": "bx built",
+          "text": "0 Foundation\ncopy, set up, core, schema, seed, tokens, verify passes\nBuilt"
+        },
+        {
+          "title": "1 Public",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "1 Public\nscreens 1, 2, sign-in form, sign-up makes an account\nPlanned"
+        },
+        {
+          "title": "2 Workspace",
+          "state": "In progress",
+          "class": "bx progress",
+          "text": "2 Workspace\nframe, dock, screens 3 to 8 in order\n1 of 7 tasks merged\nIn progress"
+        },
+        {
+          "title": "3 Admin",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "3 Admin\nscreens 9, 10, open an account, admin role\nPlanned"
+        },
+        {
+          "title": "4 Machines",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "4 Machines\nboat.dev and bus adapters behind the interfaces\nPlanned"
+        },
+        {
+          "title": "5 Proof",
+          "state": "Built",
+          "class": "bx built",
+          "text": "5 Proof\nagent kit, researcher, builder, then three squads with two approvals\n4 of 4 tasks merged\nBuilt"
+        },
+        {
+          "title": "6 Squadmates",
+          "state": "In progress",
+          "class": "bx progress",
+          "text": "6 Squadmates\na name and a character for Petra and each agent\nIn progress"
+        },
+        {
+          "title": "7 Homepage",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "7 Homepage\nnew screen 1: Moe approves the design, then the build\nPlanned"
+        }
+      ],
+      "phaseGridOverflowsAt390": false,
+      "warningCount": 0
+    },
+    {
+      "name": "external-unavailable",
+      "total": 3,
+      "cards": [
+        {
+          "title": "0 Foundation",
+          "state": "Built",
+          "class": "bx built",
+          "text": "0 Foundation\ncopy, set up, core, schema, seed, tokens, verify passes\nBuilt"
+        },
+        {
+          "title": "1 Public",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "1 Public\nscreens 1, 2, sign-in form, sign-up makes an account\nPlanned"
+        },
+        {
+          "title": "2 Workspace",
+          "state": "In progress",
+          "class": "bx progress",
+          "text": "2 Workspace\nframe, dock, screens 3 to 8 in order\n1 of 7 tasks merged\nIn progress"
+        },
+        {
+          "title": "3 Admin",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "3 Admin\nscreens 9, 10, open an account, admin role\nPlanned"
+        },
+        {
+          "title": "4 Machines",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "4 Machines\nboat.dev and bus adapters behind the interfaces\nPlanned"
+        },
+        {
+          "title": "5 Proof",
+          "state": "In progress",
+          "class": "bx progress",
+          "text": "5 Proof\nagent kit, researcher, builder, then three squads with two approvals\n1 of 4 tasks merged\nIn progress"
+        },
+        {
+          "title": "6 Squadmates",
+          "state": "In progress",
+          "class": "bx progress",
+          "text": "6 Squadmates\na name and a character for Petra and each agent\nIn progress"
+        },
+        {
+          "title": "7 Homepage",
+          "state": "Planned",
+          "class": "bx planned",
+          "text": "7 Homepage\nnew screen 1: Moe approves the design, then the build\nPlanned"
+        }
+      ],
+      "phaseGridOverflowsAt390": false,
+      "warningCount": 3
+    },
+    {
+      "name": "all-built",
+      "total": 17,
+      "cards": [
+        {
+          "title": "0 Foundation",
+          "state": "Built",
+          "class": "bx built",
+          "text": "0 Foundation\ncopy, set up, core, schema, seed, tokens, verify passes\nBuilt"
+        },
+        {
+          "title": "1 Public",
+          "state": "Built",
+          "class": "bx built",
+          "text": "1 Public\nscreens 1, 2, sign-in form, sign-up makes an account\nBuilt"
+        },
+        {
+          "title": "2 Workspace",
+          "state": "Built",
+          "class": "bx built",
+          "text": "2 Workspace\nframe, dock, screens 3 to 8 in order\n7 of 7 tasks merged\nBuilt"
+        },
+        {
+          "title": "3 Admin",
+          "state": "Built",
+          "class": "bx built",
+          "text": "3 Admin\nscreens 9, 10, open an account, admin role\nBuilt"
+        },
+        {
+          "title": "4 Machines",
+          "state": "Built",
+          "class": "bx built",
+          "text": "4 Machines\nboat.dev and bus adapters behind the interfaces\nBuilt"
+        },
+        {
+          "title": "5 Proof",
+          "state": "Built",
+          "class": "bx built",
+          "text": "5 Proof\nagent kit, researcher, builder, then three squads with two approvals\n4 of 4 tasks merged\nBuilt"
+        },
+        {
+          "title": "6 Squadmates",
+          "state": "Built",
+          "class": "bx built",
+          "text": "6 Squadmates\na name and a character for Petra and each agent\nBuilt"
+        },
+        {
+          "title": "7 Homepage",
+          "state": "Built",
+          "class": "bx built",
+          "text": "7 Homepage\nnew screen 1: Moe approves the design, then the build\nBuilt"
+        }
+      ],
+      "phaseGridOverflowsAt390": false,
+      "warningCount": 0
+    }
+  ],
+  "errors": [],
+  "requests": [
+    {
+      "mode": "planned",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-agent-kit",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "planned",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-market-researcher",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "planned",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-website-builder",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "mixed",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-agent-kit",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "mixed",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-market-researcher",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "mixed",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-website-builder",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "external-merged",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-agent-kit",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "external-merged",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-market-researcher",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "external-merged",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-website-builder",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "external-unavailable",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-agent-kit",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "external-unavailable",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-market-researcher",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "external-unavailable",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-website-builder",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "all-built",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-agent-kit",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "all-built",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-market-researcher",
+        "state": [
+          "MERGED"
+        ]
+      }
+    },
+    {
+      "mode": "all-built",
+      "path": "/api/graphql",
+      "query": "fragment pr on PullRequest{number}\n\t\tquery PullRequestList(\n\t\t\t$owner: String!,\n\t\t\t$repo: String!,\n\t\t\t$limit: Int!,\n\t\t\t$endCursor: String,\n\t\t\t$baseBranch: String,\n\t\t\t$headBranch: String,\n\t\t\t$state: [PullRequestState!] = OPEN\n\t\t) {\n\t\t\trepository(owner: $owner, name: $repo) {\n\t\t\t\tpullRequests(\n\t\t\t\t\tstates: $state,\n\t\t\t\t\tbaseRefName: $baseBranch,\n\t\t\t\t\theadRefName: $headBranch,\n\t\t\t\t\tfirst: $limit,\n\t\t\t\t\tafter: $endCursor,\n\t\t\t\t\torderBy: {field: CREATED_AT, direction: DESC}\n\t\t\t\t) {\n\t\t\t\t\ttotalCount\n\t\t\t\t\tnodes {\n\t\t\t\t\t\t...pr\n\t\t\t\t\t}\n\t\t\t\t\tpageInfo {\n\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\tendCursor\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}",
+      "variables": {
+        "limit": 1,
+        "owner": "moeghashim",
+        "repo": "tensquads-website-builder",
+        "state": [
+          "MERGED"
+        ]
+      }
+    }
+  ]
+}

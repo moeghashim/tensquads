@@ -1,0 +1,6 @@
+Run from the target worktree with existing project dependencies and gh on PATH.
+mkdir -p .review-live-test
+Copy live-driver.mjs into .review-live-test/run.mjs, then run:
+node .review-live-test/run.mjs
+The driver archives target 2c65dd9752b44b8f67d26878a7fdaf9b76549ad8 into a disposable repository. It uses real git, gh, the unmodified builder, an HTTP server, and Chromium. The external GitHub API is a disposable local GraphQL service through gh http_unix_socket. No real accounts or repositories are accessed.
+It checks five status configurations, navigates Review to Build plan, and captures desktop and 390px phase grids and summaries. Remove .review-live-test after the run.

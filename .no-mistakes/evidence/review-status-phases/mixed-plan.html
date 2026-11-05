@@ -1,7 +1,6 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow"><title>tensquads build plan</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
 body{margin:0;background:#fcfcfc;color:#282828;font:15px/24px Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 main{max-width:980px;margin:0 auto;padding:32px 24px 80px}
@@ -18,7 +17,7 @@ code{font:13px/20px ui-monospace,monospace;background:rgba(13,13,13,.06);padding
 pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{background:none;padding:0}
 .card{display:block;padding:14px 16px;border-radius:12px;box-shadow:0 0 0 1px rgba(13,13,13,.1);background:#fff;text-decoration:none;color:#0d0d0d;font-weight:500;margin:8px 0}
 .card:hover{box-shadow:0 0 0 1px rgba(13,13,13,.2)}.card span{display:block;color:#5d5d5d;font-weight:400;font-size:13px}
-</style></head><body><main><p class="note"><a href="/review/">Back to review</a> · Plan at commit 6940222, with the 10squads.com domain edit.</p><style>
+</style></head><body><main><p class="note"><a href="/review/">Back to review</a> · Plan at commit dc9710a, with the 10squads.com domain edit.</p><style>
 .dg{margin:20px 0 32px;font-size:14px;line-height:20px;color:#282828}
 .dg-lead{font-size:17px;line-height:24px;color:#0d0d0d;font-weight:600;margin:0 0 16px}
 .dg-note{font-size:13px;line-height:19px;color:#5d5d5d;margin:12px 0 0}
@@ -63,10 +62,10 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 .hero .bar{background:rgba(255,255,255,.15);height:8px}
 .now{margin-top:14px;font-size:14px;color:#e8e8e8}.now b{color:#fff}
 @media (max-width:760px){.g3{grid-template-columns:1fr 1fr}.g4{grid-template-columns:1fr 1fr}.ph{grid-template-columns:1fr 1fr}.dn{height:12px}.dn::before{display:none}}
-</style><h1>tensquads — Build Plan</h1><div class="hero"><h2>Where the build is</h2><p>Plan at commit 6940222, 2026-11-05. Every part of the plan below shows its status.</p>
-<div class="big"><strong>13 of 17</strong><span>tasks merged into main</span></div>
-<div class="bar"><span style="width:76%"></span></div>
-<div class="now">Current phase: <b>5 Proof</b>. In progress: <b>05-market-researcher, 05-website-builder, 06-squadmates</b>.</div></div>
+</style><h1>tensquads — Build Plan</h1><div class="hero"><h2>Where the build is</h2><p>Plan at commit dc9710a, 2026-11-05. Every part of the plan below shows its status.</p>
+<div class="big"><strong>4 of 17</strong><span>tasks merged into main</span></div>
+<div class="bar"><span style="width:24%"></span></div>
+<div class="now">Current phase: <b>1 Public</b>. In progress: <b>05-market-researcher, 05-website-builder, 06-squadmates</b>.</div></div>
 <div class="legend"><span class="pill built">Built</span><span class="pill progress">In progress</span><span class="pill planned">Planned</span><span>Status comes from git: a task is built when its branch is merged into main.</span></div>
 <p>Oct 31, 2026 · @Moe Ghashim</p>
 <p>This plan tells you how to build the tensquads system from the design. The plan does not include the AI agents. The system runs on Cloudflare. Stripe Projects sets up the services. Agent machines run on boat.dev.</p>
@@ -83,7 +82,7 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <tbody><tr>
 <td>1</td>
 <td>Software stack</td>
-<td>TanStack Start 1.0 (React, Vite) for the web app, on PI-Starter&#39;s tooling: strict TypeScript, Biome, <code>progress.md</code>, <code>no-mistakes</code>, skills. A cordis core in <code>packages/</code>. Drizzle for database access. Neon Postgres for the database. Cloudflare Workers for hosting, through the Cloudflare Vite plugin. Changed from Next.js on 31 October 2026</td>
+<td>TanStack Start 1.0 (React, Vite) for the web app, on PI-Starter's tooling: strict TypeScript, Biome, <code>progress.md</code>, <code>no-mistakes</code>, skills. A cordis core in <code>packages/</code>. Drizzle for database access. Neon Postgres for the database. Cloudflare Workers for hosting, through the Cloudflare Vite plugin. Changed from Next.js on 31 October 2026</td>
 </tr>
 <tr>
 <td>1b</td>
@@ -113,7 +112,7 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <tr>
 <td>5</td>
 <td>External services</td>
-<td>All are placeholders. The design has no screen for &quot;connect on the next step&quot;. That step does nothing and opens Overview</td>
+<td>All are placeholders. The design has no screen for "connect on the next step". That step does nothing and opens Overview</td>
 </tr>
 <tr>
 <td>6</td>
@@ -148,12 +147,12 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <tr>
 <td>12</td>
 <td>Name</td>
-<td>The repository is <code>moeghashim/tensquads</code>. The product name is tensquads in all places: package scope <code>@tensquads</code>, app title, admin footer. The code does not use &quot;10Squads&quot; or &quot;Business Agents&quot;. Design updated on 31 October 2026: canvas title, homepage, sign-up header, page titles and the preview address now say tensquads</td>
+<td>The repository is <code>moeghashim/tensquads</code>. The product name is tensquads in all places: package scope <code>@tensquads</code>, app title, admin footer. The code does not use "10Squads" or "Business Agents". Design updated on 31 October 2026: canvas title, homepage, sign-up header, page titles and the preview address now say tensquads</td>
 </tr>
 <tr>
 <td>13</td>
 <td>Sign-in screen</td>
-<td>Clerk elements, styled with the design tokens. No Clerk hosted page. Design updated on 31 October 2026: new screen `SignIn.dc.html` (route `/signin`); &quot;Sign in&quot; on the homepage and the sign-up page opens it</td>
+<td>Clerk elements, styled with the design tokens. No Clerk hosted page. Design updated on 31 October 2026: new screen `SignIn.dc.html` (route `/signin`); "Sign in" on the homepage and the sign-up page opens it</td>
 </tr>
 <tr>
 <td>14</td>
@@ -163,7 +162,7 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <tr>
 <td>15</td>
 <td>boat.dev account</td>
-<td>Moe&#39;s boat.dev account, with a new environment `tensquads-agents`</td>
+<td>Moe's boat.dev account, with a new environment `tensquads-agents`</td>
 </tr>
 <tr>
 <td>16</td>
@@ -173,12 +172,12 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <tr>
 <td>17</td>
 <td>Where the master runs</td>
-<td>The master core (events, state, inbox, routing, model calls) runs on Cloudflare as the account&#39;s Durable Object and a Worker. It never depends on a boat.dev machine. A boat.dev machine is used only for work that needs a full computer. Agent machines run always on, size small, as a systemd service with a heartbeat to the Durable Object</td>
+<td>The master core (events, state, inbox, routing, model calls) runs on Cloudflare as the account's Durable Object and a Worker. It never depends on a boat.dev machine. A boat.dev machine is used only for work that needs a full computer. Agent machines run always on, size small, as a systemd service with a heartbeat to the Durable Object</td>
 </tr>
 <tr>
 <td>18</td>
 <td>How updates reach running agents</td>
-<td>An agent image is ours; the account state is the customer&#39;s and never lives on the machine. A skill update is a bus message and a cordis plug-in swap, with no restart. An image update starts a new machine from the new template, checks it, then switches. Rollout goes in rings: Draft, Beta, Stable. No customer may pin a version. Everyone moves to Stable</td>
+<td>An agent image is ours; the account state is the customer's and never lives on the machine. A skill update is a bus message and a cordis plug-in swap, with no restart. An image update starts a new machine from the new template, checks it, then switches. Rollout goes in rings: Draft, Beta, Stable. No customer may pin a version. Everyone moves to Stable</td>
 </tr>
 <tr>
 <td>19</td>
@@ -213,7 +212,7 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <tr>
 <td>25</td>
 <td>Overview tiles for an account with no store</td>
-<td>The Revenue and Orders tiles show &quot;—&quot;. The layout does not move</td>
+<td>The Revenue and Orders tiles show "—". The layout does not move</td>
 </tr>
 <tr>
 <td>26</td>
@@ -238,7 +237,7 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <tr>
 <td>33</td>
 <td>Squadmates: names and characters</td>
-<td>Decided by Moe on 3 November 2026. Each agent image has one fixed character name, taken from a famous place: master Petra, Orders Pisa, Support Kyoto, Marketing Rio, Finance Zurich, Inventory Giza, Market researcher Machu, Website builder Angkor, Analytics Delphi, People Sydney. A customer cannot rename the master or an agent. Each agent shows a character: one round body in the agent&#39;s colour, one role accessory, and eyes that show the Agent loop state. The reference drawing is <code>/review/characters</code>. This departs from the canvas: where a screen shows the master&#39;s name or an agent&#39;s mark, the build shows the character name and the character. The design&#39;s agent name (&quot;Orders&quot;) stays as the role tag. No screen shows the word &quot;master&quot;: the interface says &quot;Petra&quot;, for example &quot;Chat with Petra&quot; (Moe, 3 November 2026). Task 06 builds it</td>
+<td>Decided by Moe on 3 November 2026. Each agent image has one fixed character name, taken from a famous place: master Petra, Orders Pisa, Support Kyoto, Marketing Rio, Finance Zurich, Inventory Giza, Market researcher Machu, Website builder Angkor, Analytics Delphi, People Sydney. A customer cannot rename the master or an agent. Each agent shows a character: one round body in the agent's colour, one role accessory, and eyes that show the Agent loop state. The reference drawing is <code>/review/characters</code>. This departs from the canvas: where a screen shows the master's name or an agent's mark, the build shows the character name and the character. The design's agent name ("Orders") stays as the role tag. No screen shows the word "master": the interface says "Petra", for example "Chat with Petra" (Moe, 3 November 2026). Task 06 builds it</td>
 </tr>
 <tr>
 <td>34</td>
@@ -248,13 +247,13 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <tr>
 <td>35</td>
 <td>Proof of concept: repositories</td>
-<td>Decided by Moe on 4 November 2026. He accepted the recommendations in <code>docs/handoffs/poc-squad-repos.md</code>. The Market researcher is the private repository <code>moeghashim/tensquads-market-researcher</code>. The Website builder is the private repository <code>moeghashim/tensquads-website-builder</code>. The shared bus contract and the agent loop are the private repository <code>moeghashim/tensquads-agent-kit</code>. A consumer pins one commit of the kit with an npm git dependency. The master stays in <code>moeghashim/tensquads</code>. Four task files replace the single phase 5 task. <code>tasks/05-proof-of-concept.md</code> keeps the final &quot;Done when&quot; list. ADR 0002 records the split</td>
+<td>Decided by Moe on 4 November 2026. He accepted the recommendations in <code>docs/handoffs/poc-squad-repos.md</code>. The Market researcher is the private repository <code>moeghashim/tensquads-market-researcher</code>. The Website builder is the private repository <code>moeghashim/tensquads-website-builder</code>. The shared bus contract and the agent loop are the private repository <code>moeghashim/tensquads-agent-kit</code>. A consumer pins one commit of the kit with an npm git dependency. The master stays in <code>moeghashim/tensquads</code>. Four task files replace the single phase 5 task. <code>tasks/05-proof-of-concept.md</code> keeps the final "Done when" list. ADR 0002 records the split</td>
 </tr>
 </tbody></table></div>
-<p>No question is open. Moe answered items 13 to 15 on 31 October 2026. The web framework changed from Next.js to TanStack Start the same day. TanStack Start reached version 1.0 on 13 October 2026. Its server build is a plain fetch handler, so it runs on a Worker with no adapter. Cloudflare is an official hosting partner. Clerk has an official SDK for it.&#32;</p>
+<p>No question is open. Moe answered items 13 to 15 on 31 October 2026. The web framework changed from Next.js to TanStack Start the same day. TanStack Start reached version 1.0 on 13 October 2026. Its server build is a plain fetch handler, so it runs on a Worker with no adapter. Cloudflare is an official hosting partner. Clerk has an official SDK for it. </p>
 <h2>Architecture</h2>
 <p>The system has four layers. The web app is the top layer. The core is below it. The core has six domain areas. Each domain area is a plug-in. The domain areas reach the outside only through interfaces. Adapters connect the interfaces to real services. Version 1 uses test adapters. This makes the screens correct before any real service exists.</p>
-<div class="dg" role="img" aria-label="Four layers: web app, core, interfaces, adapters, each with its build status."><p class="dg-lead">Each screen uses the core. Machines and services connect through interfaces.</p><div class="bx top built"><b>Web app: TanStack Start on Cloudflare Workers (PI-Starter tooling), Clerk sessions</b><small>Ten screens from the design canvas, three shells: public, workspace, super-admin. 10 of 10 built.</small><div class="screens"><span class="sc built"><i></i>1 Homepage</span><span class="sc built"><i></i>2 Sign-up</span><span class="sc built"><i></i>Frame and dock</span><span class="sc built"><i></i>3 Overview</span><span class="sc built"><i></i>4 Chat</span><span class="sc built"><i></i>5 Agents</span><span class="sc built"><i></i>6 Agent dashboard</span><span class="sc built"><i></i>7 Agent traffic</span><span class="sc built"><i></i>8 Rules and limits</span><span class="sc built"><i></i>9 All accounts</span><span class="sc built"><i></i>10 Agent images</span></div><span class="pill built">Built</span></div><div class="dn"></div><div class="frame"><p class="ft">Core: one cordis context. Each domain area is one plug-in.</p><div class="g3"><div class="bx built"><b>Platform</b><small>accounts, plans, admin totals</small><span class="pill built">Built</span></div><div class="bx built"><b>Squads and Agents</b><small>agents, skills, autonomy, machine</small><span class="pill built">Built</span></div><div class="bx built"><b>Bus and Shared State</b><small>events, state writes, nextEvent()</small><span class="pill built">Built</span></div><div class="bx built"><b>Policy</b><small>rules, limits, approvals</small><span class="pill built">Built</span></div><div class="bx built"><b>Catalog</b><small>agent images, bugs, features</small><span class="pill built">Built</span></div><div class="bx built"><b>Conversation</b><small>master thread, send(), dock</small><span class="pill built">Built</span></div></div></div><div class="dn"></div><div class="frame"><p class="ft">Interfaces: the boundary layer. The domain reaches outside only here.</p><div class="g4"><div class="bx built"><b>MachineProvider</b><span class="pill built">Built</span></div><div class="bx built"><b>EventBus</b><span class="pill built">Built</span></div><div class="bx built"><b>IntegrationGateway</b><span class="pill built">Built</span></div><div class="bx built"><b>Repositories</b><span class="pill built">Built</span></div></div><p class="dg-note" style="text-align:left">Decider is the fifth interface. It exists, with no adapter in version 1 (decision 19).</p></div><div class="g4" style="margin-top:0"><div class="dn"></div><div class="dn"></div><div class="dn"></div><div class="dn"></div></div><div class="g4"><div class="bx built"><b>Test machines</b><small>version 1<br>host, CPU and uptime from the design</small><span class="pill built">Built</span></div><div class="bx built"><b>In-memory bus</b><small>version 1<br>nextEvent() steps the design's events</small><span class="pill built">Built</span></div><div class="bx built"><b>Placeholders</b><small>version 1<br>Shopify, Gmail, Stripe do nothing</small><span class="pill built">Built</span></div><div class="bx built"><b>Neon Postgres</b><small>through Drizzle<br>account_id on each account row, the bus record</small><span class="pill built">Built</span></div></div><div class="g4"><div class="dn dash"></div><div class="dn dash"></div><div></div><div></div></div><div class="g4"><div class="bx built"><b>boat.dev machines</b><small>later, phase 4<br>one machine per agent, keys kept outside</small><span class="pill built">Built</span></div><div class="bx built"><b>Cloudflare bus</b><small>later, phase 4<br>Queues carry messages, one Durable Object per account</small><span class="pill built">Built</span></div></div><p class="dg-note">A dashed line: the same interface, a different adapter later. The master core runs in that Durable Object (decision 17).</p></div>
+<div class="dg" role="img" aria-label="Four layers: web app, core, interfaces, adapters, each with its build status."><p class="dg-lead">Each screen uses the core. Machines and services connect through interfaces.</p><div class="bx top progress"><b>Web app: TanStack Start on Cloudflare Workers (PI-Starter tooling), Clerk sessions</b><small>Ten screens from the design canvas, three shells: public, workspace, super-admin. 1 of 10 built.</small><div class="screens"><span class="sc planned"><i></i>1 Homepage</span><span class="sc planned"><i></i>2 Sign-up</span><span class="sc planned"><i></i>Frame and dock</span><span class="sc planned"><i></i>3 Overview</span><span class="sc built"><i></i>4 Chat</span><span class="sc planned"><i></i>5 Agents</span><span class="sc planned"><i></i>6 Agent dashboard</span><span class="sc planned"><i></i>7 Agent traffic</span><span class="sc planned"><i></i>8 Rules and limits</span><span class="sc planned"><i></i>9 All accounts</span><span class="sc planned"><i></i>10 Agent images</span></div><span class="pill progress">In progress</span></div><div class="dn"></div><div class="frame"><p class="ft">Core: one cordis context. Each domain area is one plug-in.</p><div class="g3"><div class="bx progress"><b>Platform</b><small>accounts, plans, admin totals</small><span class="pill progress">In progress</span></div><div class="bx planned"><b>Squads and Agents</b><small>agents, skills, autonomy, machine</small><span class="pill planned">Planned</span></div><div class="bx planned"><b>Bus and Shared State</b><small>events, state writes, nextEvent()</small><span class="pill planned">Planned</span></div><div class="bx planned"><b>Policy</b><small>rules, limits, approvals</small><span class="pill planned">Planned</span></div><div class="bx planned"><b>Catalog</b><small>agent images, bugs, features</small><span class="pill planned">Planned</span></div><div class="bx progress"><b>Conversation</b><small>master thread, send(), dock</small><span class="pill progress">In progress</span></div></div></div><div class="dn"></div><div class="frame"><p class="ft">Interfaces: the boundary layer. The domain reaches outside only here.</p><div class="g4"><div class="bx built"><b>MachineProvider</b><span class="pill built">Built</span></div><div class="bx built"><b>EventBus</b><span class="pill built">Built</span></div><div class="bx built"><b>IntegrationGateway</b><span class="pill built">Built</span></div><div class="bx built"><b>Repositories</b><span class="pill built">Built</span></div></div><p class="dg-note" style="text-align:left">Decider is the fifth interface. It exists, with no adapter in version 1 (decision 19).</p></div><div class="g4" style="margin-top:0"><div class="dn"></div><div class="dn"></div><div class="dn"></div><div class="dn"></div></div><div class="g4"><div class="bx built"><b>Test machines</b><small>version 1<br>host, CPU and uptime from the design</small><span class="pill built">Built</span></div><div class="bx built"><b>In-memory bus</b><small>version 1<br>nextEvent() steps the design's events</small><span class="pill built">Built</span></div><div class="bx built"><b>Placeholders</b><small>version 1<br>Shopify, Gmail, Stripe do nothing</small><span class="pill built">Built</span></div><div class="bx built"><b>Neon Postgres</b><small>through Drizzle<br>account_id on each account row, the bus record</small><span class="pill built">Built</span></div></div><div class="g4"><div class="dn dash"></div><div class="dn dash"></div><div></div><div></div></div><div class="g4"><div class="bx planned"><b>boat.dev machines</b><small>later, phase 4<br>one machine per agent, keys kept outside</small><span class="pill planned">Planned</span></div><div class="bx planned"><b>Cloudflare bus</b><small>later, phase 4<br>Queues carry messages, one Durable Object per account</small><span class="pill planned">Planned</span></div></div><p class="dg-note">A dashed line: the same interface, a different adapter later. The master core runs in that Durable Object (decision 17).</p></div>
 
 
 
@@ -308,10 +307,10 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 </tbody></table></div>
 <p>Some rules cross domain areas. The core applies these rules, not the screens:</p>
 <ul>
-<li>When you approve an approval, the agent&#39;s <code>tasks</code> count increases by one. The agent&#39;s <code>last</code> field changes to the approval title plus &quot; (approved)&quot;.</li>
+<li>When you approve an approval, the agent's <code>tasks</code> count increases by one. The agent's <code>last</code> field changes to the approval title plus " (approved)".</li>
 <li>When a bus event has <code>writes</code>, the core writes them to the shared state.</li>
 <li>A limit slider writes to the <code>policy.*</code> keys. The traffic state table reads the same keys.</li>
-<li>When you switch an agent off, the core sets CPU to 0% and uptime to &quot;Paused&quot;. It does this through the <code>MachineProvider</code> interface.</li>
+<li>When you switch an agent off, the core sets CPU to 0% and uptime to "Paused". It does this through the <code>MachineProvider</code> interface.</li>
 </ul>
 <p><strong>Where cordis is used.</strong> Cordis is the core only. The web app is TanStack Start. The app calls the core through server functions. The app, the Durable Object and the Queue consumer live in one Worker with one wrangler.jsonc. The cordis README says its API is not stable. For this reason, we pin cordis to one commit. All calls to cordis go through one small <code>Kernel</code> module. If the cordis API changes, we change only this module. The plug-ins do not change.</p>
 <p><strong>The boundary layer.</strong> The domain reaches outside through three interfaces. Each interface keeps a foreign vocabulary out of the domain:</p>
@@ -320,13 +319,13 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <li><code>IntegrationGateway</code>. The Shopify, Gmail and Stripe data shapes stay outside.</li>
 <li><code>Repositories</code>. Database rows become domain objects here. No database type crosses this line.</li>
 </ul>
-<p>The design&#39;s mock data is a fourth foreign model. One seed module converts it to domain objects, one time, with no changes.</p>
+<p>The design's mock data is a fourth foreign model. One seed module converts it to domain objects, one time, with no changes.</p>
 <p>A fifth interface, <code>Decider</code>, takes a question and a list of possible answers. It returns one answer and a confidence. Version 1 has no adapter for it. Later, the master uses it to pick an agent, the Policy area uses it for the autonomy gate, and the guardrails use it to pass or block a message (decision 19).</p>
-<p><strong>Many accounts in one database.</strong> Each account table has an <code>account_id</code> column. Each data access function receives an <code>AccountScope</code>. The function rejects a query that has no scope. When a super admin opens an account, the system makes a special session. The session carries the target <code>account_id</code>. The workspace screens do not see a difference. The design shows this: only a super admin sees the &quot;All accounts&quot; link.</p>
-<p><strong>How agents send messages (decision 16).</strong> The <code>EventBus</code> interface has two adapters. Version 1 uses an in-memory bus. It replays the design&#39;s events with <code>nextEvent()</code>. Later, the Cloudflare bus replaces it:</p>
+<p><strong>Many accounts in one database.</strong> Each account table has an <code>account_id</code> column. Each data access function receives an <code>AccountScope</code>. The function rejects a query that has no scope. When a super admin opens an account, the system makes a special session. The session carries the target <code>account_id</code>. The workspace screens do not see a difference. The design shows this: only a super admin sees the "All accounts" link.</p>
+<p><strong>How agents send messages (decision 16).</strong> The <code>EventBus</code> interface has two adapters. Version 1 uses an in-memory bus. It replays the design's events with <code>nextEvent()</code>. Later, the Cloudflare bus replaces it:</p>
 <ul>
 <li>Cloudflare Queues carry tasks to agents and results back. Retries and a dead-letter queue are built in. Agent machines on boat.dev send to a Worker endpoint and pull from a queue over HTTP.</li>
-<li>One Durable Object per account receives each event. It gives the event a sequence number, applies the <code>writes</code> to the shared state, and pushes the event to the open browser. This is the &quot;Live&quot; view.</li>
+<li>One Durable Object per account receives each event. It gives the event a sequence number, applies the <code>writes</code> to the shared state, and pushes the event to the open browser. This is the "Live" view.</li>
 <li>Neon keeps the record. All screens read from Neon. The Durable Object is the only writer to the bus tables.</li>
 </ul>
 <p>Three rules for the bus: each event has an <code>id</code>, and the Durable Object drops an id it has seen; the traffic screen sorts by sequence number, not by time; a message that fails all retries becomes an Escalation event to the master.</p>
@@ -342,7 +341,7 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <tbody><tr>
 <td>Master core</td>
 <td>Receives every event. Orders them. Applies state writes. Holds the approval inbox. Picks the agent for each task. Calls the model to plan and to write chat replies</td>
-<td>The account&#39;s Durable Object and a Worker on Cloudflare. Cloudflare keeps it alive and moves it when a host fails</td>
+<td>The account's Durable Object and a Worker on Cloudflare. Cloudflare keeps it alive and moves it when a host fails</td>
 </tr>
 <tr>
 <td>Master hands</td>
@@ -391,8 +390,8 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <td>Never on a machine, never in git</td>
 </tr>
 </tbody></table></div>
-<p><strong>How updates reach running agents (decision 18).</strong> The Agent images screen already has <code>version</code>, <code>nextVersion</code>, <code>onLatest</code> of <code>deployed</code>, &quot;Roll out&quot; and &quot;View changelog&quot;. These become real.</p>
-<p>An agent has two parts. The image is ours: the code, the skills, the prompts, the cordis plug-ins. It lives in a boat.dev template. The account state is the customer&#39;s: the mission, the limits, the rules, the keys, the memory. It lives in Neon and in the key proxy. It never lives on the machine. So we can replace a machine and lose nothing. The master is an image too. It updates the same way.</p>
+<p><strong>How updates reach running agents (decision 18).</strong> The Agent images screen already has <code>version</code>, <code>nextVersion</code>, <code>onLatest</code> of <code>deployed</code>, "Roll out" and "View changelog". These become real.</p>
+<p>An agent has two parts. The image is ours: the code, the skills, the prompts, the cordis plug-ins. It lives in a boat.dev template. The account state is the customer's: the mission, the limits, the rules, the keys, the memory. It lives in Neon and in the key proxy. It never lives on the machine. So we can replace a machine and lose nothing. The master is an image too. It updates the same way.</p>
 <div class="scroll"><table>
 <thead>
 <tr>
@@ -405,25 +404,25 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <tbody><tr>
 <td>Skill update</td>
 <td>A better skill for Marketing, or a new prompt</td>
-<td>The Durable Object sends an &quot;update skill&quot; message on the bus. The agent&#39;s cordis core unloads the old plug-in and loads the new one. The old plug-in&#39;s effects revert</td>
+<td>The Durable Object sends an "update skill" message on the bus. The agent's cordis core unloads the old plug-in and loads the new one. The old plug-in's effects revert</td>
 <td>No</td>
 </tr>
 <tr>
 <td>Image update</td>
 <td>A new runtime, a new model, a change to how the master plans</td>
 <td>The Catalog marks a new version. Roll out starts a new machine from the new template, mounts the account state, runs a health check, then switches. The old machine stays for 24 hours for a rollback</td>
-<td>Yes, about one minute. The dashboard shows &quot;Updating&quot;</td>
+<td>Yes, about one minute. The dashboard shows "Updating"</td>
 </tr>
 </tbody></table></div>
-<p>Rollout goes in rings. A version goes Draft, then Beta, then Stable. Beta goes to our own accounts first, then to accounts that opted in, then to all. The &quot;Roll out&quot; button starts the next ring. &quot;On latest: 4 of 7 deployed&quot; shows progress. The Durable Object moves one account at a time, so a bad version stops early. No customer may pin a version. Everyone moves to Stable.</p>
+<p>Rollout goes in rings. A version goes Draft, then Beta, then Stable. Beta goes to our own accounts first, then to accounts that opted in, then to all. The "Roll out" button starts the next ring. "On latest: 4 of 7 deployed" shows progress. The Durable Object moves one account at a time, so a bad version stops early. No customer may pin a version. Everyone moves to Stable.</p>
 <p>Rules an update may never break. They become invariants in the Image release state model:</p>
 <ul>
-<li>An update never changes an account&#39;s limits, rules or autonomy.</li>
-<li>An update never touches a customer&#39;s keys.</li>
+<li>An update never changes an account's limits, rules or autonomy.</li>
+<li>An update never touches a customer's keys.</li>
 <li>A rollout stops itself when the health check fails twice.</li>
 <li>Every account on Stable runs the same version.</li>
 </ul>
-<p>What this adds to the build: a Rollout object in the Catalog domain area; two methods on <code>MachineProvider</code>, make a template and start a machine from a template; &quot;Roll out&quot; and &quot;View changelog&quot; leave the &quot;do nothing&quot; list in phase 4. Version 1 ships none of it. The interfaces exist and the test adapter answers.</p>
+<p>What this adds to the build: a Rollout object in the Catalog domain area; two methods on <code>MachineProvider</code>, make a template and start a machine from a template; "Roll out" and "View changelog" leave the "do nothing" list in phase 4. Version 1 ships none of it. The interfaces exist and the test adapter answers.</p>
 <p><strong>The agent loop and verified outcomes (decision 20).</strong> Each agent runs one loop, forever, on its machine:</p>
 <ol>
 <li>Take the next task from the bus.</li>
@@ -434,7 +433,7 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <li>Go to step 1.</li>
 </ol>
 <p>The agent keeps nothing between loops. The bus has it all.</p>
-<p>Every task carries a check that code can run, for example &quot;order A-1007 has a tracking number in Shopify&quot; or &quot;the refund is under the limit&quot;. The master core runs the check when the Result arrives. The model does not grade the model. This is the same rule as <code>make verify</code> for the build.</p>
+<p>Every task carries a check that code can run, for example "order A-1007 has a tracking number in Shopify" or "the refund is under the limit". The master core runs the check when the Result arrives. The model does not grade the model. This is the same rule as <code>make verify</code> for the build.</p>
 <div class="scroll"><table>
 <thead>
 <tr>
@@ -445,7 +444,7 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 </thead>
 <tbody><tr>
 <td>Pass</td>
-<td>Marks the task done. Adds one to the agent&#39;s <code>tasks</code> and <code>success</code>. Updates <code>last</code></td>
+<td>Marks the task done. Adds one to the agent's <code>tasks</code> and <code>success</code>. Updates <code>last</code></td>
 <td>The agent card and the traffic list</td>
 </tr>
 <tr>
@@ -460,10 +459,10 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 </tr>
 </tbody></table></div>
 <p>The <code>success</code> number on the agent dashboard is the ratio of passed checks. The system computes it; it does not store it.</p>
-<p><strong>Borrowed from dsh-superagent (decision 32).</strong> DeepSeek&#39;s dsh-superagent prototype is a coding agent for one repository, built on cordis, with a main session and one executor per work item. Four of its ideas go into tensquads:</p>
+<p><strong>Borrowed from dsh-superagent (decision 32).</strong> DeepSeek's dsh-superagent prototype is a coding agent for one repository, built on cordis, with a main session and one executor per work item. Four of its ideas go into tensquads:</p>
 <ul>
-<li>Source, Trigger, Eval. An inbound event (a monitor alert, a webhook from a store, a message) is a Trigger from a Source. Eval decides whether it starts work: first a code gate (who may ask, which rule allows it), then a Decider judgement. The user&#39;s chat message is a Source too, with a gate that always passes for the account owner.</li>
-<li>Mandate. Every Approval records: the rule it matched, the limit at that time, the policy version, and who said yes. A Mandate is immutable. A later change to a rule never changes a Mandate. This makes &quot;an update never changes limits&quot; (decision 18) a rule TLC can prove against history.</li>
+<li>Source, Trigger, Eval. An inbound event (a monitor alert, a webhook from a store, a message) is a Trigger from a Source. Eval decides whether it starts work: first a code gate (who may ask, which rule allows it), then a Decider judgement. The user's chat message is a Source too, with a gate that always passes for the account owner.</li>
+<li>Mandate. Every Approval records: the rule it matched, the limit at that time, the policy version, and who said yes. A Mandate is immutable. A later change to a rule never changes a Mandate. This makes "an update never changes limits" (decision 18) a rule TLC can prove against history.</li>
 <li>Report states. The Agent loop gains Waiting (nothing to do now, keep the machine), Blocked (a person must act; the machine slot is free) and Dropped (nothing to do at all; ends with no message unless a rule asks for one).</li>
 <li>Rejected concepts. The table below. An agent that proposes one of these must cite the row and say why the reason no longer holds.</li>
 </ul>
@@ -508,12 +507,12 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
 <td>The brief: ask, never design</td>
 </tr>
 <tr>
-<td>A &quot;person&quot; entity in the domain</td>
+<td>A "person" entity in the domain</td>
 <td>A person is who sent a Trigger; an allowed list is part of the Policy. Clerk holds the account, not the domain</td>
 </tr>
 <tr>
 <td>The builder invents a dish, an item or a price</td>
-<td>Decision 28: the user&#39;s list is the only source</td>
+<td>Decision 28: the user's list is the only source</td>
 </tr>
 </tbody></table></div>
 <h2>Repository and tools</h2>
@@ -531,14 +530,14 @@ pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{
     kernel/                 the cordis core, the Kernel module, the plug-in loader
     domain/                 six domain areas, one folder each
     adapters/               test-machine, boat-machine (trial), neon-drizzle, placeholder-services
-    seed/                   the design&#39;s mock data as domain objects; the tests check the DoD numbers here
+    seed/                   the design's mock data as domain objects; the tests check the DoD numbers here
     statecharts/            TLA+ models, their settings, their view files, the charts they make
   e2e/                      Playwright tests: one file per screen, one test per behaviour line
   .agents/skills/           the skills, in the agentskills.io format (also at .claude/skills)
   .projects/                Stripe Projects state (state.json is in git; the vault is not)
   docs/adrs/                one short record for each architecture decision above
 </code></pre>
-<p><strong>From PI-Starter, with no change:</strong> strict TypeScript, Biome, the pre-commit hook, the <code>progress.md</code> add-only check, the <code>no-mistakes</code> push check (<code>git push no-mistakes</code>), the Fallow audit, the &quot;Required checks&quot; job in GitHub Actions, the Cloudflare build job, DCO sign-off, Dependabot.</p>
+<p><strong>From PI-Starter, with no change:</strong> strict TypeScript, Biome, the pre-commit hook, the <code>progress.md</code> add-only check, the <code>no-mistakes</code> push check (<code>git push no-mistakes</code>), the Fallow audit, the "Required checks" job in GitHub Actions, the Cloudflare build job, DCO sign-off, Dependabot.</p>
 <p><strong>New:</strong> TanStack Start 1.0 (pinned), the Cloudflare Vite plugin, Drizzle and the Neon driver, the Clerk SDK for TanStack Start, cordis (one pinned commit), Playwright with screenshot comparison at 1440 px, axe-core for keyboard and label checks, mise to install TLC and Java for the statechart skill.</p>
 <p><strong>Skills in <code>.agents/skills/</code></strong> (one <code>SKILL.md</code> per folder):</p>
 <div class="scroll"><table>
@@ -616,7 +615,7 @@ stripe projects add clerk/auth             # sign-in for owners and super admins
 stripe projects env --pull                 # writes .env; git ignores .projects/vault
 </code></pre>
 <p>Add these later, in the same way, when a phase needs them: <code>posthog/analytics</code>, <code>resend/email</code>, <code>inngest/app</code>.</p>
-<p><strong>Set up boat.dev by hand.</strong> boat.dev is not in the Stripe Projects catalog. Make one boat environment with the name <code>tensquads-agents</code>. Mark it safe for third parties. Then each agent machine starts with <code>noEnv: true</code>. The machine gets only the values that <code>MachineProvider</code> passes with <code>--env</code>: <code>ACCOUNT_ID</code>, <code>AGENT_ID</code>, <code>IMAGE_TAG</code>. The boat API key is a Cloudflare Worker secret. It never goes into a machine. Use the boat &quot;stop and resume&quot; pattern for the agent on/off switch. A stopped machine shows CPU 0% and uptime &quot;Paused&quot;, as the design shows.</p>
+<p><strong>Set up boat.dev by hand.</strong> boat.dev is not in the Stripe Projects catalog. Make one boat environment with the name <code>tensquads-agents</code>. Mark it safe for third parties. Then each agent machine starts with <code>noEnv: true</code>. The machine gets only the values that <code>MachineProvider</code> passes with <code>--env</code>: <code>ACCOUNT_ID</code>, <code>AGENT_ID</code>, <code>IMAGE_TAG</code>. The boat API key is a Cloudflare Worker secret. It never goes into a machine. Use the boat "stop and resume" pattern for the agent on/off switch. A stopped machine shows CPU 0% and uptime "Paused", as the design shows.</p>
 <div class="scroll"><table>
 <thead>
 <tr>
@@ -643,7 +642,7 @@ stripe projects env --pull                 # writes .env; git ignores .projects/
 <tr>
 <td>cpu, uptime</td>
 <td>machine metrics</td>
-<td>value from Main.dc.html; 0% and &quot;Paused&quot; when off</td>
+<td>value from Main.dc.html; 0% and "Paused" when off</td>
 </tr>
 <tr>
 <td>egress</td>
@@ -661,7 +660,7 @@ stripe projects env --pull                 # writes .env; git ignores .projects/
 <td>value from Main.dc.html</td>
 </tr>
 </tbody></table></div>
-<p><strong>Secrets.</strong> The Clerk, Neon and boat keys are Worker secrets. Set them with <code>wrangler secret put</code> from the <code>.env</code> file. The agents&#39; own third-party keys (Shopify, Gmail) go into the boat key proxy later, one set per machine. No secret goes into git, into CI output or into an agent prompt.</p>
+<p><strong>Secrets.</strong> The Clerk, Neon and boat keys are Worker secrets. Set them with <code>wrangler secret put</code> from the <code>.env</code> file. The agents' own third-party keys (Shopify, Gmail) go into the boat key proxy later, one set per machine. No secret goes into git, into CI output or into an agent prompt.</p>
 <p><strong>Machine specification (decision 17).</strong> From <a href="https://docs.boat.dev/pricing.md">docs.boat.dev</a>: small is 2 vCPU, 4 GB, 51 GB disk, $13 a month always on. default is 4 vCPU, 8 GB, $26. boat saves the disk every minute. After a stop, the disk comes back; memory, running programs and the IP address do not. boat publishes no uptime promise.</p>
 <div class="scroll"><table>
 <thead>
@@ -688,8 +687,8 @@ stripe projects env --pull                 # writes .env; git ignores .projects/
 </tr>
 <tr>
 <td>Heartbeat</td>
-<td>One message to the account&#39;s Durable Object every minute</td>
-<td>After three missed heartbeats, the Durable Object resumes the machine. If resume fails, it creates a new machine from the template. The dashboard shows &quot;Restarting&quot;</td>
+<td>One message to the account's Durable Object every minute</td>
+<td>After three missed heartbeats, the Durable Object resumes the machine. If resume fails, it creates a new machine from the template. The dashboard shows "Restarting"</td>
 </tr>
 <tr>
 <td>Memory</td>
@@ -717,13 +716,13 @@ stripe projects env --pull                 # writes .env; git ignores .projects/
 <tbody><tr>
 <td>Agent on/off</td>
 <td>Off, Starting, On, Stopping, Paused</td>
-<td>Off means CPU 0% and uptime &quot;Paused&quot;. A skill cannot run when its agent is Off. A change of autonomy does not change on/off</td>
+<td>Off means CPU 0% and uptime "Paused". A skill cannot run when its agent is Off. A change of autonomy does not change on/off</td>
 <td>5, 6</td>
 </tr>
 <tr>
 <td>Approval</td>
 <td>Pending, Approved, Declined</td>
-<td>Approve adds one task to one agent and sets its <code>last</code> field. Decline changes no agent. The inbox count equals the dock badge count. An empty inbox shows &quot;Nothing waiting&quot;</td>
+<td>Approve adds one task to one agent and sets its <code>last</code> field. Decline changes no agent. The inbox count equals the dock badge count. An empty inbox shows "Nothing waiting"</td>
 <td>3, dock</td>
 </tr>
 <tr>
@@ -753,7 +752,7 @@ stripe projects env --pull                 # writes .env; git ignores .projects/
 <tr>
 <td>Image release</td>
 <td>Draft, Beta, Stable, Needs attention</td>
-<td>The attention badge equals the count of &quot;Needs attention&quot; images. &quot;On latest&quot; shows onLatest of deployed, or &quot;Not deployed yet&quot;. &quot;Roll out&quot; does nothing in version 1. Later: an update never changes limits, rules, autonomy or keys. A rollout stops after two failed health checks. Every Stable account runs the same version</td>
+<td>The attention badge equals the count of "Needs attention" images. "On latest" shows onLatest of deployed, or "Not deployed yet". "Roll out" does nothing in version 1. Later: an update never changes limits, rules, autonomy or keys. A rollout stops after two failed health checks. Every Stable account runs the same version</td>
 <td>10</td>
 </tr>
 <tr>
@@ -763,7 +762,7 @@ stripe projects env --pull                 # writes .env; git ignores .projects/
 <td>6, 7</td>
 </tr>
 </tbody></table></div>
-<p>Each chart uses the words from the design, for example &quot;Paused&quot; and &quot;Nothing waiting&quot;. A reader sees the product, not the code. When TLC finds a path that breaks a rule, the builder agent first writes a Playwright test for that path. If the test cannot show the bug, the model is wrong. Correct the model first.</p>
+<p>Each chart uses the words from the design, for example "Paused" and "Nothing waiting". A reader sees the product, not the code. When TLC finds a path that breaks a rule, the builder agent first writes a Playwright test for that path. If the test cannot show the bug, the model is wrong. Correct the model first.</p>
 <p>Write the Approval model first, in phase 0. Then run <code>/create-formal-verification-skill</code>. This makes a skill with the name <code>tensquads-verify</code>. The skill knows where the models, settings and charts are. All later models follow the same shape.</p>
 <h2>How the AI agents work</h2>
 <p>Three agents do the work. A planner writes the task. A builder builds it on a branch. A reviewer tries to find faults in it against the design. No work merges until <code>make verify</code> returns 0 in CI.</p>
@@ -786,30 +785,30 @@ stripe projects env --pull                 # writes .env; git ignores .projects/
 <td>Builder</td>
 <td>the task file, the full design <code>.dc.html</code> file, <code>tokens.json</code>, the skills</td>
 <td>a branch, the screen, its Playwright test, seed changes, chart changes, a pull request with <code>git push no-mistakes</code></td>
-<td>say &quot;done&quot; without <code>make verify</code> 0; design an empty, loading or error state (it asks a question instead)</td>
+<td>say "done" without <code>make verify</code> 0; design an empty, loading or error state (it asks a question instead)</td>
 </tr>
 <tr>
 <td>Reviewer</td>
-<td>the pull request, the design file, the done checklist. Not the builder&#39;s notes</td>
+<td>the pull request, the design file, the done checklist. Not the builder's notes</td>
 <td>a list of faults. It compares screenshots at 1440 px. It runs each behaviour line. It checks the numbers, the keyboard, the 390 px view and all text</td>
-<td>approve because it &quot;looks right&quot;; review the architecture (that is fixed above)</td>
+<td>approve because it "looks right"; review the architecture (that is fixed above)</td>
 </tr>
 </tbody></table></div>
-<p><strong>What the reviewer checks.</strong> The build brief says: review all requirements that are not architecture. These are layout, spacing, colour, text, data shapes, behaviour, computed numbers, keyboard use and the 390 px view. The reviewer does not see the builder&#39;s notes. This keeps the review independent. The reviewer gives a list of faults. For each fault, it gives the design line that proves it. If it finds no fault for a checklist item, it says so.</p>
+<p><strong>What the reviewer checks.</strong> The build brief says: review all requirements that are not architecture. These are layout, spacing, colour, text, data shapes, behaviour, computed numbers, keyboard use and the 390 px view. The reviewer does not see the builder's notes. This keeps the review independent. The reviewer gives a list of faults. For each fault, it gives the design line that proves it. If it finds no fault for a checklist item, it says so.</p>
 <p><strong>Done checklist, per screen</strong> (from the build brief, with no change):</p>
 <ul>
-<li><input disabled="" type="checkbox"> A screenshot of the built screen at 1440 px next to the design at 1440 px. No visible difference. Both images are in the pull request.</li>
-<li><input disabled="" type="checkbox"> Each behaviour line for the screen is one e2e test. All tests pass in CI.</li>
-<li><input disabled="" type="checkbox"> The computed numbers match the design values with the seed data loaded.</li>
-<li><input disabled="" type="checkbox"> Tab reaches each control. Each icon-only button has an <code>aria-label</code>. Each input has a label. The focus ring is 2 px <code>#0169cc</code> with a 2 px offset.</li>
-<li><input disabled="" type="checkbox"> At 390 px wide, there is no horizontal scroll, except inside the table boxes.</li>
-<li><input disabled="" type="checkbox"> <code>make verify</code> returns 0.</li>
+<li><input disabled="" type="checkbox" style=""> A screenshot of the built screen at 1440 px next to the design at 1440 px. No visible difference. Both images are in the pull request.</li>
+<li><input disabled="" type="checkbox" style=""> Each behaviour line for the screen is one e2e test. All tests pass in CI.</li>
+<li><input disabled="" type="checkbox" style=""> The computed numbers match the design values with the seed data loaded.</li>
+<li><input disabled="" type="checkbox" style=""> Tab reaches each control. Each icon-only button has an <code>aria-label</code>. Each input has a label. The focus ring is 2 px <code>#0169cc</code> with a 2 px offset.</li>
+<li><input disabled="" type="checkbox" style=""> At 390 px wide, there is no horizontal scroll, except inside the table boxes.</li>
+<li><input disabled="" type="checkbox" style=""> <code>make verify</code> returns 0.</li>
 </ul>
 <p><strong>Ask, do not guess.</strong> The builder sends a question to Moe when it finds: a state the design does not show, a conflict between two design files, or a reason to reopen one of the 11 decisions. Each question is a numbered item with a recommended answer. The builder stops that screen until Moe answers. It moves to the next task that is not blocked.</p>
 <p><strong>Progress and proof.</strong> Each merged pull request adds one line to <code>progress.md</code>. The PI-Starter commit hook permits only additions. When screen 10 merges, the builder writes the final report. The report lists: each decision and its answer, each control that does nothing, and each approved difference from the design. Nothing else can ship as a difference.</p>
 <h2>Phases</h2>
-<p>The work has six phases. Build the screens in the order of the build brief. Phase 2 is the largest. A phase starts only when the phase before it passes its check.</p>
-<div class="dg" role="img" aria-label="Eight phases, each with its build status."><p class="dg-lead">Eight phases. Each phase ends with a check. Screens follow the design order.</p><div class="ph"><div class="bx built"><b>0 Foundation</b><small>copy, set up, core, schema, seed, tokens, verify passes</small><span class="pill built">Built</span></div><div class="bx built"><b>1 Public</b><small>screens 1, 2, sign-in form, sign-up makes an account</small><span class="pill built">Built</span></div><div class="bx built"><b>2 Workspace</b><small>frame, dock, screens 3 to 8 in order</small><div class="bar"><span style="width:100%"></span></div><div class="cnt">7 of 7 tasks merged</div><span class="pill built">Built</span></div><div class="bx built"><b>3 Admin</b><small>screens 9, 10, open an account, admin role</small><span class="pill built">Built</span></div><div class="bx built"><b>4 Machines</b><small>boat.dev and bus adapters behind the interfaces</small><span class="pill built">Built</span></div><div class="bx progress"><b>5 Proof</b><small>agent kit, researcher, builder, then three squads with two approvals</small><div class="bar"><span style="width:50%"></span></div><div class="cnt">2 of 4 tasks merged</div><span class="pill progress">In progress</span></div><div class="bx progress"><b>6 Squadmates</b><small>a name and a character for Petra and each agent</small><span class="pill progress">In progress</span></div><div class="bx planned"><b>7 Homepage</b><small>new screen 1: Moe approves the design, then the build</small><span class="pill planned">Planned</span></div></div><p class="dg-note">Each phase ends with a check: make verify returns 0 in CI, the screenshots are attached, the reviewer found no fault, and Moe answered the open questions. A green phase passed its check. The final report comes after phase 3.</p></div>
+<p>The phase list includes the original phases 0 to 5 and the additions from decisions 33 and 34. Build the screens in the order of the build brief. Phase 2 is the largest. In phases 0 to 5, a phase starts only when the phase before it passes its check. Phase 6 follows <a href="../tasks/06-squadmates.md">task 06</a>. Phase 7 follows <a href="../tasks/07-home-redesign.md">task 07</a>. Those task files set their prerequisites.</p>
+<div class="dg" role="img" aria-label="Eight phases, each with its build status."><p class="dg-lead">Eight phases. Each phase ends with a check. Screens follow the design order.</p><div class="ph"><div class="bx built"><b>0 Foundation</b><small>copy, set up, core, schema, seed, tokens, verify passes</small><span class="pill built">Built</span></div><div class="bx planned"><b>1 Public</b><small>screens 1, 2, sign-in form, sign-up makes an account</small><span class="pill planned">Planned</span></div><div class="bx progress"><b>2 Workspace</b><small>frame, dock, screens 3 to 8 in order</small><div class="bar"><span style="width:14%"></span></div><div class="cnt">1 of 7 tasks merged</div><span class="pill progress">In progress</span></div><div class="bx planned"><b>3 Admin</b><small>screens 9, 10, open an account, admin role</small><span class="pill planned">Planned</span></div><div class="bx planned"><b>4 Machines</b><small>boat.dev and bus adapters behind the interfaces</small><span class="pill planned">Planned</span></div><div class="bx progress"><b>5 Proof</b><small>agent kit, researcher, builder, then three squads with two approvals</small><div class="bar"><span style="width:50%"></span></div><div class="cnt">2 of 4 tasks merged</div><span class="pill progress">In progress</span></div><div class="bx progress"><b>6 Squadmates</b><small>a name and a character for Petra and each agent</small><span class="pill progress">In progress</span></div><div class="bx planned"><b>7 Homepage</b><small>new screen 1: Moe approves the design, then the build</small><span class="pill planned">Planned</span></div></div><p class="dg-note">Each phase ends with a check: make verify returns 0 in CI, the screenshots are attached, the reviewer found no fault, and Moe answered the open questions. A green phase passed its check. The final report comes after phase 3.</p></div>
 
 
 
@@ -827,14 +826,14 @@ stripe projects env --pull                 # writes .env; git ignores .projects/
 <li>Make <code>make verify</code> pass on the empty app.</li>
 </ol>
 <p>Phase 0 is complete when CI is green, the Cloudflare preview deploys, and the seed tests pass.</p>
-<p><strong>Phase 1: Public screens.</strong> Build screen 1 (Homepage) from <code>Home.dc.html</code>. Build screen 2 (Sign-up) from <code>Onboarding.dc.html</code>. Build the sign-in screen from SignIn.dc.html with Clerk elements. A correct sign-in opens Overview. &quot;Create my workspace&quot; makes the account, the squad, the agents, the master and the default limits. Check the Sign-up state model. Phase 1 is complete when both screens pass the done checklist, and a new account exists in Neon after the e2e run.</p>
+<p><strong>Phase 1: Public screens.</strong> Build screen 1 (Homepage) from <code>Home.dc.html</code>. Build screen 2 (Sign-up) from <code>Onboarding.dc.html</code>. Build the sign-in screen from SignIn.dc.html with Clerk elements. A correct sign-in opens Overview. "Create my workspace" makes the account, the squad, the agents, the master and the default limits. Check the Sign-up state model. Phase 1 is complete when both screens pass the done checklist, and a new account exists in Neon after the e2e run.</p>
 <p><strong>Phase 2: Workspace.</strong> Build the shared frame first: the sidebar, the agent rows with status dots, the user footer, and the chat dock with its badge. Then build screens 3 to 8 in order: Overview, Chat, Agents, Agent dashboard, Traffic, Rules. Each screen adds its state model, its e2e test and its seed check. The test <code>send()</code> and <code>nextEvent()</code> functions run inside the Conversation and Bus plug-ins. The test <code>MachineProvider</code> gives the CPU and uptime values. Phase 2 is complete when all six screens pass the done checklist. The system computes Tasks done = 331. It does not store it.</p>
-<p><strong>Phase 3: Super admin.</strong> Build screens 9 and 10 with the &quot;Platform admin&quot; sidebar and no chat dock. Add the super-admin role in Clerk. Add the special session, so that a click on an account row opens that account&#39;s workspace. Compute the totals from the full list. Check the Image release state model. Phase 3 is complete when both screens pass the done checklist. The system computes: Accounts 9, Agents 66, Squads 17, Monthly recurring $1,294, All-time value $14,568, Images 7, Bugs 8, Features 15. Write the final report here.</p>
+<p><strong>Phase 3: Super admin.</strong> Build screens 9 and 10 with the "Platform admin" sidebar and no chat dock. Add the super-admin role in Clerk. Add the special session, so that a click on an account row opens that account's workspace. Compute the totals from the full list. Check the Image release state model. Phase 3 is complete when both screens pass the done checklist. The system computes: Accounts 9, Agents 66, Squads 17, Monthly recurring $1,294, All-time value $14,568, Images 7, Bugs 8, Features 15. Write the final report here.</p>
 <p><strong>Phase 4: Machine trial.</strong> Build the boat.dev adapter for <code>MachineProvider</code>. The adapter must: start a machine with <code>noEnv: true</code> and tags, stop it, start it again, read its metrics into the agent dashboard fields, register one secret name in the key proxy, and remove the machine. Build the Cloudflare bus adapter for EventBus in the same phase: one queue, one Durable Object class, write-through to Neon. Put both adapters behind a feature flag. The test adapters stay the default. There is no AI model, no agent runtime and no external service. Phase 4 is complete when the adapter tests pass against a real boat machine in a manual CI job, and screens 1 to 10 have no change. Phase 5 is the proof of concept, in its own section below.</p>
 <p><strong>Not in any phase:</strong> real agents other than the three proof-of-concept squads, real external services other than search, Scrapling and Cloudflare Pages, billing, a second squad, a mobile design, and empty, loading or error states other than the two in the design.</p>
 <h2>Proof of concept</h2>
 <p>The first real agents are three squads: the master, a Market researcher and a Website builder. The user types a business name and picks restaurant or grocer. The researcher finds the competitors and reports how they do. The master writes a brief and asks the user. The builder makes one page from the report and the brief: a menu page for a restaurant, an item list for a grocer. The master asks the user again, then publishes. Decision 35 splits the work across four task files: <code>tasks/05-agent-kit.md</code>, <code>tasks/05-market-researcher.md</code>, <code>tasks/05-website-builder.md</code>, and <code>tasks/05-proof-of-concept.md</code>.</p>
-<div class="dg"><p class="dg-lead">One run: research, a brief, your yes, a landing page, your yes, publish <span class="pill built">Built</span></p><div class="seq"><svg viewBox="0 0 960 842" role="img" aria-label="Thirteen bus events between you, the master core and the squad machines, with two checks and two approvals. Status: Built." font-family="Inter,system-ui,sans-serif"><rect x="20" y="16" width="280" height="64" rx="10" fill="#f5fcf7" stroke="#00a240" stroke-width="1.5"/><text x="160" y="52" text-anchor="middle" font-size="16" font-weight="600" fill="#0d0d0d">You, in the chat</text><text x="160" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="#00a240">BUILT</text><line x1="160" y1="108" x2="160" y2="832" stroke="#d4d4d4" stroke-dasharray="4 4"/><rect x="340" y="16" width="280" height="64" rx="10" fill="#f5fcf7" stroke="#00a240" stroke-width="1.5"/><text x="480" y="42" text-anchor="middle" font-size="16" font-weight="600" fill="#0d0d0d">Master core</text><text x="480" y="62" text-anchor="middle" font-size="13" fill="#5d5d5d">Cloudflare Durable Object</text><text x="480" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="#00a240">BUILT</text><line x1="480" y1="108" x2="480" y2="832" stroke="#d4d4d4" stroke-dasharray="4 4"/><rect x="660" y="16" width="280" height="64" rx="10" fill="#f5fcf7" stroke="#00a240" stroke-width="1.5"/><text x="800" y="42" text-anchor="middle" font-size="16" font-weight="600" fill="#0d0d0d">Squad machines</text><text x="800" y="62" text-anchor="middle" font-size="13" fill="#5d5d5d">boat.dev, one per squad</text><text x="800" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="#00a240">BUILT</text><line x1="800" y1="108" x2="800" y2="832" stroke="#d4d4d4" stroke-dasharray="4 4"/><line x1="160" y1="150" x2="478" y2="150" stroke="#00a240" stroke-width="1.5"/><path d="M480 150 l-9 -4.5 v9 z" fill="#00a240"/><text x="320" y="141" text-anchor="middle" font-size="13" fill="#282828">1. Business name and mission</text><line x1="480" y1="204" x2="798" y2="204" stroke="#00a240" stroke-width="1.5"/><path d="M800 204 l-9 -4.5 v9 z" fill="#00a240"/><text x="640" y="195" text-anchor="middle" font-size="13" fill="#282828">2. Task: research the market</text><line x1="800" y1="258" x2="482" y2="258" stroke="#00a240" stroke-width="1.5"/><path d="M480 258 l9 -4.5 v9 z" fill="#00a240"/><text x="640" y="249" text-anchor="middle" font-size="13" fill="#282828">3. Result: competitors, prices, sources</text><path d="M480 298 h36 v24 h-36" fill="none" stroke="#0169cc" stroke-width="1.5"/><path d="M480 322 l7 -4 v8 z" fill="#0169cc"/><text x="526" y="314" font-size="13" fill="#5d5d5d">4. Check: three live URLs, each with an offer</text><line x1="480" y1="366" x2="162" y2="366" stroke="#00a240" stroke-width="1.5"/><path d="M160 366 l9 -4.5 v9 z" fill="#00a240"/><text x="320" y="357" text-anchor="middle" font-size="13" fill="#282828">5. Approval: build the site with this brief?</text><line x1="160" y1="420" x2="478" y2="420" stroke="#00a240" stroke-width="1.5"/><path d="M480 420 l-9 -4.5 v9 z" fill="#00a240"/><text x="320" y="411" text-anchor="middle" font-size="13" fill="#282828">6. Approve</text><line x1="480" y1="474" x2="798" y2="474" stroke="#00a240" stroke-width="1.5"/><path d="M800 474 l-9 -4.5 v9 z" fill="#00a240"/><text x="640" y="465" text-anchor="middle" font-size="13" fill="#282828">7. Task: build the landing page</text><line x1="800" y1="528" x2="482" y2="528" stroke="#00a240" stroke-width="1.5"/><path d="M480 528 l9 -4.5 v9 z" fill="#00a240"/><text x="640" y="519" text-anchor="middle" font-size="13" fill="#282828">8. Result: preview URL</text><path d="M480 568 h36 v24 h-36" fill="none" stroke="#0169cc" stroke-width="1.5"/><path d="M480 592 l7 -4 v8 z" fill="#0169cc"/><text x="526" y="584" font-size="13" fill="#5d5d5d">9. Check: page is live, shows the name and the offer</text><line x1="480" y1="636" x2="162" y2="636" stroke="#00a240" stroke-width="1.5"/><path d="M160 636 l9 -4.5 v9 z" fill="#00a240"/><text x="320" y="627" text-anchor="middle" font-size="13" fill="#282828">10. Approval: publish the site?</text><line x1="160" y1="690" x2="478" y2="690" stroke="#00a240" stroke-width="1.5"/><path d="M480 690 l-9 -4.5 v9 z" fill="#00a240"/><text x="320" y="681" text-anchor="middle" font-size="13" fill="#282828">11. Approve</text><line x1="480" y1="744" x2="798" y2="744" stroke="#00a240" stroke-width="1.5"/><path d="M800 744 l-9 -4.5 v9 z" fill="#00a240"/><text x="640" y="735" text-anchor="middle" font-size="13" fill="#282828">12. Task: publish to slug.10squads.com</text><line x1="800" y1="798" x2="482" y2="798" stroke="#00a240" stroke-width="1.5"/><path d="M480 798 l9 -4.5 v9 z" fill="#00a240"/><text x="640" y="789" text-anchor="middle" font-size="13" fill="#282828">13. Result: published</text></svg></div><p class="dg-note">Blue loops are checks that code runs. Every arrow is one event on the bus and shows on the traffic screen. A dashed arrow is not built yet; it turns green when phase 5 merges.</p></div>
+<div class="dg"><p class="dg-lead">One run: research, a brief, your yes, a landing page, your yes, publish <span class="pill built">Built</span></p><div class="seq"><svg viewBox="0 0 960 842" role="img" aria-label="Thirteen bus events between you, the master core and the squad machines, with two checks and two approvals. Status: Built." font-family="Inter,system-ui,sans-serif"><rect x="20" y="16" width="280" height="64" rx="10" fill="#f5fcf7" stroke="#00a240" stroke-width="1.5"></rect><text x="160" y="52" text-anchor="middle" font-size="16" font-weight="600" fill="#0d0d0d">You, in the chat</text><text x="160" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="#00a240">BUILT</text><line x1="160" y1="108" x2="160" y2="832" stroke="#d4d4d4" stroke-dasharray="4 4"></line><rect x="340" y="16" width="280" height="64" rx="10" fill="#fffaf0" stroke="#e39b00" stroke-width="1.5" stroke-dasharray="5 4"></rect><text x="480" y="42" text-anchor="middle" font-size="16" font-weight="600" fill="#0d0d0d">Master core</text><text x="480" y="62" text-anchor="middle" font-size="13" fill="#5d5d5d">Cloudflare Durable Object</text><text x="480" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="#e39b00">IN PROGRESS</text><line x1="480" y1="108" x2="480" y2="832" stroke="#d4d4d4" stroke-dasharray="4 4"></line><rect x="660" y="16" width="280" height="64" rx="10" fill="#fffaf0" stroke="#e39b00" stroke-width="1.5" stroke-dasharray="5 4"></rect><text x="800" y="42" text-anchor="middle" font-size="16" font-weight="600" fill="#0d0d0d">Squad machines</text><text x="800" y="62" text-anchor="middle" font-size="13" fill="#5d5d5d">boat.dev, one per squad</text><text x="800" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="#e39b00">IN PROGRESS</text><line x1="800" y1="108" x2="800" y2="832" stroke="#d4d4d4" stroke-dasharray="4 4"></line><line x1="160" y1="150" x2="478" y2="150" stroke="#00a240" stroke-width="1.5"></line><path d="M480 150 l-9 -4.5 v9 z" fill="#00a240"></path><text x="320" y="141" text-anchor="middle" font-size="13" fill="#282828">1. Business name and mission</text><line x1="480" y1="204" x2="798" y2="204" stroke="#00a240" stroke-width="1.5"></line><path d="M800 204 l-9 -4.5 v9 z" fill="#00a240"></path><text x="640" y="195" text-anchor="middle" font-size="13" fill="#282828">2. Task: research the market</text><line x1="800" y1="258" x2="482" y2="258" stroke="#00a240" stroke-width="1.5"></line><path d="M480 258 l9 -4.5 v9 z" fill="#00a240"></path><text x="640" y="249" text-anchor="middle" font-size="13" fill="#282828">3. Result: competitors, prices, sources</text><path d="M480 298 h36 v24 h-36" fill="none" stroke="#0169cc" stroke-width="1.5"></path><path d="M480 322 l7 -4 v8 z" fill="#0169cc"></path><text x="526" y="314" font-size="13" fill="#5d5d5d">4. Check: three live URLs, each with an offer</text><line x1="480" y1="366" x2="162" y2="366" stroke="#00a240" stroke-width="1.5"></line><path d="M160 366 l9 -4.5 v9 z" fill="#00a240"></path><text x="320" y="357" text-anchor="middle" font-size="13" fill="#282828">5. Approval: build the site with this brief?</text><line x1="160" y1="420" x2="478" y2="420" stroke="#00a240" stroke-width="1.5"></line><path d="M480 420 l-9 -4.5 v9 z" fill="#00a240"></path><text x="320" y="411" text-anchor="middle" font-size="13" fill="#282828">6. Approve</text><line x1="480" y1="474" x2="798" y2="474" stroke="#00a240" stroke-width="1.5"></line><path d="M800 474 l-9 -4.5 v9 z" fill="#00a240"></path><text x="640" y="465" text-anchor="middle" font-size="13" fill="#282828">7. Task: build the landing page</text><line x1="800" y1="528" x2="482" y2="528" stroke="#00a240" stroke-width="1.5"></line><path d="M480 528 l9 -4.5 v9 z" fill="#00a240"></path><text x="640" y="519" text-anchor="middle" font-size="13" fill="#282828">8. Result: preview URL</text><path d="M480 568 h36 v24 h-36" fill="none" stroke="#0169cc" stroke-width="1.5"></path><path d="M480 592 l7 -4 v8 z" fill="#0169cc"></path><text x="526" y="584" font-size="13" fill="#5d5d5d">9. Check: page is live, shows the name and the offer</text><line x1="480" y1="636" x2="162" y2="636" stroke="#00a240" stroke-width="1.5"></line><path d="M160 636 l9 -4.5 v9 z" fill="#00a240"></path><text x="320" y="627" text-anchor="middle" font-size="13" fill="#282828">10. Approval: publish the site?</text><line x1="160" y1="690" x2="478" y2="690" stroke="#00a240" stroke-width="1.5"></line><path d="M480 690 l-9 -4.5 v9 z" fill="#00a240"></path><text x="320" y="681" text-anchor="middle" font-size="13" fill="#282828">11. Approve</text><line x1="480" y1="744" x2="798" y2="744" stroke="#00a240" stroke-width="1.5"></line><path d="M800 744 l-9 -4.5 v9 z" fill="#00a240"></path><text x="640" y="735" text-anchor="middle" font-size="13" fill="#282828">12. Task: publish to slug.10squads.com</text><line x1="800" y1="798" x2="482" y2="798" stroke="#00a240" stroke-width="1.5"></line><path d="M480 798 l9 -4.5 v9 z" fill="#00a240"></path><text x="640" y="789" text-anchor="middle" font-size="13" fill="#282828">13. Result: published</text></svg></div><p class="dg-note">Blue loops are checks that code runs. Every arrow is one event on the bus and shows on the traffic screen. A dashed arrow is not built yet; it turns green when phase 5 merges.</p></div>
 
 
 
@@ -922,7 +921,7 @@ stripe projects env --pull                 # writes .env; git ignores .projects/
 </tr>
 </tbody></table></div>
 <p>The menu or the item list comes from the user. In step 1 the user pastes the items in the chat, or gives the current website, and the researcher reads it with Scrapling. The builder never invents a dish, an item or a price. A missing price becomes <code>[PRICE]</code>.</p>
-<p><strong>What the screens show.</strong> The proof of concept changes the data, not the screens. The seed gets one proof-of-concept account with the two squads, their skills and their events. The homepage and sign-up step 3 show the two new agents (design updated on 31 October 2026). The two agents&#39; images appear on the Agent images screen as version 0.1.0, Beta. Two things the design does not show, decided on 31 October 2026: the Revenue and Orders tiles on Overview show &quot;—&quot; for an account with no store (decision 25); the site preview is a link in the chat only (decision 26).</p>
+<p><strong>What the screens show.</strong> The proof of concept changes the data, not the screens. The seed gets one proof-of-concept account with the two squads, their skills and their events. The homepage and sign-up step 3 show the two new agents (design updated on 31 October 2026). The two agents' images appear on the Agent images screen as version 0.1.0, Beta. Two things the design does not show, decided on 31 October 2026: the Revenue and Orders tiles on Overview show "—" for an account with no store (decision 25); the site preview is a link in the chat only (decision 26).</p>
 <p><strong>Done when:</strong> one run passes both checks and both approvals on a real boat.dev machine, the page is live at <code>&lt;slug&gt;.10squads.com</code>, all thirteen events show on the traffic screen in order, and <code>make verify</code> returns 0.</p>
 <h2>Risks and open items</h2>
 <div class="scroll"><table>
@@ -961,12 +960,4 @@ stripe projects env --pull                 # writes .env; git ignores .projects/
 <tr>
 <td>TLC needs Java. CI gets slower</td>
 <td>Slow pull requests</td>
-<td>Three measures in the verify section: the check runs only when a model or its code changes; the toolchain is cached; the models stay small and run in parallel. Fallback: a nightly schedule</td>
-</tr>
-<tr>
-<td><code>Main.dc.html</code> is 117 KB of inline styles</td>
-<td>Exact screens depend on a full read each time</td>
-<td>Only the seed module and the token script read it. The screenshot comparison proves the match</td>
-</tr>
-<tr>
-<td>boat.dev costs about $26 </main></body></html>
+<td>Three measures in the ve</td></tr></tbody></table></div></main></body></html>
