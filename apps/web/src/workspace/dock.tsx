@@ -4,9 +4,9 @@ import { useSyncExternalStore } from "react";
 import { css } from "#/screens/css.ts";
 import { badgeCount, subscribeDecisions } from "#/screens/overview/actions.ts";
 
-import { masterInitial } from "./agent-view.ts";
 import { useWorkspace } from "./context.ts";
 import { CloseIcon, SendIcon } from "./icons.tsx";
+import { Squadmate } from "./Squadmate.tsx";
 import type { FrameMessage } from "./types.ts";
 
 const suggestions = [
@@ -46,7 +46,6 @@ function VisibleDock({
 		submit,
 		toggleDock,
 	} = workspace;
-	const mark = masterInitial(frame.masterName);
 	const online = frame.agents.filter((agent) => agent.on).length;
 	const shownCount = useSyncExternalStore(
 		subscribeDecisions,
@@ -66,7 +65,6 @@ function VisibleDock({
 					<div data-if="dockOpen" style={css("display: contents")}>
 						<DockPanel
 							masterName={frame.masterName}
-							mark={mark}
 							online={online}
 							messages={messages.slice(-6)}
 							agents={frame.agents}
@@ -93,10 +91,10 @@ function VisibleDock({
 				>
 					<span
 						style={css(
-							"width: 36px; height: 36px; border-radius: 999px; background: #fff; color: #0d0d0d; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px",
+							"width: 36px; height: 36px; border-radius: 999px; background: #fff; color: #0d0d0d; display: inline-flex; align-items: center; justify-content: center",
 						)}
 					>
-						{mark}
+						<Squadmate id="master" on size={32} decorative />
 					</span>
 					<span>{label}</span>
 					{unread ? (
@@ -121,7 +119,6 @@ function dockUnread(open: boolean, approvalCount: number): boolean {
 
 function DockPanel({
 	masterName,
-	mark,
 	online,
 	messages,
 	agents,
@@ -135,10 +132,14 @@ function DockPanel({
 	onOpenChat,
 }: {
 	readonly masterName: string;
-	readonly mark: string;
 	readonly online: number;
 	readonly messages: readonly FrameMessage[];
-	readonly agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[];
+	readonly agents: readonly {
+		readonly id: string;
+		readonly name: string;
+		readonly tint: string;
+		readonly on: boolean;
+	}[];
 	readonly thinking: boolean;
 	readonly thinkingAgent: string;
 	readonly draft: string;
@@ -150,7 +151,7 @@ function DockPanel({
 }) {
 	return (
 		<section
-			aria-label="Chat with the master"
+			aria-label="Chat with Petra"
 			style={css(
 				"width: 380px; max-width: 100%; max-height: min(560px, calc(100vh - 100px)); background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.1), 0 16px 48px rgba(13,13,13,.16); display: flex; flex-direction: column; overflow: hidden",
 			)}
@@ -160,13 +161,7 @@ function DockPanel({
 					"display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 16px; border-bottom: 1px solid rgba(13,13,13,.06)",
 				)}
 			>
-				<span
-					style={css(
-						"width: 28px; height: 28px; border-radius: 999px; background: #181818; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px",
-					)}
-				>
-					{mark}
-				</span>
+				<Squadmate id="master" on size={28} />
 				<div style={css("display: flex; flex-direction: column; flex: 1; min-width: 0")}>
 					<span style={css("font-weight: 600; color: #0d0d0d; font-size: 14px")}>{masterName}</span>
 					<span
@@ -320,12 +315,17 @@ function DockBubble({
 }: {
 	readonly message: FrameMessage;
 	readonly masterName: string;
-	readonly agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[];
+	readonly agents: readonly {
+		readonly id: string;
+		readonly name: string;
+		readonly tint: string;
+		readonly on: boolean;
+	}[];
 	readonly markTag: boolean;
 }) {
 	const user = message.from === "user";
 	const align = user ? "flex-end" : "flex-start";
-	const { tint, tag } = bubbleTag(message, masterName, agents);
+	const tag = bubbleTag(message, masterName, agents);
 	return (
 		<div style={css(`display: flex; flex-direction: column; align-items: ${align}; gap: 4px`)}>
 			{user ? null : (
@@ -333,8 +333,8 @@ function DockBubble({
 					<span
 						style={css("font-size: 11px; color: #5d5d5d; display: inline-flex; align-items: center; gap: 6px")}
 					>
-						<span style={css(`width: 8px; height: 8px; border-radius: 2px; background: ${tint}`)} />
-						{tag}
+						<Squadmate id={tag.id} on={tag.on} size={16} decorative />
+						{tag.label}
 					</span>
 				</div>
 			)}
@@ -345,7 +345,7 @@ function DockBubble({
 
 function bubbleAgent(
 	message: FrameMessage,
-	agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[],
+	agents: readonly { readonly id: string; readonly name: string; readonly on: boolean }[],
 ) {
 	return message.from === "agent" ? agents.find((item) => item.id === message.agent) : undefined;
 }
@@ -353,12 +353,11 @@ function bubbleAgent(
 function bubbleTag(
 	message: FrameMessage,
 	masterName: string,
-	agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[],
+	agents: readonly { readonly id: string; readonly name: string; readonly on: boolean }[],
 ) {
 	const agent = bubbleAgent(message, agents);
-	const tint = agent?.tint ?? "#181818";
-	const tag = agent ? `${agent.name} squad, via ${masterName}` : masterName;
-	return { tint, tag };
+	if (!agent) return { id: "master", on: true, label: masterName };
+	return { id: agent.id, on: agent.on, label: `${agent.name} squad, via ${masterName}` };
 }
 
 function dockBubble(from: FrameMessage["from"]): string {

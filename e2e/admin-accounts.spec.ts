@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 
 import { compareInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
@@ -119,7 +119,7 @@ test("the accounts nav highlights Companies and has no chat dock", async ({ page
 	const images = page.getByRole("button", { name: "Squad images" });
 	await expect(companies).toHaveCSS("font-weight", "600");
 	await expect(images).toHaveCSS("font-weight", "400");
-	await expect(page.getByRole("button", { name: "Chat with the master" })).toHaveCount(0);
+	await expect(page.getByRole("button", { name: "Chat with Petra" })).toHaveCount(0);
 	await expect(page.locator("[data-handler='send']")).toHaveCount(0);
 	await expect(page.getByRole("navigation", { name: "Platform admin" })).toBeVisible();
 });
@@ -142,11 +142,14 @@ test("the accounts page lists its handlers and matches the rendered design", asy
 
 test("the accounts page has no axe violation and does not scroll sideways at 390", async ({ page }) => {
 	await openAdmin(page, requiredAdmin());
-	await expectLabeledInputs(page);
-	await expectNamedButtons(page);
-	expect(await accessibilityViolations(page)).toEqual([]);
+	for (const viewport of viewports) {
+		await page.setViewportSize({ width: viewport.width, height: viewport.height });
+		await expectLabeledInputs(page);
+		await expectNamedButtons(page);
+		expect(await accessibilityViolations(page)).toEqual([]);
+		await expectNoHorizontalScroll(page);
+	}
 	await page.setViewportSize({ width: 390, height: 844 });
-	await expectNoHorizontalScroll(page);
 	const scroll = await page
 		.locator("section")
 		.filter({ hasText: "All companies" })
@@ -183,6 +186,28 @@ test("the accounts page matches the macOS screenshot baselines", async ({ page }
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		await waitForScreenFonts(page);
 		await expect(page).toHaveScreenshot(`admin-accounts-${viewport.name}.png`, { fullPage: true });
+	}
+});
+
+test("the side-by-side evidence shows the design and the build", async ({ page }) => {
+	test.skip(
+		process.env.ADMIN_EVIDENCE !== "1" || process.platform !== "darwin",
+		"Side-by-side evidence is captured once on macOS.",
+	);
+	const dir = ".no-mistakes/evidence/03-admin";
+	mkdirSync(dir, { recursive: true });
+	await openAdmin(page, requiredAdmin());
+	for (const viewport of viewports) {
+		await page.setViewportSize({ width: viewport.width, height: viewport.height });
+		await waitForScreenFonts(page);
+		const built = await shot(page);
+		const designPage = await openDesign(page, { view: "admin" }, viewport.width, viewport.height);
+		try {
+			const design = await shot(designPage);
+			await stitch(page, design, built, `${dir}/side-by-side-accounts-${viewport.name}.png`);
+		} finally {
+			await designPage.close();
+		}
 	}
 });
 
@@ -229,4 +254,34 @@ async function openDesign(page: Page, state: { view: string; acctQuery?: string 
 	});
 	await waitForScreenFonts(canvas);
 	return canvas;
+}
+
+async function shot(page: Page) {
+	return page.screenshot({ fullPage: true, animations: "disabled", caret: "hide", scale: "css" });
+}
+
+function pngSize(image: Buffer) {
+	return { width: image.readUInt32BE(16), height: image.readUInt32BE(20) };
+}
+
+async function stitch(page: Page, design: Buffer, build: Buffer, file: string) {
+	const board = await page.context().newPage();
+	const left = pngSize(design);
+	const right = pngSize(build);
+	try {
+		await board.route("https://evidence.local/design.png", (route) =>
+			route.fulfill({ contentType: "image/png", body: design }),
+		);
+		await board.route("https://evidence.local/build.png", (route) =>
+			route.fulfill({ contentType: "image/png", body: build }),
+		);
+		await board.setViewportSize({ width: left.width + right.width, height: Math.max(left.height, right.height) });
+		await board.setContent(
+			'<!doctype html><html><body style="margin:0;display:flex;background:#fff"><img alt="Design" src="https://evidence.local/design.png"><img alt="Build" src="https://evidence.local/build.png"></body></html>',
+		);
+		await board.locator("img").nth(1).waitFor();
+		await board.screenshot({ path: file, fullPage: true, animations: "disabled", caret: "hide", scale: "css" });
+	} finally {
+		await board.close();
+	}
 }

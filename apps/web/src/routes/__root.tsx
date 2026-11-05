@@ -1,6 +1,10 @@
 import { ClerkProvider, useUser } from "@clerk/tanstack-react-start";
 import { createRootRoute, HeadContent, Outlet, Scripts, useRouter } from "@tanstack/react-router";
+import { SQUADMATE_CSS } from "@tensquads/squadmates";
 import { type ReactNode, useRef } from "react";
+
+// The package constant wraps the rules. The head owns that element once, so button text stays the words.
+const squadmateRules = SQUADMATE_CSS.replace(/^<style>\n?/, "").replace(/\n?<\/style>$/, "");
 
 import "#/design/public.css";
 import { watchSignedInUser } from "#/screens/rules/write-queue.ts";
@@ -73,6 +77,7 @@ function RootDocument({ children }: { children: ReactNode }) {
 		<html lang="en">
 			<head>
 				<HeadContent />
+				<style>{squadmateRules}</style>
 			</head>
 			<body>
 				{children}

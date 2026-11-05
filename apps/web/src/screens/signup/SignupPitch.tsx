@@ -26,8 +26,8 @@ export function SignupPitch() {
 					Run your business with a team of squads
 				</h1>
 				<p style={css("margin: 12px 0 0; font-size: 16px; line-height: 24px; color: #5d5d5d")}>
-					Each part of your business gets its own squad: one agent with its tools. A master squad coordinates them,
-					and every squad works toward your mission.
+					Each part of your business gets its own squad: one agent with its tools. Petra coordinates them, and
+					every squad works toward your mission.
 				</p>
 			</div>
 			<ul style={css("margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px")}>
@@ -51,7 +51,7 @@ export function SignupPitch() {
 				<PitchItem
 					tint="#ece3ff"
 					title="One chat for everything"
-					body="Ask the master what's going on; it routes the question to the right squad."
+					body="Ask Petra what's going on; Petra routes the question to the right squad."
 				>
 					<path d="M2.5 4.5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H7l-3 2.5v-2.5h0a2 2 0 0 1-1.5-2z" />
 				</PitchItem>

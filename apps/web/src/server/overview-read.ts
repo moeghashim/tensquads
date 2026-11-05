@@ -44,6 +44,7 @@ export async function readOverview(db: AppDatabase, scope: AccountScope): Promis
 			const agent = named(byId, proposal.agent);
 			return {
 				id: proposal.id,
+				agentId: agent.id,
 				agentName: agent.name,
 				tint: agent.tint,
 				title: proposalTitle(proposal.status),
@@ -57,6 +58,7 @@ export async function readOverview(db: AppDatabase, scope: AccountScope): Promis
 			const agent = named(byId, approval.agent);
 			return {
 				id: approval.id,
+				agentId: agent.id,
 				agentName: agent.name,
 				tint: agent.tint,
 				amount: approval.amount,
@@ -83,6 +85,7 @@ function agentView(agent: Agent) {
 		name: agent.name,
 		role: agent.role,
 		tint: agent.tint,
+		on: agent.on,
 		last: agent.last,
 		tasks: agent.tasks,
 		success: agent.success,

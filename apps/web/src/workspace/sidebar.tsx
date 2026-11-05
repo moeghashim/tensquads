@@ -5,9 +5,10 @@ import { css } from "#/screens/css.ts";
 import { resetTargetAccount } from "#/screens/rules/write-queue.ts";
 import { endSpecialSession } from "#/server/admin.ts";
 
-import { agentStatus, initials, masterInitial, ownerText, squadLine } from "./agent-view.ts";
+import { agentStatus, initials, ownerText, squadLine } from "./agent-view.ts";
 import { useWorkspace } from "./context.ts";
 import { ChatIcon, FlowIcon, OverviewIcon, RulesIcon, SquadsIcon } from "./icons.tsx";
+import { RoleTag, Squadmate } from "./Squadmate.tsx";
 import { navStyle } from "./styles.ts";
 
 const shell =
@@ -20,7 +21,6 @@ export function Sidebar() {
 	const pathname = useRouterState({ select: (state) => state.location.pathname });
 	const navigate = useNavigate();
 	const page = currentPage(pathname);
-	const mark = masterInitial(frame.masterName);
 	return (
 		<nav aria-label="Workspace" data-if="notAdmin" style={css(shell)}>
 			{frame.superAdmin ? (
@@ -56,13 +56,7 @@ export function Sidebar() {
 				</button>
 			) : null}
 			<div style={css("display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px")}>
-				<div
-					style={css(
-						"width: 32px; height: 32px; border-radius: 999px; background: #181818; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px",
-					)}
-				>
-					{mark}
-				</div>
+				<Squadmate id="master" on size={32} />
 				<div style={css("display: flex; flex-direction: column")}>
 					<span style={css("font-weight: 600; color: #0d0d0d")}>{frame.masterName}</span>
 					<span style={css("font-size: 12px; color: #5d5d5d")}>
@@ -82,7 +76,7 @@ export function Sidebar() {
 				selected={page === "chat"}
 				onClick={() => void navigate({ to: "/chat" })}
 				icon={<ChatIcon />}
-				label="Chat with the master"
+				label="Chat with Petra"
 			/>
 			<NavButton
 				handler="goAgents"
@@ -121,12 +115,10 @@ export function Sidebar() {
 							onClick={() => void navigate({ to: "/agents/$id", params: { id: agent.id } })}
 							style={css(agentRow)}
 						>
-							<span
-								style={css(
-									`width: 22px; height: 22px; border-radius: 6px; background: ${agent.tint}; flex: none`,
-								)}
-							/>
-							<span style={css("flex: 1")}>{agent.name}</span>
+							<Squadmate id={agent.id} on={agent.on} size={24} decorative />
+							<span style={css("flex: 1")}>
+								{agent.name} <RoleTag id={agent.id} />
+							</span>
 							<span
 								role="img"
 								aria-label={status.statusLabel}

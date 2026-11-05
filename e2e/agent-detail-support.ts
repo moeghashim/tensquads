@@ -4,6 +4,7 @@ import { type AppDatabase, createTestMachine, type MachineRecord, openPostgres, 
 import { and, eq } from "drizzle-orm";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
+import { detailHeading, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import { readInventory, secretsFor, waitForScreenFonts } from "./support.ts";
 import { expect, installLocalFonts, openWorkspace, type WorkspaceUser } from "./workspace.ts";
 
@@ -120,7 +121,7 @@ export function expectMatch(
 		links: unknown[];
 	},
 ) {
-	const diff = compareInventory(design, built);
+	const diff = compareInventory(rewriteBuiltInventory(design, detailHeading), built);
 	expect(diff.extraTexts).toEqual([]);
 	expect(diff.missingTexts).toEqual([]);
 	expect(diff.extraHandlers).toEqual([]);
@@ -215,6 +216,7 @@ interface DetailBoxes {
 	readonly sandbox: Box | null;
 	readonly squadSwitch: Box | null;
 	readonly skillSwitch: Box | null;
+	readonly routeWidths: readonly number[];
 }
 
 function expectNear(actual: number, expected: number, label: string) {
@@ -265,6 +267,10 @@ export function expectDetail(built: DetailBoxes, design: DetailBoxes, name: stri
 	expectNear(built.squadSwitch?.height ?? 0, design.squadSwitch?.height ?? 0, `${name} squad switch height`);
 	expectNear(built.skillSwitch?.width ?? 0, design.skillSwitch?.width ?? 0, `${name} skill switch width`);
 	expectNear(built.skillSwitch?.height ?? 0, design.skillSwitch?.height ?? 0, `${name} skill switch height`);
+	expect(built.routeWidths.length).toBeGreaterThan(0);
+	for (const [index, width] of built.routeWidths.entries()) {
+		expectNear(width, 150, `${name} route ${index} width`);
+	}
 }
 
 function expectBox(built: Box | null, design: Box | null, label: string) {
@@ -315,6 +321,11 @@ export async function measureDetail(page: Page): Promise<DetailBoxes> {
 			sandbox: findBox("section[aria-label='Sandbox']"),
 			squadSwitch: findBox("button[aria-label='Squad running']"),
 			skillSwitch: findBox("button[aria-label='Skill enabled']"),
+			routeWidths: [...document.querySelectorAll("section[aria-label='Messages'] button")].map((event) => {
+				const route = event.children[2];
+				if (!route) throw new Error("route");
+				return boxOf(route).width;
+			}),
 		};
 	});
 }
@@ -412,7 +423,7 @@ export function squadsNav(page: Page) {
 export function supportDot(page: Page, status: "Running" | "Paused") {
 	return page
 		.getByRole("navigation", { name: "Workspace" })
-		.getByRole("button", { name: `Support ${status}`, exact: true })
+		.getByRole("button", { name: `Kyoto Support ${status}`, exact: true })
 		.getByRole("img", { name: status });
 }
 

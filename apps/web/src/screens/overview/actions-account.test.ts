@@ -148,10 +148,13 @@ function snapshot(count: number): OverviewData {
 		emptyText: "",
 		masterName: "Master",
 		agents: [],
-		approvals: [{ id: "ap1", agentName: "Support", tint: "", amount: "$42", title: "Refund", detail: "" }],
+		approvals: [
+			{ id: "ap1", agentId: "support", agentName: "Support", tint: "", amount: "$42", title: "Refund", detail: "" },
+		],
 		proposals: [
 			{
 				id: "mp1",
+				agentId: "inventory",
 				agentName: "Inventory",
 				tint: "",
 				title: "Proposed mission",

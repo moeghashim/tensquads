@@ -50,7 +50,9 @@ test("one create makes one account and a repeat does not make a second", async (
 			true,
 		);
 		const master = await repositories.squads.master({ accountId: "account-1", mode: "account" });
-		assert.equal(master?.name, "Master");
+		assert.equal(master?.name, "Petra");
+		assert.equal(agents.find((agent) => agent.id === "orders")?.name, "Pisa");
+		assert.equal(agents.find((agent) => agent.id === "support")?.name, "Kyoto");
 		const order = await db
 			.select({ id: schema.accounts.id, sortOrder: schema.accounts.sortOrder })
 			.from(schema.accounts)

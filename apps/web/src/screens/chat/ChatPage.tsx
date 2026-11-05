@@ -2,6 +2,7 @@ import { css } from "#/screens/css.ts";
 import type { ChatHandOff } from "#/server/chat.ts";
 import { type StartedTask, useWorkspace } from "#/workspace/context.ts";
 import { useInspect } from "#/workspace/event-view.ts";
+import { RouteFaces, Squadmate } from "#/workspace/Squadmate.tsx";
 import { kindStyle } from "#/workspace/styles.ts";
 import type { FrameMessage } from "#/workspace/types.ts";
 
@@ -31,7 +32,13 @@ export function ChatPage({ threadId, events }: { readonly threadId: string; read
 					onDraft={setDraft}
 					onSubmit={submit}
 				/>
-				<HandOffs masterName={frame.masterName} events={handoffs} names={names} onInspect={inspect} />
+				<HandOffs
+					masterName={frame.masterName}
+					events={handoffs}
+					names={names}
+					onFor={(id) => frame.agents.find((agent) => agent.id === id)?.on ?? true}
+					onInspect={inspect}
+				/>
 			</div>
 		</div>
 	);
@@ -57,7 +64,12 @@ function ChatColumn({
 	readonly threadId: string;
 	readonly masterName: string;
 	readonly messages: readonly FrameMessage[];
-	readonly agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[];
+	readonly agents: readonly {
+		readonly id: string;
+		readonly name: string;
+		readonly tint: string;
+		readonly on: boolean;
+	}[];
 	readonly draft: string;
 	readonly thinking: boolean;
 	readonly thinkingAgent: string;
@@ -69,9 +81,10 @@ function ChatColumn({
 			<header>
 				<h1
 					style={css(
-						"margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d",
+						"margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d; display: flex; align-items: center; gap: 12px",
 					)}
 				>
+					<Squadmate id="master" on size={32} decorative />
 					{masterName}
 				</h1>
 				<p style={css("margin: 4px 0 0; color: #5d5d5d")}>
@@ -196,11 +209,13 @@ function HandOffs({
 	masterName,
 	events,
 	names,
+	onFor,
 	onInspect,
 }: {
 	readonly masterName: string;
 	readonly events: readonly ChatHandOff[];
 	readonly names: Readonly<Record<string, string>>;
+	readonly onFor: (id: string) => boolean;
 	readonly onInspect: (id: string) => void;
 }) {
 	return (
@@ -221,6 +236,7 @@ function HandOffs({
 						event={event}
 						masterName={masterName}
 						names={names}
+						onFor={onFor}
 						onInspect={onInspect}
 					/>
 				))}
@@ -233,14 +249,15 @@ function HandOffButton({
 	event,
 	masterName,
 	names,
+	onFor,
 	onInspect,
 }: {
 	readonly event: ChatHandOff;
 	readonly masterName: string;
 	readonly names: Readonly<Record<string, string>>;
+	readonly onFor: (id: string) => boolean;
 	readonly onInspect: (id: string) => void;
 }) {
-	const route = `${nameOf(event.from, masterName, names)} → ${nameOf(event.to, masterName, names)}`;
 	return (
 		<button
 			type="button"
@@ -254,7 +271,8 @@ function HandOffButton({
 		>
 			<span style={css("display: flex; gap: 6px; align-items: center; font-size: 12px; color: #5d5d5d")}>
 				<span style={css(kindStyle(event.kind))}>{event.kind}</span>
-				{route} · {event.time}
+				<RouteFaces from={event.from} to={event.to} masterName={masterName} names={names} onFor={onFor} /> ·{" "}
+				{event.time}
 			</span>
 			<span style={css("font-size: 13px")}>{event.text}</span>
 		</button>
@@ -269,12 +287,17 @@ function ChatBubble({
 }: {
 	readonly message: FrameMessage;
 	readonly masterName: string;
-	readonly agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[];
+	readonly agents: readonly {
+		readonly id: string;
+		readonly name: string;
+		readonly tint: string;
+		readonly on: boolean;
+	}[];
 	readonly markTag: boolean;
 }) {
 	const user = message.from === "user";
 	const align = user ? "flex-end" : "flex-start";
-	const { tint, tag } = bubbleTag(message, masterName, agents);
+	const tag = bubbleTag(message, masterName, agents);
 	return (
 		<div style={css(`display: flex; flex-direction: column; align-items: ${align}; gap: 4px`)}>
 			{user ? null : (
@@ -282,8 +305,8 @@ function ChatBubble({
 					<span
 						style={css("font-size: 12px; color: #5d5d5d; display: inline-flex; align-items: center; gap: 6px")}
 					>
-						<span style={css(`width: 10px; height: 10px; border-radius: 3px; background: ${tint}`)} />
-						{tag}
+						<Squadmate id={tag.id} on={tag.on} size={16} decorative />
+						{tag.label}
 					</span>
 				</div>
 			)}
@@ -300,10 +323,6 @@ function agentNames(
 	return names;
 }
 
-function nameOf(id: string, masterName: string, names: Readonly<Record<string, string>>): string {
-	return id === "master" ? masterName : (names[id] ?? id);
-}
-
 function firstTag(messages: readonly FrameMessage[], index: number): boolean {
 	const message = messages[index];
 	if (!message || message.from === "user") return false;
@@ -312,7 +331,7 @@ function firstTag(messages: readonly FrameMessage[], index: number): boolean {
 
 function bubbleAgent(
 	message: FrameMessage,
-	agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[],
+	agents: readonly { readonly id: string; readonly name: string; readonly on: boolean }[],
 ) {
 	return message.from === "agent" ? agents.find((item) => item.id === message.agent) : undefined;
 }
@@ -320,12 +339,11 @@ function bubbleAgent(
 function bubbleTag(
 	message: FrameMessage,
 	masterName: string,
-	agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[],
+	agents: readonly { readonly id: string; readonly name: string; readonly on: boolean }[],
 ) {
 	const agent = bubbleAgent(message, agents);
-	const tint = agent?.tint ?? "#181818";
-	const tag = agent ? `${agent.name} squad, via ${masterName}` : masterName;
-	return { tint, tag };
+	if (!agent) return { id: "master", on: true, label: masterName };
+	return { id: agent.id, on: agent.on, label: `${agent.name} squad, via ${masterName}` };
 }
 
 function bubbleStyle(from: FrameMessage["from"]): string {

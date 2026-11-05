@@ -92,7 +92,7 @@ test("a super admin opens one account and All companies ends that session", asyn
 		await page.getByRole("button", { name: "Demo store" }).click();
 		await expect(page).toHaveURL(/\/overview$/);
 		await expect(page.getByText("Runs 5 squads · Demo store")).toBeVisible();
-		await page.getByRole("button", { name: "Chat with the master" }).click();
+		await page.getByRole("button", { name: "Chat with Petra" }).click();
 		await expect(page.getByText("Did the tracking for #A-1007 go through?")).toBeVisible();
 		await page.getByRole("button", { name: "All companies" }).click();
 		await expect(page).toHaveURL(/\/admin\/?$/);

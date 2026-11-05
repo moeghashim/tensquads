@@ -16,7 +16,7 @@ Screen 1 gets a new design with an inspiring hero. Decision 34 in `docs/PLAN.md`
 ## Part 1: the design
 
 1. Add this task file in the first commit. Install the impeccable skill from https://impeccable.style into `.agents/skills/impeccable`. `.claude/skills` is a link to that folder. Record the source and version in `docs/skills-sources.md`.
-2. Run impeccable on screen 1. Keep the product truth: the copy, the plans, the prices and the controls. Apply decision 33 in `docs/PLAN.md` to the homepage text; see task 06, step 8, for the string replacements. The hero must be inspiring: the squad of squadmates at work, led by Petra. Use the squadmates only: `apps/landing/review-src/squadmates.mjs` now, `packages/squadmates` after task 06. Do not invent new characters.
+2. Run impeccable on screen 1. Keep the product truth: the copy, the plans, the prices and the controls. Apply decision 33 in `docs/PLAN.md` to the homepage text; see task 06, step 8, for the string replacements. The hero must be inspiring: the squad of squadmates at work, led by Petra. Use the squadmates from `packages/squadmates`. Do not invent new characters.
 3. A new colour, font or shadow is allowed only on this page, and only when the design uses it. List each new token in the pull request.
 4. Save the design as `docs/designs/home/home.html`, with screenshots at 1440 px and 390 px. Deploy it to `https://10squads.com/review/home` with the review build.
 5. Stop. Moe approves the design or asks for changes. Do not start Part 2 before the approval.

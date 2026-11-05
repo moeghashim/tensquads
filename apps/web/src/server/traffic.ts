@@ -49,7 +49,7 @@ export const loadTraffic = createServerFn({ method: "GET" }).handler(async (): P
 				tint: agent.tint,
 				on: agent.on,
 			})),
-			masterName: master?.name ?? "Master",
+			masterName: master?.name ?? "Petra",
 		};
 	});
 });

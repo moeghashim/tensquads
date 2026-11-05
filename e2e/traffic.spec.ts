@@ -6,6 +6,8 @@ import { openPostgres, schema } from "@tensquads/adapters";
 import { and, asc, eq } from "drizzle-orm";
 import { compareInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
+import { squadmateRoleTagContrast } from "./accessibility-helper.ts";
+import { chipsThenOptions, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import {
 	expectLabeledInputs,
 	expectNamedButtons,
@@ -42,7 +44,7 @@ test("traffic shows the hub, the chips, the list, the inspector, the state table
 	await expect(page.getByRole("region", { name: "Squad map" })).toBeVisible();
 	await expect(page.getByRole("region", { name: "Message log" })).toBeVisible();
 	await expect(page.getByRole("complementary", { name: "Message details" })).toBeVisible();
-	await expect(page.getByRole("heading", { name: "Shared state held by Master" })).toBeVisible();
+	await expect(page.getByRole("heading", { name: "Shared state held by Petra" })).toBeVisible();
 	await expect(
 		page.locator("[data-loop='filters']").getByRole("button", { name: "All agents", exact: true }),
 	).toBeVisible();
@@ -78,7 +80,7 @@ test("an event click fills the inspector", async ({ page, workspaceUser }) => {
 	await openTraffic(page, workspaceUser);
 	await page.locator("[data-loop='busView']").getByText(financeText).click();
 	const details = page.getByRole("complementary", { name: "Message details" });
-	await expect(details.getByText("Finance → Master")).toBeVisible();
+	await expect(details.getByText("Zurich → Petra")).toBeVisible();
 	await expect(details.locator("dd", { hasText: /^quickbooks\.pnl$/ })).toBeVisible();
 	await expect(details.locator("dd", { hasText: /^tr_faa0ac$/ })).toBeVisible();
 	await expect(
@@ -154,7 +156,7 @@ test("send next event adds the event, selects it and updates the state table", a
 test("a filter chip filters the list and All agents clears it", async ({ page, workspaceUser }) => {
 	await openTraffic(page, workspaceUser);
 	const chips = page.locator("[data-loop='filters']");
-	await chips.getByRole("button", { name: "Orders", exact: true }).click();
+	await chips.getByRole("button", { name: "Pisa", exact: true }).click();
 	await expect(page.locator("[data-loop='busView']").getByText(financeText)).toHaveCount(0);
 	await expect(page.locator("[data-loop='busView']").getByText(sweatshirt)).toBeVisible();
 	await chips.getByRole("button", { name: "All agents", exact: true }).click();
@@ -200,7 +202,7 @@ test("an empty bus shows blank inspector values and None", async ({ page, worksp
 	).toHaveText("None");
 	await expect(details.locator("pre")).toHaveText("");
 	await expect(details.getByRole("heading", { name: "Message" }).locator("xpath=..").locator("span")).toHaveCount(0);
-	await expect(page.getByRole("heading", { name: "Shared state held by Master" })).toBeVisible();
+	await expect(page.getByRole("heading", { name: "Shared state held by Petra" })).toBeVisible();
 	await expect(page.getByText("policy.refund_auto_limit")).toBeVisible();
 });
 
@@ -239,6 +241,20 @@ test("the traffic boxes match the rendered design at 1440 and 390", async ({ pag
 			expectNear(built.listWidth, design.listWidth, `${board.name} list width`);
 			expectNear(built.listX, design.listX, `${board.name} list x`);
 			expectNear(built.inspectorX, design.inspectorX, `${board.name} inspector x`);
+			expectNear(built.masterHeight, design.masterHeight, `${board.name} master card height`);
+			expectNear(built.hubHeight, design.hubHeight, `${board.name} squad map height`);
+			expect(built.nodeHeights.length).toBe(design.nodeHeights.length);
+			for (const [index, height] of built.nodeHeights.entries()) {
+				expectNear(height, design.nodeHeights[index] ?? 0, `${board.name} hub node ${index} height`);
+			}
+			expect(built.routeWidths.length).toBeGreaterThan(0);
+			expect(design.routeWidths.length).toBeGreaterThan(0);
+			for (const [index, width] of design.routeWidths.entries()) {
+				expectNear(width, 150, `${board.name} design route ${index} width`);
+			}
+			for (const [index, width] of built.routeWidths.entries()) {
+				expectNear(width, 150, `${board.name} route ${index} width`);
+			}
 		} finally {
 			await designPage.close();
 		}
@@ -247,7 +263,7 @@ test("the traffic boxes match the rendered design at 1440 and 390", async ({ pag
 
 test("the traffic inventory matches the flow view", async ({ page, workspaceUser }) => {
 	await openTraffic(page, workspaceUser);
-	const design = await designInventory(page);
+	const design = rewriteBuiltInventory(await designInventory(page), chipsThenOptions);
 	const built = await flowInventory(page);
 	const diff = compareInventory(design, built);
 	expect(diff.extraTexts).toEqual([]);
@@ -396,6 +412,7 @@ test("the side-by-side evidence shows the design and the build", async ({ page, 
 });
 
 // The design pre scrolls and is not a tab stop. The off Inventory node is opacity 0.6, so its text falls under 4.5:1.
+// squadmateRoleTagContrast: tasks/06-squadmates.md line 47 keeps gray-400 (#8f8f8f) on these role tags.
 async function trafficViolations(page: Page) {
 	const skipped = ["color-contrast", "scrollable-region-focusable"];
 	const full = await new AxeBuilder({ page }).disableRules(skipped).analyze();
@@ -406,6 +423,7 @@ async function trafficViolations(page: Page) {
 	const contrast = await new AxeBuilder({ page })
 		.withRules(["color-contrast"])
 		.exclude("section[aria-label='Squad map'] button[style*='#f3f3f3']")
+		.exclude(`[data-design-contrast='${squadmateRoleTagContrast}']`)
 		.analyze();
 	return [...full.violations, ...scroll.violations, ...contrast.violations];
 }
@@ -592,8 +610,12 @@ async function measureTraffic(page: Page) {
 		const hubContent = hub.clientWidth - pixels(hubStyle.paddingLeft) - pixels(hubStyle.paddingRight);
 		const stem = boxOf(needed(hub.children[1] ?? null, "stem"));
 		const bar = boxOf(needed(hub.children[2] ?? null, "bar"));
+		const master = boxOf(needed(hub.children[0] ?? null, "master card"));
 		const row = needed(document.querySelector("[data-loop='busView'] button"), "event row");
 		const parts = [...row.children];
+		const routeWidths = [...document.querySelectorAll("[data-loop='busView'] button")].map(
+			(event) => boxOf(needed(event.children[2] ?? null, "route")).width,
+		);
 		const eventGap = boxOf(needed(parts[1] ?? null, "kind")).x - boxOf(needed(parts[0] ?? null, "time")).right;
 		const list = needed(document.querySelector("section[aria-label='Message log']"), "list");
 		const inspector = needed(document.querySelector("aside[aria-label='Message details']"), "inspector");
@@ -622,6 +644,10 @@ async function measureTraffic(page: Page) {
 			listX: listBox.x,
 			inspectorX: boxOf(inspector).x,
 			hubChildren: hub.children.length,
+			hubHeight: boxOf(hub).height,
+			nodeHeights: [...hub.querySelectorAll("button")].map((button) => boxOf(button).height),
+			masterHeight: master.height,
+			routeWidths,
 		};
 	});
 }

@@ -34,7 +34,7 @@ describe("sign-up machine", () => {
 		const squads: SignupState = { ...pickKind(initialSignup(), "new"), step: "agents" };
 		const account = openAccount(squads);
 		assert.equal(account.step, "account");
-		assert.equal(summaryLine(account.picked.length), "3 squads and one master squad will be created.");
-		assert.equal(summaryLine(1), "1 squad and one master squad will be created.");
+		assert.equal(summaryLine(account.picked.length), "3 squads and Petra's squad will be created.");
+		assert.equal(summaryLine(1), "1 squad and Petra's squad will be created.");
 	});
 });

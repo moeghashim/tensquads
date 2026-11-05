@@ -65,7 +65,7 @@ const screens: readonly ScreenCase[] = [
 	{
 		name: "chat",
 		route: "/chat",
-		heading: "Master",
+		heading: "Petra",
 		module: "chat",
 		fn: "loadChat",
 		arg: null,
@@ -85,10 +85,10 @@ const screens: readonly ScreenCase[] = [
 		fn: "loadAgentsPage",
 		arg: null,
 		ready: async (page) => {
-			await expect(page.getByRole("button", { name: "Ask Master" })).toBeVisible();
+			await expect(page.getByRole("button", { name: "Ask Petra" })).toBeVisible();
 		},
 		write: async (page) => {
-			await page.getByRole("button", { name: "Ask Master" }).click();
+			await page.getByRole("button", { name: "Ask Petra" }).click();
 			await page.locator("#dock-input").fill("Hello there");
 			await page.getByRole("button", { name: "Send", exact: true }).click();
 		},
@@ -96,7 +96,7 @@ const screens: readonly ScreenCase[] = [
 	{
 		name: "agent",
 		route: "/agents/support",
-		heading: "Support squad",
+		heading: "Kyoto squad",
 		module: "agent-detail",
 		fn: "loadAgentDetail",
 		arg: { data: "support" },
@@ -124,7 +124,7 @@ test("a blocked exit module still leaves an expired support session", async ({ p
 		await setSpecialCookie(page, specialAccountValue("demo", Date.now() - 61 * minute));
 		await page.getByRole("button", { name: "Squad running", exact: true }).click();
 		await expect(page).toHaveURL(/\/admin\/?$/, { timeout: leaveTimeout });
-		expect(await customerStillVisible(page, "Support squad")).toBe("");
+		expect(await customerStillVisible(page, "Kyoto squad")).toBe("");
 	} finally {
 		await removeCompanyMembership(secrets.secret, user.userId);
 		await deleteTestUser(secrets.secret, user.userId);

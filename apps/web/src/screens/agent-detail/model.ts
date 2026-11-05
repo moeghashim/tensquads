@@ -81,6 +81,7 @@ export interface AgentDetailView {
 	readonly barColor: string;
 	readonly companyMission: string;
 	readonly masterName: string;
+	readonly names: Readonly<Record<string, string>>;
 	readonly askLabel: string;
 	readonly targets: readonly { readonly label: string; readonly now: string; readonly goal: string }[];
 	readonly noTargets: boolean;
@@ -110,6 +111,8 @@ export interface AgentDetailView {
 		readonly time: string;
 		readonly kind: string;
 		readonly kindStyle: string;
+		readonly from: string;
+		readonly to: string;
 		readonly route: string;
 		readonly text: string;
 	}[];
@@ -153,6 +156,7 @@ export function agentDetailView(source: AgentDetailSource): AgentDetailView {
 		barColor: bits.barColor,
 		companyMission: blank(source.companyMission),
 		masterName: source.masterName,
+		names: source.names,
 		askLabel: `Ask ${source.masterName} to revise`,
 		targets: source.targets.map(([label, now, goal]) => ({
 			label: blank(label),
@@ -163,7 +167,7 @@ export function agentDetailView(source: AgentDetailSource): AgentDetailView {
 		kpis: source.kpis.map(([label, value]) => ({ label: blank(label), value: blank(value) })),
 		skills: source.skills.map((skill) => ({
 			id: skill.id,
-			desc: blank(skill.desc),
+			desc: blank(skill.desc.replaceAll("the master", source.masterName)),
 			gate: skill.gate,
 			gateStyle: gateStyle(skill.gate),
 			runs: skill.runs,
@@ -192,6 +196,8 @@ export function agentDetailView(source: AgentDetailSource): AgentDetailView {
 				time: event.time,
 				kind: event.kind,
 				kindStyle: view.kindStyle,
+				from: event.from,
+				to: event.to,
 				route: view.route,
 				text: event.text,
 			};
