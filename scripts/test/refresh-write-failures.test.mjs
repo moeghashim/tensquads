@@ -28,6 +28,10 @@ const bundle = await build({
 				navigate() {},
 				invalidate() {
 					window.invalidates += 1;
+					window.router.state.matches = [{
+						routeId: "/_workspace", status: "success",
+						loaderData: { frame: { ...window.storedFrame } },
+					}];
 					window.doReload?.();
 					return Promise.resolve();
 				},
@@ -219,7 +223,7 @@ function boundary(path) {
 			}
 			export function useMatch() { return window.agentMatch; }
 			export function isRedirect(error) {
-				return typeof Response !== "undefined" && error instanceof Response && error.status >= 300 && error.status < 400;
+				return error instanceof Response && !!error.options;
 			}
 		`;
 	}
@@ -370,6 +374,33 @@ test("chat keeps the draft cleared after a committed begin loses its response", 
 		await page.getByRole("button", { name: "Send", exact: true }).click();
 		await expect(page.getByText("Already stored question", { exact: true })).toBeVisible();
 		await expect(draft).toHaveValue("");
-		assert.equal((await counts(page)).calls, 1);
+		const seen = await counts(page);
+		assert.equal(seen.calls, 1);
+		assert.equal(seen.invalidates, 1);
+		assert.deepEqual(seen.refresh, { token: 0, reload: 0, signIn: 0 });
+	});
+});
+
+test("chat does not restore or refresh after begin exits the session", async () => {
+	await withPage(async (page) => {
+		await page.evaluate(() => {
+			window.send = async (data) => {
+				window.calls.push(data);
+				const response = new Response(null, { status: 307, headers: { location: "/signin" } });
+				response.options = { to: "/signin" };
+				throw response;
+			};
+			window.mount("chat");
+		});
+		const draft = page.locator("#chat-input");
+		await draft.fill("Leave this session");
+		await page.getByRole("button", { name: "Send", exact: true }).click();
+		await expect.poll(() => page.evaluate(() => window.calls.length)).toBe(1);
+		await expect(page.getByRole("button", { name: "Send", exact: true })).toBeEnabled();
+		await expect(draft).toHaveValue("");
+		await expect(page.getByText("Leave this session", { exact: true })).toHaveCount(0);
+		const seen = await counts(page);
+		assert.equal(seen.invalidates, 0);
+		assert.deepEqual(seen.refresh, { token: 0, reload: 0, signIn: 0 });
 	});
 });
