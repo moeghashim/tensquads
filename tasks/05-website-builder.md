@@ -111,4 +111,4 @@ Published site:
 
 Do not guess. Stop the step that needs the answer.
 
-1. **How the machine gets the signed token.** Same question as `tasks/05-agent-kit.md` question 1. Unit tests may pass a token in. The real machine step waits for Moe. *Recommended:* the boat.dev key proxy holds the token. The machine reads it at call time. It is not an environment variable.
+1. **How the machine gets the signed token.** Answered by Moe on 5 November 2026: the Worker signs the token with the Worker secret `MACHINE_TOKEN_KEY`, for one account and one agent. The boat.dev key proxy holds the token. The machine reads it from the proxy at call time. It is not an environment variable, and the image does not contain it.

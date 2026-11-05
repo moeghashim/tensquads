@@ -142,5 +142,5 @@ Do not guess. Stop the step that needs the answer. The other steps may proceed.
    - Rules: no change.
    - Accounts: the seed adds one proof-of-concept account. The layout does not change.
    - Agent images: two images, version `0.1.0`, status Beta. The layout does not change.
-5. **How a machine gets the signed token.** Same question as `tasks/05-agent-kit.md` question 1. This repository signs the token. It does not place the token on the machine until Moe answers. *Recommended:* keep the signing key in the Worker secret `MACHINE_TOKEN_KEY`. Put the token in the boat.dev key proxy. The machine reads it at call time.
+5. **How a machine gets the signed token.** Answered by Moe on 5 November 2026: the Worker signs the token with the Worker secret `MACHINE_TOKEN_KEY`, for one account and one agent. The boat.dev key proxy holds the token. The machine reads it from the proxy at call time. It is not an environment variable, and the image does not contain it.
 6. **The heartbeat route.** Same question as `tasks/05-agent-kit.md` question 2. This repository owns the Worker route and the three-miss resume. *Recommended:* accept `POST /machine/heartbeat`. The Durable Object records the time. After three missed minutes, it resumes the machine.

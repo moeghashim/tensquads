@@ -75,5 +75,5 @@ The package name is `@tensquads/agent-kit` (decision 12).
 
 Do not guess. Stop the step that needs the answer. The other steps may proceed.
 
-1. **How a machine gets the signed token.** Phase 4 builds the two routes. Tests call them. Phase 4 puts no token on a machine. Phase 5 must say how a machine gets one. *Recommended:* The Worker signs a token for one account and one agent. The boat.dev key proxy holds that token. The machine reads it from the proxy when it calls the Worker. The token is not an environment variable. The image does not contain the token. Task 04 names the Worker secret `MACHINE_TOKEN_KEY`.
+1. **How a machine gets the signed token.** Answered by Moe on 5 November 2026: the Worker signs the token with the Worker secret `MACHINE_TOKEN_KEY`, for one account and one agent. The boat.dev key proxy holds the token. The machine reads it from the proxy at call time. It is not an environment variable, and the image does not contain it.
 2. **The heartbeat path.** The plan says one message a minute to the account Durable Object. It names no URL. A machine calls the Worker, not the Durable Object. *Recommended:* `POST /machine/heartbeat` with the same token. The body names the account and `TENSQUADS_AGENT_ID`. The main task owns the Worker route. This client calls that route.
