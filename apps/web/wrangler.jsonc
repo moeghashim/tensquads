@@ -9,7 +9,8 @@
 	// Do not create the queue from this repository. Production stays on the test adapters.
 	"main": "src/worker.ts",
 	"vars": {
-		"ADAPTERS": "test"
+		"ADAPTERS": "test",
+		"CLERK_PLATFORM_ORG_ID": "org_3Lazia1HC1hdgfY0mAttb1qTWYm"
 	},
 	"durable_objects": {
 		"bindings": [{ "name": "ACCOUNT_BUS", "class_name": "AccountBus" }]
@@ -24,8 +25,5 @@
 	},
 	"observability": {
 		"enabled": true
-	},
-	"vars": {
-		"CLERK_PLATFORM_ORG_ID": "org_3Lazia1HC1hdgfY0mAttb1qTWYm"
 	}
 }
