@@ -1,0 +1,1 @@
+The base and target character-page generators emit identical parsed HTML after removing the added Sydney cast card. Existing character drawings, state rows, sample list, sizes, copy, and CSS are unchanged.

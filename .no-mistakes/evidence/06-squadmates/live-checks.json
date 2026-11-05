@@ -1,0 +1,42 @@
+[
+  {
+    "screen": "signup new 1440",
+    "names": "Pisa, Kyoto, Rio, Zurich, Giza, Machu, Angkor",
+    "idleDrawings": 7,
+    "noHorizontalScroll": true,
+    "petraCopy": true
+  },
+  {
+    "screen": "signup existing 1440",
+    "names": "Pisa, Kyoto, Rio, Zurich, Giza, Machu, Angkor",
+    "idleDrawings": 7,
+    "noHorizontalScroll": true,
+    "petraCopy": true
+  },
+  {
+    "screen": "signup new 390",
+    "names": "Pisa, Kyoto, Rio, Zurich, Giza, Machu, Angkor",
+    "idleDrawings": 7,
+    "noHorizontalScroll": true,
+    "petraCopy": true
+  },
+  {
+    "screen": "signup existing 390",
+    "names": "Pisa, Kyoto, Rio, Zurich, Giza, Machu, Angkor",
+    "idleDrawings": 7,
+    "noHorizontalScroll": true,
+    "petraCopy": true
+  },
+  {
+    "screen": "review characters",
+    "characters": 10,
+    "stateDrawings": 27,
+    "accessibleDrawings": 49,
+    "blinks": true,
+    "reducedMotionStopsBlink": true
+  },
+  {
+    "screen": "workspace access attempt",
+    "result": "redirected to /signin; Clerk keys and test database are absent"
+  }
+]
