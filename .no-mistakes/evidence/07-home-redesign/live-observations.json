@@ -1,0 +1,81 @@
+[
+  {
+    "scenario": "Approved cast, role labels, prices and responsive layout",
+    "viewport": 1440,
+    "width": 1440,
+    "scrollWidth": 1440,
+    "drawings": [
+      "Petra, Master",
+      "Pisa, Orders, checking",
+      "Kyoto, Support, done",
+      "Rio, Marketing, escalated",
+      "Zurich, Finance, done",
+      "Giza, Inventory, blocked",
+      "Machu, Market researcher, running",
+      "Angkor, Website builder, done",
+      "Delphi, Analytics, planning",
+      "Pisa, Orders",
+      "Kyoto, Support",
+      "Rio, Marketing",
+      "Zurich, Finance",
+      "Giza, Inventory",
+      "Machu, Market researcher",
+      "Angkor, Website builder",
+      "Delphi, Analytics"
+    ]
+  },
+  {
+    "scenario": "Approved cast, role labels, prices and responsive layout",
+    "viewport": 390,
+    "width": 390,
+    "scrollWidth": 390,
+    "drawings": [
+      "Petra, Master",
+      "Pisa, Orders, checking",
+      "Kyoto, Support, done",
+      "Rio, Marketing, escalated",
+      "Zurich, Finance, done",
+      "Giza, Inventory, blocked",
+      "Machu, Market researcher, running",
+      "Angkor, Website builder, done",
+      "Delphi, Analytics, planning",
+      "Pisa, Orders",
+      "Kyoto, Support",
+      "Rio, Marketing",
+      "Zurich, Finance",
+      "Giza, Inventory",
+      "Machu, Market researcher",
+      "Angkor, Website builder",
+      "Delphi, Analytics"
+    ]
+  },
+  {
+    "scenario": "All six example chips fill the prompt; both toggles update placeholder and selection; typed text survives toggle",
+    "result": "pass"
+  },
+  {
+    "scenario": "Repeated Approve and Decline clicks preserve preview and send no writes",
+    "before": "Needs your approval\n2\nMarketing agent\n$60 / day\nRaise the prints ad set from $40 to $60 a day\n\nReturn has been above 3× for 7 days. Over your $50 daily cap.\n\nApprove\nDecline\nSupport agent\n$42\nRefund #A-1012, print arrived creased\n\nUnder your limit, but this customer's second refund this month.",
+    "after": "Needs your approval\n2\nMarketing agent\n$60 / day\nRaise the prints ad set from $40 to $60 a day\n\nReturn has been above 3× for 7 days. Over your $50 daily cap.\n\nApprove\nDecline\nSupport agent\n$42\nRefund #A-1012, print arrived creased\n\nUnder your limit, but this customer's second refund this month.",
+    "writes": []
+  },
+  {
+    "scenario": "Tab reaches every visible homepage control with approved focus ring",
+    "visibleControls": 32,
+    "reached": 32
+  },
+  {
+    "scenario": "Display font is scoped to homepage",
+    "route": "/signup",
+    "headingFont": "Inter, system-ui, sans-serif"
+  },
+  {
+    "scenario": "Display font is scoped to homepage",
+    "route": "/signin",
+    "headingFont": "Inter, system-ui, sans-serif"
+  },
+  {
+    "scenario": "No uncaught browser errors",
+    "errors": []
+  }
+]

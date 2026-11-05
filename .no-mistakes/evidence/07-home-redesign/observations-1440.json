@@ -1,0 +1,54 @@
+{
+  "width": 1440,
+  "characters": [
+    "Angkor",
+    "Delphi",
+    "Giza",
+    "Kyoto",
+    "Machu",
+    "Petra",
+    "Pisa",
+    "Rio",
+    "Zurich"
+  ],
+  "roles": [
+    [
+      "Pisa",
+      "Orders"
+    ],
+    [
+      "Kyoto",
+      "Support"
+    ],
+    [
+      "Rio",
+      "Marketing"
+    ],
+    [
+      "Zurich",
+      "Finance"
+    ],
+    [
+      "Giza",
+      "Inventory"
+    ],
+    [
+      "Machu",
+      "Market researcher"
+    ],
+    [
+      "Angkor",
+      "Website builder"
+    ]
+  ],
+  "prices": [
+    "$49",
+    "$149",
+    "$399"
+  ],
+  "approvalBefore": "Needs your approval\n2\nMarketing agent\n$60 / day\nRaise the prints ad set from $40 to $60 a day\n\nReturn has been above 3× for 7 days. Over your $50 daily cap.\n\nApprove\nDecline\nSupport agent\n$42\nRefund #A-1012, print arrived creased\n\nUnder your limit, but this customer's second refund this month.",
+  "approvalAfter": "Needs your approval\n2\nMarketing agent\n$60 / day\nRaise the prints ad set from $40 to $60 a day\n\nReturn has been above 3× for 7 days. Over your $50 daily cap.\n\nApprove\nDecline\nSupport agent\n$42\nRefund #A-1012, print arrived creased\n\nUnder your limit, but this customer's second refund this month.",
+  "writeRequests": [],
+  "pageErrors": [],
+  "horizontalScroll": false
+}
