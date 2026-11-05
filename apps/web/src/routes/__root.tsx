@@ -9,7 +9,8 @@ const squadmateRules = SQUADMATE_CSS.replace(/^<style>\n?/, "").replace(/\n?<\/s
 import "#/design/public.css";
 import { watchSignedInUser } from "#/screens/rules/write-queue.ts";
 import { getPublishableKey } from "#/server/publishable-key.ts";
-import { resetAgentClientState } from "#/workspace/agent-on.ts";
+import { agentSession, resetAgentClientState } from "#/workspace/agent-on.ts";
+import { clerkAccountReset } from "#/workspace/clerk-account-switch.ts";
 
 export const Route = createRootRoute({
 	loader: () => getPublishableKey(),
@@ -57,17 +58,15 @@ function ClerkAccountReset({ children }: { readonly children: ReactNode }) {
 	const router = useRouter();
 	const next = isLoaded ? (user?.id ?? null) : undefined;
 	const previous = useRef(next);
-	if (next !== undefined && previous.current !== next) {
-		const wasLoaded = previous.current !== undefined;
-		previous.current = next;
-		if (wasLoaded) {
-			queueMicrotask(() => {
-				resetAgentClientState();
-				// Sign-out reloads the workspace, and that loader redirects to /signin.
-				// A switch reloads the signed-in account instead of leaving the old page blank.
-				void router.invalidate({ sync: true });
-			});
-		}
+	const decision = clerkAccountReset(previous.current, next, agentSession());
+	previous.current = decision.previous;
+	if (decision.reset) {
+		queueMicrotask(() => {
+			resetAgentClientState();
+			// Sign-out reloads the workspace, and that loader redirects to /signin.
+			// A switch reloads the signed-in account instead of leaving the old page blank.
+			void router.invalidate({ sync: true });
+		});
 	}
 	return children;
 }

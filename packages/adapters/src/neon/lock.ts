@@ -37,7 +37,7 @@ const sendAttempts = 3;
 const unfinished = "The workspace write did not finish.";
 
 export interface WorkspaceTransactionOptions {
-	readonly deadlineMs: number;
+	readonly deadlineMs?: number;
 	readonly accountId?: string;
 }
 
@@ -65,7 +65,7 @@ export async function workspaceTransaction<T>(
 }
 
 function sendBound(options: WorkspaceTransactionOptions | undefined): SendBound | undefined {
-	if (!options) {
+	if (options?.deadlineMs === undefined) {
 		return undefined;
 	}
 	return {

@@ -49,8 +49,12 @@ test("a held frame cannot paint another account's chat, squads, or traffic", asy
 			await waitForHydration(other);
 			await other.getByRole("button", { name: "Demo store" }).click();
 			await expect(other).toHaveURL(/\/overview$/);
+			// The URL changes when navigation starts. The other page's document needs the cookie.
+			await expect.poll(() => openedAccount(other)).toBe("demo");
 			await page.goto("/overview");
+			await expect(page).toHaveURL(/\/overview$/);
 			await expect(page.getByText("Runs 5 squads · Demo store")).toBeVisible();
+			await expect(page.getByText("Northwind Apparel")).toHaveCount(0);
 			const urls = await screenUrls(page, screen.module, screen.fn);
 			const childRead = page.waitForResponse(
 				(response) => response.url().includes(urls.child) && response.request().method() === "GET",
@@ -148,13 +152,14 @@ test("a removed role is gone once the 65 second bound has passed", async ({ page
 		expect(captured.exp - captured.iat).toBe(60);
 		const accountsUrl = await adminAccountsUrl(page);
 		await setCompanyRole(secrets.secret, user.userId, "org:member");
-		const seen = { count: 0 };
+		const seen: ReplaySeen = { inflight: 0, rows: [] };
 		await page.route(/\/_serverFn\//, async (route) => {
 			await replayCapturedSession(route, accountsUrl, captured.token, seen);
 		});
-		const beforeAccept = seen.count;
+		const beforeAccept = seen.rows.length;
 		const accepted = await deniedAccounts(page);
-		expect(seen.count).toBe(beforeAccept + 1);
+		expect(seen.rows.length).toBe(beforeAccept + 1);
+		expect(seen.rows[beforeAccept]?.accepted).toBe(true);
 		expect(accepted.ok).toBe(true);
 		expect(accepted.list).toBe(true);
 		// The bound is 65 seconds: the 60-second token plus Clerk's 5-second clock allowance.
@@ -166,9 +171,15 @@ test("a removed role is gone once the 65 second bound has passed", async ({ page
 				setTimeout(resolve, remaining);
 			});
 		}
-		const beforeRefuse = seen.count;
+		await captureInvalidates(page);
+		const beforeRefuse = seen.rows.length;
 		const refused = await deniedAccounts(page);
-		expect(seen.count).toBe(beforeRefuse + 1);
+		await replaysSettled(page, seen);
+		const replays = seen.rows.slice(beforeRefuse);
+		// The refresh reload may replay the captured token once more. Neither replay may be accepted.
+		expect(replays.length).toBeGreaterThanOrEqual(1);
+		expect(replays.length).toBeLessThanOrEqual(2);
+		expect(replays.some((row) => row.accepted)).toBe(false);
 		expect(refused.ok).toBe(false);
 		expect(refused.list).toBe(false);
 	} finally {
@@ -204,23 +215,87 @@ async function adminAccountsUrl(page: Page): Promise<string> {
 	return url;
 }
 
-async function replayCapturedSession(route: Route, accountsUrl: string, token: string, seen: { count: number }) {
+interface ReplaySeen {
+	inflight: number;
+	rows: { accepted: boolean }[];
+}
+
+async function replayCapturedSession(route: Route, accountsUrl: string, token: string, seen: ReplaySeen) {
 	const request = route.request();
 	const path = request.url().split("?")[0] ?? "";
 	if (request.method() !== "GET" || !path.includes(accountsUrl)) {
 		await route.continue();
 		return;
 	}
-	seen.count += 1;
-	const headers = { ...request.headers() };
-	headers.cookie = sessionCookie(headers.cookie, token);
-	delete headers.authorization;
-	const response = await route.fetch({ headers, maxRedirects: 0 });
-	if (response.status() >= 300 && response.status() < 400) {
-		await route.fulfill({ status: 401, body: "" });
-		return;
+	seen.inflight += 1;
+	try {
+		const headers = { ...request.headers() };
+		headers.cookie = sessionCookie(headers.cookie, token);
+		delete headers.authorization;
+		const response = await route.fetch({ headers, maxRedirects: 0 });
+		const body = await response.text();
+		const redirected = response.status() >= 300 && response.status() < 400;
+		seen.rows.push({ accepted: !redirected && accountsAccepted(body) });
+		if (redirected) {
+			await route.fulfill({ status: 401, body: "" });
+			return;
+		}
+		const responseHeaders = { ...response.headers() };
+		delete responseHeaders["content-length"];
+		delete responseHeaders["content-encoding"];
+		await route.fulfill({ status: response.status(), headers: responseHeaders, body });
+	} finally {
+		seen.inflight -= 1;
 	}
-	await route.fulfill({ response });
+}
+
+function accountsAccepted(body: string): boolean {
+	if (body.includes("$TSR/Error") || body.includes("The session needs a refresh.")) return false;
+	return body.includes("Demo store") || body.includes("Northwind");
+}
+
+async function captureInvalidates(page: Page) {
+	await page.evaluate(() => {
+		const browser = window as Window & {
+			__TSR_ROUTER__?: { invalidate: (...args: unknown[]) => unknown };
+			__isoInvalidates?: Promise<unknown>[];
+		};
+		const router = browser.__TSR_ROUTER__;
+		if (!router) throw new Error("The page router is missing.");
+		const invalidate = router.invalidate.bind(router);
+		const pending: Promise<unknown>[] = [];
+		browser.__isoInvalidates = pending;
+		router.invalidate = (...args: unknown[]) => {
+			const result = Promise.resolve(invalidate(...args));
+			pending.push(result);
+			return result;
+		};
+	});
+}
+
+async function replaysSettled(page: Page, seen: ReplaySeen) {
+	await expect
+		.poll(async () => {
+			if (seen.inflight !== 0) return false;
+			const before = seen.rows.length;
+			await page.evaluate(async () => {
+				await new Promise((resolve) => {
+					setTimeout(resolve, 0);
+				});
+				const pending = (window as Window & { __isoInvalidates?: Promise<unknown>[] }).__isoInvalidates ?? [];
+				await Promise.all(pending);
+			});
+			return seen.inflight === 0 && seen.rows.length === before;
+		})
+		.toBe(true);
+}
+
+async function openedAccount(page: Page): Promise<string> {
+	const cookies = await page.context().cookies("http://localhost:3000");
+	const value = cookies.find((cookie) => cookie.name === specialAccountCookie)?.value ?? "";
+	const split = value.lastIndexOf(".");
+	if (split <= 0) return "";
+	return value.slice(0, split);
 }
 
 function sessionCookie(header: string | undefined, token: string): string {

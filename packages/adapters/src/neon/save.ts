@@ -356,25 +356,30 @@ async function insertMetrics(
 
 export async function writeAccount(db: AppDatabase, entry: AccountSnapshot): Promise<void> {
 	const id = entry.account.id;
-	await workspaceTransaction(db, async (tx) => {
-		await tx.delete(messages).where(eq(messages.accountId, id));
-		await tx.delete(threads).where(eq(threads.accountId, id));
-		await tx.delete(skills).where(eq(skills.accountId, id));
-		await tx.delete(machines).where(eq(machines.accountId, id));
-		await tx.delete(agents).where(eq(agents.accountId, id));
-		await tx.delete(squads).where(eq(squads.accountId, id));
-		await tx.delete(masters).where(eq(masters.accountId, id));
-		await tx.delete(rules).where(eq(rules.accountId, id));
-		await tx.delete(missionProposals).where(eq(missionProposals.accountId, id));
-		await deleteAccountBusEvents(tx, id);
-		await deleteAccountStateEntries(tx, id);
-		await tx.delete(dailyRevenue).where(eq(dailyRevenue.accountId, id));
-		await tx.delete(overviewTiles).where(eq(overviewTiles.accountId, id));
-		await tx.delete(subscriptions).where(eq(subscriptions.accountId, id));
-		await tx.delete(busCursors).where(eq(busCursors.accountId, id));
-		await tx.delete(accounts).where(eq(accounts.id, id));
-		await insertAccount(tx, entry, 0);
-	});
+	// A reset is one account's writer. The shared global key lets other accounts proceed.
+	await workspaceTransaction(
+		db,
+		async (tx) => {
+			await tx.delete(messages).where(eq(messages.accountId, id));
+			await tx.delete(threads).where(eq(threads.accountId, id));
+			await tx.delete(skills).where(eq(skills.accountId, id));
+			await tx.delete(machines).where(eq(machines.accountId, id));
+			await tx.delete(agents).where(eq(agents.accountId, id));
+			await tx.delete(squads).where(eq(squads.accountId, id));
+			await tx.delete(masters).where(eq(masters.accountId, id));
+			await tx.delete(rules).where(eq(rules.accountId, id));
+			await tx.delete(missionProposals).where(eq(missionProposals.accountId, id));
+			await deleteAccountBusEvents(tx, id);
+			await deleteAccountStateEntries(tx, id);
+			await tx.delete(dailyRevenue).where(eq(dailyRevenue.accountId, id));
+			await tx.delete(overviewTiles).where(eq(overviewTiles.accountId, id));
+			await tx.delete(subscriptions).where(eq(subscriptions.accountId, id));
+			await tx.delete(busCursors).where(eq(busCursors.accountId, id));
+			await tx.delete(accounts).where(eq(accounts.id, id));
+			await insertAccount(tx, entry, 0);
+		},
+		{ accountId: id },
+	);
 }
 
 async function insertMessages(

@@ -15,6 +15,9 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 	let waveGeneration = -1;
 	let waveIds = new Set<number>();
 	const open = new Set<number>();
+	const beganAt = new Map<number, number>();
+	// A failed token whose newer read has not settled yet.
+	let failedAt: number | null = null;
 
 	function noteAction(): void {
 		generation += 1;
@@ -26,17 +29,44 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 		const id = nextId;
 		nextId += 1;
 		open.add(id);
+		beganAt.set(id, generation);
 		return id;
 	}
 
 	function end(id: number): void {
 		open.delete(id);
+		beganAt.delete(id);
+		if (failedAt !== null && !hasNewer(failedAt)) {
+			failedAt = null;
+			void goSignIn();
+		}
+	}
+
+	// A newer read that returned data has a session. Do not sign that action out.
+	function resolved(id: number): void {
+		if (failedAt !== null && (beganAt.get(id) ?? -1) > failedAt) failedAt = null;
+	}
+
+	function hasNewer(seen: number): boolean {
+		for (const id of open) {
+			if ((beganAt.get(id) ?? -1) > seen) return true;
+		}
+		return false;
 	}
 
 	async function goSignIn(): Promise<void> {
 		if (signingIn) return;
 		signingIn = true;
 		await deps.signIn();
+	}
+
+	async function rejectWave(seen: number): Promise<void> {
+		if (!hasNewer(seen)) {
+			failedAt = null;
+			await goSignIn();
+			return;
+		}
+		failedAt = seen;
 	}
 
 	async function finish(error: unknown, method: string, id: number): Promise<void> {
@@ -47,7 +77,7 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 			try {
 				await wave;
 			} catch {
-				if (seen === generation) await goSignIn();
+				await rejectWave(seen);
 			}
 			return;
 		}
@@ -61,7 +91,7 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 		try {
 			await runWave(seen);
 		} catch {
-			if (seen === generation) await goSignIn();
+			await rejectWave(seen);
 		}
 	}
 
@@ -81,6 +111,7 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 				if (typeof token !== "string" || token.length === 0) {
 					throw new Error("The session token is missing.");
 				}
+				failedAt = null;
 				// A newer action keeps its own allowance. This recovery still reloads.
 				if (seen === generation) {
 					for (const current of open) waveIds.add(current);
@@ -97,7 +128,7 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 		return pending;
 	}
 
-	return { noteAction, begin, end, finish };
+	return { noteAction, begin, end, resolved, finish };
 }
 
 function startsRefresh(error: unknown, method: string): boolean {
