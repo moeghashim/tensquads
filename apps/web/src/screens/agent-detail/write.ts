@@ -22,6 +22,7 @@ import { agentStatus } from "#/workspace/agent-view.ts";
 import { bounded } from "#/workspace/bounded.ts";
 import { frameAccountId, onFrameAccountReset } from "#/workspace/frame-load.ts";
 import { switchParts } from "#/workspace/styles.ts";
+import { settleWrite } from "#/workspace/write-result.ts";
 import { confirmRetired, nextWriteFence } from "#/write-fence.ts";
 import { type AgentDetailView, autonomyStyle, blank } from "./model.ts";
 
@@ -141,11 +142,12 @@ function createQueue(agentId: string, initialView: AgentDetailView) {
 
 	async function finishWrite(write: Write): Promise<boolean> {
 		const startedSession = agentSession();
-		try {
-			return await keptResponse(write, startedSession);
-		} catch {
+		const settled = await settleWrite(() => keptResponse(write, startedSession));
+		if (!settled.ok) {
+			if (settled.left) return false;
 			return failedResponse(write, startedSession);
 		}
+		return settled.value;
 	}
 
 	async function drainQueued(): Promise<void> {

@@ -1,4 +1,5 @@
 import { bounded } from "./bounded.ts";
+import { settleWrite } from "./write-result.ts";
 
 export interface LiveTick {
 	readonly accountId: string;
@@ -56,13 +57,15 @@ async function step(accountId: string, refresh: () => void | Promise<void>): Pro
 }
 
 async function advancedId(accountId: string): Promise<string> {
-	try {
+	const settled = await settleWrite(() => {
 		const call = advance;
 		if (!call) throw new Error("Traffic advance is not configured.");
-		return await bounded((signal) => call({ data: accountId, signal }));
-	} catch {
-		return "";
-	}
+		return bounded((signal) => call({ data: accountId, signal }));
+	});
+	if (settled.ok) return settled.value;
+	// The document is leaving. The click must not settle as an empty success.
+	if (settled.left) return new Promise(() => undefined);
+	return "";
 }
 
 async function refreshed(refresh: () => void | Promise<void>): Promise<void> {

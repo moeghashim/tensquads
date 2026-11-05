@@ -2,6 +2,7 @@ import { onRulesAccountReset } from "#/screens/rules/write-queue.ts";
 import { advanceWrites, currentWrites } from "#/workspace/approval-count.ts";
 import { bounded } from "#/workspace/bounded.ts";
 import { clearFrameHold } from "#/workspace/frame-load.ts";
+import { settleWrite } from "#/workspace/write-result.ts";
 
 import { clearOverviewHold } from "./load.ts";
 import type { OverviewData } from "./types.ts";
@@ -26,6 +27,8 @@ export interface DecisionResult {
 	readonly row: DecisionRow | null;
 	readonly readAt: number | null;
 	readonly dropLanded: boolean;
+	readonly left: boolean;
+	readonly refreshNeeded: boolean;
 }
 
 interface Job {
@@ -50,7 +53,16 @@ let seenServer: object | null = null;
 onRulesAccountReset(resetDecisions);
 
 function emptyResult(): DecisionResult {
-	return { wrote: false, refreshed: false, count: null, row: null, readAt: null, dropLanded: false };
+	return {
+		wrote: false,
+		refreshed: false,
+		count: null,
+		row: null,
+		readAt: null,
+		dropLanded: false,
+		left: false,
+		refreshNeeded: false,
+	};
 }
 
 export function decisionGeneration(): number {
@@ -229,7 +241,14 @@ async function runJob(job: Job, gen: number): Promise<void> {
 	if (activeKey === job.key) {
 		activeKey = null;
 	}
-	if (result.count !== null && result.readAt !== null) {
+	if (result.left) {
+		job.settled(result);
+		running = false;
+		return;
+	}
+	if (!result.wrote && result.refreshNeeded) {
+		releaseFailed(job.key);
+	} else if (result.count !== null && result.readAt !== null) {
 		reconcileDecisions(result.count, result.readAt, result.dropLanded);
 	}
 	job.settled(result);
@@ -242,17 +261,16 @@ async function runJob(job: Job, gen: number): Promise<void> {
 }
 
 async function runBounded(job: Job, gen: number): Promise<DecisionResult> {
-	let wrote = true;
-	let row: DecisionRow | null = null;
-	try {
-		row = decisionRow(await bounded(job.work));
-	} catch {
-		wrote = false;
-		row = null;
-	}
+	const settled = await settleWrite(() => bounded(job.work));
 	if (gen !== generation) {
 		return emptyResult();
 	}
+	if (!settled.ok && settled.left) {
+		return { ...emptyResult(), left: true };
+	}
+	const wrote = settled.ok;
+	const row = settled.ok ? decisionRow(settled.value) : null;
+	const refreshNeeded = !settled.ok && settled.refreshNeeded;
 	advanceWrites();
 	landed.set(job.key, currentWrites());
 	try {
@@ -260,10 +278,36 @@ async function runBounded(job: Job, gen: number): Promise<DecisionResult> {
 		if (gen !== generation) {
 			return emptyResult();
 		}
-		return { wrote, refreshed: true, count: read.count, row, readAt: read.readAt, dropLanded: read.dropLanded };
+		return {
+			wrote,
+			refreshed: true,
+			count: read.count,
+			row,
+			readAt: read.readAt,
+			dropLanded: read.dropLanded,
+			left: false,
+			refreshNeeded,
+		};
 	} catch {
-		return { wrote, refreshed: false, count: null, row, readAt: null, dropLanded: false };
+		return { wrote, refreshed: false, count: null, row, readAt: null, dropLanded: false, left: false, refreshNeeded };
 	}
+}
+
+// The write did not run. Drop its optimistic card and give the badge back.
+function releaseFailed(key: string): void {
+	if (!patches.some((patch) => patch.key === key)) return;
+	keys.delete(key);
+	landed.delete(key);
+	reflected.delete(key);
+	const next = patches.filter((patch) => patch.key !== key);
+	const live = liveKeys();
+	let pending = 0;
+	for (const patch of next) {
+		if (live.has(patch.key) && landed.get(patch.key) === undefined && !reflected.has(patch.key)) pending += 1;
+	}
+	patches = next;
+	target = pending === 0 ? null : (target ?? 0) + 1;
+	notify();
 }
 
 function decisionRow(value: unknown): DecisionRow | null {
