@@ -1,0 +1,23 @@
+(node:22474) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6NE69TEJGKDQYMPSH6HC3VF/.phase-test/product-evidence.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6NE69TEJGKDQYMPSH6HC3VF/.phase-test/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+persisted ordered rows [{"id":"event-1","seq":1},{"id":"event-2","seq":2},{"id":"event-3","seq":3},{"id":"event-4","seq":4},{"id":"parallel-0","seq":5},{"id":"parallel-1","seq":6},{"id":"parallel-2","seq":7},{"id":"parallel-3","seq":8}]
+duplicate delivery {"seen":true,"seq":8}
+persisted state after duplicate [{"accountId":"bus-05daed36","key":"status","value":"\"ready\"","sortOrder":4},{"accountId":"bus-05daed36","key":"count","value":"4","sortOrder":4}]
+other account sequence {"seq":1}
+other account state {}
+machine send 200 {"ok":true}
+take 0 200 [{"id":"event-1","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":["status","count"],"time":"23:59","set":{"status":"ready","count":1}},{"id":"event-2","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":["status","count"],"time":"00:01","set":{"status":"ready","count":2}},{"id":"event-3","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":["status","count"],"time":"00:01","set":{"status":"ready","count":3}},{"id":"event-4","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":["status","count"],"time":"00:01","set":{"status":"ready","count":4}},{"id":"parallel-0","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"},{"id":"parallel-1","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"},{"id":"parallel-2","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"},{"id":"parallel-3","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"},{"id":"queue-task","from":"researcher","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}]
+take 1 200 []
+spoofed sender 401 The token was rejected.
+malformed event 400 The message was rejected.
+cross account 401 The token was rejected.
+bad signature 401 The token was rejected.
+dead-letter rows [{"id":"dead-dead-proof","kind":"Escalation","body":"A message failed all retries."}]
+WebSocket event {"id":"socket-proof","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}
+outage local events [{"id":"before-outage","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"},{"id":"during-outage","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00","set":{"recovered":true}}]
+outage alarm {"alarm":1793868989591}
+recovered persisted rows [{"id":"before-outage","seq":1},{"id":"during-outage","seq":2}]
+recovered persisted state [{"accountId":"bus-4653e606","key":"recovered","value":"true","sortOrder":2}]
+Disposable Worker and trial rows removed
