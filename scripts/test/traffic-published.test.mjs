@@ -7,6 +7,7 @@ import {
 	publishTrafficEvent,
 	retirePublishedTraffic,
 	shownTrafficEvents,
+	trafficAccountGeneration,
 	watchTrafficAccount,
 } from "../../apps/web/src/screens/traffic/published.ts";
 
@@ -50,7 +51,7 @@ test("another account's event is not appended", () => {
 });
 
 test("publish records the event after the write counter moves", () => {
-	publishTrafficEvent("acct", event("e100", "Daily stock check"));
+	publishTrafficEvent("acct", event("e100", "Daily stock check"), trafficAccountGeneration());
 	const item = publishedTrafficSnapshot().at(-1);
 	assert.equal(item.accountId, "acct");
 	assert.equal(item.event.text, "Daily stock check");
@@ -76,7 +77,7 @@ test("publish records the event after the write counter moves", () => {
 		false,
 	);
 	watchTrafficAccount("acct");
-	publishTrafficEvent("acct", event("e200", "kept"));
+	publishTrafficEvent("acct", event("e200", "kept"), trafficAccountGeneration());
 	assert.equal(
 		publishedTrafficSnapshot().some((row) => row.event.id === "e200"),
 		true,
