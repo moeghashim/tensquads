@@ -112,9 +112,7 @@ export function createRepositories(db: AppDatabase): RepositoryBag {
 		bus: {
 			listEvents: (scope) => listEvents(db, scope),
 			readStore: (scope) => readStore(db, scope),
-			nextEvent: async (scope, deadlineAt) => {
-				await nextEvent(db, scope, deadlineAt);
-			},
+			nextEvent: (scope, deadlineAt) => nextEvent(db, scope, deadlineAt),
 		},
 		policy: {
 			listRules: (scope) => listRules(db, scope),
