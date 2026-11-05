@@ -26,6 +26,10 @@ export function endSessionRead(requestId: number): void {
 	refresh.end(requestId);
 }
 
+export function resolvedSessionRead(requestId: number): void {
+	refresh.resolved(requestId);
+}
+
 export async function finishSessionRead(error: unknown, method: string, requestId: number): Promise<void> {
 	await refresh.finish(error, method, requestId);
 }

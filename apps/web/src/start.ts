@@ -12,7 +12,9 @@ const sessionRefresh = createMiddleware({ type: "function" }).client(async ({ ne
 	const refresh = await loadSessionRefresh();
 	const requestId = refresh.beginSessionRead();
 	try {
-		return await next();
+		const result = await next();
+		refresh.resolvedSessionRead(requestId);
+		return result;
 	} catch (error) {
 		await refresh.finishSessionRead(error, method, requestId);
 		// Navigation is synchronous. Cleanup must not wait on a module download.
