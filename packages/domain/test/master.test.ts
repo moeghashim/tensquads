@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { digestOf } from "@tensquads/agent-kit";
+import { digestOf, parseWebsiteTask, renderPage } from "@tensquads/agent-kit";
 
 import { checkBrief, checkPage, checkPublished, checkResearch, wordCount } from "../src/master/checks.ts";
 import { pageLinks } from "../src/master/hrefs.ts";
-import { renderPage } from "../src/master/page-render.ts";
 import { proofStory } from "../src/master/proof.ts";
 import type { PageReader } from "../src/master/types.ts";
 
@@ -25,14 +24,13 @@ function mandateOf(payload: Readonly<Record<string, unknown>>) {
 test("the thirteen events stay in order and cite the gap", async () => {
 	const story = await proofStory();
 	assert.equal(story.events.length, 13);
-	const expectedPage = [
-		"<h1>Proof Kitchen</h1>",
-		'<p class="cuisine">Levantine</p>',
-		'<section><h2>Mains</h2><div class="row"><span class="name">Chicken tawook</span><span class="price">$14</span></div></section>',
-		'<section><h2>Salads</h2><div class="row"><span class="name">Fattoush</span><span class="price">[PRICE]</span></div></section>',
-		'<a href="https://example.com/alpha">Alpha Grill</a>',
-	].join("");
-	assert.equal(story.pageHtml, expectedPage);
+	assert.deepEqual(story.choice, { template: "page", palette: "task" });
+	assert.equal(story.pageHtml, renderPage(websiteTask(story), story.choice));
+	assert.equal(story.pageHtml.includes("<!doctype html>"), true);
+	assert.equal(story.pageHtml.includes("Proof Kitchen"), true);
+	assert.equal(story.pageHtml.includes("Chicken tawook"), true);
+	assert.equal(story.pageHtml.includes("[PRICE]"), true);
+	assert.equal(story.pageHtml.includes('class="cuisine"'), true);
 	const skills = story.events.map((event) => `${event.kind}:${event.from}:${event.to}:${event.skill}`);
 	assert.deepEqual(skills, [
 		"Task:master:market:task.route",
@@ -71,12 +69,8 @@ test("the thirteen events stay in order and cite the gap", async () => {
 	const research = await checkResearch(story.report, reader(story.pages));
 	const brief = checkBrief(story.brief, story.report);
 	const page = await checkPage({
+		...pageFields(story),
 		previewUrl: story.previewUrl,
-		businessName: story.request.businessName,
-		businessType: story.request.businessType,
-		cuisine: story.request.cuisine,
-		items: story.request.items,
-		choice: story.choice,
 		readPage: reader(story.pages),
 		audit: () => story.audit,
 	});
@@ -121,39 +115,33 @@ test("the page check rejects bytes that are not the kit render, a broken link, a
 	const invented = story.pageHtml.replace("Fattoush", "Dragon taco");
 	const pages = { ...story.pages, [story.previewUrl]: { status: 200, body: invented } };
 	const badItem = await checkPage({
+		...pageFields(story),
 		previewUrl: story.previewUrl,
-		businessName: story.request.businessName,
-		businessType: story.request.businessType,
-		cuisine: story.request.cuisine,
-		items: story.request.items,
-		choice: story.choice,
 		readPage: reader(pages),
 		audit: () => story.audit,
 	});
 	assert.equal(badItem.pass, false);
 	assert.equal(badItem.evidence.includes("The preview does not match the rendered page."), true);
-	const brokenChoice = { links: [{ href: "https://example.com/missing", text: "Alpha Grill" }] };
-	const brokenHtml = renderPage(story.request, brokenChoice);
+	const dead = "https://example.com/missing";
+	const brokenReport = {
+		...story.report,
+		sources: [...story.report.sources, dead],
+		gapEvidence: { sourceUrl: dead, quote: story.report.gap },
+	};
+	const brokenHtml = renderPage(websiteTask(story, brokenReport), story.choice);
 	const brokenPages = { ...story.pages, [story.previewUrl]: { status: 200, body: brokenHtml } };
 	const badLink = await checkPage({
+		...pageFields(story),
+		report: brokenReport,
 		previewUrl: story.previewUrl,
-		businessName: story.request.businessName,
-		businessType: story.request.businessType,
-		cuisine: story.request.cuisine,
-		items: story.request.items,
-		choice: brokenChoice,
 		readPage: reader(brokenPages),
 		audit: () => story.audit,
 	});
 	assert.equal(badLink.evidence.includes("A link is broken."), true);
 	assert.equal(badLink.evidence.includes("The preview does not match the rendered page."), false);
 	const flagged = await checkPage({
+		...pageFields(story),
 		previewUrl: story.previewUrl,
-		businessName: story.request.businessName,
-		businessType: story.request.businessType,
-		cuisine: story.request.cuisine,
-		items: story.request.items,
-		choice: story.choice,
 		readPage: reader(story.pages),
 		audit: () => ({ ...story.audit, horizontalScroll: true }),
 	});
@@ -170,27 +158,21 @@ test("the page check rejects bytes that are not the kit render, a broken link, a
 
 test("a grocer page does not need a cuisine", async () => {
 	const story = await proofStory();
-	const grocer = { ...story.request, businessType: "grocer" as const, cuisine: undefined };
-	const html = renderPage(grocer, story.choice);
+	const html = renderPage(websiteTask(story, story.report, "grocer"), story.choice);
 	const pages = { ...story.pages, [story.previewUrl]: { status: 200, body: html } };
 	const page = await checkPage({
-		previewUrl: story.previewUrl,
-		businessName: grocer.businessName,
+		...pageFields(story),
 		businessType: "grocer",
-		items: grocer.items,
-		choice: story.choice,
+		cuisine: undefined,
+		previewUrl: story.previewUrl,
 		readPage: reader(pages),
 		audit: () => story.audit,
 	});
 	assert.equal(page.pass, true);
-	assert.equal(html.includes("Levantine"), false);
+	assert.equal(html.includes('class="cuisine"'), false);
 	const restaurant = await checkPage({
+		...pageFields(story),
 		previewUrl: story.previewUrl,
-		businessName: story.request.businessName,
-		businessType: "restaurant",
-		cuisine: "Levantine",
-		items: story.request.items,
-		choice: story.choice,
 		readPage: reader(pages),
 		audit: () => story.audit,
 	});
@@ -198,15 +180,38 @@ test("a grocer page does not need a cuisine", async () => {
 	assert.equal(restaurant.evidence.includes("The preview does not match the rendered page."), true);
 });
 
-function pageInput(story: Awaited<ReturnType<typeof proofStory>>, html: string, choice: unknown = story.choice) {
-	const pages = { ...story.pages, [story.previewUrl]: { status: 200, body: html } };
+type Story = Awaited<ReturnType<typeof proofStory>>;
+
+function websiteTask(story: Story, report = story.report, businessType = story.request.businessType) {
+	return parseWebsiteTask({
+		businessName: story.request.businessName,
+		businessType,
+		brief: { text: story.brief, gap: report.gap },
+		report,
+		gapEvidence: report.gapEvidence,
+		items: story.request.items,
+		...(businessType === "restaurant" && story.request.cuisine ? { cuisine: story.request.cuisine } : {}),
+	});
+}
+
+function pageFields(story: Story) {
 	return {
-		previewUrl: story.previewUrl,
 		businessName: story.request.businessName,
 		businessType: story.request.businessType,
 		cuisine: story.request.cuisine,
 		items: story.request.items,
+		brief: story.brief,
+		report: story.report,
+		choice: story.choice,
+	};
+}
+
+function pageInput(story: Story, html: string, choice: unknown = story.choice) {
+	const pages = { ...story.pages, [story.previewUrl]: { status: 200, body: html } };
+	return {
+		...pageFields(story),
 		choice,
+		previewUrl: story.previewUrl,
 		readPage: reader(pages),
 		audit: () => story.audit,
 	};
@@ -251,8 +256,20 @@ test("the page check requires the kit bytes and resolves relative links", async 
 	const relative = await checkPage(pageInput(story, `${story.pageHtml}<a href="/does-not-exist">Order</a>`));
 	assert.equal(relative.pass, false);
 	assert.equal(relative.evidence.includes("A link is broken."), true);
-	const sections = renderPage({ ...story.request, sections: ["Salads", "Mains"] }, story.choice);
-	assert.equal(sections.indexOf("Salads") < sections.indexOf("Mains"), true);
+	const saladsFirst = [story.request.items[1], story.request.items[0]].filter((item) => item !== undefined);
+	const reordered = renderPage(
+		parseWebsiteTask({
+			businessName: story.request.businessName,
+			businessType: story.request.businessType,
+			brief: { text: story.brief, gap: story.report.gap },
+			report: story.report,
+			gapEvidence: story.report.gapEvidence,
+			items: saladsFirst,
+			cuisine: story.request.cuisine,
+		}),
+		story.choice,
+	);
+	assert.equal(reordered.indexOf(">Salads<") < reordered.indexOf(">Mains<"), true);
 });
 
 test("the published check requires the account site", async () => {

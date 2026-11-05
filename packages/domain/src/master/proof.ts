@@ -1,7 +1,14 @@
-import { digestOf, type ListedItem, type Mandate, type ResearchReport } from "@tensquads/agent-kit";
+import {
+	digestOf,
+	type ListedItem,
+	type Mandate,
+	type PageChoice,
+	parseWebsiteTask,
+	type ResearchReport,
+	renderPage,
+} from "@tensquads/agent-kit";
 
 import type { BusEvent, BusKind } from "../bus/types.ts";
-import { type PageChoice, renderPage } from "./page-render.ts";
 import { type BusinessRequest, mandateFor, type PageAudit, type PageFetch } from "./types.ts";
 
 export const PROOF_PREVIEW_URL = "https://preview.example/proof";
@@ -23,7 +30,7 @@ const proofRequest: BusinessRequest = {
 	],
 };
 
-const proofChoice: PageChoice = { links: [{ href: ALPHA, text: "Alpha Grill" }] };
+const proofChoice: PageChoice = { template: "page", palette: "task" };
 
 const proofAudit: PageAudit = {
 	keyboard: true,
@@ -35,8 +42,19 @@ function proofBrief(): string {
 	return "Proof Kitchen serves Levantine food. Competitors list a salad price. The menu hides salad prices. Show Fattoush with a visible price and keep Chicken tawook at $14.";
 }
 
-function proofPage(): string {
-	return renderPage(proofRequest, proofChoice);
+function proofPage(report: ResearchReport, brief: string): string {
+	return renderPage(
+		parseWebsiteTask({
+			businessName: proofRequest.businessName,
+			businessType: proofRequest.businessType,
+			brief: { text: brief, gap: report.gap },
+			report,
+			gapEvidence: report.gapEvidence,
+			items: proofRequest.items,
+			...(proofRequest.cuisine ? { cuisine: proofRequest.cuisine } : {}),
+		}),
+		proofChoice,
+	);
 }
 
 function proofReport(): ResearchReport {
@@ -109,7 +127,7 @@ export async function proofStory(): Promise<ProofStory> {
 	const request = proofRequest;
 	const report = proofReport();
 	const brief = proofBrief();
-	const pageHtml = proofPage();
+	const pageHtml = proofPage(report, brief);
 	const items: readonly ListedItem[] = request.items;
 	const buildMandate = mandateFor({
 		approvalId: "poc-08",

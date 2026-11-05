@@ -36,6 +36,8 @@ async function checked(html: string) {
 		businessType: story.request.businessType,
 		cuisine: story.request.cuisine,
 		items: story.request.items,
+		brief: story.brief,
+		report: story.report,
 		choice: story.choice,
 		readPage: async (url) => pages[url] ?? { status: 404, body: "" },
 		audit: () => story.audit,

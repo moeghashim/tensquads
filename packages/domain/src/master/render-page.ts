@@ -9,6 +9,8 @@ export interface RenderedPage {
 }
 
 export function pageDocument(html: string): string {
+	const start = html.trimStart().toLowerCase();
+	if (start.startsWith("<!doctype") || start.startsWith("<html")) return html;
 	return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0}</style></head><body>${html}</body></html>`;
 }
 

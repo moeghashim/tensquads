@@ -1,7 +1,15 @@
-import type { BusinessType, Competitor, GapEvidence, ListedItem, ResearchReport } from "@tensquads/agent-kit";
+import {
+	type BusinessType,
+	type Competitor,
+	type GapEvidence,
+	type ListedItem,
+	parsePageChoice,
+	parseWebsiteTask,
+	type ResearchReport,
+	renderPage,
+} from "@tensquads/agent-kit";
 
 import { pageLinks } from "./hrefs.ts";
-import { parsePageChoice, renderPage } from "./page-render.ts";
 import type { RenderedPage } from "./render-page.ts";
 import type { CheckOutcome, PageAudit, PageFetch, PageReader } from "./types.ts";
 
@@ -11,7 +19,8 @@ export interface PageCheckInput {
 	readonly businessType: BusinessType;
 	readonly cuisine?: string;
 	readonly items: readonly ListedItem[];
-	readonly sections?: readonly string[];
+	readonly brief: string;
+	readonly report: ResearchReport;
 	readonly choice: unknown;
 	readonly readPage: PageReader;
 	readonly audit: (html: string) => PageAudit | Promise<PageAudit>;
@@ -181,18 +190,21 @@ interface CheckedPage extends CheckOutcome {
 }
 
 function renderedBytes(input: PageCheckInput): string | null {
-	const choice = parsePageChoice(input.choice);
-	if (!choice) return null;
-	return renderPage(
-		{
+	try {
+		const choice = parsePageChoice(input.choice);
+		const task = parseWebsiteTask({
 			businessName: input.businessName,
 			businessType: input.businessType,
+			brief: { text: input.brief, gap: input.report.gap },
+			report: input.report,
+			gapEvidence: input.report.gapEvidence,
 			items: input.items,
 			...(input.cuisine ? { cuisine: input.cuisine } : {}),
-			...(input.sections ? { sections: input.sections } : {}),
-		},
-		choice,
-	);
+		});
+		return renderPage(task, choice);
+	} catch {
+		return null;
+	}
 }
 
 export async function checkPage(input: PageCheckInput): Promise<CheckedPage> {
