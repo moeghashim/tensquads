@@ -9,6 +9,8 @@ const designContrastFaults = [
 	"home-pricing-note",
 	"home-footer-line",
 	"home-online-pill",
+	// The approved homepage draws the preview host in #8f8f8f on #fcfcfc.
+	"home-preview-host",
 	"signin-divider",
 	"signin-terms",
 	"signup-inactive-step",

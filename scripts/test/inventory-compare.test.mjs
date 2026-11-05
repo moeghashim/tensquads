@@ -94,16 +94,38 @@ test("built screen inventories match each rendered design state and reject occur
 			}, name);
 			await page.addScriptTag({ content: bundle.outputFiles[0].text });
 			await page.getByText("tensquads", { exact: true }).first().waitFor();
+			if (name === "Home") {
+				await canvas.setContent(readFileSync("docs/designs/home/home.html", "utf8"), {
+					waitUntil: "domcontentloaded",
+				});
+			}
 			const compare = async (state = {}) => {
-				const rendered = await renderDesign(canvas, design, state, allowFor(name));
-				const expected = name === "Onboarding" ? rewriteBuiltInventory(rendered, agentNames) : rendered;
+				if (name === "Home" && state.kind) {
+					await canvas.getByRole("button", { name: "New business", exact: true }).click();
+				}
+				const rendered =
+					name === "Home" ? await capture(canvas) : await renderDesign(canvas, design, state, allowFor(name));
+				const expected =
+					name === "Onboarding"
+						? rewriteBuiltInventory(rendered, agentNames)
+						: name === "Home"
+							? {
+									...rendered,
+									handlers: (await renderDesign(canvas, design, state, allowFor(name))).handlers,
+								}
+							: rendered;
 				const actual = await capture(page);
+				if (name === "Home") {
+					const prompt = actual.handlers.find((handler) => handler.handler === "onDraft");
+					assert.equal(prompt?.tag, "textarea");
+					assert.equal(prompt?.event, "onChange");
+					assert.equal(prompt?.text, "hero-prompt");
+				}
 				assert.deepEqual(compareInventory(expected, actual), emptyDiff);
 				return { expected, actual };
 			};
 			const { expected, actual } = await compare();
 			if (name === "Home") {
-				assert.equal(actual.handlers.find((handler) => handler.handler === "onDraft").text, "hero-prompt");
 				await assertHomeFaults(page, expected, actual);
 				await page.getByRole("button", { name: "New business", exact: true }).click();
 				await compare({ kind: "new" });

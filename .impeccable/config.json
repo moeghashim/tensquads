@@ -8,6 +8,15 @@
         "value": "inter",
         "createdAt": "2026-11-01T12:28:06.630Z",
         "reason": "Root head loads the same Inter stylesheet the design helmet names."
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "docs/designs/home/home.html"
+        ],
+        "createdAt": "2026-11-03T17:34:30.684Z",
+        "reason": "Muted #8f8f8f on #fcfcfc is the brief colour. A recolor to #737373 was rejected. This page adds no new muted colour. The detector only flags that pair here."
       }
     ]
   }

@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { compareInventory, type inventoryHtml } from "../scripts/design-inventory.mjs";
+import { compareInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { allowFor } from "../scripts/inventory-allow.mjs";
 import { renderDesign } from "../scripts/render-design.mjs";
 import { agentNames, rewriteBuiltInventory } from "./squadmate-copy.ts";
@@ -27,25 +27,38 @@ async function bodyHtml(page: { locator: (selector: string) => { innerHTML: () =
 	return page.locator("body").innerHTML();
 }
 
+const approvedHome = inventoryHtml(readFileSync(new URL("../docs/designs/home/home.html", import.meta.url), "utf8"));
+
 async function expectInventory(
 	page: import("@playwright/test").Page,
 	name: "Home" | "Onboarding" | "SignIn",
 	built: ReturnType<typeof builtInventory>,
 	state: Record<string, unknown> = {},
 ) {
+	const expected =
+		name === "Home"
+			? { ...approvedHome, handlers: (await canvasInventory(page, "Home", state)).handlers }
+			: await canvasInventory(page, name, state);
+	const diff = compareInventory(expected, built);
+	expect(diff.extraTexts).toEqual([]);
+	expect(diff.missingTexts).toEqual([]);
+	expect(diff.extraLinks).toEqual([]);
+	expect(diff.missingLinks).toEqual([]);
+	expect(diff.extraHandlers).toEqual([]);
+	expect(diff.missingHandlers).toEqual([]);
+	expect(diff.extraLoops).toEqual([]);
+	expect(diff.missingLoops).toEqual([]);
+}
+
+async function canvasInventory(
+	page: import("@playwright/test").Page,
+	name: "Home" | "Onboarding" | "SignIn",
+	state: Record<string, unknown>,
+) {
 	const canvas = await page.context().newPage();
 	try {
 		const rendered = await renderDesign(canvas, readInventory(name), state, allowFor(name));
-		const expected = name === "Onboarding" ? rewriteBuiltInventory(rendered, agentNames) : rendered;
-		const diff = compareInventory(expected, built);
-		expect(diff.extraTexts).toEqual([]);
-		expect(diff.missingTexts).toEqual([]);
-		expect(diff.extraLinks).toEqual([]);
-		expect(diff.missingLinks).toEqual([]);
-		expect(diff.extraHandlers).toEqual([]);
-		expect(diff.missingHandlers).toEqual([]);
-		expect(diff.extraLoops).toEqual([]);
-		expect(diff.missingLoops).toEqual([]);
+		return name === "Onboarding" ? rewriteBuiltInventory(rendered, agentNames) : rendered;
 	} finally {
 		await canvas.close();
 	}
@@ -53,32 +66,40 @@ async function expectInventory(
 
 test("the homepage inventory matches the design texts, handlers, loops, and links", async ({ page }) => {
 	await page.goto("/");
-	await page.getByRole("button", { name: "New business" }).click();
-	await expectInventory(page, "Home", builtInventory(await bodyHtml(page)), { kind: "new" });
+	await expectInventory(page, "Home", builtInventory(await bodyHtml(page)));
 	await expect(page.getByText("Leen Dates").first()).toBeVisible();
 	await expect(page.getByText("Website builder").first()).toBeVisible();
 	await expect(page.getByText("Meet the squad", { exact: true })).toBeVisible();
 });
 
+function faultyHomeHtml(page: import("@playwright/test").Page, fault: string) {
+	// The HTML is read in this same turn. A later hydration pass puts a removed logo back.
+	return page.evaluate((fault) => {
+		if (fault === "extra paragraph") {
+			const paragraph = document.createElement("p");
+			paragraph.textContent = "About Terms";
+			document.body.append(paragraph);
+		} else if (fault === "missing logo") {
+			const logo = Array.from(document.querySelectorAll("span")).find(
+				(node) => node.textContent === "Northwind Apparel",
+			);
+			if (!logo) throw new Error("Northwind Apparel was not in the document");
+			logo.remove();
+		} else {
+			const link = Array.from(document.querySelectorAll("a")).find(
+				(node) => node.textContent?.trim() === "Security",
+			);
+			if (!link) throw new Error("Security link was not in the document");
+			link.setAttribute("href", "/signup");
+		}
+		return document.body.innerHTML;
+	}, fault);
+}
+
 for (const fault of ["extra paragraph", "missing logo", "changed Security target"]) {
 	test(`${fault} fails the homepage inventory`, async ({ page }) => {
 		await page.goto("/");
-		await page.evaluate((fault) => {
-			if (fault === "extra paragraph") {
-				const paragraph = document.createElement("p");
-				paragraph.textContent = "About Terms";
-				document.body.append(paragraph);
-			} else if (fault === "missing logo") {
-				Array.from(document.querySelectorAll("span"))
-					.find((node) => node.textContent === "Northwind Apparel")
-					?.remove();
-			} else {
-				Array.from(document.querySelectorAll("a"))
-					.find((node) => node.textContent?.trim() === "Security")
-					?.setAttribute("href", "/signup");
-			}
-		}, fault);
-		await expect(expectInventory(page, "Home", builtInventory(await bodyHtml(page)))).rejects.toThrow();
+		await expect(expectInventory(page, "Home", builtInventory(await faultyHomeHtml(page, fault)))).rejects.toThrow();
 	});
 }
 
