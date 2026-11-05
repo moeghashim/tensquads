@@ -1,5 +1,5 @@
 // The plan's three diagrams, redrawn after the originals, with the build status
-// on each part. The status comes from git (see status.mjs). Plain HTML, CSS and SVG.
+// on each part. See ../README.md for the status sources. Plain HTML, CSS and SVG.
 import { BUILT, LABEL, PHASES, PLANNED, PROGRESS, SCREENS } from "./status.mjs";
 
 const css = `<style>
@@ -31,16 +31,12 @@ const css = `<style>
 .sc i{width:7px;height:7px;border-radius:999px;flex:none}
 .sc.built i{background:#00a240}.sc.progress i{background:#e39b00}.sc.planned i{box-shadow:inset 0 0 0 1.5px #8f8f8f}
 .sc.planned{color:#8f8f8f}
-.ph{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.ph{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .ph .bx{text-align:left;padding:12px}
 .ph .bx b{font-size:14px}
 .bar{height:6px;border-radius:999px;background:rgba(13,13,13,.08);overflow:hidden;margin-top:10px}
 .bar span{display:block;height:100%;background:#00a240}
 .cnt{font-size:12px;color:#5d5d5d;margin-top:4px}
-.track{position:relative;height:18px;margin-top:10px}
-.track::before{content:"";position:absolute;left:0;right:0;top:8px;height:1.5px;background:#d4d4d4}
-.track i{position:absolute;top:3px;width:11px;height:11px;transform:translateX(-50%) rotate(45deg);background:#d4d4d4;border-radius:2px}
-.track i.built{background:#00a240}
 .seq{overflow-x:auto}.seq svg{display:block;min-width:720px;width:100%;height:auto}
 .hero{border-radius:16px;background:#181818;color:#fff;padding:22px 22px 20px;margin:8px 0 28px}
 .hero h2{color:#fff;margin:0;font-size:24px;line-height:30px}
@@ -50,12 +46,12 @@ const css = `<style>
 .hero .big span{color:#c9c9c9}
 .hero .bar{background:rgba(255,255,255,.15);height:8px}
 .now{margin-top:14px;font-size:14px;color:#e8e8e8}.now b{color:#fff}
-@media (max-width:760px){.g3{grid-template-columns:1fr 1fr}.g4{grid-template-columns:1fr 1fr}.ph{grid-template-columns:1fr 1fr}.dn{height:12px}.dn::before{display:none}.track{display:none}}
+@media (max-width:760px){.g3{grid-template-columns:1fr 1fr}.g4{grid-template-columns:1fr 1fr}.ph{grid-template-columns:1fr 1fr}.dn{height:12px}.dn::before{display:none}}
 </style>`;
 
 const pill = (s) => `<span class="pill ${s}">${LABEL[s]}</span>`;
 const box = (s, title, sub, extra = "") => `<div class="bx ${s}"><b>${title}</b>${sub ? `<small>${sub}</small>` : ""}${extra}${pill(s)}</div>`;
-const legend = `<div class="legend">${pill(BUILT)}${pill(PROGRESS)}${pill(PLANNED)}<span>Status comes from git: a task is built when its branch is merged into main.</span></div>`;
+const legend = `<div class="legend">${pill(BUILT)}${pill(PROGRESS)}${pill(PLANNED)}<span>Status comes from git: a task is built when its pull request is merged. Tasks in other repositories are read from GitHub.</span></div>`;
 
 function layers(st) {
 	const web = st.of(SCREENS.flatMap(([, , t]) => t));
@@ -102,13 +98,10 @@ function phases(st) {
 		const sub = tasks.length > 1 ? `<div class="bar"><span style="width:${Math.round((done / tasks.length) * 100)}%"></span></div><div class="cnt">${done} of ${tasks.length} tasks merged</div>` : "";
 		return `<div class="bx ${s}"><b>${n} ${t}</b><small>${d}</small>${sub}${pill(s)}</div>`;
 	}).join("");
-	const marks = PHASES.slice(0, 5)
-		.map(([, , , tasks], i) => `<i class="${st.of(tasks) === BUILT ? "built" : ""}" style="left:${((i + 1) / 6) * 100}%"></i>`)
-		.join("");
-	return `<div class="dg" role="img" aria-label="Six phases, each with its build status.">
-<p class="dg-lead">Six phases. Each phase ends with a check. Screens follow the design order.</p>
-<div class="ph">${cards}</div><div class="track">${marks}</div>
-<p class="dg-note">Each diamond is a check: make verify returns 0 in CI, the screenshots are attached, the reviewer found no fault, and Moe answered the open questions. A green diamond is a passed check. The final report comes after phase 3.</p>
+	return `<div class="dg" role="img" aria-label="Eight phases, each with its build status.">
+<p class="dg-lead">Eight phases. Each phase ends with a check. Screens follow the design order.</p>
+<div class="ph">${cards}</div>
+<p class="dg-note">Each phase ends with a check: make verify returns 0 in CI, the screenshots are attached, the reviewer found no fault, and Moe answered the open questions. A green phase passed its check. The final report comes after phase 3.</p>
 </div>`;
 }
 

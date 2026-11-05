@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 import { DIAGRAMS, summary } from "../../apps/landing/review-src/diagrams.mjs";
-import { BUILT, PLANNED, PROGRESS, readStatus } from "../../apps/landing/review-src/status.mjs";
+import { BUILT, EXTERNAL, PLANNED, PROGRESS, readStatus } from "../../apps/landing/review-src/status.mjs";
 
 function repository(t) {
 	const cwd = mkdtempSync(join(process.cwd(), ".review-status-test-"));
@@ -53,7 +53,32 @@ test("merged history survives deleted and advanced origin branches", (t) => {
 	assert.match(layers, /class="sc built"><i><\/i>4 Chat/);
 	assert.match(layers, /3 of 10 built/);
 	assert.match(DIAGRAMS["build phases"](st), /3 of 7 tasks merged/);
-	assert.match(summary(st, "abc", "2026-11-03"), /<strong>4 of 12<\/strong>/);
+	assert.match(summary(st, "abc", "2026-11-03"), /<strong>4 of 17<\/strong>/);
+});
+
+test("external states override local history and reach phase cards and totals", (t) => {
+	const { git, merge } = repository(t);
+	const tasks = Object.keys(EXTERNAL);
+	for (const task of tasks) merge(task);
+	merge("05-proof-of-concept");
+	for (const state of [PLANNED, PROGRESS, BUILT]) {
+		const external = Object.fromEntries(tasks.map((task) => [task, state]));
+		const st = readStatus(git, "main", external);
+		for (const task of tasks) assert.equal(st.one(task), state);
+		assert.equal(st.one("05-proof-of-concept"), BUILT);
+		assert.equal(st.one("02-chat"), PLANNED);
+		assert.equal(st.of(tasks), state);
+		const phaseState = state === BUILT ? BUILT : PROGRESS;
+		assert.equal(st.of([...tasks, "05-proof-of-concept"]), phaseState);
+		assert.ok(DIAGRAMS["build phases"](st).includes(`<div class="bx ${phaseState}"><b>5 Proof</b>`));
+		assert.match(summary(st, "abc", "2026-11-03"), new RegExp(`<strong>${state === BUILT ? 4 : 1} of 17</strong>`));
+	}
+	const st = readStatus(git, "main", { [tasks[0]]: PLANNED });
+	assert.equal(st.one(tasks[0]), PLANNED);
+	assert.equal(st.one(tasks[1]), BUILT);
+	assert.equal(st.of(tasks), PROGRESS);
+	const noLocalHistory = readStatus(() => "", "main", Object.fromEntries(tasks.map((task) => [task, BUILT])));
+	for (const task of tasks) assert.equal(noLocalHistory.one(task), BUILT);
 });
 
 test("core boxes follow their functional tasks while interfaces follow foundation", (t) => {
