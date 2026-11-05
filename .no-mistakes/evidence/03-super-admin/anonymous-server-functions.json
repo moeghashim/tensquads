@@ -1,0 +1,26 @@
+[
+  {
+    "name": "loadAdminAccounts",
+    "redirectTo": "/signin",
+    "isRedirect": true,
+    "location": "/signin"
+  },
+  {
+    "name": "loadAdminImages",
+    "redirectTo": "/signin",
+    "isRedirect": true,
+    "location": "/signin"
+  },
+  {
+    "name": "loadAdminAttention",
+    "redirectTo": "/signin",
+    "isRedirect": true,
+    "location": "/signin"
+  },
+  {
+    "name": "openSpecialSession",
+    "redirectTo": "/signin",
+    "isRedirect": true,
+    "location": "/signin"
+  }
+]

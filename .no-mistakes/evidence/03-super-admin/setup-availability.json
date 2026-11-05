@@ -1,0 +1,8 @@
+{
+  "publishable": false,
+  "secret": false,
+  "neon": false,
+  "testDatabase": false,
+  "cloudflareToken": false,
+  "cloudflareAccount": false
+}
