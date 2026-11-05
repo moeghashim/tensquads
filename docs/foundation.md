@@ -129,7 +129,7 @@ Generate the light tokens and their override record together with `node scripts/
 
 ## Verification limits
 
-`make verify` runs `check`, unit tests, e2e tests, design hashes, and the conditional statechart check in that order. Run `npx playwright install chromium` once before e2e. Playwright uses `http://localhost:3000`, starts its own server, and does not reuse an existing server. Screenshots are `e2e/blank.spec.ts-snapshots/empty-1440.png` and `empty-390.png`, with no platform segment. Axe disables `page-has-heading-one` only for this blank page, where a heading would introduce visible text. Later screens still need their own behaviour, keyboard, overflow, and design comparisons.
+`make verify` first deletes Clerk users whose whole address is `sq-` plus eight hexadecimal characters at `example.com` and whose age is more than two hours. It then runs `check`, unit tests, e2e tests, design hashes, and the conditional statechart check. The e2e command deletes those same users again before Playwright starts. The pattern does not match `moe@10claws.com`, `subs@10claws.com`, or `demo@10squads.com`. Run `npx playwright install chromium` once before e2e. Playwright uses `http://localhost:3000`, starts its own server, and does not reuse an existing server. Screenshots are `e2e/blank.spec.ts-snapshots/empty-1440.png` and `empty-390.png`, with no platform segment. Axe disables `page-has-heading-one` only for this blank page, where a heading would introduce visible text. Later screens still need their own behaviour, keyboard, overflow, and design comparisons.
 
 `npm run statechart:check` runs when `packages/statecharts` differs from `origin/main`, or when a code file named in a model's `# model:` comment differs. `Approval.tla` names `packages/domain/src/policy/decide.ts`. Untracked files count. A diff that cannot be read also runs the check. It runs the discovered models in parallel. After TLC exits 0, the generated `chart.mmd` must equal the committed chart. A chart that is not a `stateDiagram-v2`, a missing generated chart, or any difference exits non-zero. TLC's own non-zero exit is returned as-is. The temporary directory is removed after the comparison.
 
@@ -145,10 +145,10 @@ GitHub Actions runs `make verify` on Linux and macOS and a separate Cloudflare b
 | --- | --- |
 | `npm run check` | Check native tools, Biome, file length, and root and workspace types |
 | `npm test` | Run script tests and each workspace's test command. See [package.json](../package.json). Most database tests use in-memory PGlite; Cloudflare bus integration tests use Miniflare and `TEST_DATABASE_URL` |
-| `npm run e2e` | Check the blank page with Chromium, screenshots, and axe, and resolve three token colours |
+| `npm run e2e` | Delete stale `sq-` test users, then check the blank page with Chromium, screenshots, and axe, and resolve three token colours |
 | `npm run design:check` | Check the design hashes without writing files |
 | `npm run statechart:check` | Check models when `packages/statecharts` or a named model file differs from `origin/main` |
-| `make verify` | Run all five checks above in order |
+| `make verify` | Delete stale `sq-` test users, then run all five checks above in order |
 | `npm run build:cloudflare` | Build the Worker |
 | `npm run preview:cloudflare` | Build and run the Worker locally with Wrangler |
 | `npm run deploy:cloudflare` | Migrate against `NEON_POSTGRES_CONNECTION_STRING`, stop if that fails, then build and deploy through `scripts/deploy-cloudflare.mjs` |

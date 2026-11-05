@@ -5,7 +5,15 @@
 // and floor(3 * 0.5) is 1. One worker runs the app project for 27 to 39 minutes.
 import { spawnSync } from "node:child_process";
 import { cpus } from "node:os";
+import { sweepClerkTestUsers } from "./clerk-test-users.mjs";
 import { suitePlan } from "./e2e-plan.mjs";
+
+try {
+	await sweepClerkTestUsers();
+} catch (error) {
+	console.error(error instanceof Error ? error.message : "Clerk test user sweep failed.");
+	process.exit(1);
+}
 
 function run(args) {
 	const result = spawnSync("playwright", ["test", ...args], { stdio: "inherit" });

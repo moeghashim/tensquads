@@ -639,15 +639,16 @@ test("a failed decision does not stay on the next account", async ({ page, works
 	const secrets = secretsFor(["secret", "testDatabase"]);
 	const email = `sq-${randomUUID().slice(0, 8)}+clerk_test@example.com`;
 	const password = `Ts${randomUUID().replaceAll("-", "")}Zq7`;
-	const userId = await createClerkUser(secrets.secret, email, password);
 	const accountId = `overview-b-${randomUUID().slice(0, 8)}`;
-	const postgres = openPostgres(secrets.testDatabase);
+	let userId = "";
 	try {
-		await replaceDemoAccount(postgres.db, accountId, userId);
-	} finally {
-		await postgres.close();
-	}
-	try {
+		userId = await createClerkUser(secrets.secret, email, password);
+		const postgres = openPostgres(secrets.testDatabase);
+		try {
+			await replaceDemoAccount(postgres.db, accountId, userId);
+		} finally {
+			await postgres.close();
+		}
 		await openWorkspace(page, workspaceUser);
 		await page.clock.install();
 		const held = await holdFailedRefresh(page);
@@ -672,8 +673,13 @@ test("a failed decision does not stay on the next account", async ({ page, works
 			await page.unroute("**/_serverFn/**").catch(() => undefined);
 		}
 	} finally {
-		await deleteWorkspaceAccount(accountId);
-		await deleteClerkUser(secrets.secret, userId);
+		if (userId.length > 0) {
+			try {
+				await deleteWorkspaceAccount(accountId);
+			} finally {
+				await deleteClerkUser(secrets.secret, userId);
+			}
+		}
 	}
 });
 

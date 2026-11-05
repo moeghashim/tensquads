@@ -44,18 +44,26 @@ export const test = base.extend<{ accountId: string }, { workspaceUser: Workspac
 			const secrets = secretsFor(["publishable", "secret", "testDatabase"]);
 			const email = `sq-${randomUUID().slice(0, 8)}@example.com`;
 			const password = `Ts${randomUUID().replaceAll("-", "")}Zq7`;
-			const userId = await createClerkUser(secrets.secret, email, password);
-			const accountId = `frame-${workerInfo.workerIndex}-${randomUUID().slice(0, 8)}`;
-			const postgres = openPostgres(secrets.testDatabase);
+			let userId = "";
+			let accountId = "";
 			try {
-				await postgres.migrate();
-				await replaceDemoAccount(postgres.db, accountId, userId);
+				userId = await createClerkUser(secrets.secret, email, password);
+				accountId = `frame-${workerInfo.workerIndex}-${randomUUID().slice(0, 8)}`;
+				const postgres = openPostgres(secrets.testDatabase);
+				try {
+					await postgres.migrate();
+					await replaceDemoAccount(postgres.db, accountId, userId);
+				} finally {
+					await postgres.close();
+				}
+				await use({ email, password, userId, accountId });
 			} finally {
-				await postgres.close();
+				try {
+					if (accountId.length > 0) await deleteWorkspaceAccount(accountId);
+				} finally {
+					if (userId.length > 0) await deleteClerkUser(secrets.secret, userId);
+				}
 			}
-			await use({ email, password, userId, accountId });
-			await deleteWorkspaceAccount(accountId);
-			await deleteClerkUser(secrets.secret, userId);
 		},
 		{ scope: "worker" },
 	],

@@ -16,16 +16,17 @@ test("a sign-in with no account opens sign-up", async ({ page }) => {
 	const secrets = secretsFor(["publishable", "secret", "testDatabase"]);
 	const email = `sq-${randomUUID().slice(0, 8)}@example.com`;
 	const password = `Ts${randomUUID().replaceAll("-", "")}Zq7`;
-	const userId = await createClerkUser(secrets.secret, email, password);
-	const postgres = openPostgres(secrets.testDatabase);
+	let userId = "";
 	try {
-		await postgres.migrate();
-	} finally {
-		await postgres.close();
-	}
-	const authNotes = await recordAuthNotes(page);
-	const notes = watchPageErrors(page);
-	try {
+		userId = await createClerkUser(secrets.secret, email, password);
+		const postgres = openPostgres(secrets.testDatabase);
+		try {
+			await postgres.migrate();
+		} finally {
+			await postgres.close();
+		}
+		const authNotes = await recordAuthNotes(page);
+		const notes = watchPageErrors(page);
 		await page.goto("/signin");
 		await page.getByLabel("Email").fill(email);
 		await page.getByLabel("Password").fill(password);
@@ -39,7 +40,7 @@ test("a sign-in with no account opens sign-up", async ({ page }) => {
 		}
 		await expect(page).toHaveTitle("Create your business");
 	} finally {
-		await deleteClerkUser(secrets.secret, userId);
+		if (userId.length > 0) await deleteClerkUser(secrets.secret, userId);
 	}
 });
 
@@ -97,8 +98,11 @@ test("a new user makes one account and reaches overview", async ({ page }) => {
 			userId = await clerkUserId(secrets.secret, email).catch(() => "");
 		}
 		if (userId.length > 0) {
-			await deleteAccountRows(sql, userId);
-			await deleteClerkUser(secrets.secret, userId);
+			try {
+				await deleteAccountRows(sql, userId);
+			} finally {
+				await deleteClerkUser(secrets.secret, userId);
+			}
 		}
 	}
 });

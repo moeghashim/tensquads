@@ -139,8 +139,11 @@ test("a real Clerk sign-out keeps the next account clear of a held write and a h
 		await expectStored(otherAccount, 200);
 	} finally {
 		if (userId.length > 0) {
-			await deleteWorkspaceAccount(otherAccount);
-			await deleteClerkUser(secrets.secret, userId);
+			try {
+				await deleteWorkspaceAccount(otherAccount);
+			} finally {
+				await deleteClerkUser(secrets.secret, userId);
+			}
 		}
 	}
 });
