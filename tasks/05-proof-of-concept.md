@@ -115,7 +115,7 @@ The proof of concept changes the data, not the screens. Do not change any of the
 Do not guess. Stop the step that needs the answer. The other steps may proceed.
 
 1. **Decision 31.** Answered by Moe on 5 November 2026. Version 1 uses one database, Neon. ClickHouse comes after phase 5. See decision 31 in `docs/PLAN.md`.
-2. **The thirteen events.** The done list requires them on the traffic screen. The plan has a placeholder diagram, not the thirteen events. The loop above has eight steps. *Recommended:* seed these thirteen events, in this order. `site.critique` is evidence inside event 10. It is not its own event. `competition.watch` and the test `change.detected` event come after these thirteen. They are not part of the thirteen.
+2. **The thirteen events.** Answered by Moe on 5 November 2026: seed these thirteen events, in this order, with one addition to event 9. The done list requires them on the traffic screen. `site.critique` is evidence inside event 10. It is not its own event. `competition.watch` and the test `change.detected` event come after these thirteen. They are not part of the thirteen.
    1. Task, master to market, `task.route`. Research this business.
    2. Result, market to master, `web.search`.
    3. Result, market to master, `maps.competitors`.
@@ -124,7 +124,7 @@ Do not guess. Stop the step that needs the answer. The other steps may proceed.
    6. Result, market to master, `report.write`. The report, the sources, and the evidence.
    7. Approval, master to user, `brief.write`. "Build the site with this brief?"
    8. Approval, master to website, `approval.ask`. The user said yes. The payload holds the Mandate.
-   9. Task, master to website, `task.route`. Build the page.
+   9. Task, master to website, `task.route`. Build the page. The text and the payload state the research finding that the instructions rely on: the gap that the report names, with its source URL. Moe added this on 5 November 2026.
    10. Result, website to master, `site.preview`. The preview URL, after build and critique.
    11. Approval, master to user, `approval.ask`. "Publish the site?"
    12. Approval, master to website, `approval.ask`. The user said yes. The payload holds the Mandate.
