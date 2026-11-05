@@ -72,25 +72,34 @@ test("the homepage inventory matches the design texts, handlers, loops, and link
 	await expect(page.getByText("Meet the squad", { exact: true })).toBeVisible();
 });
 
+function faultyHomeHtml(page: import("@playwright/test").Page, fault: string) {
+	// The HTML is read in this same turn. A later hydration pass puts a removed logo back.
+	return page.evaluate((fault) => {
+		if (fault === "extra paragraph") {
+			const paragraph = document.createElement("p");
+			paragraph.textContent = "About Terms";
+			document.body.append(paragraph);
+		} else if (fault === "missing logo") {
+			const logo = Array.from(document.querySelectorAll("span")).find(
+				(node) => node.textContent === "Northwind Apparel",
+			);
+			if (!logo) throw new Error("Northwind Apparel was not in the document");
+			logo.remove();
+		} else {
+			const link = Array.from(document.querySelectorAll("a")).find(
+				(node) => node.textContent?.trim() === "Security",
+			);
+			if (!link) throw new Error("Security link was not in the document");
+			link.setAttribute("href", "/signup");
+		}
+		return document.body.innerHTML;
+	}, fault);
+}
+
 for (const fault of ["extra paragraph", "missing logo", "changed Security target"]) {
 	test(`${fault} fails the homepage inventory`, async ({ page }) => {
 		await page.goto("/");
-		await page.evaluate((fault) => {
-			if (fault === "extra paragraph") {
-				const paragraph = document.createElement("p");
-				paragraph.textContent = "About Terms";
-				document.body.append(paragraph);
-			} else if (fault === "missing logo") {
-				Array.from(document.querySelectorAll("span"))
-					.find((node) => node.textContent === "Northwind Apparel")
-					?.remove();
-			} else {
-				Array.from(document.querySelectorAll("a"))
-					.find((node) => node.textContent?.trim() === "Security")
-					?.setAttribute("href", "/signup");
-			}
-		}, fault);
-		await expect(expectInventory(page, "Home", builtInventory(await bodyHtml(page)))).rejects.toThrow();
+		await expect(expectInventory(page, "Home", builtInventory(await faultyHomeHtml(page, fault)))).rejects.toThrow();
 	});
 }
 
