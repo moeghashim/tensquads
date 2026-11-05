@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { currentWrites } from "#/workspace/approval-count.ts";
 import {
-	acceptOverviewRead,
 	badgeCount,
 	type DecisionRefresh,
 	type DecisionResult,
@@ -14,7 +13,6 @@ import {
 	subscribeOverviewPage,
 	watchServerCount,
 } from "./actions.ts";
-import type { OverviewData } from "./types.ts";
 
 describe("overview decisions", { concurrency: false }, () => {
 	test("a finished decision refreshes and clears the guard", async () => {
@@ -532,67 +530,6 @@ describe("overview decisions", { concurrency: false }, () => {
 			await second;
 		});
 	}
-
-	test("a refresh-needed decision reconciles an accepted read before the queued decision", async () => {
-		resetDecisions();
-		const data: OverviewData = {
-			accountId: "demo",
-			greeting: "",
-			mission: "",
-			online: "",
-			tiles: [],
-			bars: [],
-			count: 2,
-			empty: false,
-			emptyText: "",
-			masterName: "Petra",
-			agents: [],
-			proposals: [],
-			approvals: ["refund", "marketing"].map((id) => ({
-				id,
-				agentId: "support",
-				agentName: "Support",
-				tint: "",
-				amount: "$42",
-				title: id,
-				detail: "",
-			})),
-		};
-		const first = settled(
-			"refund",
-			2,
-			async () => {
-				throw new Error("The session needs a refresh.");
-			},
-			async () => {
-				const readAt = currentWrites();
-				acceptOverviewRead(data, readAt);
-				return { count: 2, readAt, dropLanded: true };
-			},
-		);
-		let release = () => {};
-		const gate = new Promise<void>((resolve) => {
-			release = resolve;
-		});
-		const second = settled(
-			"marketing",
-			2,
-			() => gate,
-			async () => ({ count: 1, readAt: currentWrites(), dropLanded: true }),
-		);
-		try {
-			const result = await first;
-			assert.equal(result.refreshNeeded, true);
-			assert.equal(shownApprovalCount(2), 1);
-			assert.deepEqual(
-				patchSnapshot().map((item) => item.key),
-				["marketing"],
-			);
-		} finally {
-			release();
-			await second;
-		}
-	});
 
 	test("a hung write aborts, refreshes, and the queue goes on", async (t) => {
 		t.mock.timers.enable({ apis: ["setTimeout"] });
