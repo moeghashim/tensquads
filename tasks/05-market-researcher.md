@@ -95,7 +95,7 @@ This repository does not run the check. The Result must still carry the evidence
 
 Do not guess. Stop the step that needs the answer.
 
-1. **The context.dev links.** Task 05 said the plan links them. The plan does not mention context.dev. *Recommended:* use these pages, and add the same list to the Proof of concept section after Moe accepts it.
+1. **The context.dev links.** Answered by Moe on 5 November 2026: the researcher uses context.dev for three things only: web search (`web.search`), map listings (`maps.competitors`: `google-maps`, `google-maps-reviews`, `yelp-search`), and watching competitors (`competition.watch`, a monitor). Use the nine pages below. All nine returned 200 on 5 November 2026.
    - Search: `https://docs.context.dev/search/overview`
    - Search API: `https://docs.context.dev/api-reference/web-scraping/search`
    - Pre-built parsers: `https://docs.context.dev/scrape/prebuilt-parsers`
