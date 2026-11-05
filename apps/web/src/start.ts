@@ -2,6 +2,7 @@ import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
 import { createCsrfMiddleware, createMiddleware, createStart } from "@tanstack/react-start";
 
 import { authorizedParties } from "#/server/authorized-parties.ts";
+import { clerkPublishableKey, documentRequestForClerk } from "#/server/dev-browser-document.ts";
 import { beginDocumentExit } from "#/workspace/session-exit-target.ts";
 
 const csrf = createCsrfMiddleware({
@@ -44,8 +45,17 @@ function loadExitCleanup(error: unknown): Promise<void> {
 		.catch(() => undefined);
 }
 
+// A development document may reach Clerk before clerk-js writes the suffixed dev-browser cookie.
+const devBrowserDocument = createMiddleware().server(async ({ request, next }) => {
+	const carried = await documentRequestForClerk(request, await clerkPublishableKey());
+	if (carried === request) return next();
+	// TanStack copies request onto the middleware context at runtime.
+	return next({ request: carried } as Parameters<typeof next>[0]);
+});
+
 export const startInstance = createStart(() => {
 	const secret = process.env.CLERK_SECRET_KEY ?? "";
-	const requestMiddleware = secret.length > 0 ? [csrf, clerkMiddleware({ authorizedParties })] : [csrf];
+	const requestMiddleware =
+		secret.length > 0 ? [csrf, devBrowserDocument, clerkMiddleware({ authorizedParties })] : [csrf];
 	return { requestMiddleware, functionMiddleware: [sessionRefresh] };
 });
