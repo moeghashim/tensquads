@@ -72,7 +72,14 @@ for (const viewport of viewports) {
 		await page.goto("/");
 		await waitForScreenFonts(page);
 		await waitForHydration(page);
-		await page.evaluate(() => document.fonts.ready);
+		await page.evaluate(async () => {
+			await Promise.all([
+				document.fonts.load("700 64px 'Familjen Grotesk'"),
+				document.fonts.load("600 18px 'Familjen Grotesk'"),
+				document.fonts.load("500 18px 'Familjen Grotesk'"),
+			]);
+			await document.fonts.ready;
+		});
 		await expectNoHorizontalScroll(page);
 		await expect(page).toHaveScreenshot(`home-${viewport.name}.png`, { fullPage: true });
 	});

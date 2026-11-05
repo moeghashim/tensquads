@@ -41,9 +41,9 @@ Part 2 still waits until task 06 (`packages/squadmates`) is merged.
 ## Done when
 
 - [x] Moe approved the design in `docs/designs/home/`
-- [ ] The build matches the approved design at 1440 px and 390 px
-- [ ] Every control on screen 1 works as before, and the sign-up path works
-- [ ] Tab reaches every control, the focus ring is 2 px `#0169cc` with a 2 px offset, and at 390 px there is no horizontal scroll
+- [x] The build matches the approved design at 1440 px and 390 px
+- [x] Every control on screen 1 works as before, and the sign-up path works
+- [x] Tab reaches every control, the focus ring is 2 px `#0169cc` with a 2 px offset, and at 390 px there is no horizontal scroll
 - [ ] `make verify` returns 0
 
 ## Do not
