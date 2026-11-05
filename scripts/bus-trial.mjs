@@ -63,11 +63,13 @@ export function busTrialPlan(env) {
 	};
 }
 
-export function trialConfig(sourceText, plan) {
+export function trialConfig(sourceText, plan, workerDirectory = "") {
 	const config = JSON.parse(sourceText.replace(/^\s*\/\/.*$/gm, ""));
 	if (config.name !== "tensquads") throw new Error("The worker config is not the project worker.");
 	if (config.account_id !== plan.cloudflareAccountId) throw new Error("The worker config is not the project account.");
 	config.name = plan.workerName;
+	// The trial config lives in a temp directory. Wrangler resolves main from that file, so a relative src/worker.ts is not found.
+	if (workerDirectory) config.main = resolve(workerDirectory, config.main);
 	config.vars = {
 		...config.vars,
 		ADAPTERS: "real",
@@ -136,7 +138,7 @@ export async function executeBusTrial(plan, deps) {
 	const configPath = resolve(directory, "wrangler.trial.jsonc");
 	const secretsPath = resolve(directory, "secrets.json");
 	try {
-		writeFileSync(configPath, JSON.stringify(trialConfig(deps.source, plan), null, 2));
+		writeFileSync(configPath, JSON.stringify(trialConfig(deps.source, plan, deps.workerDirectory), null, 2));
 		writeFileSync(
 			secretsPath,
 			JSON.stringify({
@@ -259,6 +261,7 @@ async function main() {
 	const source = readFileSync(resolve(webDirectory, "wrangler.jsonc"), "utf8");
 	return executeBusTrial(plan, {
 		source,
+		workerDirectory: webDirectory,
 		log: (text) => console.log(text),
 		tempDir: () => mkdtempSync(resolve(tmpdir(), "tensquads-bus-trial-")),
 		run: realRun(plan),

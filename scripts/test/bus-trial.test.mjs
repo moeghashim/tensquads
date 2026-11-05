@@ -41,6 +41,7 @@ test("the trial worker config keeps the project account and replaces the queue n
 	assert.equal(config.account_id, "678c5a795f40f7e9f33b8a71248cc829");
 	assert.equal(config.name, plan.workerName);
 	assert.equal(config.vars.ADAPTERS, "real");
+	assert.equal(trialConfig(source, plan, "/work/apps/web").main, "/work/apps/web/src/worker.ts");
 	assert.equal(config.queues.producers[0].queue, plan.queue);
 	assert.equal(config.queues.consumers[0].dead_letter_queue, plan.deadLetter);
 	assert.equal(JSON.stringify(config).includes('tensquads-bus"'), false);
