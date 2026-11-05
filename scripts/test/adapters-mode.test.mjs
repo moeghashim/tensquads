@@ -21,6 +21,69 @@ test("a production build stubs the master and a real build does not", () => {
 	assert.equal(adaptersMode(flipped, "real"), "real");
 });
 
+async function resolveWithVite(id, importer) {
+	const { createServer } = await import("vite");
+	const server = await createServer({
+		configFile: fileURLToPath(new URL("../../apps/web/vite.config.ts", import.meta.url)),
+		root: fileURLToPath(new URL("../../apps/web/", import.meta.url)),
+		logLevel: "silent",
+		server: { middlewareMode: true },
+		appType: "custom",
+	});
+	try {
+		const found = await server.pluginContainer.resolveId(id, importer, { ssr: true });
+		return typeof found === "string" ? found : (found?.id ?? null);
+	} finally {
+		await server.close();
+	}
+}
+
+test("the real Vite build resolves the master to the real domain code, not the typecheck stub", async () => {
+	const before = process.env.CLOUDFLARE_ENV;
+	process.env.CLOUDFLARE_ENV = "real";
+	try {
+		const masterLive = fileURLToPath(
+			new URL("../../packages/adapters/src/cloudflare-bus/master-live.ts", import.meta.url),
+		);
+		const masterStep = fileURLToPath(
+			new URL("../../packages/adapters/src/cloudflare-bus/master-step.ts", import.meta.url),
+		);
+		const live = await resolveWithVite("./master-live.ts", masterStep);
+		assert.equal(live, masterLive);
+		const domain = await resolveWithVite("@tensquads/domain/master", masterLive);
+		assert.ok(domain, "the real domain master did not resolve");
+		assert.equal(domain.includes("master-typecheck"), false, `real build resolved the typecheck stub: ${domain}`);
+		assert.equal(
+			domain.endsWith(joinPath("domain", "src", "master", "index.ts")),
+			true,
+			`real build resolved: ${domain}`,
+		);
+	} finally {
+		if (before === undefined) delete process.env.CLOUDFLARE_ENV;
+		else process.env.CLOUDFLARE_ENV = before;
+	}
+});
+
+test("the production Vite build resolves the master to the stub", async () => {
+	const before = process.env.CLOUDFLARE_ENV;
+	delete process.env.CLOUDFLARE_ENV;
+	try {
+		const masterStep = fileURLToPath(
+			new URL("../../packages/adapters/src/cloudflare-bus/master-step.ts", import.meta.url),
+		);
+		const stub = fileURLToPath(new URL("../../packages/adapters/src/cloudflare-bus/master-stub.ts", import.meta.url));
+		const live = await resolveWithVite("./master-live.ts", masterStep);
+		assert.equal(live, stub);
+	} finally {
+		if (before === undefined) delete process.env.CLOUDFLARE_ENV;
+		else process.env.CLOUDFLARE_ENV = before;
+	}
+});
+
+function joinPath(...parts) {
+	return parts.join("/");
+}
+
 test("the stub resolution follows that mode", () => {
 	const stub = fileURLToPath(new URL("../../packages/adapters/src/cloudflare-bus/master-stub.ts", import.meta.url));
 	assert.equal(masterStubId(adaptersMode(wrangler, undefined), "/app/master-live.ts", stub), stub);

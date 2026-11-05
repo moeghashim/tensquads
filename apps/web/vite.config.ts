@@ -19,8 +19,12 @@ function masterStubPlugin(): Plugin {
 	};
 }
 
+const realMaster = fileURLToPath(new URL("../../packages/domain/src/master/index.ts", import.meta.url));
+
 const config = defineConfig({
-	resolve: { tsconfigPaths: true },
+	// No tsconfigPaths here. The adapters tsconfig maps the master to a typecheck
+	// stub for tsc only. That map must not reach the bundle.
+	resolve: { alias: [{ find: "@tensquads/domain/master", replacement: realMaster }] },
 	plugins: [masterStubPlugin(), cloudflare({ viteEnvironment: { name: "ssr" } }), tanstackStart(), viteReact()],
 });
 
