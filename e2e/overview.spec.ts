@@ -8,7 +8,7 @@ import { replaceDemoAccount } from "../packages/seed/src/demo-account.ts";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
-import { createClerkUser } from "./clerk-user.ts";
+import { createTestUser, deleteTestUser } from "./admin-clerk.ts";
 import { overviewNames, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import {
 	readInventory,
@@ -637,15 +637,12 @@ test("a cached overview keeps the decision until the fresh read lands", async ({
 test("a failed decision does not stay on the next account", async ({ page, workspaceUser }) => {
 	test.setTimeout(90_000);
 	const secrets = secretsFor(["secret", "testDatabase"]);
-	const email = `sq-${randomUUID().slice(0, 8)}+clerk_test@example.com`;
-	const password = `Ts${randomUUID().replaceAll("-", "")}Zq7`;
 	const accountId = `overview-b-${randomUUID().slice(0, 8)}`;
-	let userId = "";
+	const other = await createTestUser(secrets.secret);
 	try {
-		userId = await createClerkUser(secrets.secret, email, password);
 		const postgres = openPostgres(secrets.testDatabase);
 		try {
-			await replaceDemoAccount(postgres.db, accountId, userId);
+			await replaceDemoAccount(postgres.db, accountId, other.userId);
 		} finally {
 			await postgres.close();
 		}
@@ -659,7 +656,7 @@ test("a failed decision does not stay on the next account", async ({ page, works
 			await page.clock.fastForward(30_000);
 			await page.clock.resume();
 			held.seal();
-			await switchAccount(page, email, password);
+			await switchAccount(page, other.email, other.password);
 			await expect(refundCard(page)).toHaveCount(1, settled);
 			await expect(dockBadge(page)).toHaveText("4", settled);
 			await expect(tasksTile(page)).toContainText("331", settled);
@@ -673,12 +670,10 @@ test("a failed decision does not stay on the next account", async ({ page, works
 			await page.unroute("**/_serverFn/**").catch(() => undefined);
 		}
 	} finally {
-		if (userId.length > 0) {
-			try {
-				await deleteWorkspaceAccount(accountId);
-			} finally {
-				await deleteClerkUser(secrets.secret, userId);
-			}
+		try {
+			await deleteWorkspaceAccount(accountId);
+		} finally {
+			await deleteTestUser(secrets.secret, other.userId);
 		}
 	}
 });
@@ -1020,19 +1015,6 @@ async function switchAccount(page: Page, email: string, password: string) {
 function navigationEnded(error: unknown): boolean {
 	const message = error instanceof Error ? error.message : "";
 	return message.includes("Execution context was destroyed") || message.includes("navigation");
-}
-
-async function deleteClerkUser(secret: string, userId: string) {
-	if (userId.length === 0) {
-		return;
-	}
-	const response = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
-		method: "DELETE",
-		headers: { Authorization: `Bearer ${secret}` },
-	});
-	if (!response.ok && response.status !== 404) {
-		throw new Error(`Clerk delete user failed with status ${response.status}.`);
-	}
 }
 
 function overviewSection() {
