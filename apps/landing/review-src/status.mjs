@@ -64,5 +64,13 @@ export const PHASES = [
 	],
 	["3", "Admin", "screens 9, 10, open an account, admin role", ["03-super-admin"]],
 	["4", "Machines", "boat.dev and bus adapters behind the interfaces", ["04-machine-trial"]],
-	["5", "Proof", "three squads, real model, research, site, two approvals", ["05-proof-of-concept"]],
+	[
+		"5",
+		"Proof",
+		"agent kit, researcher, builder, then three squads with two approvals",
+		["05-agent-kit", "05-market-researcher", "05-website-builder", "05-proof-of-concept"],
+	],
+	// Decisions 33 and 34 added these two tasks after the plan had six phases.
+	["6", "Squadmates", "a name and a character for Petra and each agent", ["06-squadmates"]],
+	["7", "Homepage", "new screen 1: Moe approves the design, then the build", ["07-home-redesign"]],
 ];
