@@ -1,4 +1,5 @@
 import { advanceWrites } from "#/workspace/approval-count.ts";
+import { onFrameAccountReset } from "#/workspace/frame-load.ts";
 
 import type { TrafficEvent } from "./view.ts";
 
@@ -16,11 +17,20 @@ function emit(): void {
 	for (const listener of listeners) listener();
 }
 
+let accountGeneration = 0;
+
+export function trafficAccountGeneration(): number {
+	return accountGeneration;
+}
+
 // The row is on screen when the send returns. A traffic read that started earlier
-// has a smaller writeAt and does not include this event.
-export function publishTrafficEvent(accountId: string, event: TrafficEvent): void {
+// has a smaller writeAt and does not include this event. A response that started
+// on an earlier account generation is dropped: the reset already cleared that account.
+export function publishTrafficEvent(accountId: string, event: TrafficEvent, generation: number): boolean {
+	if (generation !== accountGeneration) return false;
 	published = [...published, { accountId, event, writeAt: advanceWrites() }];
 	emit();
+	return true;
 }
 
 export function subscribePublishedTraffic(listener: () => void): () => void {
@@ -60,6 +70,17 @@ export function pendingTrafficId(accountId: string, pending: readonly PublishedT
 }
 
 let watchedAccount = "";
+
+// The frame account reset drops every painted row, including one published before Traffic renders.
+function clearPublishedAccount(): void {
+	accountGeneration += 1;
+	watchedAccount = "";
+	if (published.length === 0) return;
+	published = none;
+	emit();
+}
+
+onFrameAccountReset(clearPublishedAccount);
 
 // A switch drops every painted row. The first account keeps a row painted before the page mounted.
 export function watchTrafficAccount(nextAccountId: string): void {
