@@ -78,11 +78,29 @@ async function issueMachineToken(secret: string, accountId: string, agentId: str
 	return signMachineToken(secret, accountId, agentId, exp);
 }
 
+export function machineTokenSubject(token: string): { readonly accountId: string; readonly agentId: string } | null {
+	const split = token.lastIndexOf(".");
+	if (split <= 0) return null;
+	let payload = "";
+	try {
+		payload = new TextDecoder().decode(decode(token.slice(0, split)));
+	} catch {
+		return null;
+	}
+	const expAt = payload.lastIndexOf(".");
+	const agentAt = payload.lastIndexOf(".", expAt - 1);
+	if (expAt <= 0 || agentAt <= 0) return null;
+	const accountId = payload.slice(0, agentAt);
+	const agentId = payload.slice(agentAt + 1, expAt);
+	if (accountId.length === 0 || agentId.length === 0) return null;
+	return { accountId, agentId };
+}
+
 export function machineCredentialProfile(accountId: string, agentId: string): string {
 	if (accountId.length === 0 || agentId.length === 0 || accountId.includes("/") || agentId.includes("/")) {
 		throw new Error("The machine profile name is not valid.");
 	}
-	return `tensquads-${accountId}-${agentId}`;
+	return `tensquads.${accountId.length}.${accountId}.${agentId.length}.${agentId}`;
 }
 
 function machineTokenRotationDue(expSeconds: number | undefined, nowMs: number): boolean {

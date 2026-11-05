@@ -2,6 +2,7 @@ import { digestOf, type Mandate, type ResearchReport } from "@tensquads/agent-ki
 
 import type { BusEvent, BusKind } from "../bus/types.ts";
 import { checkBrief, checkPage, checkPublished, checkResearch, readReport } from "./checks.ts";
+import type { RenderedPage } from "./render-page.ts";
 import { type BusinessRequest, mandateFor, type PageAudit, type PageReader } from "./types.ts";
 
 export interface BriefModel {
@@ -13,6 +14,8 @@ export interface MasterPorts {
 	readonly audit: (html: string) => PageAudit | Promise<PageAudit>;
 	readonly model: BriefModel;
 	readonly mandateAt?: string;
+	readonly accountSlug?: string;
+	readonly browser?: (html: string) => Promise<RenderedPage>;
 	readonly recordMonitor?: (monitorId: string) => void | Promise<void>;
 }
 
@@ -208,6 +211,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			items: request.items,
 			readPage: ports.readPage,
 			audit: ports.audit,
+			browser: ports.browser,
 		});
 		if (!result.pass) return failPage(result.evidence);
 		state.previewHtml = result.html;
@@ -276,14 +280,25 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		const publishedUrl =
 			isRecord(event.payload) && typeof event.payload.publishedUrl === "string" ? event.payload.publishedUrl : "";
 		if (publishedUrl.length === 0) return failPage(["The published URL did not return 200."]);
-		const result = await checkPublished(state.previewHtml, publishedUrl, ports.readPage);
+		const result = await checkPublished(state.previewHtml, publishedUrl, ports.readPage, ports.accountSlug ?? "");
 		if (!result.pass) return failPage(result.evidence);
 		state.phase = "done";
 		return [];
 	}
 
+	function userSaidYes(event: BusEvent): boolean {
+		return event.kind === "Approval" && event.from === "user" && event.to === "master";
+	}
+
+	async function onUserYes(event: BusEvent): Promise<BusEvent[]> {
+		if (event.skill === "brief.write") return approveBrief();
+		if (event.skill === "approval.ask") return approvePublish();
+		return [];
+	}
+
 	async function accept(event: BusEvent): Promise<BusEvent[]> {
 		if (state.phase === "escalated" || state.phase === "done") return [];
+		if (userSaidYes(event)) return onUserYes(event);
 		if (event.kind !== "Result" || event.to !== "master") return [];
 		if (event.skill === "report.write" && state.phase === "research") return onResearch(event);
 		if (event.skill === "site.preview" && state.phase === "building") return onPreview(event);

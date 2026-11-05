@@ -3,5 +3,5 @@
 	"compilerOptions": {
 		"noEmit": true
 	},
-	"include": ["src/master/**/*", "test/master.test.ts", "test/master-loop.test.ts"]
+	"include": ["src/master/**/*", "test/master.test.ts", "test/master-loop.test.ts", "test/master-browser.test.ts"]
 }

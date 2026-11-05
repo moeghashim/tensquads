@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 
 const serial = [
 	"test/bus-writer.test.ts",
@@ -18,8 +19,13 @@ const remaining = readdirSync("test")
 	.filter((path) => !serial.includes(path))
 	.sort();
 
+const kitHook = join(import.meta.dirname, "../../../scripts/register-kit.mjs");
+const kitInstalled = existsSync(join(import.meta.dirname, "../../../node_modules/@tensquads/agent-kit/package.json"));
+const nodeArgs = ["--experimental-strip-types"];
+if (kitInstalled) nodeArgs.push("--import", kitHook);
+
 for (const args of [["--test-concurrency=1", ...serial], remaining]) {
-	const result = spawnSync(process.execPath, ["--experimental-strip-types", "--test", ...args], {
+	const result = spawnSync(process.execPath, [...nodeArgs, "--test", ...args], {
 		stdio: "inherit",
 	});
 	if (result.status !== 0) process.exit(result.status ?? 1);

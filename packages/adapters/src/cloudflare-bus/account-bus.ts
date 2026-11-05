@@ -4,6 +4,7 @@ import type { PublishedEvent } from "@tensquads/kernel";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { traceFor } from "../trace.ts";
 import { alarmAfterFlush, HEARTBEAT_ALARM, type HeartbeatEnv, recordBeat, sweepHeartbeats } from "./heartbeat.ts";
+import { finishMaster, retryOpenMaster } from "./master-retry.ts";
 import { followMaster } from "./master-step.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
 import { type PendingBusRow, readBusEvents, readBusHistory, readBusState, writePending } from "./neon-write.ts";
@@ -18,6 +19,7 @@ export interface SyncKv {
 export interface BusStorage {
 	get<T>(key: string): Promise<T | undefined>;
 	put<T>(key: string, value: T): Promise<void>;
+	delete(key: string): Promise<boolean>;
 	list<T>(options?: { prefix?: string }): Promise<Map<string, T>>;
 	transaction<T>(closure: (txn: BusStorage) => Promise<T>): Promise<T>;
 	transactionSync<T>(closure: () => T): T;
@@ -48,13 +50,26 @@ interface PageAuditInput {
 	readonly horizontalScroll: boolean;
 }
 
+interface RenderedCheck {
+	readonly visibleText: string;
+	readonly cssContent: readonly string[];
+	readonly linkTexts: readonly string[];
+	readonly imageCount: number;
+	readonly horizontalScroll: boolean;
+	readonly keyboard: boolean;
+	readonly contrast: boolean;
+}
+
 export interface BusObjectEnv extends HeartbeatEnv {
 	readonly DATABASE_URL?: string;
 	readonly BUS_INSPECT?: string;
 	readonly masterRequest?: MasterRequestInput;
 	readonly masterReadPage?: (url: string) => Promise<{ status: number; body: string }>;
 	readonly masterAudit?: (html: string) => PageAuditInput | Promise<PageAuditInput>;
-	readonly masterWriteBrief?: () => string | Promise<string>;
+	readonly masterWriteBrief?: (report?: { readonly gap: string }) => string | Promise<string>;
+	readonly masterBrowser?: (html: string) => Promise<RenderedCheck>;
+	readonly BROWSER?: unknown;
+	readonly OPENAI_API_KEY?: string;
 }
 
 interface AcceptResult {
@@ -241,7 +256,10 @@ export class AccountBus {
 	// The runtime calls alarm. No module in this repo calls it.
 	async alarm(): Promise<void> {
 		await this.flush();
-		await this.serialize(() => sweepHeartbeats(this.ctx.storage, this.env));
+		await this.serialize(async () => {
+			await sweepHeartbeats(this.ctx.storage, this.env);
+			await retryOpenMaster(this.ctx.storage, this.env, (accountId, event) => this.runMaster(accountId, event));
+		});
 	}
 
 	private routes(): Map<string, (request: Request) => Promise<Response>> {
@@ -283,19 +301,26 @@ export class AccountBus {
 	private async accept(body: unknown): Promise<Response> {
 		if (!isBusRecord(body)) return new Response("The message was rejected.", { status: 400 });
 		const record = body;
-		const result = await this.withAccount(record.accountId, () =>
-			commitDurable(this.ctx.storage, record.accountId, record.event),
-		);
-		if (result.event) this.push(result.event);
-		if (!result.seen && result.event) await this.stepMaster(record.accountId, result.event);
+		const result = await this.serialize(async () => {
+			await this.initialize(record.accountId);
+			const stored = await commitDurable(this.ctx.storage, record.accountId, record.event);
+			if (stored.event) this.push(stored.event);
+			const owner = await this.ctx.storage.get<string>("account");
+			if (owner === record.accountId) {
+				await finishMaster(this.ctx.storage, this.env, record.event, !stored.seen, (event) =>
+					this.runMaster(record.accountId, event),
+				);
+			}
+			return stored;
+		});
 		await this.flush();
 		return Response.json({ seen: result.seen, seq: result.seq });
 	}
 
-	private async stepMaster(accountId: string, event: PublishedEvent): Promise<void> {
+	private async runMaster(accountId: string, event: PublishedEvent): Promise<void> {
 		const produced = await followMaster(this.env, accountId, event);
 		for (const next of produced) {
-			const stored = await this.withAccount(accountId, () => commitDurable(this.ctx.storage, accountId, next));
+			const stored = await commitDurable(this.ctx.storage, accountId, next);
 			if (stored.event) this.push(stored.event);
 		}
 	}

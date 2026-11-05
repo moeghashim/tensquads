@@ -32,6 +32,7 @@ function ports(story: Awaited<ReturnType<typeof proofStory>>, brief = story.brie
 		readPage: reader(story.pages),
 		audit: () => audit,
 		model: { writeBrief: () => brief },
+		accountSlug: "proof",
 	};
 }
 
@@ -163,4 +164,42 @@ test("a failed page check goes back to the website once, then escalates", async 
 	const second = await master.accept(result("site.preview", { previewUrl: story.previewUrl }));
 	assert.equal(second[0]?.kind, "Escalation");
 	assert.equal(second[0]?.text, "The check failed twice.");
+});
+
+test("a user approval of the brief and of publish sends the website task", async () => {
+	const story = await proofStory();
+	const master = createMaster(story.request, ports(story));
+	master.start();
+	await master.accept(result("report.write", { report: story.report }));
+	const briefYes = await master.accept({
+		id: "user-brief",
+		time: "12:01",
+		from: "user",
+		to: "master",
+		kind: "Approval",
+		skill: "brief.write",
+		text: "Yes",
+		payload: {},
+		writes: [],
+		trace: "tr_user_brief",
+	});
+	assert.equal(briefYes[0]?.kind, "Approval");
+	assert.equal(briefYes[1]?.kind, "Task");
+	assert.equal(briefYes[1]?.skill, "task.route");
+	await master.accept(result("site.preview", { previewUrl: story.previewUrl }));
+	const publishYes = await master.accept({
+		id: "user-publish",
+		time: "12:02",
+		from: "user",
+		to: "master",
+		kind: "Approval",
+		skill: "approval.ask",
+		text: "Yes",
+		payload: {},
+		writes: [],
+		trace: "tr_user_publish",
+	});
+	assert.equal(publishYes[0]?.kind, "Approval");
+	assert.equal(publishYes[1]?.kind, "Task");
+	assert.equal(publishYes[1]?.text, "Publish the page.");
 });

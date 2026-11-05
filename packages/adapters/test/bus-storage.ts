@@ -19,6 +19,9 @@ export class Storage implements BusStorage {
 	async put<T>(key: string, value: T): Promise<void> {
 		this.rows.set(key, structuredClone(value));
 	}
+	async delete(key: string): Promise<boolean> {
+		return this.rows.delete(key);
+	}
 	async list<T>({ prefix = "" } = {}): Promise<Map<string, T>> {
 		return new Map([...this.rows].filter(([key]) => key.startsWith(prefix))) as Map<string, T>;
 	}

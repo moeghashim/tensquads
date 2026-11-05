@@ -1,7 +1,10 @@
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"noEmit": true
+		"noEmit": true,
+		"paths": {
+			"@tensquads/domain/master": ["./src/cloudflare-bus/master-typecheck.ts"]
+		}
 	},
 	"include": ["src/**/*", "test/**/*"]
 }

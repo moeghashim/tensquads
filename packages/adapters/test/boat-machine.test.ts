@@ -11,6 +11,7 @@ import {
 	MACHINE_TOKEN_TTL_SECONDS,
 	machineCredentialProfile,
 	rotateMachineToken,
+	signMachineToken,
 	verifyMachineToken,
 } from "../src/cloudflare-bus/token.ts";
 import { type FakeBoat, startFakeBoat } from "./boat-fake.ts";
@@ -394,7 +395,10 @@ test("rotation writes a 30-day token on the agent profile", async () => {
 			fetchApi,
 			wait,
 		});
-		assert.equal(machineCredentialProfile(scope.accountId, "market"), "tensquads-acct-1-market");
+		assert.equal(machineCredentialProfile(scope.accountId, "market"), "tensquads.6.acct-1.6.market");
+		assert.equal(machineCredentialProfile("a-b", "c"), "tensquads.3.a-b.1.c");
+		assert.equal(machineCredentialProfile("a", "b-c"), "tensquads.1.a.3.b-c");
+		assert.throws(() => machineCredentialProfile("", "market"), /The machine profile name is not valid\./);
 		assert.throws(() => machineCredentialProfile("acct/1", "market"), /The machine profile name is not valid\./);
 		const early = await rotateMachineToken(adapter, {
 			scope,
@@ -413,14 +417,14 @@ test("rotation writes a 30-day token on the agent profile", async () => {
 			currentExp: Math.floor(now / 1000) + MACHINE_TOKEN_ROTATION_LEAD_SECONDS,
 		});
 		assert.equal(first.rotated, true);
-		assert.equal(first.profile, "tensquads-acct-1-market");
+		assert.equal(first.profile, "tensquads.6.acct-1.6.market");
 		assert.equal(first.exp - Math.floor(now / 1000), MACHINE_TOKEN_TTL_SECONDS);
 		const created = fake.secretCalls.filter((call) => call.name === "profile");
 		const puts = fake.secretCalls.filter((call) => call.name === MACHINE_TOKEN_ENV);
 		assert.equal(created.length, 1);
-		assert.equal(created[0]?.profile, "tensquads-acct-1-market");
+		assert.equal(created[0]?.profile, "tensquads.6.acct-1.6.market");
 		assert.equal(puts.length, 1);
-		assert.equal(puts[0]?.profile, "tensquads-acct-1-market");
+		assert.equal(puts[0]?.profile, "tensquads.6.acct-1.6.market");
 		assert.equal(puts[0]?.kind, "admin");
 		assert.equal(puts[0]?.baseUrl, "https://example.com/hooks");
 		assert.notEqual(puts[0]?.profile, "tensquads-agents");
@@ -446,6 +450,29 @@ test("rotation writes a 30-day token on the agent profile", async () => {
 		assert.equal(again.length, 1);
 		assert.equal(written.length, 2);
 		assert.notEqual(written[1]?.value, token);
+	} finally {
+		await fake.close();
+	}
+});
+
+test("a market token cannot be written to the website profile", async () => {
+	const fake = await startFakeBoat();
+	try {
+		const adapter = createBoatMachine({
+			token: fake.machineToken,
+			adminToken: fake.adminToken,
+			basePath: fake.basePath,
+			profileName: "tensquads-agents",
+			secretBaseUrl: "https://example.com/hooks",
+			fetchApi: fetch,
+			wait,
+		});
+		const token = await signMachineToken("fixture", "acct", "market", 2_000_000_000);
+		await assert.rejects(
+			() => adapter.rotateToken({ accountId: "acct", mode: "account" }, "website", token),
+			/The machine token does not match the profile\./,
+		);
+		assert.equal(fake.secretCalls.length, 0);
 	} finally {
 		await fake.close();
 	}

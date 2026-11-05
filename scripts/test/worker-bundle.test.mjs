@@ -119,6 +119,21 @@ export function importTimeFileReads(source) {
 	return hits;
 }
 
+function masterStubPlugin() {
+	const stub = fileURLToPath(new URL("../../packages/adapters/src/cloudflare-bus/master-stub.ts", import.meta.url));
+	const wrangler = readFileSync(new URL("../../apps/web/wrangler.jsonc", import.meta.url), "utf8");
+	const mode = /"ADAPTERS"\s*:\s*"([^"]*)"/.exec(wrangler)?.[1] ?? "test";
+	return {
+		name: "master-stub",
+		setup(build) {
+			build.onResolve({ filter: /master-live\.ts$/ }, () => {
+				if (mode === "real") return null;
+				return { path: stub };
+			});
+		},
+	};
+}
+
 function externalNodePlugin() {
 	return {
 		name: "external-node",
@@ -156,7 +171,7 @@ async function bundleWithMeta(entryPoints) {
 		},
 		legalComments: "none",
 		logLevel: "silent",
-		plugins: [externalNodePlugin()],
+		plugins: [masterStubPlugin(), externalNodePlugin()],
 	});
 	return { directory, outfile, metafile: result.metafile };
 }
@@ -304,6 +319,7 @@ test("the worker bundle has no filesystem read and no PGlite", async () => {
 			legalComments: "none",
 			logLevel: "silent",
 			plugins: [
+				masterStubPlugin(),
 				{
 					name: "external-deps-keep-pglite",
 					setup(build) {
@@ -823,6 +839,9 @@ test("workerd boots the built worker and rejects import-time builtin routes", as
 	assert.equal(built.compatibility_date, compat.compatibilityDate);
 	assert.deepEqual(built.compatibility_flags, compat.compatibilityFlags);
 
+	const live = readFileSync(join(repoRoot, "packages/adapters/src/cloudflare-bus/master-live.ts"), "utf8");
+	assert.equal(live.includes('from "@tensquads/domain/master"'), true);
+	assert.equal(live.includes(".join("), false);
 	const homepage = await bootWorkerd(serverDirectory, compat);
 	assert.equal(homepage.status, 200);
 	assert.equal(homepage.body.includes("tensquads homepage"), true);
@@ -833,6 +852,8 @@ test("workerd boots the built worker and rejects import-time builtin routes", as
 	assert.equal(workerText.includes("master/loop"), false);
 	assert.equal(workerText.includes("master/proof"), false);
 	assert.equal(workerText.includes("digestOf"), false);
+	assert.equal(workerText.includes("@tensquads/domain/master"), false);
+	assert.equal(workerText.includes("@cloudflare/puppeteer"), false);
 
 	const realPath = join(repoRoot, "package.json");
 	for (const fixture of workerdFixtures(realPath)) {

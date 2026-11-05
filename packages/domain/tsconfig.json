@@ -4,5 +4,5 @@
 		"noEmit": true
 	},
 	"include": ["src/**/*", "test/**/*"],
-	"exclude": ["src/master/**/*", "test/master.test.ts", "test/master-loop.test.ts"]
+	"exclude": ["src/master/**/*", "test/master.test.ts", "test/master-loop.test.ts", "test/master-browser.test.ts"]
 }

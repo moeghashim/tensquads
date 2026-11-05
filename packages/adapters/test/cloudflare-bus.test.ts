@@ -133,6 +133,16 @@ function externalNode(): esbuild.Plugin {
 	};
 }
 
+function masterStub(): esbuild.Plugin {
+	const stub = fileURLToPath(new URL("../src/cloudflare-bus/master-stub.ts", import.meta.url));
+	return {
+		name: "master-stub",
+		setup(build) {
+			build.onResolve({ filter: /master-live\.ts$/ }, () => ({ path: stub }));
+		},
+	};
+}
+
 function bundleWorker(): Promise<string> {
 	bundling ??= (async () => {
 		const directory = mkdtempSync(join(tmpdir(), "tensquads-bus-"));
@@ -148,7 +158,7 @@ function bundleWorker(): Promise<string> {
 			outfile: join(directory, "index.js"),
 			legalComments: "none",
 			logLevel: "silent",
-			plugins: [externalNode()],
+			plugins: [masterStub(), externalNode()],
 		});
 		return directory;
 	})();

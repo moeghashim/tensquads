@@ -69,7 +69,7 @@ test("the thirteen events stay in order and cite the gap", async () => {
 		readPage: reader(story.pages),
 		audit: () => story.audit,
 	});
-	const published = await checkPublished(story.pageHtml, story.publishedUrl, reader(story.pages));
+	const published = await checkPublished(story.pageHtml, story.publishedUrl, reader(story.pages), "proof");
 	assert.equal(research.pass, true);
 	assert.equal(brief.pass, true);
 	assert.equal(page.pass, true);
@@ -144,7 +144,12 @@ test("the page check rejects an invented item, a broken link, and a P0 finding",
 	});
 	assert.equal(flagged.evidence.includes("The page has a P0 or P1 finding."), true);
 	assert.equal(flagged.evidence.includes("The page scrolls sideways at 390 px."), true);
-	const changed = await checkPublished(`${story.pageHtml}<!-- extra -->`, story.publishedUrl, reader(story.pages));
+	const changed = await checkPublished(
+		`${story.pageHtml}<!-- extra -->`,
+		story.publishedUrl,
+		reader(story.pages),
+		"proof",
+	);
 	assert.equal(changed.pass, false);
 });
 
@@ -229,12 +234,53 @@ test("the page check reads the visible menu and resolves relative links", async 
 
 test("the published check requires the account site", async () => {
 	const story = await proofStory();
-	const attacker = await checkPublished(story.pageHtml, "http://attacker.example", async () => ({
-		status: 200,
-		body: story.pageHtml,
-	}));
+	const attacker = await checkPublished(
+		story.pageHtml,
+		"http://attacker.example",
+		async () => ({
+			status: 200,
+			body: story.pageHtml,
+		}),
+		"proof",
+	);
 	assert.equal(attacker.pass, false);
 	assert.equal(attacker.evidence.includes("The published URL is not the account site."), true);
+});
+
+test("the page check reads unquoted and uppercase links", async () => {
+	const story = await proofStory();
+	const unquoted = await checkPage(pageInput(story, `${story.pageHtml}<a href=/does-not-exist>Order</a>`));
+	assert.equal(unquoted.pass, false);
+	assert.equal(unquoted.evidence.includes("A link is broken."), true);
+	const upper = await checkPage(pageInput(story, `${story.pageHtml}<a HREF="/does-not-exist">Order</a>`));
+	assert.equal(upper.pass, false);
+	assert.equal(upper.evidence.includes("A link is broken."), true);
+});
+
+test("the research check requires both competitor URLs to return 200", async () => {
+	const story = await proofStory();
+	const competitors = story.report.competitors.map((competitor, index) => ({
+		...competitor,
+		url: `https://example.com/missing-${index}`,
+	}));
+	const result = await checkResearch(
+		{ ...story.report, competitors },
+		async (url) => story.pages[url] ?? { status: 404, body: "" },
+	);
+	assert.equal(result.pass, false);
+	assert.equal(result.evidence.includes("A competitor URL did not return 200."), true);
+});
+
+test("the published URL must be this account site", async () => {
+	const story = await proofStory();
+	const read = async () => ({ status: 200, body: story.pageHtml });
+	const other = await checkPublished(story.pageHtml, "https://another-account.10squads.com", read, "proof");
+	assert.equal(other.pass, false);
+	assert.equal(other.evidence.includes("The published URL is not the account site."), true);
+	const nested = await checkPublished(story.pageHtml, "https://a.b.10squads.com", read, "proof");
+	assert.equal(nested.pass, false);
+	const same = await checkPublished(story.pageHtml, "https://proof.10squads.com", read, "proof");
+	assert.equal(same.pass, true);
 });
 
 test("the digest is 64 lowercase hex characters", async () => {

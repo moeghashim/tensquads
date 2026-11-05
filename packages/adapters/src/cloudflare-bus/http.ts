@@ -27,6 +27,8 @@ export interface WorkerBindings {
 	readonly DATABASE_URL?: string;
 	readonly CONTEXT_WEBHOOK_SECRET?: string;
 	readonly now?: () => number;
+	readonly BROWSER?: unknown;
+	readonly OPENAI_API_KEY?: string;
 }
 
 export interface BusMessage {

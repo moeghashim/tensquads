@@ -1,5 +1,8 @@
 import type { BusinessType, Competitor, GapEvidence, ListedItem, ResearchReport } from "@tensquads/agent-kit";
 
+import { noteRendered } from "./browser-menu.ts";
+import { pageLinks } from "./hrefs.ts";
+import type { RenderedPage } from "./render-page.ts";
 import type { CheckOutcome, PageAudit, PageFetch, PageReader } from "./types.ts";
 import { visibleText } from "./visible.ts";
 
@@ -11,6 +14,7 @@ export interface PageCheckInput {
 	readonly items: readonly ListedItem[];
 	readonly readPage: PageReader;
 	readonly audit: (html: string) => PageAudit | Promise<PageAudit>;
+	readonly browser?: (html: string) => Promise<RenderedPage>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -109,9 +113,17 @@ async function noteCompetitor(
 		evidence.push("The source is not on the competitor site.");
 		return;
 	}
-	const fetched = await readSafe(readPage, competitor.sourceUrl);
-	if (fetched.status !== 200) evidence.push("A competitor URL did not return 200.");
-	else if (!fetched.body.includes(competitor.priceOrOffer)) evidence.push("A price or offer is not on the page.");
+	await noteCompetitorPages(evidence, competitor, readPage);
+}
+
+async function noteCompetitorPages(evidence: string[], competitor: Competitor, readPage: PageReader): Promise<void> {
+	const page = await readSafe(readPage, competitor.url);
+	const source = await readSafe(readPage, competitor.sourceUrl);
+	if (page.status !== 200 || source.status !== 200) {
+		evidence.push("A competitor URL did not return 200.");
+		return;
+	}
+	if (!source.body.includes(competitor.priceOrOffer)) evidence.push("A price or offer is not on the page.");
 }
 
 export async function checkResearch(report: unknown, readPage: PageReader): Promise<CheckOutcome> {
@@ -142,27 +154,6 @@ interface ParsedRow {
 	readonly name: string;
 	readonly price: string;
 	readonly section: string;
-}
-
-function resolveHref(href: string, previewUrl: string): string | null {
-	if (href.length === 0 || href.startsWith("#")) return null;
-	try {
-		const url = new URL(href, previewUrl);
-		if (url.protocol !== "http:" && url.protocol !== "https:") return null;
-		return url.href;
-	} catch {
-		return null;
-	}
-}
-
-function pageLinks(html: string, previewUrl: string): string[] {
-	const links: string[] = [];
-	const linkRe = /href\s*=\s*("([^"]*)"|'([^']*)')/g;
-	for (const match of html.matchAll(linkRe)) {
-		const resolved = resolveHref(match[2] ?? match[3] ?? "", previewUrl);
-		if (resolved) links.push(resolved);
-	}
-	return links;
 }
 
 function parsedPage(html: string, previewUrl: string): { rows: ParsedRow[]; sections: string[]; links: string[] } {
@@ -281,10 +272,21 @@ export async function checkPage(input: PageCheckInput): Promise<CheckedPage> {
 	noteVisibleMenu(evidence, html, input.items);
 	await noteLinks(evidence, parsed.links, input.readPage);
 	noteAudit(evidence, await auditSafe(input.audit, html));
+	await noteBrowser(evidence, input, html);
 	return { ...outcome(evidence), html };
 }
 
-function accountSite(url: string): boolean {
+async function noteBrowser(evidence: string[], input: PageCheckInput, html: string): Promise<void> {
+	if (!input.browser) return;
+	try {
+		noteRendered(evidence, await input.browser(html), input);
+	} catch {
+		evidence.push("The page has a P0 or P1 finding.");
+	}
+}
+
+function accountSite(url: string, slug: string): boolean {
+	if (!/^[a-z0-9-]+$/.test(slug)) return false;
 	try {
 		const parsed = new URL(url);
 		if (parsed.protocol !== "https:") return false;
@@ -292,7 +294,7 @@ function accountSite(url: string): boolean {
 		if (parsed.port.length > 0) return false;
 		if (parsed.pathname !== "/") return false;
 		if (parsed.search.length > 0 || parsed.hash.length > 0) return false;
-		return /^[a-z0-9-]+\.10squads\.com$/.test(parsed.hostname);
+		return parsed.hostname === `${slug}.10squads.com`;
 	} catch {
 		return false;
 	}
@@ -302,8 +304,9 @@ export async function checkPublished(
 	previewHtml: string,
 	publishedUrl: string,
 	readPage: PageReader,
+	accountSlug: string,
 ): Promise<CheckOutcome> {
-	if (!accountSite(publishedUrl)) return outcome(["The published URL is not the account site."]);
+	if (!accountSite(publishedUrl, accountSlug)) return outcome(["The published URL is not the account site."]);
 	const page = await readSafe(readPage, publishedUrl);
 	if (page.status !== 200) return outcome(["The published URL did not return 200."]);
 	if (page.body !== previewHtml) return outcome(["The published page does not match the preview."]);
