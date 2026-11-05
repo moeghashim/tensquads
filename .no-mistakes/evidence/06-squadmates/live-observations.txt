@@ -1,0 +1,9 @@
+Review sheet: nine existing character cards and all 27 state drawings match base pixels; Sydney has an accessible name; no page overflow at 1440 or 390.
+Sign-up: both business types show seven named drawings and role tags with decorative SVGs; Petra copy and selection counts are correct at 1440 and 390; deselecting all squads blocks account creation.
+/overview redirects to /signin without Clerk credentials.
+/chat redirects to /signin without Clerk credentials.
+/agents redirects to /signin without Clerk credentials.
+/agents/support redirects to /signin without Clerk credentials.
+/traffic redirects to /signin without Clerk credentials.
+/rules redirects to /signin without Clerk credentials.
+/admin/images redirects to /signin without Clerk credentials.

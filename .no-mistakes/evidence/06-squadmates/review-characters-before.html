@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow"><title>tensquads squadmates</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fcfcfc;color:#282828;font:15px/24px Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:980px;margin:0 auto;padding:32px 24px 80px}
+a{color:#0169cc}a:hover{color:#004f99}
+h1{font-size:32px;line-height:38px;letter-spacing:-.02em;color:#0d0d0d;margin:16px 0}
+h2{font-size:22px;line-height:28px;color:#0d0d0d;margin:40px 0 12px}
+h3{font-size:17px;color:#0d0d0d;margin:28px 0 8px}
+.note{color:#5d5d5d;font-size:14px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;line-height:21px;margin:12px 0}
+th,td{border:1px solid rgba(13,13,13,.1);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#f3f3f3;color:#0d0d0d;font-weight:600}
+code{font:13px/20px ui-monospace,monospace;background:rgba(13,13,13,.06);padding:1px 4px;border-radius:4px}
+pre{background:#f3f3f3;padding:12px;border-radius:10px;overflow-x:auto}pre code{background:none;padding:0}
+.card{display:block;padding:14px 16px;border-radius:12px;box-shadow:0 0 0 1px rgba(13,13,13,.1);background:#fff;text-decoration:none;color:#0d0d0d;font-weight:500;margin:8px 0}
+.card:hover{box-shadow:0 0 0 1px rgba(13,13,13,.2)}.card span{display:block;color:#5d5d5d;font-weight:400;font-size:13px}
+</style></head><body><main><style>
+.sm-blink{transform-box:fill-box;transform-origin:center;animation:sm-blink 4.8s infinite}
+@keyframes sm-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@media (prefers-reduced-motion:reduce){.sm-blink{animation:none}}
+</style><style>
+.cast{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-top:16px}
+.mate{border-radius:14px;padding:18px 16px 16px;box-shadow:0 0 0 1px rgba(13,13,13,.08);text-align:center}
+.mate svg{display:block;margin:0 auto 8px}
+.mate b{display:block;font-size:18px;line-height:24px;color:#0d0d0d}
+.tag{display:inline-block;margin:4px 0 8px;padding:1px 8px;border-radius:6px;background:rgba(255,255,255,.75);color:#5d5d5d;font-size:12px;line-height:20px;font-weight:500}
+.mate .pl{font-size:12px;color:#8f8f8f;margin:0 0 6px}
+.mate p{margin:0;font-size:13px;line-height:19px;color:#5d5d5d}
+.states{overflow-x:auto;margin-top:12px}
+.states table{border-collapse:collapse;min-width:820px}
+.states th,.states td{border:none;background:none;padding:6px 4px;text-align:center;vertical-align:top;font-size:12px;line-height:16px}
+.states th{color:#0d0d0d;font-weight:600;width:84px}
+.states td.who{text-align:left;font-weight:600;color:#0d0d0d;width:90px;padding-top:26px}
+.states small{display:block;color:#8f8f8f;font-weight:400;margin-top:2px}
+.list{max-width:440px;border-radius:16px;background:#fff;box-shadow:0 0 0 1px rgba(13,13,13,.1);padding:6px;margin-top:12px}
+.row{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:12px}
+.row.on{background:#f3f3f3}
+.row .nm{display:flex;align-items:center;gap:6px;min-width:0}
+.row .nm b{color:#0d0d0d;font-size:15px}
+.row .nm .tag{margin:0;background:#f3f3f3;white-space:nowrap}
+.row.on .nm .tag{background:#fff}
+.row .msg{color:#5d5d5d;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.row .t{color:#8f8f8f;font-size:12px;text-align:right}
+.row .st{display:inline-block;margin-top:4px;padding:0 7px;border-radius:999px;font-size:11px;line-height:18px;background:#f3f3f3;color:#5d5d5d}
+.row .st.run{background:#e7efff;color:#0169cc}.row .st.ok{background:#04b84c14;color:#00692a}.row .st.wait{background:#fff1d1;color:#7a4a00}.row .st.esc{background:#fde7e7;color:#b42318}
+.sizes{display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap;margin-top:12px}
+.sizes div{text-align:center;font-size:12px;color:#8f8f8f}
+.ask{background:#fff8e1;border-radius:12px;padding:14px 16px;margin:16px 0}
+.ask ol{margin:6px 0 0;padding-left:20px}
+</style>
+<p class="note"><a href="/review/">Back to review</a></p>
+<h1>Squadmates</h1>
+<p class="note">One character for the master and for each agent. The body takes the agent's colour from the design. The accessory shows the role. The eyes show what the agent is doing now, from the Agent loop states in the plan. The product adds them next.</p>
+<div class="ask"><b>Decided by Moe on 3 November 2026</b><ol><li>Each squadmate is named after a famous place: Petra, Pisa, Kyoto, Rio, Zurich, Giza, Machu, Angkor and Delphi.</li><li>A customer cannot rename the master.</li><li>The style stays: one round body, one accessory, eyes that change with the state.</li></ol></div>
+<h2>The squad</h2><div class="cast"><div class="mate" style="background:#e8e8e8"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="112" height="112" role="img" aria-label="Petra, Master">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/></g>
+
+</svg><b>Petra</b><span class="tag">Master</span><p class="pl">Named after Petra, Jordan</p><p>Keeps the squad in sync and asks you only when it matters.</p></div><div class="mate" style="background:#e7efff"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="112" height="112" role="img" aria-label="Pisa, Orders">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><b>Pisa</b><span class="tag">Orders</span><p class="pl">Named after Pisa, Italy</p><p>Fulfils orders and chases tracking numbers.</p></div><div class="mate" style="background:#def5ee"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="112" height="112" role="img" aria-label="Kyoto, Support">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><b>Kyoto</b><span class="tag">Support</span><p class="pl">Named after Kyoto, Japan</p><p>Answers the inbox and handles refunds.</p></div><div class="mate" style="background:#ece3ff"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="112" height="112" role="img" aria-label="Rio, Marketing">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><b>Rio</b><span class="tag">Marketing</span><p class="pl">Named after Rio de Janeiro, Brazil</p><p>Runs ads, social and email.</p></div><div class="mate" style="background:#ffefa4"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="112" height="112" role="img" aria-label="Zurich, Finance">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><b>Zurich</b><span class="tag">Finance</span><p class="pl">Named after Zurich, Switzerland</p><p>Watches payouts, costs and profit.</p></div><div class="mate" style="background:#fee7c2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="112" height="112" role="img" aria-label="Giza, Inventory">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><b>Giza</b><span class="tag">Inventory</span><p class="pl">Named after Giza, Egypt</p><p>Counts stock and talks to suppliers.</p></div><div class="mate" style="background:#fde2f3"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="112" height="112" role="img" aria-label="Machu, Market researcher">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><b>Machu</b><span class="tag">Market researcher</span><p class="pl">Named after Machu Picchu, Peru</p><p>Finds the competitors and reads their prices.</p></div><div class="mate" style="background:#e5e9f0"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="112" height="112" role="img" aria-label="Angkor, Website builder">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><b>Angkor</b><span class="tag">Website builder</span><p class="pl">Named after Angkor Wat, Cambodia</p><p>Builds the page and publishes on your yes.</p></div><div class="mate" style="background:#e7efff"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="112" height="112" role="img" aria-label="Delphi, Analytics">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><b>Delphi</b><span class="tag">Analytics</span><p class="pl">Named after Delphi, Greece</p><p>Writes the reports and the weekly digest.</p></div></div>
+<h2>States</h2><p class="note">The nine Agent loop states. Waiting and idle blink slowly. A badge shows the states a person must see.</p>
+<div class="states"><table><tr><th></th><th>Waiting<small>Nothing to do now. Blinks slowly.</small></th><th>Planning<small>Looks up while it plans.</small></th><th>Running skill<small>Looks at the work.</small></th><th>Checking<small>Squints while the code check runs.</small></th><th>Done<small>The check passed.</small></th><th>Sent back<small>The check failed once. Looks down.</small></th><th>Blocked<small>Waits for a person. Holds no machine.</small></th><th>Escalated<small>Second fail. Needs you now.</small></th><th>Dropped<small>Nothing to do at all. Asleep.</small></th></tr><tr><td class="who">Petra</td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#ffffff"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#ffffff"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#ffffff"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#ffffff"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#ffffff"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, sentback">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><rect x="21.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#ffffff"/><rect x="35.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#ffffff"/><rect x="29.7" y="47.7" width="4.6" height="2.6" rx="1.3" fill="#ffffff"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#ffffff"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#ffffff"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#ffffff"/><circle cx="39" cy="37" r="4.4" fill="#ffffff"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#ffffff"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Petra, Master, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg></td></tr><tr><td class="who">Kyoto</td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, sentback">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><rect x="21.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="35.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="29.7" y="47.7" width="4.6" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Kyoto, Support, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg></td></tr><tr><td class="who">Angkor</td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, sentback">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><rect x="21.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="35.4" y="36.6" width="5.2" height="6.8" rx="2.6" fill="#0d0d0d"/><rect x="29.7" y="47.7" width="4.6" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg></td><td><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Angkor, Website builder, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg></td></tr></table></div>
+<h2>In use</h2><p class="note">A squad list, the way the sidebar or the dock could show it. Sample text only.</p>
+<div class="list"><div class="row on"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="44" height="44" role="img" aria-label="Petra, Master, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#ffffff"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#ffffff"/></g>
+
+</svg><div style="min-width:0"><div class="nm"><b>Petra</b><span class="tag">Master</span></div><div class="msg">Pisa is checking A-1007. I'll tell you when it ships.</div></div><div class="t">3m<br><span class="st run">Working</span></div></div><div class="row "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="44" height="44" role="img" aria-label="Pisa, Orders, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg><div style="min-width:0"><div class="nm"><b>Pisa</b><span class="tag">Orders</span></div><div class="msg">Petra handed A-1007 to Pisa</div></div><div class="t">3m<br><span class="st run">Checking</span></div></div><div class="row "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="44" height="44" role="img" aria-label="Kyoto, Support, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg><div style="min-width:0"><div class="nm"><b>Kyoto</b><span class="tag">Support</span></div><div class="msg">Refund for Maya sent, under the limit.</div></div><div class="t">5m<br><span class="st ok">Done</span></div></div><div class="row "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="44" height="44" role="img" aria-label="Giza, Inventory, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg><div style="min-width:0"><div class="nm"><b>Giza</b><span class="tag">Inventory</span></div><div class="msg">Needs your yes to reorder 40 units</div></div><div class="t">12m<br><span class="st wait">Waiting for you</span></div></div><div class="row "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="44" height="44" role="img" aria-label="Rio, Marketing, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg><div style="min-width:0"><div class="nm"><b>Rio</b><span class="tag">Marketing</span></div><div class="msg">Ad spend hit the daily cap twice</div></div><div class="t">37m<br><span class="st esc">Escalated</span></div></div><div class="row "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="44" height="44" role="img" aria-label="Zurich, Finance, waiting">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g class="sm-blink"><rect x="22.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="35.6" width="5.2" height="4.8" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><div style="min-width:0"><div class="nm"><b>Zurich</b><span class="tag">Finance</span></div><div class="msg">Weekly profit summary is ready</div></div><div class="t">1h<br><span class="st ">Idle</span></div></div><div class="row "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="44" height="44" role="img" aria-label="Machu, Market researcher, dropped">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g><path d="M21.4 35.4 Q25 40.4 28.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 35.4 Q39 40.4 42.6 35.4" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/></g>
+<text x="50" y="16" font-family="Inter,system-ui,sans-serif" font-size="11" font-weight="700" fill="#8f8f8f">z</text><text x="56" y="9" font-family="Inter,system-ui,sans-serif" font-size="8" font-weight="700" fill="#b4b4b4">z</text>
+</svg><div style="min-width:0"><div class="nm"><b>Machu</b><span class="tag">Market researcher</span></div><div class="msg">No competitor changes today</div></div><div class="t">10h<br><span class="st ">Idle</span></div></div></div>
+<h2>Sizes</h2><p class="note">The sidebar uses 24 or 32 px. The accessory must still read at 24 px.</p>
+<div class="sizes"><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="16" height="16" role="img" aria-label="Kyoto, Support">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><br>16 px</div><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" role="img" aria-label="Kyoto, Support">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><br>24 px</div><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" role="img" aria-label="Kyoto, Support">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><br>32 px</div><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="48" height="48" role="img" aria-label="Kyoto, Support">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><br>48 px</div><div><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="96" height="96" role="img" aria-label="Kyoto, Support">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><br>96 px</div></div></main></body></html>

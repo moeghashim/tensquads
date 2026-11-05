@@ -1,0 +1,8 @@
+Authenticated browser attempt: npm run e2e -- --config=.gate-test.config.ts --project=app --workers=1 -g "the sidebar marks the current page" e2e/frame.spec.ts
+Result: fixture stopped before sign-in: publishable, secret, testDatabase is missing.
+Neither .env nor apps/web/.dev.vars exists in this checkout; no Clerk/database credential environment variables are present.
+Browser navigation to /overview, /chat, /agents, /agents/support, /traffic, /rules and /admin/images redirects to /signin.
+Docker CLI is on PATH; docker info cannot connect to its daemon. PGlite runs locally but the application runtime uses Neon and real Clerk.
+No operator configuration or shared service was used. A local database cannot supply a genuine Clerk identity, and a fake session would bypass the product path under test.
+To finish: provide a dedicated disposable Clerk instance with publishable and secret keys, a dedicated TEST_DATABASE_URL supported by the Neon adapter, and a disposable platform organization for the admin scenario.
+Temporary test driver and config are archived here; copy them back to their original repository paths to rerun. No application source was changed.
