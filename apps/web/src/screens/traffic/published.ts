@@ -58,3 +58,39 @@ export function pendingTrafficId(accountId: string, pending: readonly PublishedT
 	}
 	return id;
 }
+
+let watchedAccount = "";
+
+// A switch drops every painted row. The first account keeps a row painted before the page mounted.
+export function watchTrafficAccount(nextAccountId: string): void {
+	if (watchedAccount === nextAccountId) return;
+	const previous = watchedAccount;
+	watchedAccount = nextAccountId;
+	if (previous.length === 0 || published.length === 0) return;
+	published = none;
+}
+
+// A read that already contains the row no longer needs the painted copy.
+export function retirePublishedTraffic(
+	accountId: string,
+	events: readonly { readonly id: string }[],
+	writeAt: number,
+): void {
+	const ids = new Set(events.map((event) => event.id));
+	const next = published.filter((item) => {
+		if (item.accountId !== accountId || writeAt < item.writeAt) return true;
+		return !ids.has(item.event.id);
+	});
+	if (next.length === published.length) return;
+	published = next;
+}
+
+// The page calls this while rendering. The visible list is derived from the same rules.
+export function settlePublishedTraffic(
+	accountId: string,
+	events: readonly { readonly id: string }[],
+	writeAt: number,
+): void {
+	watchTrafficAccount(accountId);
+	retirePublishedTraffic(accountId, events, writeAt);
+}

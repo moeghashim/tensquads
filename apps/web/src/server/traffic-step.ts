@@ -1,9 +1,8 @@
 import type { AppDatabase } from "@tensquads/adapters";
-import { chooseAdapters, createCloudflareBus, createRepositories, trafficScript } from "@tensquads/adapters";
+import { chooseAdapters, createCloudflareBus, nextEvent, trafficScript } from "@tensquads/adapters";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import type { BusEvent } from "@tensquads/domain";
 import type { AccountEventBus, AccountScope, PublishedEvent } from "@tensquads/kernel";
-import { Kernel } from "@tensquads/kernel";
 
 import { workerEnv } from "./worker-env.ts";
 
@@ -57,10 +56,6 @@ export async function advanceTrafficAccount(
 		const event = await (bus ?? (await durableTrafficBus())).nextEvent(scope, deadlineAt);
 		return event === undefined ? null : recordedEvent(event);
 	}
-	const repositories = createRepositories(db);
-	const before = new Set((await repositories.bus.listEvents(scope)).map((event) => event.id));
 	if (Date.now() >= deadlineAt) throw new Error(unfinished);
-	await new Kernel(repositories).nextEvent(scope, deadlineAt);
-	const after = await repositories.bus.listEvents(scope);
-	return after.filter((event) => !before.has(event.id)).at(-1) ?? null;
+	return (await nextEvent(db, scope, deadlineAt)) ?? null;
 }

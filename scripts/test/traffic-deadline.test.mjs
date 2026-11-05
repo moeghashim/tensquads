@@ -63,6 +63,23 @@ function scope(accountId) {
 	return { accountId, mode: "account" };
 }
 
+test("a write returns the event it stored", async () => {
+	await withAccount("created", async (opened, accountId) => {
+		const created = await advanceTrafficAccount(opened.db, scope(accountId), Date.now());
+		assert.ok(created);
+		const rows = await opened.db.select().from(schema.busEvents).where(eq(schema.busEvents.accountId, accountId));
+		const row = rows.find((item) => item.id === created.id);
+		assert.ok(row);
+		assert.equal(row.timeText, created.time);
+		assert.equal(row.body, created.text);
+		assert.equal(row.trace, created.trace);
+		assert.equal(row.fromAgent, created.from);
+		assert.equal(row.toAgent, created.to);
+		assert.equal(row.kind, created.kind);
+		assert.equal(row.skill, created.skill);
+	});
+});
+
 test("a read past the deadline commits nothing", async (t) => {
 	await withAccount("read", async (opened, accountId) => {
 		t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-11-02T12:00:00Z") });
@@ -96,15 +113,15 @@ test("a write past the original deadline commits nothing", async (t) => {
 		const restore = watchBusReads(opened.client, (sql) => {
 			if (!/select/i.test(sql) || !/bus_events/i.test(sql)) return;
 			selects += 1;
-			if (selects === 1) t.mock.timers.tick(20_000);
-			if (selects === 2) t.mock.timers.tick(15_000);
+			// The write reads, then checks the deadline captured when the send started.
+			if (selects === 1) t.mock.timers.tick(PENDING_TASK_WINDOW_MS + 1_000);
 		});
 		try {
 			await assert.rejects(
 				() => advanceTrafficAccount(opened.db, scope(accountId), Date.now()),
 				(error) => isUnfinished(error),
 			);
-			assert.equal(selects >= 2, true);
+			assert.equal(selects >= 1, true);
 			assert.equal(await generatedCount(opened.db, accountId), before);
 		} finally {
 			restore();

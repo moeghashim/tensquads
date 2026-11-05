@@ -11,6 +11,7 @@ import {
 	pendingTrafficId,
 	publishedTrafficServerSnapshot,
 	publishedTrafficSnapshot,
+	settlePublishedTraffic,
 	shownTrafficEvents,
 	subscribePublishedTraffic,
 } from "./published.ts";
@@ -64,6 +65,7 @@ const contents = "display: contents";
 export function TrafficPage({ data }: { readonly data: TrafficData & { readonly writeAt: number } }) {
 	const { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive } = useWorkspacePage(data.accountId);
 	const refresh = useRefresh();
+	settlePublishedTraffic(data.accountId, data.events, data.writeAt);
 	const pending = useSyncExternalStore(
 		subscribePublishedTraffic,
 		publishedTrafficSnapshot,

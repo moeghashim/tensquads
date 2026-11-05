@@ -64,33 +64,53 @@ function draftFrom(event: BusEvent): EventDraft {
 	};
 }
 
-async function writeNextEvent(tx: Tx, accountId: string): Promise<void> {
+async function writeNextEvent(tx: Tx, accountId: string): Promise<BusEvent | undefined> {
 	const cursor = await lockCursor(tx, accountId);
 	const events = await readEvents(tx, accountId);
 	const store = await readStore(tx, accountId);
 	const memory = createMemoryBus({ events, store, script: trafficScript(), cursor, trace: traceFor });
 	const event = memory.nextEvent();
-	if (!event) return;
+	if (!event) return undefined;
 	// appendEvents saves the script index it read. Save the advanced index after that write.
-	await appendEvents(tx, accountId, [draftFrom(event)], new Date());
+	const [saved] = await appendEvents(tx, accountId, [draftFrom(event)], new Date());
 	await saveCursor(tx, accountId, memory.cursor());
+	if (!saved) return undefined;
+	return {
+		id: saved.id,
+		time: saved.time,
+		from: event.from,
+		to: event.to,
+		kind: event.kind,
+		skill: event.skill,
+		text: event.text,
+		payload: event.payload,
+		writes: event.writes,
+		trace: saved.trace,
+		...(event.set === undefined ? {} : { set: event.set }),
+	};
 }
 
 const unfinished = "The workspace write did not finish.";
 
-export async function nextEvent(db: AppDatabase, scope: AccountScope, deadlineAt?: number): Promise<void> {
+export async function nextEvent(
+	db: AppDatabase,
+	scope: AccountScope,
+	deadlineAt?: number,
+): Promise<BusEvent | undefined> {
 	const checked = requireScope(scope);
-	if (checked.mode !== "account") return;
+	if (checked.mode !== "account") return undefined;
 	const absolute = deadlineAt ?? Date.now() + PENDING_TASK_WINDOW_MS;
 	const remaining = absolute - Date.now();
 	// A lock_timeout of 0 waits forever, so a few milliseconds left is already late.
 	if (remaining < 4) throw new Error(unfinished);
+	let created: BusEvent | undefined;
 	await workspaceTransaction(
 		db,
 		async (tx, constrainDeadline) => {
 			constrainDeadline(absolute);
-			await writeNextEvent(tx, checked.accountId);
+			created = await writeNextEvent(tx, checked.accountId);
 		},
 		{ deadlineMs: remaining, accountId: checked.accountId },
 	);
+	return created;
 }

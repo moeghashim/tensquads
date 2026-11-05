@@ -5,7 +5,9 @@ import {
 	pendingTrafficId,
 	publishedTrafficSnapshot,
 	publishTrafficEvent,
+	retirePublishedTraffic,
 	shownTrafficEvents,
+	watchTrafficAccount,
 } from "../../apps/web/src/screens/traffic/published.ts";
 
 function event(id, text = id) {
@@ -63,4 +65,22 @@ test("publish records the event after the write counter moves", () => {
 		publishedTrafficSnapshot(),
 	);
 	assert.equal(settled.filter((row) => row.id === "e100").length, 1);
+	retirePublishedTraffic("acct", seeded, item.writeAt);
+	assert.equal(
+		publishedTrafficSnapshot().some((row) => row.event.id === "e100"),
+		true,
+	);
+	retirePublishedTraffic("acct", [...seeded, item.event], item.writeAt);
+	assert.equal(
+		publishedTrafficSnapshot().some((row) => row.event.id === "e100"),
+		false,
+	);
+	watchTrafficAccount("acct");
+	publishTrafficEvent("acct", event("e200", "kept"));
+	assert.equal(
+		publishedTrafficSnapshot().some((row) => row.event.id === "e200"),
+		true,
+	);
+	watchTrafficAccount("other");
+	assert.equal(publishedTrafficSnapshot().length, 0);
 });
