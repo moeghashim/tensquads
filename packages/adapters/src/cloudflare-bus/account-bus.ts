@@ -8,11 +8,18 @@ import { type PendingBusRow, readBusEvents, readBusHistory, readBusState, writeP
 
 const ALARM_MS = 30_000;
 
+export interface SyncKv {
+	get<T>(key: string): T | undefined;
+	put<T>(key: string, value: T): void;
+}
+
 export interface BusStorage {
 	get<T>(key: string): Promise<T | undefined>;
 	put<T>(key: string, value: T): Promise<void>;
 	list<T>(options?: { prefix?: string }): Promise<Map<string, T>>;
 	transaction<T>(closure: (txn: BusStorage) => Promise<T>): Promise<T>;
+	transactionSync<T>(closure: () => T): T;
+	readonly kv: SyncKv;
 	setAlarm(scheduledTime: number | Date): Promise<void>;
 	getAlarm(): Promise<number | null>;
 	deleteAlarm(): Promise<void>;
@@ -95,17 +102,23 @@ function advanceBody(
 	return { accountId: body.accountId, script, deadlineAt };
 }
 
+class DeadlinePassed extends Error {
+	constructor() {
+		super("The deadline passed before the bus write committed.");
+	}
+}
+
 async function planAdvance(
-	txn: BusStorage,
+	storage: BusStorage,
 	accountId: string,
 	script: readonly ScriptedBusEvent[],
 	deadlineAt?: number,
 ): Promise<AdvanceResult> {
 	if (expired(deadlineAt)) return { accepted: false, expired: true };
-	const storedAccount = await txn.get<string>("account");
+	const storedAccount = await storage.get<string>("account");
 	if (storedAccount && storedAccount !== accountId) return { accepted: false };
-	let current = readCursor(await txn.get("traffic-cursor"));
-	const seen = await txn.list<boolean>({ prefix: "seen:" });
+	let current = readCursor(await storage.get("traffic-cursor"));
+	const seen = await storage.list<boolean>({ prefix: "seen:" });
 	const known = [...seen.keys()].map((key) => ({ id: key.slice("seen:".length) }));
 	const ids = new Set(known.map((event) => event.id));
 	while (ids.has(`e${current.seq}`)) {
@@ -114,10 +127,9 @@ async function planAdvance(
 	if (expired(deadlineAt)) return { accepted: false, expired: true };
 	const plan = planNextEvent(known, script, current, traceFor);
 	if (!plan) return { accepted: false };
-	const result = await commitEvent(txn, accountId, plan.event, deadlineAt);
+	const result = await commitDurable(storage, accountId, plan.event, deadlineAt, plan.cursor);
 	if (result.expired) return { accepted: false, expired: true };
 	if (result.seen || !result.event) return { accepted: false };
-	await txn.put("traffic-cursor", plan.cursor);
 	return { accepted: true, event: result.event };
 }
 
@@ -132,46 +144,59 @@ async function listed<T>(storage: BusStorage, prefix: string): Promise<readonly 
 	return [...rows.entries()].sort((left, right) => left[0].localeCompare(right[0], "en", { numeric: true }));
 }
 
-async function seenSeq(txn: BusStorage, accountId: string, eventId: string): Promise<AcceptResult | undefined> {
-	const storedAccount = await txn.get<string>("account");
-	if (storedAccount && storedAccount !== accountId) {
-		return { seen: true, seq: (await txn.get<number>("seq")) ?? 0 };
-	}
-	if (await txn.get(`seen:${eventId}`)) return { seen: true, seq: (await txn.get<number>("seq")) ?? 0 };
-	return undefined;
-}
-
-async function putSet(txn: BusStorage, values: PublishedEvent["set"]): Promise<void> {
+function writeState(kv: SyncKv, values: PublishedEvent["set"]): void {
 	if (!values) return;
-	for (const [key, value] of Object.entries(values)) await txn.put(`state:${key}`, JSON.stringify(value));
+	for (const [key, value] of Object.entries(values)) kv.put(`state:${key}`, JSON.stringify(value));
 }
 
-async function rememberTask(txn: BusStorage, event: PublishedEvent): Promise<void> {
+function rememberTask(kv: SyncKv, event: PublishedEvent): void {
 	if (event.kind !== "Task") return;
-	const tasks = (await txn.get<string[]>(`tasks:${event.to}`)) ?? [];
-	await txn.put(`tasks:${event.to}`, [...tasks, event.id]);
+	const tasks = kv.get<string[]>(`tasks:${event.to}`) ?? [];
+	kv.put(`tasks:${event.to}`, [...tasks, event.id]);
 }
 
-async function commitEvent(
-	txn: BusStorage,
+function commitSynced(
+	kv: SyncKv,
 	accountId: string,
 	event: PublishedEvent,
 	deadlineAt?: number,
-): Promise<AcceptResult> {
-	const prior = await seenSeq(txn, accountId, event.id);
-	if (prior) return prior;
-	const seq = ((await txn.get<number>("seq")) ?? 0) + 1;
-	if (expired(deadlineAt)) return { seen: false, seq, expired: true };
-	await txn.put("account", accountId);
-	await txn.put("seq", seq);
-	await txn.put(`seen:${event.id}`, true);
-	await txn.put(`event:${seq}`, event);
-	await putSet(txn, event.set);
-	await rememberTask(txn, event);
-	const pending = (await txn.get<PendingBusRow[]>("pending")) ?? [];
-	await txn.put("pending", [...pending, { seq, event }]);
-	await txn.setAlarm(Date.now() + ALARM_MS);
+	cursor?: TrafficCursor,
+): AcceptResult {
+	if (expired(deadlineAt)) throw new DeadlinePassed();
+	const storedAccount = kv.get<string>("account");
+	if (storedAccount && storedAccount !== accountId) return { seen: true, seq: kv.get<number>("seq") ?? 0 };
+	if (kv.get(`seen:${event.id}`)) return { seen: true, seq: kv.get<number>("seq") ?? 0 };
+	const seq = (kv.get<number>("seq") ?? 0) + 1;
+	kv.put("account", accountId);
+	kv.put("seq", seq);
+	kv.put(`seen:${event.id}`, true);
+	kv.put(`event:${seq}`, event);
+	writeState(kv, event.set);
+	rememberTask(kv, event);
+	const pending = kv.get<PendingBusRow[]>("pending") ?? [];
+	kv.put("pending", [...pending, { seq, event }]);
+	if (cursor) kv.put("traffic-cursor", cursor);
+	if (expired(deadlineAt)) throw new DeadlinePassed();
 	return { seen: false, seq, event };
+}
+
+async function commitDurable(
+	storage: BusStorage,
+	accountId: string,
+	event: PublishedEvent,
+	deadlineAt?: number,
+	cursor?: TrafficCursor,
+): Promise<AcceptResult> {
+	if (expired(deadlineAt)) return { seen: false, seq: 0, expired: true };
+	let result: AcceptResult;
+	try {
+		result = storage.transactionSync(() => commitSynced(storage.kv, accountId, event, deadlineAt, cursor));
+	} catch (error) {
+		if (error instanceof DeadlinePassed) return { seen: false, seq: 0, expired: true };
+		throw error;
+	}
+	if (!result.seen && result.event) await storage.setAlarm(Date.now() + ALARM_MS);
+	return result;
 }
 
 export class AccountBus {
@@ -222,9 +247,7 @@ export class AccountBus {
 			if (expired(record.deadlineAt)) return { accepted: false, expired: true };
 			await this.initialize(record.accountId);
 			if (expired(record.deadlineAt)) return { accepted: false, expired: true };
-			return this.ctx.storage.transaction((txn) =>
-				planAdvance(txn, record.accountId, record.script, record.deadlineAt),
-			);
+			return planAdvance(this.ctx.storage, record.accountId, record.script, record.deadlineAt);
 		});
 		if (result.expired) return Response.json({ accepted: false, expired: true });
 		if (result.event) this.push(result.event);
@@ -237,7 +260,7 @@ export class AccountBus {
 		if (!isBusRecord(body)) return new Response("The message was rejected.", { status: 400 });
 		const record = body;
 		const result = await this.withAccount(record.accountId, () =>
-			this.ctx.storage.transaction((txn) => commitEvent(txn, record.accountId, record.event)),
+			commitDurable(this.ctx.storage, record.accountId, record.event),
 		);
 		if (result.event) this.push(result.event);
 		await this.flush();
