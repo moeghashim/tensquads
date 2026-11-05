@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { charactersPage } from "./review-src/characters.mjs";
 import { DIAGRAM_CSS, DIAGRAMS, summary } from "./review-src/diagrams.mjs";
 import { QUESTIONS_CSS, questionsHtml } from "./review-src/questions.mjs";
-import { readStatus } from "./review-src/status.mjs";
+import { BUILT, EXTERNAL, PLANNED, PROGRESS, readStatus } from "./review-src/status.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "../..");
@@ -15,7 +15,17 @@ const ref = process.argv[2] ?? "HEAD";
 const git = (...args) => execFileSync("git", args, { cwd: root, encoding: "utf8", maxBuffer: 1 << 26 });
 const sha = git("rev-parse", "--short", ref).trim();
 const date = git("log", "-1", "--format=%cs", ref).trim();
-const status = readStatus(git, ref);
+const external = {};
+for (const [task, repo] of Object.entries(EXTERNAL)) {
+	try {
+		const prs = JSON.parse(execFileSync("gh", ["pr", "list", "-R", repo, "--state", "all", "--json", "state"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
+		external[task] = prs.some((pr) => pr.state === "MERGED") ? BUILT : PROGRESS;
+	} catch {
+		external[task] = PLANNED;
+		console.warn(`Warning: Cannot read pull requests for ${repo}; marking ${task} as planned.`);
+	}
+}
+const status = readStatus(git, ref, external);
 
 rmSync(join(here, "public"), { recursive: true, force: true });
 mkdirSync(join(out, "design"), { recursive: true });

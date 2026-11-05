@@ -1,10 +1,12 @@
-// Build status for the plan page. Git is the only source, so the page updates
-// itself on each deploy. A task is Built when its branch is merged into the ref.
-// It is In progress when its branch is on origin but not merged. Else it is Planned.
-
 export const BUILT = "built";
 export const PROGRESS = "progress";
 export const PLANNED = "planned";
+
+export const EXTERNAL = {
+	"05-agent-kit": "moeghashim/tensquads-agent-kit",
+	"05-market-researcher": "moeghashim/tensquads-market-researcher",
+	"05-website-builder": "moeghashim/tensquads-website-builder",
+};
 
 export const LABEL = { [BUILT]: "Built", [PROGRESS]: "In progress", [PLANNED]: "Planned" };
 
@@ -17,7 +19,7 @@ const branches = (git, ...args) =>
 			.map((name) => name.slice("origin/".length)),
 	);
 
-export function readStatus(git, ref) {
+export function readStatus(git, ref, external = {}) {
 	const merged = branches(git, "--merged", ref);
 	for (const subject of git("log", "--merges", "--format=%s", ref).split("\n")) {
 		const match = /^Merge pull request #\d+ from moeghashim\/(\S+)$/.exec(subject);
@@ -26,7 +28,7 @@ export function readStatus(git, ref) {
 		if (/^Merge phase 0 foundation \(#\d+\)$/.test(subject)) merged.add("00-foundation");
 	}
 	const open = branches(git);
-	const one = (task) => (merged.has(task) ? BUILT : open.has(task) ? PROGRESS : PLANNED);
+	const one = (task) => (Object.hasOwn(external, task) ? external[task] : merged.has(task) ? BUILT : open.has(task) ? PROGRESS : PLANNED);
 	// An item with several tasks is Built only when all of them are merged.
 	const of = (tasks) => {
 		const states = tasks.map(one);
