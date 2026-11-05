@@ -130,7 +130,7 @@ Do not guess. Stop the step that needs the answer. The other steps may proceed.
    12. Approval, master to website, `approval.ask`. The user said yes. The payload holds the Mandate.
    13. Result, website to master, `site.publish`. The live URL.
 3. **The context.dev links.** Answered by Moe on 5 November 2026: the researcher uses context.dev for three things only: web search (`web.search`), map listings (`maps.competitors`: `google-maps`, `google-maps-reviews`, `yelp-search`), and watching competitors (`competition.watch`, a monitor). Use the nine pages in `tasks/05-market-researcher.md` question 1. All nine returned 200 on 5 November 2026. The `change.detected` Worker route uses the payload page `https://docs.context.dev/api-reference/monitors/webhook-payload`.
-4. **The screen-by-screen table.** The old task said a table follows the Proof of concept section. The plan has no such table. *Recommended:* accept this table. Phase 5 changes seed data only. It does not change a layout.
+4. **The screen-by-screen table.** Answered by Moe on 5 November 2026: accept this table. Phase 5 changes seed data only. It does not change a layout.
    - Homepage: no change here. Decision 24 already shows the two agents. Task 07 owns the new homepage.
    - Sign-up: no change. Step 3 already shows the two agents.
    - Sign-in: no change.
