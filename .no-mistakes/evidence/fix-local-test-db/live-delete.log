@@ -1,0 +1,3 @@
+DELETE A BLOCKED: real deleteWorkspaceAccount waits on its account fence: [{"pid":71938,"mode":"ExclusiveLock","granted":false}]
+DELETE B FINISHED: while A remained fenced, B and its children were deleted; persisted accounts=[{"id":"delete-a"}]
+DELETE A RESUMED: release deleted A and its children; persisted counts=[{"accounts":0,"agents":0,"messages":0}]

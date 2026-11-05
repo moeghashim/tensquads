@@ -1,6 +1,10 @@
-Fresh database: two simultaneous real migrations completed; persisted revision=8b8773ae30862433555466cc3cef99b83f07cffb7451effeef6ab3080f39c9ac
-Current revision: both migrations completed while another connection held the exclusive global writer lock.
-Account isolation: reset B committed while reset A waited on A’s account fence.
-Same-account serialization: reset A committed after releasing its fence; persisted rows=[{"id":"live-a","agents":5},{"id":"live-b","agents":5}]
-Account-only transaction timeout settings: {"lock_timeout":"0","statement_timeout":"0"}
-Stale revision: real migration waited for shared writer, then completed and repaired persisted revision.
+FRESH/OVERLAPPING MIGRATION: two real adapter callers completed on an empty database; schema tables exist; committed revision=8b8773ae30862433555466cc3cef99b83f07cffb7451effeef6ab3080f39c9ac
+CURRENT REVISION: migrate completed in 3ms while another session held the exclusive global advisory lock.
+RESET A BLOCKED: [{"pid":71597,"mode":"ExclusiveLock","granted":false}]
+CROSS-ACCOUNT PROGRESS: reset B and real kernel Support-off write finished in 156ms while reset A remained blocked; persisted rows=[{"account_id":"live-a","is_on":true},{"account_id":"live-b","is_on":false}]
+RESET A RESUMED: same-account fence held reset for over 12 seconds (past send lock timeout); release completed reset with 5 agents=[{"account_id":"live-a","n":5},{"account_id":"live-b","n":5}]
+STALE MIGRATION BLOCKED: [{"pid":71597,"mode":"ExclusiveLock","granted":false}]
+STALE MIGRATION RESUMED: release completed migration and restored current revision; both account records retained=[{"id":"live-a"},{"id":"live-b"}]
+MIGRATION FAILURE: real Postgres rejected incompatible existing accounts table; SQLSTATE=42830 message=there is no unique constraint matching given keys for referenced table "accounts"
+ATOMIC ROLLBACK: [{"revision":null,"plans":null}]; no revision or partially-created plans table survived.
+RETRY AFTER REPAIR: same adapter migrated successfully and stored current revision.
