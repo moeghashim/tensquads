@@ -4,6 +4,7 @@ import type { PublishedEvent } from "@tensquads/kernel";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { traceFor } from "../trace.ts";
 import { alarmAfterFlush, HEARTBEAT_ALARM, type HeartbeatEnv, recordBeat, sweepHeartbeats } from "./heartbeat.ts";
+import { followMaster } from "./master-step.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
 import { type PendingBusRow, readBusEvents, readBusHistory, readBusState, writePending } from "./neon-write.ts";
 
@@ -32,9 +33,28 @@ export interface BusState {
 	getWebSockets(): WebSocket[];
 }
 
+interface MasterRequestInput {
+	readonly businessName: string;
+	readonly businessType: string;
+	readonly cuisine?: string;
+	readonly items: readonly { readonly name: string; readonly price: string; readonly section: string }[];
+}
+
+interface PageAuditInput {
+	readonly keyboard: boolean;
+	readonly contrast: boolean;
+	readonly p0: number;
+	readonly p1: number;
+	readonly horizontalScroll: boolean;
+}
+
 export interface BusObjectEnv extends HeartbeatEnv {
 	readonly DATABASE_URL?: string;
 	readonly BUS_INSPECT?: string;
+	readonly masterRequest?: MasterRequestInput;
+	readonly masterReadPage?: (url: string) => Promise<{ status: number; body: string }>;
+	readonly masterAudit?: (html: string) => PageAuditInput | Promise<PageAuditInput>;
+	readonly masterWriteBrief?: () => string | Promise<string>;
 }
 
 interface AcceptResult {
@@ -233,6 +253,7 @@ export class AccountBus {
 			["/socket", () => Promise.resolve(this.socket())],
 			["/take", (request: Request) => request.json().then((body: unknown) => this.take(body))],
 			["/heartbeat", (request: Request) => this.heartbeat(request)],
+			["/monitor", (request: Request) => this.monitor(request)],
 		]);
 		if (this.env.BUS_INSPECT === "1") {
 			routes.set("/seq", async () => Response.json({ seq: (await this.ctx.storage.get<number>("seq")) ?? 0 }));
@@ -266,8 +287,39 @@ export class AccountBus {
 			commitDurable(this.ctx.storage, record.accountId, record.event),
 		);
 		if (result.event) this.push(result.event);
+		if (!result.seen && result.event) await this.stepMaster(record.accountId, result.event);
 		await this.flush();
 		return Response.json({ seen: result.seen, seq: result.seq });
+	}
+
+	private async stepMaster(accountId: string, event: PublishedEvent): Promise<void> {
+		const produced = await followMaster(this.env, accountId, event);
+		for (const next of produced) {
+			const stored = await this.withAccount(accountId, () => commitDurable(this.ctx.storage, accountId, next));
+			if (stored.event) this.push(stored.event);
+		}
+	}
+
+	private async monitor(request: Request): Promise<Response> {
+		const map = (await this.ctx.storage.get<Record<string, string>>("monitors")) ?? {};
+		if (request.method === "GET") {
+			const id = new URL(request.url).searchParams.get("id") ?? "";
+			const accountId = map[id];
+			if (!accountId) return new Response("missing", { status: 404 });
+			return Response.json({ accountId });
+		}
+		if (request.method !== "POST") return new Response("The message was rejected.", { status: 400 });
+		const body: unknown = await request.json().catch(() => null);
+		if (!isObject(body) || !isNonEmptyString(body.monitorId) || !isNonEmptyString(body.accountId)) {
+			return new Response("The message was rejected.", { status: 400 });
+		}
+		const current = map[body.monitorId];
+		if (current && current !== body.accountId) {
+			return new Response("The monitor belongs to another account.", { status: 409 });
+		}
+		map[body.monitorId] = body.accountId;
+		await this.ctx.storage.put("monitors", map);
+		return Response.json({ ok: true });
 	}
 
 	private withAccount<T>(accountId: string, operation: () => Promise<T>): Promise<T> {

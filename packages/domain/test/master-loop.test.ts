@@ -94,6 +94,63 @@ test("a failed brief escalates and does not send the research back", async () =>
 	assert.equal((await master.approveBrief()).length, 0);
 });
 
+test("the publish approval hashes the checked preview bytes", async () => {
+	const story = await proofStory();
+	let reads = 0;
+	const bad = "<h1>Injected menu with invented items</h1>";
+	const master = createMaster(story.request, {
+		readPage: async (url) => {
+			if (url === story.previewUrl) {
+				reads += 1;
+				return { status: 200, body: reads === 1 ? story.pageHtml : bad };
+			}
+			return story.pages[url] ?? { status: 404, body: "" };
+		},
+		audit: () => story.audit,
+		model: { writeBrief: () => story.brief },
+	});
+	master.start();
+	await master.accept(result("report.write", { report: story.report }));
+	await master.approveBrief();
+	await master.accept(result("site.preview", { previewUrl: story.previewUrl }));
+	const accepted = await master.approvePublish();
+	const gate = accepted[0]?.payload.approval as { mandate: { subject: string } };
+	assert.equal(gate.mandate.subject, await digestOf(story.pageHtml));
+	assert.equal(accepted[0]?.payload.pageHtml, story.pageHtml);
+	assert.equal(reads, 1);
+});
+
+test("the publish approval also sends a task to the website agent", async () => {
+	const story = await proofStory();
+	const master = createMaster(story.request, ports(story));
+	master.start();
+	await master.accept(result("report.write", { report: story.report }));
+	await master.approveBrief();
+	await master.accept(result("site.preview", { previewUrl: story.previewUrl }));
+	const events = await master.approvePublish();
+	assert.equal(events[0]?.kind, "Approval");
+	assert.equal(events[1]?.kind, "Task");
+	assert.equal(events[1]?.to, "website");
+	assert.equal(events[1]?.skill, "task.route");
+	const carried = events[1]?.payload.approval as { skill: string; mandate: { subject: string } };
+	assert.equal(carried.skill, "site.publish");
+	assert.equal(carried.mandate.subject, await digestOf(story.pageHtml));
+	assert.equal(events[1]?.payload.pageHtml, story.pageHtml);
+});
+
+test("the master records a monitor on the account that created it", async () => {
+	const story = await proofStory();
+	const seen: string[] = [];
+	const master = createMaster(story.request, {
+		...ports(story),
+		recordMonitor: (monitorId: string) => {
+			seen.push(monitorId);
+		},
+	});
+	await master.createMonitor("monitor-a");
+	assert.deepEqual(seen, ["monitor-a"]);
+});
+
 test("a failed page check goes back to the website once, then escalates", async () => {
 	const story = await proofStory();
 	const master = createMaster(story.request, ports(story, story.brief, { ...story.audit, p0: 1 }));

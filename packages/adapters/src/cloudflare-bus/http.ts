@@ -6,6 +6,7 @@ import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { takeTestTask, workerTestBus } from "../worker-adapters.ts";
 import { changeEvent, verifyContextSignature } from "./change.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
+import { resolveMonitor } from "./monitors.ts";
 import { type MachineTokenDelivery, machineTokenDelivery, verifyMachineToken } from "./token.ts";
 
 export interface BusNamespace {
@@ -156,14 +157,25 @@ function eventFromRaw(raw: string): ReturnType<typeof changeEvent> {
 	}
 }
 
+function monitorIdOf(event: PublishedEvent): string {
+	const value = event.payload.monitorId;
+	return typeof value === "string" ? value : "";
+}
+
+async function accountForChange(request: Request, env: WorkerBindings, event: PublishedEvent): Promise<string | null> {
+	const accountId = await resolveMonitor(monitorIdOf(event), env);
+	if (!accountId) return null;
+	const claimed = new URL(request.url).searchParams.get("account");
+	if (claimed && claimed !== accountId) return null;
+	return accountId;
+}
+
 async function verifiedChange(
 	request: Request,
 	env: WorkerBindings,
 ): Promise<{ accountId: string; event: PublishedEvent } | Response> {
 	if (request.method !== "POST") return rejected();
-	const accountId = new URL(request.url).searchParams.get("account") ?? "";
 	const secret = env.CONTEXT_WEBHOOK_SECRET;
-	if (!isNonEmptyString(accountId)) return rejected();
 	if (!secret) return notReady();
 	const raw = await request.text();
 	const signed = await verifyContextSignature(
@@ -178,6 +190,8 @@ async function verifiedChange(
 	if (!event) return rejected();
 	const contextId = headerValue(request, "x-context-id");
 	if (contextId.length > 0 && contextId !== event.id) return rejected();
+	const accountId = await accountForChange(request, env, event);
+	if (!accountId) return rejected();
 	return { accountId, event };
 }
 

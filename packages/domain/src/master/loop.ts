@@ -13,6 +13,7 @@ export interface MasterPorts {
 	readonly audit: (html: string) => PageAudit | Promise<PageAudit>;
 	readonly model: BriefModel;
 	readonly mandateAt?: string;
+	readonly recordMonitor?: (monitorId: string) => void | Promise<void>;
 }
 
 type Phase = "research" | "brief" | "building" | "publish" | "publishing" | "done" | "escalated";
@@ -209,8 +210,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			audit: ports.audit,
 		});
 		if (!result.pass) return failPage(result.evidence);
-		const page = await ports.readPage(previewUrl);
-		state.previewHtml = page.body;
+		state.previewHtml = result.html;
 		state.previewUrl = previewUrl;
 		state.phase = "publish";
 		return [
@@ -236,21 +236,39 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			subject: await digestOf(state.previewHtml),
 			at: ports.mandateAt,
 		});
+		const pageHtml = state.previewHtml;
+		const previewUrl = state.previewUrl ?? "";
+		const approval = make(approvalId, {
+			from: "master",
+			to: "website",
+			kind: "Approval",
+			skill: "approval.ask",
+			text: "The user said yes.",
+			payload: {
+				approval: { skill: "site.publish", mandate },
+				pageHtml,
+				previewUrl,
+			},
+		});
+		const task = emit({
+			from: "master",
+			to: "website",
+			kind: "Task",
+			skill: "task.route",
+			text: "Publish the page.",
+			payload: {
+				approval: { skill: "site.publish", mandate },
+				pageHtml,
+				previewUrl,
+			},
+		});
 		state.phase = "publishing";
-		return [
-			make(approvalId, {
-				from: "master",
-				to: "website",
-				kind: "Approval",
-				skill: "approval.ask",
-				text: "The user said yes.",
-				payload: {
-					approval: { skill: "site.publish", mandate },
-					pageHtml: state.previewHtml,
-					previewUrl: state.previewUrl ?? "",
-				},
-			}),
-		];
+		return [approval, task];
+	}
+
+	async function createMonitor(monitorId: string): Promise<void> {
+		if (!ports.recordMonitor) throw new Error("The monitor was not recorded.");
+		await ports.recordMonitor(monitorId);
 	}
 
 	async function onPublish(event: BusEvent): Promise<BusEvent[]> {
@@ -273,5 +291,5 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		return [];
 	}
 
-	return { start, accept, approveBrief, approvePublish };
+	return { start, accept, approveBrief, approvePublish, createMonitor };
 }

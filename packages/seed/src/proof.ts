@@ -29,6 +29,18 @@ function image(id: string, name: string, tint: string, tag: string): AgentImage 
 	};
 }
 
+function proofTiles() {
+	const delta = "\u00a0";
+	const deltaColor = "#5d5d5d";
+	return [
+		{ label: "Revenue", value: "—", delta, deltaColor },
+		{ label: "Orders", value: "—", delta, deltaColor },
+		{ label: "Average order", value: "$0", delta, deltaColor },
+		{ label: "Profit margin", value: "0%", delta, deltaColor },
+		{ label: "Hours saved", value: "0h", delta, deltaColor },
+	];
+}
+
 function agent(input: {
 	readonly id: string;
 	readonly role: string;
@@ -139,7 +151,7 @@ export async function proofOfConceptWorkspace(): Promise<WorkspaceSnapshot> {
 				approvals: [],
 				proposals: [],
 				revenue: [],
-				tiles: null,
+				tiles: proofTiles(),
 				messages: [
 					{
 						id: "poc-chat-1",

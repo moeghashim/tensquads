@@ -1,6 +1,7 @@
 import type { BusinessType, Competitor, GapEvidence, ListedItem, ResearchReport } from "@tensquads/agent-kit";
 
 import type { CheckOutcome, PageAudit, PageFetch, PageReader } from "./types.ts";
+import { visibleText } from "./visible.ts";
 
 export interface PageCheckInput {
 	readonly previewUrl: string;
@@ -71,18 +72,57 @@ async function readSafe(readPage: PageReader, url: string): Promise<PageFetch> {
 	}
 }
 
+function hostOf(url: string): string | null {
+	try {
+		const parsed = new URL(url);
+		if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+		return parsed.host;
+	} catch {
+		return null;
+	}
+}
+
+function pageKey(url: string): string {
+	try {
+		const parsed = new URL(url);
+		parsed.hash = "";
+		return parsed.href;
+	} catch {
+		return url;
+	}
+}
+
+async function noteCompetitor(
+	evidence: string[],
+	competitor: Competitor,
+	sources: readonly string[],
+	seenPages: Set<string>,
+	readPage: PageReader,
+): Promise<void> {
+	if (competitor.priceOrOffer.trim().length === 0) evidence.push("A competitor has no price or offer.");
+	if (!sources.includes(competitor.sourceUrl)) evidence.push("The report was rejected.");
+	const page = pageKey(competitor.url);
+	if (seenPages.has(page)) evidence.push("The report repeats a competitor.");
+	else seenPages.add(page);
+	const site = hostOf(competitor.url);
+	if (site === null || site !== hostOf(competitor.sourceUrl)) {
+		evidence.push("The source is not on the competitor site.");
+		return;
+	}
+	const fetched = await readSafe(readPage, competitor.sourceUrl);
+	if (fetched.status !== 200) evidence.push("A competitor URL did not return 200.");
+	else if (!fetched.body.includes(competitor.priceOrOffer)) evidence.push("A price or offer is not on the page.");
+}
+
 export async function checkResearch(report: unknown, readPage: PageReader): Promise<CheckOutcome> {
 	const parsed = readReport(report);
 	if (!parsed) return outcome(["The report was rejected."]);
 	const evidence: string[] = [];
 	if (parsed.competitors.length < 3) evidence.push("The report needs three competitors.");
 	if (!parsed.sources.includes(parsed.gapEvidence.sourceUrl)) evidence.push("The report was rejected.");
+	const seenPages = new Set<string>();
 	for (const competitor of parsed.competitors) {
-		if (competitor.priceOrOffer.trim().length === 0) evidence.push("A competitor has no price or offer.");
-		if (!parsed.sources.includes(competitor.sourceUrl)) evidence.push("The report was rejected.");
-		const page = await readSafe(readPage, competitor.url);
-		if (page.status !== 200) evidence.push("A competitor URL did not return 200.");
-		else if (!page.body.includes(competitor.priceOrOffer)) evidence.push("A price or offer is not on the page.");
+		await noteCompetitor(evidence, competitor, parsed.sources, seenPages, readPage);
 	}
 	const source = await readSafe(readPage, parsed.gapEvidence.sourceUrl);
 	if (source.status !== 200 || !source.body.includes(parsed.gapEvidence.quote)) {
@@ -104,7 +144,28 @@ interface ParsedRow {
 	readonly section: string;
 }
 
-function parsedPage(html: string): { rows: ParsedRow[]; sections: string[]; links: string[] } {
+function resolveHref(href: string, previewUrl: string): string | null {
+	if (href.length === 0 || href.startsWith("#")) return null;
+	try {
+		const url = new URL(href, previewUrl);
+		if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+		return url.href;
+	} catch {
+		return null;
+	}
+}
+
+function pageLinks(html: string, previewUrl: string): string[] {
+	const links: string[] = [];
+	const linkRe = /href\s*=\s*("([^"]*)"|'([^']*)')/g;
+	for (const match of html.matchAll(linkRe)) {
+		const resolved = resolveHref(match[2] ?? match[3] ?? "", previewUrl);
+		if (resolved) links.push(resolved);
+	}
+	return links;
+}
+
+function parsedPage(html: string, previewUrl: string): { rows: ParsedRow[]; sections: string[]; links: string[] } {
 	const sections: string[] = [];
 	const rows: ParsedRow[] = [];
 	const sectionRe = /<section>\s*<h2>([^<]*)<\/h2>([\s\S]*?)<\/section>/g;
@@ -117,13 +178,27 @@ function parsedPage(html: string): { rows: ParsedRow[]; sections: string[]; link
 			rows.push({ name: row[1] ?? "", price: row[2] ?? "", section });
 		}
 	}
-	const links: string[] = [];
-	const linkRe = /href="(https?:\/\/[^"]*)"|href='(https?:\/\/[^']*)'/g;
-	for (const match of html.matchAll(linkRe)) {
-		const href = match[1] ?? match[2];
-		if (href) links.push(href);
+	return { rows, sections, links: pageLinks(html, previewUrl) };
+}
+
+const PRICE_RE = /\[PRICE\]|\$\d+(?:\.\d+)?/g;
+
+function noteVisibleMenu(evidence: string[], html: string, items: readonly ListedItem[]): void {
+	const text = visibleText(html);
+	const expected = new Map<string, number>();
+	for (const item of items) {
+		const price = shownPrice(item.price);
+		if (!text.includes(item.name) || !text.includes(price)) evidence.push("An item from the list is missing.");
+		expected.set(price, (expected.get(price) ?? 0) + 1);
 	}
-	return { rows, sections, links };
+	const seen = new Map<string, number>();
+	for (const match of text.matchAll(PRICE_RE)) {
+		const price = match[0] ?? "";
+		seen.set(price, (seen.get(price) ?? 0) + 1);
+	}
+	for (const [price, count] of seen) {
+		if (count > (expected.get(price) ?? 0)) evidence.push("The page invents an item.");
+	}
 }
 
 function userSections(items: readonly ListedItem[]): string[] {
@@ -190,18 +265,37 @@ function noteAudit(evidence: string[], audit: PageAudit): void {
 	if (audit.horizontalScroll) evidence.push("The page scrolls sideways at 390 px.");
 }
 
-export async function checkPage(input: PageCheckInput): Promise<CheckOutcome> {
+interface CheckedPage extends CheckOutcome {
+	readonly html: string;
+}
+
+export async function checkPage(input: PageCheckInput): Promise<CheckedPage> {
 	const evidence: string[] = [];
 	const preview = await readSafe(input.readPage, input.previewUrl);
-	if (preview.status !== 200) return outcome(["The preview URL did not return 200."]);
+	if (preview.status !== 200) return { ...outcome(["The preview URL did not return 200."]), html: "" };
 	const html = preview.body;
-	const parsed = parsedPage(html);
+	const parsed = parsedPage(html, input.previewUrl);
 	noteIdentity(evidence, html, input);
 	noteSections(evidence, parsed.sections, input.items);
 	noteItems(evidence, parsed.rows, input.items);
+	noteVisibleMenu(evidence, html, input.items);
 	await noteLinks(evidence, parsed.links, input.readPage);
 	noteAudit(evidence, await auditSafe(input.audit, html));
-	return outcome(evidence);
+	return { ...outcome(evidence), html };
+}
+
+function accountSite(url: string): boolean {
+	try {
+		const parsed = new URL(url);
+		if (parsed.protocol !== "https:") return false;
+		if (parsed.username.length > 0 || parsed.password.length > 0) return false;
+		if (parsed.port.length > 0) return false;
+		if (parsed.pathname !== "/") return false;
+		if (parsed.search.length > 0 || parsed.hash.length > 0) return false;
+		return /^[a-z0-9-]+\.10squads\.com$/.test(parsed.hostname);
+	} catch {
+		return false;
+	}
 }
 
 export async function checkPublished(
@@ -209,6 +303,7 @@ export async function checkPublished(
 	publishedUrl: string,
 	readPage: PageReader,
 ): Promise<CheckOutcome> {
+	if (!accountSite(publishedUrl)) return outcome(["The published URL is not the account site."]);
 	const page = await readSafe(readPage, publishedUrl);
 	if (page.status !== 200) return outcome(["The published URL did not return 200."]);
 	if (page.body !== previewHtml) return outcome(["The published page does not match the preview."]);

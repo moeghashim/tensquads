@@ -73,8 +73,9 @@ async function resumeLive(env: HeartbeatEnv, accountId: string, agentId: string)
 	await machine.resume({ accountId, mode: "account" }, agentId);
 }
 
-function dueOf(beat: HeartbeatBeat): number {
-	return (beat.resumedAt ?? beat.at) + MISSED_MS;
+function dueOf(beat: HeartbeatBeat): number | null {
+	if (beat.resumedAt !== undefined) return null;
+	return beat.at + MISSED_MS;
 }
 
 async function resumeDue(
@@ -84,11 +85,11 @@ async function resumeDue(
 	beat: HeartbeatBeat,
 	map: Record<string, HeartbeatBeat>,
 	now: number,
-): Promise<number> {
+): Promise<number | null> {
 	try {
 		await resume(accountId, agentId);
 		map[agentId] = { at: beat.at, resumedAt: now };
-		return now + MISSED_MS;
+		return null;
 	} catch {
 		return now + RETRY_MS;
 	}
@@ -104,6 +105,7 @@ async function oneDue(
 	const beat = map[agentId];
 	if (!beat) return null;
 	const due = dueOf(beat);
+	if (due === null) return null;
 	if (now < due) return due;
 	if (!resume || !accountId) return null;
 	return resumeDue(resume, accountId, agentId, beat, map, now);

@@ -85,12 +85,20 @@ test("the proof snapshot keeps the thirteen events and the blank overview", asyn
 			stored: await repos.platform.overviewTiles(proof),
 			tasksDone: 0,
 			revenue: [],
-			saved: [],
+			saved: agents.map((agent) => agent.saved),
 		});
 		assert.equal(shown[0]?.label, "Revenue");
 		assert.equal(shown[0]?.value, BLANK);
 		assert.equal(shown[1]?.label, "Orders");
 		assert.equal(shown[1]?.value, BLANK);
+		assert.equal(shown[2]?.value, "$0");
+		assert.equal(shown[3]?.value, "0%");
+		assert.equal(shown[4]?.value, "0");
+		assert.equal(shown[5]?.value, "0h");
+		assert.deepEqual(
+			shown.filter((tile) => tile.value === BLANK).map((tile) => tile.label),
+			["Revenue", "Orders"],
+		);
 		const thread = await repos.conversation.thread(proof);
 		assert.equal(
 			thread?.messages.some((message) => message.text.includes(story.previewUrl)),

@@ -173,6 +173,70 @@ test("a grocer page does not need a cuisine", async () => {
 	assert.equal(restaurant.pass, false);
 });
 
+function pageInput(story: Awaited<ReturnType<typeof proofStory>>, html: string) {
+	const pages = { ...story.pages, [story.previewUrl]: { status: 200, body: html } };
+	return {
+		previewUrl: story.previewUrl,
+		businessName: story.request.businessName,
+		businessType: story.request.businessType,
+		cuisine: story.request.cuisine,
+		items: story.request.items,
+		readPage: reader(pages),
+		audit: () => story.audit,
+	};
+}
+
+test("the research check rejects a repeated competitor and a price off its source", async () => {
+	const story = await proofStory();
+	const read = reader(story.pages);
+	const one = story.report.competitors[0];
+	assert.ok(one);
+	const repeated = await checkResearch({ ...story.report, competitors: [one, one, one] }, read);
+	assert.equal(repeated.pass, false);
+	assert.equal(repeated.evidence.includes("The report repeats a competitor."), true);
+	const cited = story.report.competitors.map((competitor) => ({
+		...competitor,
+		sourceUrl: story.report.sources[2] ?? competitor.sourceUrl,
+	}));
+	const wrongPage = await checkResearch({ ...story.report, competitors: cited }, read);
+	assert.equal(wrongPage.pass, false);
+	assert.equal(wrongPage.evidence.includes("A price or offer is not on the page."), true);
+	const foreign = story.report.competitors.map((competitor, index) =>
+		index === 0 ? { ...competitor, sourceUrl: "https://other.example/price" } : competitor,
+	);
+	const pages = {
+		...story.pages,
+		"https://other.example/price": { status: 200, body: "Alpha plate $12" },
+	};
+	const otherSite = await checkResearch({ ...story.report, competitors: foreign }, reader(pages));
+	assert.equal(otherSite.pass, false);
+	assert.equal(otherSite.evidence.includes("The source is not on the competitor site."), true);
+});
+
+test("the page check reads the visible menu and resolves relative links", async () => {
+	const story = await proofStory();
+	const extra = await checkPage(pageInput(story, `${story.pageHtml}<div>Dragon taco — $99</div>`));
+	assert.equal(extra.pass, false);
+	assert.equal(extra.evidence.includes("The page invents an item."), true);
+	const hidden = `<div hidden>${story.pageHtml}</div><h1>Proof Kitchen</h1><p>Levantine</p><p>Chicken tawook $14</p><p>Fattoush</p>`;
+	const concealed = await checkPage(pageInput(story, hidden));
+	assert.equal(concealed.pass, false);
+	assert.equal(concealed.evidence.includes("An item from the list is missing."), true);
+	const relative = await checkPage(pageInput(story, `${story.pageHtml}<a href="/does-not-exist">Order</a>`));
+	assert.equal(relative.pass, false);
+	assert.equal(relative.evidence.includes("A link is broken."), true);
+});
+
+test("the published check requires the account site", async () => {
+	const story = await proofStory();
+	const attacker = await checkPublished(story.pageHtml, "http://attacker.example", async () => ({
+		status: 200,
+		body: story.pageHtml,
+	}));
+	assert.equal(attacker.pass, false);
+	assert.equal(attacker.evidence.includes("The published URL is not the account site."), true);
+});
+
 test("the digest is 64 lowercase hex characters", async () => {
 	const empty = await digestOf("");
 	assert.equal(empty, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");

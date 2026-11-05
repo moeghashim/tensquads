@@ -1,4 +1,4 @@
-const URL_RE = /https?:\/\/[^\s<>"']+/g;
+const URL_RE = /https:\/\/[^\s<>"']+/g;
 
 export type MessagePart =
 	| { readonly kind: "text"; readonly value: string; readonly start: number }

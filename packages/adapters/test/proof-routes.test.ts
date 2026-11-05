@@ -4,6 +4,7 @@ import test from "node:test";
 import { AccountBus } from "../src/cloudflare-bus/account-bus.ts";
 import { alarmAfterFlush, HEARTBEATS, MISSED_MS, RETRY_MS } from "../src/cloudflare-bus/heartbeat.ts";
 import { credentialForMachine, handleMachineRequest } from "../src/cloudflare-bus/http.ts";
+import { recordMonitor } from "../src/cloudflare-bus/monitors.ts";
 import {
 	MACHINE_TOKEN_BASE_URL_ENV,
 	MACHINE_TOKEN_ENV,
@@ -152,7 +153,7 @@ test("three missed minutes resume the agent once", async () => {
 	assert.deepEqual(resumed, ["website"]);
 	const beats = await storage.get<Record<string, { at: number; resumedAt?: number }>>(HEARTBEATS);
 	assert.equal(beats?.website?.resumedAt, MISSED_MS);
-	assert.equal(await storage.getAlarm(), MISSED_MS + MISSED_MS);
+	assert.equal(await storage.getAlarm(), null);
 	now = 120_000;
 	assert.equal((await post()).status, 200);
 	now = MISSED_MS;
@@ -219,6 +220,7 @@ test("a signed change.detected webhook becomes one bus event", async () => {
 	};
 	const env = { CONTEXT_WEBHOOK_SECRET: SECRET, now: () => now };
 	const account = "change-proof";
+	await recordMonitor("mon-proof", account);
 	const post = (init: RequestInit, id = account) =>
 		handleMachineRequest(new Request(`https://worker/change.detected?account=${id}`, init), env);
 	const first = await post({ method: "POST", headers, body });

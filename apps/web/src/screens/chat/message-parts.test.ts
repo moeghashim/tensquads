@@ -15,3 +15,9 @@ test("an https address becomes a link and keeps the trailing period", () => {
 		{ kind: "text", value: ".", start: 49 },
 	]);
 });
+
+test("an http address, javascript, and markup stay text", () => {
+	assert.deepEqual(messageParts("http://example.com"), [{ kind: "text", value: "http://example.com", start: 0 }]);
+	assert.equal(messageParts("javascript:alert(1)")[0]?.kind, "text");
+	assert.equal(messageParts("<img src=x onerror=alert(1)>")[0]?.kind, "text");
+});
