@@ -170,6 +170,78 @@ test("a newer read that aborts after a failed token still opens sign-in", async 
 	assert.equal(calls.reload, 0);
 });
 
+test("a newer read that resolves before a failed token stays signed in", async () => {
+	let release = () => {};
+	const gate = new Promise((resolve) => {
+		release = resolve;
+	});
+	const { calls, refresh } = harness(() =>
+		gate.then(() => {
+			throw new Error("The client is signed out.");
+		}),
+	);
+	const first = refresh.begin();
+	const pending = refresh.finish(needed(), "GET", first);
+	refresh.noteAction();
+	const newer = refresh.begin();
+	refresh.resolved(newer);
+	refresh.end(newer);
+	release();
+	await pending;
+	refresh.end(first);
+	assert.equal(calls.signIn, 0);
+	assert.equal(calls.reload, 0);
+});
+
+test("a settled newer read keeps a later abort from opening sign-in", async () => {
+	let release = () => {};
+	const gate = new Promise((resolve) => {
+		release = resolve;
+	});
+	const { calls, refresh } = harness(() =>
+		gate.then(() => {
+			throw new Error("The client is signed out.");
+		}),
+	);
+	const first = refresh.begin();
+	const pending = refresh.finish(needed(), "GET", first);
+	refresh.noteAction();
+	const settled = refresh.begin();
+	refresh.resolved(settled);
+	refresh.end(settled);
+	const aborted = refresh.begin();
+	release();
+	await pending;
+	refresh.end(first);
+	assert.equal(calls.signIn, 0);
+	await refresh.finish(new Error("The request was aborted."), "GET", aborted);
+	refresh.end(aborted);
+	assert.equal(calls.signIn, 0);
+	assert.equal(calls.reload, 0);
+});
+
+test("a successful read from the same action does not hide a failed token", async () => {
+	let release = () => {};
+	const gate = new Promise((resolve) => {
+		release = resolve;
+	});
+	const { calls, refresh } = harness(() =>
+		gate.then(() => {
+			throw new Error("The client is signed out.");
+		}),
+	);
+	const first = refresh.begin();
+	const pending = refresh.finish(needed(), "GET", first);
+	const sibling = refresh.begin();
+	refresh.resolved(sibling);
+	refresh.end(sibling);
+	release();
+	await pending;
+	refresh.end(first);
+	assert.equal(calls.signIn, 1);
+	assert.equal(calls.reload, 0);
+});
+
 test("a newer read that resolves after a failed token stays signed in", async () => {
 	let release = () => {};
 	const gate = new Promise((resolve) => {

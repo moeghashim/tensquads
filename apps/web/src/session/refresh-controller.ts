@@ -18,6 +18,8 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 	const beganAt = new Map<number, number>();
 	// A failed token whose newer read has not settled yet.
 	let failedAt: number | null = null;
+	// The newest generation that already returned data. It outlives that read.
+	let succeededAt = -1;
 
 	function noteAction(): void {
 		generation += 1;
@@ -37,14 +39,17 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 		open.delete(id);
 		beganAt.delete(id);
 		if (failedAt !== null && !hasNewer(failedAt)) {
+			const seen = failedAt;
 			failedAt = null;
-			void goSignIn();
+			if (!settledNewer(seen)) void goSignIn();
 		}
 	}
 
 	// A newer read that returned data has a session. Do not sign that action out.
 	function resolved(id: number): void {
-		if (failedAt !== null && (beganAt.get(id) ?? -1) > failedAt) failedAt = null;
+		const at = beganAt.get(id) ?? -1;
+		if (at > succeededAt) succeededAt = at;
+		if (failedAt !== null && at > failedAt) failedAt = null;
 	}
 
 	function hasNewer(seen: number): boolean {
@@ -54,6 +59,10 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 		return false;
 	}
 
+	function settledNewer(seen: number): boolean {
+		return succeededAt > seen;
+	}
+
 	async function goSignIn(): Promise<void> {
 		if (signingIn) return;
 		signingIn = true;
@@ -61,6 +70,10 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 	}
 
 	async function rejectWave(seen: number): Promise<void> {
+		if (settledNewer(seen)) {
+			failedAt = null;
+			return;
+		}
 		if (!hasNewer(seen)) {
 			failedAt = null;
 			await goSignIn();
