@@ -1,10 +1,19 @@
-import { Pool } from "@neondatabase/serverless";
+import { createHash } from "node:crypto";
+import { Pool, type PoolClient } from "@neondatabase/serverless";
 import { drizzle as drizzleNeon, type NeonDatabase } from "drizzle-orm/neon-serverless";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 
 import { takeWriterLock } from "./lock.ts";
 import { migrationSql } from "./migration-sql.ts";
 import { schema } from "./schema.ts";
+
+// A matching revision means this SQL already ran. Later calls take no lock.
+export const migrationRevision = createHash("sha256").update(migrationSql).digest("hex");
+
+const revisionTable = `CREATE TABLE IF NOT EXISTS schema_revision (
+	id integer PRIMARY KEY,
+	version text NOT NULL
+)`;
 
 export type AppDatabase = PgliteDatabase<typeof schema> | NeonDatabase<typeof schema>;
 
@@ -64,17 +73,38 @@ export function migrationStatements(script: string): readonly string[] {
 	return statements;
 }
 
+async function storedRevision(client: PoolClient): Promise<string | null> {
+	const found = await client.query("SELECT to_regclass('public.schema_revision') AS name");
+	const name = found.rows[0]?.name;
+	if (name === null || name === undefined) return null;
+	const result = await client.query("SELECT version FROM schema_revision WHERE id = 1");
+	const version = result.rows[0]?.version;
+	return typeof version === "string" ? version : null;
+}
+
 async function applyMigration(pool: Pool): Promise<void> {
 	const client = await pool.connect();
+	let began = false;
 	try {
+		// The read takes no advisory lock, so a current database does not block writers.
+		if ((await storedRevision(client)) === migrationRevision) return;
 		await client.query("BEGIN");
+		began = true;
 		await takeWriterLock((statement) => client.query(statement));
+		await client.query(revisionTable);
+		if ((await storedRevision(client)) === migrationRevision) {
+			await client.query("COMMIT");
+			return;
+		}
 		for (const statement of migrationStatements(migrationSql)) {
 			await client.query(statement);
 		}
+		await client.query(
+			`INSERT INTO schema_revision (id, version) VALUES (1, '${migrationRevision}') ON CONFLICT (id) DO UPDATE SET version = EXCLUDED.version`,
+		);
 		await client.query("COMMIT");
 	} catch (error) {
-		await client.query("ROLLBACK");
+		if (began) await client.query("ROLLBACK");
 		throw error;
 	} finally {
 		client.release();

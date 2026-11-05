@@ -144,12 +144,16 @@ export async function deleteWorkspaceAccount(accountId: string): Promise<void> {
 	const secrets = secretsFor(["testDatabase"]);
 	const postgres = openPostgres(secrets.testDatabase);
 	try {
-		await workspaceTransaction(postgres.db, async (tx) => {
-			for (const table of childTables) {
-				await tx.execute(sql`delete from ${sql.identifier(table)} where account_id = ${accountId}`);
-			}
-			await tx.delete(schema.accounts).where(eq(schema.accounts.id, accountId));
-		});
+		await workspaceTransaction(
+			postgres.db,
+			async (tx) => {
+				for (const table of childTables) {
+					await tx.execute(sql`delete from ${sql.identifier(table)} where account_id = ${accountId}`);
+				}
+				await tx.delete(schema.accounts).where(eq(schema.accounts.id, accountId));
+			},
+			{ accountId },
+		);
 	} finally {
 		await postgres.close();
 	}
