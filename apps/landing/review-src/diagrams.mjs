@@ -1,5 +1,5 @@
 // The plan's three diagrams, redrawn after the originals, with the build status
-// on each part. The status comes from git (see status.mjs). Plain HTML, CSS and SVG.
+// on each part. See ../README.md for the status sources. Plain HTML, CSS and SVG.
 import { BUILT, LABEL, PHASES, PLANNED, PROGRESS, SCREENS } from "./status.mjs";
 
 const css = `<style>
