@@ -105,15 +105,16 @@ test("tool TOML comments cannot supply tool settings", () => {
 	}
 });
 
-for (const [ci, cpuCount, workers] of [
-	[true, 3, ["--workers=3"]],
-	[true, 1, ["--workers=2"]],
-	[true, 4, ["--workers=4"]],
-	[false, 3, []],
+for (const [ci, platform, cpuCount, workers] of [
+	[true, "darwin", 3, ["--workers=3"]],
+	[true, "darwin", 1, ["--workers=2"]],
+	[false, "darwin", 3, []],
+	[true, "linux", 3, []],
+	[false, "linux", 3, []],
 ]) {
-	test(`Playwright suite plan: ci=${ci}, cpus=${cpuCount}`, () => {
+	test(`Playwright suite plan: ci=${ci}, platform=${platform}, cpus=${cpuCount}`, () => {
 		const held = "a held account read commits no limit|a read held past the deadline cannot commit the queued writes";
-		assert.deepEqual(suitePlan(ci, cpuCount), [
+		assert.deepEqual(suitePlan(ci, platform, cpuCount), [
 			["--project", "app", "--grep-invert", held, ...workers],
 			["--project", "rules-fence", "--workers=1"],
 			["--project", "app", "--workers=1", "--grep", held],
