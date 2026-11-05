@@ -4,7 +4,7 @@ import { chooseAdapters } from "../adapter-choice.ts";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { DELIVERY_GRACE_MS, deliveryBackoffMs } from "../neon/commands/approval-delivery.ts";
 import { traceFor } from "../trace.ts";
-import { applyAlarm, armStoredAlarm, clearStoredAlarm, DELIVERY_ALARM, flushAlarmDue } from "./alarm.ts";
+import { BUS_ALARM, clearDeadline, DELIVERY_ALARM, rearm, setDeadline } from "./alarm.ts";
 import { type HeartbeatEnv, recordBeat, sweepHeartbeats } from "./heartbeat.ts";
 import { writeMasterCommit } from "./master-commit.ts";
 import { finishMaster, MASTER_DONE, MASTER_OPEN, masterEvent, retryOpenMaster } from "./master-retry.ts";
@@ -75,6 +75,8 @@ export interface BusObjectEnv extends HeartbeatEnv {
 	// A test can drain pending approval deliveries without a live database.
 	// It returns the number of rows left. The alarm runs it again later.
 	readonly retryDeliveries?: (accountId: string, beforeMs?: number) => Promise<number>;
+	// A test can complete a bus flush without a live database.
+	readonly writeBusPending?: (accountId: string, rows: readonly PendingBusRow[]) => Promise<void>;
 }
 
 interface AcceptResult {
@@ -243,7 +245,7 @@ async function commitDurable(
 		if (error instanceof DeadlinePassed) return { seen: false, seq: 0, expired: true };
 		throw error;
 	}
-	if (!result.seen && result.event) await applyAlarm(storage, Date.now() + ALARM_MS);
+	if (!result.seen && result.event) await setDeadline(storage, BUS_ALARM, Date.now() + ALARM_MS);
 	return result;
 }
 
@@ -273,6 +275,7 @@ export class AccountBus {
 			await retryOpenMaster(this.ctx.storage, this.env, (accountId, event) => this.runMaster(accountId, event));
 			await this.drainDeliveries();
 		});
+		await rearm(this.ctx.storage);
 	}
 
 	// A failed first send arms this route. The alarm then drains the rows.
@@ -288,7 +291,7 @@ export class AccountBus {
 		if (typeof armed !== "number") {
 			await this.ctx.storage.put("delivery-attempt", 0);
 			const now = this.env.now?.() ?? Date.now();
-			await armStoredAlarm(this.ctx.storage, DELIVERY_ALARM, now + deliveryBackoffMs(0));
+			await setDeadline(this.ctx.storage, DELIVERY_ALARM, now + deliveryBackoffMs(0));
 		}
 		return Response.json({ ok: true });
 	}
@@ -301,7 +304,7 @@ export class AccountBus {
 		if (remaining === null || onlyOld) return;
 		if (remaining > 0) await this.armDeliveryAlarm();
 		else {
-			await clearStoredAlarm(this.ctx.storage, DELIVERY_ALARM);
+			await clearDeadline(this.ctx.storage, DELIVERY_ALARM);
 			await this.ctx.storage.delete("delivery-attempt");
 		}
 	}
@@ -330,7 +333,7 @@ export class AccountBus {
 		const attempt = (await this.ctx.storage.get<number>("delivery-attempt")) ?? 0;
 		await this.ctx.storage.put("delivery-attempt", attempt + 1);
 		const now = this.env.now?.() ?? Date.now();
-		await armStoredAlarm(this.ctx.storage, DELIVERY_ALARM, now + deliveryBackoffMs(attempt));
+		await setDeadline(this.ctx.storage, DELIVERY_ALARM, now + deliveryBackoffMs(attempt));
 	}
 
 	private routes(): Map<string, (request: Request) => Promise<Response>> {
@@ -406,7 +409,7 @@ export class AccountBus {
 			throw error;
 		}
 		for (const next of step.produced) this.push(next);
-		await applyAlarm(this.ctx.storage, Date.now() + ALARM_MS);
+		await setDeadline(this.ctx.storage, BUS_ALARM, Date.now() + ALARM_MS);
 	}
 
 	private async monitor(request: Request): Promise<Response> {
@@ -483,14 +486,15 @@ export class AccountBus {
 	private async flushPending(): Promise<void> {
 		const pending = (await this.ctx.storage.get<PendingBusRow[]>("pending")) ?? [];
 		const accountId = await this.ctx.storage.get<string>("account");
-		if (pending.length === 0 || !accountId || !this.env.DATABASE_URL) {
-			if (pending.length > 0) await applyAlarm(this.ctx.storage, Date.now() + ALARM_MS);
+		if (pending.length === 0 || !accountId || (!this.env.DATABASE_URL && !this.env.writeBusPending)) {
+			if (pending.length > 0) await setDeadline(this.ctx.storage, BUS_ALARM, Date.now() + ALARM_MS);
 			return;
 		}
 		try {
-			await writePending(this.env.DATABASE_URL, accountId, pending);
+			if (this.env.writeBusPending) await this.env.writeBusPending(accountId, pending);
+			else await writePending(this.env.DATABASE_URL as string, accountId, pending);
 		} catch {
-			await applyAlarm(this.ctx.storage, Date.now() + ALARM_MS);
+			await setDeadline(this.ctx.storage, BUS_ALARM, Date.now() + ALARM_MS);
 			return;
 		}
 		const written = new Set(pending.map((row) => row.event.id));
@@ -498,9 +502,9 @@ export class AccountBus {
 			const current = (await txn.get<PendingBusRow[]>("pending")) ?? [];
 			const remaining = current.filter((row) => !written.has(row.event.id));
 			await txn.put("pending", remaining);
-			const next = await flushAlarmDue(txn, remaining.length, Date.now(), ALARM_MS);
-			if (next === null) await txn.deleteAlarm();
-			else await txn.setAlarm(next);
+			if (remaining.length > 0) await txn.put(BUS_ALARM, Date.now() + ALARM_MS);
+			else await txn.delete(BUS_ALARM);
+			await rearm(txn);
 		});
 	}
 

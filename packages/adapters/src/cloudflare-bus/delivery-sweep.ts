@@ -20,13 +20,14 @@ async function poke(namespace: BusNamespace, accountId: string): Promise<boolean
 // The cron sweep arms the account alarm for each account with an old pending
 // row. The alarm does the drain, with the stored event id.
 export async function sweepDeliveryRetries(
-	env: Pick<WorkerBindings, "ADAPTERS" | "DATABASE_URL" | "ACCOUNT_BUS">,
+	env: Pick<WorkerBindings, "ADAPTERS" | "DATABASE_URL" | "ACCOUNT_BUS" | "staleDeliveryAccounts">,
 	nowMs: number,
 	listAccounts?: StaleDeliveryAccounts,
 ): Promise<string[]> {
 	if (chooseAdapters(env.ADAPTERS) !== "real" || !env.ACCOUNT_BUS) return [];
 	const list =
 		listAccounts ??
+		env.staleDeliveryAccounts ??
 		(env.DATABASE_URL ? (before: number) => readStaleDeliveryAccounts(env.DATABASE_URL as string, before) : null);
 	if (!list) return [];
 	const accounts = await list(nowMs - DELIVERY_GRACE_MS);

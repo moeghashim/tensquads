@@ -1,5 +1,5 @@
 import { chooseAdapters } from "../adapter-choice.ts";
-import { applyAlarm, armStoredAlarm, HEARTBEAT_ALARM } from "./alarm.ts";
+import { clearDeadline, HEARTBEAT_ALARM, setDeadline } from "./alarm.ts";
 
 export { HEARTBEAT_ALARM };
 
@@ -40,7 +40,7 @@ function earlier(current: number | null, due: number): number {
 }
 
 async function arm(storage: HeartbeatStorage, due: number, _now: number): Promise<void> {
-	await armStoredAlarm(storage, HEARTBEAT_ALARM, due);
+	await setDeadline(storage, HEARTBEAT_ALARM, due);
 }
 
 export async function recordBeat(storage: HeartbeatStorage, agentId: string, at: number): Promise<void> {
@@ -118,8 +118,7 @@ async function oneDue(
 }
 
 async function clearAlarm(storage: HeartbeatStorage, _now: number): Promise<void> {
-	await storage.delete(HEARTBEAT_ALARM);
-	await applyAlarm(storage);
+	await clearDeadline(storage, HEARTBEAT_ALARM);
 }
 
 export async function sweepHeartbeats(storage: HeartbeatStorage, env: HeartbeatEnv): Promise<void> {

@@ -29,6 +29,8 @@ export interface WorkerBindings {
 	readonly now?: () => number;
 	readonly BROWSER?: unknown;
 	readonly OPENAI_API_KEY?: string;
+	// A test can name the accounts with old pending deliveries without a live database.
+	readonly staleDeliveryAccounts?: (beforeMs: number) => Promise<string[]>;
 }
 
 export interface BusMessage {

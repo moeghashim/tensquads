@@ -1,7 +1,12 @@
 // One alarm serves the bus, the heartbeats and the delivery retry.
-// Each user stores its deadline. The alarm is always the earliest stored one.
+// Each user stores its own deadline key. Only rearm sets or deletes the alarm.
+// It sets the earliest stored deadline, or deletes the alarm when none exist.
 
+export const BUS_ALARM = "bus-alarm";
+export const HEARTBEAT_ALARM = "heartbeat-alarm";
 export const DELIVERY_ALARM = "delivery-alarm";
+
+const KEYS = [BUS_ALARM, HEARTBEAT_ALARM, DELIVERY_ALARM] as const;
 
 export interface AlarmStorage {
 	get<T>(key: string): Promise<T | undefined>;
@@ -19,17 +24,31 @@ async function storedDue(storage: KvStorage, key: string): Promise<number | null
 	return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
-export const HEARTBEAT_ALARM = "heartbeat-alarm";
-
-async function earliestAlarmDue(storage: KvStorage, extra?: number | null): Promise<number | null> {
-	let next: number | null = extra ?? null;
-	for (const key of [HEARTBEAT_ALARM, DELIVERY_ALARM]) {
+export async function rearm(storage: AlarmStorage): Promise<void> {
+	let next: number | null = null;
+	for (const key of KEYS) {
 		const due = await storedDue(storage, key);
 		if (due !== null && (next === null || due < next)) next = due;
 	}
-	return next;
+	if (next === null) await storage.deleteAlarm();
+	else await storage.setAlarm(next);
 }
 
+export async function setDeadline(storage: AlarmStorage, key: string, due: number): Promise<void> {
+	await storage.put(key, due);
+	await rearm(storage);
+}
+
+export async function clearDeadline(storage: AlarmStorage, key: string): Promise<void> {
+	await storage.delete(key);
+	await rearm(storage);
+}
+
+function dueOf(value: unknown): number | null {
+	return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+// The earliest of the bus, heartbeat and delivery deadlines. Kept for the flush tests.
 export function alarmAfterFlush(
 	remaining: number,
 	heartbeatDue: unknown,
@@ -37,43 +56,9 @@ export function alarmAfterFlush(
 	alarmMs: number,
 	deliveryDue?: unknown,
 ): number | null {
-	let next: number | null = null;
-	if (remaining > 0) next = now + alarmMs;
-	else if (typeof heartbeatDue === "number" && Number.isFinite(heartbeatDue)) next = heartbeatDue;
-	if (typeof deliveryDue === "number" && Number.isFinite(deliveryDue)) {
-		next = next === null ? deliveryDue : Math.min(next, deliveryDue);
+	let next: number | null = remaining > 0 ? now + alarmMs : null;
+	for (const due of [dueOf(heartbeatDue), dueOf(deliveryDue)]) {
+		if (due !== null && (next === null || due < next)) next = due;
 	}
 	return next;
-}
-
-// After a bus flush, the next alarm is the earliest of the bus, heartbeat and delivery deadlines.
-export async function flushAlarmDue(
-	storage: KvStorage,
-	remaining: number,
-	now: number,
-	alarmMs: number,
-): Promise<number | null> {
-	return alarmAfterFlush(
-		remaining,
-		await storedDue(storage, HEARTBEAT_ALARM),
-		now,
-		alarmMs,
-		await storedDue(storage, DELIVERY_ALARM),
-	);
-}
-
-export async function applyAlarm(storage: AlarmStorage, extra?: number | null): Promise<void> {
-	const next = await earliestAlarmDue(storage, extra);
-	if (next === null) await storage.deleteAlarm();
-	else await storage.setAlarm(next);
-}
-
-export async function armStoredAlarm(storage: AlarmStorage, key: string, due: number): Promise<void> {
-	await storage.put(key, due);
-	await applyAlarm(storage);
-}
-
-export async function clearStoredAlarm(storage: AlarmStorage, key: string): Promise<void> {
-	await storage.delete(key);
-	await applyAlarm(storage);
 }

@@ -44,10 +44,12 @@ async function sign(secret: string, stamp: string, raw: string): Promise<string>
 	return `t=${stamp},v1=${hex}`;
 }
 
-test("alarmAfterFlush keeps a heartbeat alarm after the queue is empty", () => {
-	assert.equal(alarmAfterFlush(1, 500, 0, 30_000), 30_000);
+test("alarmAfterFlush picks the earliest deadline", () => {
+	assert.equal(alarmAfterFlush(1, 500, 0, 30_000), 500);
 	assert.equal(alarmAfterFlush(0, 500, 0, 30_000), 500);
 	assert.equal(alarmAfterFlush(0, null, 0, 30_000), null);
+	assert.equal(alarmAfterFlush(1, 5_000, 0, 30_000, 12_345), 5_000);
+	assert.equal(alarmAfterFlush(1, 20_000, 0, 30_000, 12_345), 12_345);
 });
 
 test("the signer matches send, take, and heartbeat for one account and one agent", async () => {

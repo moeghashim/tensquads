@@ -5,7 +5,14 @@ import { and, eq } from "drizzle-orm";
 
 import { replaceDemoAccount } from "../../seed/src/demo-account.ts";
 import { AccountBus } from "../src/cloudflare-bus/account-bus.ts";
-import { DELIVERY_ALARM, flushAlarmDue, HEARTBEAT_ALARM } from "../src/cloudflare-bus/alarm.ts";
+import {
+	BUS_ALARM,
+	clearDeadline,
+	DELIVERY_ALARM,
+	HEARTBEAT_ALARM,
+	rearm,
+	setDeadline,
+} from "../src/cloudflare-bus/alarm.ts";
 import { sweepDeliveryRetries } from "../src/cloudflare-bus/delivery-sweep.ts";
 import {
 	type DeliverUserEvent,
@@ -314,18 +321,99 @@ test("an unrelated bus flush keeps the armed delivery deadline", async () => {
 	assert.equal(await storage.get("delivery-attempt"), 0);
 });
 
-test("the alarm after a flush is the earliest of the bus, heartbeat and delivery deadlines", async () => {
+test("rearm picks the earliest of the three deadlines, in any order", async () => {
+	const keys = [BUS_ALARM, HEARTBEAT_ALARM, DELIVERY_ALARM];
+	const values = [30_000, 5_000, 12_345];
+	for (let shift = 0; shift < 3; shift += 1) {
+		const storage = new Storage();
+		for (let index = 0; index < 3; index += 1) {
+			await storage.put(keys[index] as string, values[(index + shift) % 3] as number);
+		}
+		await rearm(storage);
+		assert.equal(storage.alarm, 5_000);
+	}
+	for (const key of keys) {
+		const storage = new Storage();
+		await storage.put(key, 7_500);
+		await rearm(storage);
+		assert.equal(storage.alarm, 7_500);
+	}
 	const storage = new Storage();
-	await storage.put(DELIVERY_ALARM, 12_345);
-	await storage.put(HEARTBEAT_ALARM, 20_000);
-	assert.equal(await flushAlarmDue(storage, 0, 0, 30_000), 12_345);
-	await storage.put(HEARTBEAT_ALARM, 5_000);
-	assert.equal(await flushAlarmDue(storage, 0, 0, 30_000), 5_000);
-	assert.equal(await flushAlarmDue(storage, 1, 0, 30_000), 12_345);
-	await storage.delete(HEARTBEAT_ALARM);
-	await storage.delete(DELIVERY_ALARM);
-	assert.equal(await flushAlarmDue(storage, 0, 0, 30_000), null);
-	assert.equal(await flushAlarmDue(storage, 1, 0, 30_000), 30_000);
+	await setDeadline(storage, BUS_ALARM, 30_000);
+	await setDeadline(storage, HEARTBEAT_ALARM, 5_000);
+	await setDeadline(storage, DELIVERY_ALARM, 12_345);
+	assert.equal(storage.alarm, 5_000);
+	await clearDeadline(storage, HEARTBEAT_ALARM);
+	assert.equal(storage.alarm, 12_345);
+	await clearDeadline(storage, DELIVERY_ALARM);
+	assert.equal(storage.alarm, 30_000);
+	await clearDeadline(storage, BUS_ALARM);
+	assert.equal(storage.alarm, null);
+});
+
+test("a completed bus flush keeps the armed delivery deadline", async () => {
+	const storage = new Storage();
+	const bus = new AccountBus(
+		{ storage, acceptWebSocket() {}, getWebSockets: () => [] },
+		{ ADAPTERS: "real", retryDeliveries: async () => 0, writeBusPending: async () => undefined },
+	);
+	const armed = await bus.fetch(
+		new Request("https://bus/deliveries/retry", {
+			method: "POST",
+			body: JSON.stringify({ accountId: "acct-done" }),
+		}),
+	);
+	assert.equal(armed.ok, true);
+	const due = await storage.get<number>(DELIVERY_ALARM);
+	const accepted = await bus.fetch(
+		new Request("https://bus/accept", {
+			method: "POST",
+			body: JSON.stringify({
+				accountId: "acct-done",
+				event: {
+					id: "e-done",
+					from: "master",
+					to: "market",
+					kind: "Task",
+					skill: "web.search",
+					text: "Done.",
+					payload: {},
+					writes: [],
+				},
+			}),
+		}),
+	);
+	assert.equal(accepted.ok, true);
+	assert.deepEqual(await storage.get("pending"), []);
+	assert.equal(await storage.get(DELIVERY_ALARM), due);
+	assert.equal(storage.alarm, due);
+});
+
+test("a delivery drain keeps the bus alarm while bus writes are pending", async () => {
+	const storage = new Storage();
+	await storage.put("account", "acct-bus");
+	await storage.put("pending", [
+		{
+			seq: 1,
+			event: {
+				id: "e-bus",
+				from: "master",
+				to: "market",
+				kind: "Task",
+				skill: "web.search",
+				text: "Wait.",
+				payload: {},
+				writes: [],
+			},
+		},
+	]);
+	const bus = new AccountBus(
+		{ storage, acceptWebSocket() {}, getWebSockets: () => [] },
+		{ ADAPTERS: "real", retryDeliveries: async () => 0 },
+	);
+	await bus.alarm();
+	assert.equal(((await storage.get<readonly unknown[]>("pending")) ?? []).length, 1);
+	assert.notEqual(storage.alarm, null);
 });
 
 test("a 503 schedule leaves the row, and the sweep recovers it through the alarm", async () => {
