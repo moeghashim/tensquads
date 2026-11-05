@@ -968,6 +968,8 @@ test("ask to revise adds one proposal and opens overview, and a repeat adds none
 	await expect(page).toHaveTitle("Agent dashboard");
 	await page.getByRole("button", { name: "Ask Petra to revise" }).click();
 	await expect(page).toHaveURL(/\/overview$/, settled);
+	// The address matches while the title is still the dashboard. The overview read has not landed.
+	await expect(page).toHaveTitle("tensquads workspace");
 	const repeat = (await readAgent(accountId, "support")).proposals;
 	expect(repeat).toEqual(created);
 
@@ -979,6 +981,7 @@ test("ask to revise adds one proposal and opens overview, and a repeat adds none
 	]);
 	await page.getByRole("button", { name: "Ask Petra to revise" }).click();
 	await expect(page).toHaveURL(/\/overview$/, settled);
+	await expect(page).toHaveTitle("tensquads workspace");
 	const after = (await readAgent(accountId, "inventory")).proposals;
 	expect(after.map((proposal) => ({ id: proposal.id, status: proposal.status }))).toEqual([
 		{ id: "mp-inventory", status: "Proposed" },
