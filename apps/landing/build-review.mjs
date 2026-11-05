@@ -18,8 +18,9 @@ const date = git("log", "-1", "--format=%cs", ref).trim();
 const external = {};
 for (const [task, repo] of Object.entries(EXTERNAL)) {
 	try {
-		const prs = JSON.parse(execFileSync("gh", ["pr", "list", "-R", repo, "--state", "all", "--json", "state"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
-		external[task] = prs.some((pr) => pr.state === "MERGED") ? BUILT : PROGRESS;
+		// Ask for merged pull requests only. A list of all states can hide a merged one behind the limit.
+		const merged = JSON.parse(execFileSync("gh", ["pr", "list", "-R", repo, "--state", "merged", "--limit", "1", "--json", "number"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
+		external[task] = merged.length > 0 ? BUILT : PROGRESS;
 	} catch {
 		external[task] = PLANNED;
 		console.warn(`Warning: Cannot read pull requests for ${repo}; marking ${task} as planned.`);
