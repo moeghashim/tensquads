@@ -109,6 +109,28 @@ const screens: readonly ScreenCase[] = [
 	},
 ];
 
+test("a blocked exit module still leaves an expired support session", async ({ page }) => {
+	test.setTimeout(90_000);
+	const secrets = secretsFor(["secret"]);
+	const user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
+	try {
+		await addCompanySuperAdmin(secrets.secret, user.userId);
+		await openAdmin(page, user);
+		await setSpecialCookie(page, specialAccountValue("demo", Date.now() - 59 * minute));
+		await page.goto("/agents/support");
+		await expect(page.getByRole("button", { name: "Squad running", exact: true })).toBeVisible();
+		await expect(page.getByText("Runs 5 squads · Demo store")).toBeVisible();
+		await page.route(/\/src\/workspace\/session-exit\.ts/, (route) => route.abort("failed"));
+		await setSpecialCookie(page, specialAccountValue("demo", Date.now() - 61 * minute));
+		await page.getByRole("button", { name: "Squad running", exact: true }).click();
+		await expect(page).toHaveURL(/\/admin\/?$/, { timeout: leaveTimeout });
+		expect(await customerStillVisible(page, "Support squad")).toBe("");
+	} finally {
+		await removeCompanyMembership(secrets.secret, user.userId);
+		await deleteTestUser(secrets.secret, user.userId);
+	}
+});
+
 test("an expired support session leaves every open workspace screen", async ({ page }) => {
 	test.setTimeout(300_000);
 	const secrets = secretsFor(["secret"]);

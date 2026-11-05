@@ -2,7 +2,7 @@ import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
 import { createCsrfMiddleware, createMiddleware, createStart } from "@tanstack/react-start";
 
 import { authorizedParties } from "#/server/authorized-parties.ts";
-import { sessionExitTarget, workspacePage } from "#/workspace/session-exit-target.ts";
+import { beginDocumentExit } from "#/workspace/session-exit-target.ts";
 
 const csrf = createCsrfMiddleware({
 	filter: (ctx) => ctx.handlerType === "serverFn",
@@ -15,8 +15,11 @@ const sessionRefresh = createMiddleware({ type: "function" }).client(async ({ ne
 		return await next();
 	} catch (error) {
 		await refresh.finishSessionRead(error, method, requestId);
-		// A workspace redirect leaves at once. Any other error must throw without waiting.
-		if (leavesWorkspace(error) && (await leaveExpiredSession(error))) return new Promise<never>(() => undefined);
+		// Navigation is synchronous. Cleanup must not wait on a module download.
+		if (beginDocumentExit(error)) {
+			void loadExitCleanup(error);
+			return new Promise<never>(() => undefined);
+		}
 		throw error;
 	} finally {
 		refresh.endSessionRead(requestId);
@@ -24,26 +27,19 @@ const sessionRefresh = createMiddleware({ type: "function" }).client(async ({ ne
 });
 
 let sessionRefreshModule: Promise<typeof import("#/session/refresh.ts")> | undefined;
-let sessionExitModule: Promise<typeof import("#/workspace/session-exit.ts")> | undefined;
 
 function loadSessionRefresh() {
 	sessionRefreshModule ??= import("#/session/refresh.ts");
 	return sessionRefreshModule;
 }
 
-function loadSessionExit() {
-	sessionExitModule ??= import("#/workspace/session-exit.ts");
-	return sessionExitModule;
-}
-
-function leavesWorkspace(error: unknown): boolean {
-	if (sessionExitTarget(error) === null || typeof window === "undefined") return false;
-	return workspacePage(window.location.pathname);
-}
-
-async function leaveExpiredSession(error: unknown): Promise<boolean> {
-	const exit = await loadSessionExit();
-	return exit.leaveForSessionExit(error);
+// A failed download is not stored. The document navigation has already started.
+function loadExitCleanup(error: unknown): Promise<void> {
+	return import("#/workspace/session-exit.ts")
+		.then((exit) => {
+			exit.leaveForSessionExit(error);
+		})
+		.catch(() => undefined);
 }
 
 export const startInstance = createStart(() => {

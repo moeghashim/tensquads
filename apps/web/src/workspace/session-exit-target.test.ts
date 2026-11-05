@@ -2,11 +2,15 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { redirect } from "@tanstack/react-router";
 
-import { sessionExitTarget, workspacePage } from "./session-exit-target.ts";
+import { beginDocumentExit, sessionExitTarget, workspacePage } from "./session-exit-target.ts";
 
 describe("session exit targets", () => {
 	test("an admin redirect leaves the workspace", () => {
 		assert.equal(sessionExitTarget(redirect({ to: "/admin" })), "/admin");
+	});
+
+	test("no browser window does not navigate", () => {
+		assert.equal(beginDocumentExit(redirect({ to: "/admin" })), false);
 	});
 
 	test("a sign-in redirect leaves the workspace", () => {

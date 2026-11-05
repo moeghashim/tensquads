@@ -3,6 +3,9 @@ import { isRedirect } from "@tanstack/react-router";
 const sessionExits = new Set(["/admin", "/signin"]);
 const workspaceRoots = ["/overview", "/rules", "/traffic", "/chat", "/agents"];
 
+// One document load. A second redirect must not assign again.
+let navigationStarted = false;
+
 // The support session is the workspace. Admin and sign-in pages keep their own redirects.
 export function workspacePage(path: string): boolean {
 	const bare = stripSlash(stripQuery(path));
@@ -15,6 +18,28 @@ export function sessionExitTarget(error: unknown): string | null {
 	const path = redirectPath(error);
 	if (path === null || !sessionExits.has(path)) return null;
 	return path;
+}
+
+// Leaves at once. This module is already loaded, so the navigation does not fetch another file.
+export function beginDocumentExit(error: unknown): boolean {
+	const target = exitPath(error);
+	if (target === null) return false;
+	if (navigationStarted) return true;
+	navigationStarted = true;
+	window.location.assign(target);
+	return true;
+}
+
+function exitPath(error: unknown): string | null {
+	const target = sessionExitTarget(error);
+	if (stopped(target)) return null;
+	return target;
+}
+
+function stopped(target: string | null): boolean {
+	if (target === null || typeof window === "undefined") return true;
+	if (!workspacePage(window.location.pathname)) return true;
+	return window.location.pathname === target;
 }
 
 function redirectPath(error: unknown): string | null {
