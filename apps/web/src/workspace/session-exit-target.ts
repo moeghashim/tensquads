@@ -1,5 +1,7 @@
 import { isRedirect } from "@tanstack/react-router";
 
+import { devBrowserCookieWrites } from "./dev-browser.ts";
+
 const sessionExits = new Set(["/admin", "/signin"]);
 const workspaceRoots = ["/overview", "/rules", "/traffic", "/chat", "/agents"];
 
@@ -26,8 +28,22 @@ export function beginDocumentExit(error: unknown): boolean {
 	if (target === null) return false;
 	if (navigationStarted) return true;
 	navigationStarted = true;
+	// Navigation is synchronous. The dev browser has to be on this request, or Clerk
+	// handshakes a new signed-out client and the admin page opens sign-in.
+	keepDevBrowser();
 	window.location.assign(target);
 	return true;
+}
+
+function keepDevBrowser(): void {
+	if (typeof document === "undefined") return;
+	try {
+		for (const write of devBrowserCookieWrites(document.cookie, window.location.href)) {
+			document.cookie = write;
+		}
+	} catch {
+		// The document navigation still has to start.
+	}
 }
 
 function exitPath(error: unknown): string | null {
