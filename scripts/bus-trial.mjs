@@ -177,11 +177,27 @@ async function assertTrialResponse(response, url, host, hidden) {
 	);
 }
 
+async function finishTrial(plan, deps, say, proof, configPath) {
+	say(proof.line);
+	if (proof.failure) say(proof.failure);
+	let left = [];
+	try {
+		left = await deps.cleanup(plan, configPath);
+	} catch (error) {
+		left = [error instanceof Error ? error.message : "The bus trial cleanup failed."];
+	}
+	rmSync(configPath, { force: true });
+	say(`bus-cleanup-check run=${plan.runId} left=${left.join(",") || "none"}`);
+	return proof.failure || left.length > 0 ? 1 : 0;
+}
+
 export async function executeBusTrial(plan, deps) {
 	const machineKey = randomBytes(32).toString("hex");
 	const hidden = secretsOf(plan, machineKey);
 	const say = (text) => deps.log(redact(text, hidden));
 	let failure = "";
+	let status = "failed";
+	let database = "absent";
 	if (deps.build) await deps.build();
 	const sourceText = deps.readSource ? deps.readSource() : deps.source;
 	const directory = deps.tempDir();
@@ -229,27 +245,25 @@ export async function executeBusTrial(plan, deps) {
 			headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
 			body: JSON.stringify({ accountId: plan.accountId, agentId: plan.agentId, event }),
 		});
+		status = String(response.status);
 		await assertTrialResponse(response, url, host, hidden);
-		if (!(await deps.waitForEvent(plan.databaseUrl, plan.accountId, plan.eventId))) {
-			throw new Error("The trial event did not reach the database.");
-		}
+		if (await deps.waitForEvent(plan.databaseUrl, plan.accountId, plan.eventId)) database = "reached";
+		else throw new Error("The trial event did not reach the database.");
 	} catch (error) {
 		failure = error instanceof Error ? error.message : "The bus trial failed.";
 	} finally {
 		rmSync(secretsPath, { force: true });
 	}
-	const left = await deps.cleanup(plan, configPath);
-	rmSync(configPath, { force: true });
-	if (failure) {
-		say(failure);
-		return 1;
-	}
-	if (left.length > 0) {
-		say(`bus-cleanup-check run=${plan.runId} left=${left.join(",")}`);
-		return 1;
-	}
-	say(`bus-trial run=${plan.runId} event=${plan.eventId}`);
-	return 0;
+	return finishTrial(
+		plan,
+		deps,
+		say,
+		{
+			line: `bus-trial run=${plan.runId} event=${plan.eventId} status=${status} database=${database}`,
+			failure,
+		},
+		configPath,
+	);
 }
 
 function realBuild() {

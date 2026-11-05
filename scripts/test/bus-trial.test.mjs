@@ -153,7 +153,85 @@ test("wrangler output and the child environment do not carry the trial secrets",
 		calls.some((line) => String(line).includes("welcome.developers")),
 		false,
 	);
-	assert.match(calls.at(-1), /^bus-trial run=41877304107 event=trial-41877304107$/);
+	const proof = calls.findIndex((line) => String(line).startsWith("bus-trial run="));
+	const cleanup = calls.findIndex((line) => String(line).startsWith("bus-cleanup-check"));
+	assert.match(calls[proof], /^bus-trial run=41877304107 event=trial-41877304107 status=200 database=reached$/);
+	assert.match(calls[cleanup], /^bus-cleanup-check run=41877304107 left=none$/);
+	assert.ok(proof < cleanup);
+});
+
+async function runTrial(plan, sourceText, overrides) {
+	const calls = [];
+	const directory = mkdtempSync(join(tmpdir(), "tensquads-bus-trial-test-"));
+	try {
+		const code = await executeBusTrial(plan, {
+			source: sourceText,
+			log(text) {
+				calls.push(text);
+			},
+			tempDir: () => directory,
+			async run() {
+				return {
+					stdout: "Published https://tensquads-trial-41877304107.example.workers.dev\n",
+				};
+			},
+			async createAccount() {},
+			async fetch() {
+				return overrides.response;
+			},
+			async waitForEvent() {
+				return overrides.reached;
+			},
+			async cleanup() {
+				if (overrides.cleanupError) throw new Error(overrides.cleanupError);
+				return overrides.left ?? [];
+			},
+		});
+		return { code, calls };
+	} finally {
+		rmSync(directory, { recursive: true, force: true });
+	}
+}
+
+test("a cleanup failure still reports the send status, event id, and database row", async () => {
+	const plan = busTrialPlan(env);
+	const { code, calls } = await runTrial(plan, source, {
+		response: { ok: true, status: 200 },
+		reached: true,
+		left: ["tensquads-trial-41877304107", "code:10064", "code:11005"],
+	});
+	const proof = calls.findIndex((line) => String(line).startsWith("bus-trial run="));
+	const cleanup = calls.findIndex((line) => String(line).startsWith("bus-cleanup-check"));
+	assert.equal(code, 1);
+	assert.match(calls[proof], /^bus-trial run=41877304107 event=trial-41877304107 status=200 database=reached$/);
+	assert.match(
+		calls[cleanup],
+		/^bus-cleanup-check run=41877304107 left=tensquads-trial-41877304107,code:10064,code:11005$/,
+	);
+	assert.ok(proof < cleanup);
+});
+
+test("a failed send is reported before cleanup runs", async () => {
+	const plan = busTrialPlan(env);
+	const { code, calls } = await runTrial(plan, source, {
+		response: {
+			ok: false,
+			status: 404,
+			async text() {
+				return "missing";
+			},
+		},
+		reached: false,
+		cleanupError: "cleanup exploded",
+	});
+	const proof = calls.findIndex((line) => String(line).startsWith("bus-trial run="));
+	const failure = calls.findIndex((line) => String(line).startsWith("The trial send failed"));
+	const cleanup = calls.findIndex((line) => String(line).startsWith("bus-cleanup-check"));
+	assert.equal(code, 1);
+	assert.match(calls[proof], /^bus-trial run=41877304107 event=trial-41877304107 status=404 database=absent$/);
+	assert.ok(failure > proof);
+	assert.match(calls[cleanup], /^bus-cleanup-check run=41877304107 left=cleanup exploded$/);
+	assert.ok(cleanup > failure);
 });
 
 function sqlRecorder(results = []) {

@@ -136,6 +136,23 @@ async function deleteResource(api, path, failures) {
 	failures.push(failureCode(response));
 }
 
+function consumerNames(consumer) {
+	return [consumer.script, consumer.script_name].filter((name) => typeof name === "string" && name.length > 0);
+}
+
+async function removeConsumer(api, root, worker, queue, consumer, failures) {
+	const names = consumerNames(consumer);
+	if (!names.includes(worker)) {
+		if (names[0]) failures.push(`consumer:${names[0]}`);
+		return;
+	}
+	if (!safeId(consumer.consumer_id ?? "")) {
+		failures.push("code:bad-id");
+		return;
+	}
+	await deleteResource(api, `${root}/queues/${queue.id}/consumers/${consumer.consumer_id}`, failures);
+}
+
 async function removeConsumers(api, root, worker, queue, failures) {
 	const listed = await api({ method: "GET", path: `${root}/queues/${queue.id}/consumers` });
 	if (!listed.success) {
@@ -143,15 +160,7 @@ async function removeConsumers(api, root, worker, queue, failures) {
 		return;
 	}
 	for (const consumer of Array.isArray(listed.result) ? listed.result : []) {
-		if (consumer.script_name !== worker) {
-			if (consumer.script_name) failures.push(`consumer:${consumer.script_name}`);
-			continue;
-		}
-		if (!safeId(consumer.consumer_id ?? "")) {
-			failures.push("code:bad-id");
-			continue;
-		}
-		await deleteResource(api, `${root}/queues/${queue.id}/consumers/${consumer.consumer_id}`, failures);
+		await removeConsumer(api, root, worker, queue, consumer, failures);
 	}
 }
 

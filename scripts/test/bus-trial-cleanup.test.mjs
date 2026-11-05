@@ -15,6 +15,10 @@ const plan = {
 	cloudflareAccountId: account,
 };
 
+function consumerAttached(consumer, name) {
+	return consumer.script === name || consumer.script_name === name;
+}
+
 function apiFor(state) {
 	const calls = [];
 	async function api(request) {
@@ -39,7 +43,7 @@ function apiFor(state) {
 			const name = decodeURIComponent(request.path.split("/").at(-1).split("?")[0]);
 			const attached = Object.values(state.consumers)
 				.flat()
-				.some((consumer) => consumer.script_name === name);
+				.some((consumer) => consumerAttached(consumer, name));
 			if (attached) return { status: 400, success: false, errors: [{ code: 10064, message: "consumer" }] };
 			state.scripts = state.scripts.filter((script) => script.id !== name);
 			if (!request.path.includes("force=true"))
@@ -138,6 +142,74 @@ test("cleanup deletes consumers, then the worker, then both queues, and sweeps r
 		current.consumers["q-prod"].map((consumer) => consumer.script_name),
 		["tensquads"],
 	);
+});
+
+test("cleanup matches a consumer on script and on script_name", async () => {
+	const current = state();
+	current.scripts = current.scripts.filter((script) => script.id === "tensquads" || script.id.endsWith("41877304107"));
+	current.queues = current.queues.filter(
+		(queue) => queue.queue_name === "tensquads-bus" || queue.queue_name.endsWith("41877304107"),
+	);
+	current.consumers = {
+		"q-prod": [
+			{
+				consumer_id: "c-prod",
+				created_on: old,
+				queue_id: "q-prod",
+				queue_name: "tensquads-bus",
+				script: "tensquads",
+				settings: {},
+				type: "worker",
+			},
+		],
+		"q-run": [
+			{
+				consumer_id: "c-script",
+				created_on: recent,
+				dead_letter_queue: "tensquads-bus-dlq-41877304107",
+				queue_id: "q-run",
+				queue_name: "tensquads-bus-41877304107",
+				script: "tensquads-trial-41877304107",
+				settings: { batch_size: 10 },
+				type: "worker",
+			},
+		],
+		"q-run-dlq": [
+			{
+				consumer_id: "c-name",
+				created_on: recent,
+				queue_id: "q-run-dlq",
+				queue_name: "tensquads-bus-dlq-41877304107",
+				script_name: "tensquads-trial-41877304107",
+				settings: {},
+				type: "worker",
+			},
+		],
+	};
+	const { api, calls } = apiFor(current);
+	const left = await cleanupTrial(plan, api, now);
+	const consumerDelete = calls.findIndex((call) => call.includes("/consumers/c-script"));
+	const nameDelete = calls.findIndex((call) => call.includes("/consumers/c-name"));
+	const workerDelete = calls.findIndex((call) => call.includes("/workers/scripts/tensquads-trial-41877304107"));
+	const queueDelete = calls.findIndex((call) => call.endsWith("/queues/q-run"));
+	assert.deepEqual(left, []);
+	assert.ok(consumerDelete >= 0 && consumerDelete < workerDelete);
+	assert.ok(nameDelete >= 0 && nameDelete < workerDelete);
+	assert.ok(workerDelete < queueDelete);
+	assert.equal(
+		current.scripts.some((script) => script.id === "tensquads-trial-41877304107"),
+		false,
+	);
+	assert.deepEqual(
+		current.queues.map((queue) => queue.queue_name),
+		["tensquads-bus"],
+	);
+	assert.deepEqual(
+		current.consumers["q-prod"].map((consumer) => consumer.script),
+		["tensquads"],
+	);
+	assert.deepEqual(current.consumers["q-run"], []);
+	assert.deepEqual(current.consumers["q-run-dlq"], []);
 });
 
 test("a missing trial worker is already gone", async () => {
