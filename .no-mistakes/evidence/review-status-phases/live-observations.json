@@ -1,0 +1,256 @@
+[
+  {
+    "mode": "mixed",
+    "url": "http://127.0.0.1:63667/review/plan",
+    "summary": "Where the build is\n\nPlan at commit 6940222, 2026-11-05. Every part of the plan below shows its status.\n\n13 of 17\ntasks merged into main\nCurrent phase: 5 Proof. In progress: 05-market-researcher, 05-website-builder, 06-squadmates.",
+    "phases": [
+      "0 Foundation\ncopy, set up, core, schema, seed, tokens, verify passes\nBuilt",
+      "1 Public\nscreens 1, 2, sign-in form, sign-up makes an account\nBuilt",
+      "2 Workspace\nframe, dock, screens 3 to 8 in order\n7 of 7 tasks merged\nBuilt",
+      "3 Admin\nscreens 9, 10, open an account, admin role\nBuilt",
+      "4 Machines\nboat.dev and bus adapters behind the interfaces\nBuilt",
+      "5 Proof\nagent kit, researcher, builder, then three squads with two approvals\n2 of 4 tasks merged\nIn progress",
+      "6 Squadmates\na name and a character for Petra and each agent\nIn progress",
+      "7 Homepage\nnew screen 1: Moe approves the design, then the build\nPlanned"
+    ],
+    "desktop": [
+      {
+        "title": "0 Foundation",
+        "x": 230,
+        "y": 332,
+        "width": 237.5
+      },
+      {
+        "title": "1 Public",
+        "x": 477.5,
+        "y": 332,
+        "width": 237.5
+      },
+      {
+        "title": "2 Workspace",
+        "x": 725,
+        "y": 332,
+        "width": 237.5
+      },
+      {
+        "title": "3 Admin",
+        "x": 972.5,
+        "y": 332,
+        "width": 237.5
+      },
+      {
+        "title": "4 Machines",
+        "x": 230,
+        "y": 500,
+        "width": 237.5
+      },
+      {
+        "title": "5 Proof",
+        "x": 477.5,
+        "y": 500,
+        "width": 237.5
+      },
+      {
+        "title": "6 Squadmates",
+        "x": 725,
+        "y": 500,
+        "width": 237.5
+      },
+      {
+        "title": "7 Homepage",
+        "x": 972.5,
+        "y": 500,
+        "width": 237.5
+      }
+    ]
+  },
+  {
+    "mode": "failure",
+    "url": "http://127.0.0.1:63667/review/plan",
+    "summary": "Where the build is\n\nPlan at commit 6940222, 2026-11-05. Every part of the plan below shows its status.\n\n12 of 17\ntasks merged into main\nCurrent phase: 5 Proof. In progress: 06-squadmates.",
+    "phases": [
+      "0 Foundation\ncopy, set up, core, schema, seed, tokens, verify passes\nBuilt",
+      "1 Public\nscreens 1, 2, sign-in form, sign-up makes an account\nBuilt",
+      "2 Workspace\nframe, dock, screens 3 to 8 in order\n7 of 7 tasks merged\nBuilt",
+      "3 Admin\nscreens 9, 10, open an account, admin role\nBuilt",
+      "4 Machines\nboat.dev and bus adapters behind the interfaces\nBuilt",
+      "5 Proof\nagent kit, researcher, builder, then three squads with two approvals\n1 of 4 tasks merged\nIn progress",
+      "6 Squadmates\na name and a character for Petra and each agent\nIn progress",
+      "7 Homepage\nnew screen 1: Moe approves the design, then the build\nPlanned"
+    ],
+    "desktop": [
+      {
+        "title": "0 Foundation",
+        "x": 230,
+        "y": 332,
+        "width": 237.5
+      },
+      {
+        "title": "1 Public",
+        "x": 477.5,
+        "y": 332,
+        "width": 237.5
+      },
+      {
+        "title": "2 Workspace",
+        "x": 725,
+        "y": 332,
+        "width": 237.5
+      },
+      {
+        "title": "3 Admin",
+        "x": 972.5,
+        "y": 332,
+        "width": 237.5
+      },
+      {
+        "title": "4 Machines",
+        "x": 230,
+        "y": 500,
+        "width": 237.5
+      },
+      {
+        "title": "5 Proof",
+        "x": 477.5,
+        "y": 500,
+        "width": 237.5
+      },
+      {
+        "title": "6 Squadmates",
+        "x": 725,
+        "y": 500,
+        "width": 237.5
+      },
+      {
+        "title": "7 Homepage",
+        "x": 972.5,
+        "y": 500,
+        "width": 237.5
+      }
+    ]
+  },
+  {
+    "mode": "merged",
+    "url": "http://127.0.0.1:63667/review/plan",
+    "summary": "Where the build is\n\nPlan at commit 6940222, 2026-11-05. Every part of the plan below shows its status.\n\n15 of 17\ntasks merged into main\nCurrent phase: 6 Squadmates. In progress: 06-squadmates.",
+    "phases": [
+      "0 Foundation\ncopy, set up, core, schema, seed, tokens, verify passes\nBuilt",
+      "1 Public\nscreens 1, 2, sign-in form, sign-up makes an account\nBuilt",
+      "2 Workspace\nframe, dock, screens 3 to 8 in order\n7 of 7 tasks merged\nBuilt",
+      "3 Admin\nscreens 9, 10, open an account, admin role\nBuilt",
+      "4 Machines\nboat.dev and bus adapters behind the interfaces\nBuilt",
+      "5 Proof\nagent kit, researcher, builder, then three squads with two approvals\n4 of 4 tasks merged\nBuilt",
+      "6 Squadmates\na name and a character for Petra and each agent\nIn progress",
+      "7 Homepage\nnew screen 1: Moe approves the design, then the build\nPlanned"
+    ],
+    "desktop": [
+      {
+        "title": "0 Foundation",
+        "x": 230,
+        "y": 332,
+        "width": 237.5
+      },
+      {
+        "title": "1 Public",
+        "x": 477.5,
+        "y": 332,
+        "width": 237.5
+      },
+      {
+        "title": "2 Workspace",
+        "x": 725,
+        "y": 332,
+        "width": 237.5
+      },
+      {
+        "title": "3 Admin",
+        "x": 972.5,
+        "y": 332,
+        "width": 237.5
+      },
+      {
+        "title": "4 Machines",
+        "x": 230,
+        "y": 500,
+        "width": 237.5
+      },
+      {
+        "title": "5 Proof",
+        "x": 477.5,
+        "y": 500,
+        "width": 237.5
+      },
+      {
+        "title": "6 Squadmates",
+        "x": 725,
+        "y": 500,
+        "width": 237.5
+      },
+      {
+        "title": "7 Homepage",
+        "x": 972.5,
+        "y": 500,
+        "width": 237.5
+      }
+    ]
+  },
+  {
+    "mobile": [
+      {
+        "title": "0 Foundation",
+        "x": 24,
+        "y": 79,
+        "right": 190
+      },
+      {
+        "title": "1 Public",
+        "x": 200,
+        "y": 79,
+        "right": 366
+      },
+      {
+        "title": "2 Workspace",
+        "x": 24,
+        "y": 226,
+        "right": 190
+      },
+      {
+        "title": "3 Admin",
+        "x": 200,
+        "y": 226,
+        "right": 366
+      },
+      {
+        "title": "4 Machines",
+        "x": 24,
+        "y": 394,
+        "right": 190
+      },
+      {
+        "title": "5 Proof",
+        "x": 200,
+        "y": 394,
+        "right": 366
+      },
+      {
+        "title": "6 Squadmates",
+        "x": 24,
+        "y": 600,
+        "right": 190
+      },
+      {
+        "title": "7 Homepage",
+        "x": 200,
+        "y": 600,
+        "right": 366
+      }
+    ],
+    "overflow": {
+      "width": 390,
+      "scroll": 390
+    }
+  },
+  {
+    "pageErrors": []
+  }
+]

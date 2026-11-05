@@ -1,0 +1,3 @@
+["pr","list","-R","moeghashim/tensquads-agent-kit","--state","all","--json","state"]
+["pr","list","-R","moeghashim/tensquads-market-researcher","--state","all","--json","state"]
+["pr","list","-R","moeghashim/tensquads-website-builder","--state","all","--json","state"]
