@@ -95,7 +95,7 @@ This repository does not run the check. The Result must still carry the evidence
 
 Do not guess. Stop the step that needs the answer.
 
-1. **The context.dev links.** Task 05 said the plan links them. The plan does not mention context.dev. *Recommended:* use these pages, and add the same list to the Proof of concept section after Moe accepts it.
+1. **The context.dev links.** Answered by Moe on 5 November 2026: the researcher uses context.dev for three things only: web search (`web.search`), map listings (`maps.competitors`: `google-maps`, `google-maps-reviews`, `yelp-search`), and watching competitors (`competition.watch`, a monitor). Use the nine pages below. All nine returned 200 on 5 November 2026.
    - Search: `https://docs.context.dev/search/overview`
    - Search API: `https://docs.context.dev/api-reference/web-scraping/search`
    - Pre-built parsers: `https://docs.context.dev/scrape/prebuilt-parsers`
@@ -105,4 +105,4 @@ Do not guess. Stop the step that needs the answer.
    - Monitors: `https://docs.context.dev/monitors/overview`
    - Monitor events: `https://docs.context.dev/monitors/webhooks`
    - `change.detected` payload: `https://docs.context.dev/api-reference/monitors/webhook-payload`
-2. **How the machine gets the signed token.** Same question as `tasks/05-agent-kit.md` question 1. Unit tests may pass a token in. The real machine step waits for Moe. *Recommended:* the boat.dev key proxy holds the token. The machine reads it at call time. It is not an environment variable.
+2. **How the machine gets the signed token.** Answered by Moe on 5 November 2026: the Worker signs the token with the Worker secret `MACHINE_TOKEN_KEY`, for one account and one agent. The boat.dev key proxy holds the token. The machine reads it from the proxy at call time. It is not an environment variable, and the image does not contain it. Adjusted by Moe on 5 November 2026: boat.dev delivers the token through a custom API. The machine sees only a placeholder environment variable (`TENSQUADS_MACHINE_TOKEN`) and its base URL (`TENSQUADS_MACHINE_TOKEN_BASE_URL`). It sends the placeholder to that base URL, and boat.dev substitutes the real token on the way out. The real token never reaches the machine.

@@ -6,7 +6,7 @@ This file is the main-repository task. It replaces the old single phase 5 task f
 
 ## Goal
 
-The master runs one full loop for a restaurant or a grocer. The Market researcher finds and analyses the competitors. The master writes a brief and asks the user. The Website builder makes one page. The master asks the user again. The page goes live at `<slug>.10squads.com`. Every step is a bus event. Every result passes a check that code runs. Decisions 20 to 28 and 35 govern this task. Decision 31 has no row yet. See open question 1.
+The master runs one full loop for a restaurant or a grocer. The Market researcher finds and analyses the competitors. The master writes a brief and asks the user. The Website builder makes one page. The master asks the user again. The page goes live at `<slug>.10squads.com`. Every step is a bus event. Every result passes a check that code runs. Decisions 20 to 28 and 35 govern this task. Decision 31 says version 1 uses one database, Neon.
 
 ## Read
 
@@ -23,7 +23,7 @@ Where the plan and this file disagree on the skill list or on GPT-6 Astra, this 
 
 - The master skills: `brief.write`, `task.route`, `approval.ask`, and `check.run`. The model is a cheaper GPT-6 tier. All four gates are Auto.
 - Every check below. An agent repository holds no check that decides a pass.
-- The Durable Object side of the heartbeat. Three missed heartbeats resume the machine (decision 17). The path is open question 6.
+- The Durable Object side of the heartbeat. Three missed heartbeats resume the machine (decision 17). The path is `POST /machine/heartbeat` (open question 6, answered).
 - The `change.detected` Worker route. A test webhook becomes one bus event to the master.
 - The proof-of-concept seed account, with the two squads, their skills, and their events. The event list is open question 2.
 - The two images on the Agent images screen, version `0.1.0`, status Beta. The ids are `market` and `website`.
@@ -106,7 +106,7 @@ The proof of concept changes the data, not the screens. Do not change any of the
 - Do not invent a dish, an item, or a price. The user's list is the only source.
 - Do not let an agent write to Neon. Only the Durable Object writes (decision 16).
 - Do not change any of the ten product screens.
-- Do not add ClickHouse. Wait for open question 1.
+- Do not add ClickHouse. Decision 31 keeps it out of version 1.
 - Do not build the researcher skills or the builder skills. Those repositories do that work.
 - Do not put a key on a machine, in a prompt, in a log, or in git.
 
@@ -114,8 +114,8 @@ The proof of concept changes the data, not the screens. Do not change any of the
 
 Do not guess. Stop the step that needs the answer. The other steps may proceed.
 
-1. **Decision 31.** This task used to cite it. The decisions table has no row 31. Moe dropped decisions 29 and 30. The rejected-concepts table says decision 31 means Neon answers every version 1 question. The old task text says ClickHouse comes after phase 5. *Recommended:* add this row. "A second database. Not in version 1. Neon answers every version 1 question. ClickHouse comes after phase 5. Decisions 29 and 30 stay dropped." Do not add the row until Moe accepts it. Do not add ClickHouse until then.
-2. **The thirteen events.** The done list requires them on the traffic screen. The plan has a placeholder diagram, not the thirteen events. The loop above has eight steps. *Recommended:* seed these thirteen events, in this order. `site.critique` is evidence inside event 10. It is not its own event. `competition.watch` and the test `change.detected` event come after these thirteen. They are not part of the thirteen.
+1. **Decision 31.** Answered by Moe on 5 November 2026. Version 1 uses one database, Neon. ClickHouse comes after phase 5. See decision 31 in `docs/PLAN.md`.
+2. **The thirteen events.** Answered by Moe on 5 November 2026: seed these thirteen events, in this order, with one addition to event 9. The done list requires them on the traffic screen. `site.critique` is evidence inside event 10. It is not its own event. `competition.watch` and the test `change.detected` event come after these thirteen. They are not part of the thirteen.
    1. Task, master to market, `task.route`. Research this business.
    2. Result, market to master, `web.search`.
    3. Result, market to master, `maps.competitors`.
@@ -124,13 +124,13 @@ Do not guess. Stop the step that needs the answer. The other steps may proceed.
    6. Result, market to master, `report.write`. The report, the sources, and the evidence.
    7. Approval, master to user, `brief.write`. "Build the site with this brief?"
    8. Approval, master to website, `approval.ask`. The user said yes. The payload holds the Mandate.
-   9. Task, master to website, `task.route`. Build the page.
+   9. Task, master to website, `task.route`. Build the page. The text and the payload state the research finding that the instructions rely on: the gap that the report names, with its source URL. Moe added this on 5 November 2026.
    10. Result, website to master, `site.preview`. The preview URL, after build and critique.
    11. Approval, master to user, `approval.ask`. "Publish the site?"
    12. Approval, master to website, `approval.ask`. The user said yes. The payload holds the Mandate.
    13. Result, website to master, `site.publish`. The live URL.
-3. **The context.dev links.** Same gap as `tasks/05-market-researcher.md` question 1. This task needs the `change.detected` payload page for the Worker route. *Recommended:* use the nine links in that question. The payload page is `https://docs.context.dev/api-reference/monitors/webhook-payload`.
-4. **The screen-by-screen table.** The old task said a table follows the Proof of concept section. The plan has no such table. *Recommended:* accept this table. Phase 5 changes seed data only. It does not change a layout.
+3. **The context.dev links.** Answered by Moe on 5 November 2026: the researcher uses context.dev for three things only: web search (`web.search`), map listings (`maps.competitors`: `google-maps`, `google-maps-reviews`, `yelp-search`), and watching competitors (`competition.watch`, a monitor). Use the nine pages in `tasks/05-market-researcher.md` question 1. All nine returned 200 on 5 November 2026. The `change.detected` Worker route uses the payload page `https://docs.context.dev/api-reference/monitors/webhook-payload`.
+4. **The screen-by-screen table.** Answered by Moe on 5 November 2026: accept this table. Phase 5 changes seed data only. It does not change a layout.
    - Homepage: no change here. Decision 24 already shows the two agents. Task 07 owns the new homepage.
    - Sign-up: no change. Step 3 already shows the two agents.
    - Sign-in: no change.
@@ -142,5 +142,5 @@ Do not guess. Stop the step that needs the answer. The other steps may proceed.
    - Rules: no change.
    - Accounts: the seed adds one proof-of-concept account. The layout does not change.
    - Agent images: two images, version `0.1.0`, status Beta. The layout does not change.
-5. **How a machine gets the signed token.** Same question as `tasks/05-agent-kit.md` question 1. This repository signs the token. It does not place the token on the machine until Moe answers. *Recommended:* keep the signing key in the Worker secret `MACHINE_TOKEN_KEY`. Put the token in the boat.dev key proxy. The machine reads it at call time.
-6. **The heartbeat route.** Same question as `tasks/05-agent-kit.md` question 2. This repository owns the Worker route and the three-miss resume. *Recommended:* accept `POST /machine/heartbeat`. The Durable Object records the time. After three missed minutes, it resumes the machine.
+5. **How a machine gets the signed token.** Answered by Moe on 5 November 2026: the Worker signs the token with the Worker secret `MACHINE_TOKEN_KEY`, for one account and one agent. The boat.dev key proxy holds the token. The machine reads it from the proxy at call time. It is not an environment variable, and the image does not contain it. Adjusted by Moe on 5 November 2026: boat.dev delivers the token through a custom API. The machine sees only a placeholder environment variable (`TENSQUADS_MACHINE_TOKEN`) and its base URL (`TENSQUADS_MACHINE_TOKEN_BASE_URL`). It sends the placeholder to that base URL, and boat.dev substitutes the real token on the way out. The real token never reaches the machine.
+6. **The heartbeat route.** Answered by Moe on 5 November 2026: `POST /machine/heartbeat`, with the same signed token, once a minute. The body names the account and `TENSQUADS_AGENT_ID`. The main repository owns the route and the Durable Object records the time. After three missed minutes the master resumes the machine.
