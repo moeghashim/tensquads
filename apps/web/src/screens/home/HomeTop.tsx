@@ -1,3 +1,4 @@
+import { characterName } from "@tensquads/squadmates";
 import { Arrow, Mark } from "../marks.tsx";
 import { type BusinessKind, examplesFor, homeAgents, logos, placeholderFor, previewKpis } from "./data.ts";
 import { Mate } from "./Mate.tsx";
@@ -77,7 +78,7 @@ export function HomeTop({
 						{homeAgents.map((agent) => (
 							<article key={agent.id} className="swatch" style={{ background: agent.tint }}>
 								<Mate id={agent.id} state={agent.draw} size={88} />
-								<b>{agent.character}</b>
+								<b>{characterName(agent.id)}</b>
 								<span className="role">{agent.name}</span>
 								<span className="last">{agent.last}</span>
 							</article>
@@ -184,7 +185,7 @@ export function HomeTop({
 								{homeAgents.map((agent) => (
 									<div key={agent.id} className="mini">
 										<Mate id={agent.id} state={agent.draw} size={28} />
-										<span className="mini-name">{agent.character}</span>
+										<span className="mini-name">{characterName(agent.id)}</span>
 										<span className="tag">{agent.name}</span>
 										<span className="mini-last">{agent.last}</span>
 										<span className="dot" style={{ background: agent.dot }} />

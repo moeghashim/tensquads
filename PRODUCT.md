@@ -28,7 +28,7 @@ The public homepage is screen 1. Sign-in is `/signin`. Sign-up is `/signup`. A l
 
 The homepage keeps the New and Existing toggle, the prompt box, the agent cards, how it works, control, pricing, the call to action, and the path to sign-up. Prices stay Starter $49, Growth $149, and Scale $399 per month. The trial line stays: free for 14 days, no credit card, cancel from the dashboard. Placeholders stay as written, including `[BUSINESS]`, `[VAT NOTE]`, and `[COMPANY LEGAL NAME]`. A control that does nothing in the design does nothing. Do not edit `design/`, `docs/PLAN.md`, or `docs/BRIEF.md`. Do not change another screen. Decision 34 allows a new colour, font, or shadow only on this page, and only where the new design uses it.
 
-Decision 33 gives each agent one character name. The drawings in `apps/landing/review-src/squadmates.mjs` are the only characters this page may use. Do not draw a new character. People (Sydney) is named in the decision and has no drawing in that file, so this page does not draw Sydney.
+Decision 33 gives each agent one character name. The drawings in `packages/squadmates` are the only characters this page may use. Do not draw a new character. This page draws Petra, Pisa, Kyoto, Rio, Zurich, Giza, Machu, Angkor, and Delphi. It does not draw Sydney.
 
 ## Brand Commitments
 
@@ -36,7 +36,7 @@ The product name is tensquads. The token list in `docs/BRIEF.md` is the system f
 
 ## Evidence on Hand
 
-Homepage copy and behaviour are in `design/Home.dc.html` and `apps/web/src/screens/home/`. Character drawings are in `apps/landing/review-src/squadmates.mjs`. The names in the logo row are the design's words. Do not add a testimonial, a customer quote, a benchmark, or a price.
+The homepage reference for screen 1 is `docs/designs/home/`. The build is in `apps/web/src/screens/home/`. Character drawings are in `packages/squadmates`. The names in the logo row are the design's words. Do not add a testimonial, a customer quote, a benchmark, or a price.
 
 ## Product Principles
 

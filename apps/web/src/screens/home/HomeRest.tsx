@@ -1,3 +1,4 @@
+import { characterName } from "@tensquads/squadmates";
 import { Check } from "../marks.tsx";
 import { castMates, controls, homeAgents, plans, steps } from "./data.ts";
 import { Mate } from "./Mate.tsx";
@@ -19,7 +20,7 @@ export function HomeRest() {
 								<Mate id={agent.id} state={agent.draw} size={72} />
 								<div className="roster-copy">
 									<div className="who">
-										<b>{agent.character}</b>
+										<b>{characterName(agent.id)}</b>
 										<span className="tag">{agent.name}</span>
 									</div>
 									<div className="sub">{agent.role}</div>

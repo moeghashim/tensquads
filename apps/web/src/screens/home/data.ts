@@ -1,11 +1,10 @@
-import type { SquadmateDrawState } from "@tensquads/squadmates";
+import { characterName, type SquadmateDrawState } from "@tensquads/squadmates";
 
 export type BusinessKind = "new" | "existing";
 
 export const homeAgents = [
 	{
 		id: "orders",
-		character: "Pisa",
 		draw: "checking",
 		name: "Orders",
 		role: "Fulfilment and tracking",
@@ -17,7 +16,6 @@ export const homeAgents = [
 	},
 	{
 		id: "support",
-		character: "Kyoto",
 		draw: "done",
 		name: "Support",
 		role: "Customer inbox and refunds",
@@ -29,7 +27,6 @@ export const homeAgents = [
 	},
 	{
 		id: "marketing",
-		character: "Rio",
 		draw: "escalated",
 		name: "Marketing",
 		role: "Ads, social and email",
@@ -41,7 +38,6 @@ export const homeAgents = [
 	},
 	{
 		id: "finance",
-		character: "Zurich",
 		draw: "done",
 		name: "Finance",
 		role: "Payouts, costs and profit",
@@ -53,7 +49,6 @@ export const homeAgents = [
 	},
 	{
 		id: "inventory",
-		character: "Giza",
 		draw: "blocked",
 		name: "Inventory",
 		role: "Stock and suppliers",
@@ -65,7 +60,6 @@ export const homeAgents = [
 	},
 	{
 		id: "market",
-		character: "Machu",
 		draw: "running",
 		name: "Market researcher",
 		role: "Competitors and positioning",
@@ -77,7 +71,6 @@ export const homeAgents = [
 	},
 	{
 		id: "website",
-		character: "Angkor",
 		draw: "done",
 		name: "Website builder",
 		role: "Landing pages and site updates",
@@ -89,7 +82,6 @@ export const homeAgents = [
 	},
 ] as const satisfies readonly {
 	readonly id: string;
-	readonly character: string;
 	readonly draw: SquadmateDrawState;
 	readonly name: string;
 	readonly role: string;
@@ -99,6 +91,12 @@ export const homeAgents = [
 	readonly pitch: string;
 	readonly tools: readonly string[];
 }[];
+
+for (const agent of homeAgents) {
+	if (characterName(agent.id) === null) {
+		throw new Error(`Missing homepage character name: ${agent.id}`);
+	}
+}
 
 export const castMates = [
 	"master",
