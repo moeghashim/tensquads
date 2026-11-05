@@ -6,6 +6,7 @@ import { digestOf, parseWebsiteTask, renderPage } from "@tensquads/agent-kit";
 import { checkBrief, checkPage, checkPublished, checkResearch, wordCount } from "../src/master/checks.ts";
 import { pageLinks } from "../src/master/hrefs.ts";
 import { proofStory } from "../src/master/proof.ts";
+import { pageDocument } from "../src/master/render-page.ts";
 import type { PageReader } from "../src/master/types.ts";
 
 function reader(pages: Record<string, { status: number; body: string }>): PageReader {
@@ -20,6 +21,19 @@ function mandateOf(payload: Readonly<Record<string, unknown>>) {
 	assert.equal(typeof mandate?.subject, "string");
 	return { skill, subject: mandate?.subject ?? "", at: mandate?.at ?? "" };
 }
+
+test("the proof page keeps the kit heading rules and the cream note", async () => {
+	const story = await proofStory();
+	assert.equal(
+		story.pageHtml.startsWith(
+			"<!-- impeccable-disable cream-palette: the restaurant paper is the warm palette -->\n<!doctype html>",
+		),
+		true,
+	);
+	assert.equal(story.pageHtml.includes("h1{font-size:2rem}\nh2{font-size:1.35rem}"), true);
+	assert.equal(pageDocument(story.pageHtml), story.pageHtml);
+	assert.equal(pageDocument("<p>fragment</p>").startsWith("<!DOCTYPE html>"), true);
+});
 
 test("the thirteen events stay in order and cite the gap", async () => {
 	const story = await proofStory();
