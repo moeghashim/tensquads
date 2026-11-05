@@ -4,7 +4,16 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { busTrialPlan, childEnv, executeBusTrial, redact, trialConfig, trialWorkerUrl } from "../bus-trial.mjs";
+import {
+	busTrialPlan,
+	childEnv,
+	createTrialAccount,
+	deleteRows,
+	executeBusTrial,
+	redact,
+	trialConfig,
+	trialWorkerUrl,
+} from "../bus-trial.mjs";
 
 const root = new URL("../../", import.meta.url);
 const source = readFileSync(new URL("apps/web/wrangler.jsonc", root), "utf8");
@@ -95,6 +104,7 @@ test("wrangler output and the child environment do not carry the trial secrets",
 	const calls = [];
 	const directory = mkdtempSync(join(tmpdir(), "tensquads-bus-trial-test-"));
 	let code = 1;
+	let accountCreated = false;
 	try {
 		code = await executeBusTrial(plan, {
 			source,
@@ -113,7 +123,13 @@ test("wrangler output and the child environment do not carry the trial secrets",
 				}
 				return { stdout: "" };
 			},
+			async createAccount(databaseUrl, account) {
+				assert.equal(databaseUrl, plan.databaseUrl);
+				assert.equal(account, plan.accountId);
+				accountCreated = true;
+			},
 			async fetch(url) {
+				assert.equal(accountCreated, true);
 				calls.push(url);
 				return { ok: true, status: 200 };
 			},
@@ -138,4 +154,50 @@ test("wrangler output and the child environment do not carry the trial secrets",
 		false,
 	);
 	assert.match(calls.at(-1), /^bus-trial run=41877304107 event=trial-41877304107$/);
+});
+
+function sqlRecorder(results = []) {
+	const calls = [];
+	return {
+		calls,
+		async sql(strings, ...values) {
+			calls.push({ text: strings.join("?").replace(/\s+/g, " ").trim(), values });
+			return results[calls.length - 1] ?? [];
+		},
+	};
+}
+
+test("trial account creation emits a scoped parameterized Neon insert", async () => {
+	const { sql, calls } = sqlRecorder();
+	const { accountId } = busTrialPlan(env);
+	await createTrialAccount(sql, accountId);
+	assert.deepEqual(calls, [
+		{
+			text: "insert into accounts (id, account_id, name, owner, email, tint, agents, online, tasks, last_active, created_week, mission, sort_order) values (?, ?, '', '', '', '', 0, 0, 0, '', 0, '', 0) on conflict do nothing",
+			values: [accountId, accountId],
+		},
+	]);
+});
+
+test("trial row cleanup emits child deletes before the scoped parent delete", async () => {
+	const { sql, calls } = sqlRecorder();
+	const { accountId } = busTrialPlan(env);
+	assert.equal(await deleteRows(sql, accountId), 0);
+	assert.deepEqual(calls, [
+		{ text: "delete from bus_events where account_id = ?", values: [accountId] },
+		{ text: "delete from state_entries where account_id = ?", values: [accountId] },
+		{ text: "delete from accounts where id = ?", values: [accountId] },
+		{ text: "select id from bus_events where account_id = ?", values: [accountId] },
+		{ text: "select key from state_entries where account_id = ?", values: [accountId] },
+		{ text: "select id from accounts where id = ?", values: [accountId] },
+	]);
+});
+
+test("trial row cleanup counts each remaining child or parent row", async () => {
+	for (const index of [3, 4, 5]) {
+		const results = Array.from({ length: 6 }, () => []);
+		results[index] = [{}];
+		const { sql } = sqlRecorder(results);
+		assert.equal(await deleteRows(sql, busTrialPlan(env).accountId), 1);
+	}
 });

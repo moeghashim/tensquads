@@ -137,14 +137,24 @@ async function waitForEvent(databaseUrl, account, eventId) {
 	}
 }
 
-async function deleteRows(databaseUrl, account) {
+async function trialSql(databaseUrl) {
 	const { neon } = await import("@neondatabase/serverless");
-	const sql = neon(databaseUrl);
+	return neon(databaseUrl);
+}
+
+export async function createTrialAccount(sql, account) {
+	await sql`insert into accounts (id, account_id, name, owner, email, tint, agents, online, tasks, last_active, created_week, mission, sort_order)
+		values (${account}, ${account}, '', '', '', '', 0, 0, 0, '', 0, '', 0) on conflict do nothing`;
+}
+
+export async function deleteRows(sql, account) {
 	await sql`delete from bus_events where account_id = ${account}`;
 	await sql`delete from state_entries where account_id = ${account}`;
+	await sql`delete from accounts where id = ${account}`;
 	const events = await sql`select id from bus_events where account_id = ${account}`;
 	const state = await sql`select key from state_entries where account_id = ${account}`;
-	return events.length + state.length;
+	const accounts = await sql`select id from accounts where id = ${account}`;
+	return events.length + state.length + accounts.length;
 }
 
 export async function executeBusTrial(plan, deps) {
@@ -192,6 +202,7 @@ export async function executeBusTrial(plan, deps) {
 			payload: {},
 			writes: [],
 		};
+		await deps.createAccount(plan.databaseUrl, plan.accountId);
 		const response = await deps.fetch(`${url}/machine/send`, {
 			method: "POST",
 			redirect: "manual",
@@ -295,7 +306,9 @@ async function realCleanup(plan) {
 		throw new Error("The trial worker name is not valid.");
 	}
 	const left = await cleanupTrial(plan, (request) => cloudflare(plan, request.method, request.path));
-	const rows = await deleteRows(plan.databaseUrl, plan.accountId).catch(() => 1);
+	const rows = await trialSql(plan.databaseUrl)
+		.then((sql) => deleteRows(sql, plan.accountId))
+		.catch(() => 1);
 	if (rows !== 0) left.push("rows");
 	return left;
 }
@@ -320,6 +333,7 @@ async function main() {
 		tempDir: () => mkdtempSync(resolve(tmpdir(), "tensquads-bus-trial-")),
 		run: realRun(plan),
 		fetch,
+		createAccount: async (databaseUrl, account) => createTrialAccount(await trialSql(databaseUrl), account),
 		waitForEvent,
 		cleanup: (current) => realCleanup(current),
 	});
