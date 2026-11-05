@@ -111,4 +111,4 @@ Published site:
 
 Do not guess. Stop the step that needs the answer.
 
-1. **How the machine gets the signed token.** Answered by Moe on 5 November 2026: the Worker signs the token with the Worker secret `MACHINE_TOKEN_KEY`, for one account and one agent. The boat.dev key proxy holds the token. The machine reads it from the proxy at call time. It is not an environment variable, and the image does not contain it.
+1. **How the machine gets the signed token.** Answered by Moe on 5 November 2026: the Worker signs the token with the Worker secret `MACHINE_TOKEN_KEY`, for one account and one agent. The boat.dev key proxy holds the token. The machine reads it from the proxy at call time. It is not an environment variable, and the image does not contain it. Adjusted by Moe on 5 November 2026: boat.dev delivers the token through a custom API. The machine sees only a placeholder environment variable (`TENSQUADS_MACHINE_TOKEN`) and its base URL (`TENSQUADS_MACHINE_TOKEN_BASE_URL`). It sends the placeholder to that base URL, and boat.dev substitutes the real token on the way out. The real token never reaches the machine.
