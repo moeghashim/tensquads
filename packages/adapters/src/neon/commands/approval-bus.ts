@@ -56,10 +56,11 @@ export async function scheduleDeliveryRetry(accountId: string, namespace?: BusNa
 	if (chooseAdapters(process.env.ADAPTERS) !== "real") return;
 	if (!namespace) throw new Error(missingBus);
 	const id = namespace.idFromName(accountId);
-	await namespace.get(id).fetch("https://bus/deliveries/retry", {
+	const response = await namespace.get(id).fetch("https://bus/deliveries/retry", {
 		method: "POST",
 		body: JSON.stringify({ accountId }),
 	});
+	if (!response.ok) throw new Error(missingBus);
 }
 
 export async function deliverUserToMaster(

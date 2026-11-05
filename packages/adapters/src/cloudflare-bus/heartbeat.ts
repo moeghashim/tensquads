@@ -1,9 +1,11 @@
 import { chooseAdapters } from "../adapter-choice.ts";
+import { applyAlarm, armStoredAlarm, HEARTBEAT_ALARM } from "./alarm.ts";
+
+export { HEARTBEAT_ALARM };
 
 export const MISSED_MS = 180_000;
 export const RETRY_MS = 60_000;
 export const HEARTBEATS = "heartbeats";
-export const HEARTBEAT_ALARM = "heartbeat-alarm";
 
 interface HeartbeatBeat {
 	readonly at: number;
@@ -13,6 +15,7 @@ interface HeartbeatBeat {
 export interface HeartbeatStorage {
 	get<T>(key: string): Promise<T | undefined>;
 	put<T>(key: string, value: T): Promise<void>;
+	delete(key: string): Promise<boolean>;
 	getAlarm(): Promise<number | null>;
 	setAlarm(scheduledTime: number | Date): Promise<void>;
 	deleteAlarm(): Promise<void>;
@@ -32,19 +35,12 @@ export interface HeartbeatEnv {
 
 type Resume = (accountId: string, agentId: string) => Promise<void>;
 
-function sooner(current: number | null, due: number, now: number): number {
-	if (current === null || current <= now) return due;
-	return Math.min(current, due);
-}
-
 function earlier(current: number | null, due: number): number {
 	return current === null ? due : Math.min(current, due);
 }
 
-async function arm(storage: HeartbeatStorage, due: number, now: number): Promise<void> {
-	await storage.put(HEARTBEAT_ALARM, due);
-	const current = await storage.getAlarm();
-	await storage.setAlarm(sooner(current, due, now));
+async function arm(storage: HeartbeatStorage, due: number, _now: number): Promise<void> {
+	await armStoredAlarm(storage, HEARTBEAT_ALARM, due);
 }
 
 export async function recordBeat(storage: HeartbeatStorage, agentId: string, at: number): Promise<void> {
@@ -121,10 +117,9 @@ async function oneDue(
 	return resumeDue(resume, accountId, agentId, beat, map, now);
 }
 
-async function clearAlarm(storage: HeartbeatStorage, now: number): Promise<void> {
-	await storage.put(HEARTBEAT_ALARM, null);
-	const current = await storage.getAlarm();
-	if (current === null || current <= now) await storage.deleteAlarm();
+async function clearAlarm(storage: HeartbeatStorage, _now: number): Promise<void> {
+	await storage.delete(HEARTBEAT_ALARM);
+	await applyAlarm(storage);
 }
 
 export async function sweepHeartbeats(storage: HeartbeatStorage, env: HeartbeatEnv): Promise<void> {
@@ -147,8 +142,4 @@ export async function sweepHeartbeats(storage: HeartbeatStorage, env: HeartbeatE
 	await arm(storage, nextDue, now);
 }
 
-export function alarmAfterFlush(remaining: number, heartbeatDue: unknown, now: number, alarmMs: number): number | null {
-	if (remaining > 0) return now + alarmMs;
-	if (typeof heartbeatDue === "number" && Number.isFinite(heartbeatDue)) return heartbeatDue;
-	return null;
-}
+export { alarmAfterFlush } from "./alarm.ts";

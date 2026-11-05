@@ -136,12 +136,36 @@ export async function drainApprovalDeliveries(
 	connectionString: string,
 	accountId: string,
 	deliver: (event: PublishedEvent) => Promise<void>,
+	beforeMs?: number,
 ): Promise<number> {
 	const { pool, db } = database(connectionString);
 	try {
-		return await retryApprovalDeliveries(db as unknown as AppDatabase, accountId, (_id, event) =>
-			deliver(event as PublishedEvent),
+		return await retryApprovalDeliveries(
+			db as unknown as AppDatabase,
+			accountId,
+			(_id, event) => deliver(event as PublishedEvent),
+			beforeMs,
 		);
+	} catch (error) {
+		throw hidden(error, connectionString);
+	} finally {
+		await pool.end();
+	}
+}
+
+// The cron sweep finds accounts whose pending rows are older than the grace time.
+export async function readStaleDeliveryAccounts(connectionString: string, beforeMs: number): Promise<string[]> {
+	const { pool, db } = database(connectionString);
+	try {
+		const rows = await db
+			.select({ accountId: approvalDeliveries.accountId, event: approvalDeliveries.event })
+			.from(approvalDeliveries);
+		const accounts = new Set<string>();
+		for (const row of rows) {
+			const parsed = Date.parse(row.event.time);
+			if ((Number.isFinite(parsed) ? parsed : 0) <= beforeMs) accounts.add(row.accountId);
+		}
+		return [...accounts].sort();
 	} catch (error) {
 		throw hidden(error, connectionString);
 	} finally {

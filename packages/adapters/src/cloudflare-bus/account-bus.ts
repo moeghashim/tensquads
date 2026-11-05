@@ -2,9 +2,10 @@ import { planNextEvent, type TrafficCursor } from "@tensquads/domain";
 import type { PublishedEvent } from "@tensquads/kernel";
 import { chooseAdapters } from "../adapter-choice.ts";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
-import { deliveryBackoffMs } from "../neon/commands/approval-delivery.ts";
+import { DELIVERY_GRACE_MS, deliveryBackoffMs } from "../neon/commands/approval-delivery.ts";
 import { traceFor } from "../trace.ts";
-import { alarmAfterFlush, HEARTBEAT_ALARM, type HeartbeatEnv, recordBeat, sweepHeartbeats } from "./heartbeat.ts";
+import { applyAlarm, armStoredAlarm, clearStoredAlarm, DELIVERY_ALARM, flushAlarmDue } from "./alarm.ts";
+import { type HeartbeatEnv, recordBeat, sweepHeartbeats } from "./heartbeat.ts";
 import { writeMasterCommit } from "./master-commit.ts";
 import { finishMaster, MASTER_DONE, MASTER_OPEN, masterEvent, retryOpenMaster } from "./master-retry.ts";
 import { prepareMaster } from "./master-step.ts";
@@ -73,7 +74,7 @@ export interface BusObjectEnv extends HeartbeatEnv {
 	readonly MASTER_MODEL?: string;
 	// A test can drain pending approval deliveries without a live database.
 	// It returns the number of rows left. The alarm runs it again later.
-	readonly retryDeliveries?: (accountId: string) => Promise<number>;
+	readonly retryDeliveries?: (accountId: string, beforeMs?: number) => Promise<number>;
 }
 
 interface AcceptResult {
@@ -242,7 +243,7 @@ async function commitDurable(
 		if (error instanceof DeadlinePassed) return { seen: false, seq: 0, expired: true };
 		throw error;
 	}
-	if (!result.seen && result.event) await storage.setAlarm(Date.now() + ALARM_MS);
+	if (!result.seen && result.event) await applyAlarm(storage, Date.now() + ALARM_MS);
 	return result;
 }
 
@@ -283,30 +284,43 @@ export class AccountBus {
 		const stored = await this.ctx.storage.get<string>("account");
 		if (stored && stored !== body.accountId) return new Response("The message was rejected.", { status: 400 });
 		await this.ctx.storage.put("account", body.accountId);
-		await this.ctx.storage.put("delivery-attempt", 0);
-		const now = this.env.now?.() ?? Date.now();
-		await this.ctx.storage.setAlarm(now + deliveryBackoffMs(0));
+		const armed = await this.ctx.storage.get<number>(DELIVERY_ALARM);
+		if (typeof armed !== "number") {
+			await this.ctx.storage.put("delivery-attempt", 0);
+			const now = this.env.now?.() ?? Date.now();
+			await armStoredAlarm(this.ctx.storage, DELIVERY_ALARM, now + deliveryBackoffMs(0));
+		}
 		return Response.json({ ok: true });
 	}
 
-	private async drainDeliveries(): Promise<void> {
+	private async drainDeliveries(onlyOld = false): Promise<void> {
 		if (chooseAdapters(this.env.ADAPTERS) !== "real") return;
 		const accountId = await this.ctx.storage.get<string>("account");
 		if (!accountId) return;
-		const remaining = await this.drainRemaining(accountId);
-		if (remaining === null) return;
+		const remaining = await this.drainRemaining(accountId, onlyOld);
+		if (remaining === null || onlyOld) return;
 		if (remaining > 0) await this.armDeliveryAlarm();
-		else await this.ctx.storage.delete("delivery-attempt");
+		else {
+			await clearStoredAlarm(this.ctx.storage, DELIVERY_ALARM);
+			await this.ctx.storage.delete("delivery-attempt");
+		}
 	}
 
 	// A missing source means there is nothing to drain. A failed drain counts as one row left.
-	private async drainRemaining(accountId: string): Promise<number | null> {
+	private async drainRemaining(accountId: string, onlyOld: boolean): Promise<number | null> {
+		const now = this.env.now?.() ?? Date.now();
+		const beforeMs = onlyOld ? now - DELIVERY_GRACE_MS : undefined;
 		try {
-			if (this.env.retryDeliveries) return await this.env.retryDeliveries(accountId);
+			if (this.env.retryDeliveries) return await this.env.retryDeliveries(accountId, beforeMs);
 			if (!this.env.DATABASE_URL) return null;
-			return await drainApprovalDeliveries(this.env.DATABASE_URL, accountId, async (event) => {
-				await this.acceptStored(accountId, event);
-			});
+			return await drainApprovalDeliveries(
+				this.env.DATABASE_URL,
+				accountId,
+				async (event) => {
+					await this.acceptStored(accountId, event);
+				},
+				beforeMs,
+			);
 		} catch {
 			return 1;
 		}
@@ -316,7 +330,7 @@ export class AccountBus {
 		const attempt = (await this.ctx.storage.get<number>("delivery-attempt")) ?? 0;
 		await this.ctx.storage.put("delivery-attempt", attempt + 1);
 		const now = this.env.now?.() ?? Date.now();
-		await this.ctx.storage.setAlarm(now + deliveryBackoffMs(attempt));
+		await armStoredAlarm(this.ctx.storage, DELIVERY_ALARM, now + deliveryBackoffMs(attempt));
 	}
 
 	private routes(): Map<string, (request: Request) => Promise<Response>> {
@@ -392,7 +406,7 @@ export class AccountBus {
 			throw error;
 		}
 		for (const next of step.produced) this.push(next);
-		await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
+		await applyAlarm(this.ctx.storage, Date.now() + ALARM_MS);
 	}
 
 	private async monitor(request: Request): Promise<Response> {
@@ -456,7 +470,12 @@ export class AccountBus {
 	}
 
 	private flush(): Promise<void> {
-		const next = this.flushing.then(() => this.flushPending());
+		const next = this.flushing.then(async () => {
+			await this.flushPending();
+			// A flush also drains old pending deliveries. This is the fallback
+			// when the first schedule call did not reach the account bus.
+			await this.drainDeliveries(true);
+		});
 		this.flushing = next.catch(() => undefined);
 		return next;
 	}
@@ -465,13 +484,13 @@ export class AccountBus {
 		const pending = (await this.ctx.storage.get<PendingBusRow[]>("pending")) ?? [];
 		const accountId = await this.ctx.storage.get<string>("account");
 		if (pending.length === 0 || !accountId || !this.env.DATABASE_URL) {
-			if (pending.length > 0) await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
+			if (pending.length > 0) await applyAlarm(this.ctx.storage, Date.now() + ALARM_MS);
 			return;
 		}
 		try {
 			await writePending(this.env.DATABASE_URL, accountId, pending);
 		} catch {
-			await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
+			await applyAlarm(this.ctx.storage, Date.now() + ALARM_MS);
 			return;
 		}
 		const written = new Set(pending.map((row) => row.event.id));
@@ -479,8 +498,7 @@ export class AccountBus {
 			const current = (await txn.get<PendingBusRow[]>("pending")) ?? [];
 			const remaining = current.filter((row) => !written.has(row.event.id));
 			await txn.put("pending", remaining);
-			const due = await txn.get(HEARTBEAT_ALARM);
-			const next = alarmAfterFlush(remaining.length, due, Date.now(), ALARM_MS);
+			const next = await flushAlarmDue(txn, remaining.length, Date.now(), ALARM_MS);
 			if (next === null) await txn.deleteAlarm();
 			else await txn.setAlarm(next);
 		});

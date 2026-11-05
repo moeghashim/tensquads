@@ -5,7 +5,13 @@ import { and, eq } from "drizzle-orm";
 
 import { replaceDemoAccount } from "../../seed/src/demo-account.ts";
 import { AccountBus } from "../src/cloudflare-bus/account-bus.ts";
-import type { DeliverUserEvent, UserMasterEvent } from "../src/neon/commands/approval-bus.ts";
+import { DELIVERY_ALARM, flushAlarmDue, HEARTBEAT_ALARM } from "../src/cloudflare-bus/alarm.ts";
+import { sweepDeliveryRetries } from "../src/cloudflare-bus/delivery-sweep.ts";
+import {
+	type DeliverUserEvent,
+	scheduleDeliveryRetry,
+	type UserMasterEvent,
+} from "../src/neon/commands/approval-bus.ts";
 import { deliveryBackoffMs, retryApprovalDeliveries } from "../src/neon/commands/approval-delivery.ts";
 import { decide } from "../src/neon/commands/approvals.ts";
 import { schema } from "../src/neon/schema.ts";
@@ -202,8 +208,8 @@ test("a drain that still has rows arms the alarm with a growing backoff", async 
 		{
 			ADAPTERS: "real",
 			now: () => 10_000,
-			retryDeliveries: async () => {
-				calls += 1;
+			retryDeliveries: async (_id, beforeMs) => {
+				if (beforeMs === undefined) calls += 1;
 				return 1;
 			},
 		},
@@ -234,6 +240,138 @@ test("a test-mode alarm does not drain deliveries", async () => {
 	);
 	await bus.alarm();
 	assert.equal(calls, 0);
+});
+
+test("a failed send asks the account bus to schedule the retry", async () => {
+	await withDemo("schedule", async (db, accountId) => {
+		const scheduled: string[] = [];
+		const deliver: DeliverUserEvent = async () => {
+			throw new Error("The bus write failed.");
+		};
+		await assert.rejects(() =>
+			decide(db, scope(accountId), "ap1", true, undefined, deliver, async (id) => {
+				scheduled.push(id);
+			}),
+		);
+		assert.deepEqual(scheduled, [accountId]);
+		assert.equal((await deliveries(db, accountId)).length, 1);
+	});
+});
+
+test("a non-ok schedule answer is a failure, not a success", async () => {
+	const namespace = {
+		idFromName: (name: string) => name,
+		get: () => ({ fetch: async () => new Response("no", { status: 503 }) }),
+	};
+	const previous = process.env.ADAPTERS;
+	process.env.ADAPTERS = "real";
+	try {
+		await assert.rejects(() => scheduleDeliveryRetry("acct-503", namespace));
+	} finally {
+		if (previous === undefined) delete process.env.ADAPTERS;
+		else process.env.ADAPTERS = previous;
+	}
+});
+
+test("an unrelated bus flush keeps the armed delivery deadline", async () => {
+	const storage = new Storage();
+	const bus = new AccountBus(
+		{ storage, acceptWebSocket() {}, getWebSockets: () => [] },
+		{ ADAPTERS: "real", retryDeliveries: async () => 0 },
+	);
+	const armed = await bus.fetch(
+		new Request("https://bus/deliveries/retry", {
+			method: "POST",
+			body: JSON.stringify({ accountId: "acct-flush" }),
+		}),
+	);
+	assert.equal(armed.ok, true);
+	const due = await storage.get<number>(DELIVERY_ALARM);
+	assert.equal(typeof due, "number");
+	assert.equal(storage.alarm, due);
+
+	const accepted = await bus.fetch(
+		new Request("https://bus/accept", {
+			method: "POST",
+			body: JSON.stringify({
+				accountId: "acct-flush",
+				event: {
+					id: "e-other",
+					from: "master",
+					to: "market",
+					kind: "Task",
+					skill: "web.search",
+					text: "Done.",
+					payload: {},
+					writes: [],
+				},
+			}),
+		}),
+	);
+	assert.equal(accepted.ok, true);
+	assert.equal(await storage.get(DELIVERY_ALARM), due);
+	assert.equal(storage.alarm, due);
+	assert.equal(await storage.get("delivery-attempt"), 0);
+});
+
+test("the alarm after a flush is the earliest of the bus, heartbeat and delivery deadlines", async () => {
+	const storage = new Storage();
+	await storage.put(DELIVERY_ALARM, 12_345);
+	await storage.put(HEARTBEAT_ALARM, 20_000);
+	assert.equal(await flushAlarmDue(storage, 0, 0, 30_000), 12_345);
+	await storage.put(HEARTBEAT_ALARM, 5_000);
+	assert.equal(await flushAlarmDue(storage, 0, 0, 30_000), 5_000);
+	assert.equal(await flushAlarmDue(storage, 1, 0, 30_000), 12_345);
+	await storage.delete(HEARTBEAT_ALARM);
+	await storage.delete(DELIVERY_ALARM);
+	assert.equal(await flushAlarmDue(storage, 0, 0, 30_000), null);
+	assert.equal(await flushAlarmDue(storage, 1, 0, 30_000), 30_000);
+});
+
+test("a 503 schedule leaves the row, and the sweep recovers it through the alarm", async () => {
+	await withDemo("sweep", async (db, accountId) => {
+		const received: string[] = [];
+		let calls = 0;
+		const deliver: DeliverUserEvent = async (_accountId, event) => {
+			calls += 1;
+			if (calls === 1) throw new Error("The bus write failed.");
+			if (!received.includes(event.id)) received.push(event.id);
+		};
+		const failingNamespace = {
+			idFromName: (name: string) => name,
+			get: () => ({ fetch: async () => new Response("no", { status: 503 }) }),
+		};
+		await assert.rejects(() =>
+			decide(db, scope(accountId), "ap1", true, undefined, deliver, (id) =>
+				scheduleDeliveryRetry(id, failingNamespace),
+			),
+		);
+		assert.equal(calls, 1);
+		assert.equal((await deliveries(db, accountId)).length, 1);
+
+		const storage = new Storage();
+		await storage.put("account", accountId);
+		const bus = new AccountBus(
+			{ storage, acceptWebSocket() {}, getWebSockets: () => [] },
+			{ ADAPTERS: "real", retryDeliveries: (id) => retryApprovalDeliveries(db, id, deliver) },
+		);
+		const busNamespace = {
+			idFromName: (name: string) => name,
+			get: () => ({
+				fetch: (input: Request | string | URL, init?: RequestInit) => bus.fetch(new Request(input, init)),
+			}),
+		};
+		const poked = await sweepDeliveryRetries(
+			{ ADAPTERS: "real", ACCOUNT_BUS: busNamespace },
+			Date.now(),
+			async () => [accountId],
+		);
+		assert.deepEqual(poked, [accountId]);
+		await bus.alarm();
+		assert.equal(calls, 2);
+		assert.deepEqual(received, ["user-ap1"]);
+		assert.equal((await deliveries(db, accountId)).length, 0);
+	});
 });
 
 test("the delivery backoff is bounded", () => {

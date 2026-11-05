@@ -2,6 +2,7 @@ import type { PublishedEvent } from "@tensquads/kernel";
 
 import { chooseAdapters } from "../adapter-choice.ts";
 import type { BusObjectEnv, BusStorage } from "./account-bus.ts";
+import { applyAlarm } from "./alarm.ts";
 
 export const MASTER_OPEN = "master-open:";
 export const MASTER_DONE = "master-done:";
@@ -17,7 +18,8 @@ export function masterEvent(event: { readonly kind: string; readonly to: string;
 async function rememberRetry(storage: BusStorage): Promise<void> {
 	const retryAt = Date.now() + RETRY_MS;
 	const current = await storage.getAlarm();
-	if (current === null || retryAt < current) await storage.setAlarm(retryAt);
+	const earliest = current !== null && current > Date.now() ? Math.min(current, retryAt) : retryAt;
+	await applyAlarm(storage, earliest);
 }
 
 export async function finishMaster(
