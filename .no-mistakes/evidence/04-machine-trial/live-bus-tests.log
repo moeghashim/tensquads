@@ -1,0 +1,53 @@
+publish {"accountId":"bus-2bb64713","id":"p-0","result":{"seen":false,"seq":1}}
+publish {"accountId":"bus-2bb64713","id":"p-1","result":{"seen":false,"seq":2}}
+publish {"accountId":"bus-2bb64713","id":"p-2","result":{"seen":false,"seq":3}}
+publish {"accountId":"bus-2bb64713","id":"p-3","result":{"seen":false,"seq":4}}
+publish {"accountId":"bus-2bb64713","id":"p-4","result":{"seen":false,"seq":5}}
+publish {"accountId":"bus-2bb64713","id":"p-5","result":{"seen":false,"seq":6}}
+publish {"accountId":"bus-2bb64713","id":"p-6","result":{"seen":false,"seq":7}}
+publish {"accountId":"bus-2bb64713","id":"p-7","result":{"seen":false,"seq":8}}
+publish {"accountId":"bus-2bb64713","id":"p-0","result":{"seen":true,"seq":8}}
+read {"accountId":"bus-2bb64713","path":"/local-store","result":{}}
+✔ parallel events keep one sequence and a repeat changes nothing (282.74225ms)
+publish {"accountId":"bus-95abf4bf","id":"a1","result":{"seen":false,"seq":1}}
+publish {"accountId":"bus-e66000ed","id":"b1","result":{"seen":false,"seq":1}}
+publish {"accountId":"bus-95abf4bf","id":"a2","result":{"seen":false,"seq":2}}
+read {"accountId":"bus-95abf4bf","path":"/seq","result":{"seq":2}}
+read {"accountId":"bus-e66000ed","path":"/seq","result":{"seq":1}}
+✔ two accounts do not share a sequence (52.443375ms)
+publish {"accountId":"bus-08faf777","id":"late","result":{"seen":false,"seq":1}}
+publish {"accountId":"bus-08faf777","id":"early","result":{"seen":false,"seq":2}}
+read {"accountId":"bus-08faf777","path":"/events","result":[{"id":"late","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":["alpha","beta"],"time":"23:59","trace":"tr_089001"},{"id":"early","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"00:01","trace":"tr_f40883"}]}
+read {"accountId":"bus-08faf777","path":"/store","result":{"alpha":"one","beta":2}}
+✔ one accept writes every key and events sort by sequence (44.412542ms)
+✔ nextEvent writes one row through the same accept path (29.420083ms)
+✔ a dead letter makes one escalation and a repeat delivery makes no second row (33.821167ms)
+read {"accountId":"ac.me-2cc94e","path":"/local-events","result":[]}
+read {"accountId":"ac.me-2cc94e","path":"/local-events","result":[{"id":"task-1","from":"researcher","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}]}
+publish {"accountId":"ac.me-2cc94e","id":"other-task","result":{"seen":false,"seq":2}}
+read {"accountId":"ac.me-2cc94e","path":"/local-events","result":[{"id":"task-1","from":"researcher","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"},{"id":"other-task","from":"master","to":"clerk","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}]}
+✔ a machine token sends and takes one task and a bad token is rejected (34.295042ms)
+publish {"accountId":"bus-9d6f3c20","id":"pushed","result":{"seen":false,"seq":1}}
+✔ the socket receives the new event (20.582875ms)
+publish {"accountId":"bus-f4e55077","id":"initialized","result":{"seen":false,"seq":1}}
+publish {"accountId":"bus-f4e55077","id":"held","result":{"seen":false,"seq":2}}
+read {"accountId":"bus-f4e55077","path":"/alarm","result":{"alarm":1793866743499}}
+read {"accountId":"bus-f4e55077","path":"/local-events","result":[{"id":"initialized","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"},{"id":"held","from":"master","to":"researcher","kind":"Task","skill":"research","text":"Look at the market.","payload":{},"writes":[],"time":"12:00"}]}
+✔ a refused database keeps the event and sets an alarm (325.578917ms)
+✔ a missing token key refuses the machine call (93.035584ms)
+publish {"accountId":"bus-2222eb95","id":"added","result":{"seen":false,"seq":1}}
+seeded scoped store: {"first":{"seed":"preserved"},"next":{"new":2,"seed":"preserved"},"foreign":{"private":"foreign"},"persisted":[{"accountId":"bus-2222eb95","key":"seed","value":"\"preserved\"","sortOrder":0},{"accountId":"bus-2222eb95","key":"new","value":"2","sortOrder":1}]}
+✔ live seeded state is scoped and survives a publication without writing during the read (49.276125ms)
+publish {"accountId":"bus-4cea9b71","id":"before-outage","result":{"seen":false,"seq":1}}
+publish {"accountId":"bus-4cea9b71","id":"held-until-alarm","result":{"seen":false,"seq":2}}
+read {"accountId":"bus-4cea9b71","path":"/alarm","result":{"alarm":1793866743832}}
+alarm recovery persisted rows: [{"accountId":"bus-4cea9b71","id":"before-outage","timeText":"12:00","occurredAt":null,"fromAgent":"master","toAgent":"researcher","kind":"Task","skill":"research","body":"Look at the market.","payload":{},"writes":[],"trace":"tr_147299","seq":1},{"accountId":"bus-4cea9b71","id":"held-until-alarm","timeText":"12:00","occurredAt":null,"fromAgent":"master","toAgent":"researcher","kind":"Task","skill":"research","body":"Look at the market.","payload":{},"writes":["recovered"],"trace":"tr_4c188e","seq":2}]
+✔ a database outage retains the accepted event until the real alarm retries successfully (30568.171209ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32083.212542

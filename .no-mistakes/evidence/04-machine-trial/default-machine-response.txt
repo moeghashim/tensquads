@@ -1,0 +1,9 @@
+HTTP/1.1 503 Service Unavailable
+Vary: Origin
+content-length: 38
+content-type: text/plain;charset=UTF-8
+Date: Thu, 05 Nov 2026 08:20:04 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+The machine service is not configured.

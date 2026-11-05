@@ -1,0 +1,17 @@
+{
+  "action": "create twice, insert FK children, delete trial children then parent",
+  "before": [
+    {
+      "id": "bus9999951105"
+    },
+    {
+      "id": "untouched9999951105"
+    }
+  ],
+  "remainingTrialRows": 0,
+  "after": [
+    {
+      "id": "untouched9999951105"
+    }
+  ]
+}

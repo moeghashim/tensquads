@@ -1,0 +1,132 @@
+
+> dev
+> node ../../scripts/write-dev-vars.mjs && vite dev --port 3000
+
+Default inspector port 9229 not available, using 9230 instead
+
+Using secrets defined in .dev.vars
+Port 3000 is in use, trying another one...
+
+  VITE v8.3.5  ready in 2037 ms
+
+  ➜  Local:   http://localhost:3001/
+  ➜  Network: use --host to expose
+  ➜  Debug:   http://localhost:3001/__debug
+
+The Cloudflare Vite plugin detected this dev session is running in an AI agent.
+The Local Explorer API is available at http://localhost:3001/cdn-cgi/local/explorer/api
+Useful routes:
+  GET http://localhost:3001/cdn-cgi/local/explorer/api/local/workers - local Workers and bindings
+  POST http://localhost:3001/cdn-cgi/local/explorer/api/local/scheduled?worker=<name> - invoke a Worker's scheduled handler; cron is required (see the OpenAPI schema for the full request)
+  GET http://localhost:3001/cdn-cgi/local/explorer/api/storage/kv/namespaces - KV namespaces
+  GET http://localhost:3001/cdn-cgi/local/explorer/api/d1/database - D1 databases
+  GET http://localhost:3001/cdn-cgi/local/explorer/api/r2/buckets - R2 buckets
+  GET http://localhost:3001/cdn-cgi/local/explorer/api/workers/durable_objects/namespaces - Durable Object namespaces
+  GET http://localhost:3001/cdn-cgi/local/explorer/api/workflows - Workflows
+  POST http://localhost:3001/cdn-cgi/local/explorer/api/local/observability/query - run a read-only SQL query (SELECT/WITH only) over captured request traces and console logs. Tables: spans, logs (read attributes via json(attributes)). Example:
+    curl -X POST http://localhost:3001/cdn-cgi/local/explorer/api/local/observability/query -H 'Content-Type: application/json' -d '{"sql":"SELECT service, name, outcome, duration_ms FROM spans WHERE parent_id IS NULL LIMIT 20"}'
+  POST http://localhost:3001/cdn-cgi/local/explorer/api/local/observability/clear - clear all captured traces and logs
+If the routes above don't cover what you need, fetch the full OpenAPI schema (large - use only as a last resort):
+  GET http://localhost:3001/cdn-cgi/local/explorer/api - OpenAPI schema
+
+2:17:50 AM [vite] (client) [console.error] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <MatchInnerImpl match={{id:"__root__/", ...}}>
+      <RootApp>
+        <OutletImpl>
+          <Suspense fallback={null}>
+            <MatchImpl routeId="/">
+              <MatchInnerImpl match={{id:"//",ssr:true, ...}}>
+                <Lazy>
+                  <HomePage>
+                    <main style={{...}}>
+                      <HomeTop kind="existing" draft="" onKind={function bound dispatchSetState} ...>
+                        <nav>
+                        <section aria-label="Hero" style={{padding:"8...", ...}}>
+                          <span>
+                          <h1>
+                          <p>
+                          <div style={{width:"100%", ...}}>
+                            <div>
+                            <label>
+                            <textarea
+                              id="hero-prompt"
+                              rows={3}
+                              placeholder="Paste your store URL or describe what you sell…"
+                              value=""
+                              data-handler="onDraft"
+                              onChange={function onChange}
+                              style={{
++                               width: "100%"
+-                               width: "100%"
++                               boxSizing: "border-box"
++                               border: "0"
++                               padding: "4px 4px 0"
++                               background: "transparent"
++                               fontFamily: "inherit"
++                               fontSize: "17px"
++                               lineHeight: "26px"
++                               color: "#0d0d0d"
+-                               color: "rgb(13, 13, 13)"
++                               resize: "none"
+-                               resize: "none"
+-                               box-sizing: "border-box"
+-                               border-top-width: "0px"
+-                               border-right-width: "0px"
+-                               border-bottom-width: "0px"
+-                               border-left-width: "0px"
+-                               border-top-style: "none"
+-                               border-right-style: "none"
+-                               border-bottom-style: "none"
+-                               border-left-style: "none"
+-                               border-top-color: "currentcolor"
+-                               border-right-color: "currentcolor"
+-                               border-bottom-color: "currentcolor"
+-                               border-left-color: "currentcolor"
+-                               border-image-source: "none"
+-                               border-image-slice: "100%"
+-                               border-image-width: "1"
+-                               border-image-outset: "0"
+-                               border-image-repeat: "stretch"
+-                               padding-top: "4px"
+-                               padding-right: "4px"
+-                               padding-bottom: "0px"
+-                               padding-left: "4px"
+-                               background-image: "initial"
+-                               background-position-x: "initial"
+-                               background-position-y: "initial"
+-                               background-size: "initial"
+-                               background-repeat: "initial"
+-                               background-attachment: "initial"
+-                               background-origin: "initial"
+-                               background-clip: "initial"
+-                               background-color: "transparent"
+-                               font-family: "inherit"
+-                               font-size: "17px"
+-                               line-height: "26px"
+-                               caret-color: "transparent"
+                              }}
+                            >
+                            ...
+                          ...
+                        ...
+                      ...
+
+npm error Lifecycle script `dev` failed with error:
+npm error code 130
+npm error path /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6NC4RDTNH0JF13FF0F042VJ/apps/web
+npm error workspace @tensquads/web
+npm error location /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6NC4RDTNH0JF13FF0F042VJ/apps/web
+npm error command failed
+npm error command sh -c node ../../scripts/write-dev-vars.mjs && vite dev --port 3000

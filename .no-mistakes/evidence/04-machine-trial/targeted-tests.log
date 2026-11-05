@@ -1,0 +1,45 @@
+✔ the adapter flag defaults to test (0.407666ms)
+✔ real adapters are built only when the flag and the config are present (0.369541ms)
+✔ uptime text uses one day, many days, and just started (2.286375ms)
+✔ a closed profile and a missing registration never call the machine service (9.131ms)
+✔ start is idempotent and maps the dashboard fields (72.491166ms)
+✔ a run id is a label on the machine and on the template source (79.705334ms)
+✔ a refused environment is sent again without that field (32.42175ms)
+✔ stop shows paused with no process read, and resume keeps the disk (18.459125ms)
+✔ remove waits until the delete operation completes (6.506708ms)
+✔ a template save removes the source and a repeat does not start another (22.058542ms)
+✔ start from a template resumes a stopped machine (18.702167ms)
+✔ a failed template save still removes the source (12.755167ms)
+✔ secret registration uses the admin token and returns names only (19.432709ms)
+✔ service errors become port errors and hide the body (4.62075ms)
+✔ a refused stop and expired data use their own port errors (4.934916ms)
+✔ the label filter accepts a comma-joined value (5.687416ms)
+✔ scoped reads see seeded Neon history before the first accept (1033.531667ms)
+✔ accept initializes sequence and seen ids once before new events (429.095625ms)
+✔ failed history initialization accepts nothing and can be retried (0.932041ms)
+✔ invalid records never reach durable storage or queue acknowledgement (1.520208ms)
+✔ signed machine sends reject malformed records and envelopes (4.09625ms)
+✔ rejected queue messages still become one dead-letter escalation (0.159ms)
+✔ simulation resumes stored steps, serializes calls, and retries the failed step (0.606292ms)
+✔ pending writes recover in order and commit batches atomically (401.142792ms)
+✔ machine sends bind the sender in both adapter modes and preserve queue senders (1.742167ms)
+✔ inspection routes require the exact test binding and store stays available (0.740042ms)
+✔ a pending duplicate is not a new simulation step and does not advance the cursor (1.055542ms)
+✔ store restores scoped Neon state once and keeps seeded keys after publication (1049.800084ms)
+✔ production names are never trial resources (0.638167ms)
+✔ cleanup deletes consumers, then the worker, then both queues, and sweeps resources older than two hours (1.527417ms)
+✔ a missing trial worker is already gone (0.156958ms)
+✔ the bus trial stays off unless its input is set (1.087541ms)
+✔ the trial worker config keeps the project account and replaces the queue names (0.616375ms)
+✔ wrangler output and the child environment do not carry the trial secrets (56.74375ms)
+✔ trial account creation emits a scoped parameterized Neon insert (0.225709ms)
+✔ trial row cleanup emits child deletes before the scoped parent delete (0.138625ms)
+✔ trial row cleanup counts each remaining child or parent row (0.132458ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2423.5195
