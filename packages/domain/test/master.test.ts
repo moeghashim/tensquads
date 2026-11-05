@@ -4,6 +4,8 @@ import test from "node:test";
 import { digestOf } from "@tensquads/agent-kit";
 
 import { checkBrief, checkPage, checkPublished, checkResearch, wordCount } from "../src/master/checks.ts";
+import { pageLinks } from "../src/master/hrefs.ts";
+import { renderPage } from "../src/master/page-render.ts";
 import { proofStory } from "../src/master/proof.ts";
 import type { PageReader } from "../src/master/types.ts";
 
@@ -23,6 +25,14 @@ function mandateOf(payload: Readonly<Record<string, unknown>>) {
 test("the thirteen events stay in order and cite the gap", async () => {
 	const story = await proofStory();
 	assert.equal(story.events.length, 13);
+	const expectedPage = [
+		"<h1>Proof Kitchen</h1>",
+		'<p class="cuisine">Levantine</p>',
+		'<section><h2>Mains</h2><div class="row"><span class="name">Chicken tawook</span><span class="price">$14</span></div></section>',
+		'<section><h2>Salads</h2><div class="row"><span class="name">Fattoush</span><span class="price">[PRICE]</span></div></section>',
+		'<a href="https://example.com/alpha">Alpha Grill</a>',
+	].join("");
+	assert.equal(story.pageHtml, expectedPage);
 	const skills = story.events.map((event) => `${event.kind}:${event.from}:${event.to}:${event.skill}`);
 	assert.deepEqual(skills, [
 		"Task:master:market:task.route",
@@ -66,6 +76,7 @@ test("the thirteen events stay in order and cite the gap", async () => {
 		businessType: story.request.businessType,
 		cuisine: story.request.cuisine,
 		items: story.request.items,
+		choice: story.choice,
 		readPage: reader(story.pages),
 		audit: () => story.audit,
 	});
@@ -105,7 +116,7 @@ test("the brief check rejects 150 words and a missing gap", async () => {
 	assert.equal(checkBrief("A short brief with no finding.", story.report).pass, false);
 });
 
-test("the page check rejects an invented item, a broken link, and a P0 finding", async () => {
+test("the page check rejects bytes that are not the kit render, a broken link, and sideways scroll", async () => {
 	const story = await proofStory();
 	const invented = story.pageHtml.replace("Fattoush", "Dragon taco");
 	const pages = { ...story.pages, [story.previewUrl]: { status: 200, body: invented } };
@@ -115,34 +126,38 @@ test("the page check rejects an invented item, a broken link, and a P0 finding",
 		businessType: story.request.businessType,
 		cuisine: story.request.cuisine,
 		items: story.request.items,
+		choice: story.choice,
 		readPage: reader(pages),
 		audit: () => story.audit,
 	});
 	assert.equal(badItem.pass, false);
-	assert.equal(badItem.evidence.includes("The page invents an item."), true);
-	assert.equal(badItem.evidence.includes("An item from the list is missing."), true);
-	const broken = story.pageHtml.replace("https://example.com/alpha", "https://example.com/missing");
-	const brokenPages = { ...story.pages, [story.previewUrl]: { status: 200, body: broken } };
+	assert.equal(badItem.evidence.includes("The preview does not match the rendered page."), true);
+	const brokenChoice = { links: [{ href: "https://example.com/missing", text: "Alpha Grill" }] };
+	const brokenHtml = renderPage(story.request, brokenChoice);
+	const brokenPages = { ...story.pages, [story.previewUrl]: { status: 200, body: brokenHtml } };
 	const badLink = await checkPage({
 		previewUrl: story.previewUrl,
 		businessName: story.request.businessName,
 		businessType: story.request.businessType,
 		cuisine: story.request.cuisine,
 		items: story.request.items,
+		choice: brokenChoice,
 		readPage: reader(brokenPages),
 		audit: () => story.audit,
 	});
 	assert.equal(badLink.evidence.includes("A link is broken."), true);
+	assert.equal(badLink.evidence.includes("The preview does not match the rendered page."), false);
 	const flagged = await checkPage({
 		previewUrl: story.previewUrl,
 		businessName: story.request.businessName,
 		businessType: story.request.businessType,
 		cuisine: story.request.cuisine,
 		items: story.request.items,
+		choice: story.choice,
 		readPage: reader(story.pages),
-		audit: () => ({ ...story.audit, p0: 1, horizontalScroll: true }),
+		audit: () => ({ ...story.audit, horizontalScroll: true }),
 	});
-	assert.equal(flagged.evidence.includes("The page has a P0 or P1 finding."), true);
+	assert.equal(flagged.evidence.includes("The page has a P0 or P1 finding."), false);
 	assert.equal(flagged.evidence.includes("The page scrolls sideways at 390 px."), true);
 	const changed = await checkPublished(
 		`${story.pageHtml}<!-- extra -->`,
@@ -155,30 +170,35 @@ test("the page check rejects an invented item, a broken link, and a P0 finding",
 
 test("a grocer page does not need a cuisine", async () => {
 	const story = await proofStory();
-	const html = story.pageHtml.replace('<p class="cuisine">Levantine</p>', "");
+	const grocer = { ...story.request, businessType: "grocer" as const, cuisine: undefined };
+	const html = renderPage(grocer, story.choice);
 	const pages = { ...story.pages, [story.previewUrl]: { status: 200, body: html } };
 	const page = await checkPage({
 		previewUrl: story.previewUrl,
-		businessName: story.request.businessName,
+		businessName: grocer.businessName,
 		businessType: "grocer",
-		items: story.request.items,
+		items: grocer.items,
+		choice: story.choice,
 		readPage: reader(pages),
 		audit: () => story.audit,
 	});
 	assert.equal(page.pass, true);
+	assert.equal(html.includes("Levantine"), false);
 	const restaurant = await checkPage({
 		previewUrl: story.previewUrl,
 		businessName: story.request.businessName,
 		businessType: "restaurant",
 		cuisine: "Levantine",
 		items: story.request.items,
+		choice: story.choice,
 		readPage: reader(pages),
 		audit: () => story.audit,
 	});
 	assert.equal(restaurant.pass, false);
+	assert.equal(restaurant.evidence.includes("The preview does not match the rendered page."), true);
 });
 
-function pageInput(story: Awaited<ReturnType<typeof proofStory>>, html: string) {
+function pageInput(story: Awaited<ReturnType<typeof proofStory>>, html: string, choice: unknown = story.choice) {
 	const pages = { ...story.pages, [story.previewUrl]: { status: 200, body: html } };
 	return {
 		previewUrl: story.previewUrl,
@@ -186,6 +206,7 @@ function pageInput(story: Awaited<ReturnType<typeof proofStory>>, html: string) 
 		businessType: story.request.businessType,
 		cuisine: story.request.cuisine,
 		items: story.request.items,
+		choice,
 		readPage: reader(pages),
 		audit: () => story.audit,
 	};
@@ -218,18 +239,20 @@ test("the research check rejects a repeated competitor and a price off its sourc
 	assert.equal(otherSite.evidence.includes("The source is not on the competitor site."), true);
 });
 
-test("the page check reads the visible menu and resolves relative links", async () => {
+test("the page check requires the kit bytes and resolves relative links", async () => {
 	const story = await proofStory();
 	const extra = await checkPage(pageInput(story, `${story.pageHtml}<div>Dragon taco — $99</div>`));
 	assert.equal(extra.pass, false);
-	assert.equal(extra.evidence.includes("The page invents an item."), true);
-	const hidden = `<div hidden>${story.pageHtml}</div><h1>Proof Kitchen</h1><p>Levantine</p><p>Chicken tawook $14</p><p>Fattoush</p>`;
+	assert.equal(extra.evidence.includes("The preview does not match the rendered page."), true);
+	const hidden = `<div style="opacity:0">${story.pageHtml}</div>`;
 	const concealed = await checkPage(pageInput(story, hidden));
 	assert.equal(concealed.pass, false);
-	assert.equal(concealed.evidence.includes("An item from the list is missing."), true);
+	assert.equal(concealed.evidence.includes("The preview does not match the rendered page."), true);
 	const relative = await checkPage(pageInput(story, `${story.pageHtml}<a href="/does-not-exist">Order</a>`));
 	assert.equal(relative.pass, false);
 	assert.equal(relative.evidence.includes("A link is broken."), true);
+	const sections = renderPage({ ...story.request, sections: ["Salads", "Mains"] }, story.choice);
+	assert.equal(sections.indexOf("Salads") < sections.indexOf("Mains"), true);
 });
 
 test("the published check requires the account site", async () => {
@@ -249,10 +272,14 @@ test("the published check requires the account site", async () => {
 
 test("the page check reads unquoted and uppercase links", async () => {
 	const story = await proofStory();
-	const unquoted = await checkPage(pageInput(story, `${story.pageHtml}<a href=/does-not-exist>Order</a>`));
+	const unquotedHtml = `${story.pageHtml}<a href=/does-not-exist>Order</a>`;
+	const upperHtml = `${story.pageHtml}<a HREF="/does-not-exist">Order</a>`;
+	assert.equal(pageLinks(unquotedHtml, story.previewUrl).includes("https://preview.example/does-not-exist"), true);
+	assert.equal(pageLinks(upperHtml, story.previewUrl).includes("https://preview.example/does-not-exist"), true);
+	const unquoted = await checkPage(pageInput(story, unquotedHtml));
 	assert.equal(unquoted.pass, false);
 	assert.equal(unquoted.evidence.includes("A link is broken."), true);
-	const upper = await checkPage(pageInput(story, `${story.pageHtml}<a HREF="/does-not-exist">Order</a>`));
+	const upper = await checkPage(pageInput(story, upperHtml));
 	assert.equal(upper.pass, false);
 	assert.equal(upper.evidence.includes("A link is broken."), true);
 });

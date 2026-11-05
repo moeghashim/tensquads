@@ -1,5 +1,8 @@
 export { checkBrief, checkPage, checkPublished, checkResearch, wordCount } from "./checks.ts";
+export type { MasterSnapshot } from "./loop.ts";
 export { createMaster } from "./loop.ts";
+export type { PageChoice } from "./page-render.ts";
+export { parsePageChoice, renderPage } from "./page-render.ts";
 export { PROOF_PREVIEW_URL, proofStory } from "./proof.ts";
 export type { RenderedPage } from "./render-page.ts";
 export { collectRendered, pageDocument } from "./render-page.ts";

@@ -235,13 +235,33 @@ test("real mode routes traffic through the object and refuses other bus writers"
 			["write account", () => writeAccount(db, snapshot)],
 			["limit", () => setLimit(db, scope, "policy.refund_auto_limit", 50, { tab: "tab", seq: 1 })],
 			["conversation", () => conversationTransaction(db, scope, (commands) => commands.appendEvent(draft))],
-			["approve", () => decide(db, scope, "p1", true)],
-			["decline", () => decide(db, scope, "p1", false)],
 		];
 		for (const [name, write] of writers) {
 			await assert.rejects(write, { message: "A bus write in real mode must go through the Durable Object." }, name);
 			assert.deepEqual(counts, { inserts: 0, updates: 0 }, name);
 		}
+		await assert.rejects(() => decide(db, scope, "p1", true), { message: "The bus is not configured." });
+		await assert.rejects(() => decide(db, scope, "p1", false), { message: "The bus is not configured." });
+		assert.deepEqual(counts, { inserts: 0, updates: 0 });
+		const delivered: { from: string; to: string; kind: string }[] = [];
+		const declined = await decide(db, scope, "p1", false, undefined, async (_accountId, event) => {
+			delivered.push(event);
+		});
+		assert.equal(declined.status, "Declined");
+		assert.equal(delivered[0]?.from, "user");
+		assert.equal(delivered[0]?.to, "master");
+		assert.equal(delivered[0]?.kind, "Declined");
+		await assert.rejects(
+			() =>
+				decide(db, scope, "p1", true, undefined, async (_accountId, event) => {
+					delivered.push(event);
+				}),
+			/An Approval matches a rule\./,
+		);
+		assert.equal(delivered[1]?.from, "user");
+		assert.equal(delivered[1]?.to, "master");
+		assert.equal(delivered[1]?.kind, "Approval");
+		assert.deepEqual(counts, { inserts: 0, updates: 0 });
 	} finally {
 		if (previous === undefined) delete process.env.ADAPTERS;
 		else process.env.ADAPTERS = previous;

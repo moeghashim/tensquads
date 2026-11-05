@@ -1,6 +1,7 @@
 import { digestOf, type ListedItem, type Mandate, type ResearchReport } from "@tensquads/agent-kit";
 
 import type { BusEvent, BusKind } from "../bus/types.ts";
+import { type PageChoice, renderPage } from "./page-render.ts";
 import { type BusinessRequest, mandateFor, type PageAudit, type PageFetch } from "./types.ts";
 
 export const PROOF_PREVIEW_URL = "https://preview.example/proof";
@@ -22,11 +23,11 @@ const proofRequest: BusinessRequest = {
 	],
 };
 
+const proofChoice: PageChoice = { links: [{ href: ALPHA, text: "Alpha Grill" }] };
+
 const proofAudit: PageAudit = {
 	keyboard: true,
 	contrast: true,
-	p0: 0,
-	p1: 0,
 	horizontalScroll: false,
 };
 
@@ -35,13 +36,7 @@ function proofBrief(): string {
 }
 
 function proofPage(): string {
-	return [
-		"<h1>Proof Kitchen</h1>",
-		'<p class="cuisine">Levantine</p>',
-		'<section><h2>Mains</h2><div class="row"><span class="name">Chicken tawook</span><span class="price">$14</span></div></section>',
-		'<section><h2>Salads</h2><div class="row"><span class="name">Fattoush</span><span class="price">[PRICE]</span></div></section>',
-		`<a href="${ALPHA}">Alpha Grill</a>`,
-	].join("");
+	return renderPage(proofRequest, proofChoice);
 }
 
 function proofReport(): ResearchReport {
@@ -72,6 +67,7 @@ export interface ProofStory {
 	readonly report: ResearchReport;
 	readonly brief: string;
 	readonly pageHtml: string;
+	readonly choice: PageChoice;
 	readonly previewUrl: string;
 	readonly publishedUrl: string;
 	readonly events: readonly BusEvent[];
@@ -223,7 +219,7 @@ export async function proofStory(): Promise<ProofStory> {
 			kind: "Result",
 			skill: "site.preview",
 			text: `The preview is ${PROOF_PREVIEW_URL}`,
-			payload: { previewUrl: PROOF_PREVIEW_URL, critique: "site.critique passed" },
+			payload: { previewUrl: PROOF_PREVIEW_URL, critique: "site.critique passed", choice: proofChoice },
 		}),
 		stamp(11, {
 			from: "master",
@@ -255,6 +251,7 @@ export async function proofStory(): Promise<ProofStory> {
 		report,
 		brief,
 		pageHtml,
+		choice: proofChoice,
 		previewUrl: PROOF_PREVIEW_URL,
 		publishedUrl: PROOF_PUBLISHED_URL,
 		events,

@@ -16,8 +16,6 @@
 	"durable_objects": {
 		"bindings": [{ "name": "ACCOUNT_BUS", "class_name": "AccountBus" }]
 	},
-	// Browser Rendering. The page check uses this binding only when ADAPTERS=real.
-	"browser": { "binding": "BROWSER" },
 	"migrations": [{ "tag": "v1-account-bus", "new_sqlite_classes": ["AccountBus"] }],
 	"queues": {
 		"producers": [{ "binding": "BUS_QUEUE", "queue": "tensquads-bus" }],
@@ -28,5 +26,16 @@
 	},
 	"observability": {
 		"enabled": true
+	},
+	// The real environment is not production. Deploy stays `wrangler deploy` with no --env.
+	// Moe sets MASTER_MODEL to the cheaper GPT-6 tier and the Worker secret OPENAI_API_KEY.
+	// Browser Rendering is bound only here.
+	"env": {
+		"real": {
+			"vars": {
+				"ADAPTERS": "real"
+			},
+			"browser": { "binding": "BROWSER" }
+		}
 	}
 }

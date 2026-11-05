@@ -36,6 +36,7 @@ async function checked(html: string) {
 		businessType: story.request.businessType,
 		cuisine: story.request.cuisine,
 		items: story.request.items,
+		choice: story.choice,
 		readPage: async (url) => pages[url] ?? { status: 404, body: "" },
 		audit: () => story.audit,
 		browser: async (body) => {
@@ -54,34 +55,23 @@ test("the rendered proof page passes the browser check", async () => {
 	assert.equal(result.pass, true);
 });
 
-test("a stylesheet, an off-screen box, a euro price, and an extra item fail the rendered check", async () => {
+test("changed bytes fail the page check and the browser still checks layout", async () => {
 	const story = await proofStory();
 	const hidden = await checked(`<style>.menu{display:none}</style><div class="menu">${story.pageHtml}</div>`);
 	assert.equal(hidden.calls, 1);
 	assert.equal(hidden.result.pass, false);
-	assert.equal(hidden.result.evidence.includes("An item from the list is missing."), true);
+	assert.equal(hidden.result.evidence.includes("The preview does not match the rendered page."), true);
 	const offscreen = await checked(`<div style="position:absolute;left:-10000px">${story.pageHtml}</div>`);
 	assert.equal(offscreen.result.pass, false);
+	assert.equal(offscreen.result.evidence.includes("The preview does not match the rendered page."), true);
 	const euro = await checked(`${story.pageHtml}<div>Dragon taco — €99</div>`);
 	assert.equal(euro.result.pass, false);
-	assert.equal(euro.result.evidence.includes("The page invents an item."), true);
-	const plain = await checked(`${story.pageHtml}<div>Dragon taco</div>`);
-	assert.equal(plain.result.pass, false);
-	assert.equal(plain.result.evidence.includes("The page invents an item."), true);
-});
-
-test("a pseudo-element price, an image, a wide page, and a bad control fail the rendered check", async () => {
-	const story = await proofStory();
-	const pseudo = await checked(
-		`${story.pageHtml}<style>.extra::after{content:"Dragon taco — $99"}</style><div class="extra"></div>`,
-	);
-	assert.equal(pseudo.result.pass, false);
-	assert.equal(pseudo.result.evidence.includes("The page invents an item."), true);
+	assert.equal(euro.result.evidence.includes("The preview does not match the rendered page."), true);
 	const image = await checked(
-		`${story.pageHtml}<img alt="Dragon taco — $99" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22%3E%3C/svg%3E">`,
+		`${story.pageHtml}<img alt="Dragon taco" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22%3E%3C/svg%3E">`,
 	);
 	assert.equal(image.result.pass, false);
-	assert.equal(image.result.evidence.includes("The page invents an item."), true);
+	assert.equal(image.result.evidence.includes("The page invents an item."), false);
 	const wide = await checked(`${story.pageHtml}<div style="width:2000px;height:10px"></div>`);
 	assert.equal(wide.result.pass, false);
 	assert.equal(wide.result.evidence.includes("The page scrolls sideways at 390 px."), true);

@@ -5,13 +5,12 @@ export interface BusinessRequest {
 	readonly businessType: BusinessType;
 	readonly items: readonly ListedItem[];
 	readonly cuisine?: string;
+	readonly sections?: readonly string[];
 }
 
 export interface PageAudit {
 	readonly keyboard: boolean;
 	readonly contrast: boolean;
-	readonly p0: number;
-	readonly p1: number;
 	readonly horizontalScroll: boolean;
 }
 

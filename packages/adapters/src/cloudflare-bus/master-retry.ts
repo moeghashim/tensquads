@@ -3,8 +3,9 @@ import type { PublishedEvent } from "@tensquads/kernel";
 import { chooseAdapters } from "../adapter-choice.ts";
 import type { BusObjectEnv, BusStorage } from "./account-bus.ts";
 
-const OPEN_PREFIX = "master-open:";
-const DONE_PREFIX = "master-done:";
+export const MASTER_OPEN = "master-open:";
+export const MASTER_DONE = "master-done:";
+export const MASTER_PHASE = "master-phase";
 const RETRY_MS = 1000;
 
 export function masterEvent(event: { readonly kind: string; readonly to: string; readonly from: string }): boolean {
@@ -27,14 +28,12 @@ export async function finishMaster(
 	run: (event: PublishedEvent) => Promise<void>,
 ): Promise<void> {
 	if (!masterEvent(event) || chooseAdapters(env.ADAPTERS) !== "real") return;
-	if (await storage.get(`${DONE_PREFIX}${event.id}`)) return;
-	const openKey = `${OPEN_PREFIX}${event.id}`;
+	if (await storage.get(`${MASTER_DONE}${event.id}`)) return;
+	const openKey = `${MASTER_OPEN}${event.id}`;
 	if (!receipt && !(await storage.get(openKey))) return;
 	await storage.put(openKey, event);
 	try {
 		await run(event);
-		await storage.delete(openKey);
-		await storage.put(`${DONE_PREFIX}${event.id}`, true);
 	} catch (error) {
 		await rememberRetry(storage);
 		throw error;
@@ -49,9 +48,9 @@ export async function retryOpenMaster(
 	if (chooseAdapters(env.ADAPTERS) !== "real") return;
 	const accountId = await storage.get<string>("account");
 	if (!accountId) return;
-	const open = await storage.list<PublishedEvent>({ prefix: OPEN_PREFIX });
+	const open = await storage.list<PublishedEvent>({ prefix: MASTER_OPEN });
 	for (const [key, event] of open) {
-		if (await storage.get(`${DONE_PREFIX}${event.id}`)) {
+		if (await storage.get(`${MASTER_DONE}${event.id}`)) {
 			await storage.delete(key);
 			continue;
 		}

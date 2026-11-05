@@ -69,7 +69,7 @@ function approval(id: string, skill: string): PublishedEvent {
 	};
 }
 
-function preview(id: string, previewUrl: string): PublishedEvent {
+function preview(id: string, previewUrl: string, choice: unknown): PublishedEvent {
 	return {
 		id,
 		time: "12:03",
@@ -78,7 +78,7 @@ function preview(id: string, previewUrl: string): PublishedEvent {
 		kind: "Result",
 		skill: "site.preview",
 		text: "The preview is ready.",
-		payload: { previewUrl },
+		payload: { previewUrl, choice },
 		writes: [],
 		trace: `tr_${id}`,
 	};
@@ -104,12 +104,15 @@ type Story = Awaited<ReturnType<typeof import("@tensquads/domain/master")["proof
 function ports(story: Story, writeBrief: () => string): BusObjectEnv {
 	return {
 		ADAPTERS: "real",
-		masterRequest: story.request,
 		masterReadPage: async (url: string) => story.pages[url] ?? { status: 404, body: "" },
 		masterAudit: () => story.audit,
 		masterWriteBrief: writeBrief,
 		masterBrowser: async () => rendered,
 	};
+}
+
+async function seedBusiness(storage: Storage, request: Story["request"]): Promise<void> {
+	await storage.put("state:business", JSON.stringify(request));
 }
 
 test("the real flag alone wires the master", { timeout: 20_000 }, async () => {
@@ -142,6 +145,7 @@ test("one successful result calls the model once and a foreign account adds noth
 			return story.brief;
 		}),
 	);
+	await seedBusiness(storage, story.request);
 	const event = reportEvent("review-report", story.report);
 	assert.equal((await post(target, "review-owner", event)).status, 200);
 	assert.equal((await post(target, "review-owner", event)).status, 200);
@@ -164,6 +168,7 @@ test("one model failure then redelivery runs the model twice and produces one tr
 			return story.brief;
 		}),
 	);
+	await seedBusiness(storage, story.request);
 	const event = reportEvent("retry-report", story.report);
 	await assert.rejects(() => post(target, "retry-owner", event), /temporary/);
 	assert.equal(calls, 1);
@@ -186,6 +191,7 @@ test("an alarm retries an open master step once", async () => {
 			return story.brief;
 		}),
 	);
+	await seedBusiness(storage, story.request);
 	await assert.rejects(() => post(target, "alarm-owner", reportEvent("alarm-report", story.report)), /temporary/);
 	assert.equal(calls, 1);
 	await target.alarm();
@@ -200,9 +206,10 @@ test("a user approval of the brief and of publish reaches the website", async ()
 	const { proofStory } = await import("@tensquads/domain/master");
 	const story = await proofStory();
 	const { storage, target } = objectBus(ports(story, () => story.brief));
+	await seedBusiness(storage, story.request);
 	assert.equal((await post(target, "proof", reportEvent("apr-report", story.report))).status, 200);
 	assert.equal((await post(target, "proof", approval("apr-yes-brief", "brief.write"))).status, 200);
-	assert.equal((await post(target, "proof", preview("apr-preview", story.previewUrl))).status, 200);
+	assert.equal((await post(target, "proof", preview("apr-preview", story.previewUrl, story.choice))).status, 200);
 	assert.equal((await post(target, "proof", approval("apr-yes-publish", "approval.ask"))).status, 200);
 	assert.equal((await post(target, "proof", published("apr-publish", story.publishedUrl))).status, 200);
 	const stored = await storedEvents(storage);

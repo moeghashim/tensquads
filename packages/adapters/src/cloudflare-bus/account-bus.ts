@@ -4,8 +4,9 @@ import type { PublishedEvent } from "@tensquads/kernel";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { traceFor } from "../trace.ts";
 import { alarmAfterFlush, HEARTBEAT_ALARM, type HeartbeatEnv, recordBeat, sweepHeartbeats } from "./heartbeat.ts";
+import { writeMasterCommit } from "./master-commit.ts";
 import { finishMaster, retryOpenMaster } from "./master-retry.ts";
-import { followMaster } from "./master-step.ts";
+import { prepareMaster } from "./master-step.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
 import { type PendingBusRow, readBusEvents, readBusHistory, readBusState, writePending } from "./neon-write.ts";
 
@@ -14,6 +15,7 @@ const ALARM_MS = 30_000;
 export interface SyncKv {
 	get<T>(key: string): T | undefined;
 	put<T>(key: string, value: T): void;
+	delete(key: string): boolean;
 }
 
 export interface BusStorage {
@@ -35,18 +37,9 @@ export interface BusState {
 	getWebSockets(): WebSocket[];
 }
 
-interface MasterRequestInput {
-	readonly businessName: string;
-	readonly businessType: string;
-	readonly cuisine?: string;
-	readonly items: readonly { readonly name: string; readonly price: string; readonly section: string }[];
-}
-
 interface PageAuditInput {
 	readonly keyboard: boolean;
 	readonly contrast: boolean;
-	readonly p0: number;
-	readonly p1: number;
 	readonly horizontalScroll: boolean;
 }
 
@@ -63,13 +56,13 @@ interface RenderedCheck {
 export interface BusObjectEnv extends HeartbeatEnv {
 	readonly DATABASE_URL?: string;
 	readonly BUS_INSPECT?: string;
-	readonly masterRequest?: MasterRequestInput;
 	readonly masterReadPage?: (url: string) => Promise<{ status: number; body: string }>;
 	readonly masterAudit?: (html: string) => PageAuditInput | Promise<PageAuditInput>;
 	readonly masterWriteBrief?: (report?: { readonly gap: string }) => string | Promise<string>;
 	readonly masterBrowser?: (html: string) => Promise<RenderedCheck>;
 	readonly BROWSER?: unknown;
 	readonly OPENAI_API_KEY?: string;
+	readonly MASTER_MODEL?: string;
 }
 
 interface AcceptResult {
@@ -318,11 +311,21 @@ export class AccountBus {
 	}
 
 	private async runMaster(accountId: string, event: PublishedEvent): Promise<void> {
-		const produced = await followMaster(this.env, accountId, event);
-		for (const next of produced) {
-			const stored = await commitDurable(this.ctx.storage, accountId, next);
-			if (stored.event) this.push(stored.event);
+		const step = await prepareMaster(this.env, accountId, event, this.ctx.storage);
+		if (!step) return;
+		const kv = this.ctx.storage.kv;
+		try {
+			this.ctx.storage.transactionSync(() => {
+				writeMasterCommit(kv, event.id, step.phase, step.produced, (item) => {
+					commitSynced(kv, accountId, item);
+				});
+			});
+		} catch (error) {
+			step.restore();
+			throw error;
 		}
+		for (const next of step.produced) this.push(next);
+		await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
 	}
 
 	private async monitor(request: Request): Promise<Response> {

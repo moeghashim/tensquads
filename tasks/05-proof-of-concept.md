@@ -21,7 +21,7 @@ Where the plan and this file disagree on the skill list or on GPT-6 Astra, this 
 
 ## What this repository builds
 
-- The master skills: `brief.write`, `task.route`, `approval.ask`, and `check.run`. The model is a cheaper GPT-6 tier. All four gates are Auto.
+- The master skills: `brief.write`, `task.route`, `approval.ask`, and `check.run`. The model id is the Worker variable `MASTER_MODEL`. Moe sets it to the cheaper GPT-6 tier and sets the Worker secret `OPENAI_API_KEY`. The code has no model default. All four gates are Auto.
 - Every check below. An agent repository holds no check that decides a pass.
 - The Durable Object side of the heartbeat. Three missed heartbeats resume the machine (decision 17). The path is `POST /machine/heartbeat` (open question 6, answered).
 - The `change.detected` Worker route. A test webhook becomes one bus event to the master.
@@ -72,6 +72,7 @@ Brief:
 Page:
 
 - The preview URL returns 200.
+- The preview body equals `renderPage` of the stored request and the Result `choice`.
 - The page has the business name.
 - Every menu item or grocery item from the user's list has a name and a price.
 - A missing price reads `[PRICE]`.
@@ -79,7 +80,7 @@ Page:
 - The cuisine from step 1 appears on a restaurant page.
 - No link is broken.
 - Keyboard and contrast checks pass.
-- `npx impeccable detect` reports no P0 or P1 finding.
+- The kit CI runs the impeccable audit on the kit templates. The master does not repeat that audit and does not store a P0 or P1 count.
 - At 390 px there is no horizontal scroll.
 
 Published site:
@@ -155,3 +156,8 @@ Orchestrator decisions on 5 November 2026, under Moe's delegation.
 4. The dashboard does not say "Restarting". `docs/PLAN.md` stays unchanged.
 5. The boat AI proxy stays off until the live run.
 6. Each agent machine has one boat credential profile, named `tensquads-<accountId>-<agentId>`. That profile holds `TENSQUADS_MACHINE_TOKEN`. A machine token lasts 30 days. `rotateMachineToken` signs a new token and sets that value when 7 days or less remain, or when the profile has no token. The test uses a fake boat API. It does not call boat.dev. `CONTEXT_DEV` and the OpenAI credential stay on the profile `tensquads-agents`.
+7. The page check parses the Result `choice` with `parsePageChoice`. The preview bytes must equal `renderPage(task, choice)`. The browser check stays for 390 px, the keyboard, and contrast. Until kit `0.2.0` is tagged, `renderPage` and `PageChoice` are a local stand-in. The pin stays `516f6e131f107ec23c89991a91177fd4b50c33a7`.
+8. Real mode loads the business request from the account key `state:business`. A user Approval or Declined goes to the master through the account Durable Object. The kit CI runs the impeccable audit on the kit templates. The master does not store a P0 or P1 count.
+9. The master stores its phase and its output events in the same storage transaction that marks the input done. A failed output write leaves the input open. Restart and redelivery emit the pending outputs.
+10. The model id is the Worker variable `MASTER_MODEL`. The code has no default. Moe sets `MASTER_MODEL` to the cheaper GPT-6 tier and sets the Worker secret `OPENAI_API_KEY`.
+11. The `BROWSER` binding is on the wrangler environment `real`. Production deploy stays `wrangler deploy` with no `--env`. Production keeps `ADAPTERS=test` and has no browser binding.

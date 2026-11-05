@@ -2,6 +2,7 @@ import {
 	type BusinessRequest,
 	collectRendered,
 	createMaster,
+	type MasterSnapshot,
 	type PageAudit,
 	type PageReader,
 	pageDocument,
@@ -11,6 +12,9 @@ import type { PublishedEvent } from "@tensquads/kernel";
 
 import { chooseAdapters } from "../adapter-choice.ts";
 import type { BusObjectEnv } from "./account-bus.ts";
+import { BUSINESS_KEY, parseStoredRequest } from "./account-request.ts";
+import type { MasterPhase } from "./master-commit.ts";
+import { MASTER_PHASE } from "./master-retry.ts";
 import { recordMonitor } from "./monitors.ts";
 
 const PAGE_MS = 1_500;
@@ -46,13 +50,13 @@ async function fetchDocument(url: string): Promise<{ status: number; body: strin
 	}
 }
 
-async function requestBrief(key: string, gap: string): Promise<string> {
+async function requestBrief(load: typeof fetch, key: string, model: string, gap: string): Promise<string> {
 	try {
-		const response = await fetch(MODEL_URL, {
+		const response = await load(MODEL_URL, {
 			method: "POST",
 			headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
 			body: JSON.stringify({
-				model: "gpt-4o-mini",
+				model,
 				messages: [{ role: "user", content: `Write a brief under 150 words. Name this gap: ${gap}` }],
 			}),
 			signal: AbortSignal.timeout(MODEL_MS),
@@ -67,29 +71,37 @@ async function requestBrief(key: string, gap: string): Promise<string> {
 
 function liveBrief(env: BusObjectEnv, report: BriefGap): Promise<string> {
 	const key = env.OPENAI_API_KEY;
-	if (!key) return Promise.reject(new Error(MODEL_GAP));
-	return requestBrief(key, report.gap).then((content) => {
+	const model = env.MASTER_MODEL;
+	// Moe sets MASTER_MODEL to the cheaper GPT-6 tier. This code has no model default.
+	if (!key || !model) return Promise.reject(new Error(MODEL_GAP));
+	return requestBrief(env.fetchApi ?? fetch, key, model, report.gap).then((content) => {
 		if (!content) throw new Error(MODEL_GAP);
 		return content;
 	});
 }
 
-function requestOf(input: BusObjectEnv["masterRequest"]): BusinessRequest {
-	return {
-		businessName: input?.businessName ?? "Account",
-		businessType: input?.businessType === "grocer" ? "grocer" : "restaurant",
-		...(input?.cuisine ? { cuisine: input.cuisine } : {}),
-		items: (input?.items ?? []).map((item) => ({ name: item.name, price: item.price, section: item.section })),
-	};
+function emptyRequest(): BusinessRequest {
+	return { businessName: "", businessType: "restaurant", items: [] };
+}
+
+async function storedRequest(storage: RequestStore): Promise<BusinessRequest | null> {
+	const raw = await storage.get<string>(BUSINESS_KEY);
+	if (typeof raw !== "string") return null;
+	try {
+		return parseStoredRequest(JSON.parse(raw) as unknown);
+	} catch {
+		return null;
+	}
 }
 
 function readPageOf(env: BusObjectEnv): PageReader {
 	return env.masterReadPage ?? fetchDocument;
 }
 
+// The kit CI runs the impeccable audit on the kit templates. This worker does not invent a P0 or P1 count.
 function auditOf(env: BusObjectEnv): (html: string) => PageAudit | Promise<PageAudit> {
 	if (env.masterAudit) return env.masterAudit;
-	return () => ({ keyboard: true, contrast: true, p0: 0, p1: 0, horizontalScroll: false });
+	return () => ({ keyboard: true, contrast: true, horizontalScroll: false });
 }
 
 function briefOf(env: BusObjectEnv): (report: BriefGap) => string | Promise<string> {
@@ -126,13 +138,25 @@ function browserOf(env: BusObjectEnv): (html: string) => Promise<RenderedPage> {
 	return (html) => renderBinding(env.BROWSER, html);
 }
 
+interface RequestStore {
+	get<T>(key: string): Promise<T | undefined>;
+}
+
+interface OpenedMaster {
+	accept(event: unknown): Promise<PublishedEvent[]>;
+	snapshot(): MasterPhase;
+	restore(phase: MasterPhase): void;
+}
+
 // fetchDocument is the page fetcher and the link checker. The key stays in the request header.
 export async function openMaster(
 	env: BusObjectEnv,
 	accountId: string,
-): Promise<{ accept: (event: unknown) => Promise<PublishedEvent[]> } | null> {
+	storage: RequestStore,
+): Promise<OpenedMaster | null> {
 	if (chooseAdapters(env.ADAPTERS) !== "real") return null;
-	const master = createMaster(requestOf(env.masterRequest), {
+	const request = (await storedRequest(storage)) ?? emptyRequest();
+	const master = createMaster(request, {
 		readPage: readPageOf(env),
 		audit: auditOf(env),
 		model: { writeBrief: briefOf(env) },
@@ -140,7 +164,11 @@ export async function openMaster(
 		browser: browserOf(env),
 		recordMonitor: (monitorId: string) => recordMonitor(monitorId, accountId, env),
 	});
+	const saved = await storage.get<MasterSnapshot>(MASTER_PHASE);
+	if (saved) master.restore(saved);
 	return {
 		accept: (event) => master.accept(event as never) as Promise<PublishedEvent[]>,
+		snapshot: () => master.snapshot(),
+		restore: (phase) => master.restore(phase as MasterSnapshot),
 	};
 }

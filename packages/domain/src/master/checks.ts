@@ -1,10 +1,9 @@
 import type { BusinessType, Competitor, GapEvidence, ListedItem, ResearchReport } from "@tensquads/agent-kit";
 
-import { noteRendered } from "./browser-menu.ts";
 import { pageLinks } from "./hrefs.ts";
+import { parsePageChoice, renderPage } from "./page-render.ts";
 import type { RenderedPage } from "./render-page.ts";
 import type { CheckOutcome, PageAudit, PageFetch, PageReader } from "./types.ts";
-import { visibleText } from "./visible.ts";
 
 export interface PageCheckInput {
 	readonly previewUrl: string;
@@ -12,6 +11,8 @@ export interface PageCheckInput {
 	readonly businessType: BusinessType;
 	readonly cuisine?: string;
 	readonly items: readonly ListedItem[];
+	readonly sections?: readonly string[];
+	readonly choice: unknown;
 	readonly readPage: PageReader;
 	readonly audit: (html: string) => PageAudit | Promise<PageAudit>;
 	readonly browser?: (html: string) => Promise<RenderedPage>;
@@ -23,10 +24,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function outcome(evidence: string[]): CheckOutcome {
 	return { pass: evidence.length === 0, evidence };
-}
-
-function shownPrice(price: string): string {
-	return price.trim().length === 0 ? "[PRICE]" : price;
 }
 
 export function wordCount(text: string): number {
@@ -150,95 +147,13 @@ export function checkBrief(brief: string, report: ResearchReport): CheckOutcome 
 	return outcome(evidence);
 }
 
-interface ParsedRow {
-	readonly name: string;
-	readonly price: string;
-	readonly section: string;
-}
-
-function parsedPage(html: string, previewUrl: string): { rows: ParsedRow[]; sections: string[]; links: string[] } {
-	const sections: string[] = [];
-	const rows: ParsedRow[] = [];
-	const sectionRe = /<section>\s*<h2>([^<]*)<\/h2>([\s\S]*?)<\/section>/g;
-	const rowRe = /<span class="name">([^<]*)<\/span>\s*<span class="price">([^<]*)<\/span>/g;
-	for (const match of html.matchAll(sectionRe)) {
-		const section = match[1] ?? "";
-		const body = match[2] ?? "";
-		sections.push(section);
-		for (const row of body.matchAll(rowRe)) {
-			rows.push({ name: row[1] ?? "", price: row[2] ?? "", section });
-		}
-	}
-	return { rows, sections, links: pageLinks(html, previewUrl) };
-}
-
-const PRICE_RE = /\[PRICE\]|\$\d+(?:\.\d+)?/g;
-
-function noteVisibleMenu(evidence: string[], html: string, items: readonly ListedItem[]): void {
-	const text = visibleText(html);
-	const expected = new Map<string, number>();
-	for (const item of items) {
-		const price = shownPrice(item.price);
-		if (!text.includes(item.name) || !text.includes(price)) evidence.push("An item from the list is missing.");
-		expected.set(price, (expected.get(price) ?? 0) + 1);
-	}
-	const seen = new Map<string, number>();
-	for (const match of text.matchAll(PRICE_RE)) {
-		const price = match[0] ?? "";
-		seen.set(price, (seen.get(price) ?? 0) + 1);
-	}
-	for (const [price, count] of seen) {
-		if (count > (expected.get(price) ?? 0)) evidence.push("The page invents an item.");
-	}
-}
-
-function userSections(items: readonly ListedItem[]): string[] {
-	const names: string[] = [];
-	for (const item of items) {
-		if (!names.includes(item.section)) names.push(item.section);
-	}
-	return names;
-}
-
-const failedAudit: PageAudit = { keyboard: false, contrast: false, p0: 1, p1: 1, horizontalScroll: true };
+const failedLayout: PageAudit = { keyboard: false, contrast: false, horizontalScroll: true };
 
 async function auditSafe(audit: PageCheckInput["audit"], html: string): Promise<PageAudit> {
 	try {
 		return await audit(html);
 	} catch {
-		return failedAudit;
-	}
-}
-
-function noteIdentity(evidence: string[], html: string, input: PageCheckInput): void {
-	if (!html.includes(input.businessName)) evidence.push("The page omits the business name.");
-	const cuisineMissing = input.businessType === "restaurant" && (!input.cuisine || !html.includes(input.cuisine));
-	if (cuisineMissing) evidence.push("The cuisine is missing from the page.");
-}
-
-function noteSections(evidence: string[], sections: readonly string[], items: readonly ListedItem[]): void {
-	const expected = userSections(items);
-	const sameOrder = sections.length === expected.length && sections.every((name, index) => name === expected[index]);
-	if (!sameOrder) evidence.push("A section is out of order.");
-}
-
-function noteRow(evidence: string[], row: ParsedRow, items: readonly ListedItem[], seen: Set<string>): void {
-	if (seen.has(row.name)) evidence.push("The page repeats an item.");
-	seen.add(row.name);
-	const item = items.find((entry) => entry.name === row.name);
-	if (!item) {
-		evidence.push("The page invents an item.");
-		return;
-	}
-	if (row.price !== shownPrice(item.price)) evidence.push("An item price does not match the list.");
-	if (row.section !== item.section) evidence.push("An item is in the wrong section.");
-}
-
-function noteItems(evidence: string[], rows: readonly ParsedRow[], items: readonly ListedItem[]): void {
-	const seen = new Set<string>();
-	for (const row of rows) noteRow(evidence, row, items, seen);
-	for (const item of items) {
-		if (!seen.has(item.name)) evidence.push("An item from the list is missing.");
+		return failedLayout;
 	}
 }
 
@@ -249,15 +164,35 @@ async function noteLinks(evidence: string[], links: readonly string[], readPage:
 	}
 }
 
-function noteAudit(evidence: string[], audit: PageAudit): void {
-	if (!audit.keyboard) evidence.push("The keyboard check failed.");
-	if (!audit.contrast) evidence.push("The contrast check failed.");
-	if (audit.p0 > 0 || audit.p1 > 0) evidence.push("The page has a P0 or P1 finding.");
-	if (audit.horizontalScroll) evidence.push("The page scrolls sideways at 390 px.");
+interface LayoutFlags {
+	readonly keyboard: boolean;
+	readonly contrast: boolean;
+	readonly horizontalScroll: boolean;
+}
+
+function noteLayout(evidence: string[], layout: LayoutFlags): void {
+	if (!layout.keyboard) evidence.push("The keyboard check failed.");
+	if (!layout.contrast) evidence.push("The contrast check failed.");
+	if (layout.horizontalScroll) evidence.push("The page scrolls sideways at 390 px.");
 }
 
 interface CheckedPage extends CheckOutcome {
 	readonly html: string;
+}
+
+function renderedBytes(input: PageCheckInput): string | null {
+	const choice = parsePageChoice(input.choice);
+	if (!choice) return null;
+	return renderPage(
+		{
+			businessName: input.businessName,
+			businessType: input.businessType,
+			items: input.items,
+			...(input.cuisine ? { cuisine: input.cuisine } : {}),
+			...(input.sections ? { sections: input.sections } : {}),
+		},
+		choice,
+	);
 }
 
 export async function checkPage(input: PageCheckInput): Promise<CheckedPage> {
@@ -265,24 +200,18 @@ export async function checkPage(input: PageCheckInput): Promise<CheckedPage> {
 	const preview = await readSafe(input.readPage, input.previewUrl);
 	if (preview.status !== 200) return { ...outcome(["The preview URL did not return 200."]), html: "" };
 	const html = preview.body;
-	const parsed = parsedPage(html, input.previewUrl);
-	noteIdentity(evidence, html, input);
-	noteSections(evidence, parsed.sections, input.items);
-	noteItems(evidence, parsed.rows, input.items);
-	noteVisibleMenu(evidence, html, input.items);
-	await noteLinks(evidence, parsed.links, input.readPage);
-	noteAudit(evidence, await auditSafe(input.audit, html));
-	await noteBrowser(evidence, input, html);
+	if (renderedBytes(input) !== html) evidence.push("The preview does not match the rendered page.");
+	await noteLinks(evidence, pageLinks(html, input.previewUrl), input.readPage);
+	await noteSecondLayer(evidence, input, html);
 	return { ...outcome(evidence), html };
 }
 
-async function noteBrowser(evidence: string[], input: PageCheckInput, html: string): Promise<void> {
-	if (!input.browser) return;
-	try {
-		noteRendered(evidence, await input.browser(html), input);
-	} catch {
-		evidence.push("The page has a P0 or P1 finding.");
+async function noteSecondLayer(evidence: string[], input: PageCheckInput, html: string): Promise<void> {
+	if (input.browser) {
+		noteLayout(evidence, await input.browser(html));
+		return;
 	}
+	noteLayout(evidence, await auditSafe(input.audit, html));
 }
 
 function accountSite(url: string, slug: string): boolean {

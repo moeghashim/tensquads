@@ -21,6 +21,17 @@ export interface MasterPorts {
 
 type Phase = "research" | "brief" | "building" | "publish" | "publishing" | "done" | "escalated";
 
+export interface MasterSnapshot {
+	readonly phase: Phase;
+	readonly report?: ResearchReport;
+	readonly brief?: string;
+	readonly previewHtml?: string;
+	readonly previewUrl?: string;
+	readonly researchFails: number;
+	readonly pageFails: number;
+	readonly seq: number;
+}
+
 interface State {
 	phase: Phase;
 	report?: ResearchReport;
@@ -125,6 +136,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 				businessType: request.businessType,
 				items: request.items,
 				...(request.cuisine ? { cuisine: request.cuisine } : {}),
+				...(request.sections ? { sections: request.sections } : {}),
 			},
 		});
 	}
@@ -157,6 +169,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 	}
 
 	async function approveBrief(): Promise<BusEvent[]> {
+		if (request.businessName.trim().length === 0) throw new Error("The business is not stored.");
 		if (state.phase !== "brief" || !state.report || !state.brief) return [];
 		const report = state.report;
 		const brief = state.brief;
@@ -191,6 +204,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 				gapEvidence: report.gapEvidence,
 				items: request.items,
 				...(request.cuisine ? { cuisine: request.cuisine } : {}),
+				...(request.sections ? { sections: request.sections } : {}),
 				approval: { skill: "site.build", mandate },
 			},
 		});
@@ -209,6 +223,8 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			businessType: request.businessType,
 			cuisine: request.cuisine,
 			items: request.items,
+			sections: request.sections,
+			choice: isRecord(event.payload) ? event.payload.choice : undefined,
 			readPage: ports.readPage,
 			audit: ports.audit,
 			browser: ports.browser,
@@ -306,5 +322,29 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		return [];
 	}
 
-	return { start, accept, approveBrief, approvePublish, createMonitor };
+	function snapshot(): MasterSnapshot {
+		return {
+			phase: state.phase,
+			report: state.report,
+			brief: state.brief,
+			previewHtml: state.previewHtml,
+			previewUrl: state.previewUrl,
+			researchFails: state.researchFails,
+			pageFails: state.pageFails,
+			seq,
+		};
+	}
+
+	function restore(saved: MasterSnapshot): void {
+		state.phase = saved.phase;
+		state.report = saved.report;
+		state.brief = saved.brief;
+		state.previewHtml = saved.previewHtml;
+		state.previewUrl = saved.previewUrl;
+		state.researchFails = saved.researchFails;
+		state.pageFails = saved.pageFails;
+		seq = saved.seq;
+	}
+
+	return { start, accept, approveBrief, approvePublish, createMonitor, snapshot, restore };
 }

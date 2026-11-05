@@ -39,7 +39,6 @@ test("a Result runs the master only when adapters are real", async () => {
 	const { proofStory } = await import("@tensquads/domain/master");
 	const story = await proofStory();
 	const ports = {
-		masterRequest: story.request,
 		masterReadPage: async (url: string) => story.pages[url] ?? { status: 404, body: "" },
 		masterAudit: () => story.audit,
 		masterWriteBrief: () => story.brief,
@@ -56,6 +55,7 @@ test("a Result runs the master only when adapters are real", async () => {
 	assert.deepEqual(await skills(quiet.storage), ["report.write"]);
 
 	const real = objectBus({ ADAPTERS: "real", ...ports });
+	await real.storage.put("state:business", JSON.stringify(story.request));
 	const realResponse = await real.target.fetch(
 		new Request("https://bus/accept", {
 			method: "POST",

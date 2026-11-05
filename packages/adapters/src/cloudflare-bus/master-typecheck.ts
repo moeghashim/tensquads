@@ -5,14 +5,24 @@ export interface BusinessRequest {
 	readonly businessType: "restaurant" | "grocer";
 	readonly items: readonly { readonly name: string; readonly price: string; readonly section: string }[];
 	readonly cuisine?: string;
+	readonly sections?: readonly string[];
 }
 
 export interface PageAudit {
 	readonly keyboard: boolean;
 	readonly contrast: boolean;
-	readonly p0: number;
-	readonly p1: number;
 	readonly horizontalScroll: boolean;
+}
+
+export interface MasterSnapshot {
+	readonly phase: string;
+	readonly researchFails: number;
+	readonly pageFails: number;
+	readonly seq: number;
+	readonly report?: unknown;
+	readonly brief?: string;
+	readonly previewHtml?: string;
+	readonly previewUrl?: string;
 }
 
 export type PageReader = (url: string) => Promise<{ readonly status: number; readonly body: string }>;
@@ -48,6 +58,7 @@ export interface ProofStory {
 	readonly report: { readonly gap: string };
 	readonly brief: string;
 	readonly pageHtml: string;
+	readonly choice: unknown;
 	readonly previewUrl: string;
 	readonly publishedUrl: string;
 	readonly events: readonly unknown[];
@@ -59,6 +70,17 @@ export function proofStory(): Promise<ProofStory> {
 	return Promise.reject(new Error("The proof story is not available."));
 }
 
-export function createMaster(_request: unknown, _ports: unknown): { accept: (event: unknown) => Promise<unknown[]> } {
-	return { accept: () => Promise.resolve([]) };
+export function createMaster(
+	_request: unknown,
+	_ports: unknown,
+): {
+	accept: (event: unknown) => Promise<unknown[]>;
+	snapshot: () => MasterSnapshot;
+	restore: (saved: MasterSnapshot) => void;
+} {
+	return {
+		accept: () => Promise.resolve([]),
+		snapshot: () => ({ phase: "research", researchFails: 0, pageFails: 0, seq: 0 }),
+		restore: () => undefined,
+	};
 }

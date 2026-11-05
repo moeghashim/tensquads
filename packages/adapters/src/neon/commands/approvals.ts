@@ -9,10 +9,12 @@ import {
 	requireScope,
 } from "@tensquads/domain";
 import { and, asc, eq } from "drizzle-orm";
+import { chooseAdapters } from "../../adapter-choice.ts";
 import { PENDING_TASK_WINDOW_MS } from "../../pending-window.ts";
 import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { accounts, agents, approvals, missionProposals, rules, stateEntries } from "../schema.ts";
+import { type DeliverUserEvent, deliverUserToMaster, userMasterEvent } from "./approval-bus.ts";
 import { appendEvents } from "./bus.ts";
 import { createMandate } from "./mandates.ts";
 
@@ -53,6 +55,7 @@ export async function decide(
 	id: string,
 	ok: boolean,
 	deadlineAt?: number,
+	deliver: DeliverUserEvent = deliverUserToMaster,
 ): Promise<WrittenDecision> {
 	const accountId = accountOf(scope);
 	return commitDecision(db, accountId, deadlineAt, async (tx) => {
@@ -75,23 +78,27 @@ export async function decide(
 				.set({ tasks: next.agent.tasks, lastText: next.agent.last })
 				.where(and(eq(agents.accountId, accountId), eq(agents.id, agent.id)));
 		}
-		await appendEvents(
-			tx,
-			accountId,
-			[
-				{
-					from: "master",
-					to: approval.agent,
-					kind: ok ? "Approval" : "Declined",
-					skill: "-",
-					text: `${ok ? "Approved: " : "Declined: "}${approval.title}`,
-					payload: { approval_id: approval.id, approved: ok, by: name },
-					writes: [`approvals.${approval.id}`],
-					set: { [`approvals.${approval.id}`]: ok ? "approved" : "declined" },
-				},
-			],
-			at,
-		);
+		if (chooseAdapters(process.env.ADAPTERS) === "real") {
+			await deliver(accountId, userMasterEvent({ id: approval.id, ok, title: approval.title, by: name, at }));
+		} else {
+			await appendEvents(
+				tx,
+				accountId,
+				[
+					{
+						from: "master",
+						to: approval.agent,
+						kind: ok ? "Approval" : "Declined",
+						skill: "-",
+						text: `${ok ? "Approved: " : "Declined: "}${approval.title}`,
+						payload: { approval_id: approval.id, approved: ok, by: name },
+						writes: [`approvals.${approval.id}`],
+						set: { [`approvals.${approval.id}`]: ok ? "approved" : "declined" },
+					},
+				],
+				at,
+			);
+		}
 		if (ok) await recordMandate(tx, scope, accountId, approval, name, at);
 		return { id, status: next.approval.status, count: await countInbox(tx, accountId) };
 	});

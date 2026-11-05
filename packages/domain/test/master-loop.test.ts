@@ -12,6 +12,10 @@ function reader(pages: Record<string, { status: number; body: string }>): PageRe
 	return async (url) => pages[url] ?? { status: 404, body: "" };
 }
 
+function previewResult(story: Awaited<ReturnType<typeof proofStory>>): BusEvent {
+	return result("site.preview", { previewUrl: story.previewUrl, choice: story.choice });
+}
+
 function result(skill: string, payload: Readonly<Record<string, unknown>>): BusEvent {
 	return {
 		id: `in-${skill}`,
@@ -55,7 +59,7 @@ test("a passing report asks for the brief, then the page, then publish", async (
 	const build = yes[0]?.payload.approval as { skill: string; mandate: { subject: string } };
 	assert.equal(build.skill, "site.build");
 	assert.equal(build.mandate.subject, await digestOf(story.brief));
-	const preview = await master.accept(result("site.preview", { previewUrl: story.previewUrl }));
+	const preview = await master.accept(previewResult(story));
 	assert.equal(preview[0]?.text, "Publish the site?");
 	const publish = await master.approvePublish();
 	const gate = publish[0]?.payload.approval as { skill: string; mandate: { subject: string } };
@@ -113,7 +117,7 @@ test("the publish approval hashes the checked preview bytes", async () => {
 	master.start();
 	await master.accept(result("report.write", { report: story.report }));
 	await master.approveBrief();
-	await master.accept(result("site.preview", { previewUrl: story.previewUrl }));
+	await master.accept(previewResult(story));
 	const accepted = await master.approvePublish();
 	const gate = accepted[0]?.payload.approval as { mandate: { subject: string } };
 	assert.equal(gate.mandate.subject, await digestOf(story.pageHtml));
@@ -127,7 +131,7 @@ test("the publish approval also sends a task to the website agent", async () => 
 	master.start();
 	await master.accept(result("report.write", { report: story.report }));
 	await master.approveBrief();
-	await master.accept(result("site.preview", { previewUrl: story.previewUrl }));
+	await master.accept(previewResult(story));
 	const events = await master.approvePublish();
 	assert.equal(events[0]?.kind, "Approval");
 	assert.equal(events[1]?.kind, "Task");
@@ -154,14 +158,14 @@ test("the master records a monitor on the account that created it", async () => 
 
 test("a failed page check goes back to the website once, then escalates", async () => {
 	const story = await proofStory();
-	const master = createMaster(story.request, ports(story, story.brief, { ...story.audit, p0: 1 }));
+	const master = createMaster(story.request, ports(story, story.brief, { ...story.audit, horizontalScroll: true }));
 	master.start();
 	await master.accept(result("report.write", { report: story.report }));
 	await master.approveBrief();
-	const first = await master.accept(result("site.preview", { previewUrl: story.previewUrl }));
+	const first = await master.accept(previewResult(story));
 	assert.equal(first[0]?.to, "website");
 	assert.equal(first[0]?.kind, "Task");
-	const second = await master.accept(result("site.preview", { previewUrl: story.previewUrl }));
+	const second = await master.accept(previewResult(story));
 	assert.equal(second[0]?.kind, "Escalation");
 	assert.equal(second[0]?.text, "The check failed twice.");
 });
@@ -186,7 +190,7 @@ test("a user approval of the brief and of publish sends the website task", async
 	assert.equal(briefYes[0]?.kind, "Approval");
 	assert.equal(briefYes[1]?.kind, "Task");
 	assert.equal(briefYes[1]?.skill, "task.route");
-	await master.accept(result("site.preview", { previewUrl: story.previewUrl }));
+	await master.accept(previewResult(story));
 	const publishYes = await master.accept({
 		id: "user-publish",
 		time: "12:02",
