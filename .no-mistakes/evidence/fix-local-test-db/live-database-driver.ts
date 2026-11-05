@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict';
+import {Pool} from '@neondatabase/serverless';
+import {openPostgres,migrationRevision} from '../packages/adapters/src/neon/postgres.ts';
+import {replaceDemoAccount} from '../packages/seed/src/demo-account.ts';
+import {workspaceTransaction} from '../packages/adapters/src/neon/lock.ts';
+import {sql} from 'drizzle-orm';
+const connection='postgresql://testuser@127.0.0.1:55439/gate_scenarios';
+const pool=new Pool({connectionString:connection});
+const observer=await pool.connect();
+const first=openPostgres(connection), second=openPostgres(connection);
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function bounded(promise,ms=5000){let t;try{return await Promise.race([promise,new Promise((_,reject)=>{t=setTimeout(()=>reject(new Error('operation did not complete within '+ms+'ms')),ms)})]);}finally{clearTimeout(t)}}
+try{
+ await Promise.all([first.migrate(),second.migrate()]);
+ const revision=(await observer.query('SELECT version FROM schema_revision WHERE id=1')).rows[0].version;
+ assert.equal(revision,migrationRevision);
+ console.log('Fresh database: two simultaneous real migrations completed; persisted revision='+revision);
+ await replaceDemoAccount(first.db,'live-a','clerk-a');
+ await replaceDemoAccount(second.db,'live-b','clerk-b');
+ await observer.query('BEGIN');
+ await observer.query('SELECT pg_advisory_xact_lock(1952804467,1)');
+ await bounded(Promise.all([first.migrate(),second.migrate()]));
+ console.log('Current revision: both migrations completed while another connection held the exclusive global writer lock.');
+ await observer.query('ROLLBACK');
+ await observer.query('BEGIN');
+ await observer.query("SELECT pg_advisory_xact_lock_shared(1952804467,1)");
+ await observer.query("SELECT pg_advisory_xact_lock(1952804468,hashtext('live-a'))");
+ let resetDone=false;
+ const reset=replaceDemoAccount(first.db,'live-a','clerk-a').then(()=>{resetDone=true});
+ await bounded((async()=>{while(true){const r=await observer.query("SELECT count(*)::int n FROM pg_locks WHERE locktype='advisory' AND classid=1952804468 AND NOT granted");if(r.rows[0].n>0)return;await sleep(20)}})());
+ await bounded(replaceDemoAccount(second.db,'live-b','clerk-b'));
+ assert.equal(resetDone,false);
+ console.log('Account isolation: reset B committed while reset A waited on A’s account fence.');
+ await observer.query('ROLLBACK');
+ await bounded(reset);
+ const accounts=(await observer.query("SELECT a.id,count(g.id)::int agents FROM accounts a JOIN agents g ON g.account_id=a.id GROUP BY a.id ORDER BY a.id")).rows;
+ assert.deepEqual(accounts,[{id:'live-a',agents:5},{id:'live-b',agents:5}]);
+ console.log('Same-account serialization: reset A committed after releasing its fence; persisted rows='+JSON.stringify(accounts));
+ await workspaceTransaction(first.db,async tx=>{
+ const rows=await tx.execute(sql.raw("SELECT current_setting('lock_timeout') AS lock_timeout,current_setting('statement_timeout') AS statement_timeout"));
+ assert.equal(rows.rows[0].lock_timeout,'0');assert.equal(rows.rows[0].statement_timeout,'0');
+ console.log('Account-only transaction timeout settings: '+JSON.stringify(rows.rows[0]));
+ },{accountId:'live-a'});
+ await observer.query("UPDATE schema_revision SET version='stale' WHERE id=1");
+ await observer.query('BEGIN');await observer.query('SELECT pg_advisory_xact_lock_shared(1952804467,1)');
+ let done=false;const migrated=second.migrate().then(()=>{done=true});
+ await bounded((async()=>{while(true){const r=await observer.query("SELECT count(*)::int n FROM pg_locks WHERE locktype='advisory' AND classid=1952804467 AND NOT granted");if(r.rows[0].n>0)return;await sleep(20)}})());
+ assert.equal(done,false);
+ await observer.query('ROLLBACK');await bounded(migrated);
+ assert.equal((await observer.query('SELECT version FROM schema_revision WHERE id=1')).rows[0].version,migrationRevision);
+ console.log('Stale revision: real migration waited for shared writer, then completed and repaired persisted revision.');
+}finally{await observer.query('ROLLBACK');observer.release();await Promise.all([first.close(),second.close(),pool.end()]);}

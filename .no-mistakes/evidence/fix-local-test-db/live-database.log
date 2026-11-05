@@ -1,0 +1,6 @@
+Fresh database: two simultaneous real migrations completed; persisted revision=8b8773ae30862433555466cc3cef99b83f07cffb7451effeef6ab3080f39c9ac
+Current revision: both migrations completed while another connection held the exclusive global writer lock.
+Account isolation: reset B committed while reset A waited on A’s account fence.
+Same-account serialization: reset A committed after releasing its fence; persisted rows=[{"id":"live-a","agents":5},{"id":"live-b","agents":5}]
+Account-only transaction timeout settings: {"lock_timeout":"0","statement_timeout":"0"}
+Stale revision: real migration waited for shared writer, then completed and repaired persisted revision.
