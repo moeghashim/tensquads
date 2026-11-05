@@ -1,0 +1,11 @@
+✔ a reset waiting on the advisory lock longer than the send timeout succeeds (12218.043542ms)
+✔ a migration waits for an approval and neither side deadlocks (354.309292ms)
+✔ one account's writers exclude each other (277.741166ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22896.35725

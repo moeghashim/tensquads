@@ -1,0 +1,5 @@
+{"scenario":"Concurrent first migrations","revision":"8b8773ae30862433555466cc3cef99b83f07cffb7451effeef6ab3080f39c9ac","accounts":[{"id":"live-a"},{"id":"live-b"}]}
+{"scenario":"Current migration bypasses held exclusive maintenance lock","elapsedMs":4,"exclusiveLockStillHeld":true}
+{"scenario":"Account A reset waits on its fence while account B writes and cleanup finish","waitingLocks":[{"classid":"1952804468","mode":"ExclusiveLock","granted":false}],"resetDone":false,"otherAccountWrite":"written","storedSupportOn":false,"deletedAccountB":true}
+{"scenario":"Same-account cleanup waits for writer and deletes after release","blockedBeforeRelease":true,"accountsRemaining":0}
+{"scenario":"Failed stale migration rolls back DDL; concurrent retry repairs schema and records revision","failedRevision":"stale","columnAbsentAfterFailure":true,"columnRestoredOnRetry":true,"revision":"8b8773ae30862433555466cc3cef99b83f07cffb7451effeef6ab3080f39c9ac"}

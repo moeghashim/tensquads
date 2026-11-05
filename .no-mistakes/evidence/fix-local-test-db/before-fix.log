@@ -1,0 +1,6 @@
+(node:70754) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6MWG0QP5VT151MCJCG583FY/.local-validation/base-postgres.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/moeghashim/.no-mistakes/worktrees/7fcac8a8339b/01M6MWG0QP5VT151MCJCG583FY/.local-validation/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"commit":"2abbdae00e7fa6bf6bdebb26e1eb4ce1f39999c7","scenario":"Current schema migration under exclusive maintenance lock","completedWhileLockHeld":false,"waitingLocks":[{"classid":"1952804467","mode":"ExclusiveLock","granted":false}]}
+Base migration completed only after lock release; target completed while held (4 ms).
