@@ -1,73 +1,95 @@
 {
-  "signup": [
+  "results": [
     {
+      "surface": "signup",
+      "kind": "new",
       "width": 1440,
-      "names": 7,
-      "drawings": 7,
-      "scroll": {
-        "width": 1440,
-        "scroll": 1440
-      },
-      "zeroSquadGuard": "blocked account form"
+      "cards": [
+        "PisaOrders · Fulfilment and trackingReady for your first order",
+        "KyotoSupport · Customer inbox and refundsReplies in your voice, refunds under a limit you set",
+        "RioMarketing · Ads, social and emailDrafts your launch campaign and first posts",
+        "ZurichFinance · Payouts, costs and profitWeekly profit summary, bills matched to orders",
+        "GizaInventory · Stock and suppliersAdd once you hold stock",
+        "MachuMarket researcher · Competitors and positioningFinds your competitors before you launch",
+        "AngkorWebsite builder · Landing pages and site updatesBuilds your first landing page from the market report"
+      ],
+      "noHorizontalScroll": true
     },
     {
+      "surface": "signup",
+      "kind": "existing",
+      "width": 1440,
+      "cards": [
+        "PisaOrders · Fulfilment and trackingSyncs tracking and chases the maker",
+        "KyotoSupport · Customer inbox and refundsReplies in your voice, refunds under a limit you set",
+        "RioMarketing · Ads, social and emailWatches ad spend and return",
+        "ZurichFinance · Payouts, costs and profitWeekly profit summary, bills matched to orders",
+        "GizaInventory · Stock and suppliersFlags low stock and drafts reorders",
+        "MachuMarket researcher · Competitors and positioningWatches how your competitors price and sell",
+        "AngkorWebsite builder · Landing pages and site updatesUpdates your site from the market report"
+      ],
+      "noHorizontalScroll": true
+    },
+    {
+      "surface": "signup",
+      "kind": "new",
       "width": 390,
-      "names": 7,
-      "drawings": 7,
-      "scroll": {
-        "width": 390,
-        "scroll": 390
-      },
-      "zeroSquadGuard": "blocked account form"
+      "cards": [
+        "PisaOrders · Fulfilment and trackingReady for your first order",
+        "KyotoSupport · Customer inbox and refundsReplies in your voice, refunds under a limit you set",
+        "RioMarketing · Ads, social and emailDrafts your launch campaign and first posts",
+        "ZurichFinance · Payouts, costs and profitWeekly profit summary, bills matched to orders",
+        "GizaInventory · Stock and suppliersAdd once you hold stock",
+        "MachuMarket researcher · Competitors and positioningFinds your competitors before you launch",
+        "AngkorWebsite builder · Landing pages and site updatesBuilds your first landing page from the market report"
+      ],
+      "noHorizontalScroll": true
+    },
+    {
+      "surface": "signup",
+      "zeroSelected": "Create stays on squad picker; no account form"
+    },
+    {
+      "surface": "signup",
+      "kind": "existing",
+      "width": 390,
+      "cards": [
+        "PisaOrders · Fulfilment and trackingSyncs tracking and chases the maker",
+        "KyotoSupport · Customer inbox and refundsReplies in your voice, refunds under a limit you set",
+        "RioMarketing · Ads, social and emailWatches ad spend and return",
+        "ZurichFinance · Payouts, costs and profitWeekly profit summary, bills matched to orders",
+        "GizaInventory · Stock and suppliersFlags low stock and drafts reorders",
+        "MachuMarket researcher · Competitors and positioningWatches how your competitors price and sell",
+        "AngkorWebsite builder · Landing pages and site updatesUpdates your site from the market report"
+      ],
+      "noHorizontalScroll": true
+    },
+    {
+      "requested": "/overview",
+      "actual": "http://localhost:3000/signin",
+      "blocked": "Clerk keys absent; real protected route redirects to sign-in"
+    },
+    {
+      "requested": "/agents/support",
+      "actual": "http://localhost:3000/signin",
+      "blocked": "Clerk keys absent; real protected route redirects to sign-in"
+    },
+    {
+      "requested": "/chat",
+      "actual": "http://localhost:3000/signin",
+      "blocked": "Clerk keys absent; real protected route redirects to sign-in"
+    },
+    {
+      "requested": "/admin/images",
+      "actual": "http://localhost:3000/signin",
+      "blocked": "Clerk keys absent; real protected route redirects to sign-in"
+    },
+    {
+      "surface": "review/characters",
+      "characters": 10,
+      "stateColumns": 9,
+      "accessiblePetra": "Petra, Master"
     }
   ],
-  "review": {
-    "names": [
-      "Petra",
-      "Pisa",
-      "Kyoto",
-      "Rio",
-      "Zurich",
-      "Giza",
-      "Machu",
-      "Angkor",
-      "Delphi",
-      "Sydney"
-    ],
-    "states": [
-      "",
-      "WaitingNothing to do now. Blinks slowly.",
-      "PlanningLooks up while it plans.",
-      "Running skillLooks at the work.",
-      "CheckingSquints while the code check runs.",
-      "DoneThe check passed.",
-      "Sent backThe check failed once. Looks down.",
-      "BlockedWaits for a person. Holds no machine.",
-      "EscalatedSecond fail. Needs you now.",
-      "DroppedNothing to do at all. Asleep."
-    ],
-    "unchangedCards": [
-      "Petra",
-      "Pisa",
-      "Kyoto",
-      "Rio",
-      "Zurich",
-      "Giza",
-      "Machu",
-      "Angkor",
-      "Delphi"
-    ],
-    "unchangedStateDrawings": 27,
-    "animation": "sm-blink",
-    "reducedMotionAnimation": "none"
-  },
-  "workspace": {
-    "/overview": "redirected to /signin; no Clerk session configured",
-    "/agents": "redirected to /signin; no Clerk session configured",
-    "/agents/support": "redirected to /signin; no Clerk session configured",
-    "/chat": "redirected to /signin; no Clerk session configured",
-    "/traffic": "redirected to /signin; no Clerk session configured",
-    "/rules": "redirected to /signin; no Clerk session configured"
-  },
   "pageErrors": []
 }
