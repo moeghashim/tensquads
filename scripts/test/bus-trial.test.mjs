@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { busTrialPlan, childEnv, executeBusTrial, redact, trialConfig } from "../bus-trial.mjs";
+import { busTrialPlan, childEnv, executeBusTrial, redact, trialConfig, trialWorkerUrl } from "../bus-trial.mjs";
 
 const root = new URL("../../", import.meta.url);
 const source = readFileSync(new URL("apps/web/wrangler.jsonc", root), "utf8");
@@ -55,7 +55,17 @@ test("the trial worker config keeps the project account and replaces the queue n
 	assert.equal(built.main, "index.js");
 	assert.equal(built.no_bundle, true);
 	assert.equal(built.assets.directory, "../client");
+	assert.deepEqual(built.assets.run_worker_first, ["/machine/*"]);
+	assert.equal(built.workers_dev, true);
 	assert.equal(built.vars.ADAPTERS, "real");
+	assert.equal(config.workers_dev, true);
+	assert.equal(
+		trialWorkerUrl(
+			"https://welcome.developers.workers.dev\nhttps://tensquads-trial-418773041079.example.workers.dev\nhttps://tensquads-trial-41877304107.example.workers.dev\n",
+			plan.workerName,
+		),
+		"https://tensquads-trial-41877304107.example.workers.dev",
+	);
 	assert.equal(config.queues.producers[0].queue, plan.queue);
 	assert.equal(config.queues.consumers[0].dead_letter_queue, plan.deadLetter);
 	assert.equal(JSON.stringify(config).includes('tensquads-bus"'), false);
@@ -96,11 +106,15 @@ test("wrangler output and the child environment do not carry the trial secrets",
 				calls.push(args.join(" "));
 				assert.equal(args.includes("tensquads"), false);
 				if (args[0] === "deploy") {
-					return { stdout: "Published https://tensquads-trial-41877304107.example.workers.dev\n" };
+					return {
+						stdout:
+							"https://welcome.developers.workers.dev\nPublished https://tensquads-trial-41877304107.example.workers.dev\n",
+					};
 				}
 				return { stdout: "" };
 			},
-			async fetch() {
+			async fetch(url) {
+				calls.push(url);
 				return { ok: true, status: 200 };
 			},
 			async waitForEvent() {
@@ -118,5 +132,10 @@ test("wrangler output and the child environment do not carry the trial secrets",
 	assert.equal(calls.join("\n").includes(plan.boatToken), false);
 	assert.equal(calls.join("\n").includes(plan.databaseUrl), false);
 	assert.equal(calls.join("\n").includes(plan.cloudflareToken), false);
+	assert.equal(calls.includes("https://tensquads-trial-41877304107.example.workers.dev/machine/send"), true);
+	assert.equal(
+		calls.some((line) => String(line).includes("welcome.developers")),
+		false,
+	);
 	assert.match(calls.at(-1), /^bus-trial run=41877304107 event=trial-41877304107$/);
 });

@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { cleanupTrial } from "./bus-trial-cleanup.mjs";
+
 const root = resolve(import.meta.dirname, "..");
 const webDirectory = resolve(root, "apps/web");
 const wranglerBin = resolve(root, "node_modules/wrangler/bin/wrangler.js");
@@ -81,7 +83,25 @@ export function trialConfig(sourceText, plan) {
 			{ queue: plan.deadLetter },
 		],
 	};
+	// Asset routes answer before the Worker. /machine/* has to run the Worker first.
+	if (config.assets?.directory) config.assets = { ...config.assets, run_worker_first: ["/machine/*"] };
+	config.workers_dev = true;
 	return config;
+}
+
+export function trialWorkerUrl(stdout, workerName) {
+	const matches = stdout.match(/https:\/\/[a-z0-9.-]+\.workers\.dev/g) ?? [];
+	for (const url of matches) {
+		let hostname = "";
+		try {
+			hostname = new URL(url).hostname;
+		} catch {
+			continue;
+		}
+		const rest = hostname.slice(workerName.length);
+		if (hostname.startsWith(workerName) && /^\.[a-z0-9-]+\.workers\.dev$/.test(rest)) return url;
+	}
+	return "";
 }
 
 export function redact(text, secrets) {
@@ -151,8 +171,10 @@ export async function executeBusTrial(plan, deps) {
 		await deps.run(["queues", "create", plan.queue]);
 		await deps.run(["queues", "create", plan.deadLetter]);
 		const deployed = await deps.run(["deploy", "--config", configPath, "--secrets-file", secretsPath]);
-		const url = redact(deployed.stdout, hidden).match(/https:\/\/[a-z0-9.-]+\.workers\.dev/)?.[0];
+		const url = trialWorkerUrl(redact(deployed.stdout, hidden), plan.workerName);
 		if (!url) throw new Error("The trial worker URL is missing.");
+		const host = new URL(url).host;
+		say(`bus-target host=${host}`);
 		const { signMachineToken } = await import("../packages/adapters/src/cloudflare-bus/token.ts");
 		const token = await signMachineToken(
 			machineKey,
@@ -172,10 +194,28 @@ export async function executeBusTrial(plan, deps) {
 		};
 		const response = await deps.fetch(`${url}/machine/send`, {
 			method: "POST",
+			redirect: "manual",
 			headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
 			body: JSON.stringify({ accountId: plan.accountId, agentId: plan.agentId, event }),
 		});
-		if (!response.ok) throw new Error(`The trial send failed with status ${response.status}.`);
+		if (!response.ok) {
+			const detail = redact(typeof response.text === "function" ? await response.text().catch(() => "") : "", hidden)
+				.replace(/\s+/g, " ")
+				.slice(0, 120);
+			let location = "";
+			try {
+				const header = response.headers?.get?.("location") ?? "";
+				if (header) {
+					const parsed = new URL(header, url);
+					location = ` location=${parsed.host}${parsed.pathname}`;
+				}
+			} catch {
+				location = "";
+			}
+			throw new Error(
+				`The trial send failed with status ${response.status} for ${host}.${location}${detail ? ` ${detail}` : ""}`,
+			);
+		}
 		if (!(await deps.waitForEvent(plan.databaseUrl, plan.accountId, plan.eventId))) {
 			throw new Error("The trial event did not reach the database.");
 		}
@@ -226,36 +266,36 @@ function realRun(plan) {
 	};
 }
 
-async function realCleanup(plan) {
-	const run = (args) => {
-		spawnSync(process.execPath, [wranglerBin, ...args], {
-			cwd: webDirectory,
-			encoding: "utf8",
-			env: childEnv(process.env, plan),
+async function cloudflare(plan, method, path) {
+	let response;
+	try {
+		response = await fetch(`https://api.cloudflare.com/client/v4${path}`, {
+			method,
+			headers: {
+				authorization: `Bearer ${plan.cloudflareToken}`,
+				"content-type": "application/json",
+			},
 		});
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "The Cloudflare request failed.";
+		throw new Error(redact(message, secretsOf(plan, "")));
+	}
+	const body = await response.json().catch(() => ({}));
+	return {
+		status: response.status,
+		success: response.ok && body.success !== false,
+		result: body.result,
+		errors: Array.isArray(body.errors) ? body.errors : [],
+		result_info: body.result_info ?? null,
 	};
+}
+
+async function realCleanup(plan) {
 	if (plan.workerName === "tensquads" || !plan.workerName.startsWith("tensquads-trial-")) {
 		throw new Error("The trial worker name is not valid.");
 	}
-	run(["delete", plan.workerName, "--force"]);
-	run(["queues", "delete", plan.queue]);
-	run(["queues", "delete", plan.deadLetter]);
+	const left = await cleanupTrial(plan, (request) => cloudflare(plan, request.method, request.path));
 	const rows = await deleteRows(plan.databaseUrl, plan.accountId).catch(() => 1);
-	const queues = spawnSync(process.execPath, [wranglerBin, "queues", "list"], {
-		cwd: webDirectory,
-		encoding: "utf8",
-		env: childEnv(process.env, plan),
-	});
-	const listed = queues.stdout ?? "";
-	const worker = spawnSync(process.execPath, [wranglerBin, "deployments", "status", "--name", plan.workerName], {
-		cwd: webDirectory,
-		encoding: "utf8",
-		env: childEnv(process.env, plan),
-	});
-	const left = [];
-	if (listed.includes(plan.queue)) left.push(plan.queue);
-	if (listed.includes(plan.deadLetter)) left.push(plan.deadLetter);
-	if ((worker.status ?? 1) === 0) left.push(plan.workerName);
 	if (rows !== 0) left.push("rows");
 	return left;
 }
