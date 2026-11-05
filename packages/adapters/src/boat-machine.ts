@@ -23,6 +23,7 @@ import {
 	templateName,
 	uptimeText,
 } from "./boat-fields.ts";
+import { MACHINE_TOKEN_ENV, machineCredentialProfile } from "./cloudflare-bus/token.ts";
 
 const LIVE = new Set(["ready", "idle", "running"]);
 const OFF = new Set(["archived", "archiving"]);
@@ -258,6 +259,25 @@ async function profileApis(ctx: BoatContext): Promise<readonly string[]> {
 	return listed.profiles.find((profile) => profile.name === ctx.profileName)?.customApis ?? [];
 }
 
+async function setMachineToken(ctx: BoatContext, scope: AccountScope, agentId: string, value: string): Promise<void> {
+	const admin = ctx.admin;
+	if (!admin || !ctx.secretBaseUrl) throw notConfigured("The secret registration is not configured.");
+	if (value.length === 0) throw notConfigured("The machine token is empty.");
+	const profile = machineCredentialProfile(scope.accountId, agentId);
+	const baseUrl = ctx.secretBaseUrl;
+	const listed = await call(() => admin.listCredentialProfiles());
+	if (!listed.profiles.some((row) => row.name === profile)) {
+		await call(() => admin.createCredentialProfile({ createCredentialProfileRequest: { name: profile } }));
+	}
+	await call(() =>
+		admin.setCredentialProfileCustomApi({
+			profile,
+			name: MACHINE_TOKEN_ENV,
+			setCustomApiRequest: { value, baseUrl },
+		}),
+	);
+}
+
 export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 	if (!options.token || !options.profileName) throw notConfigured();
 	if (options.profileName === "default" || options.profileName === "moe@10claws.com") {
@@ -361,6 +381,9 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 					setCustomApiRequest: { value: secret, baseUrl },
 				}),
 			);
+		},
+		async rotateToken(scope, agentId, value) {
+			await setMachineToken(ctx, scope, agentId, value);
 		},
 		async removeSecret(_scope, name) {
 			const admin = ctx.admin;

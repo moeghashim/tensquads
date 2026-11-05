@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { digestOf } from "@tensquads/agent-kit";
+
 import { checkBrief, checkPage, checkPublished, checkResearch, wordCount } from "../src/master/checks.ts";
-import { digestOf } from "../src/master/digest.ts";
 import { proofStory } from "../src/master/proof.ts";
 import type { PageReader } from "../src/master/types.ts";
 

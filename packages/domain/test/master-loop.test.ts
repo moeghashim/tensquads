@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { digestOf, type ResearchReport } from "@tensquads/agent-kit";
+
 import type { BusEvent } from "../src/bus/types.ts";
-import { digestOf } from "../src/master/digest.ts";
 import { createMaster } from "../src/master/loop.ts";
 import { proofStory } from "../src/master/proof.ts";
-import type { PageReader, ResearchReport } from "../src/master/types.ts";
+import type { PageReader } from "../src/master/types.ts";
 
 function reader(pages: Record<string, { status: number; body: string }>): PageReader {
 	return async (url) => pages[url] ?? { status: 404, body: "" };

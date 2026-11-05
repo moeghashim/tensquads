@@ -47,9 +47,11 @@ interface StoredTemplate {
 export interface SecretCall {
 	readonly kind: "admin" | "machine" | "other";
 	readonly name: string;
+	readonly profile?: string;
 	readonly valuePresent: boolean;
 	readonly hasValueField: boolean;
 	readonly value?: string;
+	readonly baseUrl?: string;
 }
 
 export interface FakeBoat {
@@ -71,10 +73,24 @@ export interface FakeBoat {
 const MACHINE_TOKEN = "machine-token-fixture";
 const ADMIN_TOKEN = "admin-token-fixture";
 
+function credentialProfile(name: string, customApis: readonly string[]) {
+	const now = new Date().toISOString();
+	return {
+		id: `profile-${name}`,
+		name,
+		isDefault: false,
+		canManage: true,
+		connected: [],
+		owner: { id: "owner", kind: "personal", name: "trial", aiProxyEnabled: false },
+		customApis: [...customApis],
+		createdAt: now,
+		updatedAt: now,
+	};
+}
+
 function send(response: ServerResponse, status: number, body: unknown): void {
-	const encoded = JSON.stringify(body);
 	response.writeHead(status, { "content-type": "application/json" });
-	response.end(encoded);
+	response.end(JSON.stringify(body));
 }
 
 function fail(response: ServerResponse, status: number, code: string): void {
@@ -136,7 +152,7 @@ export async function startFakeBoat(): Promise<FakeBoat> {
 	const byKey = new Map<string, string>();
 	const templates = new Map<string, StoredTemplate>();
 	const operations = new Map<string, { gets: number; targetId: string }>();
-	const apiNames: string[] = [];
+	const profileApis = new Map<string, string[]>([["tensquads-agents", []]]);
 	const secretCalls: SecretCall[] = [];
 	const location = { basePath: "" };
 	const state: FakeBoat = {
@@ -290,9 +306,13 @@ export async function startFakeBoat(): Promise<FakeBoat> {
 			listProfiles(response, kind);
 			return;
 		}
+		if (path === "/credential-profiles" && request.method === "POST") {
+			await createProfile(request, response, kind);
+			return;
+		}
 		const secretMatch = /^\/credential-profiles\/([^/]+)\/custom-apis\/([^/]+)$/.exec(path);
 		if (secretMatch?.[1] && secretMatch[2] && (request.method === "PUT" || request.method === "DELETE")) {
-			await secret(request, response, kind, decodeURIComponent(secretMatch[2]));
+			await secret(request, response, kind, decodeURIComponent(secretMatch[1]), decodeURIComponent(secretMatch[2]));
 			return;
 		}
 		fail(response, 404, "not_found");
@@ -495,25 +515,37 @@ export async function startFakeBoat(): Promise<FakeBoat> {
 		});
 	}
 
+	function apisFor(profile: string): string[] {
+		const found = profileApis.get(profile);
+		if (found) return found;
+		profileApis.set(profile, []);
+		return profileApis.get(profile) ?? [];
+	}
+
 	function listProfiles(response: ServerResponse, kind: "admin" | "machine" | "other"): void {
 		secretCalls.push({ kind, name: "list", valuePresent: false, hasValueField: false });
-		const now = new Date().toISOString();
 		send(response, 200, {
 			ok: true,
 			type: "credential.list",
-			profiles: [
-				{
-					id: "profile-1",
-					name: "tensquads-agents",
-					isDefault: false,
-					owner: { id: "owner", kind: "personal", name: "trial", aiProxyEnabled: false },
-					canManage: true,
-					connected: [],
-					customApis: [...apiNames],
-					createdAt: now,
-					updatedAt: now,
-				},
-			],
+			profiles: [...profileApis.entries()].map(([name, apis]) => credentialProfile(name, apis)),
+		});
+	}
+
+	async function createProfile(
+		request: IncomingMessage,
+		response: ServerResponse,
+		kind: "admin" | "machine" | "other",
+	): Promise<void> {
+		const body = await readJson(request);
+		const name = typeof body.name === "string" ? body.name : "";
+		if (name.length === 0) return fail(response, 400, "invalid");
+		apisFor(name);
+		secretCalls.push({ kind, name: "profile", profile: name, valuePresent: false, hasValueField: false });
+		send(response, 201, {
+			ok: true,
+			type: "credential.profile",
+			success: true,
+			profile: credentialProfile(name, apisFor(name)),
 		});
 	}
 
@@ -521,32 +553,32 @@ export async function startFakeBoat(): Promise<FakeBoat> {
 		request: IncomingMessage,
 		response: ServerResponse,
 		kind: "admin" | "machine" | "other",
+		profile: string,
 		name: string,
 	): Promise<void> {
 		const body = request.method === "DELETE" ? {} : await readJson(request);
 		const value = typeof body.value === "string" ? body.value : undefined;
 		const valuePresent = typeof value === "string" && value.length > 0;
-		secretCalls.push({ kind, name, valuePresent, hasValueField: Object.hasOwn(body, "value"), value });
+		const baseUrl = typeof body.baseUrl === "string" ? body.baseUrl : undefined;
+		secretCalls.push({
+			kind,
+			name,
+			profile,
+			valuePresent,
+			hasValueField: Object.hasOwn(body, "value"),
+			value,
+			baseUrl,
+		});
+		const apis = apisFor(profile);
 		if (request.method === "DELETE") {
-			const index = apiNames.indexOf(name);
-			if (index >= 0) apiNames.splice(index, 1);
-		} else if (!apiNames.includes(name)) apiNames.push(name);
-		const now = new Date().toISOString();
+			const index = apis.indexOf(name);
+			if (index >= 0) apis.splice(index, 1);
+		} else if (!apis.includes(name)) apis.push(name);
 		send(response, 200, {
 			ok: true,
 			type: "credential.profile",
 			success: true,
-			profile: {
-				id: "profile-1",
-				name: "tensquads-agents",
-				isDefault: false,
-				owner: { id: "owner", kind: "personal", name: "trial", aiProxyEnabled: false },
-				canManage: true,
-				connected: [],
-				customApis: [...apiNames],
-				createdAt: now,
-				updatedAt: now,
-			},
+			profile: credentialProfile(profile, apis),
 		});
 	}
 

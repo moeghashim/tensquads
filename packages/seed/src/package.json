@@ -1,0 +1,8 @@
+{
+	"private": true,
+	"type": "module",
+	"description": "Declares the agent kit for the proof seed. This folder is not a workspace, so npm ci does not clone it.",
+	"dependencies": {
+		"@tensquads/agent-kit": "github:moeghashim/tensquads-agent-kit#516f6e131f107ec23c89991a91177fd4b50c33a7"
+	}
+}

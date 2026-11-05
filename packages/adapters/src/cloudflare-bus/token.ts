@@ -1,3 +1,5 @@
+import type { AccountMachine, AccountScope } from "@tensquads/kernel";
+
 import { hmacSign, sameBytes } from "./hmac.ts";
 
 function encode(bytes: Uint8Array): string {
@@ -56,7 +58,9 @@ export async function verifyMachineToken(
 	return sameBytes(signature, await hmacSign(secret, payload));
 }
 
-const TOKEN_TTL_SECONDS = 60 * 60;
+// A machine token lasts 30 days. The master rotates it during the last 7 days.
+export const MACHINE_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
+export const MACHINE_TOKEN_ROTATION_LEAD_SECONDS = 7 * 24 * 60 * 60;
 
 export const MACHINE_TOKEN_ENV = "TENSQUADS_MACHINE_TOKEN";
 export const MACHINE_TOKEN_BASE_URL_ENV = "TENSQUADS_MACHINE_TOKEN_BASE_URL";
@@ -70,8 +74,40 @@ export interface MachineTokenDelivery {
 }
 
 async function issueMachineToken(secret: string, accountId: string, agentId: string, nowMs: number): Promise<string> {
-	const exp = Math.floor(nowMs / 1000) + TOKEN_TTL_SECONDS;
+	const exp = Math.floor(nowMs / 1000) + MACHINE_TOKEN_TTL_SECONDS;
 	return signMachineToken(secret, accountId, agentId, exp);
+}
+
+export function machineCredentialProfile(accountId: string, agentId: string): string {
+	if (accountId.length === 0 || agentId.length === 0 || accountId.includes("/") || agentId.includes("/")) {
+		throw new Error("The machine profile name is not valid.");
+	}
+	return `tensquads-${accountId}-${agentId}`;
+}
+
+function machineTokenRotationDue(expSeconds: number | undefined, nowMs: number): boolean {
+	if (expSeconds === undefined || !Number.isFinite(expSeconds)) return true;
+	return expSeconds - Math.floor(nowMs / 1000) <= MACHINE_TOKEN_ROTATION_LEAD_SECONDS;
+}
+
+export async function rotateMachineToken(
+	machine: Pick<AccountMachine, "rotateToken">,
+	input: {
+		readonly scope: AccountScope;
+		readonly agentId: string;
+		readonly secret: string;
+		readonly nowMs: number;
+		readonly currentExp?: number;
+	},
+): Promise<{ readonly rotated: boolean; readonly profile: string; readonly exp: number }> {
+	const profile = machineCredentialProfile(input.scope.accountId, input.agentId);
+	if (!machineTokenRotationDue(input.currentExp, input.nowMs)) {
+		return { rotated: false, profile, exp: input.currentExp ?? 0 };
+	}
+	const exp = Math.floor(input.nowMs / 1000) + MACHINE_TOKEN_TTL_SECONDS;
+	const token = await signMachineToken(input.secret, input.scope.accountId, input.agentId, exp);
+	await machine.rotateToken(input.scope, input.agentId, token);
+	return { rotated: true, profile, exp };
 }
 
 // The machine receives the placeholder. Boat substitutes the signed token.

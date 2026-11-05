@@ -1,14 +1,6 @@
-import type {
-	BusinessType,
-	CheckOutcome,
-	Competitor,
-	GapEvidence,
-	ListedItem,
-	PageAudit,
-	PageFetch,
-	PageReader,
-	ResearchReport,
-} from "./types.ts";
+import type { BusinessType, Competitor, GapEvidence, ListedItem, ResearchReport } from "@tensquads/agent-kit";
+
+import type { CheckOutcome, PageAudit, PageFetch, PageReader } from "./types.ts";
 
 export interface PageCheckInput {
 	readonly previewUrl: string;

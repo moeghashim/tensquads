@@ -28,6 +28,14 @@ test("the account test machine starts once and pauses on stop", async () => {
 	assert.deepEqual(await machine.secrets(scope, "orders"), ["shop"]);
 	await machine.removeSecret(scope, "shop");
 	assert.deepEqual(await machine.secrets(scope, "orders"), []);
+	await machine.rotateToken(scope, "orders", "signed-token");
+	assert.deepEqual(await machine.secrets(scope, "orders"), ["TENSQUADS_MACHINE_TOKEN"]);
+	await assert.rejects(
+		() => machine.rotateToken(scope, "orders", ""),
+		(error: unknown) => error instanceof MachineFault && error.message === "The machine token is empty.",
+	);
+	await machine.removeSecret(scope, "TENSQUADS_MACHINE_TOKEN");
+	assert.deepEqual(await machine.secrets(scope, "orders"), []);
 	const template = await machine.makeTemplate(scope, "market-researcher", "0.1.0");
 	assert.equal(template.id, "tensquads-market-researcher-0.1.0");
 	assert.deepEqual(await machine.startFromTemplate(scope, template.id, "ads"), {

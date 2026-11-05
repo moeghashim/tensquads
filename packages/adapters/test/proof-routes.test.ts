@@ -58,6 +58,9 @@ test("the signer matches send, take, and heartbeat for one account and one agent
 	assert.equal(delivery.placeholder, MACHINE_TOKEN_PLACEHOLDER);
 	assert.notEqual(token, MACHINE_TOKEN_PLACEHOLDER);
 	assert.equal(await verifyMachineToken(KEY, token, "acct-a", "market", now), true);
+	const day = 24 * 60 * 60 * 1000;
+	assert.equal(await verifyMachineToken(KEY, token, "acct-a", "market", now + 29 * day), true);
+	assert.equal(await verifyMachineToken(KEY, token, "acct-a", "market", now + 30 * day), false);
 	assert.equal(await verifyMachineToken(KEY, token, "acct-b", "market", now), false);
 	assert.equal(await verifyMachineToken(KEY, token, "acct-a", "website", now), false);
 	await assert.rejects(

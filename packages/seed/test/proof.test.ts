@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createRepositories, saveWorkspace } from "@tensquads/adapters";
-import { assembleTiles, BLANK, digestOf, proofStory } from "@tensquads/domain";
+import { digestOf } from "@tensquads/agent-kit";
+import { assembleTiles, BLANK } from "@tensquads/domain";
+import { proofStory } from "@tensquads/domain/master";
 
 import { openPglite } from "../../adapters/test/pglite.ts";
 import { proofOfConceptWorkspace } from "../src/proof.ts";

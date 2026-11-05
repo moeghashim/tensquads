@@ -1,14 +1,8 @@
+import { digestOf, type Mandate, type ResearchReport } from "@tensquads/agent-kit";
+
 import type { BusEvent, BusKind } from "../bus/types.ts";
 import { checkBrief, checkPage, checkPublished, checkResearch, readReport } from "./checks.ts";
-import { digestOf } from "./digest.ts";
-import {
-	type BusinessRequest,
-	mandateFor,
-	type PageAudit,
-	type PageReader,
-	type PocMandate,
-	type ResearchReport,
-} from "./types.ts";
+import { type BusinessRequest, mandateFor, type PageAudit, type PageReader } from "./types.ts";
 
 export interface BriefModel {
 	writeBrief(report: ResearchReport): Promise<string> | string;
@@ -163,7 +157,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		const report = state.report;
 		const brief = state.brief;
 		const approvalId = nextId();
-		const mandate: PocMandate = mandateFor({
+		const mandate: Mandate = mandateFor({
 			approvalId,
 			ruleId: "poc-brief",
 			ruleWhen: "The brief is ready.",

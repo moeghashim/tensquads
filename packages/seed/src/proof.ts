@@ -1,6 +1,6 @@
 import type { WorkspaceSnapshot } from "@tensquads/adapters";
 import type { Agent, AgentImage, Plan, PlanName, Skill, SkillGate } from "@tensquads/domain";
-import { PROOF_PREVIEW_URL, proofStory } from "@tensquads/domain";
+import { PROOF_PREVIEW_URL, proofStory } from "@tensquads/domain/master";
 
 import { design } from "./design-file.ts";
 

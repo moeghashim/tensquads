@@ -826,6 +826,13 @@ test("workerd boots the built worker and rejects import-time builtin routes", as
 	const homepage = await bootWorkerd(serverDirectory, compat);
 	assert.equal(homepage.status, 200);
 	assert.equal(homepage.body.includes("tensquads homepage"), true);
+	const workerText = jsFiles(serverDirectory)
+		.map((path) => readFileSync(path, "utf8"))
+		.join("\n");
+	assert.equal(workerText.includes("@tensquads/agent-kit"), false);
+	assert.equal(workerText.includes("master/loop"), false);
+	assert.equal(workerText.includes("master/proof"), false);
+	assert.equal(workerText.includes("digestOf"), false);
 
 	const realPath = join(repoRoot, "package.json");
 	for (const fixture of workerdFixtures(realPath)) {

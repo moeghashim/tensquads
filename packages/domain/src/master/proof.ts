@@ -1,14 +1,7 @@
+import { digestOf, type ListedItem, type Mandate, type ResearchReport } from "@tensquads/agent-kit";
+
 import type { BusEvent, BusKind } from "../bus/types.ts";
-import { digestOf } from "./digest.ts";
-import {
-	type BusinessRequest,
-	type ListedItem,
-	mandateFor,
-	type PageAudit,
-	type PageFetch,
-	type PocMandate,
-	type ResearchReport,
-} from "./types.ts";
+import { type BusinessRequest, mandateFor, type PageAudit, type PageFetch } from "./types.ts";
 
 export const PROOF_PREVIEW_URL = "https://preview.example/proof";
 const PROOF_PUBLISHED_URL = "https://proof.10squads.com";
@@ -112,7 +105,7 @@ function stamp(
 	};
 }
 
-function approval(skill: string, mandate: PocMandate, extra: Readonly<Record<string, unknown>> = {}) {
+function approval(skill: string, mandate: Mandate, extra: Readonly<Record<string, unknown>> = {}) {
 	return { ...extra, approval: { skill, mandate } };
 }
 

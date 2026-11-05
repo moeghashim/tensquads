@@ -5,6 +5,14 @@ import test from "node:test";
 import { MachineFault } from "@tensquads/kernel";
 import { imageFromTemplate, uptimeText } from "../src/boat-fields.ts";
 import { createBoatMachine } from "../src/boat-machine.ts";
+import {
+	MACHINE_TOKEN_ENV,
+	MACHINE_TOKEN_ROTATION_LEAD_SECONDS,
+	MACHINE_TOKEN_TTL_SECONDS,
+	machineCredentialProfile,
+	rotateMachineToken,
+	verifyMachineToken,
+} from "../src/cloudflare-bus/token.ts";
 import { type FakeBoat, startFakeBoat } from "./boat-fake.ts";
 
 const scope = { accountId: "acct-1", mode: "account" } as const;
@@ -258,6 +266,7 @@ test("secret registration uses the admin token and returns names only", async ()
 		const secretValue = randomBytes(16).toString("hex");
 		await adapter.registerSecret(scope, "shop", secretValue);
 		assert.equal(fake.secretCalls.at(-1)?.kind, "admin");
+		assert.equal(fake.secretCalls.at(-1)?.profile, "tensquads-agents");
 		assert.equal(fake.secretCalls.at(-1)?.valuePresent, true);
 		assert.equal(fake.secretCalls.at(-1)?.value, secretValue);
 		assert.deepEqual(await adapter.secrets(scope, "orders"), ["shop"]);
@@ -362,6 +371,81 @@ test("the label filter accepts a comma-joined value", async () => {
 		);
 		const body = (await joined.json()) as { sandboxes: { id: string }[] };
 		assert.equal(body.sandboxes.length, 1);
+	} finally {
+		await fake.close();
+	}
+});
+
+test("rotation writes a 30-day token on the agent profile", async () => {
+	const fake = await startFakeBoat();
+	const now = Date.parse("2026-11-05T12:00:00.000Z");
+	const fetchApi: typeof fetch = (input, init) => {
+		const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+		assert.equal(new URL(href).hostname, "127.0.0.1");
+		return fetch(input, init);
+	};
+	try {
+		const adapter = createBoatMachine({
+			token: fake.machineToken,
+			adminToken: fake.adminToken,
+			basePath: fake.basePath,
+			profileName: "tensquads-agents",
+			secretBaseUrl: "https://example.com/hooks",
+			fetchApi,
+			wait,
+		});
+		assert.equal(machineCredentialProfile(scope.accountId, "market"), "tensquads-acct-1-market");
+		assert.throws(() => machineCredentialProfile("acct/1", "market"), /The machine profile name is not valid\./);
+		const early = await rotateMachineToken(adapter, {
+			scope,
+			agentId: "market",
+			secret: "machine-token-fixture",
+			nowMs: now,
+			currentExp: Math.floor(now / 1000) + MACHINE_TOKEN_ROTATION_LEAD_SECONDS + 60,
+		});
+		assert.equal(early.rotated, false);
+		assert.equal(fake.secretCalls.length, 0);
+		const first = await rotateMachineToken(adapter, {
+			scope,
+			agentId: "market",
+			secret: "machine-token-fixture",
+			nowMs: now,
+			currentExp: Math.floor(now / 1000) + MACHINE_TOKEN_ROTATION_LEAD_SECONDS,
+		});
+		assert.equal(first.rotated, true);
+		assert.equal(first.profile, "tensquads-acct-1-market");
+		assert.equal(first.exp - Math.floor(now / 1000), MACHINE_TOKEN_TTL_SECONDS);
+		const created = fake.secretCalls.filter((call) => call.name === "profile");
+		const puts = fake.secretCalls.filter((call) => call.name === MACHINE_TOKEN_ENV);
+		assert.equal(created.length, 1);
+		assert.equal(created[0]?.profile, "tensquads-acct-1-market");
+		assert.equal(puts.length, 1);
+		assert.equal(puts[0]?.profile, "tensquads-acct-1-market");
+		assert.equal(puts[0]?.kind, "admin");
+		assert.equal(puts[0]?.baseUrl, "https://example.com/hooks");
+		assert.notEqual(puts[0]?.profile, "tensquads-agents");
+		const token = puts[0]?.value ?? "";
+		const day = 24 * 60 * 60 * 1000;
+		assert.equal(
+			await verifyMachineToken("machine-token-fixture", token, scope.accountId, "market", now + 29 * day),
+			true,
+		);
+		assert.equal(
+			await verifyMachineToken("machine-token-fixture", token, scope.accountId, "market", now + 30 * day),
+			false,
+		);
+		const second = await rotateMachineToken(adapter, {
+			scope,
+			agentId: "market",
+			secret: "machine-token-fixture",
+			nowMs: now + day,
+		});
+		assert.equal(second.rotated, true);
+		const again = fake.secretCalls.filter((call) => call.name === "profile");
+		const written = fake.secretCalls.filter((call) => call.name === MACHINE_TOKEN_ENV);
+		assert.equal(again.length, 1);
+		assert.equal(written.length, 2);
+		assert.notEqual(written[1]?.value, token);
 	} finally {
 		await fake.close();
 	}

@@ -1,29 +1,4 @@
-export type BusinessType = "restaurant" | "grocer";
-
-export interface ListedItem {
-	readonly name: string;
-	readonly price: string;
-	readonly section: string;
-}
-
-export interface GapEvidence {
-	readonly sourceUrl: string;
-	readonly quote: string;
-}
-
-export interface Competitor {
-	readonly name: string;
-	readonly url: string;
-	readonly priceOrOffer: string;
-	readonly sourceUrl: string;
-}
-
-export interface ResearchReport {
-	readonly competitors: readonly Competitor[];
-	readonly gap: string;
-	readonly gapEvidence: GapEvidence;
-	readonly sources: readonly string[];
-}
+import type { BusinessType, ListedItem, Mandate } from "@tensquads/agent-kit";
 
 export interface BusinessRequest {
 	readonly businessName: string;
@@ -52,20 +27,6 @@ export interface CheckOutcome {
 	readonly evidence: readonly string[];
 }
 
-// Kit v0.1.1 (516f6e13) Mandate. The rules screen keeps its own Mandate type.
-export interface PocMandate {
-	readonly approvalId: string;
-	readonly ruleId: string;
-	readonly ruleWhen: string;
-	readonly ruleAction: string;
-	readonly ruleApproval: string;
-	readonly limitValue: number;
-	readonly policyVersion: string;
-	readonly saidYes: string;
-	readonly at: string;
-	readonly subject: string;
-}
-
 const MANDATE_AT = "2026-11-05T12:00:00.000Z";
 
 export function mandateFor(input: {
@@ -75,7 +36,7 @@ export function mandateFor(input: {
 	readonly ruleAction: string;
 	readonly subject: string;
 	readonly at?: string;
-}): PocMandate {
+}): Mandate {
 	return {
 		approvalId: input.approvalId,
 		ruleId: input.ruleId,

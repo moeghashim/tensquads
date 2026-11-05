@@ -3,11 +3,12 @@
 	"private": true,
 	"type": "module",
 	"exports": {
-		".": "./src/index.ts"
+		".": "./src/index.ts",
+		"./master": "./src/master/index.ts"
 	},
 	"scripts": {
-		"check": "tsc --noEmit",
-		"test": "node --experimental-strip-types --test test/*.test.ts"
+		"check": "tsc --noEmit && node ../../scripts/kit-optional.mjs check tsconfig.master.json",
+		"test": "node ../../scripts/kit-optional.mjs test --skip master.test.ts --skip master-loop.test.ts"
 	},
 	"devDependencies": {
 		"typescript": "7.0.2"
