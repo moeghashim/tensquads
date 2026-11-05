@@ -14,7 +14,7 @@ import type { OverviewData } from "./types.ts";
 
 // A decision that needs a session refresh is a failed write. These cases keep that file under the length limit.
 describe("overview decisions that need a refresh", { concurrency: false }, () => {
-	test("a refresh-needed decision reconciles an accepted read before the queued decision", async () => {
+	test("a refresh-needed decision does not read again and keeps the queued hold", async () => {
 		resetDecisions();
 		const data: OverviewData = {
 			accountId: "demo",
@@ -39,6 +39,7 @@ describe("overview decisions that need a refresh", { concurrency: false }, () =>
 				detail: "",
 			})),
 		};
+		let reads = 0;
 		const first = settled(
 			"refund",
 			2,
@@ -46,6 +47,7 @@ describe("overview decisions that need a refresh", { concurrency: false }, () =>
 				throw new Error("The session needs a refresh.");
 			},
 			async () => {
+				reads += 1;
 				const readAt = currentWrites();
 				acceptOverviewRead(data, readAt);
 				return { count: 2, readAt, dropLanded: true };
@@ -63,7 +65,9 @@ describe("overview decisions that need a refresh", { concurrency: false }, () =>
 		);
 		try {
 			const result = await first;
+			assert.equal(reads, 0);
 			assert.equal(result.refreshNeeded, true);
+			assert.equal(result.refreshed, false);
 			assert.equal(shownApprovalCount(2), 1);
 			assert.deepEqual(
 				patchSnapshot().map((item) => item.key),

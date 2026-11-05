@@ -6,6 +6,7 @@ import { build } from "esbuild";
 const bundle = await build({
 	stdin: {
 		contents: `
+			import { startInstance } from "./apps/web/src/start.ts";
 			import React, { useState } from "react";
 			import { createRoot } from "react-dom/client";
 			import design from "./packages/seed/src/design.json";
@@ -15,17 +16,36 @@ const bundle = await build({
 			import { OverviewPage } from "./apps/web/src/screens/overview/page.tsx";
 			import { ChatPage } from "./apps/web/src/screens/chat/ChatPage.tsx";
 			import { TrafficPage } from "./apps/web/src/screens/traffic/page.tsx";
-			import { createSessionRefresh } from "./apps/web/src/session/refresh-controller.ts";
 			import { agentSession } from "./apps/web/src/workspace/agent-on.ts";
 			import { WorkspaceProvider } from "./apps/web/src/workspace/provider.tsx";
 			import { registerTrafficAdvance } from "./apps/web/src/workspace/live.ts";
 
+			window.startInstance = startInstance;
 			window.calls = [];
 			window.invalidates = 0;
-			window.refreshCounts = { token: 0, reload: 0, signIn: 0 };
+			window.navigations = [];
+			window.refreshCounts = { token: 0, signIn: 0 };
+			window.Clerk = {
+				session: {
+					getToken: async () => {
+						window.refreshCounts.token += 1;
+						return "fresh";
+					},
+				},
+			};
 			window.router = {
+				history: {
+					location: { pathname: "/overview", search: "" },
+					subscribe() {
+						return () => {};
+					},
+				},
 				state: { matches: [] },
-				navigate() {},
+				navigate(to) {
+					const target = typeof to === "string" ? to : to && to.to;
+					window.navigations.push(target);
+					if (target === "/signin") window.refreshCounts.signIn += 1;
+				},
 				invalidate() {
 					window.invalidates += 1;
 					window.router.state.matches = [{
@@ -37,31 +57,8 @@ const bundle = await build({
 				},
 			};
 			window.agentMatch = { status: "success" };
-			window.refreshControl = createSessionRefresh({
-				token: async () => {
-					window.refreshCounts.token += 1;
-					return "fresh";
-				},
-				reload: () => {
-					window.refreshCounts.reload += 1;
-					window.doReload?.();
-				},
-				signIn: () => {
-					window.refreshCounts.signIn += 1;
-				},
-			});
-			window.callWrite = async (data, signal) => {
-				const control = window.refreshControl;
-				const id = control.begin();
-				try {
-					return await window.send(data, signal);
-				} catch (error) {
-					await control.finish(error, "POST", id);
-					throw error;
-				} finally {
-					control.end(id);
-				}
-			};
+			window.callWrite = (data, signal) =>
+				window.clientMiddleware({ next: () => window.send(data, signal), method: "POST" });
 			window.send = async (data) => {
 				window.calls.push(data);
 				throw new Error("The session needs a refresh.");
@@ -178,6 +175,7 @@ const bundle = await build({
 		resolveDir: process.cwd(),
 		loader: "tsx",
 	},
+	define: { "process.env.CLERK_SECRET_KEY": '""' },
 	bundle: true,
 	write: false,
 	format: "iife",
@@ -186,6 +184,14 @@ const bundle = await build({
 		{
 			name: "refresh-write-boundary",
 			setup(build) {
+				build.onResolve({ filter: /^@tanstack\/react-start$/ }, () => ({
+					path: "start",
+					namespace: "boundary",
+				}));
+				build.onResolve({ filter: /^@clerk\/tanstack-react-start\/server$/ }, () => ({
+					path: "clerk-server",
+					namespace: "boundary",
+				}));
 				build.onResolve({ filter: /^@clerk\/tanstack-react-start$/ }, () => ({
 					path: "clerk",
 					namespace: "boundary",
@@ -208,6 +214,22 @@ const bundle = await build({
 });
 
 function boundary(path) {
+	if (path === "start") {
+		return `
+			export const createMiddleware = () => ({
+				client(fn) {
+					window.clientMiddleware = fn;
+					return fn;
+				},
+			});
+			export const createStart = (fn) => fn();
+			export const createCsrfMiddleware = () => ({});
+			export const getRouterInstance = async () => window.router;
+		`;
+	}
+	if (path === "clerk-server") {
+		return `export const clerkMiddleware = () => ({});`;
+	}
 	if (path === "clerk") {
 		return `export function useAuth() { return { isLoaded: true, userId: "user-1" }; }`;
 	}
@@ -288,13 +310,13 @@ test("overview keeps the stored approval when the decision needs a refresh", asy
 		await expect(inbox.getByText("Refund $42", { exact: true })).toBeVisible();
 		await expect(inbox.getByText("2", { exact: true })).toBeVisible();
 		await page.getByRole("button", { name: "Approve", exact: true }).click();
-		await expect.poll(() => page.evaluate(() => window.refreshCounts.reload)).toBe(1);
+		await expect.poll(() => page.evaluate(() => window.invalidates)).toBe(1);
 		await expect(inbox.getByText("Refund $42", { exact: true })).toBeVisible();
 		await expect(inbox.getByText("Proposed mission", { exact: true })).toBeVisible();
 		await expect(inbox.getByText("2", { exact: true })).toBeVisible();
 		await expect(page.getByText("Refund $42 (approved)", { exact: true })).toHaveCount(0);
 		const seen = await counts(page);
-		assert.deepEqual(seen.refresh, { token: 1, reload: 1, signIn: 0 });
+		assert.deepEqual(seen.refresh, { token: 1, signIn: 0 });
 		assert.equal(seen.calls, 1);
 		assert.equal(seen.invalidates, 1);
 	});
@@ -307,15 +329,16 @@ test("the agent dashboard keeps the stored running control when the write needs 
 		await expect(toggle).toHaveAttribute("aria-pressed", "true");
 		await expect(page.getByText("Running", { exact: true })).toBeVisible();
 		await toggle.click();
-		await expect.poll(() => page.evaluate(() => window.refreshCounts.reload)).toBe(1);
+		await expect.poll(() => page.evaluate(() => window.invalidates)).toBe(1);
 		await expect(toggle).toHaveAttribute("aria-pressed", "true");
 		await expect(page.getByText("Running", { exact: true })).toBeVisible();
 		await expect(page.getByText("Paused", { exact: true })).toHaveCount(0);
 		await expect(page.locator("#agent-missing")).toHaveCount(0);
 		await expect(page.getByRole("heading", { name: "Support squad" })).toBeVisible();
 		const seen = await counts(page);
-		assert.deepEqual(seen.refresh, { token: 1, reload: 1, signIn: 0 });
+		assert.deepEqual(seen.refresh, { token: 1, signIn: 0 });
 		assert.equal(seen.calls, 1);
+		assert.equal(seen.invalidates, 1);
 	});
 });
 
@@ -328,12 +351,12 @@ test("traffic keeps the stored event when the advance needs a refresh", async ()
 		await expect(page.getByRole("heading", { name: "Squad traffic" })).toBeVisible();
 		await expect(page.getByText("Packed the stored order", { exact: true })).toHaveCount(2);
 		await page.getByRole("button", { name: "Send next event", exact: true }).click();
-		await expect.poll(() => page.evaluate(() => window.refreshCounts.reload)).toBe(1);
+		await expect.poll(() => page.evaluate(() => window.invalidates)).toBe(1);
 		await expect(page.getByText("Packed the stored order", { exact: true })).toHaveCount(2);
 		await expect(page.getByText("Opened the stored carton", { exact: true })).toBeVisible();
 		await expect(page.getByText("Phantom shipment", { exact: true })).toHaveCount(0);
 		const seen = await counts(page);
-		assert.deepEqual(seen.refresh, { token: 1, reload: 1, signIn: 0 });
+		assert.deepEqual(seen.refresh, { token: 1, signIn: 0 });
 		assert.equal(seen.calls, 1);
 		assert.equal(seen.invalidates, 1);
 	});
@@ -346,13 +369,14 @@ test("chat restores the unsent draft when begin needs a refresh", async () => {
 		const draft = page.locator("#chat-input");
 		await draft.fill("Keep the unsent question");
 		await page.getByRole("button", { name: "Send", exact: true }).click();
-		await expect.poll(() => page.evaluate(() => window.refreshCounts.reload)).toBe(1);
+		await expect.poll(() => page.evaluate(() => window.invalidates)).toBe(1);
 		await expect(draft).toHaveValue("Keep the unsent question");
 		await expect(page.getByText("Stored answer from Petra", { exact: true })).toBeVisible();
 		await expect(page.getByText("Keep the unsent question", { exact: true })).toHaveCount(0);
 		const seen = await counts(page);
-		assert.deepEqual(seen.refresh, { token: 1, reload: 1, signIn: 0 });
+		assert.deepEqual(seen.refresh, { token: 1, signIn: 0 });
 		assert.equal(seen.calls, 1);
+		assert.equal(seen.invalidates, 1);
 	});
 });
 
@@ -377,7 +401,7 @@ test("chat keeps the draft cleared after a committed begin loses its response", 
 		const seen = await counts(page);
 		assert.equal(seen.calls, 1);
 		assert.equal(seen.invalidates, 1);
-		assert.deepEqual(seen.refresh, { token: 0, reload: 0, signIn: 0 });
+		assert.deepEqual(seen.refresh, { token: 0, signIn: 0 });
 	});
 });
 
@@ -401,6 +425,6 @@ test("chat does not restore or refresh after begin exits the session", async () 
 		await expect(page.getByText("Leave this session", { exact: true })).toHaveCount(0);
 		const seen = await counts(page);
 		assert.equal(seen.invalidates, 0);
-		assert.deepEqual(seen.refresh, { token: 0, reload: 0, signIn: 0 });
+		assert.deepEqual(seen.refresh, { token: 0, signIn: 0 });
 	});
 });

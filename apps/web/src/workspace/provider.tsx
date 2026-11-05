@@ -380,23 +380,26 @@ interface SendHooks {
 	readonly applyFrame: (frame: WorkspaceFrameData) => void;
 }
 
+type SendOutcome = "left" | "refresh" | "settle";
+
 async function sendDraft(value: string, hooks: SendHooks) {
 	let refreshed: WorkspaceFrameData | undefined;
-	let left = false;
+	let outcome: SendOutcome = "settle";
 	try {
-		left = await performSend(value, hooks);
+		outcome = await performSend(value, hooks);
 	} catch {
 		// Finish settled with an error after begin. The draft stays cleared.
 	}
 	try {
-		if (!left && hooks.mounted.current) refreshed = await hooks.refreshFrame();
+		// A refresh-needed begin already invalidated the router on the shared path.
+		if (outcome === "settle" && hooks.mounted.current) refreshed = await hooks.refreshFrame();
 	} catch {
 		// Refresh settled with an error. The guard still clears.
 	} finally {
 		hooks.sending.current = false;
 	}
 	if (!hooks.mounted.current) return;
-	if (left) {
+	if (outcome === "left") {
 		hooks.setPending(false);
 		hooks.setThinking(false);
 		hooks.setThinkingAgent("");
@@ -405,22 +408,28 @@ async function sendDraft(value: string, hooks: SendHooks) {
 	completeSend(hooks, refreshed);
 }
 
-async function performSend(value: string, hooks: SendHooks): Promise<boolean> {
+function sendFailure(settled: { readonly left: boolean; readonly refreshNeeded: boolean }): SendOutcome {
+	if (settled.left) return "left";
+	if (settled.refreshNeeded) return "refresh";
+	return "settle";
+}
+
+async function performSend(value: string, hooks: SendHooks): Promise<SendOutcome> {
 	const started = await settleWrite(() =>
 		bounded((signal) => beginWorkspaceSend({ data: { accountId: hooks.accountId, text: value }, signal })),
 	);
 	if (!started.ok) {
 		if (started.refreshNeeded && hooks.mounted.current) restoreDraft(value, hooks);
-		return started.left;
+		return sendFailure(started);
 	}
-	if (!hooks.mounted.current) return false;
+	if (!hooks.mounted.current) return "settle";
 	const body = started.value;
 	if (body.kind === "ignored") {
 		restoreDraft(value, hooks);
-		return false;
+		return "settle";
 	}
 	showStartedMessages(body, hooks);
-	if (body.kind !== "working") return false;
+	if (body.kind !== "working") return "settle";
 	return finishWorkingSend(body, hooks);
 }
 
@@ -437,20 +446,20 @@ function showStartedMessages(started: Awaited<ReturnType<typeof beginWorkspaceSe
 async function finishWorkingSend(
 	started: Extract<Awaited<ReturnType<typeof beginWorkspaceSend>>, { kind: "working" }>,
 	hooks: SendHooks,
-): Promise<boolean> {
+): Promise<SendOutcome> {
 	hooks.setThinking(true);
 	hooks.setThinkingAgent(started.agentName);
 	hooks.setStartedTask(started.task);
 	await delay(replyWaitMs);
-	if (!hooks.mounted.current) return false;
+	if (!hooks.mounted.current) return "settle";
 	const finished = await settleWrite(() =>
 		bounded((signal) => finishWorkspaceSend({ data: { accountId: hooks.accountId, text: started.taskId }, signal })),
 	);
-	if (!finished.ok) return finished.left;
+	if (!finished.ok) return sendFailure(finished);
 	if (hooks.mounted.current && finished.value.kind === "replied") {
 		hooks.setMessages(finished.value.messages);
 	}
-	return false;
+	return "settle";
 }
 
 function completeSend(hooks: SendHooks, refreshed: WorkspaceFrameData | undefined) {

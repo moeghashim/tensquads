@@ -269,6 +269,10 @@ async function runBounded(job: Job, gen: number): Promise<DecisionResult> {
 	if (!settled.ok && settled.left) {
 		return { ...emptyResult(), left: true };
 	}
+	// The shared session refresh already reloads the router. This screen must not reload again.
+	if (!settled.ok && settled.refreshNeeded) {
+		return { ...emptyResult(), refreshNeeded: true };
+	}
 	const wrote = settled.ok;
 	const row = settled.ok ? decisionRow(settled.value) : null;
 	const refreshNeeded = !settled.ok && settled.refreshNeeded;

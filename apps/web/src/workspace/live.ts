@@ -50,22 +50,22 @@ export function consumeQueuedEvent(): string {
 
 // Advance and refresh each wait up to 30 seconds, so one step can take 60.
 async function step(accountId: string, refresh: () => void | Promise<void>): Promise<void> {
-	const id = await advancedId(accountId);
+	const settled = await settledAdvance(accountId);
+	// The document is leaving. The click must not settle as an empty success.
+	if (!settled.ok && settled.left) return new Promise(() => undefined);
 	if (stopped()) return;
-	noteSelection(id);
+	// The shared session refresh already reloads the router. This screen must not reload again.
+	if (!settled.ok && settled.refreshNeeded) return;
+	noteSelection(settled.ok ? settled.value : "");
 	await refreshed(refresh);
 }
 
-async function advancedId(accountId: string): Promise<string> {
-	const settled = await settleWrite(() => {
+function settledAdvance(accountId: string) {
+	return settleWrite(() => {
 		const call = advance;
 		if (!call) throw new Error("Traffic advance is not configured.");
 		return bounded((signal) => call({ data: accountId, signal }));
 	});
-	if (settled.ok) return settled.value;
-	// The document is leaving. The click must not settle as an empty success.
-	if (settled.left) return new Promise(() => undefined);
-	return "";
 }
 
 async function refreshed(refresh: () => void | Promise<void>): Promise<void> {
