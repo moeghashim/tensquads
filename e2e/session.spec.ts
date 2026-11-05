@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { openPostgres } from "@tensquads/adapters";
+import { createClerkUser } from "./clerk-user.ts";
 import { allowTestSignUp, expect, recordAuthNotes, secretsFor, test, watchPageErrors } from "./support.ts";
 import { deleteWorkspaceAccount } from "./workspace.ts";
 
@@ -55,6 +56,7 @@ test("a new user makes one account and reaches overview", async ({ page }) => {
 	}
 	const notes = watchPageErrors(page);
 	const authNotes = await recordAuthNotes(page);
+	const createNotes = watchCreateAccount(page);
 	await allowTestSignUp(page, secrets.publishable, secrets.secret);
 	let userId = "";
 	try {
@@ -71,7 +73,8 @@ test("a new user makes one account and reaches overview", async ({ page }) => {
 			await page.waitForURL("**/overview", { timeout: 20_000 });
 		} catch {
 			const alert = (await page.getByRole("alert").allTextContents()).join(" ").trim();
-			const detail = [...authNotes, ...notes].join(" | ");
+			await Promise.all(createNotes.pending);
+			const detail = [...authNotes, ...notes, ...createNotes.notes].join(" | ");
 			throw new Error(
 				`Sign-up stayed on ${page.url()}. Alert: ${alert.length > 0 ? alert : "none"}. Notes: ${detail || "none"}.`,
 			);
@@ -83,7 +86,7 @@ test("a new user makes one account and reaches overview", async ({ page }) => {
 		await expect(page.locator("[data-if='dockUnread']")).toHaveCount(0);
 		const rows = await sql.query("select id from accounts where email = $1", [email]);
 		expect(rows).toHaveLength(1);
-		const accountId = String(rows[0]?.id ?? "");
+		const accountId = firstId(rows);
 		const agents = await sql.query("select id from agents where account_id = $1", [accountId]);
 		expect(agents.length).toBeGreaterThan(0);
 		userId = await clerkUserId(secrets.secret, email);
@@ -100,30 +103,97 @@ test("a new user makes one account and reaches overview", async ({ page }) => {
 	}
 });
 
-type Sql = ReturnType<typeof neon>;
-
-async function createClerkUser(secret: string, email: string, password: string) {
-	const response = await fetch("https://api.clerk.com/v1/users", {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${secret}`,
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			email_address: [email],
-			password,
-			skip_password_checks: true,
-		}),
+function watchCreateAccount(page: import("@playwright/test").Page) {
+	const notes: string[] = [];
+	const pending: Promise<void>[] = [];
+	page.on("response", (response) => {
+		const path = createAccountPath(response);
+		if (!path) return;
+		pending.push(readCreateNote(response, path, notes));
 	});
-	if (!response.ok) {
-		throw new Error(`Clerk create user failed with status ${response.status}.`);
-	}
-	const body = (await response.json()) as { id?: string };
-	if (!body.id) {
-		throw new Error("Clerk create user returned no id.");
-	}
-	return body.id;
+	return { notes, pending };
 }
+
+function createAccountPath(response: import("@playwright/test").Response): string | null {
+	if (response.request().method() !== "POST") return null;
+	const path = localhostPath(response.url());
+	if (!path || assetPath(path)) return null;
+	return path;
+}
+
+function localhostPath(value: string): string | null {
+	try {
+		const url = new URL(value);
+		if (!url.hostname.includes("localhost")) return null;
+		return url.pathname;
+	} catch {
+		return null;
+	}
+}
+
+function assetPath(path: string): boolean {
+	return path.startsWith("/v1/") || path.startsWith("/@") || path.startsWith("/src");
+}
+
+function readCreateNote(response: import("@playwright/test").Response, path: string, notes: string[]): Promise<void> {
+	return response
+		.text()
+		.then((text) => {
+			notes.push(createAccountNote(response.status(), path, text));
+		})
+		.catch(() => undefined);
+}
+
+function createAccountNote(status: number, path: string, text: string): string {
+	const message = createAccountMessage(text)
+		.replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted]")
+		.replace(/[\w.+-]+@[\w.-]+/g, "[email]")
+		.replace(/sk_(?:test|live)_[A-Za-z0-9]+/g, "[redacted]")
+		.replace(/pk_(?:test|live)_[A-Za-z0-9]+/g, "[redacted]")
+		.slice(0, 180);
+	return `${status} ${path} ${message}`.trim();
+}
+
+const createFailures: readonly (readonly [string, string])[] = [
+	["The session needs a refresh.", "session refresh"],
+	["The workspace write did not finish.", "unfinished"],
+	["The database is not configured.", "database not configured"],
+	["The create request is not valid.", "invalid create request"],
+];
+
+function createAccountMessage(text: string): string {
+	const known = knownCreateFailure(text);
+	if (known) return known;
+	return createAccountSentence(text);
+}
+
+function knownCreateFailure(text: string): string | null {
+	if (text.toLowerCase().includes("deadlock") || text.includes("40P01")) return "deadlock 40P01";
+	return labeledFailure(text);
+}
+
+function labeledFailure(text: string): string | null {
+	for (const [needle, label] of createFailures) {
+		if (text.includes(needle)) return label;
+	}
+	return null;
+}
+
+function createAccountSentence(text: string): string {
+	const sentence = text.match(/The [^"\\]{0,120}/);
+	if (sentence) return sentence[0];
+	if (text.includes("created")) return "ok";
+	return "no-error-message";
+}
+
+function firstId(rows: readonly { id?: unknown }[]): string {
+	const row = rows[0];
+	if (!row) return "";
+	if (row.id === undefined || row.id === null) return "";
+	return String(row.id);
+}
+
+type Sql = ReturnType<typeof neon>;
 
 async function clerkUserId(secret: string, email: string) {
 	const response = await fetch(`https://api.clerk.com/v1/users?email_address=${encodeURIComponent(email)}`, {

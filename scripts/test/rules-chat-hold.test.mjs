@@ -71,8 +71,14 @@ const bundle = await build({
 				build.onLoad({ filter: /.*/, namespace: "boundary" }, ({ path }) => ({
 					contents: path.endsWith("workspace.ts")
 						? `
-							export const beginWorkspaceSend = ({ data }) => window.beginSend(data);
-							export const finishWorkspaceSend = ({ data }) => window.finishSend(data);
+							export const beginWorkspaceSend = ({ data }) => {
+								if (data.accountId !== window.frame.accountId) throw new Error("Wrong account");
+								return window.beginSend(data.text);
+							};
+							export const finishWorkspaceSend = ({ data }) => {
+								if (data.accountId !== window.frame.accountId) throw new Error("Wrong account");
+								return window.finishSend(data.text);
+							};
 						`
 						: `
 							function asWritten(data, row) {
@@ -93,9 +99,12 @@ const bundle = await build({
 
 function frame(messages = []) {
 	return {
+		accountId: "northwind",
 		accountName: "Northwind",
 		owner: "Moe",
 		masterName: "Master",
+		squadCount: 1,
+		superAdmin: false,
 		agents: [{ id: "orders", name: "Orders", tint: "#181818", on: true }],
 		approvalCount: 0,
 		messages,
@@ -136,6 +145,7 @@ async function mount(page) {
 				},
 			];
 			window.readRules = async () => ({
+				accountId: "northwind",
 				rules: window.rules.map((row) => ({ ...row })),
 				limits: window.limits.map((row) => ({ ...row })),
 			});

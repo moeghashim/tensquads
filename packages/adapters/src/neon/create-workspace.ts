@@ -1,6 +1,7 @@
 import { type AccountScope, requireScope, type WorkspaceCreated, type WorkspaceDraft } from "@tensquads/domain";
-import { eq } from "drizzle-orm";
+import { eq, max, sql } from "drizzle-orm";
 
+import { takeWriterLock } from "./lock.ts";
 import type { AppDatabase } from "./postgres.ts";
 import { accounts, agents, machines, masters, squads, stateEntries, subscriptions } from "./schema.ts";
 
@@ -46,6 +47,9 @@ export async function createWorkspace(
 
 async function insertWorkspace(db: AppDatabase, accountId: string, draft: WorkspaceDraft): Promise<WorkspaceCreated> {
 	return db.transaction(async (tx) => {
+		// The shared global lock, then this Clerk user. A new account id would not
+		// serialize two creates for the same user, and a read before the lock deadlocks a migration.
+		await takeWriterLock((statement) => tx.execute(sql.raw(statement)), draft.clerkUserId);
 		const existing = await tx
 			.select({ id: accounts.id })
 			.from(accounts)
@@ -55,6 +59,9 @@ async function insertWorkspace(db: AppDatabase, accountId: string, draft: Worksp
 			return { accountId: found.id, created: false };
 		}
 		const now = new Date();
+		const highest = await tx.select({ value: max(accounts.sortOrder) }).from(accounts);
+		const current = highest[0]?.value;
+		const sortOrder = current === null || current === undefined ? 0 : current + 1;
 		await tx.insert(accounts).values({
 			id: accountId,
 			accountId,
@@ -66,10 +73,10 @@ async function insertWorkspace(db: AppDatabase, accountId: string, draft: Worksp
 			agents: draft.agents.length,
 			online: draft.agents.length,
 			tasks: 0,
-			lastActive: "",
-			createdWeek: 0,
+			lastActive: "Just now",
+			createdWeek: 7,
 			mission: draft.mission,
-			sortOrder: 0,
+			sortOrder,
 		});
 		await tx.insert(subscriptions).values({
 			accountId,

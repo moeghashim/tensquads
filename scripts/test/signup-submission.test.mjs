@@ -26,7 +26,10 @@ const result = await esbuild.build({
 			name: "signup-boundaries",
 			setup(build) {
 				build.onResolve(
-					{ filter: /^(@clerk\/tanstack-react-start|@tanstack\/react-router|#\/server\/create-account.ts)$/ },
+					{
+						filter:
+							/^(@clerk\/tanstack-react-start|@tanstack\/react-router|#\/server\/create-account.ts|#\/server\/admin.ts)$/,
+					},
 					(args) => ({ path: args.path, namespace: "boundary" }),
 				);
 				build.onLoad({ filter: /.*/, namespace: "boundary" }, ({ path }) => ({
@@ -39,12 +42,17 @@ const result = await esbuild.build({
 					};
 					export const useSignUp = () => ({ signUp });
 					export const useSignIn = () => ({ signIn: signUp });
+					export const useClerk = () => ({ user: null, setActive: async () => {} });
 				`
 						: path.startsWith("@tanstack")
 							? `
 					export const useNavigate = () => async (options) => { window.destination = options.to; window.calls.navigate++; };
 				`
-							: `
+							: path.endsWith("admin.ts")
+								? `
+					export const platformOrgId = async () => "";
+				`
+								: `
 					export const createAccount = async () => {
 						window.calls.create++;
 						await new Promise((resolve, reject) => { window.finish = resolve; window.fail = reject; });

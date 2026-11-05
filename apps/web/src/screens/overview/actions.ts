@@ -1,6 +1,6 @@
-import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
-
+import { onRulesAccountReset } from "#/screens/rules/write-queue.ts";
 import { advanceWrites, currentWrites } from "#/workspace/approval-count.ts";
+import { bounded } from "#/workspace/bounded.ts";
 import { clearFrameHold } from "#/workspace/frame-load.ts";
 
 import { clearOverviewHold } from "./load.ts";
@@ -46,6 +46,8 @@ const landed = new Map<string, number>();
 const reflected = new Set<string>();
 let activeKey: string | null = null;
 let seenServer: object | null = null;
+
+onRulesAccountReset(resetDecisions);
 
 function emptyResult(): DecisionResult {
 	return { wrote: false, refreshed: false, count: null, row: null, readAt: null, dropLanded: false };
@@ -278,27 +280,6 @@ function decisionRow(value: unknown): DecisionRow | null {
 		return null;
 	}
 	return { id, status, count };
-}
-
-function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
-	const controller = new AbortController();
-	let timer: ReturnType<typeof setTimeout> | undefined;
-	const timeout = new Promise<never>((_resolve, reject) => {
-		timer = setTimeout(() => {
-			controller.abort();
-			reject(new DOMException("The operation was aborted.", "AbortError"));
-		}, PENDING_TASK_WINDOW_MS);
-	});
-	const work = Promise.resolve().then(() => run(controller.signal));
-	void work.then(
-		() => undefined,
-		() => undefined,
-	);
-	return Promise.race([work, timeout]).finally(() => {
-		if (timer !== undefined) {
-			clearTimeout(timer);
-		}
-	});
 }
 
 function notify(): void {

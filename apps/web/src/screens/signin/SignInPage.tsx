@@ -1,10 +1,13 @@
-import { useSignIn } from "@clerk/tanstack-react-start";
+import { useClerk, useSignIn } from "@clerk/tanstack-react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
+
+import { platformOrgId } from "#/server/admin.ts";
 
 import { css } from "../css.ts";
 import { Arrow, Mark } from "../marks.tsx";
 import { fieldsComplete } from "../signup/machine.ts";
+import { activateCompanyOrganization } from "./activate-org.ts";
 
 const inputStyle = css(
 	"height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; border-radius: 10px; background: rgba(13,13,13,.06); font-family: inherit; font-size: 14px; color: #0d0d0d",
@@ -25,6 +28,7 @@ export function SignInPage({ publishableKey }: { publishableKey: string }) {
 
 function SignInClerk() {
 	const { signIn } = useSignIn();
+	const clerk = useClerk();
 	const navigate = useNavigate();
 	return (
 		<SignInScreen
@@ -36,6 +40,8 @@ function SignInClerk() {
 					}
 					const finalized = await signIn.finalize();
 					if (finalized.error) return "wrong";
+					const orgId = await platformOrgId().catch(() => "");
+					await activateCompanyOrganization(clerk, orgId).catch(() => undefined);
 					await navigate({ to: "/overview" });
 					return "ok";
 				} catch {

@@ -33,6 +33,7 @@ export interface TrafficStoreRow {
 }
 
 export interface TrafficData {
+	readonly accountId: string;
 	readonly events: readonly TrafficEvent[];
 	readonly store: readonly TrafficStoreRow[];
 	readonly agents: readonly TrafficAgent[];

@@ -1,13 +1,14 @@
-import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
+import { bounded } from "./bounded.ts";
 
 export interface LiveTick {
+	readonly accountId: string;
 	readonly live: boolean;
 	readonly refresh: () => void | Promise<void>;
 }
 
 // The route registers this call. This file cannot import the server function.
 // The dock bundle test compiles this module without the server-function compiler.
-type Advance = (options: { signal: AbortSignal }) => Promise<string>;
+type Advance = (options: { data: string; signal: AbortSignal }) => Promise<string>;
 let advance: Advance | null = null;
 
 export function registerTrafficAdvance(fn: Advance) {
@@ -15,15 +16,26 @@ export function registerTrafficAdvance(fn: Advance) {
 }
 
 let pending = false;
+let retired = false;
 let queuedEventId = "";
 
 interface QueuedClick {
+	readonly accountId: string;
 	readonly refresh: () => void | Promise<void>;
 	readonly resolve: () => void;
 	readonly reject: (error: unknown) => void;
 }
 
 const clicks: QueuedClick[] = [];
+
+export function retireLiveQueue(): void {
+	retired = true;
+	clicks.length = 0;
+}
+
+function stopped(): boolean {
+	return retired;
+}
 
 function noteSelection(id: string) {
 	if (id.length > 0) queuedEventId = id;
@@ -36,35 +48,24 @@ export function consumeQueuedEvent(): string {
 }
 
 // Advance and refresh each wait up to 30 seconds, so one step can take 60.
-function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
-	const controller = new AbortController();
-	let timer: ReturnType<typeof setTimeout> | undefined;
-	const timeout = new Promise<never>((_resolve, reject) => {
-		timer = setTimeout(() => {
-			controller.abort();
-			reject(new DOMException("The operation was aborted.", "AbortError"));
-		}, PENDING_TASK_WINDOW_MS);
-	});
-	const work = Promise.resolve().then(() => run(controller.signal));
-	void work.then(
-		() => undefined,
-		() => undefined,
-	);
-	return Promise.race([work, timeout]).finally(() => {
-		if (timer !== undefined) clearTimeout(timer);
-	});
+async function step(accountId: string, refresh: () => void | Promise<void>): Promise<void> {
+	const id = await advancedId(accountId);
+	if (stopped()) return;
+	noteSelection(id);
+	await refreshed(refresh);
 }
 
-async function step(refresh: () => void | Promise<void>): Promise<void> {
-	let id = "";
+async function advancedId(accountId: string): Promise<string> {
 	try {
 		const call = advance;
 		if (!call) throw new Error("Traffic advance is not configured.");
-		id = await bounded((signal) => call({ signal }));
+		return await bounded((signal) => call({ data: accountId, signal }));
 	} catch {
-		id = "";
+		return "";
 	}
-	noteSelection(id);
+}
+
+async function refreshed(refresh: () => void | Promise<void>): Promise<void> {
 	try {
 		await bounded(async () => refresh());
 	} catch {
@@ -73,16 +74,21 @@ async function step(refresh: () => void | Promise<void>): Promise<void> {
 }
 
 function pump(): void {
-	if (pending) return;
+	if (stopped() || pending) return;
 	const next = clicks.shift();
 	if (!next) return;
 	pending = true;
-	void runOwned(next.refresh, next);
+	void runOwned(next.accountId, next.refresh, next);
 }
 
-async function runOwned(refresh: () => void | Promise<void>, done: QueuedClick | null): Promise<void> {
+async function runOwned(
+	accountId: string,
+	refresh: () => void | Promise<void>,
+	done: QueuedClick | null,
+): Promise<void> {
 	try {
-		await step(refresh);
+		await step(accountId, refresh);
+		if (stopped()) return;
 		done?.resolve();
 	} catch (error) {
 		if (done) {
@@ -100,14 +106,15 @@ async function runOwned(refresh: () => void | Promise<void>, done: QueuedClick |
 }
 
 export async function runLiveTick(tick: LiveTick): Promise<void> {
-	if (!tick.live || pending || clicks.length > 0) return;
+	if (stopped() || !tick.live || pending || clicks.length > 0) return;
 	pending = true;
-	await runOwned(tick.refresh, null);
+	await runOwned(tick.accountId, tick.refresh, null);
 }
 
-export function sendNextEvent(refresh: () => void | Promise<void>): Promise<void> {
+export function sendNextEvent(refresh: () => void | Promise<void>, accountId: string): Promise<void> {
+	if (stopped()) return new Promise(() => undefined);
 	return new Promise((resolve, reject) => {
-		clicks.push({ refresh, resolve, reject });
+		clicks.push({ accountId, refresh, resolve, reject });
 		pump();
 	});
 }

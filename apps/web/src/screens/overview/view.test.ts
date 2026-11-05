@@ -28,6 +28,7 @@ const approval = {
 
 function data(): OverviewData {
 	return {
+		accountId: "demo",
 		greeting: "Good morning, Moe",
 		mission: "Run the store",
 		online: "4 of 5 squads online",

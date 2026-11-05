@@ -1,4 +1,5 @@
 import type {
+	AccountOpened,
 	AccountScope,
 	Autonomy,
 	Fenced,
@@ -16,6 +17,7 @@ import { type BusCommands, bus } from "./plugins/bus.ts";
 import type { ConversationCommands } from "./plugins/conversation.ts";
 import { conversation } from "./plugins/conversation.ts";
 import { plugins } from "./plugins/index.ts";
+import type { PlatformCommands } from "./plugins/platform.ts";
 import type { PolicyCommands } from "./plugins/policy.ts";
 import { policy } from "./plugins/policy.ts";
 import type { PolicyApprovalCommands } from "./plugins/policy-approvals.ts";
@@ -98,7 +100,6 @@ export class Kernel {
 		return (this.context.get("workspaceConversation") as ConversationCommands).finishSend(scope, taskId);
 	}
 
-	// fallow-ignore-next-line unused-class-member
 	async setAgentOn(
 		scope: AccountScope,
 		agentId: string,
@@ -197,6 +198,11 @@ export class Kernel {
 	): Promise<Fenced<StoredLimit>> {
 		await this.ready;
 		return (this.context.get("workspacePolicy") as PolicyCommands).setLimit(scope, key, value, fence, deadlineAt);
+	}
+
+	async openAccount(scope: AccountScope): Promise<AccountOpened> {
+		await this.ready;
+		return (this.context.get("platformEvents") as PlatformCommands).openAccount(scope);
 	}
 
 	async decide(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision> {

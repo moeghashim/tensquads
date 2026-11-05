@@ -40,7 +40,7 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 	}
 
 	async function finish(error: unknown, method: string, id: number): Promise<void> {
-		if (!isSessionRefreshNeeded(error) || method !== "GET") return;
+		if (!startsRefresh(error, method)) return;
 		if (wave && waveGeneration === generation && !spent) waveIds.add(id);
 		if (wave && waveGeneration === generation && waveIds.has(id)) {
 			const seen = generation;
@@ -98,4 +98,8 @@ export function createSessionRefresh(deps: SessionRefreshDeps) {
 	}
 
 	return { noteAction, begin, end, finish };
+}
+
+function startsRefresh(error: unknown, method: string): boolean {
+	return isSessionRefreshNeeded(error) && (method === "GET" || method === "POST");
 }

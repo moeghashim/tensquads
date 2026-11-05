@@ -93,11 +93,14 @@ describe("approval count clock", () => {
 	});
 
 	test("the overview stamp round-trips only while that read is still current", () => {
-		const stamp = overviewMatchStamp({ count: 3, writeAt: 0, greeting: "Good morning, Moe" });
+		const stamp = overviewMatchStamp(
+			{ accountId: "demo", count: 3, writeAt: 0, greeting: "Good morning, Moe" },
+			"demo",
+		);
 		assert.equal(stamp, "0:3");
 		assert.deepEqual(overviewReadFromStamp(stamp, 0), { count: 3, writeAt: 0 });
 		assert.equal(overviewReadFromStamp(stamp, 1), null);
-		assert.equal(overviewMatchStamp(null), null);
-		assert.equal(overviewMatchStamp({ count: "3", writeAt: 0 }), null);
+		assert.equal(overviewMatchStamp(null, "demo"), null);
+		assert.equal(overviewMatchStamp({ accountId: "demo", count: "3", writeAt: 0 }, "demo"), null);
 	});
 });

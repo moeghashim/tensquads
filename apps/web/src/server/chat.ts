@@ -26,6 +26,6 @@ export const loadChat = createServerFn({ method: "GET" }).handler(async () => {
 			kind: event.kind,
 			text: event.text,
 		}));
-		return { threadId: thread?.id ?? "dock", events: handoffs };
+		return { accountId: scope.accountId, threadId: thread?.id ?? "dock", events: handoffs };
 	});
 });

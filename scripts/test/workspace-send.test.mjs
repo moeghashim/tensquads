@@ -69,6 +69,16 @@ const bundle = await esbuild.build({
 		{
 			name: "workspace-boundaries",
 			setup(build) {
+				build.onResolve({ filter: /^#\/server\/rules.ts$/ }, ({ path }) => ({
+					path,
+					namespace: "rules-boundary",
+				}));
+				build.onLoad({ filter: /.*/, namespace: "rules-boundary" }, () => ({
+					contents: `
+						export const setRuleEnabled = () => { throw new Error("Unexpected rules write"); };
+						export const setRuleLimit = () => { throw new Error("Unexpected limit write"); };
+					`,
+				}));
 				build.onResolve({ filter: /^#\/server\/workspace.ts$/ }, ({ path }) => ({
 					path,
 					namespace: "boundary",
@@ -85,7 +95,7 @@ const bundle = await esbuild.build({
 				}));
 				build.onLoad({ filter: /.*/, namespace: "boundary" }, () => ({
 					contents: `
-     export const beginWorkspaceSend = ({data}) => window.beginSend(data);
+     export const beginWorkspaceSend = ({data}) => window.beginSend(data.text);
      export const finishWorkspaceSend = ({data, signal}) => {
       if (window.holdFinish) {
        window.finishHeld = true;
@@ -96,7 +106,7 @@ const bundle = await esbuild.build({
         else signal.addEventListener("abort", abort, { once: true });
        });
       }
-      return window.finishSend(data);
+      return window.finishSend(data.text);
      };
     `,
 				}));
@@ -136,7 +146,7 @@ async function withDock(t, run) {
 			return result;
 		});
 		await page.exposeFunction("readFrame", async () => {
-			return readWorkspaceFrame(db, scope);
+			return { ...(await readWorkspaceFrame(db, scope)), accountId: scope.accountId };
 		});
 		const mount = async () => {
 			await page.setContent('<div id="root"></div>');

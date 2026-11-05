@@ -1,10 +1,11 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useSyncExternalStore } from "react";
 
 import { loadWorkspaceFrame } from "#/server/workspace.ts";
 import { agentSession, stampAgentReads, subscribeAgentSession } from "#/workspace/agent-on.ts";
 import { captureWrites } from "#/workspace/approval-count.ts";
 import { frameEpoch, loadHeldFrame } from "#/workspace/frame-load.ts";
+import { MatchedChild } from "#/workspace/matched-child.tsx";
 import { WorkspaceProvider } from "#/workspace/provider.tsx";
 import { WorkspaceShell } from "#/workspace/shell.tsx";
 
@@ -29,9 +30,9 @@ function WorkspaceLayout() {
 	const currentSession = useSyncExternalStore(subscribeAgentSession, agentSession, agentSession);
 	if (session !== currentSession) return null;
 	return (
-		<WorkspaceProvider key={session} frame={frame} readAt={readAt}>
+		<WorkspaceProvider key={`${session}:${frame.accountId}`} frame={frame} readAt={readAt}>
 			<WorkspaceShell>
-				<Outlet />
+				<MatchedChild frameAccountId={frame.accountId} />
 			</WorkspaceShell>
 		</WorkspaceProvider>
 	);

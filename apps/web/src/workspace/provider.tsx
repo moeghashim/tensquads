@@ -1,6 +1,5 @@
 import { useAuth } from "@clerk/tanstack-react-start";
 import { useRouter, useRouterState } from "@tanstack/react-router";
-import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import {
 	type Dispatch,
 	type ReactNode,
@@ -30,6 +29,7 @@ import {
 	sameCount,
 	seedApprovalCount,
 } from "./approval-count.ts";
+import { bounded } from "./bounded.ts";
 import { type StartedTask, useRefresh, useWorkspace, WorkspaceContext } from "./context.ts";
 import { decorate, useInspect } from "./event-view.ts";
 import { rememberFrame } from "./frame-load.ts";
@@ -79,6 +79,7 @@ export function WorkspaceProvider({
 	useMountedFlag(mounted);
 
 	const submit = useSubmit(draft, thinking, {
+		accountId: frame.accountId,
 		mounted,
 		setDraft,
 		setMessages,
@@ -259,7 +260,7 @@ function useFrameMessages(frame: WorkspaceFrameData, sending: { current: boolean
 }
 
 function useApprovalCount(frame: WorkspaceFrameData & { readonly writeAt: number }) {
-	const overviewStamp = useRouterState({ select: overviewStampOf });
+	const overviewStamp = useRouterState({ select: (state) => overviewStampOf(state, frame.accountId) });
 	const [clock, setClock] = useState(() => seedApprovalCount(frame.approvalCount));
 	const noteDecision = useCallback((count: number) => {
 		const writeAt = currentWrites();
@@ -281,9 +282,12 @@ function useApprovalCount(frame: WorkspaceFrameData & { readonly writeAt: number
 	return { approvalCount: clock.value, noteDecision };
 }
 
-function overviewStampOf(state: { matches: readonly { routeId: string; loaderData?: unknown }[] }): string | null {
+function overviewStampOf(
+	state: { matches: readonly { routeId: string; loaderData?: unknown }[] },
+	accountId: string,
+): string | null {
 	const match = state.matches.find((item) => item.routeId === "/_workspace/overview");
-	return overviewMatchStamp(match?.loaderData);
+	return overviewMatchStamp(match?.loaderData, accountId);
 }
 
 // The first signed-in id is the account that rendered this document. A later
@@ -323,9 +327,9 @@ function InspectBridge({ children }: { readonly children: ReactNode }) {
 }
 
 function LiveTimer() {
-	const { live, setSelEvent } = useWorkspace();
+	const { frame, live, setSelEvent } = useWorkspace();
 	const refresh = useRefresh();
-	useLiveClock(live, refreshTraffic(refresh, setSelEvent));
+	useLiveClock(frame.accountId, live, refreshTraffic(refresh, setSelEvent));
 	return null;
 }
 
@@ -346,9 +350,9 @@ function useMountedFlag(mounted: { current: boolean }) {
 	useSyncExternalStore(subscribe, idleSnapshot, idleSnapshot);
 }
 
-function useLiveClock(live: boolean, refresh: () => Promise<void>) {
-	const tick = useRef({ live, refresh });
-	tick.current = { live, refresh };
+function useLiveClock(accountId: string, live: boolean, refresh: () => Promise<void>) {
+	const tick = useRef({ accountId, live, refresh });
+	tick.current = { accountId, live, refresh };
 	// The clock must not notify React. A render here would move the screenshot.
 	const subscribe = useCallback((_onStoreChange: () => void) => {
 		const timer = setInterval(() => {
@@ -362,6 +366,7 @@ function useLiveClock(live: boolean, refresh: () => Promise<void>) {
 }
 
 interface SendHooks {
+	readonly accountId: string;
 	readonly mounted: { current: boolean };
 	readonly setDraft: Dispatch<SetStateAction<string>>;
 	readonly setMessages: (messages: WorkspaceFrameData["messages"]) => void;
@@ -372,25 +377,6 @@ interface SendHooks {
 	readonly refreshFrame: () => Promise<WorkspaceFrameData>;
 	readonly sending: { current: boolean };
 	readonly applyFrame: (frame: WorkspaceFrameData) => void;
-}
-
-function bounded<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
-	const controller = new AbortController();
-	let timer: ReturnType<typeof setTimeout> | undefined;
-	const timeout = new Promise<never>((_resolve, reject) => {
-		timer = setTimeout(() => {
-			controller.abort();
-			reject(new DOMException("The operation was aborted.", "AbortError"));
-		}, PENDING_TASK_WINDOW_MS);
-	});
-	const work = Promise.resolve().then(() => run(controller.signal));
-	void work.then(
-		() => undefined,
-		() => undefined,
-	);
-	return Promise.race([work, timeout]).finally(() => {
-		if (timer !== undefined) clearTimeout(timer);
-	});
 }
 
 async function sendDraft(value: string, hooks: SendHooks) {
@@ -411,7 +397,9 @@ async function sendDraft(value: string, hooks: SendHooks) {
 }
 
 async function performSend(value: string, hooks: SendHooks) {
-	const started = await bounded((signal) => beginWorkspaceSend({ data: value, signal }));
+	const started = await bounded((signal) =>
+		beginWorkspaceSend({ data: { accountId: hooks.accountId, text: value }, signal }),
+	);
 	if (!hooks.mounted.current) {
 		return;
 	}
@@ -443,7 +431,9 @@ async function finishWorkingSend(
 	if (!hooks.mounted.current) {
 		return;
 	}
-	const finished = await bounded((signal) => finishWorkspaceSend({ data: started.taskId, signal }));
+	const finished = await bounded((signal) =>
+		finishWorkspaceSend({ data: { accountId: hooks.accountId, text: started.taskId }, signal }),
+	);
 	if (hooks.mounted.current && finished.kind === "replied") {
 		hooks.setMessages(finished.messages);
 	}

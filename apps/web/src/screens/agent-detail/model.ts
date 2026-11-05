@@ -61,6 +61,7 @@ interface SwitchView {
 }
 
 export interface AgentDetailView {
+	readonly accountId?: string;
 	readonly id: string;
 	readonly name: string;
 	readonly role: string;

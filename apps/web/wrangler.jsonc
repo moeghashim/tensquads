@@ -8,6 +8,9 @@
 	"main": "@tanstack/react-start/server-entry",
 	"observability": {
 		"enabled": true
+	},
+	"vars": {
+		"CLERK_PLATFORM_ORG_ID": "org_3Lazia1HC1hdgfY0mAttb1qTWYm"
 	}
 	// Decision 16. This Worker will also hold one Durable Object class and one Queue consumer.
 	// Do not add those bindings in phase 0.

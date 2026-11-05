@@ -43,6 +43,12 @@ export function noteAgentWrite(agentId: string): void {
 	epochs.set(agentId, stampAgentRead(agentId) + 1);
 }
 
+export function clearPublishedAgentOn(): void {
+	if (published.size === 0) return;
+	published = new Map();
+	for (const listener of listeners) listener();
+}
+
 export function publishAgentOn(id: string, on: boolean): void {
 	const next = new Map(published);
 	next.set(id, on);

@@ -11,12 +11,15 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorkspaceRouteImport } from './routes/_workspace'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as WorkspaceChatRouteImport } from './routes/_workspace/chat'
 import { Route as WorkspaceOverviewRouteImport } from './routes/_workspace/overview'
 import { Route as WorkspaceRulesRouteImport } from './routes/_workspace/rules'
 import { Route as WorkspaceTrafficRouteImport } from './routes/_workspace/traffic'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminImagesRouteImport } from './routes/admin/images'
 import { Route as WorkspaceAgentsIndexRouteImport } from './routes/_workspace/agents.index'
 import { Route as WorkspaceAgentsIdRouteImport } from './routes/_workspace/agents.$id'
 
@@ -27,6 +30,11 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const WorkspaceRoute = WorkspaceRouteImport.update({
   id: '/_workspace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SigninRoute = SigninRouteImport.update({
@@ -59,6 +67,16 @@ const WorkspaceTrafficRoute = WorkspaceTrafficRouteImport.update({
   path: '/traffic',
   getParentRoute: () => WorkspaceRoute,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminImagesRoute = AdminImagesRouteImport.update({
+  id: '/images',
+  path: '/images',
+  getParentRoute: () => AdminRoute,
+} as any)
 const WorkspaceAgentsIndexRoute = WorkspaceAgentsIndexRouteImport.update({
   id: '/agents/',
   path: '/agents/',
@@ -72,12 +90,15 @@ const WorkspaceAgentsIdRoute = WorkspaceAgentsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/chat': typeof WorkspaceChatRoute
   '/overview': typeof WorkspaceOverviewRoute
   '/rules': typeof WorkspaceRulesRoute
   '/traffic': typeof WorkspaceTrafficRoute
+  '/admin/images': typeof AdminImagesRoute
+  '/admin/': typeof AdminIndexRoute
   '/agents/$id': typeof WorkspaceAgentsIdRoute
   '/agents/': typeof WorkspaceAgentsIndexRoute
 }
@@ -89,6 +110,8 @@ export interface FileRoutesByTo {
   '/overview': typeof WorkspaceOverviewRoute
   '/rules': typeof WorkspaceRulesRoute
   '/traffic': typeof WorkspaceTrafficRoute
+  '/admin/images': typeof AdminImagesRoute
+  '/admin': typeof AdminIndexRoute
   '/agents/$id': typeof WorkspaceAgentsIdRoute
   '/agents': typeof WorkspaceAgentsIndexRoute
 }
@@ -96,12 +119,15 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_workspace': typeof WorkspaceRouteWithChildren
+  '/admin': typeof AdminRouteWithChildren
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/_workspace/chat': typeof WorkspaceChatRoute
   '/_workspace/overview': typeof WorkspaceOverviewRoute
   '/_workspace/rules': typeof WorkspaceRulesRoute
   '/_workspace/traffic': typeof WorkspaceTrafficRoute
+  '/admin/images': typeof AdminImagesRoute
+  '/admin/': typeof AdminIndexRoute
   '/_workspace/agents/$id': typeof WorkspaceAgentsIdRoute
   '/_workspace/agents/': typeof WorkspaceAgentsIndexRoute
 }
@@ -109,12 +135,15 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/signin'
     | '/signup'
     | '/chat'
     | '/overview'
     | '/rules'
     | '/traffic'
+    | '/admin/images'
+    | '/admin/'
     | '/agents/$id'
     | '/agents/'
   fileRoutesByTo: FileRoutesByTo
@@ -126,18 +155,23 @@ export interface FileRouteTypes {
     | '/overview'
     | '/rules'
     | '/traffic'
+    | '/admin/images'
+    | '/admin'
     | '/agents/$id'
     | '/agents'
   id:
     | '__root__'
     | '/'
     | '/_workspace'
+    | '/admin'
     | '/signin'
     | '/signup'
     | '/_workspace/chat'
     | '/_workspace/overview'
     | '/_workspace/rules'
     | '/_workspace/traffic'
+    | '/admin/images'
+    | '/admin/'
     | '/_workspace/agents/$id'
     | '/_workspace/agents/'
   fileRoutesById: FileRoutesById
@@ -145,6 +179,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   WorkspaceRoute: typeof WorkspaceRouteWithChildren
+  AdminRoute: typeof AdminRouteWithChildren
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
 }
@@ -163,6 +198,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof WorkspaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signin': {
@@ -207,6 +249,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceTrafficRouteImport
       parentRoute: typeof WorkspaceRoute
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/images': {
+      id: '/admin/images'
+      path: '/images'
+      fullPath: '/admin/images'
+      preLoaderRoute: typeof AdminImagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_workspace/agents/': {
       id: '/_workspace/agents/'
       path: '/agents'
@@ -246,9 +302,22 @@ const WorkspaceRouteWithChildren = WorkspaceRoute._addFileChildren(
   WorkspaceRouteChildren,
 )
 
+interface AdminRouteChildren {
+  AdminImagesRoute: typeof AdminImagesRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminImagesRoute: AdminImagesRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   WorkspaceRoute: WorkspaceRouteWithChildren,
+  AdminRoute: AdminRouteWithChildren,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
 }

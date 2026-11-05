@@ -2,7 +2,7 @@ import { type Dispatch, type SetStateAction, useState } from "react";
 
 import { css } from "#/screens/css.ts";
 import { addWorkspaceRule, type RulesPageData, type RulesRule } from "#/server/rules.ts";
-import { useWorkspace } from "#/workspace/context.ts";
+import { useWorkspacePage } from "#/workspace/context.ts";
 import type { RuleForm } from "#/workspace/types.ts";
 
 import { type RulesSnapshotPage, useRulesSnapshot } from "./snapshot.ts";
@@ -108,7 +108,7 @@ export function RulesScreen({ page }: { readonly page: RulesSnapshotPage }) {
 		setSeenEpoch(epoch);
 		setPending([]);
 	}
-	const workspace = useWorkspace();
+	const workspace = useWorkspacePage(page.accountId);
 	const { snapshot, refresh } = useRulesSnapshot(page, workspace.refresh);
 	const rules = [...snapshot.rules, ...pending.map((item) => item.row)];
 	return (
@@ -122,6 +122,7 @@ export function RulesScreen({ page }: { readonly page: RulesSnapshotPage }) {
 					</p>
 				</header>
 				<RuleList
+					accountId={page.accountId}
 					rules={rules}
 					agents={workspace.frame.agents}
 					gateStyle={workspace.helpers.gateStyle}
@@ -132,13 +133,14 @@ export function RulesScreen({ page }: { readonly page: RulesSnapshotPage }) {
 				/>
 				<div style={css(cardRow)}>
 					<NewRule
+						accountId={page.accountId}
 						form={workspace.ruleForm}
 						agents={workspace.frame.agents}
 						setForm={workspace.setRuleForm}
 						setPending={setPending}
 						refresh={refresh}
 					/>
-					<Limits limits={snapshot.limits} refresh={refresh} />
+					<Limits accountId={page.accountId} limits={snapshot.limits} refresh={refresh} />
 				</div>
 			</div>
 		</div>
@@ -146,6 +148,7 @@ export function RulesScreen({ page }: { readonly page: RulesSnapshotPage }) {
 }
 
 function RuleList({
+	accountId,
 	rules,
 	agents,
 	gateStyle,
@@ -154,6 +157,7 @@ function RuleList({
 	refresh,
 	setPending,
 }: {
+	readonly accountId: string;
 	readonly rules: readonly RulesRule[];
 	readonly agents: readonly { readonly id: string; readonly name: string; readonly tint: string }[];
 	readonly gateStyle: (gate: string) => string;
@@ -171,6 +175,7 @@ function RuleList({
 			<div data-loop="rules" data-loop-as="r" style={css("display: contents")}>
 				{rules.map((rule) => (
 					<RuleRow
+						accountId={accountId}
 						key={rule.id}
 						rule={rule}
 						agent={agents.find((item) => item.id === rule.agent)}
@@ -187,6 +192,7 @@ function RuleList({
 }
 
 function RuleRow({
+	accountId,
 	rule,
 	agent,
 	gateStyle,
@@ -195,6 +201,7 @@ function RuleRow({
 	refresh,
 	setPending,
 }: {
+	readonly accountId: string;
 	readonly rule: RulesRule;
 	readonly agent: { readonly id: string; readonly name: string; readonly tint: string } | undefined;
 	readonly gateStyle: (gate: string) => string;
@@ -210,7 +217,7 @@ function RuleRow({
 	const on = shownRuleOn(rule, loaded);
 	const parts = switchParts(on);
 	const toggle = () => {
-		toggleRow(rule, loaded, refresh, setPending);
+		toggleRow(rule, loaded, accountId, refresh, setPending);
 	};
 	return (
 		<div style={css(ruleRow)}>
@@ -247,12 +254,14 @@ function RuleRow({
 }
 
 function NewRule({
+	accountId,
 	form,
 	agents,
 	setForm,
 	setPending,
 	refresh,
 }: {
+	readonly accountId: string;
 	readonly form: RuleForm;
 	readonly agents: readonly { readonly id: string; readonly name: string }[];
 	readonly setForm: SetRuleForm;
@@ -328,7 +337,7 @@ function NewRule({
 					type="button"
 					data-handler="addRule"
 					data-event="onClick"
-					onClick={() => addRule(form, setForm, setPending, refresh)}
+					onClick={() => addRule(form, accountId, setForm, setPending, refresh)}
 					style={css(addButton)}
 				>
 					Add rule
@@ -366,7 +375,13 @@ function shownRuleOn(rule: RulesRule, loaded: boolean): boolean {
 	return shownOn(rule.id, loaded);
 }
 
-function toggleRow(rule: RulesRule, loaded: boolean, refresh: () => Promise<void>, setPending: SetPending) {
+function toggleRow(
+	rule: RulesRule,
+	loaded: boolean,
+	accountId: string,
+	refresh: () => Promise<void>,
+	setPending: SetPending,
+) {
 	const id = rowOwners.get(rule.id);
 	if (id !== undefined && submissions.has(id)) {
 		const next = !(pendingShown.get(id) ?? true);
@@ -375,10 +390,16 @@ function toggleRow(rule: RulesRule, loaded: boolean, refresh: () => Promise<void
 		setPending((items) => items.map((item) => (item.id === id ? { ...item, row: { ...item.row, on: next } } : item)));
 		return;
 	}
-	queueRule(rule.id, !shownOn(rule.id, loaded), refresh);
+	queueRule(rule.id, !shownOn(rule.id, loaded), accountId, refresh);
 }
 
-function addRule(form: RuleForm, setForm: SetRuleForm, setPending: SetPending, refresh: () => Promise<void>) {
+function addRule(
+	form: RuleForm,
+	accountId: string,
+	setForm: SetRuleForm,
+	setPending: SetPending,
+	refresh: () => Promise<void>,
+) {
 	const typed = form.action;
 	const action = typed.trim();
 	if (action.length === 0) {
@@ -407,7 +428,7 @@ function addRule(form: RuleForm, setForm: SetRuleForm, setPending: SetPending, r
 		},
 	]);
 	setForm((current) => ({ ...current, action: "" }));
-	void saveRule(form, submission, setForm, setPending, refresh);
+	void saveRule(form, accountId, submission, setForm, setPending, refresh);
 }
 
 function leftAccount(epoch: number): boolean {
@@ -416,6 +437,7 @@ function leftAccount(epoch: number): boolean {
 
 async function saveRule(
 	form: RuleForm,
+	accountId: string,
 	submission: Submission,
 	setForm: SetRuleForm,
 	setPending: SetPending,
@@ -427,7 +449,7 @@ async function saveRule(
 	try {
 		result = await bounded((signal) =>
 			addWorkspaceRule({
-				data: { when: form.when, agent: form.agent, action: typed, approval: form.approval },
+				data: { accountId, when: form.when, agent: form.agent, action: typed, approval: form.approval },
 				signal,
 			}),
 		);
@@ -455,7 +477,7 @@ async function saveRule(
 	placeRule(result);
 	dropPending(id, rowId, setPending);
 	if (wanted !== undefined && wanted !== result.on) {
-		queueRule(result.id, wanted, refresh);
+		queueRule(result.id, wanted, accountId, refresh);
 		return;
 	}
 	await readIfNeeded(refresh);
@@ -469,9 +491,11 @@ function dropPending(id: symbol, rowId: string, setPending: SetPending) {
 }
 
 function Limits({
+	accountId,
 	limits,
 	refresh,
 }: {
+	readonly accountId: string;
 	readonly limits: RulesPageData["limits"];
 	readonly refresh: () => Promise<void>;
 }) {
@@ -496,7 +520,7 @@ function Limits({
 								value={value}
 								data-handler="l.change"
 								data-event="onChange"
-								onChange={(event) => queueLimit(limit.key, Number(event.target.value), refresh)}
+								onChange={(event) => queueLimit(limit.key, Number(event.target.value), accountId, refresh)}
 								style={css(sliderStyle)}
 							/>
 						</div>

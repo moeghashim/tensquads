@@ -13,9 +13,12 @@ export interface FrameMessage {
 }
 
 export interface WorkspaceFrameData {
+	readonly accountId: string;
 	readonly accountName: string;
 	readonly owner: string;
 	readonly masterName: string;
+	readonly squadCount: number;
+	readonly superAdmin: boolean;
 	readonly agents: readonly FrameAgent[];
 	readonly approvalCount: number;
 	readonly messages: readonly FrameMessage[];

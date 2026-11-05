@@ -1,7 +1,7 @@
 import { createElement, Fragment } from "react";
 
 import { css } from "#/screens/css.ts";
-import { useRefresh, useWorkspace } from "#/workspace/context.ts";
+import { useRefresh, useWorkspacePage } from "#/workspace/context.ts";
 import { decorate } from "#/workspace/event-view.ts";
 import { consumeQueuedEvent, sendNextEvent } from "#/workspace/live.ts";
 import { kindStyle } from "#/workspace/styles.ts";
@@ -53,7 +53,7 @@ const writeChip =
 const contents = "display: contents";
 
 export function TrafficPage({ data }: { readonly data: TrafficData }) {
-	const { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive } = useWorkspace();
+	const { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive } = useWorkspacePage(data.accountId);
 	const refresh = useRefresh();
 	const selectedId = selectedEventId(data.events, selEvent);
 	const names = agentNames(data.agents);
@@ -98,7 +98,7 @@ export function TrafficPage({ data }: { readonly data: TrafficData }) {
 							data-handler="simulate"
 							data-event="onClick"
 							onClick={async () => {
-								await sendNextEvent(refresh);
+								await sendNextEvent(refresh, data.accountId);
 								const id = consumeQueuedEvent();
 								if (id.length > 0) setSelEvent(id);
 							}}

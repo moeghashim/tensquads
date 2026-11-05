@@ -96,10 +96,17 @@ test("a missing or failed token opens sign-in and does not reload", async () => 
 	}
 });
 
-test("a write is not replayed", async () => {
+test("a refresh-needed write refreshes the token and reloads once", async () => {
 	const { calls, refresh } = harness();
 	await refresh.finish(needed(), "POST", refresh.begin());
-	await refresh.finish(new Error("The write failed."), "GET", refresh.begin());
+	assert.deepEqual(calls, { token: 1, reload: 1, signIn: 0 });
+	await refresh.finish(needed(), "POST", refresh.begin());
+	assert.deepEqual(calls, { token: 1, reload: 1, signIn: 1 });
+});
+
+test("a failed write that does not need a refresh is left alone", async () => {
+	const { calls, refresh } = harness();
+	await refresh.finish(new Error("The write failed."), "POST", refresh.begin());
 	assert.deepEqual(calls, { token: 0, reload: 0, signIn: 0 });
 });
 

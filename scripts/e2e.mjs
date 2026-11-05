@@ -22,4 +22,5 @@ if (extra.length > 0) {
 }
 
 const results = suitePlan(Boolean(process.env.CI), process.platform, cpus().length).map(run);
-process.exit(results.every((status) => status === 0) ? 0 : 1);
+const admin = run(["--project", "admin", "--workers=1"]);
+process.exit(results.every((status) => status === 0) && admin === 0 ? 0 : 1);

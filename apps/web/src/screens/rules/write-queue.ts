@@ -1,7 +1,10 @@
-import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import { useSyncExternalStore } from "react";
 
+import { resetAgentAccountState } from "#/screens/agent-detail/account-reset.ts";
+import { clearOverviewHold } from "#/screens/overview/load.ts";
 import { type RulesLimitValue, type RulesRule, type RulesWrite, setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
+import { bounded } from "#/workspace/bounded.ts";
+import { clearFrameHold, onFrameAccountReset } from "#/workspace/frame-load.ts";
 import { confirmRetired, nextWriteFence } from "#/write-fence.ts";
 
 interface Flight<T> {
@@ -19,6 +22,8 @@ let recoveryGeneration = 0;
 let accountEpoch = 0;
 let signedInUser: string | null | undefined;
 const accountResets = new Set<() => void>();
+
+onFrameAccountReset(resetTargetAccount);
 
 export function readNeeded(): boolean {
 	return needsRead;
@@ -50,6 +55,16 @@ export function watchSignedInUser(userId: string | null): void {
 	}
 	if (signedInUser === userId) return;
 	signedInUser = userId;
+	dropAccountState();
+}
+
+// A row click and All companies change the target account without a new Clerk user.
+export function resetTargetAccount(): void {
+	if (typeof window === "undefined") return;
+	dropAccountState();
+}
+
+function dropAccountState(): void {
 	accountEpoch += 1;
 	ruleFlights.clear();
 	limitFlights.clear();
@@ -58,6 +73,9 @@ export function watchSignedInUser(userId: string | null): void {
 	needsRead = false;
 	recoveryGeneration = 0;
 	writeCounter = 0;
+	clearFrameHold();
+	clearOverviewHold();
+	resetAgentAccountState();
 	for (const reset of accountResets) reset();
 	queueMicrotask(notify);
 }
@@ -124,20 +142,20 @@ export function shownLimit(key: string, loaded: number): number {
 	return shownValue(limitFlights, key, loaded);
 }
 
-export function queueRule(id: string, next: boolean, refresh: () => Promise<void>): void {
+export function queueRule(id: string, next: boolean, accountId: string, refresh: () => Promise<void>): void {
 	const flight = queueValue(ruleFlights, id, next);
 	if (!flight) {
 		return;
 	}
-	void run(ruleFlights, id, flight, (value, signal) => sendRule(id, value, signal), refresh);
+	void run(ruleFlights, id, flight, (value, signal) => sendRule(id, value, accountId, signal), refresh);
 }
 
-export function queueLimit(key: string, next: number, refresh: () => Promise<void>): void {
+export function queueLimit(key: string, next: number, accountId: string, refresh: () => Promise<void>): void {
 	const flight = queueValue(limitFlights, key, next);
 	if (!flight) {
 		return;
 	}
-	void run(limitFlights, key, flight, (value, signal) => sendLimit(key, value, signal), refresh);
+	void run(limitFlights, key, flight, (value, signal) => sendLimit(key, value, accountId, signal), refresh);
 }
 
 export function placeRule(rule: RulesRule): void {
@@ -174,11 +192,19 @@ function queueValue<T>(map: Map<string, Flight<T>>, key: string, next: T): Fligh
 	return null;
 }
 
-async function sendRule(id: string, value: boolean, signal: AbortSignal): Promise<boolean | null> {
+async function sentOrHeld<T>(send: (value: T, signal: AbortSignal) => Promise<T | null>, sent: T): Promise<T | null> {
+	try {
+		return await bounded((signal) => send(sent, signal));
+	} catch {
+		return null;
+	}
+}
+
+async function sendRule(id: string, value: boolean, accountId: string, signal: AbortSignal): Promise<boolean | null> {
 	const epoch = accountEpoch;
 	const fence = nextWriteFence();
 	const body = await setRuleEnabled({
-		data: { id, on: value, tab: fence.tab, seq: fence.seq, retires: fence.retires },
+		data: { accountId, id, on: value, tab: fence.tab, seq: fence.seq, retires: fence.retires },
 		signal,
 	});
 	const row = acceptedRule(body, id);
@@ -191,11 +217,11 @@ async function sendRule(id: string, value: boolean, signal: AbortSignal): Promis
 	return row.on;
 }
 
-async function sendLimit(key: string, value: number, signal: AbortSignal): Promise<number | null> {
+async function sendLimit(key: string, value: number, accountId: string, signal: AbortSignal): Promise<number | null> {
 	const epoch = accountEpoch;
 	const fence = nextWriteFence();
 	const body = await setRuleLimit({
-		data: { key, value, tab: fence.tab, seq: fence.seq, retires: fence.retires },
+		data: { accountId, key, value, tab: fence.tab, seq: fence.seq, retires: fence.retires },
 		signal,
 	});
 	const row = acceptedLimit(body, key);
@@ -223,12 +249,7 @@ async function run<T>(
 		flight.queued = null;
 		flight.sending = true;
 		notify();
-		let returned: T | null = null;
-		try {
-			returned = await bounded((signal) => send(sent, signal));
-		} catch {
-			returned = null;
-		}
+		const returned = await sentOrHeld(send, sent);
 		if (!sameAccount(epoch)) return;
 		if (returned === null) {
 			noteUncertainWrite(epoch);
@@ -305,23 +326,4 @@ function notify(): void {
 	}
 }
 
-export function bounded<T>(runWork: (signal: AbortSignal) => Promise<T>): Promise<T> {
-	const controller = new AbortController();
-	let timer: ReturnType<typeof setTimeout> | undefined;
-	const timeout = new Promise<never>((_resolve, reject) => {
-		timer = setTimeout(() => {
-			controller.abort();
-			reject(new DOMException("The operation was aborted.", "AbortError"));
-		}, PENDING_TASK_WINDOW_MS);
-	});
-	const work = Promise.resolve().then(() => runWork(controller.signal));
-	void work.then(
-		() => undefined,
-		() => undefined,
-	);
-	return Promise.race([work, timeout]).finally(() => {
-		if (timer !== undefined) {
-			clearTimeout(timer);
-		}
-	});
-}
+export { bounded };
