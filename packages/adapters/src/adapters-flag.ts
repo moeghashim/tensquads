@@ -4,6 +4,7 @@ import { MachineFault } from "@tensquads/kernel";
 import { chooseAdapters } from "./adapter-choice.ts";
 import { createBoatMachine } from "./boat-machine.ts";
 import { type BusNamespace, createCloudflareBus, type QueueProducer } from "./cloudflare-bus/index.ts";
+import { trafficScript } from "./traffic-script.ts";
 import { workerTestBus, workerTestMachine } from "./worker-adapters.ts";
 
 export interface AdapterEnv {
@@ -38,6 +39,6 @@ export function pickWorkerAdapters(env: AdapterEnv): { machine: AccountMachine; 
 			secretBaseUrl: env.BOAT_SECRET_BASE_URL,
 			fetchApi: env.fetchApi ?? fetch,
 		}),
-		bus: createCloudflareBus(env.ACCOUNT_BUS, [], env.BUS_QUEUE),
+		bus: createCloudflareBus(env.ACCOUNT_BUS, trafficScript(), env.BUS_QUEUE),
 	};
 }

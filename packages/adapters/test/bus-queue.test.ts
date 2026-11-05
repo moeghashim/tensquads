@@ -29,6 +29,22 @@ test("a real publication waits on the queue until the consumer accepts it", asyn
 				const path = new URL(request.url).pathname;
 				fetches.push(path);
 				if (path === "/events") return Response.json([]);
+				if (path === "/advance") {
+					const body = (await request.json()) as { script?: { text?: string }[] };
+					return Response.json({
+						accepted: true,
+						event: {
+							id: "e100",
+							from: "master",
+							to: "researcher",
+							kind: "Task",
+							skill: "research",
+							text: body.script?.[0]?.text ?? "",
+							payload: {},
+							writes: [],
+						},
+					});
+				}
 				return Response.json({ seen: false });
 			},
 		}),
@@ -69,9 +85,9 @@ test("a real publication waits on the queue until the consumer accepts it", asyn
 
 	const scripted = await bus.nextEvent(scope);
 	assert.equal(scripted?.id, "e100");
-	assert.deepEqual(fetches, ["/events"]);
-	assert.equal(sent.length, 2);
-	assert.equal((sent[1] as { event: PublishedEvent }).event.id, "e100");
+	assert.equal(scripted?.text, "Next.");
+	assert.deepEqual(fetches, ["/advance"]);
+	assert.equal(sent.length, 1);
 
 	const key = "queue-key";
 	const token = await signMachineToken(key, scope.accountId, "researcher", Math.floor(Date.now() / 1000) + 60);
@@ -84,8 +100,8 @@ test("a real publication waits on the queue until the consumer accepts it", asyn
 		{ ADAPTERS: "real", ACCOUNT_BUS: namespace, MACHINE_TOKEN_KEY: key, BUS_QUEUE: queue },
 	);
 	assert.equal(response?.status, 200);
-	assert.deepEqual(fetches, ["/events"]);
-	assert.equal(sent.length, 3);
+	assert.deepEqual(fetches, ["/advance"]);
+	assert.equal(sent.length, 2);
 	await assert.rejects(
 		() =>
 			handleMachineRequest(

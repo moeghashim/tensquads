@@ -14,3 +14,4 @@ export { type AccountSnapshot, squadId, type WorkspaceSnapshot } from "./neon/sn
 export { createPlaceholderServices } from "./placeholder-services.ts";
 export { createAccountTestMachine, createTestMachine, type MachineRecord } from "./test-machine.ts";
 export { traceFor } from "./trace.ts";
+export { trafficScript } from "./traffic-script.ts";

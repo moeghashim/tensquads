@@ -104,8 +104,9 @@ test("scoped reads see seeded Neon history before the first accept", async (t) =
 		);
 		assert.equal(storage.rows.size, 0);
 		assert.deepEqual(await adapter.events({ accountId: "empty-account", mode: "account" }), []);
-		assert.equal((await adapter.nextEvent(scope))?.id, "e101");
-		assert.equal(published[0]?.text, "Second");
+		const advanced = await adapter.nextEvent(scope);
+		assert.equal(advanced?.id, "e101");
+		assert.equal(advanced?.text, "Second");
 		await storage.put("account", scope.accountId);
 		assert.deepEqual(
 			(await adapter.events(scope)).map(({ id }) => id),
@@ -368,17 +369,15 @@ test("the production dead-letter name is a normal task when it is not configured
 });
 
 test("simulation resumes stored steps, serializes calls, and retries the failed step", async () => {
-	const stored: PublishedEvent[] = [];
+	const storage = new Storage();
+	const target = bus(storage);
 	let refuse = false;
 	const namespace = {
 		idFromName: (id: string) => id,
 		get: () => ({
 			async fetch(input: Request | string | URL, init?: RequestInit) {
-				if (String(input).endsWith("/events")) return Response.json(stored);
 				if (refuse) return new Response("unavailable", { status: 503 });
-				const body = JSON.parse(String(init?.body)) as { event: PublishedEvent };
-				if (!stored.some(({ id }) => id === body.event.id)) stored.push(body.event);
-				return Response.json({ seen: false });
+				return target.fetch(new Request(input, init));
 			},
 		}),
 	};
@@ -397,7 +396,7 @@ test("simulation resumes stored steps, serializes calls, and retries the failed 
 	await assert.rejects(recreated.nextEvent(scope));
 	refuse = false;
 	assert.equal((await recreated.nextEvent(scope))?.id, "e104");
-	assert.equal(stored.length, 5);
+	assert.equal((await storage.list<PublishedEvent>({ prefix: "event:" })).size, 5);
 });
 
 test("pending writes recover in order and commit batches atomically", async (t) => {
@@ -596,23 +595,47 @@ test("inspection routes require the exact test binding and store stays available
 	}
 });
 
-test("a pending duplicate is not a new simulation step and does not advance the cursor", async (t) => {
+test("two concurrent advances on one account never both succeed for one event", async () => {
 	const storage = new Storage();
-	t.mock.method(Pool.prototype, "query", async () => ({ rows: [] }));
-	t.mock.method(Pool.prototype, "connect", async () => {
-		throw new Error("Database refused.");
-	});
-	const target = bus(storage, "postgres://fixture/db");
-	let visible = false;
+	const target = bus(storage);
+	const sent: string[] = [];
+	const namespace = {
+		idFromName: (id: string) => id,
+		get: () => ({
+			fetch(input: Request | string | URL, init?: RequestInit) {
+				return target.fetch(new Request(input, init));
+			},
+		}),
+	};
+	const queue = {
+		async send(body: { event: PublishedEvent }) {
+			sent.push(body.event.id);
+		},
+	};
+	const concurrent = { accountId: "bus-concurrent", mode: "account" } as const;
+	const first = createCloudflareBus(namespace, script, queue);
+	const second = createCloudflareBus(namespace, script, queue);
+	const results = await Promise.all([first.nextEvent(concurrent), second.nextEvent(concurrent)]);
+	const ids = results.map((row) => row?.id ?? "nothing new");
+	const accepted = ids.filter((id) => id !== "nothing new");
+	assert.equal(new Set(accepted).size, accepted.length);
+	assert.equal(accepted.includes("e100"), true);
+	assert.equal(ids.filter((id) => id === "e100").length, 1);
+	const other = ids.find((id) => id !== "e100");
+	assert.equal(other === "e101" || other === "nothing new", true);
+	const stored = [...(await storage.list<PublishedEvent>({ prefix: "event:" })).values()].map((event) => event.id);
+	for (const id of accepted) assert.equal(stored.includes(id), true);
+	assert.equal(sent.length, 0);
+});
+
+test("a recreated adapter advances when the history read still lags", async () => {
+	const storage = new Storage();
+	const target = bus(storage);
 	const namespace = {
 		idFromName: (id: string) => id,
 		get: () => ({
 			async fetch(input: Request | string | URL, init?: RequestInit) {
-				if (String(input).endsWith("/events")) {
-					return Response.json(
-						visible ? [...(await storage.list<PublishedEvent>({ prefix: "event:" })).values()] : [],
-					);
-				}
+				if (String(input).endsWith("/events")) return Response.json([]);
 				return target.fetch(new Request(input, init));
 			},
 		}),
@@ -621,17 +644,11 @@ test("a pending duplicate is not a new simulation step and does not advance the 
 	const recreated = createCloudflareBus(namespace, script);
 	const results = await Promise.all([first.nextEvent(scope), recreated.nextEvent(scope)]);
 	assert.deepEqual(
-		results.filter(Boolean).map((row) => row?.id),
-		["e100"],
+		results.map((row) => row?.id),
+		["e100", "e101"],
 	);
-	assert.equal(results.filter((row) => row === undefined).length, 1);
-	assert.equal(await recreated.nextEvent(scope), undefined);
-	assert.equal(await storage.get("seq"), 1);
-	assert.equal(typeof storage.alarm, "number");
-	visible = true;
 	const next = await recreated.nextEvent(scope);
-	assert.equal(next?.id, "e101");
-	assert.equal(next?.text, "Second");
-	assert.equal(next?.time, "11:04");
-	assert.equal(await storage.get("seq"), 2);
+	assert.equal(next?.id, "e102");
+	assert.equal(next?.text, "First");
+	assert.equal(await storage.get("seq"), 3);
 });

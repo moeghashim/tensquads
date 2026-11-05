@@ -1,10 +1,8 @@
-import { planNextEvent, type TrafficCursor } from "@tensquads/domain";
 import type { AccountEventBus, AccountScope, PublishedEvent } from "@tensquads/kernel";
 import { MachineFault } from "@tensquads/kernel";
 
 import { chooseAdapters } from "../adapter-choice.ts";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
-import { traceFor } from "../trace.ts";
 import { takeTestTask, workerTestBus } from "../worker-adapters.ts";
 import { isBusRecord, isNonEmptyString, isObject } from "./message.ts";
 import { verifyMachineToken } from "./token.ts";
@@ -37,8 +35,6 @@ export interface BusBatch {
 	readonly queue: string;
 	readonly messages: readonly BusMessage[];
 }
-
-const opened: TrafficCursor = { seq: 100, clock: 11 * 60 + 2, scriptIndex: 0 };
 
 function notConfigured(message = "The machine service is not configured."): MachineFault {
 	return new MachineFault("unavailable", message);
@@ -144,8 +140,6 @@ export function createCloudflareBus(
 	script: readonly ScriptedBusEvent[] = [],
 	queue?: QueueProducer,
 ): AccountEventBus {
-	const cursors = new Map<string, TrafficCursor>();
-	const advancing = new Map<string, Promise<void>>();
 	const env = { ADAPTERS: "real", ACCOUNT_BUS: namespace, BUS_QUEUE: queue } satisfies WorkerBindings;
 
 	async function publish(scope: AccountScope, event: PublishedEvent): Promise<void> {
@@ -173,35 +167,14 @@ export function createCloudflareBus(
 		},
 		publish,
 		async nextEvent(scope) {
-			const next = (advancing.get(scope.accountId) ?? Promise.resolve()).then(async () => {
-				let current = cursors.get(scope.accountId) ?? opened;
-				const existing = await this.events(scope);
-				const ids = new Set(existing.map((event) => event.id));
-				while (ids.has(`e${current.seq}`)) {
-					current = { seq: current.seq + 1, clock: current.clock + 1, scriptIndex: current.scriptIndex + 1 };
-				}
-				const plan = planNextEvent(existing, script, current, traceFor);
-				if (!plan) return undefined;
-				if (queue) {
-					await queue.send({ accountId: scope.accountId, event: plan.event });
-					cursors.set(scope.accountId, plan.cursor);
-					return plan.event;
-				}
-				const seen = await deliver(env, scope.accountId, plan.event);
-				if (seen) return undefined;
-				cursors.set(scope.accountId, plan.cursor);
-				return plan.event;
+			const response = await stubFetch(env, scope.accountId, "/advance", {
+				method: "POST",
+				body: JSON.stringify({ accountId: scope.accountId, script }),
 			});
-			const tail = next.then(
-				() => undefined,
-				() => undefined,
-			);
-			advancing.set(scope.accountId, tail);
-			try {
-				return await next;
-			} finally {
-				if (advancing.get(scope.accountId) === tail) advancing.delete(scope.accountId);
-			}
+			if (!response.ok) throw notConfigured("The bus is not configured.");
+			const result = (await response.json()) as { accepted?: boolean; event?: PublishedEvent };
+			if (result.accepted !== true || result.event === undefined) return undefined;
+			return result.event;
 		},
 	};
 }

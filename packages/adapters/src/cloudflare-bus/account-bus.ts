@@ -1,6 +1,9 @@
+import { planNextEvent, type TrafficCursor } from "@tensquads/domain";
 import type { PublishedEvent } from "@tensquads/kernel";
 
-import { isBusRecord } from "./message.ts";
+import type { ScriptedBusEvent } from "../memory-bus.ts";
+import { traceFor } from "../trace.ts";
+import { isBusRecord, isNonEmptyString, isObject } from "./message.ts";
 import { type PendingBusRow, readBusEvents, readBusHistory, readBusState, writePending } from "./neon-write.ts";
 
 const ALARM_MS = 30_000;
@@ -30,6 +33,72 @@ interface AcceptResult {
 	readonly seen: boolean;
 	readonly seq: number;
 	readonly event?: PublishedEvent;
+}
+
+interface AdvanceResult {
+	readonly accepted: boolean;
+	readonly event?: PublishedEvent;
+}
+
+const openedCursor: TrafficCursor = { seq: 100, clock: 11 * 60 + 2, scriptIndex: 0 };
+
+function readCursor(value: unknown): TrafficCursor {
+	if (!isObject(value)) return openedCursor;
+	const { seq, clock, scriptIndex } = value;
+	if (typeof seq !== "number" || typeof clock !== "number" || typeof scriptIndex !== "number") return openedCursor;
+	return { seq, clock, scriptIndex };
+}
+
+function advanceBody(body: unknown): { accountId: string; script: ScriptedBusEvent[] } | undefined {
+	if (!isObject(body) || !isNonEmptyString(body.accountId) || !Array.isArray(body.script)) return undefined;
+	const script: ScriptedBusEvent[] = [];
+	for (const step of body.script) {
+		if (!isObject(step)) return undefined;
+		const from = step.from;
+		const to = step.to;
+		const kind = step.kind;
+		const skill = step.skill;
+		const text = step.text;
+		const payload = step.payload;
+		if (!isNonEmptyString(from) || !isNonEmptyString(to) || !isNonEmptyString(kind)) return undefined;
+		if (!isNonEmptyString(skill) || !isNonEmptyString(text) || !isObject(payload)) return undefined;
+		const writes = step.writes === undefined ? [] : step.writes;
+		if (!Array.isArray(writes) || writes.some((key) => typeof key !== "string")) return undefined;
+		if (step.set !== undefined && !isObject(step.set)) return undefined;
+		script.push({
+			from,
+			to,
+			kind: kind as ScriptedBusEvent["kind"],
+			skill,
+			text,
+			payload,
+			writes: writes as string[],
+			set: isObject(step.set) ? step.set : undefined,
+		});
+	}
+	return { accountId: body.accountId, script };
+}
+
+async function planAdvance(
+	txn: BusStorage,
+	accountId: string,
+	script: readonly ScriptedBusEvent[],
+): Promise<AdvanceResult> {
+	const storedAccount = await txn.get<string>("account");
+	if (storedAccount && storedAccount !== accountId) return { accepted: false };
+	let current = readCursor(await txn.get("traffic-cursor"));
+	const seen = await txn.list<boolean>({ prefix: "seen:" });
+	const known = [...seen.keys()].map((key) => ({ id: key.slice("seen:".length) }));
+	const ids = new Set(known.map((event) => event.id));
+	while (ids.has(`e${current.seq}`)) {
+		current = { seq: current.seq + 1, clock: current.clock + 1, scriptIndex: current.scriptIndex + 1 };
+	}
+	const plan = planNextEvent(known, script, current, traceFor);
+	if (!plan) return { accepted: false };
+	const result = await commitEvent(txn, accountId, plan.event);
+	if (result.seen || !result.event) return { accepted: false };
+	await txn.put("traffic-cursor", plan.cursor);
+	return { accepted: true, event: result.event };
 }
 
 function socketPair(): { 0: WebSocket; 1: WebSocket } {
@@ -105,6 +174,7 @@ export class AccountBus {
 	private routes(): Map<string, (request: Request) => Promise<Response>> {
 		const routes = new Map<string, (request: Request) => Promise<Response>>([
 			["/accept", (request: Request) => request.json().then((body: unknown) => this.accept(body))],
+			["/advance", (request: Request) => request.json().then((body: unknown) => this.advance(body))],
 			["/events", (request: Request) => this.events(request)],
 			["/store", (request: Request) => this.store(request)],
 			["/socket", () => Promise.resolve(this.socket())],
@@ -117,6 +187,18 @@ export class AccountBus {
 			routes.set("/local-events", async () => Response.json(await this.storedEvents()));
 		}
 		return routes;
+	}
+
+	private async advance(body: unknown): Promise<Response> {
+		const record = advanceBody(body);
+		if (!record) return new Response("The message was rejected.", { status: 400 });
+		const result = await this.withAccount(record.accountId, () =>
+			this.ctx.storage.transaction((txn) => planAdvance(txn, record.accountId, record.script)),
+		);
+		if (result.event) this.push(result.event);
+		await this.flush();
+		if (!result.accepted || !result.event) return Response.json({ accepted: false });
+		return Response.json({ accepted: true, event: result.event });
 	}
 
 	private async accept(body: unknown): Promise<Response> {
