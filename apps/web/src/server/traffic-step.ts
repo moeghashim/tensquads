@@ -36,7 +36,7 @@ export async function advanceTrafficAccount(
 	const deadlineAt = startedAt + PENDING_TASK_WINDOW_MS;
 	if (chooseAdapters(await workerEnv("ADAPTERS")) === "real") {
 		if (Date.now() >= deadlineAt) throw new Error(unfinished);
-		const event = await (bus ?? (await durableTrafficBus())).nextEvent(scope);
+		const event = await (bus ?? (await durableTrafficBus())).nextEvent(scope, deadlineAt);
 		return event?.id ?? "";
 	}
 	const repositories = createRepositories(db);

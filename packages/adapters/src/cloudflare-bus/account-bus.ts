@@ -31,12 +31,14 @@ export interface BusObjectEnv {
 
 interface AcceptResult {
 	readonly seen: boolean;
+	readonly expired?: boolean;
 	readonly seq: number;
 	readonly event?: PublishedEvent;
 }
 
 interface AdvanceResult {
 	readonly accepted: boolean;
+	readonly expired?: boolean;
 	readonly event?: PublishedEvent;
 }
 
@@ -49,7 +51,13 @@ function readCursor(value: unknown): TrafficCursor {
 	return { seq, clock, scriptIndex };
 }
 
-function advanceBody(body: unknown): { accountId: string; script: ScriptedBusEvent[] } | undefined {
+function expired(deadlineAt?: number): boolean {
+	return deadlineAt !== undefined && Date.now() >= deadlineAt;
+}
+
+function advanceBody(
+	body: unknown,
+): { accountId: string; script: ScriptedBusEvent[]; deadlineAt?: number } | undefined {
 	if (!isObject(body) || !isNonEmptyString(body.accountId) || !Array.isArray(body.script)) return undefined;
 	const script: ScriptedBusEvent[] = [];
 	for (const step of body.script) {
@@ -76,14 +84,18 @@ function advanceBody(body: unknown): { accountId: string; script: ScriptedBusEve
 			set: isObject(step.set) ? step.set : undefined,
 		});
 	}
-	return { accountId: body.accountId, script };
+	const deadlineAt =
+		typeof body.deadlineAt === "number" && Number.isFinite(body.deadlineAt) ? body.deadlineAt : undefined;
+	return { accountId: body.accountId, script, deadlineAt };
 }
 
 async function planAdvance(
 	txn: BusStorage,
 	accountId: string,
 	script: readonly ScriptedBusEvent[],
+	deadlineAt?: number,
 ): Promise<AdvanceResult> {
+	if (expired(deadlineAt)) return { accepted: false, expired: true };
 	const storedAccount = await txn.get<string>("account");
 	if (storedAccount && storedAccount !== accountId) return { accepted: false };
 	let current = readCursor(await txn.get("traffic-cursor"));
@@ -93,9 +105,11 @@ async function planAdvance(
 	while (ids.has(`e${current.seq}`)) {
 		current = { seq: current.seq + 1, clock: current.clock + 1, scriptIndex: current.scriptIndex + 1 };
 	}
+	if (expired(deadlineAt)) return { accepted: false, expired: true };
 	const plan = planNextEvent(known, script, current, traceFor);
 	if (!plan) return { accepted: false };
-	const result = await commitEvent(txn, accountId, plan.event);
+	const result = await commitEvent(txn, accountId, plan.event, deadlineAt);
+	if (result.expired) return { accepted: false, expired: true };
 	if (result.seen || !result.event) return { accepted: false };
 	await txn.put("traffic-cursor", plan.cursor);
 	return { accepted: true, event: result.event };
@@ -132,10 +146,16 @@ async function rememberTask(txn: BusStorage, event: PublishedEvent): Promise<voi
 	await txn.put(`tasks:${event.to}`, [...tasks, event.id]);
 }
 
-async function commitEvent(txn: BusStorage, accountId: string, event: PublishedEvent): Promise<AcceptResult> {
+async function commitEvent(
+	txn: BusStorage,
+	accountId: string,
+	event: PublishedEvent,
+	deadlineAt?: number,
+): Promise<AcceptResult> {
 	const prior = await seenSeq(txn, accountId, event.id);
 	if (prior) return prior;
 	const seq = ((await txn.get<number>("seq")) ?? 0) + 1;
+	if (expired(deadlineAt)) return { seen: false, seq, expired: true };
 	await txn.put("account", accountId);
 	await txn.put("seq", seq);
 	await txn.put(`seen:${event.id}`, true);
@@ -192,9 +212,15 @@ export class AccountBus {
 	private async advance(body: unknown): Promise<Response> {
 		const record = advanceBody(body);
 		if (!record) return new Response("The message was rejected.", { status: 400 });
-		const result = await this.withAccount(record.accountId, () =>
-			this.ctx.storage.transaction((txn) => planAdvance(txn, record.accountId, record.script)),
-		);
+		const result = await this.serialize<AdvanceResult>(async () => {
+			if (expired(record.deadlineAt)) return { accepted: false, expired: true };
+			await this.initialize(record.accountId);
+			if (expired(record.deadlineAt)) return { accepted: false, expired: true };
+			return this.ctx.storage.transaction((txn) =>
+				planAdvance(txn, record.accountId, record.script, record.deadlineAt),
+			);
+		});
+		if (result.expired) return Response.json({ accepted: false, expired: true });
 		if (result.event) this.push(result.event);
 		await this.flush();
 		if (!result.accepted || !result.event) return Response.json({ accepted: false });
@@ -213,10 +239,14 @@ export class AccountBus {
 	}
 
 	private withAccount<T>(accountId: string, operation: () => Promise<T>): Promise<T> {
-		const next = this.accepting.then(async () => {
+		return this.serialize(async () => {
 			await this.initialize(accountId);
 			return operation();
 		});
+	}
+
+	private serialize<T>(operation: () => Promise<T>): Promise<T> {
+		const next = this.accepting.then(operation);
 		this.accepting = next.then(
 			() => undefined,
 			() => undefined,

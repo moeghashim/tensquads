@@ -166,13 +166,18 @@ export function createCloudflareBus(
 			return (await response.json()) as Record<string, unknown>;
 		},
 		publish,
-		async nextEvent(scope) {
+		async nextEvent(scope, deadlineAt) {
 			const response = await stubFetch(env, scope.accountId, "/advance", {
 				method: "POST",
-				body: JSON.stringify({ accountId: scope.accountId, script }),
+				body: JSON.stringify({
+					accountId: scope.accountId,
+					script,
+					...(typeof deadlineAt === "number" && Number.isFinite(deadlineAt) ? { deadlineAt } : {}),
+				}),
 			});
 			if (!response.ok) throw notConfigured("The bus is not configured.");
-			const result = (await response.json()) as { accepted?: boolean; event?: PublishedEvent };
+			const result = (await response.json()) as { accepted?: boolean; expired?: boolean; event?: PublishedEvent };
+			if (result.expired === true) throw new Error("The workspace write did not finish.");
 			if (result.accepted !== true || result.event === undefined) return undefined;
 			return result.event;
 		},

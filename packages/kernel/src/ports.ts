@@ -88,7 +88,7 @@ export interface PublishedEvent {
 
 export interface AccountEventBus {
 	events(scope: AccountScope): Promise<readonly PublishedEvent[]>;
-	nextEvent(scope: AccountScope): Promise<PublishedEvent | undefined>;
+	nextEvent(scope: AccountScope, deadlineAt?: number): Promise<PublishedEvent | undefined>;
 	store(scope: AccountScope): Promise<Readonly<Record<string, unknown>>>;
 	publish(scope: AccountScope, event: PublishedEvent): Promise<void>;
 }

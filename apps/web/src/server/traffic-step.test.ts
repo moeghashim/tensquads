@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { trafficScript } from "@tensquads/adapters";
-import type { PublishedEvent } from "@tensquads/kernel";
+import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
+import type { AccountScope, PublishedEvent } from "@tensquads/kernel";
 import { consumeQueuedEvent, registerTrafficAdvance, runLiveTick, sendNextEvent } from "#/workspace/live.ts";
 
 import { advanceTrafficAccount, realTrafficBus } from "./traffic-step.ts";
@@ -21,6 +22,7 @@ const event: PublishedEvent = {
 test("real mode traffic advances through the bus and test mode keeps the repository", async () => {
 	const previous = process.env.ADAPTERS;
 	let busCalls = 0;
+	let receivedDeadline: number | undefined;
 	const bus = {
 		async events() {
 			return [];
@@ -31,30 +33,31 @@ test("real mode traffic advances through the bus and test mode keeps the reposit
 		async publish() {
 			return undefined;
 		},
-		async nextEvent() {
+		async nextEvent(_scope: AccountScope, deadlineAt?: number) {
+			receivedDeadline = deadlineAt;
 			busCalls += 1;
 			return event;
 		},
 	};
 	try {
 		process.env.ADAPTERS = "real";
-		const advanced = await advanceTrafficAccount(
-			{} as never,
-			{ accountId: "acct", mode: "account" },
-			Date.now(),
-			bus,
-		);
+		const startedAt = Date.now();
+		const advanced = await advanceTrafficAccount({} as never, { accountId: "acct", mode: "account" }, startedAt, bus);
 		assert.equal(advanced, "e100");
 		assert.equal(busCalls, 1);
+		assert.equal(receivedDeadline, startedAt + PENDING_TASK_WINDOW_MS);
 		const script = trafficScript();
 		const published: PublishedEvent[] = [];
+		let callStartedAt = 0;
 		const namespace = {
 			idFromName: (name: string) => name,
 			get: () => ({
 				async fetch(input: Request | string | URL, init?: RequestInit) {
 					const request = new Request(input, init);
 					assert.equal(new URL(request.url).pathname, "/advance");
-					const body = (await request.json()) as { script?: { text?: string }[] };
+					const body = (await request.json()) as { script?: { text?: string }[]; deadlineAt?: number };
+					assert.equal(typeof body.deadlineAt, "number");
+					assert.equal(body.deadlineAt, callStartedAt + PENDING_TASK_WINDOW_MS);
 					assert.equal(body.script?.[0]?.text, script[0]?.text);
 					assert.equal(body.script?.[1]?.text, script[1]?.text);
 					const step = body.script?.[published.length];
@@ -76,7 +79,10 @@ test("real mode traffic advances through the bus and test mode keeps the reposit
 		};
 		const durable = realTrafficBus({ ACCOUNT_BUS: namespace });
 		const scope = { accountId: "acct", mode: "account" } as const;
-		registerTrafficAdvance(() => advanceTrafficAccount({} as never, scope, Date.now(), durable));
+		registerTrafficAdvance(() => {
+			callStartedAt = Date.now();
+			return advanceTrafficAccount({} as never, scope, callStartedAt, durable);
+		});
 		await runLiveTick({
 			accountId: scope.accountId,
 			live: true,
