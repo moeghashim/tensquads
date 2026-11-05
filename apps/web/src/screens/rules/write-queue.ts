@@ -5,6 +5,7 @@ import { clearOverviewHold } from "#/screens/overview/load.ts";
 import { type RulesLimitValue, type RulesRule, type RulesWrite, setRuleEnabled, setRuleLimit } from "#/server/rules.ts";
 import { bounded } from "#/workspace/bounded.ts";
 import { clearFrameHold, onFrameAccountReset } from "#/workspace/frame-load.ts";
+import { settleWrite } from "#/workspace/write-result.ts";
 import { confirmRetired, nextWriteFence } from "#/write-fence.ts";
 
 interface Flight<T> {
@@ -192,12 +193,13 @@ function queueValue<T>(map: Map<string, Flight<T>>, key: string, next: T): Fligh
 	return null;
 }
 
-async function sentOrHeld<T>(send: (value: T, signal: AbortSignal) => Promise<T | null>, sent: T): Promise<T | null> {
-	try {
-		return await bounded((signal) => send(sent, signal));
-	} catch {
-		return null;
-	}
+async function sentOrHeld<T>(
+	send: (value: T, signal: AbortSignal) => Promise<T | null>,
+	sent: T,
+): Promise<{ readonly value: T | null; readonly left: boolean }> {
+	const settled = await settleWrite(() => bounded((signal) => send(sent, signal)));
+	if (!settled.ok) return { value: null, left: settled.left };
+	return { value: settled.value, left: false };
 }
 
 async function sendRule(id: string, value: boolean, accountId: string, signal: AbortSignal): Promise<boolean | null> {
@@ -249,8 +251,14 @@ async function run<T>(
 		flight.queued = null;
 		flight.sending = true;
 		notify();
-		const returned = await sentOrHeld(send, sent);
+		const held = await sentOrHeld(send, sent);
 		if (!sameAccount(epoch)) return;
+		if (held.left) {
+			map.delete(key);
+			notify();
+			return;
+		}
+		const returned = held.value;
 		if (returned === null) {
 			noteUncertainWrite(epoch);
 			markReadFailed(epoch);

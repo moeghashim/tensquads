@@ -132,6 +132,27 @@ test("a failed advance refreshes and the queued click runs", async () => {
 	assert.equal(consumeQueuedEvent(), "e2");
 });
 
+test("a refresh-needed advance does not refresh and the queued click still runs", async () => {
+	consumeQueuedEvent();
+	let calls = 0;
+	registerTrafficAdvance(() => {
+		calls += 1;
+		if (calls === 1) return Promise.reject(new Error("The session needs a refresh."));
+		return Promise.resolve(`e${calls}`);
+	});
+	let refreshes = 0;
+	const refresh = () => {
+		refreshes += 1;
+		return Promise.resolve();
+	};
+	const first = sendNextEvent(refresh);
+	const second = sendNextEvent(refresh);
+	await Promise.all([first, second]);
+	assert.equal(calls, 2);
+	assert.equal(refreshes, 1);
+	assert.equal(consumeQueuedEvent(), "e2");
+});
+
 test("a live tick does not queue behind an open send", async () => {
 	consumeQueuedEvent();
 	let release;

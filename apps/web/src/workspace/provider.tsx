@@ -36,6 +36,7 @@ import { rememberFrame } from "./frame-load.ts";
 import { runLiveTick } from "./live.ts";
 import { gateStyle, kindStyle, navStyle, pill, switchParts } from "./styles.ts";
 import type { RuleForm, WorkspaceFrameData } from "./types.ts";
+import { settleWrite } from "./write-result.ts";
 
 const replyWaitMs = 1400;
 
@@ -379,39 +380,61 @@ interface SendHooks {
 	readonly applyFrame: (frame: WorkspaceFrameData) => void;
 }
 
+type SendOutcome = "left" | "refresh" | "settle";
+
 async function sendDraft(value: string, hooks: SendHooks) {
 	let refreshed: WorkspaceFrameData | undefined;
+	let outcome: SendOutcome = "settle";
 	try {
-		await performSend(value, hooks);
+		outcome = await performSend(value, hooks);
 	} catch {
-		// Begin or finish settled with an error. Refresh still runs.
+		// Finish settled with an error after begin. The draft stays cleared.
 	}
 	try {
-		if (hooks.mounted.current) refreshed = await hooks.refreshFrame();
+		// A refresh-needed begin already invalidated the router on the shared path.
+		if (outcome === "settle" && hooks.mounted.current) refreshed = await hooks.refreshFrame();
 	} catch {
 		// Refresh settled with an error. The guard still clears.
 	} finally {
 		hooks.sending.current = false;
-		completeSend(hooks, refreshed);
 	}
+	if (!hooks.mounted.current) return;
+	if (outcome === "left") {
+		hooks.setPending(false);
+		hooks.setThinking(false);
+		hooks.setThinkingAgent("");
+		return;
+	}
+	completeSend(hooks, refreshed);
 }
 
-async function performSend(value: string, hooks: SendHooks) {
-	const started = await bounded((signal) =>
-		beginWorkspaceSend({ data: { accountId: hooks.accountId, text: value }, signal }),
+function sendFailure(settled: { readonly left: boolean; readonly refreshNeeded: boolean }): SendOutcome {
+	if (settled.left) return "left";
+	if (settled.refreshNeeded) return "refresh";
+	return "settle";
+}
+
+async function performSend(value: string, hooks: SendHooks): Promise<SendOutcome> {
+	const started = await settleWrite(() =>
+		bounded((signal) => beginWorkspaceSend({ data: { accountId: hooks.accountId, text: value }, signal })),
 	);
-	if (!hooks.mounted.current) {
-		return;
+	if (!started.ok) {
+		if (started.refreshNeeded && hooks.mounted.current) restoreDraft(value, hooks);
+		return sendFailure(started);
 	}
-	if (started.kind === "ignored") {
-		hooks.setDraft((draft) => (draft.length === 0 ? value : draft));
-		return;
+	if (!hooks.mounted.current) return "settle";
+	const body = started.value;
+	if (body.kind === "ignored") {
+		restoreDraft(value, hooks);
+		return "settle";
 	}
-	showStartedMessages(started, hooks);
-	if (started.kind !== "working") {
-		return;
-	}
-	await finishWorkingSend(started, hooks);
+	showStartedMessages(body, hooks);
+	if (body.kind !== "working") return "settle";
+	return finishWorkingSend(body, hooks);
+}
+
+function restoreDraft(value: string, hooks: SendHooks): void {
+	hooks.setDraft((draft) => (draft.length === 0 ? value : draft));
 }
 
 function showStartedMessages(started: Awaited<ReturnType<typeof beginWorkspaceSend>>, hooks: SendHooks) {
@@ -423,20 +446,20 @@ function showStartedMessages(started: Awaited<ReturnType<typeof beginWorkspaceSe
 async function finishWorkingSend(
 	started: Extract<Awaited<ReturnType<typeof beginWorkspaceSend>>, { kind: "working" }>,
 	hooks: SendHooks,
-) {
+): Promise<SendOutcome> {
 	hooks.setThinking(true);
 	hooks.setThinkingAgent(started.agentName);
 	hooks.setStartedTask(started.task);
 	await delay(replyWaitMs);
-	if (!hooks.mounted.current) {
-		return;
-	}
-	const finished = await bounded((signal) =>
-		finishWorkspaceSend({ data: { accountId: hooks.accountId, text: started.taskId }, signal }),
+	if (!hooks.mounted.current) return "settle";
+	const finished = await settleWrite(() =>
+		bounded((signal) => finishWorkspaceSend({ data: { accountId: hooks.accountId, text: started.taskId }, signal })),
 	);
-	if (hooks.mounted.current && finished.kind === "replied") {
-		hooks.setMessages(finished.messages);
+	if (!finished.ok) return sendFailure(finished);
+	if (hooks.mounted.current && finished.value.kind === "replied") {
+		hooks.setMessages(finished.value.messages);
 	}
+	return "settle";
 }
 
 function completeSend(hooks: SendHooks, refreshed: WorkspaceFrameData | undefined) {

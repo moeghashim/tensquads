@@ -123,6 +123,7 @@ function harness() {
 				navigations += 1;
 			},
 			useRouter: () => router,
+			isRedirect: (error) => error instanceof Response && Boolean(error.options),
 		},
 		react: {
 			useSyncExternalStore: (_subscribe, snapshot) => snapshot(),
