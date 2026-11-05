@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tensquads</title>
+<meta name="description" content="Orders, support, marketing, finance and stock, each handled by its own agent. One master keeps them in sync and only interrupts you when it matters.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+.sm-blink{transform-box:fill-box;transform-origin:center;animation:sm-blink 4.8s infinite}
+@keyframes sm-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@media (prefers-reduced-motion:reduce){.sm-blink{animation:none}}
+</style>
+<style>
+:root { --home-display: "Familjen Grotesk", Inter, sans-serif; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: #fcfcfc; color: #282828; font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 22px; letter-spacing: -0.01em; -webkit-font-smoothing: antialiased; }
+::selection { background: #0169cc; color: #fff; }
+button, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+textarea { caret-color: #0d0d0d; }
+textarea::placeholder { color: #5d5d5d; opacity: 1; }
+a:focus-visible, button:focus-visible, textarea:focus-visible { outline: 2px solid #0169cc; outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+h1, h2, .price span, .swatch b, .plan-top b { font-family: var(--home-display); font-weight: 700; letter-spacing: -0.03em; color: #0d0d0d; }
+h1 { margin: 8px 0 0; font-size: 64px; line-height: 68px; text-wrap: balance; max-width: 16em; }
+h2 { margin: 8px 0 0; font-size: 40px; line-height: 46px; text-wrap: balance; max-width: 16em; }
+h3 { margin: 0; font-size: 20px; line-height: 26px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d; }
+p { text-wrap: pretty; }
+.nav { position: sticky; top: 0; z-index: 2; background: #fcfcfc; border-bottom: 1px solid rgba(13, 13, 13, 0.1); }
+.nav-row { max-width: 1200px; margin: 0 auto; padding: 12px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0d0d0d; font-weight: 600; font-size: 15px; margin-right: 8px; }
+.brand span.mark { width: 30px; height: 30px; border-radius: 8px; background: #181818; color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+.nav-links { display: flex; flex-wrap: wrap; gap: 2px; }
+.nav-link { color: #414141; text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 12px; border-radius: 8px; }
+.nav-link:hover { background: rgba(13, 13, 13, 0.06); color: #0d0d0d; }
+.nav-actions { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn-dark, .btn-soft, .btn-light { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; font-weight: 500; border: 0; }
+.btn-dark { background: #181818; color: #fff; }
+.btn-dark:hover { background: #000; color: #fff; }
+.btn-soft { background: rgba(13, 13, 13, 0.06); color: #0d0d0d; }
+.btn-soft:hover { background: rgba(13, 13, 13, 0.12); color: #0d0d0d; }
+.btn-light { background: #fff; color: #0d0d0d; }
+.btn-light:hover { background: #f3f3f3; color: #0d0d0d; }
+.nav-actions .btn-dark { height: 38px; padding: 0 16px; font-size: 14px; }
+.hero { padding: 72px 0 32px; }
+.kicker { font-size: 13px; font-weight: 600; color: #0169cc; }
+.pill { height: 28px; padding: 0 12px; border-radius: 999px; background: #04b84c14; color: #00692a; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; }
+.pill i, .dot { width: 8px; height: 8px; border-radius: 999px; background: #00a240; display: inline-block; }
+.lede { margin: 12px 0 0; max-width: 68ch; font-size: 19px; line-height: 28px; color: #5d5d5d; }
+.line { margin-top: 36px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; background: rgba(13, 13, 13, 0.14); border: 1px solid rgba(13, 13, 13, 0.14); }
+.swatch { min-width: 0; background: #fff; padding: 16px 12px 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.swatch.petra { grid-column: 1 / span 2; grid-row: 1 / span 2; background: #e8e8e8; justify-content: flex-end; padding: 20px; }
+.swatch.petra div { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.swatch svg { display: block; max-width: 100%; height: auto; }
+.swatch b { font-size: 18px; line-height: 22px; }
+.swatch.petra b { font-size: 40px; line-height: 44px; }
+.role, .tag, .sub { color: #5d5d5d; font-size: 13px; line-height: 18px; }
+.last { font-size: 13px; line-height: 18px; color: #414141; overflow-wrap: anywhere; }
+.brief { margin-top: 20px; background: #fff; border: 1px solid rgba(13, 13, 13, 0.1); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.kinds, .examples { display: flex; flex-wrap: wrap; gap: 8px; }
+.kinds button, .examples button { border: 0; border-radius: 999px; font-weight: 500; }
+.kinds button { height: 32px; padding: 0 14px; font-size: 13px; background: rgba(13, 13, 13, 0.06); color: #282828; }
+.kinds button[aria-pressed="true"] { background: #181818; color: #fff; }
+.brief textarea { width: 100%; border: 0; padding: 4px 4px 0; resize: none; background: transparent; font-size: 17px; line-height: 26px; color: #0d0d0d; min-height: 78px; }
+.brief-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid rgba(13, 13, 13, 0.06); padding-top: 12px; }
+.examples { gap: 6px; }
+.examples button { height: 30px; padding: 0 12px; background: rgba(13, 13, 13, 0.06); color: #414141; font-size: 12px; }
+.brief-bar .btn-dark { height: 42px; padding: 0 18px; font-size: 15px; }
+.trial { margin: 14px 0 0; font-size: 13px; color: #8f8f8f; }
+.stockists { padding: 28px 0 72px; }
+.stockists p { margin: 0 0 14px; font-size: 12px; font-weight: 500; color: #8f8f8f; letter-spacing: 0.08em; text-transform: uppercase; }
+.stockists div { display: flex; flex-wrap: wrap; gap: 14px 32px; }
+.stockists span { font-family: var(--home-display); font-size: 18px; font-weight: 600; color: #8f8f8f; letter-spacing: -0.02em; }
+.section { padding: 0 0 96px; }
+.caption { font-size: 13px; font-weight: 600; color: #0169cc; }
+.host { margin: 0 0 8px; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; color: #8f8f8f; }
+.overview { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 1px; background: rgba(13, 13, 13, 0.1); border: 1px solid rgba(13, 13, 13, 0.1); }
+.side, .overview-main { background: #fcfcfc; min-width: 0; }
+.side { background: #f3f3f3; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.side-who { display: flex; align-items: center; gap: 8px; padding: 2px 8px 12px; font-weight: 600; color: #0d0d0d; }
+.side-on, .side a, .side span.item { padding: 8px 10px; color: #414141; }
+.side-on { border-radius: 8px; background: rgba(13, 13, 13, 0.08); font-weight: 600; color: #0d0d0d; }
+.overview-main { padding: 20px 22px 8px; display: flex; flex-direction: column; gap: 16px; }
+.greet { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 8px; }
+.greet b { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d; display: block; }
+.greet span { font-size: 12px; color: #5d5d5d; }
+.online { height: 22px; padding: 0 8px; border-radius: 999px; background: #04b84c14; color: #008635; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: rgba(13, 13, 13, 0.08); border: 1px solid rgba(13, 13, 13, 0.08); }
+.kpi { background: #fff; padding: 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kpi span { font-size: 11px; color: #5d5d5d; }
+.kpi b { font-size: 20px; line-height: 26px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d; font-variant-numeric: tabular-nums; }
+.kpi em { font-style: normal; font-size: 11px; color: #00692a; }
+.minis { display: flex; flex-direction: column; }
+.mini { display: grid; grid-template-columns: 28px auto auto minmax(0, 1fr) 8px; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid rgba(13, 13, 13, 0.06); min-width: 0; }
+.mini-name { font-weight: 600; font-size: 13px; color: #0d0d0d; }
+.mini-last { font-size: 12px; color: #5d5d5d; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tag { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(13, 13, 13, 0.06); color: #414141; font-size: 12px; font-weight: 500; }
+.roster { list-style: none; margin: 28px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(13, 13, 13, 0.1); border: 1px solid rgba(13, 13, 13, 0.1); }
+.roster-row, .more { background: #fff; min-width: 0; }
+.roster-row:nth-child(7) { grid-column: 1 / -1; }
+.roster-row { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 14px; padding: 18px; }
+.who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.who b { font-size: 17px; color: #0d0d0d; }
+.roster-copy p { margin: 8px 0 0; font-size: 14px; line-height: 21px; color: #414141; }
+.tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tools span { height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(13, 13, 13, 0.06); font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; display: inline-flex; align-items: center; color: #414141; }
+.more { grid-column: 1 / -1; display: flex; gap: 16px; align-items: center; padding: 18px; }
+.more b { display: block; font-size: 17px; color: #0d0d0d; }
+.more span { font-size: 13px; color: #5d5d5d; }
+.how { background: #f3f3f3; padding: 56px 0; margin-bottom: 96px; }
+.how .wrap { display: flex; flex-direction: column; gap: 36px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+.steps li { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.num { width: 36px; height: 36px; border-radius: 999px; background: #181818; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; }
+.steps p { margin: 0; font-size: 15px; line-height: 23px; color: #5d5d5d; }
+.control { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: start; }
+.rules { list-style: none; margin: 20px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.rules li { display: flex; gap: 12px; align-items: flex-start; font-size: 16px; line-height: 24px; color: #282828; }
+.rules strong { color: #0d0d0d; }
+.tick { width: 22px; height: 22px; border-radius: 999px; background: #04b84c14; color: #00692a; display: inline-flex; align-items: center; justify-content: center; flex: none; margin-top: 1px; }
+.sheet { background: #fff; border: 1px solid rgba(13, 13, 13, 0.1); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.sheet-top { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0d0d0d; }
+.count { min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 999px; background: #fb6a2212; color: #923b0f; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+.ask { background: #f9f9f9; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.ask-who { display: flex; gap: 8px; align-items: center; font-size: 12px; color: #5d5d5d; }
+.ask-who b { margin-left: auto; font-weight: 600; color: #0d0d0d; font-size: 14px; font-variant-numeric: tabular-nums; }
+.ask h3 { font-family: Inter, system-ui, sans-serif; font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
+.ask p { margin: 0; font-size: 13px; color: #5d5d5d; }
+.ask-actions { display: flex; gap: 8px; }
+.ask-actions button { height: 30px; padding: 0 12px; font-size: 13px; }
+.limits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: rgba(13, 13, 13, 0.1); border: 1px solid rgba(13, 13, 13, 0.1); }
+.limits div { background: #fff; padding: 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.limits span { font-size: 12px; color: #5d5d5d; }
+.limits b { font-size: 18px; color: #0d0d0d; font-variant-numeric: tabular-nums; }
+.pricing { display: flex; flex-direction: column; gap: 28px; }
+.pricing .lede { margin: 12px 0 0; }
+.plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: rgba(13, 13, 13, 0.1); border: 1px solid rgba(13, 13, 13, 0.1); }
+.plan { background: #fff; color: #0d0d0d; padding: 28px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.plan-dark { background: #181818; color: #fff; }
+.plan-dark .plan-top b, .plan-dark .price span { color: #fff; }
+.plan-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.plan-top b { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; }
+.pop { height: 22px; padding: 0 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; font-family: Inter, system-ui, sans-serif; letter-spacing: -0.01em; }
+.price span { font-size: 40px; line-height: 44px; font-variant-numeric: tabular-nums; }
+.price small { font-size: 14px; opacity: 0.7; }
+.plan p { margin: 0; font-size: 14px; line-height: 21px; opacity: 0.75; }
+.plan ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.plan li { display: flex; gap: 8px; align-items: flex-start; }
+.plan li svg { flex: none; margin-top: 4px; }
+.plan a { height: 42px; padding: 0 18px; font-size: 14px; margin-top: auto; }
+.fine { margin: 0; font-size: 13px; color: #8f8f8f; }
+.close { background: #181818; color: #fff; padding: 64px 0; }
+.close h2 { color: #fff; max-width: 16em; font-size: 44px; line-height: 50px; }
+.close p { margin: 16px 0 0; max-width: 54ch; font-size: 17px; line-height: 26px; color: #c9c9c9; }
+.close-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.close-actions a { height: 46px; padding: 0 22px; font-size: 15px; }
+.close-actions .btn-ghost { border-radius: 999px; background: rgba(255, 255, 255, 0.12); color: #fff; text-decoration: none; display: inline-flex; align-items: center; font-weight: 500; }
+.close-actions .btn-ghost:hover { background: rgba(255, 255, 255, 0.2); }
+.cast { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 36px; }
+.foot { border-top: 1px solid rgba(13, 13, 13, 0.06); padding: 40px 0 32px; }
+.foot-row { display: flex; flex-wrap: wrap; gap: 32px; justify-content: space-between; }
+.foot-brand { display: flex; flex-direction: column; gap: 10px; max-width: 260px; }
+.foot-brand b { display: flex; align-items: center; gap: 8px; font-weight: 600; color: #0d0d0d; }
+.foot-brand i { width: 24px; height: 24px; border-radius: 6px; background: #181818; display: inline-block; }
+.foot-brand span, .cols a { font-size: 13px; color: #5d5d5d; }
+.cols { display: flex; gap: 48px; flex-wrap: wrap; }
+.cols div { display: flex; flex-direction: column; gap: 8px; }
+.cols strong { font-size: 12px; color: #0d0d0d; }
+.cols a { text-decoration: none; }
+.cols a:hover { color: #0d0d0d; }
+.legal { margin: 24px 0 0; font-size: 12px; color: #8f8f8f; }
+@media (max-width: 800px) {
+  .wrap { padding: 0 16px; }
+  .nav-row { padding: 12px 16px; }
+  h1 { font-size: 40px; line-height: 44px; }
+  h2, .close h2 { font-size: 32px; line-height: 38px; }
+  .line { grid-template-columns: 1fr 1fr; }
+  .swatch.petra { grid-column: 1 / -1; grid-row: auto; flex-direction: row; align-items: center; gap: 16px; }
+  .swatch.petra b { font-size: 32px; line-height: 36px; }
+  .overview, .control, .plans, .roster, .steps, .kpis { grid-template-columns: 1fr; }
+  .limits { grid-template-columns: 1fr; }
+  .mini { grid-template-columns: 28px auto minmax(0, 1fr) 8px; }
+  .mini > svg { grid-column: 1; grid-row: 1 / span 2; }
+  .mini-name { grid-column: 2; grid-row: 1; }
+  .mini .tag { grid-column: 2; grid-row: 2; justify-self: start; }
+  .mini-last { grid-column: 3; grid-row: 1 / span 2; }
+  .mini .dot { grid-column: 4; grid-row: 1 / span 2; }
+  .how { padding: 40px 0; }
+  .hero { padding-top: 36px; }
+  .brief-bar .btn-dark { width: 100%; }
+}
+@media (min-width: 801px) and (max-width: 1100px) {
+  .line { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .swatch.petra { grid-column: 1 / span 2; grid-row: span 2; }
+  .plans, .steps, .kpis { grid-template-columns: 1fr 1fr; }
+  .plan:last-child { grid-column: 1 / -1; }
+}
+</style>
+</head>
+<body>
+<header class="nav">
+<div class="nav-row">
+<a class="brand" href="/"><span class="mark"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"></rect><path d="M8 2.5V5M6 9h0M10 9h0"></path></svg></span>tensquads</a>
+<nav class="nav-links" aria-label="Site">
+<a class="nav-link" href="#squad">Agents</a>
+<a class="nav-link" href="#how">How it works</a>
+<a class="nav-link" href="#control">Control</a>
+<a class="nav-link" href="#pricing">Pricing</a>
+</nav>
+<div class="nav-actions">
+<a class="nav-link" href="/signin">Sign in</a>
+<a class="btn-dark" href="/signup">Start free</a>
+</div>
+</div>
+</header>
+<main>
+<section class="hero" aria-label="Hero">
+<div class="wrap">
+<span class="pill"><i></i>New: Analytics agent in beta</span>
+<h1>Hire a squad of AI agents to run your business</h1>
+<p class="lede">Orders, support, marketing, finance and stock, each handled by its own agent. One master keeps them in sync and only interrupts you when it matters.</p>
+<div class="line">
+<article class="swatch petra">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="148" height="148" role="img" aria-label="Petra, Master">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/></g>
+
+</svg>
+<div><b>Petra</b><span class="role">Master</span></div>
+</article>
+<article class="swatch" style="background:#e7efff">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="88" height="88" role="img" aria-label="Pisa, Orders, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg>
+<b>Pisa</b>
+<span class="role">Orders</span>
+<span class="last">Added tracking to #A-1007</span>
+</article><article class="swatch" style="background:#def5ee">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="88" height="88" role="img" aria-label="Kyoto, Support, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<b>Kyoto</b>
+<span class="role">Support</span>
+<span class="last">Replied to T-2291 in 4 min</span>
+</article><article class="swatch" style="background:#ece3ff">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="88" height="88" role="img" aria-label="Rio, Marketing, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg>
+<b>Rio</b>
+<span class="role">Marketing</span>
+<span class="last">Asked to raise the prints ad set</span>
+</article><article class="swatch" style="background:#ffefa4">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="88" height="88" role="img" aria-label="Zurich, Finance, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<b>Zurich</b>
+<span class="role">Finance</span>
+<span class="last">Sent the weekly profit summary</span>
+</article><article class="swatch" style="background:#fee7c2">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="88" height="88" role="img" aria-label="Giza, Inventory, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg>
+<b>Giza</b>
+<span class="role">Inventory</span>
+<span class="last">Drafted a reorder of 50 hoodies</span>
+</article><article class="swatch" style="background:#fde2f3">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="88" height="88" role="img" aria-label="Machu, Market researcher, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg>
+<b>Machu</b>
+<span class="role">Market researcher</span>
+<span class="last">Found 4 competitors for [BUSINESS]</span>
+</article><article class="swatch" style="background:#e5e9f0">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="88" height="88" role="img" aria-label="Angkor, Website builder, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<b>Angkor</b>
+<span class="role">Website builder</span>
+<span class="last">Preview ready</span>
+</article><article class="swatch" style="background:#e7efff">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="88" height="88" role="img" aria-label="Delphi, Analytics, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg>
+<b>Delphi</b>
+<span class="role">Analytics</span>
+<span class="last">New: Analytics agent in beta</span>
+</article>
+</div>
+<form class="brief" onsubmit="event.preventDefault()">
+<div class="kinds" data-kinds>
+<button type="button" data-kind="new" aria-pressed="false">New business</button>
+<button type="button" data-kind="existing" aria-pressed="true">Existing business</button>
+</div>
+<label class="sr" for="hero-prompt">Describe your business</label>
+<textarea id="hero-prompt" rows="3" placeholder="Paste your store URL or describe what you sell…"></textarea>
+<div class="brief-bar">
+<div class="examples" data-examples><button type="button" data-example>A Shopify store doing 300 orders a month</button><button type="button" data-example>A cafe with a wholesale side</button><button type="button" data-example>Two Amazon listings and a website</button></div>
+<a class="btn-dark" href="/signup">Build my squad <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></a>
+</div>
+</form>
+<p class="trial">Free for 14 days · No credit card · Cancel from the dashboard</p>
+</div>
+</section>
+<section class="stockists" aria-label="Customers">
+<div class="wrap">
+<p>Running the day-to-day at</p>
+<div><span>Leen Dates</span><span>Northwind Apparel</span><span>Atlas Outdoor</span><span>Bloom Skincare</span><span>Harbor Coffee</span><span>Sunbeam Toys</span></div>
+</div>
+</section>
+<section class="section" aria-label="Product preview">
+<div class="wrap">
+<p class="host">app.tensquads.co / overview</p>
+<div class="overview">
+<div class="side">
+<div class="side-who"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="26" height="26" role="img" aria-label="Petra, Master">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/></g>
+
+</svg><span>Petra</span><span class="tag">Master</span></div>
+<div class="side-on">Overview</div>
+<div class="item">Chat with the master</div>
+<div class="item">Agents</div>
+<div class="item">Agent traffic</div>
+<div class="item">Rules and limits</div>
+</div>
+<div class="overview-main">
+<div class="greet">
+<div><b>Good morning, Moe</b><span>Last 7 days across the store and your agents</span></div>
+<span class="online">4 of 5 agents online</span>
+</div>
+<div class="kpis"><div class="kpi"><span>Revenue</span><b>$8,420</b><em>+12% vs last week</em></div><div class="kpi"><span>Orders</span><b>186</b><em>+8%</em></div><div class="kpi"><span>Tasks done by agents</span><b>331</b><em>This week</em></div><div class="kpi"><span>Hours saved</span><b>34h</b><em>This week</em></div></div>
+<div class="minis"><div class="mini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="28" height="28" role="img" aria-label="Pisa, Orders, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg>
+<span class="mini-name">Pisa</span>
+<span class="tag">Orders</span>
+<span class="mini-last">Added tracking to #A-1007</span>
+<span class="dot" style="background:#00a240"></span>
+</div><div class="mini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="28" height="28" role="img" aria-label="Kyoto, Support, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<span class="mini-name">Kyoto</span>
+<span class="tag">Support</span>
+<span class="mini-last">Replied to T-2291 in 4 min</span>
+<span class="dot" style="background:#00a240"></span>
+</div><div class="mini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="28" height="28" role="img" aria-label="Rio, Marketing, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg>
+<span class="mini-name">Rio</span>
+<span class="tag">Marketing</span>
+<span class="mini-last">Asked to raise the prints ad set</span>
+<span class="dot" style="background:#00a240"></span>
+</div><div class="mini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="28" height="28" role="img" aria-label="Zurich, Finance, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<span class="mini-name">Zurich</span>
+<span class="tag">Finance</span>
+<span class="mini-last">Sent the weekly profit summary</span>
+<span class="dot" style="background:#00a240"></span>
+</div><div class="mini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="28" height="28" role="img" aria-label="Giza, Inventory, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg>
+<span class="mini-name">Giza</span>
+<span class="tag">Inventory</span>
+<span class="mini-last">Drafted a reorder of 50 hoodies</span>
+<span class="dot" style="background:#cdcdcd"></span>
+</div><div class="mini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="28" height="28" role="img" aria-label="Machu, Market researcher, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg>
+<span class="mini-name">Machu</span>
+<span class="tag">Market researcher</span>
+<span class="mini-last">Found 4 competitors for [BUSINESS]</span>
+<span class="dot" style="background:#00a240"></span>
+</div><div class="mini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="28" height="28" role="img" aria-label="Angkor, Website builder, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<span class="mini-name">Angkor</span>
+<span class="tag">Website builder</span>
+<span class="mini-last">Preview ready</span>
+<span class="dot" style="background:#00a240"></span>
+</div></div>
+</div>
+</div>
+</div>
+</section>
+<section class="section" id="squad" aria-label="The agents">
+<div class="wrap">
+<span class="caption">Meet the squad</span>
+<h2>One agent for every part of the business</h2>
+<p class="lede">Each agent runs on its own isolated machine with only the connections it needs. Start with one, add the rest when you are ready.</p>
+<ul class="roster"><li class="roster-row">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72" role="img" aria-label="Pisa, Orders, checking">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="35.8" y="35.7" width="6.4" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+
+</svg>
+<div class="roster-copy">
+<div class="who"><b>Pisa</b><span class="tag">Orders</span></div>
+<div class="sub">Fulfilment and tracking</div>
+<p>Marks items shipped, syncs tracking from your maker and tells the customer, without you opening a tab.</p>
+<div class="tools"><span>shopify</span><span>printify</span></div>
+</div>
+</li><li class="roster-row">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72" role="img" aria-label="Kyoto, Support, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<div class="roster-copy">
+<div class="who"><b>Kyoto</b><span class="tag">Support</span></div>
+<div class="sub">Customer inbox and refunds</div>
+<p>Answers in your voice, looks up the order itself and refunds under the limit you set.</p>
+<div class="tools"><span>gmail</span><span>shopify</span></div>
+</div>
+</li><li class="roster-row">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72" role="img" aria-label="Rio, Marketing, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg>
+<div class="roster-copy">
+<div class="who"><b>Rio</b><span class="tag">Marketing</span></div>
+<div class="sub">Ads, social and email</div>
+<p>Reports spend and return every morning, drafts posts and campaigns, asks before spending more.</p>
+<div class="tools"><span>meta ads</span><span>klaviyo</span><span>canva</span></div>
+</div>
+</li><li class="roster-row">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72" role="img" aria-label="Zurich, Finance, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<div class="roster-copy">
+<div class="who"><b>Zurich</b><span class="tag">Finance</span></div>
+<div class="sub">Payouts, costs and profit</div>
+<p>Matches bills to orders, tracks fees and payouts, and sends a profit summary you can read in a minute.</p>
+<div class="tools"><span>stripe</span><span>quickbooks</span></div>
+</div>
+</li><li class="roster-row">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72" role="img" aria-label="Giza, Inventory, blocked">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g><rect x="21.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/><rect x="35.5" y="35.7" width="7" height="2.6" rx="1.3" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e39b00" stroke="#fff" stroke-width="2.5"/><rect x="49.8" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/><rect x="54" y="49.5" width="2.2" height="7" rx="1" fill="#fff"/>
+</svg>
+<div class="roster-copy">
+<div class="who"><b>Giza</b><span class="tag">Inventory</span></div>
+<div class="sub">Stock and suppliers</div>
+<p>Watches stock across products, flags what is running low and drafts the reorder for your approval.</p>
+<div class="tools"><span>shopify</span><span>printify</span></div>
+</div>
+</li><li class="roster-row">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72" role="img" aria-label="Machu, Market researcher, running">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g><rect x="25.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/><rect x="39.4" y="33.4" width="5.2" height="7.2" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg>
+<div class="roster-copy">
+<div class="who"><b>Machu</b><span class="tag">Market researcher</span></div>
+<div class="sub">Competitors and positioning</div>
+<p>Finds who you compete with, reads their sites and prices, and tells the master how they are doing.</p>
+<div class="tools"><span>web search</span><span>scrapling</span></div>
+</div>
+</li><li class="roster-row">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72" role="img" aria-label="Angkor, Website builder, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+<div class="roster-copy">
+<div class="who"><b>Angkor</b><span class="tag">Website builder</span></div>
+<div class="sub">Landing pages and site updates</div>
+<p>Builds a landing page from the market report and the master's brief, and publishes only when you say so.</p>
+<div class="tools"><span>cloudflare pages</span></div>
+</div>
+</li>
+<li class="more"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="72" height="72" role="img" aria-label="Delphi, Analytics, planning">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g><rect x="24.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="38.4" y="29.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><circle cx="53" cy="13" r="2" fill="#a8a8a8"/><circle cx="57.5" cy="8" r="2.8" fill="#a8a8a8"/></g>
+
+</svg><div><b>More on the way</b><span>Analytics is in beta. People and Legal are next.</span></div></li>
+</ul>
+</div>
+</section>
+<section class="how" id="how" aria-label="How it works">
+<div class="wrap">
+<div>
+<span class="caption">How it works</span>
+<h2>Set up in an afternoon, not a quarter</h2>
+</div>
+<ol class="steps"><li><span class="num">1</span><h3>Tell us about the business</h3><p>New or existing, what you sell, where you sell it. A couple of sentences is enough to brief the squad.</p></li><li><span class="num">2</span><h3>Pick your agents and connect</h3><p>Choose the agents you want and connect your store, inbox and ads. Each agent gets its own isolated machine and only the keys it needs.</p></li><li><span class="num">3</span><h3>Set the limits, then let go</h3><p>Decide what agents can do alone and what needs a yes from you. Loosen the limits as you build trust.</p></li></ol>
+</div>
+</section>
+<section class="section" id="control" aria-label="You stay in control">
+<div class="wrap control">
+<div>
+<span class="caption">You stay in control</span>
+<h2>Agents work inside limits you set. Anything bigger, they ask.</h2>
+<ul class="rules"><li><span class="tick" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"></path></svg></span><span><strong>Spend and refund caps.</strong> Per agent, per day. Anything over the cap lands in your approval inbox with the reasoning.</span></li><li><span class="tick" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"></path></svg></span><span><strong>Every action is logged.</strong> See who asked what, which skill ran and what changed, message by message.</span></li><li><span class="tick" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"></path></svg></span><span><strong>Isolated by default.</strong> Each agent runs on its own machine with its own secrets and an allowlist of sites it may reach.</span></li><li><span class="tick" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"></path></svg></span><span><strong>Pause anything, any time.</strong> One switch per agent, one per skill. Paused agents keep their memory and pick up where they left off.</span></li></ul>
+</div>
+<div>
+<div class="sheet">
+<div class="sheet-top"><span>Needs your approval</span><span class="count">2</span></div>
+<div class="ask">
+<div class="ask-who"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="22" height="22" role="img" aria-label="Rio, Marketing, escalated">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g><circle cx="25" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="39" cy="37" r="4.4" fill="#0d0d0d"/><circle cx="26.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><circle cx="40.4" cy="35.6" r="1.3" fill="#fff" opacity=".9"/><ellipse cx="32" cy="48" rx="2.4" ry="2.8" fill="#0d0d0d"/></g>
+<circle cx="53" cy="53" r="8" fill="#e5484d" stroke="#fff" stroke-width="2.5"/><rect x="52" y="48.2" width="2" height="6" rx="1" fill="#fff"/><circle cx="53" cy="57.2" r="1.15" fill="#fff"/>
+</svg><span>Marketing agent</span><b>$60 / day</b></div>
+<h3>Raise the prints ad set from $40 to $60 a day</h3>
+<p>Return has been above 3× for 7 days. Over your $50 daily cap.</p>
+<div class="ask-actions"><button type="button" class="btn-dark">Approve</button><button type="button" class="btn-soft">Decline</button></div>
+</div>
+<div class="ask">
+<div class="ask-who"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="22" height="22" role="img" aria-label="Kyoto, Support, done">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g><path d="M21.4 38.6 Q25 33.6 28.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M35.4 38.6 Q39 33.6 42.6 38.6" fill="none" stroke="#0d0d0d" stroke-width="2.6" stroke-linecap="round"/><path d="M28.5 46 Q32 49.5 35.5 46" fill="none" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/></g>
+<circle cx="53" cy="53" r="8" fill="#00a240" stroke="#fff" stroke-width="2.5"/><path d="M49.4 53.2 l2.5 2.5 l4.7 -5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg><span>Support agent</span><b>$42</b></div>
+<h3>Refund #A-1012, print arrived creased</h3>
+<p>Under your limit, but this customer's second refund this month.</p>
+</div>
+</div>
+<div class="limits">
+<div><span>Refund without asking, up to</span><b>$50</b></div>
+<div><span>Ad spend per day</span><b>$50</b></div>
+<div><span>Reorder without asking, up to</span><b>$500</b></div>
+</div>
+</div>
+</div>
+</section>
+<section class="section" id="pricing" aria-label="Pricing">
+<div class="wrap pricing">
+<div>
+<span class="caption">Pricing</span>
+<h2>Pay for the squad, not per seat</h2>
+<p class="lede">Every plan includes the master, the chat and the approval inbox. Plans differ in how many agents you can run and how much they can do without asking.</p>
+</div>
+<div class="plans"><article class="plan">
+<div class="plan-top"><b>Starter</b></div>
+<div class="price"><span>$49</span><small> / month</small></div>
+<p>One shop, a couple of agents, you still do most of the work.</p>
+<ul><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>Up to 3 agents</span></li><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>1 squad</span></li><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>Ask-first mode on every action</span></li><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>Email support</span></li></ul>
+<a class="btn-soft" href="/signup">Start free</a>
+</article><article class="plan plan-dark">
+<div class="plan-top"><b>Growth</b><span class="pop">Most popular</span></div>
+<div class="price"><span>$149</span><small> / month</small></div>
+<p>A running store that wants the daily work off its plate.</p>
+<ul><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>Up to 10 agents</span></li><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>3 squads</span></li><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>Spend and refund limits</span></li><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>Agent traffic and audit log</span></li><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>Priority support</span></li></ul>
+<a class="btn-light" href="/signup">Start free</a>
+</article><article class="plan">
+<div class="plan-top"><b>Scale</b></div>
+<div class="price"><span>$399</span><small> / month</small></div>
+<p>Several stores or regions, each with its own squad.</p>
+<ul><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>Up to 25 agents</span></li><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>Unlimited squads</span></li><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>Custom rules and triggers</span></li><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>Dedicated region and SSO</span></li><li><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg><span>Onboarding with a human</span></li></ul>
+<a class="btn-soft" href="/signup">Talk to us</a>
+</article></div>
+<p class="fine">All plans start with 14 days free. Prices in USD, billed monthly. [VAT NOTE]</p>
+</div>
+</section>
+<section class="close" aria-label="Get started">
+<div class="wrap">
+<h2>Your first agent can be working by tonight</h2>
+<p>Tell us about your business, pick a squad, set the limits. The master takes it from there.</p>
+<div class="close-actions">
+<a class="btn-light" href="/signup">Start free</a>
+<a class="btn-ghost" href="/chat">See a live demo</a>
+</div>
+<div class="cast" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Petra, Master">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#1f1f1f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M21 17 L24 8 L29 13.5 L32 6 L35 13.5 L40 8 L43 17 Z" fill="#f2c230" stroke="#c99400" stroke-width="1.2" stroke-linejoin="round"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#ffffff"/></g>
+
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Pisa, Orders">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#5b8def"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M14 25 Q14 12 32 12 Q50 12 50 25 Z" fill="#2f5fc4"/><path d="M40 24 Q52 23 57 26.5 Q50 28 40 27.5 Z" fill="#244c9e"/><circle cx="32" cy="12.5" r="1.8" fill="#244c9e"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Kyoto, Support">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#34b98c"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M12.5 33 Q12.5 10 32 10 Q51.5 10 51.5 33" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="3.2" stroke-linecap="round"/><rect x="8" y="29" width="8" height="12" rx="4" fill="rgba(13,13,13,.78)"/><path d="M12 41 Q14 51 24.5 49.5" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2.2" stroke-linecap="round"/><circle cx="25.5" cy="49.3" r="2.3" fill="rgba(13,13,13,.78)"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Rio, Marketing">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#9a6bf2"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M32 14 L32 6" stroke="rgba(13,13,13,.78)" stroke-width="2.4" stroke-linecap="round"/><path d="M32 0.5 l1.6 3.3 l3.6 .5 l-2.6 2.5 l.6 3.6 l-3.2 -1.7 l-3.2 1.7 l.6 -3.6 l-2.6 -2.5 l3.6 -.5 z" fill="#f2c230" stroke="#c99400" stroke-width=".9" stroke-linejoin="round"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Zurich, Finance">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f0bd1d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13 26 Q32 17 51 26 L51 29 Q32 21.5 13 29 Z" fill="#1f8f5f"/><path d="M18 27.5 Q32 33 46 27.5 Q32 31 18 27.5 Z" fill="#167048" opacity=".9"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Giza, Inventory">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#f39a3d"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M13.5 26 Q14 9 32 9 Q50 9 50.5 26 Z" fill="#c24f2a"/><rect x="12.5" y="22.5" width="39" height="6" rx="3" fill="#a3401f"/><circle cx="32" cy="7.5" r="4" fill="#fff4e8"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Machu, Market researcher">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#e8679f"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="25" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><circle cx="39" cy="37" r="7" fill="rgba(255,255,255,.28)" stroke="rgba(13,13,13,.78)" stroke-width="2.2"/><path d="M30.5 36 Q32 34 33.5 36" fill="none" stroke="rgba(13,13,13,.78)" stroke-width="2"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Angkor, Website builder">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#6c7d99"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<path d="M15 25 Q15 10 32 10 Q49 10 49 25 Z" fill="#f2c230"/><rect x="11" y="23" width="42" height="4.6" rx="2.3" fill="#d9a70f"/><rect x="30" y="10.5" width="4" height="13" rx="2" fill="#d9a70f"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40" role="img" aria-label="Delphi, Analytics">
+<ellipse cx="32" cy="60" rx="16" ry="2.4" fill="rgba(13,13,13,.10)"/>
+<rect x="11" y="14" width="42" height="44" rx="21" fill="#4a6fd1"/>
+<ellipse cx="22" cy="23" rx="6.5" ry="4" fill="#fff" opacity=".22" transform="rotate(-24 22 23)"/>
+<circle cx="39" cy="37" r="7.4" fill="rgba(255,255,255,.3)" stroke="#c99400" stroke-width="2.2"/><path d="M45.5 41 Q48 50 44 56" fill="none" stroke="#c99400" stroke-width="1.4"/>
+<g class="sm-blink"><rect x="22.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/><rect x="36.4" y="32.8" width="5.2" height="8.4" rx="2.6" fill="#0d0d0d"/></g>
+
+</svg></div>
+</div>
+</section>
+</main>
+<footer class="foot">
+<div class="wrap">
+<div class="foot-row">
+<div class="foot-brand">
+<b><i></i>tensquads</b>
+<span>A squad of AI agents for small businesses that sell things.</span>
+</div>
+<div class="cols">
+<div><strong>Product</strong><a href="#squad">Agents</a><a href="#how">How it works</a><a href="#pricing">Pricing</a><a href="/signup">Start free</a></div>
+<div><strong>Company</strong><a href="#">About</a><a href="#">Blog</a><a href="#">Careers</a><a href="#">Contact</a></div>
+<div><strong>Legal</strong><a href="#">Terms</a><a href="#">Privacy</a><a href="#">Security</a></div>
+</div>
+</div>
+<p class="legal">© 2026 [COMPANY LEGAL NAME]. All rights reserved.</p>
+</div>
+</footer>
+<script>
+const examples = {
+  new: ["Date-seed coffee, caffeine-free", "Handmade ceramics on Etsy", "A print-on-demand streetwear brand"],
+  existing: ["A Shopify store doing 300 orders a month", "A cafe with a wholesale side", "Two Amazon listings and a website"]
+};
+const placeholders = {
+  new: "Describe what you want to sell and to whom…",
+  existing: "Paste your store URL or describe what you sell…"
+};
+const box = document.querySelector("[data-examples]");
+const field = document.getElementById("hero-prompt");
+function paint(kind) {
+  document.querySelectorAll("[data-kind]").forEach((button) => {
+    button.setAttribute("aria-pressed", button.dataset.kind === kind ? "true" : "false");
+  });
+  field.placeholder = placeholders[kind];
+  box.replaceChildren();
+  examples[kind].forEach((label) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.addEventListener("click", () => { field.value = label; });
+    box.appendChild(button);
+  });
+}
+document.querySelectorAll("[data-kind]").forEach((button) => {
+  button.addEventListener("click", () => paint(button.dataset.kind));
+});
+document.querySelectorAll("[data-example]").forEach((button) => {
+  button.addEventListener("click", () => { field.value = button.textContent; });
+});
+</script>
+</body>
+</html>

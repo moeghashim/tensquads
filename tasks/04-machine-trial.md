@@ -18,7 +18,7 @@ Two real adapters exist behind one feature flag. The boat.dev adapter for `Machi
 
 ## Moe's answers, 4 November 2026
 
-The builder does no step 1 work. Item 21 stays open with Moe. Items 1, 2 and 3 were done by Moe on 4 November 2026.
+The builder does no step 1 work. Item 21 was answered by boat.dev on 5 November 2026. Items 1, 2 and 3 were done by Moe on 4 November 2026.
 
 1. **Paid plan.** Done by Moe on 4 November 2026. The boat plan is Standard.
 2. **API keys.** Done by Moe on 4 November 2026. `BOAT_API_KEY` and `BOAT_ADMIN_API_KEY` are in `.env` and in GitHub Actions secrets. The API key was rotated on 4 November 2026.
@@ -40,7 +40,7 @@ The builder does no step 1 work. Item 21 stays open with Moe. Items 1, 2 and 3 w
 18. **Port errors.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. One typed port error for each boat error. No automatic retry except the `Idempotency-Key` on start. No screen shows the errors.
 19. **Heartbeat.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The heartbeat, systemd service, and "Restarting" stay out of this task.
 20. **Find a machine.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. No new table. Find the machine with the label filter. The SDK method accepts `label`.
-21. **Host failure and a second region.** Open with Moe.
+21. **Host failure and a second region.** Answered by boat.dev to Moe on 5 November 2026. Host failure: boat.dev resumes the machine from its last snapshot on a new host; they say host failure is rare. A second region: not available yet. Effect: an agent keeps no state between loops, so a resume from the last snapshot loses nothing that matters; the master heartbeat restarts a silent machine. All agent machines run in one region, which is an accepted risk for the proof of concept.
 22. **Bus proof.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The rules run on Miniflare in `npm test`. The real deploy half is the `bus_trial` input, default false. The job reads GitHub secret `CLOUDFLARE_API_TOKEN` and variable `CLOUDFLARE_ACCOUNT_ID`. It was not run. The token is Workers Scripts Edit and Queues Edit until Moe raises Workers to product-level Admin.
 
 AGENT_ID is reserved by boat (invalid_env). The machine gets TENSQUADS_AGENT_ID. Decided by the orchestrator under Moe's delegation, 4 November 2026.
