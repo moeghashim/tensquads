@@ -1,0 +1,6 @@
+{"scenario":"current migration bypasses held global lock","elapsedMs":20,"revision":"8b8773ae30862433555466cc3cef99b83f07cffb7451effeef6ab3080f39c9ac"}
+{"scenario":"other-account reset, agent write and cleanup proceed while account A waits","elapsedMs":239,"agentWrite":"written","deletedAccountCount":0,"accountAResetWaiting":true}
+{"scenario":"same-account reset waits then commits","rows":[{"id":"live-a","clerk_user_id":"reset-user-a"}]}
+{"scenario":"stale migration waits for writers and updates revision","locksWhileWaiting":[{"mode":"ExclusiveLock","granted":false},{"mode":"ShareLock","granted":true}],"revision":"8b8773ae30862433555466cc3cef99b83f07cffb7451effeef6ab3080f39c9ac"}
+{"scenario":"overlapping stale migrations apply schema SQL once","accountsCreateExecutions":1}
+{"scenario":"failed migration preserves data and revision; retry succeeds","preservedAccount":"live-a","revisionAfterFailure":"stale","revisionAfterRetry":"8b8773ae30862433555466cc3cef99b83f07cffb7451effeef6ab3080f39c9ac"}

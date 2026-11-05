@@ -1,0 +1,13 @@
+✔ a migration waits on the global lock before workspace creation reads accounts (413.222167ms)
+✔ two creates for one Clerk user make one account and do not deadlock (178.108875ms)
+✔ a reset waiting on the advisory lock longer than the send timeout succeeds (12247.051375ms)
+✔ a migration waits for an approval and neither side deadlocks (366.724375ms)
+✔ one account's writers exclude each other (257.777916ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33715.182958
