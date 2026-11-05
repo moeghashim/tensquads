@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { compareInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
@@ -12,6 +12,7 @@ import {
 } from "./admin-clerk.ts";
 import { expect, openAdmin, test } from "./admin-db.ts";
 import { expectContents, expectImages, measureImages } from "./admin-layout.ts";
+import { agentNames, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import {
 	expectLabeledInputs,
 	expectNamedButtons,
@@ -47,13 +48,13 @@ test("each image filter shows the matching rows", async ({ page }) => {
 	await openImages(page);
 	await expect(page.getByRole("heading", { name: "All images" })).toContainText("7 of 7");
 	await page.getByRole("button", { name: "Needs attention", exact: true }).click();
-	await expect(page.getByRole("button", { name: "Support" })).toBeVisible();
-	await expect(page.getByRole("button", { name: "Marketing" })).toHaveCount(0);
+	await expect(page.getByRole("button", { name: "Kyoto" })).toBeVisible();
+	await expect(page.getByRole("button", { name: "Rio" })).toHaveCount(0);
 	await page.getByRole("button", { name: "With bugs", exact: true }).click();
-	await expect(page.getByRole("button", { name: "Support" })).toBeVisible();
-	await expect(page.getByRole("button", { name: "Marketing" })).toHaveCount(0);
+	await expect(page.getByRole("button", { name: "Kyoto" })).toBeVisible();
+	await expect(page.getByRole("button", { name: "Rio" })).toHaveCount(0);
 	await page.getByRole("button", { name: "With requests", exact: true }).click();
-	await expect(page.getByRole("button", { name: "Marketing" })).toBeVisible();
+	await expect(page.getByRole("button", { name: "Rio" })).toBeVisible();
 	await expect(page.getByRole("heading", { name: "All images" })).toContainText("7 of 7");
 	await page.getByRole("button", { name: "All", exact: true }).click();
 	await expect(page.getByRole("heading", { name: "All images" })).toContainText("7 of 7");
@@ -61,17 +62,18 @@ test("each image filter shows the matching rows", async ({ page }) => {
 
 test("a row click fills the detail panel", async ({ page }) => {
 	await openImages(page);
-	await expect(page.getByRole("heading", { name: "Support" })).toBeVisible();
+	await expect(page.getByRole("heading", { name: "Kyoto" })).toBeVisible();
+	await expect(page.getByRole("img", { name: "Kyoto, Support" })).toBeVisible();
 	await expect(page.getByText("22 of 34 (65%)")).toBeVisible();
-	await page.getByRole("button", { name: "People" }).click();
-	await expect(page.getByRole("heading", { name: "People" })).toBeVisible();
+	await page.getByRole("button", { name: "Sydney" }).click();
+	await expect(page.getByRole("heading", { name: "Sydney" })).toBeVisible();
 	await expect(page.getByText("Not deployed yet")).toBeVisible();
-	await page.getByRole("button", { name: "Marketing" }).click();
-	await expect(page.getByRole("heading", { name: "Marketing" })).toBeVisible();
+	await page.getByRole("button", { name: "Rio" }).click();
+	await expect(page.getByRole("heading", { name: "Rio" })).toBeVisible();
 	await expect(page.getByText("No open bugs on this version.")).toBeVisible();
 	await page.getByRole("button", { name: "Needs attention", exact: true }).click();
-	await expect(page.getByRole("button", { name: "Marketing" })).toHaveCount(0);
-	await expect(page.getByRole("heading", { name: "Marketing" })).toBeVisible();
+	await expect(page.getByRole("button", { name: "Rio" })).toHaveCount(0);
+	await expect(page.getByRole("heading", { name: "Rio" })).toBeVisible();
 	await expect(page.getByText("No open bugs on this version.")).toBeVisible();
 });
 
@@ -96,7 +98,7 @@ test("the images nav highlights Squad images and has no chat dock", async ({ pag
 	await expect(page).toHaveTitle("Agent images");
 	await expect(page.getByRole("button", { name: "Squad images" })).toHaveCSS("font-weight", "600");
 	await expect(page.getByRole("button", { name: "Companies" })).toHaveCSS("font-weight", "400");
-	await expect(page.getByRole("button", { name: "Chat with the master" })).toHaveCount(0);
+	await expect(page.getByRole("button", { name: "Chat with Petra" })).toHaveCount(0);
 	await expect(page.locator("[data-handler='send']")).toHaveCount(0);
 });
 
@@ -109,7 +111,7 @@ test("the images page lists its handlers and matches the rendered design", async
 	}
 	expect(built.loops.some((loop) => loop.kind === "if" && loop.value === "img.noBugs")).toBe(false);
 	const design = await designFrame(page);
-	const diff = compareInventory(design, built);
+	const diff = compareInventory(rewriteBuiltInventory(design, agentNames), built);
 	expect(diff.extraHandlers).toEqual([]);
 	expect(diff.missingHandlers).toEqual([]);
 	expect(diff.extraLoops).toEqual([]);
@@ -124,11 +126,14 @@ test("the source still has the empty feature request", async () => {
 
 test("the images page has no axe violation and does not scroll sideways at 390", async ({ page }) => {
 	await openImages(page);
-	await expectLabeledInputs(page);
-	await expectNamedButtons(page);
-	expect(await accessibilityViolations(page)).toEqual([]);
+	for (const viewport of viewports) {
+		await page.setViewportSize({ width: viewport.width, height: viewport.height });
+		await expectLabeledInputs(page);
+		await expectNamedButtons(page);
+		expect(await accessibilityViolations(page)).toEqual([]);
+		await expectNoHorizontalScroll(page);
+	}
 	await page.setViewportSize({ width: 390, height: 844 });
-	await expectNoHorizontalScroll(page);
 	const scroll = await page.locator("section[aria-label='Images']").evaluate((section) => {
 		const box = [...section.querySelectorAll("div")].find((node) => getComputedStyle(node).overflowX === "auto");
 		if (!box) return { scroll: 0, client: 0 };
@@ -162,6 +167,28 @@ test("the images page matches the macOS screenshot baselines", async ({ page }) 
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		await waitForScreenFonts(page);
 		await expect(page).toHaveScreenshot(`admin-images-${viewport.name}.png`, { fullPage: true });
+	}
+});
+
+test("the side-by-side evidence shows the design and the build", async ({ page }) => {
+	test.skip(
+		process.env.ADMIN_EVIDENCE !== "1" || process.platform !== "darwin",
+		"Side-by-side evidence is captured once on macOS.",
+	);
+	const dir = ".no-mistakes/evidence/03-admin";
+	mkdirSync(dir, { recursive: true });
+	await openImages(page);
+	for (const viewport of viewports) {
+		await page.setViewportSize({ width: viewport.width, height: viewport.height });
+		await waitForScreenFonts(page);
+		const built = await shot(page);
+		const designPage = await openCatalogCanvas(page, viewport.width, viewport.height);
+		try {
+			const design = await shot(designPage);
+			await stitch(page, design, built, `${dir}/side-by-side-images-${viewport.name}.png`);
+		} finally {
+			await designPage.close();
+		}
 	}
 });
 
@@ -211,4 +238,34 @@ async function openCatalogCanvas(page: Page, width: number, height: number) {
 	});
 	await waitForScreenFonts(canvas);
 	return canvas;
+}
+
+async function shot(page: Page) {
+	return page.screenshot({ fullPage: true, animations: "disabled", caret: "hide", scale: "css" });
+}
+
+function pngSize(image: Buffer) {
+	return { width: image.readUInt32BE(16), height: image.readUInt32BE(20) };
+}
+
+async function stitch(page: Page, design: Buffer, build: Buffer, file: string) {
+	const board = await page.context().newPage();
+	const left = pngSize(design);
+	const right = pngSize(build);
+	try {
+		await board.route("https://evidence.local/design.png", (route) =>
+			route.fulfill({ contentType: "image/png", body: design }),
+		);
+		await board.route("https://evidence.local/build.png", (route) =>
+			route.fulfill({ contentType: "image/png", body: build }),
+		);
+		await board.setViewportSize({ width: left.width + right.width, height: Math.max(left.height, right.height) });
+		await board.setContent(
+			'<!doctype html><html><body style="margin:0;display:flex;background:#fff"><img alt="Design" src="https://evidence.local/design.png"><img alt="Build" src="https://evidence.local/build.png"></body></html>',
+		);
+		await board.locator("img").nth(1).waitFor();
+		await board.screenshot({ path: file, fullPage: true, animations: "disabled", caret: "hide", scale: "css" });
+	} finally {
+		await board.close();
+	}
 }

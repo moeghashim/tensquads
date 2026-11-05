@@ -6,7 +6,7 @@ import { captureWrites } from "#/workspace/approval-count.ts";
 
 export const Route = createFileRoute("/_workspace/chat")({
 	head: () => ({
-		meta: [{ title: "Chat with the master" }],
+		meta: [{ title: "Chat with Petra" }],
 	}),
 	loader: async () => {
 		const writeAt = captureWrites();

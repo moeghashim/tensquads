@@ -3,7 +3,9 @@ import type { ReactNode } from "react";
 
 import { css } from "#/screens/css.ts";
 
-import { BackIcon, SquadIcon } from "./icons.tsx";
+import { RoleTag, RouteFaces, Squadmate } from "#/workspace/Squadmate.tsx";
+
+import { BackIcon } from "./icons.tsx";
 import type { AgentDetailView } from "./model.ts";
 
 const column = "display: flex; flex-direction: column; gap: 20px";
@@ -80,21 +82,18 @@ export function AgentDetailPage({
 function DetailHeader({ view, onToggle }: { readonly view: AgentDetailView; readonly onToggle: () => void }) {
 	return (
 		<header style={css("display: flex; flex-wrap: wrap; gap: 16px; align-items: center")}>
-			<span
-				style={css(
-					`width: 48px; height: 48px; border-radius: 12px; background: ${view.tint}; display: flex; align-items: center; justify-content: center`,
-				)}
-			>
-				<SquadIcon />
-			</span>
+			<Squadmate id={view.id} on={view.on} size={48} />
 			<div style={css("flex: 1; min-width: 200px")}>
-				<h1
-					style={css(
-						"margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d",
-					)}
-				>
-					{view.name} squad
-				</h1>
+				<div style={css("display: flex; align-items: baseline")}>
+					<h1
+						style={css(
+							"margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; color: #0d0d0d",
+						)}
+					>
+						{view.name} squad
+					</h1>
+					<RoleTag id={view.id} />
+				</div>
 				<p style={css("margin: 2px 0 0; color: #5d5d5d")}>{view.role}</p>
 			</div>
 			<div style={css("display: flex; align-items: center; gap: 10px")}>
@@ -418,7 +417,15 @@ function Messages({
 					>
 						<span style={css(`${mono}; font-size: 12px; color: #5d5d5d; width: 44px`)}>{event.time}</span>
 						<span style={css(event.kindStyle)}>{event.kind}</span>
-						<span style={css("font-size: 12px; color: #5d5d5d; width: 150px")}>{event.route}</span>
+						<span style={css("font-size: 12px; color: #5d5d5d; width: 150px; flex: none")}>
+							<RouteFaces
+								from={event.from}
+								to={event.to}
+								masterName={view.masterName}
+								names={view.names}
+								onFor={(id) => id !== view.id || view.on}
+							/>
+						</span>
 						<span style={css("flex: 1; min-width: 200px; font-size: 13px")}>{event.text}</span>
 					</button>
 				))}

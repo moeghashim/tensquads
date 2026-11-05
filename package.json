@@ -9,13 +9,14 @@
 		"packages/adapters",
 		"packages/domain",
 		"packages/kernel",
-		"packages/seed"
+		"packages/seed",
+		"packages/squadmates"
 	],
 	"scripts": {
 		"dco:fix": "git rebase --signoff",
 		"clean": "npm run clean --workspaces --if-present",
 		"build": "npm run build --workspaces --if-present",
-		"test": "node --test scripts/test/*.test.mjs && node scripts/run-workspaces.mjs test",
+		"test": "node --experimental-strip-types --test scripts/test/*.test.mjs && node scripts/run-workspaces.mjs test",
 		"fallow:audit": "fallow audit --changed-since origin/main",
 		"preview:cloudflare": "npm run cf:preview -w @tensquads/web",
 		"build:cloudflare": "npm run cf:build -w @tensquads/web",

@@ -6,6 +6,7 @@ import { PENDING_TASK_WINDOW_MS } from "../../pending-window.ts";
 import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { agents, busEvents, messages, skills, stateEntries, threads } from "../schema.ts";
+import { shownAgentName } from "../shown-name.ts";
 import { appendEvents, type BusCursor, lockCursor, saveCursor } from "./bus.ts";
 
 export { PENDING_TASK_WINDOW_MS };
@@ -99,7 +100,9 @@ async function readAgent(tx: Tx, accountId: string, agentId: string) {
 		.select({ id: agents.id, name: agents.name, isOn: agents.isOn })
 		.from(agents)
 		.where(and(eq(agents.accountId, accountId), eq(agents.id, agentId)));
-	return rows[0] ?? null;
+	const row = rows[0];
+	if (!row) return null;
+	return { ...row, name: shownAgentName(row.id, row.name) };
 }
 
 async function readSkills(tx: Tx, accountId: string, agentId: string) {

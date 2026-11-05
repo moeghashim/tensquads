@@ -8,6 +8,7 @@ import { presentOverview } from "./view.ts";
 
 const proposal = {
 	id: "mp1",
+	agentId: "inventory",
 	agentName: "Inventory",
 	tint: "#000",
 	title: "Proposed mission",
@@ -19,6 +20,7 @@ const proposal = {
 
 const approval = {
 	id: "ap1",
+	agentId: "support",
 	agentName: "Support",
 	tint: "#000",
 	amount: "$42",
@@ -45,6 +47,7 @@ function data(): OverviewData {
 				name: "Inventory",
 				role: "Stock",
 				tint: "#000",
+				on: true,
 				last: "Checked stock",
 				tasks: 31,
 				success: "90%",
@@ -57,6 +60,7 @@ function data(): OverviewData {
 				name: "Support",
 				role: "Customers",
 				tint: "#000",
+				on: true,
 				last: "Checked a refund",
 				tasks: 96,
 				success: "90%",

@@ -16,7 +16,7 @@ const screens = [
 	{
 		module: "chat",
 		fn: "loadChat",
-		nav: "Chat with the master",
+		nav: "Chat with Petra",
 		route: "/chat",
 		rows: "main [data-loop='chatBus'] > button",
 	},

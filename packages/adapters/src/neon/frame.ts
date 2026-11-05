@@ -5,6 +5,7 @@ import { and, asc, count, eq } from "drizzle-orm";
 import { listMessages } from "./commands/conversation.ts";
 import type { AppDatabase } from "./postgres.ts";
 import { accounts, agents, approvals, masters, missionProposals, squads, subscriptions } from "./schema.ts";
+import { shownAgentName, shownMasterName } from "./shown-name.ts";
 
 export const FRAME_QUERY_COUNT = 6;
 
@@ -90,9 +91,9 @@ export async function readWorkspaceFrame(db: AppDatabase, scope: AccountScope): 
 	return {
 		accountName: account.name,
 		owner: account.owner,
-		masterName: masterRows[0]?.name ?? "Master",
+		masterName: masterRows[0] ? shownMasterName() : "Petra",
 		squadCount: account.agents,
-		agents: agentRows,
+		agents: agentRows.map((row) => ({ ...row, name: shownAgentName(row.id, row.name) })),
 		approvalCount: asCount(pending[0]?.total) + asCount(proposed[0]?.total),
 		messages: thread,
 	};

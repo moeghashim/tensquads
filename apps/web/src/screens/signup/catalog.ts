@@ -112,5 +112,5 @@ export function summaryLine(count: number): string {
 		return "Pick at least one squad to start.";
 	}
 	const noun = count === 1 ? " squad" : " squads";
-	return `${count}${noun} and one master squad will be created.`;
+	return `${count}${noun} and Petra's squad will be created.`;
 }

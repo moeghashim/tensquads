@@ -1,7 +1,9 @@
+import { characterName } from "@tensquads/squadmates";
 import { type ReactNode, useCallback, useRef, useState } from "react";
-
+import { RoleTag, Squadmate } from "#/workspace/Squadmate.tsx";
 import { css } from "../css.ts";
-import { Arrow, Check, Mark } from "../marks.tsx";
+
+import { Arrow, Check } from "../marks.tsx";
 import {
 	type BusinessKind,
 	channelLabels,
@@ -301,7 +303,7 @@ function NewFields({ state, onChange }: { state: SignupState; onChange: (state: 
 					style={css(areaStyle)}
 				/>
 				<span style={css("font-size: 12px; color: #5d5d5d")}>
-					The master uses this to brief every squad. You can change it later.
+					Petra uses this to brief every squad. You can change it later.
 				</span>
 			</div>
 			<div style={css("display: flex; flex-direction: column; gap: 8px")}>
@@ -436,18 +438,14 @@ function SquadStep({
 							onClick={() => onChange(togglePicked(state, squad.id))}
 							style={css(squadStyle(on))}
 						>
-							<span
-								style={css(
-									`width: 32px; height: 32px; border-radius: 8px; background: ${squad.tint}; display: inline-flex; align-items: center; justify-content: center; flex: none; color: #0d0d0d`,
-								)}
-							>
-								<Mark />
-							</span>
+							<Squadmate id={squad.id} on size={32} decorative />
 							<span
 								style={css("display: flex; flex-direction: column; flex: 1; min-width: 0; text-align: left")}
 							>
 								<span style={css("font-weight: 600; color: #0d0d0d")}>
-									{squad.name} <span style={css("font-weight: 400; color: #5d5d5d")}>· {squad.role}</span>
+									{characterName(squad.id) ?? squad.name}
+									<RoleTag id={squad.id} />
+									<span style={css("font-weight: 400; color: #5d5d5d")}> · {squad.role}</span>
 								</span>
 								<span style={css("font-size: 12px; color: #5d5d5d")}>
 									{kind === "new" ? squad.whyNew : squad.whyExisting}
@@ -481,7 +479,7 @@ function SquadStep({
 				<span>
 					{summaryLine(state.picked.length)} Every squad starts in{" "}
 					<strong style={css("color: #0d0d0d")}>ask-first</strong> mode; you loosen the limits once you trust it.
-					The master will propose a mission for each squad; you approve them in your inbox.
+					Petra will propose a mission for each squad; you approve them in your inbox.
 				</span>
 			</div>
 			<div style={rowStyle()}>

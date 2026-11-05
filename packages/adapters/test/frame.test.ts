@@ -28,7 +28,8 @@ test("the frame reader asks six questions and returns the demo badge", async () 
 		assert.equal(queries.length, 6);
 		assert.equal(frame.accountName, "Demo store");
 		assert.equal(frame.owner, "Moe Ghashim");
-		assert.equal(frame.masterName, "Master");
+		assert.equal(frame.masterName, "Petra");
+		assert.equal(frame.agents.find((agent) => agent.id === "orders")?.name, "Pisa");
 		assert.equal(frame.agents.length, 5);
 		assert.equal(frame.approvalCount, 4);
 		assert.equal(frame.messages.length, 5);

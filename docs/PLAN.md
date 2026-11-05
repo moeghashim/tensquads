@@ -328,9 +328,9 @@ Three agents do the work. A planner writes the task. A builder builds it on a br
 
 ## Phases
 
-The work has six phases. Build the screens in the order of the build brief. Phase 2 is the largest. A phase starts only when the phase before it passes its check.
+The phase list includes the original phases 0 to 5 and the additions from decisions 33 and 34. Build the screens in the order of the build brief. Phase 2 is the largest. In phases 0 to 5, a phase starts only when the phase before it passes its check. Phase 6 follows [task 06](../tasks/06-squadmates.md). Phase 7 follows [task 07](../tasks/07-home-redesign.md). Those task files set their prerequisites.
 
-&#91;embedded content: build phases · 5 phases, 4 gates\]
+&#91;embedded content: build phases · tasks and build status\]
 
 **Phase 0: Foundation.**
 

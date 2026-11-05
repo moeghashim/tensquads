@@ -15,7 +15,7 @@ test("a refund limit change appears in Traffic shared state", async ({ page, wor
 	await saved.finished();
 	await expect(page.locator("#lim-refund")).toHaveValue("55");
 	await page.goto("/traffic");
-	await expect(page.getByRole("heading", { name: "Shared state held by Master" })).toBeVisible();
+	await expect(page.getByRole("heading", { name: "Shared state held by Petra" })).toBeVisible();
 	const refund = page.locator("[data-loop='stateRows'] > div").filter({
 		has: page.getByText("policy.refund_auto_limit", { exact: true }),
 	});

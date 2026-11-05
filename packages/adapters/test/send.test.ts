@@ -11,7 +11,7 @@ const ads = "How did ads do this week?";
 const marketingResult = "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.";
 const noAgent =
 	"That one I can answer myself, no agent needed. Ask me about orders, refunds, ads, profit or stock and I will hand it to the right agent.";
-const paused = "That is a job for the Inventory agent, but it is paused. Turn it on in Agents and ask me again.";
+const paused = "That is a job for the Giza agent, but it is paused. Turn it on in Agents and ask me again.";
 
 function beginSend(db: AppDatabase, accountScope: ReturnType<typeof scope>, text: string) {
 	return new Kernel(createRepositories(db)).beginSend(accountScope, text);
@@ -110,13 +110,13 @@ test("a marketing send writes the task, and the reply writes the result without 
 			return;
 		}
 		assert.equal(started.agentId, "marketing");
-		assert.equal(started.agentName, "Marketing");
+		assert.equal(started.agentName, "Rio");
 		assert.equal(started.skill, "meta_ads.report");
 		assert.deepEqual(
 			started.messages.slice(-2).map((message) => message.id),
 			["c100", "c101"],
 		);
-		assert.equal(started.messages.at(-1)?.text, "Passing this to the Marketing agent. I will report back here.");
+		assert.equal(started.messages.at(-1)?.text, "Passing this to the Rio agent. I will report back here.");
 		const task = (await generated(db, accountId))[0];
 		assert.ok(task);
 		assert.equal(task.id, "e102");

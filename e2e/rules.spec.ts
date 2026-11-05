@@ -8,6 +8,7 @@ import { compareInventory, designInventory, inventoryHtml } from "../scripts/des
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
 import { pinnedFontStylesheet } from "./fonts.ts";
+import { chipsThenOptions, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import {
 	expectLabeledInputs,
 	expectNamedButtons,
@@ -166,7 +167,7 @@ test("a chat message after a limit change carries the new limit", async ({ page,
 	await openRules(page, workspaceUser);
 	await setSlider(page, "#lim-refund", "65");
 	await expectStored(accountId, "policy.refund_auto_limit", 65);
-	await page.getByRole("button", { name: "Ask Master" }).click();
+	await page.getByRole("button", { name: "Ask Petra" }).click();
 	await page.locator("#dock-input").fill("How did ads do this week?");
 	await page.getByRole("button", { name: "Send" }).click();
 	await expect(page.getByText(marketingResult)).toBeVisible({ timeout: dockReplyTimeout });
@@ -192,7 +193,7 @@ test("a new account shows the rules card with no rows", async ({ page, workspace
 	await page.reload();
 	await expect(page.locator("section[aria-label='Rules']")).toBeVisible();
 	await expect(page.locator("[data-loop='rules'] > div")).toHaveCount(0);
-	await expect(page.getByLabel("Agent").locator("option").first()).toHaveText("Orders");
+	await expect(page.getByLabel("Agent").locator("option").first()).toHaveText("Pisa");
 	await expect(page.getByLabel("Agent")).toHaveValue("orders");
 });
 
@@ -606,7 +607,7 @@ function expectMatch(
 		links: unknown[];
 	},
 ) {
-	const diff = compareInventory(design, built);
+	const diff = compareInventory(rewriteBuiltInventory(design, chipsThenOptions), built);
 	expect(diff.extraTexts).toEqual([]);
 	expect(diff.missingTexts).toEqual([]);
 	expect(diff.extraHandlers).toEqual([]);

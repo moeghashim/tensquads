@@ -5,6 +5,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
+import { agentNames, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import {
 	expectLabeledInputs,
 	expectNamedButtons,
@@ -31,8 +32,8 @@ const supportResult =
 const ordersResult =
 	"3 orders were waiting on tracking. All three now have tracking in Shopify and the customers have their links.";
 const inventoryResult = "2 products are under 10: Black hoodie M and A3 frame. A reorder draft is in your approvals.";
-const askLine = "Ask for anything. Master hands the work to the right squad and reports back here.";
-const handoffLine = "Each message here was sent between Master and a squad. Open one to see its payload.";
+const askLine = "Ask for anything. Petra hands the work to the right squad and reports back here.";
+const handoffLine = "Each message here was sent between Petra and a squad. Open one to see its payload.";
 const replyTimeout = 30_000;
 
 const scriptedRoutes = [
@@ -60,11 +61,11 @@ publicTest("the design section cutter finds the chat screen", () => {
 
 test("the chat page shows the thread, four chips, the input and six hand-offs", async ({ page, workspaceUser }) => {
 	await openChat(page, workspaceUser);
-	await expect(page.getByRole("heading", { level: 1, name: "Master" })).toBeVisible();
+	await expect(page.getByRole("heading", { level: 1, name: "Petra" })).toBeVisible();
 	await expect(page.getByText(askLine)).toBeVisible();
 	const thread = page.locator("[data-loop='chat']");
 	await expect(thread.getByText("Did the tracking for #A-1007 go through?", { exact: true })).toBeVisible();
-	await expect(thread.getByText("Orders squad, via Master")).toBeVisible();
+	await expect(thread.getByText("Pisa squad, via Petra")).toBeVisible();
 	await expect(thread.getByText("Print ETA is 3 November. I will add its tracking automatically.")).toBeVisible();
 	await expect(thread.locator(":scope > div")).toHaveCount(5);
 	for (const text of [
@@ -75,16 +76,16 @@ test("the chat page shows the thread, four chips, the input and six hand-offs", 
 	]) {
 		await expect(page.getByRole("button", { name: text, exact: true })).toBeVisible();
 	}
-	await expect(page.locator("#chat-input")).toHaveAttribute("placeholder", "Message Master");
+	await expect(page.locator("#chat-input")).toHaveAttribute("placeholder", "Message Petra");
 	await expect(page.getByRole("button", { name: "Send" })).toBeEnabled();
 	await expect(page.getByRole("heading", { level: 2, name: "Hand-offs from this chat" })).toBeVisible();
 	await expect(page.getByText(handoffLine)).toBeVisible();
 	await expect(page.locator("[data-loop='chatBus'] button")).toHaveCount(6);
 	const first = page.locator("[data-loop='chatBus'] button").first();
 	await expect(first).toContainText("Result");
-	await expect(first).toContainText("Finance → Master · 10:56");
+	await expect(first).toContainText("Zurich → Petra · 10:56");
 	await expect(first).toContainText("Last 7 days: $8,420 revenue, $2,610 profit");
-	await expect(page.getByRole("button", { name: "Ask Master" })).toHaveCount(0);
+	await expect(page.getByRole("button", { name: "Ask Petra" })).toHaveCount(0);
 	await expect(page.getByRole("heading", { level: 1 })).toHaveCSS("font-size", "28px");
 	await expect(page.locator("#chat-input")).toHaveCSS("outline-offset", "6px");
 	await expect(page.getByRole("button", { name: "Any refunds waiting?", exact: true })).toHaveCSS("height", "28px");
@@ -105,10 +106,10 @@ test("a message shows the bubble, the working line, then the agent reply", async
 	await page.locator("#chat-input").fill("How did ads do this week?");
 	await page.getByRole("button", { name: "Send" }).click();
 	await expect(thread.getByText("How did ads do this week?", { exact: true })).toBeVisible({ timeout: replyTimeout });
-	await expect(thread.getByText("Passing this to the Marketing agent. I will report back here.")).toBeVisible();
-	await expect(page.getByText("Marketing agent is working on it…")).toBeVisible();
+	await expect(thread.getByText("Passing this to the Rio agent. I will report back here.")).toBeVisible();
+	await expect(page.getByText("Rio agent is working on it…")).toBeVisible();
 	await expect(thread.getByText(marketingResult, { exact: true })).toBeVisible({ timeout: replyTimeout });
-	await expect(thread.getByText("Marketing squad, via Master")).toBeVisible();
+	await expect(thread.getByText("Rio squad, via Petra")).toBeVisible();
 	const rows = await agentRows(accountId);
 	expect(rows.reduce((sum, row) => sum + row.tasks, 0)).toBe(332);
 	expect(rows.find((row) => row.id === "marketing")?.tasks).toBe(39);
@@ -130,7 +131,7 @@ test("a Task hand-off is visible while the reply is still working", async ({ pag
 	const question = "How did ads do this week?";
 	await page.locator("#chat-input").fill(question);
 	await page.getByRole("button", { name: "Send", exact: true }).click();
-	await expect(page.getByText("Marketing agent is working on it…")).toBeVisible({ timeout: replyTimeout });
+	await expect(page.getByText("Rio agent is working on it…")).toBeVisible({ timeout: replyTimeout });
 	await expect.poll(() => held !== undefined).toBe(true);
 	const buttons = page.locator("[data-loop='chatBus'] button");
 	const first = buttons.first();
@@ -143,7 +144,7 @@ test("a Task hand-off is visible while the reply is still working", async ({ pag
 		if (held) await held.abort();
 		await page.unroute("**/_serverFn/**");
 	}
-	await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0, { timeout: 35_000 });
+	await expect(page.getByText("Rio agent is working on it…")).toHaveCount(0, { timeout: 35_000 });
 	const newest = await newestBusEvent(accountId);
 	await expect(first).toContainText(newest.kind);
 	await expect(first).toContainText(newest.body);
@@ -171,7 +172,7 @@ test("the Task is in the panel while finish and the bus read are held", async ({
 	const question = "How did ads do this week?";
 	await page.locator("#chat-input").fill(question);
 	await page.getByRole("button", { name: "Send", exact: true }).click();
-	await expect(page.getByText("Marketing agent is working on it…")).toBeVisible({ timeout: replyTimeout });
+	await expect(page.getByText("Rio agent is working on it…")).toBeVisible({ timeout: replyTimeout });
 	await expect.poll(() => posts).toBe(2);
 	const buttons = page.locator("[data-loop='chatBus'] button");
 	const first = buttons.first();
@@ -184,7 +185,7 @@ test("the Task is in the panel while finish and the bus read are held", async ({
 		for (const route of held) await route.abort();
 		await page.unroute("**/_serverFn/**");
 	}
-	await expect(page.getByText("Marketing agent is working on it…")).toHaveCount(0, { timeout: 35_000 });
+	await expect(page.getByText("Rio agent is working on it…")).toHaveCount(0, { timeout: 35_000 });
 	const newest = await newestBusEvent(accountId);
 	await expect(first).toContainText(newest.kind);
 	await expect(first).toContainText(newest.body);
@@ -204,7 +205,7 @@ test("an acknowledged Task stays retired after newer loader lists and navigation
 	try {
 		await other.goto("/chat");
 		await expect(other).toHaveURL(/\/chat$/);
-		await expect(other).toHaveTitle("Chat with the master");
+		await expect(other).toHaveTitle("Chat with Petra");
 		await waitForHydration(other);
 		const newerButtons = other.locator("[data-loop='chatBus'] button");
 		for (const [text, reply] of [scriptedRoutes[0], scriptedRoutes[1], scriptedRoutes[3]]) {
@@ -215,7 +216,7 @@ test("an acknowledged Task stays retired after newer loader lists and navigation
 		const expected = await newerButtons.allTextContents();
 		await page.getByRole("button", { name: "Overview", exact: true }).click();
 		await expect(page).toHaveURL(/\/overview$/);
-		await page.getByRole("button", { name: "Chat with the master", exact: true }).click();
+		await page.getByRole("button", { name: "Chat with Petra", exact: true }).click();
 		await expect(page).toHaveURL(/\/chat$/);
 		await expect(buttons).toHaveCount(6);
 		await expect(buttons.filter({ hasText: question })).toHaveCount(0);
@@ -247,11 +248,11 @@ test("the dock and the chat page share one thread and one draft", async ({ page,
 	await input.fill("page draft");
 	await page.getByRole("button", { name: "Overview" }).click();
 	await expect(page).toHaveURL(/\/overview$/);
-	await page.getByRole("button", { name: "Ask Master" }).click();
+	await page.getByRole("button", { name: "Ask Petra" }).click();
 	const dock = page.locator("#dock-input");
 	await expect(dock).toHaveValue("page draft");
 	await dock.fill("dock draft");
-	await page.getByRole("button", { name: "Chat with the master" }).click();
+	await page.getByRole("button", { name: "Chat with Petra" }).click();
 	await expect(page).toHaveURL(/\/chat$/);
 	await expect(input).toHaveValue("dock draft");
 	await input.fill("Hello there");
@@ -268,10 +269,10 @@ test("the dock and the chat page share one thread and one draft", async ({ page,
 
 test("the dock is hidden on the chat page and comes back on the next page", async ({ page, workspaceUser }) => {
 	await openChat(page, workspaceUser);
-	await expect(page.getByRole("button", { name: "Ask Master" })).toHaveCount(0);
+	await expect(page.getByRole("button", { name: "Ask Petra" })).toHaveCount(0);
 	await expect(page.getByRole("button", { name: "Hide chat" })).toHaveCount(0);
 	await page.getByRole("button", { name: "Overview" }).click();
-	const launcher = page.getByRole("button", { name: "Ask Master" });
+	const launcher = page.getByRole("button", { name: "Ask Petra" });
 	await expect(launcher).toBeVisible();
 	await expect(launcher).toHaveAttribute("aria-expanded", "false");
 });
@@ -322,7 +323,7 @@ test("an empty thread and empty hand-offs add no text", async ({ page, workspace
 	await openChat(page, workspaceUser);
 	await clearThreadAndBus(accountId);
 	await page.goto("/chat");
-	await expect(page.getByRole("heading", { level: 1, name: "Master" })).toBeVisible();
+	await expect(page.getByRole("heading", { level: 1, name: "Petra" })).toBeVisible();
 	await expect(page.getByText(askLine)).toBeVisible();
 	await expect(page.getByRole("button", { name: "Any refunds waiting?", exact: true })).toBeVisible();
 	await expect(page.locator("#chat-input")).toBeVisible();
@@ -401,7 +402,7 @@ test("the chat page matches the macOS screenshot baselines", async ({ page, work
 	for (const viewport of viewports) {
 		await page.setViewportSize({ width: viewport.width, height: viewport.height });
 		await waitForScreenFonts(page);
-		await expect(page.getByRole("heading", { level: 1, name: "Master" })).toBeVisible();
+		await expect(page.getByRole("heading", { level: 1, name: "Petra" })).toBeVisible();
 		await expect(page).toHaveScreenshot(`chat-${viewport.name}.png`, { fullPage: true });
 	}
 });
@@ -425,9 +426,9 @@ test("the side-by-side evidence shows the design and the build", async ({ page, 
 
 async function openChat(page: Page, user: { email: string; password: string; userId: string; accountId: string }) {
 	await openWorkspace(page, user);
-	await page.getByRole("button", { name: "Chat with the master" }).click();
+	await page.getByRole("button", { name: "Chat with Petra" }).click();
 	await expect(page).toHaveURL(/\/chat$/);
-	await expect(page).toHaveTitle("Chat with the master");
+	await expect(page).toHaveTitle("Chat with Petra");
 }
 
 async function sendAndSee(page: Page, text: string, reply: string) {
@@ -541,7 +542,7 @@ function expectMatch(
 		links: unknown[];
 	},
 ) {
-	const diff = compareInventory(design, built);
+	const diff = compareInventory(rewriteBuiltInventory(design, agentNames), built);
 	expect(diff.extraTexts).toEqual([]);
 	expect(diff.missingTexts).toEqual([]);
 	expect(diff.extraHandlers).toEqual([]);

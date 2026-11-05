@@ -67,6 +67,7 @@ import {
 	subscriptions,
 	threads,
 } from "./schema.ts";
+import { shownAgentName, shownMasterName } from "./shown-name.ts";
 
 type Reader = Pick<AppDatabase, "select">;
 
@@ -281,7 +282,7 @@ async function listAgents(db: Reader, scope: AccountScope): Promise<readonly Age
 		}
 		return {
 			id: row.id,
-			name: row.name,
+			name: shownAgentName(row.id, row.name),
 			role: row.role,
 			tint: row.tint,
 			on: row.isOn,
@@ -330,7 +331,7 @@ async function readMaster(db: Reader, scope: AccountScope) {
 		.where(eq(masters.accountId, checked.accountId))
 		.orderBy(asc(masters.sortOrder));
 	const row = rows[0];
-	return row ? { accountId: row.accountId, name: row.name } : null;
+	return row ? { accountId: row.accountId, name: shownMasterName() } : null;
 }
 
 async function listEvents(db: AppDatabase, scope: AccountScope): Promise<readonly BusEvent[]> {
@@ -449,7 +450,7 @@ async function listImages(db: AppDatabase, scope: AccountScope): Promise<readonl
 	const featureRows = await db.select().from(featureRequests).orderBy(asc(featureRequests.sortOrder));
 	return imageRows.map((row) => ({
 		id: row.id,
-		name: row.name,
+		name: shownAgentName(row.id, row.name),
 		role: row.role,
 		tint: row.tint,
 		tag: row.tag,

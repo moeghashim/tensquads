@@ -4,6 +4,7 @@ import { css } from "#/screens/css.ts";
 import { useRefresh, useWorkspacePage } from "#/workspace/context.ts";
 import { decorate } from "#/workspace/event-view.ts";
 import { consumeQueuedEvent, sendNextEvent } from "#/workspace/live.ts";
+import { RoleTag, RouteFaces, Squadmate } from "#/workspace/Squadmate.tsx";
 import { kindStyle } from "#/workspace/styles.ts";
 
 import {
@@ -35,7 +36,7 @@ const ruleCard =
 const hubSection =
 	"background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px rgba(13,13,13,.08); padding: 24px 20px; display: flex; flex-direction: column; align-items: center";
 const masterCard =
-	"background: #181818; color: #fff; border-radius: 16px; padding: 12px 18px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 220px";
+	"position: relative; background: #181818; color: #fff; border-radius: 16px; padding: 12px 18px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 220px; max-width: 100%";
 const hubGrid = "width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px";
 const split = "display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start";
 const logSection =
@@ -62,7 +63,7 @@ export function TrafficPage({ data }: { readonly data: TrafficData }) {
 	const rules = messagingRules(data.masterName);
 	const filters = filterChips(data.agents);
 	const delta = missionDelta(selected?.kind, selected?.skill);
-	const inspected = selected ? decorate(selected, selectedId, data.masterName, names) : undefined;
+	const onFor = (id: string) => agentOn(data.agents, id);
 
 	return (
 		<div data-if="isFlow" style={css(contents)}>
@@ -121,6 +122,13 @@ export function TrafficPage({ data }: { readonly data: TrafficData }) {
 				</section>
 				<section aria-label="Squad map" style={css(hubSection)}>
 					<div style={css(masterCard)}>
+						<span
+							style={css(
+								"position: absolute; left: 50%; top: 12px; transform: translate(-50%, -100%); width: 36px; height: 36px; border-radius: 999px; background: #fff; display: inline-flex; align-items: center; justify-content: center",
+							)}
+						>
+							<Squadmate id="master" on size={32} />
+						</span>
 						<span style={css("font-weight: 600")}>{data.masterName} squad</span>
 						<span style={css("font-size: 12px; color: #cdcdcd")}>
 							Routes every message · holds shared state · scores missions · checks rules
@@ -156,6 +164,7 @@ export function TrafficPage({ data }: { readonly data: TrafficData }) {
 										onClick={() => setBusFilter(filter.id)}
 										style={css(filterStyle(busFilter === filter.id))}
 									>
+										{filter.face ? <Squadmate id={filter.id} on={filter.on} size={16} decorative /> : null}
 										{filter.label}
 									</button>
 								))}
@@ -186,7 +195,13 @@ export function TrafficPage({ data }: { readonly data: TrafficData }) {
 												</span>
 												<span style={css(view.kindStyle)}>{event.kind}</span>
 												<span style={css("font-size: 12px; color: #414141; width: 150px; flex: none")}>
-													{view.route}
+													<RouteFaces
+														from={event.from}
+														to={event.to}
+														masterName={data.masterName}
+														names={names}
+														onFor={onFor}
+													/>
 												</span>
 												<span style={css("flex: 1; font-size: 13px")}>{event.text}</span>
 											</button>
@@ -211,7 +226,17 @@ export function TrafficPage({ data }: { readonly data: TrafficData }) {
 								)}
 							>
 								<dt style={css("color: #5d5d5d")}>Route</dt>
-								<dd style={css("margin: 0")}>{inspected?.route ?? ""}</dd>
+								<dd style={css("margin: 0")}>
+									{selected ? (
+										<RouteFaces
+											from={selected.from}
+											to={selected.to}
+											masterName={data.masterName}
+											names={names}
+											onFor={onFor}
+										/>
+									) : null}
+								</dd>
 								<dt style={css("color: #5d5d5d")}>Skill</dt>
 								<dd style={css("margin: 0; font-family: 'JetBrains Mono', monospace")}>
 									{selected?.skill ?? ""}
@@ -302,8 +327,11 @@ function HubNode({
 				style={css(hubStyle(agent.on, selected))}
 			>
 				<span style={css("display: flex; gap: 8px; align-items: center")}>
-					<span style={css(`width: 14px; height: 14px; border-radius: 4px; background: ${agent.tint}`)} />
-					<strong style={css("color: #0d0d0d")}>{agent.name}</strong>
+					<Squadmate id={agent.id} on={agent.on} size={14} decorative />
+					<strong style={css("color: #0d0d0d")}>
+						{agent.name}
+						<RoleTag id={agent.id} lockLine />
+					</strong>
 				</span>
 				<span style={css("font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5d5d5d")}>
 					{agent.host}
@@ -348,7 +376,14 @@ function showNone(selected: TrafficEvent | undefined): boolean {
 }
 
 function filterChips(agents: readonly TrafficAgent[]) {
-	return [{ id: "all", label: "All agents" }, ...agents.map((agent) => ({ id: agent.id, label: agent.name }))];
+	return [
+		{ id: "all", label: "All agents", on: true, face: false },
+		...agents.map((agent) => ({ id: agent.id, label: agent.name, on: agent.on, face: true })),
+	];
+}
+
+function agentOn(agents: readonly TrafficAgent[], id: string): boolean {
+	return agents.find((agent) => agent.id === id)?.on ?? true;
 }
 
 function agentNames(agents: readonly TrafficAgent[]): Readonly<Record<string, string>> {

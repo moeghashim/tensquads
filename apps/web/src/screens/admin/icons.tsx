@@ -53,21 +53,3 @@ export function CatalogIcon() {
 		</svg>
 	);
 }
-
-export function ImageMark({ size }: { readonly size: number }) {
-	return (
-		<svg
-			width={size}
-			height={size}
-			viewBox="0 0 16 16"
-			fill="none"
-			stroke="#0d0d0d"
-			strokeWidth="1.5"
-			strokeLinecap="round"
-			aria-hidden="true"
-		>
-			<rect x="3" y="5" width="10" height="8" rx="2" />
-			<path d="M8 2.5V5M6 9h0M10 9h0" />
-		</svg>
-	);
-}

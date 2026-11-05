@@ -9,6 +9,7 @@ import { compareInventory, designInventory, inventoryHtml } from "../scripts/des
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
 import { createClerkUser } from "./clerk-user.ts";
+import { overviewNames, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import {
 	readInventory,
 	secretsFor,
@@ -29,7 +30,7 @@ import {
 
 const mission = "Never run out of a top-20 product and keep stock under 30 days of cover.";
 const marketingReply = "Ad spend this week is $262 at a 3.4 return. The best ad set is Prints, lookalike.";
-const revisingCopy = 'Master is writing a new proposal. The squad stays on "Mission pending".';
+const revisingCopy = 'Petra is writing a new proposal. The squad stays on "Mission pending".';
 const emptyInbox = "Nothing waiting. Your squads are working inside their limits.";
 const settled = { timeout: 15_000 };
 
@@ -431,7 +432,7 @@ test("a held dock begin keeps the server count on traffic", async ({ page, works
 	await openWorkspace(page, workspaceUser);
 	const held = await holdWorkspaceSend(page, "begin");
 	try {
-		await page.getByRole("button", { name: "Ask Master" }).click();
+		await page.getByRole("button", { name: "Ask Petra" }).click();
 		await page.locator("#dock-input").fill("How did ads do this week?");
 		await page.getByRole("button", { name: "Send", exact: true }).click();
 		await expect.poll(held.held, { timeout: 20_000 }).toBe(true);
@@ -445,7 +446,7 @@ test("a held dock begin keeps the server count on traffic", async ({ page, works
 test("a held chat finish keeps the server count on traffic", async ({ page, workspaceUser }) => {
 	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
-	await page.getByRole("button", { name: "Chat with the master" }).click();
+	await page.getByRole("button", { name: "Chat with Petra" }).click();
 	await expect(page).toHaveURL(/\/chat$/);
 	const held = await holdWorkspaceSend(page, "finish");
 	try {
@@ -532,7 +533,7 @@ test("the overview matches the rendered design inventory", async ({ page, worksp
 	await openWorkspace(page, workspaceUser);
 	const design = await designMain(page);
 	const built = await sectionInventory(page, "main");
-	const diff = compareInventory(design, built);
+	const diff = compareInventory(rewriteBuiltInventory(design, overviewNames), built);
 	expect(diff.extraTexts).toEqual([]);
 	expect(diff.missingTexts).toEqual([]);
 	expect(diff.extraHandlers).toEqual([]);
@@ -679,7 +680,7 @@ test("a failed decision does not stay on the next account", async ({ page, works
 test("a held chat finish still writes the reply after an approval", async ({ page, workspaceUser, accountId }) => {
 	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
-	await page.getByRole("button", { name: "Chat with the master" }).click();
+	await page.getByRole("button", { name: "Chat with Petra" }).click();
 	await expect(page).toHaveURL(/\/chat$/);
 	const held = await holdWorkspaceSend(page, "finish");
 	try {
@@ -691,7 +692,7 @@ test("a held chat finish still writes the reply after an approval", async ({ pag
 		await refundCard(page).getByRole("button", { name: "Approve", exact: true }).click();
 		await expect(tasksTile(page)).toContainText("332", settled);
 		await held.finish();
-		await expect(page.getByRole("region", { name: "Chat with the master" }).getByText(marketingReply)).toBeVisible(
+		await expect(page.getByRole("region", { name: "Chat with Petra" }).getByText(marketingReply)).toBeVisible(
 			settled,
 		);
 		await expect(tasksTile(page)).toContainText("333", settled);

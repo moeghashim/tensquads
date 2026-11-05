@@ -49,7 +49,6 @@ export function agentStatus(on: boolean) {
 	};
 }
 
-// fallow-ignore-next-line unused-export
 export function skillChips(skills: readonly { readonly id: string; readonly on: boolean }[]): readonly string[] {
 	return skills
 		.filter((skill) => skill.on)
@@ -85,10 +84,6 @@ function nameInitials(owner: string): string {
 		return `${first.charAt(0)}${second.charAt(0)}`.toUpperCase();
 	}
 	return first.slice(0, 2).toUpperCase();
-}
-
-export function masterInitial(masterName: string): string {
-	return masterName.charAt(0).toUpperCase();
 }
 
 export function squadLine(agentCount: number, accountName: string): string {
