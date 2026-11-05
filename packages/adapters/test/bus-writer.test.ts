@@ -165,7 +165,7 @@ interface TrafficControls {
 test("real mode routes traffic through the object and refuses other bus writers", async () => {
 	const previous = process.env.ADAPTERS;
 	const scope: AccountScope = { accountId: "acct", mode: "account" };
-const probe = recordingDatabase();
+	const probe = recordingDatabase();
 	for (const table of [busCursors, busEvents, stateEntries]) {
 		await probe.tx.insert(table).values({});
 		await probe.tx.update(table).set({});

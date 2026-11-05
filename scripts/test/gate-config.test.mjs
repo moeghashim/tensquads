@@ -134,6 +134,126 @@ test("the mise cache is saved by actions/cache and keyed by the lock hash", () =
 	assert.equal(mise.with.cache, false);
 });
 
+function evaluateExpression(expression, context) {
+	if (typeof expression === "boolean") return expression;
+	let source = expression.trim();
+	if (source.startsWith("${{") && source.endsWith("}}")) source = source.slice(3, -2).trim();
+	const tokens = [];
+	const token = /\s*('(?:[^']|'')*'|==|!=|&&|\|\||[(),]|[a-zA-Z_][a-zA-Z_0-9.]*)/y;
+	let offset = 0;
+	while (offset < source.length) {
+		token.lastIndex = offset;
+		const match = token.exec(source);
+		if (!match) throw new Error(`Unsupported expression: ${source.slice(offset)}`);
+		tokens.push(match[1]);
+		offset = token.lastIndex;
+	}
+	let index = 0;
+	function take(expected) {
+		assert.equal(tokens[index++], expected);
+	}
+	function primary() {
+		const value = tokens[index++];
+		if (value === "(") {
+			const result = logicalOr();
+			take(")");
+			return result;
+		}
+		if (value === "true" || value === "false") return value === "true";
+		if (value?.startsWith("'")) return value.slice(1, -1).replaceAll("''", "'");
+		if (value === "format") {
+			take("(");
+			const pattern = logicalOr();
+			const args = [];
+			while (tokens[index] === ",") {
+				take(",");
+				args.push(logicalOr());
+			}
+			take(")");
+			return pattern.replace(/\{([01])\}/g, (_match, position) => String(args[Number(position)]));
+		}
+		if (Object.hasOwn(context, value)) return context[value];
+		throw new Error(`Unsupported expression value: ${value}`);
+	}
+	function equality() {
+		let result = primary();
+		while (tokens[index] === "==" || tokens[index] === "!=") {
+			const operator = tokens[index++];
+			const right = primary();
+			result = operator === "==" ? result === right : result !== right;
+		}
+		return result;
+	}
+	function logicalAnd() {
+		let result = equality();
+		while (tokens[index] === "&&") {
+			take("&&");
+			const right = equality();
+			result = result && right;
+		}
+		return result;
+	}
+	function logicalOr() {
+		let result = logicalAnd();
+		while (tokens[index] === "||") {
+			take("||");
+			const right = logicalAnd();
+			result = result || right;
+		}
+		return result;
+	}
+	const result = logicalOr();
+	assert.equal(index, tokens.length);
+	return result;
+}
+
+function expressionContext(event, inputs = {}) {
+	return {
+		"github.event_name": event,
+		"github.run_id": "123456",
+		"github.workflow": "CI",
+		"github.ref": "refs/heads/04-machine-trial",
+		"inputs.machine_trial": inputs.machine_trial ?? false,
+		"inputs.bus_trial": inputs.bus_trial ?? false,
+	};
+}
+
+function assertTrialSchedule(machineIf, busIf) {
+	for (const [event, machine, bus, expectedMachine, expectedBus] of [
+		["workflow_dispatch", true, false, true, false],
+		["workflow_dispatch", false, true, false, true],
+		["workflow_dispatch", false, false, false, false],
+		["push", true, true, false, false],
+		["pull_request", true, true, false, false],
+	]) {
+		const context = expressionContext(event, { machine_trial: machine, bus_trial: bus });
+		assert.equal(evaluateExpression(machineIf, context), expectedMachine, `${event}: machine trial`);
+		assert.equal(evaluateExpression(busIf, context), expectedBus, `${event}: bus trial`);
+	}
+	const missing = expressionContext("workflow_dispatch");
+	assert.equal(evaluateExpression(machineIf, missing), false);
+	assert.equal(evaluateExpression(busIf, missing), false);
+}
+
+test("trial scheduling rejects an unconditional acceptance branch", () => {
+	assert.throws(
+		() =>
+			assertTrialSchedule(
+				"true || (github.event_name == 'workflow_dispatch' && inputs.machine_trial)",
+				workflow.jobs["bus-trial"].if,
+			),
+		{ code: "ERR_ASSERTION" },
+	);
+	assert.throws(
+		() =>
+			assertTrialSchedule(
+				workflow.jobs["machine-trial"].if,
+				"true || (github.event_name == 'workflow_dispatch' && inputs.bus_trial)",
+			),
+		{ code: "ERR_ASSERTION" },
+	);
+});
+
 test("the machine trial is a manual job and the bus trial stays off", () => {
 	assert.equal(workflow.on.workflow_dispatch.inputs.machine_trial.type, "boolean");
 	assert.equal(workflow.on.workflow_dispatch.inputs.machine_trial.default, false);
@@ -144,27 +264,23 @@ test("the machine trial is a manual job and the bus trial stays off", () => {
 	const machine = workflow.jobs["machine-trial"];
 	assert.deepEqual(machine.concurrency, { group: "machine-trial", "cancel-in-progress": false });
 	assert.equal(machine["timeout-minutes"], 20);
-	assert.match(machine.if, /workflow_dispatch/);
-	assert.match(machine.if, /inputs\.machine_trial/);
+	const machineProof = machine.steps.find((step) => step.name === "Prove one real machine");
 	assert.equal(
-		machine.steps.some((step) => step.if === "always()" && String(step.run).includes("live/cleanup.ts")),
-		true,
+		machineProof.run,
+		"node --experimental-strip-types --test --test-force-exit packages/adapters/test/live/machine-trial.test.ts",
 	);
-	assert.equal(
-		machine.steps.some(
-			(step) =>
-				String(step.run).includes("packages/adapters/test/live/machine-trial.test.ts") &&
-				String(step.env?.MACHINE_TRIAL) === "1",
-		),
-		true,
-	);
+	assert.equal(machineProof.env.MACHINE_TRIAL, "1");
+	const machineCleanup = machine.steps.find((step) => step.name === "Remove the trial machines");
+	assert.equal(machineCleanup.if, "always()");
+	assert.equal(machineCleanup.run, "node --experimental-strip-types packages/adapters/test/live/cleanup.ts");
 	const bus = workflow.jobs["bus-trial"];
 	assert.equal(bus.concurrency, undefined);
-	assert.match(bus.if, /inputs\.bus_trial/);
-	assert.equal(
-		bus.steps.some((step) => step.if === "always()"),
-		true,
-	);
+	const busProof = bus.steps.find((step) => step.name === "Prove one real queue delivery");
+	assert.equal(busProof.run, "node --experimental-strip-types scripts/bus-trial.mjs");
+	const busCleanup = bus.steps.find((step) => step.name === "Remove the trial bus");
+	assert.equal(busCleanup.if, "always()");
+	assert.equal(busCleanup.run, "node --experimental-strip-types scripts/bus-trial.mjs");
+	assertTrialSchedule(machine.if, bus.if);
 	for (const step of bus.steps) {
 		if (!step.env) continue;
 		assert.equal(step.env.CLOUDFLARE_API_TOKEN, "$" + "{{ secrets.CLOUDFLARE_API_TOKEN }}");
@@ -176,8 +292,13 @@ test("the machine trial is a manual job and the bus trial stays off", () => {
 	);
 	assert.equal(summary.needs.includes("machine-trial"), false);
 	assert.equal(summary.needs.includes("bus-trial"), false);
-	assert.match(workflow.concurrency.group, /workflow_dispatch/);
-	assert.match(String(workflow.concurrency["cancel-in-progress"]), /workflow_dispatch/);
+	for (const event of ["workflow_dispatch", "push", "pull_request"]) {
+		const context = expressionContext(event);
+		const dispatch = event === "workflow_dispatch";
+		const group = dispatch ? "trial-123456" : "ci-CI-refs/heads/04-machine-trial";
+		assert.equal(evaluateExpression(workflow.concurrency.group, context), group);
+		assert.equal(evaluateExpression(workflow.concurrency["cancel-in-progress"], context), !dispatch);
+	}
 });
 
 test("stable Required checks job fails closed for failed, skipped or cancelled dependencies", () => {
