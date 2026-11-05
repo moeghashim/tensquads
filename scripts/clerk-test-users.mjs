@@ -49,20 +49,27 @@ function listedUsers(body) {
 	throw new Error("Clerk list users returned an unexpected list.");
 }
 
+function sweepCandidate(user, now) {
+	const id = typeof user?.id === "string" ? user.id : "";
+	if (!id.startsWith("user_") || id === protectedUserId) return "";
+	const email = onlyStaleAddress(user);
+	if (!isExpiredTestUser(email, createdAtMs(user), now)) return "";
+	return id;
+}
+
 export async function sweepExpiredTestUsers({ now, list, remove, pageSize = 100 }) {
+	const candidates = [];
 	let offset = 0;
-	let deleted = 0;
 	for (let page = 0; page < pageLimit; page += 1) {
 		const users = listedUsers(await list({ offset, limit: pageSize }));
 		for (const user of users) {
-			const id = typeof user?.id === "string" ? user.id : "";
-			if (!id.startsWith("user_") || id === protectedUserId) continue;
-			const email = onlyStaleAddress(user);
-			if (!isExpiredTestUser(email, createdAtMs(user), now)) continue;
-			await remove(id);
-			deleted += 1;
+			const id = sweepCandidate(user, now);
+			if (id.length > 0) candidates.push(id);
 		}
-		if (users.length < pageSize) return deleted;
+		if (users.length < pageSize) {
+			for (const id of candidates) await remove(id);
+			return candidates.length;
+		}
 		offset += users.length;
 	}
 	throw new Error("Clerk list users did not end.");
@@ -83,7 +90,8 @@ async function clerkResponse(secret, path, method) {
 export async function sweepClerkTestUsers(options = {}) {
 	const secret = options.secret ?? localSecrets().secret;
 	if (typeof secret !== "string" || secret.length === 0) {
-		throw new Error("CLERK_SECRET_KEY is missing.");
+		console.log("skipped Clerk test user sweep; CLERK_SECRET_KEY is missing");
+		return 0;
 	}
 	const now = options.now ?? Date.now();
 	const deleted = await sweepExpiredTestUsers({

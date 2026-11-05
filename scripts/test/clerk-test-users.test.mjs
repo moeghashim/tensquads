@@ -105,6 +105,28 @@ test("the sweep stops when the Clerk list does not end", async () => {
 	assert.deepEqual(removed, []);
 });
 
-test("a missing Clerk secret fails before any request", async () => {
-	await assert.rejects(() => sweepClerkTestUsers({ secret: "" }), /CLERK_SECRET_KEY is missing/);
+test("a missing Clerk secret skips the sweep", async () => {
+	assert.equal(await sweepClerkTestUsers({ secret: "" }), 0);
+});
+
+test("the sweep lists every candidate before it deletes one", async () => {
+	const events = [];
+	const pages = [
+		[row("user_stale", "sq-abcd1234@example.com"), row("user_fresh", "sq-00abcdef@example.com", freshAt)],
+		[row("user_next", "sq-55555555@example.com")],
+	];
+	let calls = 0;
+	const deleted = await sweepExpiredTestUsers({
+		now,
+		pageSize: 2,
+		list: async () => {
+			events.push("list");
+			return pages[calls++] ?? [];
+		},
+		remove: async (id) => {
+			events.push(id);
+		},
+	});
+	assert.equal(deleted, 2);
+	assert.deepEqual(events, ["list", "list", "user_stale", "user_next"]);
 });
