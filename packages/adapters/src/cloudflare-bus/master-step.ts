@@ -24,7 +24,10 @@ async function masterFor(env: BusObjectEnv, accountId: string, storage: BusStora
 	const cached = masters.get(accountId);
 	if (cached) return cached;
 	const loaded = await import("./master-live.ts");
-	const opened = await loaded.openMaster(env, accountId, storage);
+	// The production build swaps this module for the stub, which uses a default export.
+	const open = loaded.openMaster ?? (loaded as { default?: typeof loaded.openMaster }).default;
+	if (!open) return null;
+	const opened = await open(env, accountId, storage);
 	if (!opened) return null;
 	masters.set(accountId, opened);
 	return opened;

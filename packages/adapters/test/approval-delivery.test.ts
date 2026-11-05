@@ -193,6 +193,49 @@ test("the alarm trigger retries a failed send exactly once, with no decide call"
 	});
 });
 
+test("a drain that still has rows arms the alarm with a growing backoff", async () => {
+	const storage = new Storage();
+	await storage.put("account", "acct-backoff");
+	let calls = 0;
+	const bus = new AccountBus(
+		{ storage, acceptWebSocket() {}, getWebSockets: () => [] },
+		{
+			ADAPTERS: "real",
+			now: () => 10_000,
+			retryDeliveries: async () => {
+				calls += 1;
+				return 1;
+			},
+		},
+	);
+	await bus.alarm();
+	assert.equal(calls, 1);
+	assert.equal(storage.alarm, 11_000);
+	assert.equal(await storage.get("delivery-attempt"), 1);
+	await bus.alarm();
+	assert.equal(calls, 2);
+	assert.equal(storage.alarm, 12_000);
+	assert.equal(await storage.get("delivery-attempt"), 2);
+});
+
+test("a test-mode alarm does not drain deliveries", async () => {
+	const storage = new Storage();
+	await storage.put("account", "acct-test");
+	let calls = 0;
+	const bus = new AccountBus(
+		{ storage, acceptWebSocket() {}, getWebSockets: () => [] },
+		{
+			ADAPTERS: "test",
+			retryDeliveries: async () => {
+				calls += 1;
+				return 0;
+			},
+		},
+	);
+	await bus.alarm();
+	assert.equal(calls, 0);
+});
+
 test("the delivery backoff is bounded", () => {
 	assert.equal(deliveryBackoffMs(0), 1_000);
 	assert.equal(deliveryBackoffMs(1), 2_000);

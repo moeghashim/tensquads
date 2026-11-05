@@ -1,9 +1,11 @@
 import { neonConfig, Pool } from "@neondatabase/serverless";
 import type { PublishedEvent } from "@tensquads/kernel";
-import { and, asc, eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { chooseAdapters } from "../adapter-choice.ts";
+import { retryApprovalDeliveries } from "../neon/commands/approval-delivery.ts";
 import { askDetail, siteAgent } from "../neon/commands/master-ask.ts";
+import type { AppDatabase } from "../neon/postgres.ts";
 import { approvalDeliveries, approvals, busEvents, stateEntries } from "../neon/schema.ts";
 import { traceFor } from "../trace.ts";
 
@@ -127,9 +129,9 @@ function database(connectionString: string) {
 	return { pool, db: drizzle(pool, { schema: { busEvents, stateEntries, approvals, approvalDeliveries } }) };
 }
 
-// The alarm drains pending approval deliveries from Neon. Each row keeps its
-// event id, so a repeat send is dropped at the receiver. A row is deleted
-// only after its send succeeds. The count left tells the alarm to run again.
+// The alarm drains pending approval deliveries from Neon. The shared retry
+// keeps each row's event id, so a repeat send is dropped at the receiver.
+// The count left tells the alarm to run again.
 export async function drainApprovalDeliveries(
 	connectionString: string,
 	accountId: string,
@@ -137,24 +139,9 @@ export async function drainApprovalDeliveries(
 ): Promise<number> {
 	const { pool, db } = database(connectionString);
 	try {
-		const rows = await db
-			.select()
-			.from(approvalDeliveries)
-			.where(eq(approvalDeliveries.accountId, accountId))
-			.orderBy(asc(approvalDeliveries.approvalId));
-		let remaining = 0;
-		for (const row of rows) {
-			try {
-				await deliver(row.event as PublishedEvent);
-			} catch {
-				remaining += 1;
-				continue;
-			}
-			await db
-				.delete(approvalDeliveries)
-				.where(and(eq(approvalDeliveries.accountId, accountId), eq(approvalDeliveries.approvalId, row.approvalId)));
-		}
-		return remaining;
+		return await retryApprovalDeliveries(db as unknown as AppDatabase, accountId, (_id, event) =>
+			deliver(event as PublishedEvent),
+		);
 	} catch (error) {
 		throw hidden(error, connectionString);
 	} finally {

@@ -293,25 +293,30 @@ export class AccountBus {
 		if (chooseAdapters(this.env.ADAPTERS) !== "real") return;
 		const accountId = await this.ctx.storage.get<string>("account");
 		if (!accountId) return;
-		let remaining: number;
+		const remaining = await this.drainRemaining(accountId);
+		if (remaining === null) return;
+		if (remaining > 0) await this.armDeliveryAlarm();
+		else await this.ctx.storage.delete("delivery-attempt");
+	}
+
+	// A missing source means there is nothing to drain. A failed drain counts as one row left.
+	private async drainRemaining(accountId: string): Promise<number | null> {
 		try {
-			if (this.env.retryDeliveries) remaining = await this.env.retryDeliveries(accountId);
-			else if (this.env.DATABASE_URL) {
-				remaining = await drainApprovalDeliveries(this.env.DATABASE_URL, accountId, async (event) => {
-					await this.acceptStored(accountId, event);
-				});
-			} else return;
+			if (this.env.retryDeliveries) return await this.env.retryDeliveries(accountId);
+			if (!this.env.DATABASE_URL) return null;
+			return await drainApprovalDeliveries(this.env.DATABASE_URL, accountId, async (event) => {
+				await this.acceptStored(accountId, event);
+			});
 		} catch {
-			remaining = 1;
+			return 1;
 		}
+	}
+
+	private async armDeliveryAlarm(): Promise<void> {
+		const attempt = (await this.ctx.storage.get<number>("delivery-attempt")) ?? 0;
+		await this.ctx.storage.put("delivery-attempt", attempt + 1);
 		const now = this.env.now?.() ?? Date.now();
-		if (remaining > 0) {
-			const attempt = (await this.ctx.storage.get<number>("delivery-attempt")) ?? 0;
-			await this.ctx.storage.put("delivery-attempt", attempt + 1);
-			await this.ctx.storage.setAlarm(now + deliveryBackoffMs(attempt));
-			return;
-		}
-		await this.ctx.storage.delete("delivery-attempt");
+		await this.ctx.storage.setAlarm(now + deliveryBackoffMs(attempt));
 	}
 
 	private routes(): Map<string, (request: Request) => Promise<Response>> {
