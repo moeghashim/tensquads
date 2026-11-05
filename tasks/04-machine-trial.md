@@ -16,6 +16,35 @@ Two real adapters exist behind one feature flag. The boat.dev adapter for `Machi
 - The boat docs from `https://docs.boat.dev/llms.txt`: TypeScript SDK, Create sandbox, Get sandbox, List sandbox processes, Stop a sandbox, Resume fork and restore, Delete a sandbox, Saved snapshots, Templates and sizing, Access and credentials, AI credentials, Scopes, Limits and errors, Free trial, Firewall rules, Compliance and uptime
 - The Cloudflare docs for Queues (consumers, pull consumers, dead letter queues, batching and retries) and for Durable Objects (SQLite storage, alarms, WebSocket hibernation)
 
+## Moe's answers, 4 November 2026
+
+The builder does no step 1 work. Item 21 stays open with Moe. Items 1, 2 and 3 were done by Moe on 4 November 2026.
+
+1. **Paid plan.** Done by Moe on 4 November 2026. The boat plan is Standard.
+2. **API keys.** Done by Moe on 4 November 2026. `BOAT_API_KEY` and `BOAT_ADMIN_API_KEY` are in `.env` and in GitHub Actions secrets. The API key was rotated on 4 November 2026.
+3. **Credential profile.** Done by Moe on 4 November 2026. The profile `tensquads-agents` exists and is empty. `default` and `moe@10claws.com` stay untouched.
+4. **noEnv and the environment.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Send `noEnv: true` and `environment: "tensquads-agents"` together. If that pair is refused, send `noEnv: true` alone. The live run on 4 November 2026 kept the pair. The sandbox read `sandbox.environment=tensquads-agents`, `sandbox.ttlSeconds=null`, and `noEnv=absent`. Boat injects `AGENT_ID`, `ASCII_API_URL`, `ASCII_PORT`, `ASCII_TOKEN`, `BOAT_ID`, `ENVIRONMENT_ID`, and `PRODUCT_MODE`. The env reader runs the command `env` with no filter. The check allows names from a fresh machine that receives no sent values, the three sent keys, and those seven injected names. A name outside that set fails. A fixed POSIX allow-list was not used, because that run did not print the system names. `OLDPWD`, `PWD`, `SHLVL`, and `_` are shell state that changes as commands run, so the comparison ignores those four names. Run 41930877441 failed on `OLDPWD` after the first env read had passed.
+5. **Async account ports.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. New methods are async and take an `AccountScope`. The old sync ports stay, so the current callers do not move in this pull request.
+6. **Template contents.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. `makeTemplate` starts a machine, writes the image file, saves `tensquads-<imageId>-<version>`, waits until ready, and removes the source.
+7. **Dashboard fields.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Host is `vps-<agentId>-01`, region is `EU`, size is `<vcpu> vCPU · <memoryGB> GB`, CPU is the rounded process share, and uptime is `N days` or "Just started".
+8. **Queue consumer.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. One queue, one Worker consumer, and the Durable Object holds each agent's tasks. Machines use Worker endpoints.
+9. **Dead letter queue.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. `tensquads-bus` and `tensquads-bus-dlq` count as one queue. The same Worker consumes both. This pull request does not create them.
+10. **Machine token.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Send and take are guarded by a signed token for one account and one agent. Tests call them. No token is placed on a machine.
+11. **Neon failure.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The Durable Object saves to its storage first, keeps unwritten rows, and retries with an alarm.
+12. **Write-through scope.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Phase 4 writes `bus_events` and the shared state at run time. The seed stays a setup writer.
+13. **Browser push.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The Durable Object accepts a WebSocket and pushes each new event. The Traffic screen does not connect.
+14. **Roll out.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. Roll out and View changelog still do nothing. There is no Rollout object.
+15. **Adapter flag.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. `ADAPTERS` is `test` or `real`, the default is `test`, and both adapters switch together. Production stays on `test`.
+16. **Manual job shape.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. A `machine-trial` input on `ci.yml` runs only when that input is true, and it is not a required check. The manual job is in this pull request, after Moe finished step 1 on 4 November 2026.
+17. **Cleanup of a failed run.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The live job labels what it makes with the run id, times out at 20 minutes, and always removes that label. The job fails if anything is left. The manual job is in this pull request, after Moe finished step 1 on 4 November 2026.
+18. **Port errors.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. One typed port error for each boat error. No automatic retry except the `Idempotency-Key` on start. No screen shows the errors.
+19. **Heartbeat.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The heartbeat, systemd service, and "Restarting" stay out of this task.
+20. **Find a machine.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. No new table. Find the machine with the label filter. The SDK method accepts `label`.
+21. **Host failure and a second region.** Open with Moe.
+22. **Bus proof.** Recommended answer accepted by the orchestrator under Moe's delegation, 4 November 2026. The rules run on Miniflare in `npm test`. The real deploy half is the `bus_trial` input, default false. The job reads GitHub secret `CLOUDFLARE_API_TOKEN` and variable `CLOUDFLARE_ACCOUNT_ID`. It was not run. The token is Workers Scripts Edit and Queues Edit until Moe raises Workers to product-level Admin.
+
+AGENT_ID is reserved by boat (invalid_env). The machine gets TENSQUADS_AGENT_ID. Decided by the orchestrator under Moe's delegation, 4 November 2026.
+
 ## Steps, in order
 
 Step 1 is for Moe. Steps 2 onward wait for step 1 and for Moe's answers to "Stop and ask". Record each answer in this file under a heading "Moe's answers", as task 01 does, in the first commit.
@@ -30,7 +59,7 @@ Step 1 is for Moe. Steps 2 onward wait for step 1 and for Moe's answers to "Stop
 3. Change the ports in `packages/kernel/src/ports.ts` as item 5 settles. Change `test-machine` and `memory-bus` to match them. Off still means CPU 0% and uptime "Paused". Update every caller. No screen may show a change. Run `make verify`. It must return 0 before the next step. Commit this step alone.
 4. Add the feature flag as item 15 settles. One place in the Worker picks the adapters. The default picks `test-machine` and `memory-bus`. A test proves the default. Another test proves that a missing flag picks the test adapters.
 5. Build `packages/adapters/src/boat-machine.ts`. Load the `boundary-discipline` and `make-operations-idempotent` skills first. The boat words stay in this file. No sandbox, snapshot or credential word crosses the port. Write the tests first, with the `tdd` skill, against a fake boat HTTP server. Build these methods:
-   - **Start.** Send `type: "small"`, `noEnv: true`, `ttlSeconds: null`, and `env` with `ACCOUNT_ID`, `AGENT_ID` and `IMAGE_TAG` only. Send the environment as item 4 settles. Send `labels` for the account, the agent and the image. The plan says "tags". Boat calls them labels. Send an `Idempotency-Key`. A repeat start for the same agent must not make a second machine. Then wait for ready with `waitUntilReady`.
+   - **Start.** Send `type: "small"`, `noEnv: true`, `ttlSeconds: null`, and `env` with `ACCOUNT_ID`, `TENSQUADS_AGENT_ID` and `IMAGE_TAG` only. Send the environment as item 4 settles. Send `labels` for the account, the agent and the image. The plan says "tags". Boat calls them labels. Send an `Idempotency-Key`. A repeat start for the same agent must not make a second machine. Then wait for ready with `waitUntilReady`.
    - **Stop.** Call stop. A stop returns at `stopping`, so poll until the state is `stopped`. A stopped machine shows CPU 0% and uptime "Paused" with no call to boat metrics.
    - **Start again.** Call resume. Then wait for ready. The disk comes back. Memory, processes and the IP address do not.
    - **Read fields.** Map the fields as item 7 settles. `size` is `<vcpu> vCPU · <memoryGB> GB`.
@@ -55,7 +84,7 @@ Step 1 is for Moe. Steps 2 onward wait for step 1 and for Moe's answers to "Stop
     1. Make a template.
     2. Start from the template with `noEnv: true`, labels and `ttlSeconds: null`.
     3. Read `host`, `region`, `size`, `cpu`, `uptime`, `egress` and `secrets`.
-    4. Run `env` on the machine. Assert that `ACCOUNT_ID`, `AGENT_ID` and `IMAGE_TAG` have the sent values, that `BOAT_ID` and `ASCII_TOKEN` are the only other boat variables, and that the secret name and the boat API key are not there.
+    4. Run `env` on the machine. Assert that `ACCOUNT_ID`, `TENSQUADS_AGENT_ID` and `IMAGE_TAG` have the sent values, that `BOAT_ID` and `ASCII_TOKEN` are the only other boat variables, and that the secret name and the boat API key are not there.
     5. Register one secret name. Assert that the name reads back, and that a new read of `env` on the machine does not have it.
     6. Stop. Assert CPU 0% and uptime "Paused".
     7. Start again. Assert the state is on, and that the file from the template is still there.
@@ -75,7 +104,7 @@ Step 1 is for Moe. Steps 2 onward wait for step 1 and for Moe's answers to "Stop
 
 - [ ] The manual job passes on the branch against a real boat machine. The run link is in the pull request
 - [ ] The live test proves each of these on a real machine: start with `noEnv: true` and labels, stop, start again, read of the dashboard fields, one secret name registered, make a template, start from a template, remove
-- [ ] The live test proves that the machine holds `ACCOUNT_ID`, `AGENT_ID` and `IMAGE_TAG`, and no secret value
+- [ ] The live test proves that the machine holds `ACCOUNT_ID`, `TENSQUADS_AGENT_ID` and `IMAGE_TAG`, and no secret value
 - [ ] A stopped machine shows CPU 0% and uptime "Paused"
 - [ ] The manual job leaves no machine, no template and no secret name behind. Evidence: the output of the cleanup check
 - [ ] The Worker tests prove the three bus rules: a seen id is dropped, the traffic list sorts by sequence number, and a message that fails all retries makes one Escalation event

@@ -1,14 +1,44 @@
 import type { AppDatabase } from "@tensquads/adapters";
-import { createRepositories } from "@tensquads/adapters";
+import { chooseAdapters, createCloudflareBus, createRepositories, trafficScript } from "@tensquads/adapters";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
-import type { AccountScope } from "@tensquads/kernel";
+import type { AccountEventBus, AccountScope } from "@tensquads/kernel";
 import { Kernel } from "@tensquads/kernel";
 
+import { workerEnv } from "./worker-env.ts";
+
 const unfinished = "The workspace write did not finish.";
+const unconfigured = "The machine service is not configured.";
+
+export function realTrafficBus(env: {
+	ACCOUNT_BUS?: Parameters<typeof createCloudflareBus>[0];
+	BUS_QUEUE?: Parameters<typeof createCloudflareBus>[2];
+}): AccountEventBus {
+	if (!env.ACCOUNT_BUS) throw new Error(unconfigured);
+	return createCloudflareBus(env.ACCOUNT_BUS, trafficScript(), env.BUS_QUEUE);
+}
+
+async function durableTrafficBus(): Promise<AccountEventBus> {
+	const workers = await import("cloudflare:workers");
+	const env = (workers.env ?? {}) as {
+		ACCOUNT_BUS?: Parameters<typeof createCloudflareBus>[0];
+		BUS_QUEUE?: Parameters<typeof createCloudflareBus>[2];
+	};
+	return realTrafficBus(env);
+}
 
 // startedAt is the server function's clock. The read and the write share it.
-export async function advanceTrafficAccount(db: AppDatabase, scope: AccountScope, startedAt: number): Promise<string> {
+export async function advanceTrafficAccount(
+	db: AppDatabase,
+	scope: AccountScope,
+	startedAt: number,
+	bus?: AccountEventBus,
+): Promise<string> {
 	const deadlineAt = startedAt + PENDING_TASK_WINDOW_MS;
+	if (chooseAdapters(await workerEnv("ADAPTERS")) === "real") {
+		if (Date.now() >= deadlineAt) throw new Error(unfinished);
+		const event = await (bus ?? (await durableTrafficBus())).nextEvent(scope, deadlineAt);
+		return event?.id ?? "";
+	}
 	const repositories = createRepositories(db);
 	const before = new Set((await repositories.bus.listEvents(scope)).map((event) => event.id));
 	if (Date.now() >= deadlineAt) throw new Error(unfinished);

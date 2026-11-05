@@ -1,26 +1,15 @@
 import { type AccountScope, type BusEvent, type BusKind, requireScope } from "@tensquads/domain";
 import { asc, eq } from "drizzle-orm";
-import designFile from "../../../../seed/src/design.json" with { type: "json" };
-import { createMemoryBus, type ScriptedBusEvent } from "../../memory-bus.ts";
+import { createMemoryBus } from "../../memory-bus.ts";
 import { PENDING_TASK_WINDOW_MS } from "../../pending-window.ts";
 import { traceFor } from "../../trace.ts";
+import { trafficScript } from "../../traffic-script.ts";
 import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { busEvents, stateEntries } from "../schema.ts";
 import { appendEvents, type EventDraft, lockCursor, saveCursor } from "./bus.ts";
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
-
-interface DesignStep {
-	readonly from: string;
-	readonly to: string;
-	readonly kind: string;
-	readonly skill: string;
-	readonly text: string;
-	readonly payload: Readonly<Record<string, unknown>>;
-	readonly writes?: readonly string[];
-	readonly set?: Readonly<Record<string, unknown>>;
-}
 
 const busKinds = ["Task", "Result", "Request", "Relay", "Escalation", "Approval", "Declined"] as const;
 
@@ -29,20 +18,6 @@ function knownKind(kind: string): BusKind {
 		if (candidate === kind) return candidate;
 	}
 	throw new Error(`The script kind ${kind} is not a bus kind.`);
-}
-
-function trafficScript(): readonly ScriptedBusEvent[] {
-	const steps = designFile.script as unknown as readonly DesignStep[];
-	return steps.map((step) => ({
-		from: step.from,
-		to: step.to,
-		kind: knownKind(step.kind),
-		skill: step.skill,
-		text: step.text,
-		payload: step.payload,
-		writes: step.writes ?? [],
-		set: step.set,
-	}));
 }
 
 function asKind(value: string): BusKind {

@@ -11,6 +11,7 @@
 \* # model: packages/domain/src/bus/traffic-commands.ts
 \* # model: packages/adapters/src/neon/commands/traffic.ts
 \* # model: packages/adapters/src/memory-bus.ts
+\* # model: packages/adapters/src/cloudflare-bus/account-bus.ts
 \* # model: packages/kernel/src/plugins/bus.ts
 \* # model: packages/kernel/src/kernel.ts
 \* # model: packages/adapters/src/neon/commands/bus.ts

@@ -31,6 +31,68 @@ export interface MachineProvider {
 	startFromTemplate(templateId: string, agentId: string): StartedMachine;
 }
 
+// The sync ports above stay for the screens. These async ports take an account
+// so a real machine call cannot cross accounts. Callers of the sync ports are unchanged.
+export type MachineFaultCode =
+	| "rate_limited"
+	| "limit_reached"
+	| "billing_required"
+	| "out_of_capacity"
+	| "data_expired"
+	| "stop_refused"
+	| "save_failed"
+	| "unavailable";
+
+export class MachineFault extends Error {
+	readonly code: MachineFaultCode;
+
+	constructor(code: MachineFaultCode, message: string) {
+		super(message);
+		this.name = "MachineFault";
+		this.code = code;
+	}
+}
+
+export interface AccountMachine {
+	host(scope: AccountScope, agentId: string): Promise<string>;
+	region(scope: AccountScope, agentId: string): Promise<string>;
+	size(scope: AccountScope, agentId: string): Promise<string>;
+	cpu(scope: AccountScope, agentId: string): Promise<string>;
+	uptime(scope: AccountScope, agentId: string): Promise<string>;
+	egress(scope: AccountScope, agentId: string): Promise<readonly string[]>;
+	secrets(scope: AccountScope, agentId: string): Promise<readonly string[]>;
+	start(scope: AccountScope, agentId: string, imageTag: string): Promise<void>;
+	stop(scope: AccountScope, agentId: string): Promise<void>;
+	resume(scope: AccountScope, agentId: string): Promise<void>;
+	remove(scope: AccountScope, agentId: string): Promise<void>;
+	registerSecret(scope: AccountScope, name: string, value?: string): Promise<void>;
+	removeSecret(scope: AccountScope, name: string): Promise<void>;
+	makeTemplate(scope: AccountScope, imageId: string, version: string): Promise<MachineTemplate>;
+	startFromTemplate(scope: AccountScope, templateId: string, agentId: string): Promise<StartedMachine>;
+	removeTemplate(scope: AccountScope, templateId: string): Promise<void>;
+}
+
+export interface PublishedEvent {
+	readonly id: string;
+	readonly from: string;
+	readonly to: string;
+	readonly kind: string;
+	readonly skill: string;
+	readonly text: string;
+	readonly payload: Readonly<Record<string, unknown>>;
+	readonly writes: readonly string[];
+	readonly set?: Readonly<Record<string, unknown>>;
+	readonly time?: string;
+	readonly trace?: string;
+}
+
+export interface AccountEventBus {
+	events(scope: AccountScope): Promise<readonly PublishedEvent[]>;
+	nextEvent(scope: AccountScope, deadlineAt?: number): Promise<PublishedEvent | undefined>;
+	store(scope: AccountScope): Promise<Readonly<Record<string, unknown>>>;
+	publish(scope: AccountScope, event: PublishedEvent): Promise<void>;
+}
+
 export interface BusEventRecord {
 	readonly id: string;
 	readonly writes: readonly string[];

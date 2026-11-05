@@ -11,6 +11,7 @@ Run this check when a change touches any of these:
 - `packages/domain/src/bus/traffic-commands.ts`
 - `packages/adapters/src/neon/commands/traffic.ts`
 - `packages/adapters/src/memory-bus.ts`
+- `packages/adapters/src/cloudflare-bus/account-bus.ts`
 - `packages/kernel/src/plugins/bus.ts`
 - `packages/kernel/src/kernel.ts`
 - `packages/adapters/src/neon/commands/bus.ts`

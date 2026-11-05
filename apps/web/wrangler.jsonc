@@ -5,13 +5,26 @@
 	"account_id": "678c5a795f40f7e9f33b8a71248cc829",
 	"compatibility_date": "2026-10-23",
 	"compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env"],
-	"main": "@tanstack/react-start/server-entry",
+	// Phase 4 keeps one Worker. The class and the queue are declared here.
+	// Do not create the queue from this repository. Production stays on the test adapters.
+	"main": "src/worker.ts",
+	"vars": {
+		"ADAPTERS": "test",
+		"BUS_DEAD_LETTER": "tensquads-bus-dlq",
+		"CLERK_PLATFORM_ORG_ID": "org_3Lazia1HC1hdgfY0mAttb1qTWYm"
+	},
+	"durable_objects": {
+		"bindings": [{ "name": "ACCOUNT_BUS", "class_name": "AccountBus" }]
+	},
+	"migrations": [{ "tag": "v1-account-bus", "new_sqlite_classes": ["AccountBus"] }],
+	"queues": {
+		"producers": [{ "binding": "BUS_QUEUE", "queue": "tensquads-bus" }],
+		"consumers": [
+			{ "queue": "tensquads-bus", "max_retries": 3, "dead_letter_queue": "tensquads-bus-dlq" },
+			{ "queue": "tensquads-bus-dlq" }
+		]
+	},
 	"observability": {
 		"enabled": true
-	},
-	"vars": {
-		"CLERK_PLATFORM_ORG_ID": "org_3Lazia1HC1hdgfY0mAttb1qTWYm"
 	}
-	// Decision 16. This Worker will also hold one Durable Object class and one Queue consumer.
-	// Do not add those bindings in phase 0.
 }

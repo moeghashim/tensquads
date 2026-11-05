@@ -13,6 +13,7 @@
 \* The old read's return or its bound leaves that failure its own read.
 \* The model records one later failure. The successor read is not overtaken.
 \* # model: packages/adapters/src/test-machine.ts
+\* # model: packages/adapters/src/boat-machine.ts
 \* # model: packages/kernel/src/plugins/squads.ts
 \* # model: packages/kernel/src/ports.ts
 \* # model: packages/adapters/src/neon/commands/agents.ts

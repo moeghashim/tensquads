@@ -27,7 +27,7 @@ export interface PlannedTrafficEvent {
 
 const busKinds = ["Task", "Result", "Request", "Relay", "Escalation", "Approval", "Declined"] as const;
 
-function knownKind(kind: string): BusKind {
+export function knownKind(kind: string): BusKind {
 	for (const candidate of busKinds) {
 		if (candidate === kind) return candidate;
 	}
