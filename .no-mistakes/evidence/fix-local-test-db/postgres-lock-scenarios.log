@@ -1,0 +1,14 @@
+✔ two accounts write at once and the second agent commits while the first is held (506.429042ms)
+✔ a migration waits on the global lock before workspace creation reads accounts (278.453209ms)
+✔ two creates for one Clerk user make one account and do not deadlock (166.188083ms)
+✔ a reset waiting on the advisory lock longer than the send timeout succeeds (12287.837666ms)
+✔ a migration waits for an approval and neither side deadlocks (361.413833ms)
+✔ one account's writers exclude each other (231.502875ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34588.5505

@@ -1,0 +1,8 @@
+Concurrent initial migrations: both completed; one current schema_revision persisted: 8b8773ae30862433555466cc3cef99b83f07cffb7451effeef6ab3080f39c9ac
+Current migration completed while global exclusive lock remained held: no writer blockage.
+Reset B completed while reset A waited on its account fence. Persisted accounts: [ { id: 'live-a' }, { id: 'live-b' } ]
+E2E cleanup B completed while A remained locked; account B removed, account A preserved.
+Same-account reset completed only after fence release; five agents persisted.
+Stale migration waited for live writer lock, then completed with current revision.
+Injected database DDL failure rolled migration back, preserved stale revision, released connection; retry succeeded.
+Final persisted account/agent state: [ { id: 'live-a', agents: 5 } ]
