@@ -176,7 +176,7 @@ type AdvanceTraffic = (
 	scope: AccountScope,
 	startedAt: number,
 	bus: AccountEventBus,
-) => Promise<string>;
+) => Promise<{ readonly id: string } | null>;
 type Refresh = () => void;
 interface TrafficControls {
 	registerTrafficAdvance(fn: (options: { data: string; signal: AbortSignal }) => Promise<string>): void;
@@ -229,12 +229,13 @@ test("real mode routes traffic through the object and refuses other bus writers"
 	const draft = { from: "master", to: "orders", kind: "Task" as const, skill: "test", text: "", payload: {} };
 	try {
 		process.env.ADAPTERS = "real";
-		assert.equal(await advanceTrafficAccount(db, scope, Date.now(), bus), "e1");
+		assert.equal((await advanceTrafficAccount(db, scope, Date.now(), bus))?.id, "e1");
 		assert.equal(advances, 1);
 		assert.deepEqual(counts, { inserts: 0, updates: 0 });
-		controls.registerTrafficAdvance(({ data }) => {
+		controls.registerTrafficAdvance(async ({ data }) => {
 			assert.equal(data, scope.accountId);
-			return advanceTrafficAccount(db, scope, Date.now(), bus);
+			const created = await advanceTrafficAccount(db, scope, Date.now(), bus);
+			return created?.id ?? "";
 		});
 		const refresh = () => {
 			refreshes += 1;

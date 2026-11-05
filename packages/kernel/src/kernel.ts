@@ -2,6 +2,7 @@ import type {
 	AccountOpened,
 	AccountScope,
 	Autonomy,
+	BusEvent,
 	Fenced,
 	Rule,
 	SendResult,
@@ -155,16 +156,16 @@ export class Kernel {
 		return (this.context.get("workspaceSquads") as SquadCommands).askRevise(scope, agentId, deadlineAt);
 	}
 
-	async nextEvent(scope: AccountScope, deadlineAt?: number): Promise<void> {
+	async nextEvent(scope: AccountScope, deadlineAt?: number): Promise<BusEvent | undefined> {
 		await this.ready;
 		return (this.context.get("workspaceBus") as BusCommands).nextEvent(scope, deadlineAt);
 	}
 
 	// ports.ts lists no nextEvent. The repository bag has it. The cast stays on this call.
-	private advance(scope: AccountScope, deadlineAt?: number): Promise<void> {
+	private advance(scope: AccountScope, deadlineAt?: number): Promise<BusEvent | undefined> {
 		if (!this.repositories) throw new Error("Repositories are not configured.");
 		const port = this.repositories.bus as unknown as {
-			nextEvent(scope: AccountScope, deadlineAt?: number): Promise<void>;
+			nextEvent(scope: AccountScope, deadlineAt?: number): Promise<BusEvent | undefined>;
 		};
 		return port.nextEvent(scope, deadlineAt);
 	}

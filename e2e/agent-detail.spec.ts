@@ -968,6 +968,8 @@ test("ask to revise adds one proposal and opens overview, and a repeat adds none
 	await expect(page).toHaveTitle("Agent dashboard");
 	await page.getByRole("button", { name: "Ask Petra to revise" }).click();
 	await expect(page).toHaveURL(/\/overview$/, settled);
+	// The address matches while the title is still the dashboard. The overview read has not landed.
+	await expect(page).toHaveTitle("tensquads workspace");
 	const repeat = (await readAgent(accountId, "support")).proposals;
 	expect(repeat).toEqual(created);
 
@@ -979,6 +981,7 @@ test("ask to revise adds one proposal and opens overview, and a repeat adds none
 	]);
 	await page.getByRole("button", { name: "Ask Petra to revise" }).click();
 	await expect(page).toHaveURL(/\/overview$/, settled);
+	await expect(page).toHaveTitle("tensquads workspace");
 	const after = (await readAgent(accountId, "inventory")).proposals;
 	expect(after.map((proposal) => ({ id: proposal.id, status: proposal.status }))).toEqual([
 		{ id: "mp-inventory", status: "Proposed" },
@@ -1110,7 +1113,7 @@ test("an account switch on the mounted agent route hides the previous account", 
 	accountId,
 }) => {
 	test.setTimeout(120_000);
-	const other = await temporaryAccount();
+	let other: WorkspaceUser | undefined;
 	let release = () => undefined;
 	const gate = new Promise<void>((resolve) => {
 		release = resolve;
@@ -1141,15 +1144,17 @@ test("an account switch on the mounted agent route hides the previous account", 
 		await route.continue();
 	};
 	try {
+		const account = await temporaryAccount();
+		other = account;
 		await withDb(async (db) => {
 			await db
 				.update(schema.agents)
 				.set({ mission: "Account B mission" })
-				.where(and(eq(schema.agents.accountId, other.accountId), eq(schema.agents.id, "support")));
+				.where(and(eq(schema.agents.accountId, account.accountId), eq(schema.agents.id, "support")));
 			await db
 				.update(schema.busEvents)
 				.set({ body: "Account B message" })
-				.where(eq(schema.busEvents.accountId, other.accountId));
+				.where(eq(schema.busEvents.accountId, account.accountId));
 		});
 		await openAgent(page, workspaceUser, "support");
 		await expect(page.getByText(supportMission, { exact: true })).toBeVisible();
@@ -1205,8 +1210,13 @@ test("an account switch on the mounted agent route hides the previous account", 
 	} finally {
 		release();
 		await page.unroute(pattern, handler).catch(() => undefined);
-		await deleteClerkUser(other.userId);
-		await deleteWorkspaceAccount(other.accountId);
+		if (other) {
+			try {
+				await deleteWorkspaceAccount(other.accountId);
+			} finally {
+				await deleteClerkUser(other.userId);
+			}
+		}
 	}
 });
 
@@ -1216,7 +1226,7 @@ test("a ticket session switch keeps the agent route isolated from held account r
 	accountId,
 }) => {
 	test.setTimeout(120_000);
-	const other = await temporaryAccount();
+	let other: WorkspaceUser | undefined;
 	let release = () => undefined;
 	const gate = new Promise<void>((resolve) => {
 		release = resolve;
@@ -1247,15 +1257,17 @@ test("a ticket session switch keeps the agent route isolated from held account r
 		await route.continue();
 	};
 	try {
+		const account = await temporaryAccount();
+		other = account;
 		await withDb(async (db) => {
 			await db
 				.update(schema.agents)
 				.set({ mission: "Account B mission" })
-				.where(and(eq(schema.agents.accountId, other.accountId), eq(schema.agents.id, "support")));
+				.where(and(eq(schema.agents.accountId, account.accountId), eq(schema.agents.id, "support")));
 			await db
 				.update(schema.busEvents)
 				.set({ body: "Account B message" })
-				.where(eq(schema.busEvents.accountId, other.accountId));
+				.where(eq(schema.busEvents.accountId, account.accountId));
 		});
 		await openAgent(page, workspaceUser, "support");
 		await expect(page.getByText(supportMission, { exact: true })).toBeVisible();
@@ -1318,8 +1330,13 @@ test("a ticket session switch keeps the agent route isolated from held account r
 	} finally {
 		release();
 		await page.unroute(pattern, handler).catch(() => undefined);
-		await deleteClerkUser(other.userId);
-		await deleteWorkspaceAccount(other.accountId);
+		if (other) {
+			try {
+				await deleteWorkspaceAccount(other.accountId);
+			} finally {
+				await deleteClerkUser(other.userId);
+			}
+		}
 	}
 });
 
@@ -1587,13 +1604,18 @@ async function temporaryAccount(): Promise<WorkspaceUser> {
 	const password = `Ts${randomUUID().replaceAll("-", "")}Zq7`;
 	const userId = await createClerkUser(secrets.secret, email, password);
 	const accountId = `frame-b-${randomUUID().slice(0, 8)}`;
-	const postgres = openPostgres(secrets.testDatabase);
 	try {
-		await replaceDemoAccount(postgres.db, accountId, userId);
-	} finally {
-		await postgres.close();
+		const postgres = openPostgres(secrets.testDatabase);
+		try {
+			await replaceDemoAccount(postgres.db, accountId, userId);
+		} finally {
+			await postgres.close();
+		}
+		return { email, password, userId, accountId };
+	} catch (error) {
+		await deleteClerkUser(userId);
+		throw error;
 	}
-	return { email, password, userId, accountId };
 }
 
 async function deleteClerkUser(userId: string) {

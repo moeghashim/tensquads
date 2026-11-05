@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import test from "node:test";
 import { Pool, type PoolClient } from "@neondatabase/serverless";
 import type { WorkspaceDraft } from "@tensquads/domain";
+import { sql } from "drizzle-orm";
 
 import { createWorkspace } from "../src/neon/create-workspace.ts";
 import { type AppDatabase, openPostgres } from "../src/neon/postgres.ts";
@@ -223,6 +224,7 @@ test("a migration waits on the global lock before workspace creation reads accou
 	const selected = { value: false };
 	try {
 		await opened.migrate();
+		await opened.db.execute(sql`UPDATE schema_revision SET version = 'stale' WHERE id = 1`);
 		const creator = createWorkspace(
 			pauseAfterLocks(opened.db, markReady, gate, selected),
 			{ accountId, mode: "account" },

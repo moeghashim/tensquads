@@ -6,8 +6,8 @@ type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 
 // Maintenance takes 1952804467 exclusive. An account writer takes that same key shared,
 // then 1952804468 for its account. Two accounts do not wait on each other. A migration
-// waits for every live writer, and a live writer waits for a migration, before either
-// touches a row.
+// with a missing or different revision takes the exclusive key before changing the
+// schema. A current revision needs no advisory lock.
 const globalLock = "SELECT pg_advisory_xact_lock(1952804467, 1)";
 const globalSharedLock = "SELECT pg_advisory_xact_lock_shared(1952804467, 1)";
 
@@ -37,7 +37,7 @@ const sendAttempts = 3;
 const unfinished = "The workspace write did not finish.";
 
 export interface WorkspaceTransactionOptions {
-	readonly deadlineMs: number;
+	readonly deadlineMs?: number;
 	readonly accountId?: string;
 }
 
@@ -65,7 +65,7 @@ export async function workspaceTransaction<T>(
 }
 
 function sendBound(options: WorkspaceTransactionOptions | undefined): SendBound | undefined {
-	if (!options) {
+	if (options?.deadlineMs === undefined) {
 		return undefined;
 	}
 	return {

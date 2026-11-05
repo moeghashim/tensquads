@@ -20,7 +20,6 @@ const marketingResult = "Ad spend this week is $262 at a 3.4 return. The best ad
 const noAgent =
 	"That one I can answer myself, no agent needed. Ask me about orders, refunds, ads, profit or stock and I will hand it to the right agent.";
 const paused = "That is a job for the Giza agent, but it is paused. Turn it on in Agents and ask me again.";
-// Parallel resets share the workspace lock with each send, so a full run waits longer than one send.
 const dockReplyTimeout = 30_000;
 
 publicTest("the design section cutter finds the sidebar and the dock", () => {

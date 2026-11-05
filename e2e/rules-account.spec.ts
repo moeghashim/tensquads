@@ -58,10 +58,17 @@ test("a real Clerk sign-out keeps the next account clear of a held write and a h
 		// The default poll is 5s. The write response itself often takes longer, so wait for it first.
 		const written = page.waitForResponse((response) => {
 			const request = response.request();
-			return request.method() === "POST" && (request.postData() ?? "").includes(adCap);
+			if (request.method() !== "POST") return false;
+			const post = request.postData() ?? "";
+			return post.includes(adCap) && post.includes("240");
 		});
 		await page.locator("#lim-ads").fill("240");
-		expect((await written).ok()).toBe(true);
+		const writeResponse = await written;
+		const writeBody = await writeResponse.text();
+		expect(writeResponse.ok()).toBe(true);
+		// A serialized error is still HTTP 200. Only a written 240 is the commit.
+		expect(writeBody.includes("written")).toBe(true);
+		expect(writeBody.includes("240")).toBe(true);
 		await expectStored(accountId, 240);
 		await expect(page.locator("#lim-ads")).toHaveValue("240");
 		parked.holdWrites = true;
@@ -132,8 +139,11 @@ test("a real Clerk sign-out keeps the next account clear of a held write and a h
 		await expectStored(otherAccount, 200);
 	} finally {
 		if (userId.length > 0) {
-			await deleteWorkspaceAccount(otherAccount);
-			await deleteClerkUser(secrets.secret, userId);
+			try {
+				await deleteWorkspaceAccount(otherAccount);
+			} finally {
+				await deleteClerkUser(secrets.secret, userId);
+			}
 		}
 	}
 });

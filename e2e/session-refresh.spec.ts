@@ -201,23 +201,46 @@ async function watchRefresh(page: Page, rejectFreshToken = false) {
 			};
 		};
 		const router = browser.__TSR_ROUTER__;
-		const session = browser.Clerk?.session;
-		if (!router || !session) throw new Error("The signed-in workspace is not ready.");
+		const clerk = browser.Clerk;
+		if (!router || !clerk?.session) throw new Error("The signed-in workspace is not ready.");
 		const invalidate = router.invalidate.bind(router);
-		const getToken = session.getToken.bind(session);
 		browser.__reloadCount = 0;
 		browser.__tokenCalls = [];
 		router.invalidate = (...args) => {
 			browser.__reloadCount = (browser.__reloadCount ?? 0) + 1;
 			return invalidate(...args);
 		};
-		session.getToken = (options) => {
-			browser.__tokenCalls?.push(options ?? null);
-			if (rejectFresh && options?.skipCache === true) {
-				return Promise.reject(new Error("The client is signed out."));
-			}
-			return getToken(options);
+		let current = clerk.session ?? null;
+		const wrapped = new WeakSet<(options?: { skipCache?: boolean }) => Promise<string | null>>();
+		const wrap = (session: NonNullable<typeof current>) => {
+			if (wrapped.has(session.getToken)) return session;
+			const getToken = session.getToken.bind(session);
+			const replacement = (options?: { skipCache?: boolean }) => {
+				browser.__tokenCalls?.push(options ?? null);
+				if (rejectFresh && options?.skipCache === true) {
+					return Promise.reject(new Error("The client is signed out."));
+				}
+				return getToken(options);
+			};
+			wrapped.add(replacement);
+			session.getToken = replacement;
+			return session;
 		};
+		if (current) wrap(current);
+		Object.defineProperty(clerk, "session", {
+			configurable: true,
+			enumerable: true,
+			get() {
+				if (!current) return current;
+				// A signed-out simulation has to survive Clerk replacing the session or getToken.
+				if (rejectFresh) return wrap(current);
+				return current;
+			},
+			set(next) {
+				current = next;
+				if (next && rejectFresh) wrap(next);
+			},
+		});
 	}, rejectFreshToken);
 }
 

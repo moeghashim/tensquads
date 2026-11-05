@@ -32,16 +32,27 @@ let admin: ClerkTestUser | null = null;
 
 test.beforeEach(async () => {
 	const secrets = secretsFor(["secret"]);
-	admin = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
-	await addCompanySuperAdmin(secrets.secret, admin.userId);
+	let created: ClerkTestUser | null = null;
+	try {
+		created = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
+		await addCompanySuperAdmin(secrets.secret, created.userId);
+		admin = created;
+		created = null;
+	} finally {
+		if (created) await deleteTestUser(secrets.secret, created.userId);
+	}
 });
 
 test.afterEach(async () => {
 	if (!admin) return;
 	const secrets = secretsFor(["secret"]);
-	await removeCompanyMembership(secrets.secret, admin.userId);
-	await deleteTestUser(secrets.secret, admin.userId);
+	const userId = admin.userId;
 	admin = null;
+	try {
+		await removeCompanyMembership(secrets.secret, userId);
+	} finally {
+		await deleteTestUser(secrets.secret, userId);
+	}
 });
 
 test("search by company name, owner, and email", async ({ page }) => {

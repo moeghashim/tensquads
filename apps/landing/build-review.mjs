@@ -119,12 +119,23 @@ writeFileSync(
 		`<p class="note"><a href="/review/">Back to review</a></p><h1>Design</h1><p class="note">Design canvas version ${manifest.version}. ${canvas.order.length} files. The files are the originals, and they are interactive. Open one to use it.</p>${TILE_CSS}<div class="tiles">${cards}</div>`,
 	),
 );
+writeFileSync(join(out, "characters.html"), page("tensquads squadmates", charactersPage()));
+
+// The homepage design is a full document. Copy it as-is when this ref has it.
+// An older ref still builds the rest of the review site.
+let homeCard = "";
+try {
+	const home = git("show", `${ref}:docs/designs/home/home.html`);
+	writeFileSync(join(out, "home.html"), home);
+	homeCard = `<h2>Homepage</h2><a class="card" href="/review/home">Homepage<span>Screen 1, for approval. The squad at work, led by Petra.</span></a>`;
+} catch {
+	homeCard = "";
+}
 writeFileSync(
 	join(out, "index.html"),
 	page(
 		"tensquads review",
-		`<h1>tensquads review</h1><p class="note">For team review. Build plan at commit ${sha}. Design canvas version ${manifest.version}.</p><h2>Build plan</h2><a class="card" href="/review/plan">Build plan<span>Decisions, architecture, phases, the proof of concept, and the build status of each part</span></a><h2>Squadmates</h2><a class="card" href="/review/characters">Squadmates<span>Proposal: a name and a character for the master and each agent</span></a><h2>Design</h2><a class="card" href="/review/design/">Design<span>${canvas.order.length} screens from the design canvas, with thumbnails</span></a><h2 id="open-questions">Open questions</h2><p class="note">Not decided yet. Each has a recommended answer for the team to discuss.</p>${QUESTIONS_CSS}${questionsHtml()}`,
+		`<h1>tensquads review</h1><p class="note">For team review. Build plan at commit ${sha}. Design canvas version ${manifest.version}.</p>${homeCard}<h2>Build plan</h2><a class="card" href="/review/plan">Build plan<span>Decisions, architecture, phases, the proof of concept, and the build status of each part</span></a><h2>Squadmates</h2><a class="card" href="/review/characters">Squadmates<span>Proposal: a name and a character for the master and each agent</span></a><h2>Design</h2><a class="card" href="/review/design/">Design<span>${canvas.order.length} screens from the design canvas, with thumbnails</span></a><h2 id="open-questions">Open questions</h2><p class="note">Not decided yet. Each has a recommended answer for the team to discuss.</p>${QUESTIONS_CSS}${questionsHtml()}`,
 	),
 );
-writeFileSync(join(out, "characters.html"), page("tensquads squadmates", charactersPage()));
 console.log("built", canvas.order.length, "design files from", sha, "manifest", manifest.version);

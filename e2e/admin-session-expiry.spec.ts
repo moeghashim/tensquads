@@ -1,7 +1,13 @@
 import type { Page } from "@playwright/test";
 
 import { specialAccountCookie, specialAccountValue } from "../apps/web/src/server/special-account.ts";
-import { addCompanySuperAdmin, createTestUser, deleteTestUser, removeCompanyMembership } from "./admin-clerk.ts";
+import {
+	addCompanySuperAdmin,
+	type ClerkTestUser,
+	createTestUser,
+	deleteTestUser,
+	removeCompanyMembership,
+} from "./admin-clerk.ts";
 import { expect, openAdmin, test } from "./admin-db.ts";
 import { secretsFor } from "./support.ts";
 
@@ -112,8 +118,9 @@ const screens: readonly ScreenCase[] = [
 test("a blocked exit module still leaves an expired support session", async ({ page }) => {
 	test.setTimeout(90_000);
 	const secrets = secretsFor(["secret"]);
-	const user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
+	let user: ClerkTestUser | undefined;
 	try {
+		user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
 		await addCompanySuperAdmin(secrets.secret, user.userId);
 		await openAdmin(page, user);
 		await setSpecialCookie(page, specialAccountValue("demo", Date.now() - 59 * minute));
@@ -126,17 +133,23 @@ test("a blocked exit module still leaves an expired support session", async ({ p
 		await expect(page).toHaveURL(/\/admin\/?$/, { timeout: leaveTimeout });
 		expect(await customerStillVisible(page, "Kyoto squad")).toBe("");
 	} finally {
-		await removeCompanyMembership(secrets.secret, user.userId);
-		await deleteTestUser(secrets.secret, user.userId);
+		if (user) {
+			try {
+				await removeCompanyMembership(secrets.secret, user.userId);
+			} finally {
+				await deleteTestUser(secrets.secret, user.userId);
+			}
+		}
 	}
 });
 
 test("an expired support session leaves every open workspace screen", async ({ page }) => {
 	test.setTimeout(300_000);
 	const secrets = secretsFor(["secret"]);
-	const user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
 	const stayed: string[] = [];
+	let user: ClerkTestUser | undefined;
 	try {
+		user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
 		await addCompanySuperAdmin(secrets.secret, user.userId);
 		await openAdmin(page, user);
 		for (const screen of screens) {
@@ -145,8 +158,13 @@ test("an expired support session leaves every open workspace screen", async ({ p
 		}
 		expect(stayed.filter((item) => item.length > 0)).toEqual([]);
 	} finally {
-		await removeCompanyMembership(secrets.secret, user.userId);
-		await deleteTestUser(secrets.secret, user.userId);
+		if (user) {
+			try {
+				await removeCompanyMembership(secrets.secret, user.userId);
+			} finally {
+				await deleteTestUser(secrets.secret, user.userId);
+			}
+		}
 	}
 });
 

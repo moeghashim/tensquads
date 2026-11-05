@@ -178,7 +178,7 @@ test("the script starts again after eight events with new ids", async ({ page, w
 	await openTraffic(page, workspaceUser);
 	for (let step = 0; step < 9; step += 1) {
 		await page.getByRole("button", { name: "Send next event" }).click();
-		// The row is on screen only after the refresh, which is when the guard clears.
+		// The row is painted from the send. This wait covers the advance.
 		await expect(page.locator(`[data-event-id='e${100 + step}']`)).toBeVisible({ timeout: 20_000 });
 	}
 	const rows = await generatedEvents(accountId);

@@ -133,3 +133,134 @@ test("a new action after a refresh may refresh once", async () => {
 	await refresh.finish(needed(), "GET", refresh.begin());
 	assert.deepEqual(calls, { token: 2, reload: 2, signIn: 1 });
 });
+
+test("a failed token after a newer action with no newer read opens sign-in", async () => {
+	const { calls, refresh } = harness(async () => {
+		refresh.noteAction();
+		throw new Error("The client is signed out.");
+	});
+	const id = refresh.begin();
+	await refresh.finish(needed(), "GET", id);
+	refresh.end(id);
+	assert.equal(calls.reload, 0);
+	assert.equal(calls.signIn, 1);
+});
+
+test("a newer read that aborts after a failed token still opens sign-in", async () => {
+	let release = () => {};
+	const gate = new Promise((resolve) => {
+		release = resolve;
+	});
+	const { calls, refresh } = harness(() =>
+		gate.then(() => {
+			throw new Error("The client is signed out.");
+		}),
+	);
+	const first = refresh.begin();
+	const pending = refresh.finish(needed(), "GET", first);
+	refresh.noteAction();
+	const newer = refresh.begin();
+	release();
+	await pending;
+	refresh.end(first);
+	assert.equal(calls.signIn, 0);
+	await refresh.finish(new Error("The request was aborted."), "GET", newer);
+	refresh.end(newer);
+	assert.equal(calls.signIn, 1);
+	assert.equal(calls.reload, 0);
+});
+
+test("a newer read that resolves before a failed token stays signed in", async () => {
+	let release = () => {};
+	const gate = new Promise((resolve) => {
+		release = resolve;
+	});
+	const { calls, refresh } = harness(() =>
+		gate.then(() => {
+			throw new Error("The client is signed out.");
+		}),
+	);
+	const first = refresh.begin();
+	const pending = refresh.finish(needed(), "GET", first);
+	refresh.noteAction();
+	const newer = refresh.begin();
+	refresh.resolved(newer);
+	refresh.end(newer);
+	release();
+	await pending;
+	refresh.end(first);
+	assert.equal(calls.signIn, 0);
+	assert.equal(calls.reload, 0);
+});
+
+test("a settled newer read keeps a later abort from opening sign-in", async () => {
+	let release = () => {};
+	const gate = new Promise((resolve) => {
+		release = resolve;
+	});
+	const { calls, refresh } = harness(() =>
+		gate.then(() => {
+			throw new Error("The client is signed out.");
+		}),
+	);
+	const first = refresh.begin();
+	const pending = refresh.finish(needed(), "GET", first);
+	refresh.noteAction();
+	const settled = refresh.begin();
+	refresh.resolved(settled);
+	refresh.end(settled);
+	const aborted = refresh.begin();
+	release();
+	await pending;
+	refresh.end(first);
+	assert.equal(calls.signIn, 0);
+	await refresh.finish(new Error("The request was aborted."), "GET", aborted);
+	refresh.end(aborted);
+	assert.equal(calls.signIn, 0);
+	assert.equal(calls.reload, 0);
+});
+
+test("a successful read from the same action does not hide a failed token", async () => {
+	let release = () => {};
+	const gate = new Promise((resolve) => {
+		release = resolve;
+	});
+	const { calls, refresh } = harness(() =>
+		gate.then(() => {
+			throw new Error("The client is signed out.");
+		}),
+	);
+	const first = refresh.begin();
+	const pending = refresh.finish(needed(), "GET", first);
+	const sibling = refresh.begin();
+	refresh.resolved(sibling);
+	refresh.end(sibling);
+	release();
+	await pending;
+	refresh.end(first);
+	assert.equal(calls.signIn, 1);
+	assert.equal(calls.reload, 0);
+});
+
+test("a newer read that resolves after a failed token stays signed in", async () => {
+	let release = () => {};
+	const gate = new Promise((resolve) => {
+		release = resolve;
+	});
+	const { calls, refresh } = harness(() =>
+		gate.then(() => {
+			throw new Error("The client is signed out.");
+		}),
+	);
+	const first = refresh.begin();
+	const pending = refresh.finish(needed(), "GET", first);
+	refresh.noteAction();
+	const newer = refresh.begin();
+	release();
+	await pending;
+	refresh.end(first);
+	refresh.resolved(newer);
+	refresh.end(newer);
+	assert.equal(calls.signIn, 0);
+	assert.equal(calls.reload, 0);
+});

@@ -1,7 +1,11 @@
+import { characterName, type SquadmateDrawState } from "@tensquads/squadmates";
+
 export type BusinessKind = "new" | "existing";
 
 export const homeAgents = [
 	{
+		id: "orders",
+		draw: "checking",
 		name: "Orders",
 		role: "Fulfilment and tracking",
 		tint: "#e7efff",
@@ -11,6 +15,8 @@ export const homeAgents = [
 		tools: ["shopify", "printify"],
 	},
 	{
+		id: "support",
+		draw: "done",
 		name: "Support",
 		role: "Customer inbox and refunds",
 		tint: "#def5ee",
@@ -20,6 +26,8 @@ export const homeAgents = [
 		tools: ["gmail", "shopify"],
 	},
 	{
+		id: "marketing",
+		draw: "escalated",
 		name: "Marketing",
 		role: "Ads, social and email",
 		tint: "#ece3ff",
@@ -29,6 +37,8 @@ export const homeAgents = [
 		tools: ["meta ads", "klaviyo", "canva"],
 	},
 	{
+		id: "finance",
+		draw: "done",
 		name: "Finance",
 		role: "Payouts, costs and profit",
 		tint: "#ffefa4",
@@ -38,6 +48,8 @@ export const homeAgents = [
 		tools: ["stripe", "quickbooks"],
 	},
 	{
+		id: "inventory",
+		draw: "blocked",
 		name: "Inventory",
 		role: "Stock and suppliers",
 		tint: "#fee7c2",
@@ -47,6 +59,8 @@ export const homeAgents = [
 		tools: ["shopify", "printify"],
 	},
 	{
+		id: "market",
+		draw: "running",
 		name: "Market researcher",
 		role: "Competitors and positioning",
 		tint: "#fde2f3",
@@ -56,6 +70,8 @@ export const homeAgents = [
 		tools: ["web search", "scrapling"],
 	},
 	{
+		id: "website",
+		draw: "done",
 		name: "Website builder",
 		role: "Landing pages and site updates",
 		tint: "#e5e9f0",
@@ -64,6 +80,34 @@ export const homeAgents = [
 		pitch: "Builds a landing page from the market report and the master's brief, and publishes only when you say so.",
 		tools: ["cloudflare pages"],
 	},
+] as const satisfies readonly {
+	readonly id: string;
+	readonly draw: SquadmateDrawState;
+	readonly name: string;
+	readonly role: string;
+	readonly tint: string;
+	readonly dot: string;
+	readonly last: string;
+	readonly pitch: string;
+	readonly tools: readonly string[];
+}[];
+
+for (const agent of homeAgents) {
+	if (characterName(agent.id) === null) {
+		throw new Error(`Missing homepage character name: ${agent.id}`);
+	}
+}
+
+export const castMates = [
+	"master",
+	"orders",
+	"support",
+	"marketing",
+	"finance",
+	"inventory",
+	"market",
+	"website",
+	"analytics",
 ] as const;
 
 export const logos = [
