@@ -3,6 +3,9 @@ import type { PublishedEvent } from "@tensquads/kernel";
 import { chooseAdapters } from "../../adapter-choice.ts";
 import { type BusNamespace, createCloudflareBus } from "../../cloudflare-bus/http.ts";
 
+const briefAsk = "Build the site with this brief?";
+const publishAsk = "Publish the site?";
+
 export interface UserMasterEvent {
 	readonly id: string;
 	readonly time: string;
@@ -20,6 +23,12 @@ export type DeliverUserEvent = (accountId: string, event: UserMasterEvent) => Pr
 
 const missingBus = "The bus is not configured.";
 
+function skillForAsk(title: string): string {
+	if (title === briefAsk) return "brief.write";
+	if (title === publishAsk) return "approval.ask";
+	return "-";
+}
+
 export function userMasterEvent(input: {
 	readonly id: string;
 	readonly ok: boolean;
@@ -34,7 +43,7 @@ export function userMasterEvent(input: {
 		from: "user",
 		to: "master",
 		kind: input.ok ? "Approval" : "Declined",
-		skill: "-",
+		skill: skillForAsk(input.title),
 		text: `${input.ok ? "Approved: " : "Declined: "}${input.title}`,
 		payload: { approval_id: input.id, approved: input.ok, by: input.by },
 		writes: [`approvals.${input.id}`],
@@ -42,18 +51,12 @@ export function userMasterEvent(input: {
 	};
 }
 
-async function accountBus(): Promise<BusNamespace | undefined> {
-	try {
-		const workers = (await import("cloudflare:workers")) as { env?: { ACCOUNT_BUS?: BusNamespace } };
-		return workers.env?.ACCOUNT_BUS;
-	} catch {
-		return undefined;
-	}
-}
-
-export async function deliverUserToMaster(accountId: string, event: UserMasterEvent): Promise<void> {
+export async function deliverUserToMaster(
+	accountId: string,
+	event: UserMasterEvent,
+	namespace?: BusNamespace,
+): Promise<void> {
 	if (chooseAdapters(process.env.ADAPTERS) !== "real") return;
-	const namespace = await accountBus();
 	if (!namespace) throw new Error(missingBus);
 	await createCloudflareBus(namespace).publish({ accountId, mode: "account" }, event as PublishedEvent);
 }

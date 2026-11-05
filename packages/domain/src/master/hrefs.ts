@@ -45,6 +45,16 @@ function attributeValue(tag: string, name: string): string | null {
 	return null;
 }
 
+function decodeHref(value: string): string {
+	return value.replace(/&(?:amp|lt|gt|quot|#39);/g, (token) => {
+		if (token === "&amp;") return "&";
+		if (token === "&lt;") return "<";
+		if (token === "&gt;") return ">";
+		if (token === "&quot;") return '"';
+		return "'";
+	});
+}
+
 function resolveHref(href: string, previewUrl: string): string | null {
 	if (href.length === 0 || href.startsWith("#")) return null;
 	try {
@@ -61,7 +71,7 @@ export function pageLinks(html: string, previewUrl: string): string[] {
 	for (const match of html.matchAll(/<a\b[^>]*>/gi)) {
 		const href = attributeValue(match[0] ?? "", "href");
 		if (href === null) continue;
-		const resolved = resolveHref(href, previewUrl);
+		const resolved = resolveHref(decodeHref(href), previewUrl);
 		if (resolved) links.push(resolved);
 	}
 	return links;

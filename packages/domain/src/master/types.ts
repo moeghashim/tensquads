@@ -17,6 +17,7 @@ export interface PageAudit {
 export interface PageFetch {
 	readonly status: number;
 	readonly body: string;
+	readonly bytes?: Uint8Array;
 }
 
 export type PageReader = (url: string) => Promise<PageFetch>;

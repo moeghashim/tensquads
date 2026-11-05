@@ -41,12 +41,13 @@ interface BriefGap {
 	readonly gap: string;
 }
 
-async function fetchDocument(url: string): Promise<{ status: number; body: string }> {
+async function fetchDocument(url: string): Promise<{ status: number; body: string; bytes: Uint8Array }> {
 	try {
 		const response = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(PAGE_MS) });
-		return { status: response.status, body: await response.text() };
+		const bytes = new Uint8Array(await response.arrayBuffer());
+		return { status: response.status, body: new TextDecoder("utf-8", { ignoreBOM: true }).decode(bytes), bytes };
 	} catch {
-		return { status: 404, body: "" };
+		return { status: 404, body: "", bytes: new Uint8Array() };
 	}
 }
 

@@ -30,8 +30,9 @@ export async function finishMaster(
 	if (!masterEvent(event) || chooseAdapters(env.ADAPTERS) !== "real") return;
 	if (await storage.get(`${MASTER_DONE}${event.id}`)) return;
 	const openKey = `${MASTER_OPEN}${event.id}`;
+	// The accept transaction stores this marker. A put here would sit outside that transaction.
 	if (!receipt && !(await storage.get(openKey))) return;
-	await storage.put(openKey, event);
+	if (!(await storage.get(openKey))) return;
 	try {
 		await run(event);
 	} catch (error) {

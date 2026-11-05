@@ -36,7 +36,9 @@ import {
 } from "@tensquads/domain";
 import { asc, eq, sql } from "drizzle-orm";
 
+import type { BusNamespace } from "../cloudflare-bus/http.ts";
 import { askRevise, setAgentOn, setAutonomy, setSkillOn } from "./commands/agents.ts";
+import { type DeliverUserEvent, deliverUserToMaster } from "./commands/approval-bus.ts";
 import { decide, decideMission } from "./commands/approvals.ts";
 import { conversationTransaction } from "./commands/conversation.ts";
 import { createMandate, mandate } from "./commands/mandates.ts";
@@ -85,7 +87,8 @@ export function readOverviewSnapshot(db: AppDatabase, scope: AccountScope) {
 	});
 }
 
-export function createRepositories(db: AppDatabase): RepositoryBag {
+export function createRepositories(db: AppDatabase, namespace?: BusNamespace): RepositoryBag {
+	const deliver: DeliverUserEvent = (accountId, event) => deliverUserToMaster(accountId, event, namespace);
 	return {
 		platform: {
 			listAccounts: (scope) => listAccounts(db, scope),
@@ -119,7 +122,7 @@ export function createRepositories(db: AppDatabase): RepositoryBag {
 			listApprovals: (scope) => listApprovals(db, scope),
 			listMissionProposals: (scope) => listProposals(db, scope),
 			inbox: (scope) => readInbox(db, scope),
-			decide: (scope, id, ok, deadlineAt) => decide(db, scope, id, ok, deadlineAt),
+			decide: (scope, id, ok, deadlineAt) => decide(db, scope, id, ok, deadlineAt, deliver),
 			decideMission: (scope, id, ok, deadlineAt) => decideMission(db, scope, id, ok, deadlineAt),
 			setRuleOn: (scope, id, on, fence, deadlineAt) => setRuleOn(db, scope, id, on, fence, deadlineAt),
 			addRule: (scope, draft, deadlineAt) => addRule(db, scope, draft, deadlineAt),

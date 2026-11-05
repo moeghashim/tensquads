@@ -189,6 +189,23 @@ interface CheckedPage extends CheckOutcome {
 	readonly html: string;
 }
 
+function utf8(text: string): Uint8Array {
+	return new TextEncoder().encode(text);
+}
+
+function sameBytes(left: Uint8Array, right: Uint8Array): boolean {
+	if (left.byteLength !== right.byteLength) return false;
+	for (let index = 0; index < left.byteLength; index += 1) {
+		if (left[index] !== right[index]) return false;
+	}
+	return true;
+}
+
+function matchesRender(page: PageFetch, rendered: string | null): boolean {
+	if (rendered === null) return false;
+	return sameBytes(page.bytes ?? utf8(page.body), utf8(rendered));
+}
+
 function renderedBytes(input: PageCheckInput): string | null {
 	try {
 		const choice = parsePageChoice(input.choice);
@@ -212,7 +229,7 @@ export async function checkPage(input: PageCheckInput): Promise<CheckedPage> {
 	const preview = await readSafe(input.readPage, input.previewUrl);
 	if (preview.status !== 200) return { ...outcome(["The preview URL did not return 200."]), html: "" };
 	const html = preview.body;
-	if (renderedBytes(input) !== html) evidence.push("The preview does not match the rendered page.");
+	if (!matchesRender(preview, renderedBytes(input))) evidence.push("The preview does not match the rendered page.");
 	await noteLinks(evidence, pageLinks(html, input.previewUrl), input.readPage);
 	await noteSecondLayer(evidence, input, html);
 	return { ...outcome(evidence), html };
@@ -250,6 +267,6 @@ export async function checkPublished(
 	if (!accountSite(publishedUrl, accountSlug)) return outcome(["The published URL is not the account site."]);
 	const page = await readSafe(readPage, publishedUrl);
 	if (page.status !== 200) return outcome(["The published URL did not return 200."]);
-	if (page.body !== previewHtml) return outcome(["The published page does not match the preview."]);
+	if (!matchesRender(page, previewHtml)) return outcome(["The published page does not match the preview."]);
 	return outcome([]);
 }

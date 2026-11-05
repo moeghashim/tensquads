@@ -287,6 +287,52 @@ test("the published check requires the account site", async () => {
 	assert.equal(attacker.evidence.includes("The published URL is not the account site."), true);
 });
 
+test("the page check compares raw response bytes", async () => {
+	const story = await proofStory();
+	const raw = Uint8Array.from([0xef, 0xbb, 0xbf, ...Buffer.from(story.pageHtml)]);
+	const stripped = await new Response(raw).text();
+	const read = async () => ({ status: 200, body: stripped, bytes: raw });
+	const preview = await checkPage({
+		...pageFields(story),
+		previewUrl: story.previewUrl,
+		readPage: async (url) => (url === story.previewUrl ? read() : (story.pages[url] ?? { status: 404, body: "" })),
+		audit: () => story.audit,
+	});
+	assert.equal(preview.pass, false);
+	assert.equal(preview.evidence.includes("The preview does not match the rendered page."), true);
+	const published = await checkPublished(story.pageHtml, story.publishedUrl, read, "proof");
+	assert.equal(published.pass, false);
+	assert.equal(published.evidence.includes("The published page does not match the preview."), true);
+});
+
+test("the page check decodes an href entity before it fetches the link", async () => {
+	const story = await proofStory();
+	const source = "https://example.com/alpha?a=1&b=2";
+	const report = {
+		...story.report,
+		sources: [...story.report.sources, source],
+		gapEvidence: { ...story.report.gapEvidence, sourceUrl: source },
+	};
+	const html = renderPage(websiteTask(story, report), story.choice);
+	const seen: string[] = [];
+	const checked = await checkPage({
+		...pageFields(story),
+		report,
+		choice: story.choice,
+		previewUrl: story.previewUrl,
+		readPage: async (url) => {
+			seen.push(url);
+			if (url === story.previewUrl) return { status: 200, body: html };
+			if (url === source) return { status: 200, body: report.gapEvidence.quote };
+			return story.pages[url] ?? { status: 404, body: "" };
+		},
+		audit: () => story.audit,
+	});
+	assert.equal(checked.pass, true);
+	assert.equal(seen.includes(source), true);
+	assert.equal(seen.includes("https://example.com/alpha?a=1&amp;b=2"), false);
+});
+
 test("the page check reads unquoted and uppercase links", async () => {
 	const story = await proofStory();
 	const unquotedHtml = `${story.pageHtml}<a href=/does-not-exist>Order</a>`;

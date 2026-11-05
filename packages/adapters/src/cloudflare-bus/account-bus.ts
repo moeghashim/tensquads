@@ -1,11 +1,11 @@
 import { planNextEvent, type TrafficCursor } from "@tensquads/domain";
 import type { PublishedEvent } from "@tensquads/kernel";
-
+import { chooseAdapters } from "../adapter-choice.ts";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { traceFor } from "../trace.ts";
 import { alarmAfterFlush, HEARTBEAT_ALARM, type HeartbeatEnv, recordBeat, sweepHeartbeats } from "./heartbeat.ts";
 import { writeMasterCommit } from "./master-commit.ts";
-import { finishMaster, retryOpenMaster } from "./master-retry.ts";
+import { finishMaster, MASTER_DONE, MASTER_OPEN, masterEvent, retryOpenMaster } from "./master-retry.ts";
 import { prepareMaster } from "./master-step.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
 import { type PendingBusRow, readBusEvents, readBusHistory, readBusState, writePending } from "./neon-write.ts";
@@ -215,11 +215,18 @@ async function commitDurable(
 	event: PublishedEvent,
 	deadlineAt?: number,
 	cursor?: TrafficCursor,
+	markMaster = false,
 ): Promise<AcceptResult> {
 	if (expired(deadlineAt)) return { seen: false, seq: 0, expired: true };
 	let result: AcceptResult;
 	try {
-		result = storage.transactionSync(() => commitSynced(storage.kv, accountId, event, deadlineAt, cursor));
+		result = storage.transactionSync(() => {
+			const committed = commitSynced(storage.kv, accountId, event, deadlineAt, cursor);
+			if (markMaster && !committed.seen && committed.event && !storage.kv.get(`${MASTER_DONE}${event.id}`)) {
+				storage.kv.put(`${MASTER_OPEN}${event.id}`, event);
+			}
+			return committed;
+		});
 	} catch (error) {
 		if (error instanceof DeadlinePassed) return { seen: false, seq: 0, expired: true };
 		throw error;
@@ -296,7 +303,15 @@ export class AccountBus {
 		const record = body;
 		const result = await this.serialize(async () => {
 			await this.initialize(record.accountId);
-			const stored = await commitDurable(this.ctx.storage, record.accountId, record.event);
+			const mark = masterEvent(record.event) && chooseAdapters(this.env.ADAPTERS) === "real";
+			const stored = await commitDurable(
+				this.ctx.storage,
+				record.accountId,
+				record.event,
+				undefined,
+				undefined,
+				mark,
+			);
 			if (stored.event) this.push(stored.event);
 			const owner = await this.ctx.storage.get<string>("account");
 			if (owner === record.accountId) {
