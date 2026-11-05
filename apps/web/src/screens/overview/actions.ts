@@ -247,8 +247,9 @@ async function runJob(job: Job, gen: number): Promise<void> {
 		return;
 	}
 	if (!result.wrote && result.refreshNeeded) {
-		releaseFailed(job.key);
-	} else if (result.count !== null && result.readAt !== null) {
+		releaseFailed(job.key, result.count === null || result.readAt === null);
+	}
+	if (result.count !== null && result.readAt !== null) {
 		reconcileDecisions(result.count, result.readAt, result.dropLanded);
 	}
 	job.settled(result);
@@ -294,18 +295,21 @@ async function runBounded(job: Job, gen: number): Promise<DecisionResult> {
 }
 
 // The write did not run. Drop its optimistic card and give the badge back.
-function releaseFailed(key: string): void {
+function releaseFailed(key: string, undoHold: boolean): void {
 	if (!patches.some((patch) => patch.key === key)) return;
 	keys.delete(key);
 	landed.delete(key);
 	reflected.delete(key);
-	const next = patches.filter((patch) => patch.key !== key);
+	patches = patches.filter((patch) => patch.key !== key);
+	if (!undoHold) {
+		notify();
+		return;
+	}
 	const live = liveKeys();
 	let pending = 0;
-	for (const patch of next) {
+	for (const patch of patches) {
 		if (live.has(patch.key) && landed.get(patch.key) === undefined && !reflected.has(patch.key)) pending += 1;
 	}
-	patches = next;
 	target = pending === 0 ? null : (target ?? 0) + 1;
 	notify();
 }

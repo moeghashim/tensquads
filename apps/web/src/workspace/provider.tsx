@@ -410,7 +410,7 @@ async function performSend(value: string, hooks: SendHooks): Promise<boolean> {
 		bounded((signal) => beginWorkspaceSend({ data: { accountId: hooks.accountId, text: value }, signal })),
 	);
 	if (!started.ok) {
-		if (!started.left && hooks.mounted.current) restoreDraft(value, hooks);
+		if (started.refreshNeeded && hooks.mounted.current) restoreDraft(value, hooks);
 		return started.left;
 	}
 	if (!hooks.mounted.current) return false;

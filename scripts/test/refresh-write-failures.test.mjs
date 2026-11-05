@@ -351,3 +351,25 @@ test("chat restores the unsent draft when begin needs a refresh", async () => {
 		assert.equal(seen.calls, 1);
 	});
 });
+
+test("chat keeps the draft cleared after a committed begin loses its response", async () => {
+	await withPage(async (page) => {
+		await page.evaluate(() => {
+			window.send = async (data) => {
+				window.calls.push(data);
+				window.storedFrame.messages = [
+					...window.storedFrame.messages,
+					{ id: "sent", from: "user", text: data.text },
+				];
+				throw new Error("The response was lost after commit.");
+			};
+			window.mount("chat");
+		});
+		const draft = page.locator("#chat-input");
+		await draft.fill("Already stored question");
+		await page.getByRole("button", { name: "Send", exact: true }).click();
+		await expect(page.getByText("Already stored question", { exact: true })).toBeVisible();
+		await expect(draft).toHaveValue("");
+		assert.equal((await counts(page)).calls, 1);
+	});
+});
