@@ -239,11 +239,7 @@ test("real mode routes traffic through the object and refuses other bus writers"
 			["decline", () => decide(db, scope, "p1", false)],
 		];
 		for (const [name, write] of writers) {
-			await assert.rejects(
-				write,
-				{ message: "A bus write in real mode must go through the Durable Object." },
-				name,
-			);
+			await assert.rejects(write, { message: "A bus write in real mode must go through the Durable Object." }, name);
 			assert.deepEqual(counts, { inserts: 0, updates: 0 }, name);
 		}
 	} finally {
