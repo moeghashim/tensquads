@@ -41,7 +41,7 @@ export function assertMachineEnv(
 	}
 	if (env.has("TENSQUADS_TRIAL_KEY")) throw new Error("The secret name is present on the machine.");
 	for (const secret of secrets) {
-		if (secret.length < 12) continue;
+		if (secret.length === 0) continue;
 		for (const value of env.values()) {
 			if (value.includes(secret)) throw new Error("The machine env holds a boat API key.");
 		}

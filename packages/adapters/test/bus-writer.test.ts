@@ -4,6 +4,8 @@ import { join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
+import { appendEvents } from "../src/neon/commands/bus.ts";
+
 const src = fileURLToPath(new URL("../src", import.meta.url));
 const writePattern = /\.(insert|update|delete)\((busEvents|stateEntries)\)/;
 
@@ -33,13 +35,45 @@ test("runtime bus writers stay on the known list", () => {
 		.filter((path) => writePattern.test(readFileSync(path, "utf8")))
 		.map(relative)
 		.sort();
-	assert.deepEqual(writers, [
-		"cloudflare-bus/neon-write.ts",
-		"neon/commands/bus.ts",
-		"neon/commands/rules.ts",
-		"neon/create-workspace.ts",
-		"neon/save.ts",
-	]);
+	assert.deepEqual(writers, ["cloudflare-bus/neon-write.ts"]);
+});
+
+test("real mode bus writes go through the durable object", async () => {
+	const previous = process.env.ADAPTERS;
+	const draft = {
+		from: "master",
+		to: "researcher",
+		kind: "Task" as const,
+		skill: "research",
+		text: "Look at the market.",
+		payload: {},
+	};
+	let inserted = false;
+	const tx = {
+		insert() {
+			inserted = true;
+			throw new Error("inserted");
+		},
+	};
+	try {
+		process.env.ADAPTERS = "real";
+		await assert.rejects(
+			() => appendEvents(tx as never, "acct", [draft], new Date()),
+			/A bus write in real mode must go through the Durable Object\./,
+		);
+		assert.equal(inserted, false);
+	} finally {
+		if (previous === undefined) delete process.env.ADAPTERS;
+		else process.env.ADAPTERS = previous;
+	}
+});
+
+test("the traffic step does not write bus rows", () => {
+	const traffic = fileURLToPath(new URL("../../../apps/web/src/server/traffic-step.ts", import.meta.url));
+	const text = readFileSync(traffic, "utf8");
+	assert.equal(writePattern.test(text), false);
+	assert.match(text, /chooseAdapters/);
+	assert.match(text, /createCloudflareBus/);
 });
 
 test("the worker entry does not write bus rows", () => {

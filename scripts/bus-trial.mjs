@@ -75,6 +75,7 @@ export function trialConfig(sourceText, plan) {
 		ADAPTERS: "real",
 		BOAT_PROFILE: "tensquads-agents",
 		BOAT_SECRET_BASE_URL: "https://example.com",
+		BUS_DEAD_LETTER: plan.deadLetter,
 	};
 	config.queues = {
 		producers: [{ binding: "BUS_QUEUE", queue: plan.queue }],

@@ -1,5 +1,13 @@
 import { eq } from "drizzle-orm";
 
+import {
+	deleteAccountBusEvents,
+	deleteAccountStateEntries,
+	deleteAllBusEvents,
+	deleteAllStateEntries,
+	insertBusEvents,
+	insertStateRows,
+} from "../cloudflare-bus/neon-write.ts";
 import { workspaceTransaction } from "./lock.ts";
 import type { AppDatabase } from "./postgres.ts";
 import {
@@ -9,7 +17,6 @@ import {
 	approvals,
 	bugs,
 	busCursors,
-	busEvents,
 	dailyRevenue,
 	featureRequests,
 	machines,
@@ -21,7 +28,6 @@ import {
 	rules,
 	skills,
 	squads,
-	stateEntries,
 	subscriptions,
 	threads,
 } from "./schema.ts";
@@ -49,8 +55,8 @@ export async function saveWorkspace(db: AppDatabase, snapshot: WorkspaceSnapshot
 		await tx.delete(masters);
 		await tx.delete(rules);
 		await tx.delete(missionProposals);
-		await tx.delete(busEvents);
-		await tx.delete(stateEntries);
+		await deleteAllBusEvents(tx);
+		await deleteAllStateEntries(tx);
 		await tx.delete(dailyRevenue);
 		await tx.delete(overviewTiles);
 		await tx.delete(subscriptions);
@@ -239,7 +245,8 @@ async function insertActivity(
 ): Promise<void> {
 	const account = entry.account;
 	if (entry.events.length > 0) {
-		await db.insert(busEvents).values(
+		await insertBusEvents(
+			db,
 			entry.events.map((event, index) => ({
 				accountId: account.id,
 				id: event.id,
@@ -259,7 +266,8 @@ async function insertActivity(
 
 	const storeKeys = Object.keys(entry.store);
 	if (storeKeys.length > 0) {
-		await db.insert(stateEntries).values(
+		await insertStateRows(
+			db,
 			storeKeys.map((key, index) => ({
 				accountId: account.id,
 				key,
@@ -358,8 +366,8 @@ export async function writeAccount(db: AppDatabase, entry: AccountSnapshot): Pro
 		await tx.delete(masters).where(eq(masters.accountId, id));
 		await tx.delete(rules).where(eq(rules.accountId, id));
 		await tx.delete(missionProposals).where(eq(missionProposals.accountId, id));
-		await tx.delete(busEvents).where(eq(busEvents.accountId, id));
-		await tx.delete(stateEntries).where(eq(stateEntries.accountId, id));
+		await deleteAccountBusEvents(tx, id);
+		await deleteAccountStateEntries(tx, id);
 		await tx.delete(dailyRevenue).where(eq(dailyRevenue.accountId, id));
 		await tx.delete(overviewTiles).where(eq(overviewTiles.accountId, id));
 		await tx.delete(subscriptions).where(eq(subscriptions.accountId, id));

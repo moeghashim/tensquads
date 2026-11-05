@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
 import test from "node:test";
 
 import { MachineFault } from "@tensquads/kernel";
@@ -254,9 +255,11 @@ test("secret registration uses the admin token and returns names only", async ()
 		const adapter = machine(fake);
 		await adapter.start(scope, "orders", tag);
 		assert.deepEqual(await adapter.egress(scope, "orders"), []);
-		await adapter.registerSecret(scope, "shop");
+		const secretValue = randomBytes(16).toString("hex");
+		await adapter.registerSecret(scope, "shop", secretValue);
 		assert.equal(fake.secretCalls.at(-1)?.kind, "admin");
 		assert.equal(fake.secretCalls.at(-1)?.valuePresent, true);
+		assert.equal(fake.secretCalls.at(-1)?.value, secretValue);
 		assert.deepEqual(await adapter.secrets(scope, "orders"), ["shop"]);
 		assert.deepEqual(await adapter.egress(scope, "orders"), ["example.com"]);
 		const fresh = machine(fake);

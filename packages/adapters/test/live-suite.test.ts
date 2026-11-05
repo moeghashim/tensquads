@@ -59,6 +59,10 @@ test("the machine env check accepts sent values, injected boat variables, and ba
 		/The machine env holds a boat API key\./,
 	);
 	assert.throws(
+		() => assertMachineEnv(`${stdout}\nPATH=/usr/bin:configured`, sent, ["configured"], ["PATH"]),
+		/The machine env holds a boat API key\./,
+	);
+	assert.throws(
 		() => assertMachineEnv(`${stdout}\nTENSQUADS_TRIAL_KEY=configured`, sent, [], ["TENSQUADS_TRIAL_KEY"]),
 		/The secret name is present on the machine\./,
 	);

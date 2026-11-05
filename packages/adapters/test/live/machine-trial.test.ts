@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
 import test from "node:test";
 import {
 	BoatApi,
@@ -163,14 +164,15 @@ test("a real machine follows the trial path", { timeout: 16 * 60 * 1000, skip: !
 			baseline,
 		);
 		console.log("done: env");
-		await adapter.registerSecret(trial.scope, SECRET_NAME);
+		const secretValue = randomBytes(16).toString("hex");
+		await adapter.registerSecret(trial.scope, SECRET_NAME, secretValue);
 		assert.deepEqual(await adapter.secrets(trial.scope, trial.agentId), [SECRET_NAME]);
 		assert.deepEqual(await adapter.egress(trial.scope, trial.agentId), ["example.com"]);
 		await readEnv(
 			machine,
 			row.id,
 			{ ACCOUNT_ID: trial.accountId, TENSQUADS_AGENT_ID: trial.agentId, IMAGE_TAG: trial.tag },
-			secrets,
+			[...secrets, secretValue],
 			baseline,
 		);
 		console.log("done: secret name");

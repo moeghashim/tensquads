@@ -23,6 +23,7 @@ export interface WorkerBindings {
 	readonly MACHINE_TOKEN_KEY?: string;
 	readonly ACCOUNT_BUS?: BusNamespace;
 	readonly BUS_QUEUE?: QueueProducer;
+	readonly BUS_DEAD_LETTER?: string;
 	readonly DATABASE_URL?: string;
 }
 
@@ -76,11 +77,15 @@ async function deliver(env: WorkerBindings, accountId: string, event: PublishedE
 	return result.seen;
 }
 
+function deadLetter(env: WorkerBindings, queue: string): boolean {
+	return typeof env.BUS_DEAD_LETTER === "string" && env.BUS_DEAD_LETTER.length > 0 && queue === env.BUS_DEAD_LETTER;
+}
+
 export async function handleBusQueue(batch: BusBatch, env: WorkerBindings): Promise<void> {
 	for (const message of batch.messages) {
 		const body = message.body;
 		if (!isObject(body) || !isNonEmptyString(body.accountId)) throw new Error("The message was rejected.");
-		if (batch.queue === "tensquads-bus-dlq") await deliver(env, body.accountId, escalation(message.id));
+		if (deadLetter(env, batch.queue)) await deliver(env, body.accountId, escalation(message.id));
 		else {
 			if (!isBusRecord(body)) throw new Error("The message was rejected.");
 			await deliver(env, body.accountId, body.event);

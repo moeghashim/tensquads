@@ -2,8 +2,84 @@ import { neonConfig, Pool } from "@neondatabase/serverless";
 import type { PublishedEvent } from "@tensquads/kernel";
 import { asc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
+import { chooseAdapters } from "../adapter-choice.ts";
 import { busEvents, stateEntries } from "../neon/schema.ts";
 import { traceFor } from "../trace.ts";
+
+const directWrite = "A bus write in real mode must go through the Durable Object.";
+
+type Thenable = PromiseLike<unknown>;
+
+interface InsertChain extends Thenable {
+	onConflictDoNothing(): Thenable;
+	onConflictDoUpdate(config: { target: unknown; set: Record<string, unknown> }): Thenable;
+}
+
+interface DeleteChain extends Thenable {
+	where(condition: unknown): Thenable;
+}
+
+interface BusTableTx {
+	insert(table: typeof busEvents | typeof stateEntries): { values(values: unknown): InsertChain };
+	delete(table: typeof busEvents | typeof stateEntries): DeleteChain;
+}
+
+export function refuseDirectBusWrite(): void {
+	if (chooseAdapters(process.env.ADAPTERS) === "real") throw new Error(directWrite);
+}
+
+function writer(tx: unknown): BusTableTx {
+	return tx as BusTableTx;
+}
+
+export async function insertBusEvent(tx: unknown, row: Record<string, unknown>): Promise<void> {
+	refuseDirectBusWrite();
+	await writer(tx).insert(busEvents).values(row);
+}
+
+export async function insertBusEvents(tx: unknown, rows: readonly Record<string, unknown>[]): Promise<void> {
+	refuseDirectBusWrite();
+	await writer(tx).insert(busEvents).values(rows);
+}
+
+export async function upsertStateValue(
+	tx: unknown,
+	row: { accountId: string; key: string; value: string; sortOrder: number },
+): Promise<void> {
+	refuseDirectBusWrite();
+	await writer(tx)
+		.insert(stateEntries)
+		.values(row)
+		.onConflictDoUpdate({
+			target: [stateEntries.accountId, stateEntries.key],
+			set: { value: row.value },
+		});
+}
+
+export async function insertStateRows(tx: unknown, rows: readonly Record<string, unknown>[]): Promise<void> {
+	refuseDirectBusWrite();
+	await writer(tx).insert(stateEntries).values(rows);
+}
+
+export async function deleteAllBusEvents(tx: unknown): Promise<void> {
+	refuseDirectBusWrite();
+	await writer(tx).delete(busEvents);
+}
+
+export async function deleteAllStateEntries(tx: unknown): Promise<void> {
+	refuseDirectBusWrite();
+	await writer(tx).delete(stateEntries);
+}
+
+export async function deleteAccountBusEvents(tx: unknown, accountId: string): Promise<void> {
+	refuseDirectBusWrite();
+	await writer(tx).delete(busEvents).where(eq(busEvents.accountId, accountId));
+}
+
+export async function deleteAccountStateEntries(tx: unknown, accountId: string): Promise<void> {
+	refuseDirectBusWrite();
+	await writer(tx).delete(stateEntries).where(eq(stateEntries.accountId, accountId));
+}
 
 export interface PendingBusRow {
 	readonly seq: number;

@@ -299,7 +299,7 @@ test("rejected queue messages still become one dead-letter escalation", async ()
 					},
 				],
 			},
-			{},
+			{ BUS_DEAD_LETTER: "tensquads-bus-dlq" },
 		);
 		assert.equal(acknowledged, true);
 	}
@@ -307,6 +307,63 @@ test("rejected queue messages still become one dead-letter escalation", async ()
 	assert.deepEqual(
 		events.map(({ id, kind }) => ({ id, kind })),
 		[{ id: "dead-rejected", kind: "Escalation" }],
+	);
+});
+
+test("a trial dead-letter queue name escalates when it is the configured binding", async () => {
+	const trial = "tensquads-bus-dlq-41877304107";
+	const accountId = "bus-recovery-trial";
+	const trialScope = { accountId, mode: "account" as const };
+	for (let index = 0; index < 2; index += 1) {
+		let acknowledged = false;
+		await handleBusQueue(
+			{
+				queue: trial,
+				messages: [
+					{
+						id: "rejected",
+						body: { accountId, event },
+						ack() {
+							acknowledged = true;
+						},
+					},
+				],
+			},
+			{ BUS_DEAD_LETTER: trial },
+		);
+		assert.equal(acknowledged, true);
+	}
+	const events = await workerTestBus().events(trialScope);
+	assert.deepEqual(
+		events.map(({ id, kind }) => ({ id, kind })),
+		[{ id: "dead-rejected", kind: "Escalation" }],
+	);
+});
+
+test("the production dead-letter name is a normal task when it is not configured", async () => {
+	const accountId = "bus-recovery-literal";
+	const literalScope = { accountId, mode: "account" as const };
+	let acknowledged = false;
+	await handleBusQueue(
+		{
+			queue: "tensquads-bus-dlq",
+			messages: [
+				{
+					id: "plain",
+					body: { accountId, event: { ...event, id: "plain-task" } },
+					ack() {
+						acknowledged = true;
+					},
+				},
+			],
+		},
+		{},
+	);
+	assert.equal(acknowledged, true);
+	const events = await workerTestBus().events(literalScope);
+	assert.deepEqual(
+		events.map(({ id, kind }) => ({ id, kind })),
+		[{ id: "plain-task", kind: "Task" }],
 	);
 });
 

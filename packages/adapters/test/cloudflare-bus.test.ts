@@ -171,6 +171,7 @@ function workerConfig(databaseUrl: string, tokenKey?: string) {
 			DATABASE_URL: { type: "text" as const, value: databaseUrl },
 			ACCOUNT_BUS: { type: "durable-object" as const, worker: "tensquads", exportName: "AccountBus" },
 			BUS_QUEUE: { type: "queue" as const, name: "tensquads-bus" },
+			BUS_DEAD_LETTER: { type: "text" as const, value: "tensquads-bus-dlq" },
 			...(tokenKey === undefined ? {} : { MACHINE_TOKEN_KEY: { type: "text" as const, value: tokenKey } }),
 		},
 		exports: { AccountBus: { type: "durable-object" as const, storage: "sqlite" as const } },

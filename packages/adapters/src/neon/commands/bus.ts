@@ -1,9 +1,10 @@
 import type { BusKind } from "@tensquads/domain";
 import { eq } from "drizzle-orm";
 
+import { insertBusEvent, refuseDirectBusWrite, upsertStateValue } from "../../cloudflare-bus/neon-write.ts";
 import { traceFor } from "../../trace.ts";
 import type { AppDatabase } from "../postgres.ts";
-import { busCursors, busEvents, stateEntries } from "../schema.ts";
+import { busCursors } from "../schema.ts";
 
 const CURSOR_SEQ = 100;
 const CURSOR_CLOCK = 11 * 60 + 2;
@@ -65,6 +66,7 @@ export async function appendEvents(
 	drafts: readonly EventDraft[],
 	occurredAt: Date,
 ): Promise<readonly StampedEvent[]> {
+	refuseDirectBusWrite();
 	const cursor = await lockCursor(tx, accountId);
 	if (drafts.length === 0) {
 		return [];
@@ -76,7 +78,7 @@ export async function appendEvents(
 	for (const draft of drafts) {
 		const id = `e${seq}`;
 		const trace = traceFor(id);
-		await tx.insert(busEvents).values({
+		await insertBusEvent(tx, {
 			accountId,
 			id,
 			timeText: time,
@@ -109,12 +111,6 @@ async function applySet(
 		return;
 	}
 	for (const [key, value] of Object.entries(values)) {
-		await tx
-			.insert(stateEntries)
-			.values({ accountId, key, value: JSON.stringify(value), sortOrder: seq })
-			.onConflictDoUpdate({
-				target: [stateEntries.accountId, stateEntries.key],
-				set: { value: JSON.stringify(value) },
-			});
+		await upsertStateValue(tx, { accountId, key, value: JSON.stringify(value), sortOrder: seq });
 	}
 }

@@ -8,6 +8,7 @@ import {
 	addRule as planRule,
 	setRuleOn as planRuleOn,
 } from "../../../../kernel/src/plugins/policy-rules.ts";
+import { upsertStateValue } from "../../cloudflare-bus/neon-write.ts";
 import { PENDING_TASK_WINDOW_MS } from "../../pending-window.ts";
 import { workspaceTransaction } from "../lock.ts";
 import type { AppDatabase } from "../postgres.ts";
@@ -155,18 +156,12 @@ async function writeLimit(tx: Tx, accountId: string, key: string, value: number)
 		.from(stateEntries)
 		.where(eq(stateEntries.accountId, accountId));
 	const current = rows.find((row) => row.key === key);
-	await tx
-		.insert(stateEntries)
-		.values({
-			accountId,
-			key,
-			value: JSON.stringify(value),
-			sortOrder: current?.sortOrder ?? nextSort(rows.map((row) => row.sortOrder)),
-		})
-		.onConflictDoUpdate({
-			target: [stateEntries.accountId, stateEntries.key],
-			set: { value: JSON.stringify(value) },
-		});
+	await upsertStateValue(tx, {
+		accountId,
+		key,
+		value: JSON.stringify(value),
+		sortOrder: current?.sortOrder ?? nextSort(rows.map((row) => row.sortOrder)),
+	});
 }
 
 async function readRule(tx: Tx, accountId: string, id: string): Promise<Rule> {

@@ -1,7 +1,7 @@
 export { chooseAdapters } from "./adapter-choice.ts";
 export { pickWorkerAdapters } from "./adapters-flag.ts";
-export type { BusBatch, WorkerBindings } from "./cloudflare-bus/index.ts";
-export { AccountBus, handleBusQueue, handleMachineRequest } from "./cloudflare-bus/index.ts";
+export type { BusBatch, BusNamespace, QueueProducer, WorkerBindings } from "./cloudflare-bus/index.ts";
+export { AccountBus, createCloudflareBus, handleBusQueue, handleMachineRequest } from "./cloudflare-bus/index.ts";
 export { createAccountMemoryBus, createMemoryBus, type MemoryBus, type ScriptedBusEvent } from "./memory-bus.ts";
 export { appendEvents, type EventDraft } from "./neon/commands/bus.ts";
 export { accountForClerkUser, FRAME_QUERY_COUNT, readWorkspaceFrame, type WorkspaceFrame } from "./neon/frame.ts";

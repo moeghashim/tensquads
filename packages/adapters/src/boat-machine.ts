@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import {
 	BoatApi,
 	Configuration,
@@ -348,15 +349,16 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 			const row = await requireMachine(ctx, scope, agentId);
 			await removeById(ctx, row.id);
 		},
-		async registerSecret(_scope, name) {
+		async registerSecret(_scope, name, value?) {
 			const admin = ctx.admin;
 			if (!admin || !ctx.secretBaseUrl) throw notConfigured("The secret registration is not configured.");
 			const baseUrl = ctx.secretBaseUrl;
+			const secret = typeof value === "string" && value.length > 0 ? value : randomBytes(16).toString("hex");
 			await call(() =>
 				admin.setCredentialProfileCustomApi({
 					profile: ctx.profileName,
 					name,
-					setCustomApiRequest: { value: "configured", baseUrl },
+					setCustomApiRequest: { value: secret, baseUrl },
 				}),
 			);
 		},

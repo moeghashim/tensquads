@@ -49,6 +49,7 @@ export interface SecretCall {
 	readonly name: string;
 	readonly valuePresent: boolean;
 	readonly hasValueField: boolean;
+	readonly value?: string;
 }
 
 export interface FakeBoat {
@@ -523,8 +524,9 @@ export async function startFakeBoat(): Promise<FakeBoat> {
 		name: string,
 	): Promise<void> {
 		const body = request.method === "DELETE" ? {} : await readJson(request);
-		const valuePresent = typeof body.value === "string" && body.value.length > 0;
-		secretCalls.push({ kind, name, valuePresent, hasValueField: Object.hasOwn(body, "value") });
+		const value = typeof body.value === "string" ? body.value : undefined;
+		const valuePresent = typeof value === "string" && value.length > 0;
+		secretCalls.push({ kind, name, valuePresent, hasValueField: Object.hasOwn(body, "value"), value });
 		if (request.method === "DELETE") {
 			const index = apiNames.indexOf(name);
 			if (index >= 0) apiNames.splice(index, 1);

@@ -10,6 +10,7 @@
 	"main": "src/worker.ts",
 	"vars": {
 		"ADAPTERS": "test",
+		"BUS_DEAD_LETTER": "tensquads-bus-dlq",
 		"CLERK_PLATFORM_ORG_ID": "org_3Lazia1HC1hdgfY0mAttb1qTWYm"
 	},
 	"durable_objects": {

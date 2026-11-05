@@ -50,6 +50,7 @@ test("the trial worker config keeps the project account and replaces the queue n
 	assert.equal(config.account_id, "678c5a795f40f7e9f33b8a71248cc829");
 	assert.equal(config.name, plan.workerName);
 	assert.equal(config.vars.ADAPTERS, "real");
+	assert.equal(config.vars.BUS_DEAD_LETTER, plan.deadLetter);
 	const built = trialConfig(
 		JSON.stringify({
 			name: "tensquads",
@@ -67,6 +68,7 @@ test("the trial worker config keeps the project account and replaces the queue n
 	assert.deepEqual(built.assets.run_worker_first, ["/machine/*"]);
 	assert.equal(built.workers_dev, true);
 	assert.equal(built.vars.ADAPTERS, "real");
+	assert.equal(built.vars.BUS_DEAD_LETTER, plan.deadLetter);
 	assert.equal(config.workers_dev, true);
 	assert.equal(
 		trialWorkerUrl(
