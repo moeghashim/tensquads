@@ -1,14 +1,20 @@
-import type { AccountScope, AppendedChatEvent, ChatEventDraft, ConversationTransaction } from "@tensquads/domain";
+import type {
+	AccountScope,
+	AppendedChatEvent,
+	BusEvent,
+	ChatEventDraft,
+	ConversationTransaction,
+} from "@tensquads/domain";
 
 export interface BusCommands {
 	append(commands: ConversationTransaction, draft: ChatEventDraft): Promise<AppendedChatEvent>;
 
-	nextEvent(scope: AccountScope, deadlineAt?: number): Promise<void>;
+	nextEvent(scope: AccountScope, deadlineAt?: number): Promise<BusEvent | undefined>;
 }
 
 export function bus(
 	context: { provide(name: string, service: BusCommands): unknown },
-	config?: { nextEvent(scope: AccountScope, deadlineAt?: number): Promise<void> },
+	config?: { nextEvent(scope: AccountScope, deadlineAt?: number): Promise<BusEvent | undefined> },
 ): void {
 	context.provide("workspaceBus", {
 		append: (commands, draft) => commands.appendEvent(draft),

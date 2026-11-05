@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
+import { postedField } from "./fence-body.ts";
 import { pinnedFontStylesheet } from "./fonts.ts";
 import { chipsThenOptions, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import {
@@ -66,7 +67,9 @@ test("a rule switch changes only that rule", async ({ page, workspaceUser }) => 
 		await expect(switches.nth(index)).toHaveAttribute("aria-pressed", "true");
 	}
 	await expect(switches.nth(4)).toHaveAttribute("aria-pressed", "false");
+	const enabled = mondayWrite(page);
 	await switches.nth(4).click();
+	await enabled;
 	await expect(switches.nth(4)).toHaveAttribute("aria-pressed", "true");
 	for (const index of [0, 1, 2, 3]) {
 		await expect(switches.nth(index)).toHaveAttribute("aria-pressed", "true");
@@ -148,7 +151,10 @@ test("each slider has the design minimum, maximum and step", async ({ page, work
 test("a rule switch and a slider persist after a page reload", async ({ page, workspaceUser, accountId }) => {
 	await openRules(page, workspaceUser);
 	const monday = page.locator("[data-loop='rules'] > div").nth(4).getByRole("button", { name: "Rule enabled" });
+	await expect(monday).toHaveAttribute("aria-pressed", "false");
+	const enabled = mondayWrite(page);
 	await monday.click();
+	await enabled;
 	await setSlider(page, "#lim-ads", "220");
 	await expectRuleOn(accountId, "it is Monday at 8:00", true);
 	await expectStored(accountId, "policy.daily_ad_cap", 220);
@@ -433,6 +439,16 @@ test("the side-by-side evidence shows the design and the build", async ({ page, 
 		}
 	}
 });
+
+// The switch paints before the POST commits. The next account reset must not race that write.
+function mondayWrite(page: Page) {
+	return page.waitForResponse((response) => {
+		const request = response.request();
+		if (request.method() !== "POST") return false;
+		const body = request.postData() ?? "";
+		return body.includes("r5") && postedField(body, "on") === true;
+	});
+}
 
 async function openRules(page: Page, user: { email: string; password: string }) {
 	await openWorkspace(page, user);

@@ -28,9 +28,10 @@ test("a visitor with no session goes to sign in", async ({ page }) => {
 
 test("a role in another organization cannot reach admin", async ({ page }) => {
 	const secrets = secretsFor(["secret"]);
-	const user = await createTestUser(secrets.secret);
+	let user: ClerkTestUser | undefined;
 	let orgId = "";
 	try {
+		user = await createTestUser(secrets.secret);
 		orgId = await createForeignOrg(secrets.secret, user.userId);
 		expect(orgId).not.toBe(companyOrgId);
 		await signInAs(page, user);
@@ -41,16 +42,20 @@ test("a role in another organization cannot reach admin", async ({ page }) => {
 		await expect(page.getByText("Platform admin")).toHaveCount(0);
 		await expect(page).not.toHaveURL(/\/admin/);
 	} finally {
-		if (orgId.length > 0) await deleteForeignOrg(secrets.secret, orgId);
-		await deleteTestUser(secrets.secret, user.userId);
+		try {
+			if (orgId.length > 0) await deleteForeignOrg(secrets.secret, orgId);
+		} finally {
+			if (user) await deleteTestUser(secrets.secret, user.userId);
+		}
 	}
 });
 
 test("an account owner cannot reach admin or the admin server functions", async ({ page }) => {
 	const secrets = secretsFor(["secret", "testDatabase"]);
-	const user = await createTestUser(secrets.secret);
 	const accountId = `owner-${randomUUID().slice(0, 8)}`;
+	let user: ClerkTestUser | undefined;
 	try {
+		user = await createTestUser(secrets.secret);
 		await createOwner(secrets.testDatabase, accountId, user);
 		await signInAs(page, user);
 		await expect(page).toHaveURL(/\/overview$/, { timeout: 20_000 });
@@ -78,15 +83,19 @@ test("an account owner cannot reach admin or the admin server functions", async 
 		await expect(page.getByText("Northwind Apparel")).toHaveCount(0);
 		await expect(page.getByText("Tom Becker")).toHaveCount(0);
 	} finally {
-		await deleteWorkspaceAccount(accountId);
-		await deleteTestUser(secrets.secret, user.userId);
+		try {
+			await deleteWorkspaceAccount(accountId);
+		} finally {
+			if (user) await deleteTestUser(secrets.secret, user.userId);
+		}
 	}
 });
 
 test("a super admin opens one account and All companies ends that session", async ({ page }) => {
 	const secrets = secretsFor(["secret"]);
-	const user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
+	let user: ClerkTestUser | undefined;
 	try {
+		user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
 		await addCompanySuperAdmin(secrets.secret, user.userId);
 		await openAdmin(page, user);
 		await page.getByRole("button", { name: "Demo store" }).click();
@@ -108,8 +117,13 @@ test("a super admin opens one account and All companies ends that session", asyn
 		await expect(page.getByText("Demo store")).toHaveCount(0);
 		await expect(page.getByText("Did the tracking for #A-1007 go through?")).toHaveCount(0);
 	} finally {
-		await removeCompanyMembership(secrets.secret, user.userId);
-		await deleteTestUser(secrets.secret, user.userId);
+		if (user) {
+			try {
+				await removeCompanyMembership(secrets.secret, user.userId);
+			} finally {
+				await deleteTestUser(secrets.secret, user.userId);
+			}
+		}
 	}
 });
 

@@ -4,7 +4,7 @@ import test from "node:test";
 import { Pool, type PoolClient } from "@neondatabase/serverless";
 import { type AppDatabase, createRepositories, schema } from "@tensquads/adapters";
 import { Kernel } from "@tensquads/kernel";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { replaceDemoAccount } from "../../seed/src/demo-account.ts";
 import { openPostgres } from "../src/neon/postgres.ts";
@@ -227,6 +227,8 @@ test("a migration waits for an approval and neither side deadlocks", {
 	});
 	try {
 		await opened.migrate();
+		// A stale revision forces the next migrate to take the exclusive key and wait.
+		await opened.db.execute(sql`UPDATE schema_revision SET version = 'stale' WHERE id = 1`);
 		await replaceDemoAccount(opened.db, accountId, `clerk-${suffix}`);
 		const scope = { accountId, mode: "account" as const };
 		const seen: string[] = [];

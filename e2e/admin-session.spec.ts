@@ -3,6 +3,7 @@ import type { Page, Route } from "@playwright/test";
 import { specialAccountCookie, specialAccountValue } from "../apps/web/src/server/special-account.ts";
 import {
 	addCompanySuperAdmin,
+	type ClerkTestUser,
 	createTestUser,
 	deleteTestUser,
 	removeCompanyMembership,
@@ -39,9 +40,10 @@ const screens = [
 test("a held frame cannot paint another account's chat, squads, or traffic", async ({ page, context }) => {
 	test.setTimeout(180_000);
 	const secrets = secretsFor(["secret"]);
-	const user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
 	const other = await context.newPage();
+	let user: ClerkTestUser | undefined;
 	try {
+		user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
 		await addCompanySuperAdmin(secrets.secret, user.userId);
 		await openAdmin(page, user);
 		for (const screen of screens) {
@@ -81,16 +83,22 @@ test("a held frame cannot paint another account's chat, squads, or traffic", asy
 	} finally {
 		await disarm(page);
 		await other.close();
-		await removeCompanyMembership(secrets.secret, user.userId);
-		await deleteTestUser(secrets.secret, user.userId);
+		if (user) {
+			try {
+				await removeCompanyMembership(secrets.secret, user.userId);
+			} finally {
+				await deleteTestUser(secrets.secret, user.userId);
+			}
+		}
 	}
 });
 
 test("a special session opens Northwind at 59 minutes and returns to /admin at 61", async ({ page }) => {
 	test.setTimeout(60_000);
 	const secrets = secretsFor(["secret"]);
-	const user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
+	let user: ClerkTestUser | undefined;
 	try {
+		user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
 		await addCompanySuperAdmin(secrets.secret, user.userId);
 		await openAdmin(page, user);
 		const now = Date.now();
@@ -104,16 +112,22 @@ test("a special session opens Northwind at 59 minutes and returns to /admin at 6
 		await expect(page).toHaveURL(/\/admin\/?$/);
 		await expect(page.getByRole("navigation", { name: "Platform admin" })).toBeVisible();
 	} finally {
-		await removeCompanyMembership(secrets.secret, user.userId);
-		await deleteTestUser(secrets.secret, user.userId);
+		if (user) {
+			try {
+				await removeCompanyMembership(secrets.secret, user.userId);
+			} finally {
+				await deleteTestUser(secrets.secret, user.userId);
+			}
+		}
 	}
 });
 
 test("a removed role ends admin access when the session token refreshes", async ({ page }) => {
 	test.setTimeout(60_000);
 	const secrets = secretsFor(["secret"]);
-	const user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
+	let user: ClerkTestUser | undefined;
 	try {
+		user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
 		await addCompanySuperAdmin(secrets.secret, user.userId);
 		await openAdmin(page, user);
 		await setCompanyRole(secrets.secret, user.userId, "org:member");
@@ -136,16 +150,22 @@ test("a removed role ends admin access when the session token refreshes", async 
 		expect(accounts.ok).toBe(false);
 		expect(accounts.list).toBe(false);
 	} finally {
-		await removeCompanyMembership(secrets.secret, user.userId);
-		await deleteTestUser(secrets.secret, user.userId);
+		if (user) {
+			try {
+				await removeCompanyMembership(secrets.secret, user.userId);
+			} finally {
+				await deleteTestUser(secrets.secret, user.userId);
+			}
+		}
 	}
 });
 
 test("a removed role is gone once the 65 second bound has passed", async ({ page }) => {
 	test.setTimeout(120_000);
 	const secrets = secretsFor(["secret"]);
-	const user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
+	let user: ClerkTestUser | undefined;
 	try {
+		user = await createTestUser(secrets.secret, { firstName: "Moe", lastName: "Ghashim" });
 		await addCompanySuperAdmin(secrets.secret, user.userId);
 		await openAdmin(page, user);
 		const captured = await captureSessionToken(page);
@@ -183,8 +203,13 @@ test("a removed role is gone once the 65 second bound has passed", async ({ page
 		expect(refused.ok).toBe(false);
 		expect(refused.list).toBe(false);
 	} finally {
-		await removeCompanyMembership(secrets.secret, user.userId);
-		await deleteTestUser(secrets.secret, user.userId);
+		if (user) {
+			try {
+				await removeCompanyMembership(secrets.secret, user.userId);
+			} finally {
+				await deleteTestUser(secrets.secret, user.userId);
+			}
+		}
 	}
 });
 

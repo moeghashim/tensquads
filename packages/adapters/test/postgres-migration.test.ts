@@ -4,7 +4,7 @@ import { setImmediate } from "node:timers/promises";
 
 import { Pool, type PoolClient } from "@neondatabase/serverless";
 
-import { openPostgres } from "../src/neon/postgres.ts";
+import { migrationRevision, openPostgres } from "../src/neon/postgres.ts";
 
 function migrationServer() {
 	const events: { client: number; sql: string }[] = [];
@@ -45,19 +45,51 @@ test("overlapping Postgres migrations serialize all statements in transactions",
 	const first = openPostgres("postgres://test");
 	const second = openPostgres("postgres://test");
 	await Promise.all([first.migrate(), second.migrate()]);
-	const statements = server.events.filter(({ sql }) => sql !== "BEGIN");
-	const firstCommit = statements.findIndex(({ sql }) => sql === "COMMIT");
-	assert.ok(firstCommit > 1);
-	assert.ok(statements.slice(0, firstCommit + 1).every(({ client }) => client === 1));
-	assert.ok(statements.slice(firstCommit + 1).every(({ client }) => client === 2));
-	for (const client of [1, 2]) {
+	const locks = server.events.filter(({ sql }) => sql.startsWith("SELECT pg_advisory_xact_lock("));
+	assert.equal(locks.length, 2);
+	const leaderLock = locks[0];
+	const follower = locks[1];
+	assert.ok(leaderLock);
+	assert.ok(follower);
+	const leaderCommit = server.events.findIndex(
+		(event) => event.client === leaderLock.client && event.sql === "COMMIT",
+	);
+	const followerLock = server.events.indexOf(follower);
+	assert.ok(leaderCommit > 1);
+	assert.ok(followerLock > leaderCommit);
+	for (const client of [leaderLock.client, follower.client]) {
 		const queries = server.events.filter((event) => event.client === client).map(({ sql }) => sql);
-		assert.equal(queries[0], "BEGIN");
-		assert.match(queries[1] ?? "", /^SELECT pg_advisory_xact_lock\(/);
+		const begin = queries.indexOf("BEGIN");
+		assert.ok(begin > 0);
+		assert.match(queries[begin + 1] ?? "", /^SELECT pg_advisory_xact_lock\(/);
 		assert.equal(queries.at(-1), "COMMIT");
+		assert.equal(
+			queries.some((sql) => sql.startsWith("INSERT INTO schema_revision")),
+			true,
+		);
 	}
 	assert.deepEqual(server.released, [1, 2]);
 	await Promise.all([first.close(), second.close()]);
+});
+
+test("a current revision does not lock or run the migration", async (context) => {
+	const queries: string[] = [];
+	context.mock.method(Pool.prototype, "connect", async () => ({
+		async query(sql: string) {
+			queries.push(sql);
+			if (sql.includes("to_regclass")) return { rows: [{ name: "schema_revision" }] };
+			if (sql.startsWith("SELECT version")) return { rows: [{ version: migrationRevision }] };
+			return { rows: [] };
+		},
+		release() {},
+	}));
+	const postgres = openPostgres("postgres://test");
+	await postgres.migrate();
+	assert.deepEqual(queries, [
+		"SELECT to_regclass('public.schema_revision') AS name",
+		"SELECT version FROM schema_revision WHERE id = 1",
+	]);
+	await postgres.close();
 });
 
 test("a failed Postgres migration rolls back and releases its client", async (context) => {
@@ -76,7 +108,9 @@ test("a failed Postgres migration rolls back and releases its client", async (co
 	}));
 	const postgres = openPostgres("postgres://test");
 	await assert.rejects(postgres.migrate(), (error) => error === failure);
-	assert.equal(queries[0], "BEGIN");
+	const begin = queries.indexOf("BEGIN");
+	assert.ok(begin > 0);
+	assert.match(queries[begin + 1] ?? "", /^SELECT pg_advisory_xact_lock\(/);
 	assert.equal(queries.at(-1), "ROLLBACK");
 	assert.equal(queries.includes("COMMIT"), false);
 	assert.equal(released, true);

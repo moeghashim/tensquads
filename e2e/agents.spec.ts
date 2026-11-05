@@ -25,7 +25,6 @@ const sandboxLine =
 const taskCounts = [142, 96, 38, 24, 31] as const;
 const dash = "—";
 
-// One worker. A second reset holds the shared database lock, so the first teardown exceeds 30 seconds.
 test.describe.configure({ mode: "serial", timeout: 90_000 });
 
 publicTest("the design section cutter finds the agents list", () => {

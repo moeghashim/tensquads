@@ -176,7 +176,7 @@ Pull request 12 names no do-nothing control. The agent page on/off switch, the s
 - The design says "Squad running", "Sandbox", and "All squads". The brief says agent and machine. The build follows the design. Task 02-agent-detail step 8.
 - A session read that needs a new token throws "The session needs a refresh." The browser refreshes that token on GET and then retries the read. A POST does not refresh.
 - Clerk accepts a session token only when its `azp` is `https://tensquads.moe-678.workers.dev` or `http://localhost:3000`.
-- Agent, chat, traffic, and approval writes take the per-account lock `pg_advisory_xact_lock(1952804468, hashtext(accountId))`. Rules writes already passed the account. `writeAccount`, `deleteWorkspaceAccount`, and `applyMigration` stay on the global exclusive lock.
+- Workspace write and migration locking follow [the database reference](foundation.md#database-and-repository-scope).
 - Running, skills, and autonomy claim the shared write fence. `askRevise` sends no fence. A superseded write returns the current row. A validation error keeps the retire list. A failed or timed-out write keeps the snapshot, advances the write counter, and reads once. A successful read clears recovery only when it started after the latest failure. A newer write stays ahead of an older arrival.
 - Sign-out reloads the workspace, and that loader redirects to `/signin`. While the session stamp differs, the parent renders nothing.
 - A start or stop is bounded by `MachineTimeout`. Fairness is only that timeout, the refresh timeout, and the mark-late timeout, each alone.

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { workspaceTransaction } from "../src/neon/lock.ts";
+import { writeAccount } from "../src/neon/save.ts";
 import { PENDING_TASK_WINDOW_MS } from "../src/pending-window.ts";
 
 function hangingTransaction(error: unknown) {
@@ -133,6 +134,43 @@ test("an account writer takes the global key shared, then that account's fence",
 		"ok",
 	);
 	const text = seen.join("\n");
+	const sharedAt = text.indexOf("pg_advisory_xact_lock_shared(1952804467, 1)");
+	const accountAt = text.indexOf("pg_advisory_xact_lock(1952804468, hashtext('account-a'))");
+	assert.ok(sharedAt >= 0);
+	assert.ok(accountAt > sharedAt);
+	assert.doesNotMatch(text, /pg_advisory_xact_lock\(1952804467, 1\)/);
+});
+
+test("an account reset takes the account fence and sets no timeout", async () => {
+	const seen: string[] = [];
+	const db = {
+		async transaction(
+			run: (tx: {
+				execute: (query: unknown) => Promise<void>;
+				delete: () => { where: () => never };
+			}) => Promise<unknown>,
+		) {
+			return run({
+				async execute(query: unknown) {
+					seen.push(JSON.stringify(query));
+				},
+				delete() {
+					return {
+						where() {
+							throw new Error("stop after the lock");
+						},
+					};
+				},
+			});
+		},
+	};
+	await assert.rejects(
+		() => writeAccount(db as never, { account: { id: "account-a" } } as never),
+		/stop after the lock/,
+	);
+	const text = seen.join("\n");
+	assert.equal((text.match(/lock_timeout/g) ?? []).length, 0);
+	assert.equal((text.match(/statement_timeout/g) ?? []).length, 0);
 	const sharedAt = text.indexOf("pg_advisory_xact_lock_shared(1952804467, 1)");
 	const accountAt = text.indexOf("pg_advisory_xact_lock(1952804468, hashtext('account-a'))");
 	assert.ok(sharedAt >= 0);

@@ -43,7 +43,7 @@ test("real mode traffic advances through the bus and test mode keeps the reposit
 		process.env.ADAPTERS = "real";
 		const startedAt = Date.now();
 		const advanced = await advanceTrafficAccount({} as never, { accountId: "acct", mode: "account" }, startedAt, bus);
-		assert.equal(advanced, "e100");
+		assert.equal(advanced?.id, "e100");
 		assert.equal(busCalls, 1);
 		assert.equal(receivedDeadline, startedAt + PENDING_TASK_WINDOW_MS);
 		const script = trafficScript();
@@ -79,9 +79,10 @@ test("real mode traffic advances through the bus and test mode keeps the reposit
 		};
 		const durable = realTrafficBus({ ACCOUNT_BUS: namespace });
 		const scope = { accountId: "acct", mode: "account" } as const;
-		registerTrafficAdvance(() => {
+		registerTrafficAdvance(async () => {
 			callStartedAt = Date.now();
-			return advanceTrafficAccount({} as never, scope, callStartedAt, durable);
+			const created = await advanceTrafficAccount({} as never, scope, callStartedAt, durable);
+			return created?.id ?? "";
 		});
 		await runLiveTick({
 			accountId: scope.accountId,

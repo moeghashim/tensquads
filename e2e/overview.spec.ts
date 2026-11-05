@@ -8,7 +8,7 @@ import { replaceDemoAccount } from "../packages/seed/src/demo-account.ts";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
-import { createClerkUser } from "./clerk-user.ts";
+import { createTestUser, deleteTestUser } from "./admin-clerk.ts";
 import { overviewNames, rewriteBuiltInventory } from "./squadmate-copy.ts";
 import {
 	readInventory,
@@ -637,17 +637,15 @@ test("a cached overview keeps the decision until the fresh read lands", async ({
 test("a failed decision does not stay on the next account", async ({ page, workspaceUser }) => {
 	test.setTimeout(90_000);
 	const secrets = secretsFor(["secret", "testDatabase"]);
-	const email = `sq-${randomUUID().slice(0, 8)}+clerk_test@example.com`;
-	const password = `Ts${randomUUID().replaceAll("-", "")}Zq7`;
-	const userId = await createClerkUser(secrets.secret, email, password);
 	const accountId = `overview-b-${randomUUID().slice(0, 8)}`;
-	const postgres = openPostgres(secrets.testDatabase);
+	const other = await createTestUser(secrets.secret);
 	try {
-		await replaceDemoAccount(postgres.db, accountId, userId);
-	} finally {
-		await postgres.close();
-	}
-	try {
+		const postgres = openPostgres(secrets.testDatabase);
+		try {
+			await replaceDemoAccount(postgres.db, accountId, other.userId);
+		} finally {
+			await postgres.close();
+		}
 		await openWorkspace(page, workspaceUser);
 		await page.clock.install();
 		const held = await holdFailedRefresh(page);
@@ -658,7 +656,7 @@ test("a failed decision does not stay on the next account", async ({ page, works
 			await page.clock.fastForward(30_000);
 			await page.clock.resume();
 			held.seal();
-			await switchAccount(page, email, password);
+			await switchAccount(page, other.email, other.password);
 			await expect(refundCard(page)).toHaveCount(1, settled);
 			await expect(dockBadge(page)).toHaveText("4", settled);
 			await expect(tasksTile(page)).toContainText("331", settled);
@@ -672,8 +670,11 @@ test("a failed decision does not stay on the next account", async ({ page, works
 			await page.unroute("**/_serverFn/**").catch(() => undefined);
 		}
 	} finally {
-		await deleteWorkspaceAccount(accountId);
-		await deleteClerkUser(secrets.secret, userId);
+		try {
+			await deleteWorkspaceAccount(accountId);
+		} finally {
+			await deleteTestUser(secrets.secret, other.userId);
+		}
 	}
 });
 
@@ -781,12 +782,16 @@ function tasksTile(page: Page) {
 	return page.locator("main [data-loop='kpis'] > div").filter({ hasText: "Tasks done by squads" });
 }
 
+// One click on Overview starts two overview reads about half a second apart. The read
+// that finishes last is not always the one the screen is waiting on. Hold every overview
+// body, and fulfill each one on release. Releasing only the last arrival can answer the
+// abandoned read and leave Traffic on screen.
 async function holdNextOverview(page: Page) {
-	const state = { held: false };
-	let parked: { route: Route; response: Awaited<ReturnType<Route["fetch"]>>; body: string } | undefined;
+	const state = { held: false, released: false };
+	const parked: { route: Route; response: Awaited<ReturnType<Route["fetch"]>>; body: string }[] = [];
 	await page.route("**/_serverFn/**", async (route) => {
 		const request = route.request();
-		if (request.method() !== "GET" || state.held || parked) {
+		if (request.method() !== "GET") {
 			await route.continue();
 			return;
 		}
@@ -794,22 +799,21 @@ async function holdNextOverview(page: Page) {
 		if (!response || !parkedRoutes.has(route)) return;
 		const body = await response.text();
 		if (!parkedRoutes.has(route)) return;
-		if (!body.includes("Tasks done by squads")) {
+		if (!body.includes("Tasks done by squads") || state.released) {
 			await settleParked(route, () => route.fulfill({ response, body }));
 			return;
 		}
 		state.held = true;
-		parked = { route, response, body };
+		parked.push({ route, response, body });
 	});
 	return {
 		held: () => state.held,
 		release: async () => {
-			const current = parked;
-			if (!current) return;
-			parked = undefined;
-			await settleParked(current.route, () =>
-				current.route.fulfill({ response: current.response, body: current.body }),
-			);
+			state.released = true;
+			const current = parked.splice(0);
+			for (const item of current) {
+				await settleParked(item.route, () => item.route.fulfill({ response: item.response, body: item.body }));
+			}
 		},
 	};
 }
@@ -1011,19 +1015,6 @@ async function switchAccount(page: Page, email: string, password: string) {
 function navigationEnded(error: unknown): boolean {
 	const message = error instanceof Error ? error.message : "";
 	return message.includes("Execution context was destroyed") || message.includes("navigation");
-}
-
-async function deleteClerkUser(secret: string, userId: string) {
-	if (userId.length === 0) {
-		return;
-	}
-	const response = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
-		method: "DELETE",
-		headers: { Authorization: `Bearer ${secret}` },
-	});
-	if (!response.ok && response.status !== 404) {
-		throw new Error(`Clerk delete user failed with status ${response.status}.`);
-	}
 }
 
 function overviewSection() {

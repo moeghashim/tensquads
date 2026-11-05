@@ -1,8 +1,8 @@
 import type { AppDatabase } from "@tensquads/adapters";
 import { chooseAdapters, createCloudflareBus, createRepositories, trafficScript } from "@tensquads/adapters";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
-import type { AccountEventBus, AccountScope } from "@tensquads/kernel";
-import { Kernel } from "@tensquads/kernel";
+import type { BusEvent } from "@tensquads/domain";
+import { type AccountEventBus, type AccountScope, Kernel, type PublishedEvent } from "@tensquads/kernel";
 
 import { workerEnv } from "./worker-env.ts";
 
@@ -26,23 +26,37 @@ async function durableTrafficBus(): Promise<AccountEventBus> {
 	return realTrafficBus(env);
 }
 
+function recordedEvent(event: PublishedEvent): BusEvent {
+	return {
+		id: event.id,
+		time: event.time ?? "",
+		from: event.from,
+		to: event.to,
+		kind: event.kind as BusEvent["kind"],
+		skill: event.skill,
+		text: event.text,
+		payload: event.payload,
+		writes: event.writes,
+		trace: event.trace ?? "",
+		...(event.set === undefined ? {} : { set: event.set }),
+	};
+}
+
 // startedAt is the server function's clock. The read and the write share it.
+// Real mode returns the event the bus created. Test mode returns the event this write appended.
 export async function advanceTrafficAccount(
 	db: AppDatabase,
 	scope: AccountScope,
 	startedAt: number,
 	bus?: AccountEventBus,
-): Promise<string> {
+): Promise<BusEvent | null> {
 	const deadlineAt = startedAt + PENDING_TASK_WINDOW_MS;
 	if (chooseAdapters(await workerEnv("ADAPTERS")) === "real") {
 		if (Date.now() >= deadlineAt) throw new Error(unfinished);
 		const event = await (bus ?? (await durableTrafficBus())).nextEvent(scope, deadlineAt);
-		return event?.id ?? "";
+		return event === undefined ? null : recordedEvent(event);
 	}
-	const repositories = createRepositories(db);
-	const before = new Set((await repositories.bus.listEvents(scope)).map((event) => event.id));
 	if (Date.now() >= deadlineAt) throw new Error(unfinished);
-	await new Kernel(repositories).nextEvent(scope, deadlineAt);
-	const after = await repositories.bus.listEvents(scope);
-	return after.filter((event) => !before.has(event.id)).at(-1)?.id ?? "";
+	const created = await new Kernel(createRepositories(db)).nextEvent(scope, deadlineAt);
+	return created ?? null;
 }
