@@ -3,8 +3,7 @@ import { useState } from "react";
 
 import { AdminFilterButtons, AdminIntro, AdminKpiSection, adminPillRow, RightLabel } from "#/screens/admin/chrome.tsx";
 import { css } from "#/screens/css.ts";
-
-import { ImageMark } from "./icons.tsx";
+import { RoleTag, Squadmate } from "#/workspace/Squadmate.tsx";
 
 const column = "display: flex; flex-direction: column; gap: 24px";
 const attentionPill =
@@ -79,7 +78,7 @@ export function ImagesScreen({ images }: { readonly images: readonly AgentImage[
 														`width: 28px; height: 28px; border-radius: 8px; background: ${row.tint}; display: inline-flex; align-items: center; justify-content: center; flex: none`,
 													)}
 												>
-													<ImageMark size={16} />
+													<Squadmate id={row.id} on size={16} decorative />
 												</span>
 												<span style={css("display: flex; flex-direction: column; min-width: 0")}>
 													<span
@@ -88,6 +87,7 @@ export function ImagesScreen({ images }: { readonly images: readonly AgentImage[
 														)}
 													>
 														{row.name}
+														<RoleTag id={row.id} />
 													</span>
 													<span
 														style={css(
@@ -125,11 +125,12 @@ export function ImagesScreen({ images }: { readonly images: readonly AgentImage[
 										`width: 40px; height: 40px; border-radius: 10px; background: ${detail.tint}; display: inline-flex; align-items: center; justify-content: center; flex: none`,
 									)}
 								>
-									<ImageMark size={20} />
+									<Squadmate id={detail.id} on size={20} />
 								</span>
 								<div style={css("display: flex; flex-direction: column; min-width: 0; flex: 1")}>
 									<h2 style={css("margin: 0; font-size: 18px; font-weight: 600; color: #0d0d0d")}>
 										{detail.name}
+										<RoleTag id={detail.id} />
 									</h2>
 									<span style={css("font-size: 13px; color: #5d5d5d")}>{detail.role}</span>
 								</div>
