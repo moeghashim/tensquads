@@ -6,7 +6,7 @@ This file is the main-repository task. It replaces the old single phase 5 task f
 
 ## Goal
 
-The master runs one full loop for a restaurant or a grocer. The Market researcher finds and analyses the competitors. The master writes a brief and asks the user. The Website builder makes one page. The master asks the user again. The page goes live at `<slug>.10squads.com`. Every step is a bus event. Every result passes a check that code runs. Decisions 20 to 28 and 35 govern this task. Decision 31 has no row yet. See open question 1.
+The master runs one full loop for a restaurant or a grocer. The Market researcher finds and analyses the competitors. The master writes a brief and asks the user. The Website builder makes one page. The master asks the user again. The page goes live at `<slug>.10squads.com`. Every step is a bus event. Every result passes a check that code runs. Decisions 20 to 28 and 35 govern this task. Decision 31 says version 1 uses one database, Neon.
 
 ## Read
 
@@ -106,7 +106,7 @@ The proof of concept changes the data, not the screens. Do not change any of the
 - Do not invent a dish, an item, or a price. The user's list is the only source.
 - Do not let an agent write to Neon. Only the Durable Object writes (decision 16).
 - Do not change any of the ten product screens.
-- Do not add ClickHouse. Wait for open question 1.
+- Do not add ClickHouse. Decision 31 keeps it out of version 1.
 - Do not build the researcher skills or the builder skills. Those repositories do that work.
 - Do not put a key on a machine, in a prompt, in a log, or in git.
 
@@ -114,7 +114,7 @@ The proof of concept changes the data, not the screens. Do not change any of the
 
 Do not guess. Stop the step that needs the answer. The other steps may proceed.
 
-1. **Decision 31.** This task used to cite it. The decisions table has no row 31. Moe dropped decisions 29 and 30. The rejected-concepts table says decision 31 means Neon answers every version 1 question. The old task text says ClickHouse comes after phase 5. *Recommended:* add this row. "A second database. Not in version 1. Neon answers every version 1 question. ClickHouse comes after phase 5. Decisions 29 and 30 stay dropped." Do not add the row until Moe accepts it. Do not add ClickHouse until then.
+1. **Decision 31.** Answered by Moe on 5 November 2026. Version 1 uses one database, Neon. ClickHouse comes after phase 5. See decision 31 in `docs/PLAN.md`.
 2. **The thirteen events.** The done list requires them on the traffic screen. The plan has a placeholder diagram, not the thirteen events. The loop above has eight steps. *Recommended:* seed these thirteen events, in this order. `site.critique` is evidence inside event 10. It is not its own event. `competition.watch` and the test `change.detected` event come after these thirteen. They are not part of the thirteen.
    1. Task, master to market, `task.route`. Research this business.
    2. Result, market to master, `web.search`.
