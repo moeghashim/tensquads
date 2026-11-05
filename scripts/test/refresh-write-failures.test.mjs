@@ -221,6 +221,9 @@ function boundary(path) {
 					window.clientMiddleware = fn;
 					return fn;
 				},
+				server(fn) {
+					return fn;
+				},
 			});
 			export const createStart = (fn) => fn();
 			export const createCsrfMiddleware = () => ({});

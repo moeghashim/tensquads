@@ -2,7 +2,6 @@ import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
 import { createCsrfMiddleware, createMiddleware, createStart } from "@tanstack/react-start";
 
 import { authorizedParties } from "#/server/authorized-parties.ts";
-import { clerkPublishableKey, documentRequestForClerk } from "#/server/dev-browser-document.ts";
 import { beginDocumentExit } from "#/workspace/session-exit-target.ts";
 
 const csrf = createCsrfMiddleware({
@@ -46,7 +45,9 @@ function loadExitCleanup(error: unknown): Promise<void> {
 }
 
 // A development document may reach Clerk before clerk-js writes the suffixed dev-browser cookie.
+// Load the checker here. A top-level import puts Clerk's backend in the browser bundle.
 const devBrowserDocument = createMiddleware().server(async ({ request, next }) => {
+	const { clerkPublishableKey, documentRequestForClerk } = await import("#/server/dev-browser-document.ts");
 	const carried = await documentRequestForClerk(request, await clerkPublishableKey());
 	if (carried === request) return next();
 	// TanStack copies request onto the middleware context at runtime.
