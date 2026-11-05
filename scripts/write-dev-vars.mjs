@@ -78,6 +78,12 @@ function quote(value) {
 	return `"${value.replaceAll("\\", "\\\\").replaceAll('"', '\\"').replaceAll("\n", "")}"`;
 }
 
+function localPortLine() {
+	const port = process.env.TS_E2E_PORT ?? "";
+	if (!/^[1-9]\d{0,4}$/.test(port) || port === "3000" || Number(port) > 65535) return [];
+	return [`TS_E2E_PORT=${quote(port)}`];
+}
+
 function writeDevVars() {
 	const secrets = localSecrets();
 	const lines = [
@@ -85,6 +91,7 @@ function writeDevVars() {
 		`CLERK_SECRET_KEY=${quote(secrets.secret)}`,
 		`NEON_POSTGRES_CONNECTION_STRING=${quote(secrets.neon)}`,
 		`TEST_DATABASE_URL=${quote(secrets.testDatabase)}`,
+		...localPortLine(),
 	];
 	writeFileSync(resolve(root, "apps/web/.dev.vars"), `${lines.join("\n")}\n`, { mode: 0o600 });
 }

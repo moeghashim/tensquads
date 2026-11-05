@@ -1,6 +1,10 @@
 import { defineConfig } from "@playwright/test";
 
+import { appOrigin, resolveE2ePort } from "./scripts/e2e-port.mjs";
+
 const rulesFenceRepeat = Number(process.env.RULES_FENCE_REPEAT ?? "1");
+const e2ePort = await resolveE2ePort();
+const origin = appOrigin(e2ePort);
 
 export default defineConfig({
 	testDir: "e2e",
@@ -9,6 +13,9 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	retries: 0,
 	reporter: "line",
+	// Compile each screen before the first test. A cold route can leave the
+	// document request unanswered.
+	globalSetup: "./e2e/global-setup.ts",
 	snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
 	expect: {
 		toHaveScreenshot: {
@@ -18,7 +25,7 @@ export default defineConfig({
 		},
 	},
 	use: {
-		baseURL: "http://localhost:3000",
+		baseURL: origin,
 		deviceScaleFactor: 1,
 		viewport: { width: 1440, height: 900 },
 		launchOptions: {
@@ -27,9 +34,10 @@ export default defineConfig({
 	},
 	webServer: {
 		command: "npm run dev -w @tensquads/web",
-		url: "http://localhost:3000",
+		url: origin,
 		reuseExistingServer: false,
 		timeout: 120_000,
+		env: { ...process.env, TS_E2E_PORT: String(e2ePort) },
 	},
 	projects: [
 		{

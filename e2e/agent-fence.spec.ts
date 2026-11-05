@@ -1,5 +1,7 @@
 import type { Page, Route } from "@playwright/test";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
+
+import { appOrigin } from "../scripts/e2e-port.mjs";
 import {
 	openAgent,
 	paused,
@@ -107,8 +109,8 @@ test("two reloads before a write retire a held request", async ({ page, workspac
 		headers: {
 			"content-type": "application/json",
 			"x-tsr-serverfn": "true",
-			origin: "http://localhost:3000",
-			referer: "http://localhost:3000/agents/support",
+			origin: appOrigin(),
+			referer: `${appOrigin()}/agents/support`,
 		},
 		data: old.body,
 	});

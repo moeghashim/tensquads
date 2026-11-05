@@ -1,7 +1,7 @@
 import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
 import { createCsrfMiddleware, createMiddleware, createStart } from "@tanstack/react-start";
 
-import { authorizedParties } from "#/server/authorized-parties.ts";
+import { partiesForBuild } from "#/server/authorized-parties.ts";
 import { beginDocumentExit } from "#/workspace/session-exit-target.ts";
 
 const csrf = createCsrfMiddleware({
@@ -46,6 +46,7 @@ function loadExitCleanup(error: unknown): Promise<void> {
 
 export const startInstance = createStart(() => {
 	const secret = process.env.CLERK_SECRET_KEY ?? "";
-	const requestMiddleware = secret.length > 0 ? [csrf, clerkMiddleware({ authorizedParties })] : [csrf];
+	const requestMiddleware =
+		secret.length > 0 ? [csrf, clerkMiddleware({ authorizedParties: [...partiesForBuild()] })] : [csrf];
 	return { requestMiddleware, functionMiddleware: [sessionRefresh] };
 });

@@ -1,6 +1,6 @@
 import type { Page, Route } from "@playwright/test";
-
 import { specialAccountCookie, specialAccountValue } from "../apps/web/src/server/special-account.ts";
+import { appOrigin } from "../scripts/e2e-port.mjs";
 import {
 	addCompanySuperAdmin,
 	type ClerkTestUser,
@@ -316,7 +316,7 @@ async function replaysSettled(page: Page, seen: ReplaySeen) {
 }
 
 async function openedAccount(page: Page): Promise<string> {
-	const cookies = await page.context().cookies("http://localhost:3000");
+	const cookies = await page.context().cookies(appOrigin());
 	const value = cookies.find((cookie) => cookie.name === specialAccountCookie)?.value ?? "";
 	const split = value.lastIndexOf(".");
 	if (split <= 0) return "";
@@ -369,7 +369,7 @@ async function setSpecialCookie(page: Page, value: string) {
 		{
 			name: specialAccountCookie,
 			value,
-			url: "http://localhost:3000",
+			url: appOrigin(),
 			httpOnly: true,
 			secure: true,
 			sameSite: "Lax",
