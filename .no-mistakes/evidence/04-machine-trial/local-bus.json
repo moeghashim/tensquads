@@ -1,0 +1,191 @@
+[
+  {
+    "name": "parallel sequence, duplicate refusal and account isolation",
+    "data": {
+      "results": [
+        {
+          "seen": false,
+          "seq": 1
+        },
+        {
+          "seen": false,
+          "seq": 2
+        },
+        {
+          "seen": false,
+          "seq": 3
+        },
+        {
+          "seen": false,
+          "seq": 4
+        },
+        {
+          "seen": false,
+          "seq": 5
+        },
+        {
+          "seen": false,
+          "seq": 6
+        },
+        {
+          "seen": false,
+          "seq": 7
+        },
+        {
+          "seen": false,
+          "seq": 8
+        }
+      ],
+      "duplicate": {
+        "seen": true,
+        "seq": 8
+      },
+      "alpha": {
+        "seq": 8
+      },
+      "beta": {
+        "seq": 1
+      }
+    }
+  },
+  {
+    "name": "shared state and sequence order",
+    "data": {
+      "events": [
+        {
+          "id": "late",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Check local stock",
+          "payload": {},
+          "writes": [
+            "a",
+            "b"
+          ],
+          "time": "23:59",
+          "set": {
+            "a": 1,
+            "b": "two"
+          }
+        },
+        {
+          "id": "early",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Check local stock",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        }
+      ],
+      "store": {
+        "a": 1,
+        "b": "two"
+      }
+    }
+  },
+  {
+    "name": "concurrent real adapter advances",
+    "data": [
+      {
+        "id": "e100",
+        "time": "11:03",
+        "from": "master",
+        "to": "inventory",
+        "kind": "Task",
+        "skill": "stock",
+        "text": "Daily stock check",
+        "payload": {},
+        "writes": [],
+        "trace": "tr_0cac87",
+        "set": {
+          "stock": 1
+        }
+      },
+      {
+        "id": "e101",
+        "time": "11:04",
+        "from": "master",
+        "to": "inventory",
+        "kind": "Task",
+        "skill": "stock",
+        "text": "Daily stock check",
+        "payload": {},
+        "writes": [],
+        "trace": "tr_f9decc",
+        "set": {
+          "stock": 1
+        }
+      }
+    ]
+  },
+  {
+    "name": "queue delivery and single task take",
+    "data": {
+      "taken": [
+        {
+          "id": "queued",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Check local stock",
+          "payload": {},
+          "writes": []
+        }
+      ],
+      "again": []
+    }
+  },
+  {
+    "name": "cross-account, sender spoof and expired token refusal",
+    "data": [
+      {
+        "status": 401,
+        "text": "The token was rejected."
+      },
+      {
+        "status": 401,
+        "text": "The token was rejected."
+      },
+      {
+        "status": 401,
+        "text": "The token was rejected."
+      }
+    ]
+  },
+  {
+    "name": "repeat dead letter creates one escalation",
+    "data": [
+      {
+        "id": "dead-failed",
+        "from": "bus",
+        "to": "master",
+        "kind": "Escalation",
+        "skill": "bus.retry",
+        "text": "A message failed all retries.",
+        "payload": {
+          "messageId": "failed"
+        },
+        "writes": []
+      }
+    ]
+  },
+  {
+    "name": "browser websocket push",
+    "data": {
+      "id": "pushed",
+      "from": "researcher",
+      "to": "researcher",
+      "kind": "Task",
+      "skill": "research",
+      "text": "Check local stock",
+      "payload": {},
+      "writes": []
+    }
+  }
+]

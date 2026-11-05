@@ -1,0 +1,71 @@
+[
+  {
+    "accountId": "past",
+    "response": {
+      "error": "The workspace write did not finish."
+    },
+    "rows": []
+  },
+  {
+    "accountId": "initialization",
+    "response": {
+      "error": "The workspace write did not finish."
+    },
+    "rows": [
+      [
+        "account",
+        "initialization"
+      ],
+      [
+        "seq",
+        0
+      ]
+    ]
+  },
+  {
+    "accountId": "future",
+    "response": {
+      "event": {
+        "id": "e100",
+        "time": "11:03",
+        "from": "master",
+        "to": "inventory",
+        "kind": "Task",
+        "skill": "stock",
+        "text": "Daily stock check",
+        "payload": {},
+        "writes": [],
+        "trace": "tr_0cac87",
+        "set": {
+          "stock": 1
+        }
+      }
+    }
+  },
+  {
+    "accountId": "omitted",
+    "response": {
+      "event": {
+        "id": "e100",
+        "time": "11:03",
+        "from": "master",
+        "to": "inventory",
+        "kind": "Task",
+        "skill": "stock",
+        "text": "Daily stock check",
+        "payload": {},
+        "writes": [],
+        "trace": "tr_0cac87",
+        "set": {
+          "stock": 1
+        }
+      }
+    }
+  },
+  {
+    "accountId": "empty",
+    "response": {
+      "event": null
+    }
+  }
+]

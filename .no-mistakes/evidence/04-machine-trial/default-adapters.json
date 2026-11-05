@@ -1,0 +1,27 @@
+{
+  "config": "ADAPTERS omitted; no service credentials or network fixtures",
+  "paused": {
+    "host": "vps-inventory-01",
+    "cpu": "0%",
+    "uptime": "Paused"
+  },
+  "resumed": "Just started",
+  "events": [
+    {
+      "id": "local-default",
+      "from": "master",
+      "to": "inventory",
+      "kind": "Task",
+      "skill": "stock",
+      "text": "Default mode task",
+      "payload": {},
+      "writes": [],
+      "set": {
+        "stock": 1
+      }
+    }
+  ],
+  "store": {
+    "stock": 1
+  }
+}

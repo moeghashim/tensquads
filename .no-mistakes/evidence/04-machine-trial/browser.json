@@ -1,0 +1,24 @@
+[
+  {
+    "width": 1440,
+    "status": 200,
+    "title": "tensquads homepage",
+    "h1": [
+      "Hire a squad of AI agents to run your business"
+    ],
+    "scrollWidth": 1440
+  },
+  {
+    "width": 390,
+    "status": 200,
+    "title": "tensquads homepage",
+    "h1": [
+      "Hire a squad of AI agents to run your business"
+    ],
+    "scrollWidth": 390
+  },
+  {
+    "trafficUnsignedFinalUrl": "http://127.0.0.1:4317/signin",
+    "text": "tensquads\nNew here?\nStart free\nSign in to tensquads\n\nYour squads kept working while you were away.\n\nEmail\nPassword\nForgot password?\nSign in\nor\nEmail me a sign-in link\n\nBy signing in you agree to the [TERMS] and [PRIVACY POLICY]."
+  }
+]

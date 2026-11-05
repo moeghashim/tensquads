@@ -1,0 +1,904 @@
+{
+  "runtime": "Miniflare/workerd, actual SQLite AccountBus, no external database",
+  "records": [
+    {
+      "path": "/defaults",
+      "status": 200,
+      "request": {},
+      "response": {
+        "paused": {
+          "cpu": "0%",
+          "uptime": "Paused"
+        },
+        "resumed": {
+          "host": "vps-local-agent-01",
+          "uptime": "Just started"
+        },
+        "events": [
+          {
+            "id": "default-event",
+            "from": "master",
+            "to": "orders",
+            "kind": "Task",
+            "skill": "local",
+            "text": "default mode",
+            "payload": {},
+            "writes": []
+          }
+        ]
+      }
+    },
+    {
+      "path": "/selected-next",
+      "status": 200,
+      "request": {},
+      "response": {
+        "id": "e100",
+        "time": "11:03",
+        "from": "master",
+        "to": "inventory",
+        "kind": "Task",
+        "skill": "shopify.stock_levels",
+        "text": "Daily stock check",
+        "payload": {
+          "intent": "stock_check",
+          "threshold": 10
+        },
+        "writes": [],
+        "trace": "tr_0cac87"
+      }
+    },
+    {
+      "path": "/selected-next",
+      "status": 200,
+      "request": {},
+      "response": {
+        "id": "e101",
+        "time": "11:04",
+        "from": "inventory",
+        "to": "master",
+        "kind": "Result",
+        "skill": "shopify.stock_levels",
+        "text": "2 products under 10: Black hoodie M (6), A3 frame (8)",
+        "payload": {
+          "low": [
+            {
+              "sku": "HD-BLK-M",
+              "qty": 6
+            },
+            {
+              "sku": "FR-A3",
+              "qty": 8
+            }
+          ]
+        },
+        "writes": [
+          "inventory.low_stock"
+        ],
+        "trace": "tr_f9decc",
+        "set": {
+          "inventory.low_stock": "[\"Black hoodie M\",\"A3 frame\"]"
+        }
+      }
+    },
+    {
+      "path": "/slow-advance",
+      "status": 200,
+      "request": {
+        "accountId": "slow",
+        "script": [
+          {
+            "from": "master",
+            "to": "researcher",
+            "kind": "Task",
+            "skill": "research",
+            "text": "Check local stock",
+            "payload": {},
+            "writes": [
+              "stock",
+              "ready"
+            ],
+            "set": {
+              "stock": 2,
+              "ready": true
+            }
+          }
+        ],
+        "deadlineAt": 1793877215707
+      },
+      "response": {
+        "accepted": false,
+        "expired": true
+      }
+    },
+    {
+      "path": "/slow-read",
+      "status": 200,
+      "request": {},
+      "response": []
+    },
+    {
+      "path": "/publish",
+      "status": 200,
+      "request": {
+        "accountId": "parallel",
+        "event": {
+          "id": "p0",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "23:59"
+        }
+      },
+      "response": {
+        "seen": false,
+        "seq": 1
+      }
+    },
+    {
+      "path": "/publish",
+      "status": 200,
+      "request": {
+        "accountId": "parallel",
+        "event": {
+          "id": "p1",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        }
+      },
+      "response": {
+        "seen": false,
+        "seq": 2
+      }
+    },
+    {
+      "path": "/publish",
+      "status": 200,
+      "request": {
+        "accountId": "parallel",
+        "event": {
+          "id": "p3",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        }
+      },
+      "response": {
+        "seen": false,
+        "seq": 4
+      }
+    },
+    {
+      "path": "/publish",
+      "status": 200,
+      "request": {
+        "accountId": "parallel",
+        "event": {
+          "id": "p4",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        }
+      },
+      "response": {
+        "seen": false,
+        "seq": 5
+      }
+    },
+    {
+      "path": "/publish",
+      "status": 200,
+      "request": {
+        "accountId": "parallel",
+        "event": {
+          "id": "p5",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        }
+      },
+      "response": {
+        "seen": false,
+        "seq": 6
+      }
+    },
+    {
+      "path": "/publish",
+      "status": 200,
+      "request": {
+        "accountId": "parallel",
+        "event": {
+          "id": "p2",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        }
+      },
+      "response": {
+        "seen": false,
+        "seq": 3
+      }
+    },
+    {
+      "path": "/publish",
+      "status": 200,
+      "request": {
+        "accountId": "parallel",
+        "event": {
+          "id": "p6",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        }
+      },
+      "response": {
+        "seen": false,
+        "seq": 7
+      }
+    },
+    {
+      "path": "/publish",
+      "status": 200,
+      "request": {
+        "accountId": "parallel",
+        "event": {
+          "id": "p7",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        }
+      },
+      "response": {
+        "seen": false,
+        "seq": 8
+      }
+    },
+    {
+      "path": "/publish",
+      "status": 200,
+      "request": {
+        "accountId": "parallel",
+        "event": {
+          "id": "p0",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "set": {
+            "shouldNotExist": true
+          }
+        }
+      },
+      "response": {
+        "seen": true,
+        "seq": 8
+      }
+    },
+    {
+      "account": "parallel",
+      "path": "/local-store",
+      "value": {}
+    },
+    {
+      "account": "parallel",
+      "path": "/local-events",
+      "value": [
+        {
+          "id": "p0",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "23:59"
+        },
+        {
+          "id": "p1",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        },
+        {
+          "id": "p2",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        },
+        {
+          "id": "p3",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        },
+        {
+          "id": "p4",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        },
+        {
+          "id": "p5",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        },
+        {
+          "id": "p6",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        },
+        {
+          "id": "p7",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": [],
+          "time": "00:01"
+        }
+      ]
+    },
+    {
+      "path": "/publish",
+      "status": 200,
+      "request": {
+        "accountId": "separate",
+        "event": {
+          "id": "p0",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": []
+        }
+      },
+      "response": {
+        "seen": false,
+        "seq": 1
+      }
+    },
+    {
+      "path": "/advance",
+      "status": 200,
+      "request": {
+        "accountId": "advance",
+        "script": [
+          {
+            "from": "master",
+            "to": "researcher",
+            "kind": "Task",
+            "skill": "research",
+            "text": "Check local stock",
+            "payload": {},
+            "writes": [
+              "stock",
+              "ready"
+            ],
+            "set": {
+              "stock": 2,
+              "ready": true
+            }
+          }
+        ]
+      },
+      "response": {
+        "accepted": true,
+        "event": {
+          "id": "e100",
+          "time": "11:03",
+          "from": "master",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Check local stock",
+          "payload": {},
+          "writes": [
+            "stock",
+            "ready"
+          ],
+          "trace": "tr_0cac87",
+          "set": {
+            "stock": 2,
+            "ready": true
+          }
+        }
+      }
+    },
+    {
+      "path": "/advance",
+      "status": 200,
+      "request": {
+        "accountId": "advance",
+        "script": [
+          {
+            "from": "master",
+            "to": "researcher",
+            "kind": "Task",
+            "skill": "research",
+            "text": "Check local stock",
+            "payload": {},
+            "writes": [
+              "stock",
+              "ready"
+            ],
+            "set": {
+              "stock": 2,
+              "ready": true
+            }
+          }
+        ]
+      },
+      "response": {
+        "accepted": true,
+        "event": {
+          "id": "e101",
+          "time": "11:04",
+          "from": "master",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Check local stock",
+          "payload": {},
+          "writes": [
+            "stock",
+            "ready"
+          ],
+          "trace": "tr_f9decc",
+          "set": {
+            "stock": 2,
+            "ready": true
+          }
+        }
+      }
+    },
+    {
+      "account": "advance",
+      "path": "/local-store",
+      "value": {
+        "ready": true,
+        "stock": 2
+      }
+    },
+    {
+      "path": "/advance",
+      "status": 200,
+      "request": {
+        "accountId": "advance",
+        "script": []
+      },
+      "response": {
+        "accepted": false
+      }
+    },
+    {
+      "path": "/advance",
+      "status": 200,
+      "request": {
+        "accountId": "expired",
+        "script": [
+          {
+            "from": "master",
+            "to": "researcher",
+            "kind": "Task",
+            "skill": "research",
+            "text": "Check local stock",
+            "payload": {},
+            "writes": [
+              "stock",
+              "ready"
+            ],
+            "set": {
+              "stock": 2,
+              "ready": true
+            }
+          }
+        ],
+        "deadlineAt": 1793877215916
+      },
+      "response": {
+        "accepted": false,
+        "expired": true
+      }
+    },
+    {
+      "account": "expired",
+      "path": "/local-events",
+      "value": []
+    },
+    {
+      "account": "expired",
+      "path": "/seq",
+      "value": {
+        "seq": 0
+      }
+    },
+    {
+      "account": "expired",
+      "path": "/local-store",
+      "value": {}
+    },
+    {
+      "path": "/adapter-advance",
+      "status": 409,
+      "request": {
+        "accountId": "expired",
+        "script": [
+          {
+            "from": "master",
+            "to": "researcher",
+            "kind": "Task",
+            "skill": "research",
+            "text": "Check local stock",
+            "payload": {},
+            "writes": [
+              "stock",
+              "ready"
+            ],
+            "set": {
+              "stock": 2,
+              "ready": true
+            }
+          }
+        ],
+        "deadlineAt": 1
+      },
+      "response": "The workspace write did not finish."
+    },
+    {
+      "path": "/advance",
+      "status": 200,
+      "request": {
+        "accountId": "future",
+        "script": [
+          {
+            "from": "master",
+            "to": "researcher",
+            "kind": "Task",
+            "skill": "research",
+            "text": "Check local stock",
+            "payload": {},
+            "writes": [
+              "stock",
+              "ready"
+            ],
+            "set": {
+              "stock": 2,
+              "ready": true
+            }
+          }
+        ],
+        "deadlineAt": 1793877275931
+      },
+      "response": {
+        "accepted": true,
+        "event": {
+          "id": "e100",
+          "time": "11:03",
+          "from": "master",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Check local stock",
+          "payload": {},
+          "writes": [
+            "stock",
+            "ready"
+          ],
+          "trace": "tr_0cac87",
+          "set": {
+            "stock": 2,
+            "ready": true
+          }
+        }
+      }
+    },
+    {
+      "path": "/machine/send",
+      "status": 200,
+      "request": {
+        "accountId": "machine",
+        "agentId": "researcher",
+        "event": {
+          "id": "queued",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": []
+        }
+      },
+      "response": {
+        "ok": true
+      }
+    },
+    {
+      "account": "machine",
+      "path": "/local-events",
+      "value": [
+        {
+          "id": "queued",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": []
+        }
+      ]
+    },
+    {
+      "path": "/machine/take",
+      "status": 200,
+      "request": {
+        "accountId": "machine",
+        "agentId": "researcher"
+      },
+      "response": [
+        {
+          "id": "queued",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": []
+        }
+      ]
+    },
+    {
+      "path": "/machine/take",
+      "status": 200,
+      "request": {
+        "accountId": "machine",
+        "agentId": "researcher"
+      },
+      "response": []
+    },
+    {
+      "path": "/machine/send",
+      "status": 401,
+      "request": {
+        "accountId": "other",
+        "agentId": "researcher",
+        "event": {
+          "id": "forbidden",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": []
+        }
+      },
+      "response": "The token was rejected."
+    },
+    {
+      "path": "/machine/send",
+      "status": 401,
+      "request": {
+        "accountId": "machine",
+        "agentId": "other",
+        "event": {
+          "id": "forbidden",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": []
+        }
+      },
+      "response": "The token was rejected."
+    },
+    {
+      "path": "/machine/send",
+      "status": 401,
+      "request": {
+        "accountId": "machine",
+        "agentId": "researcher",
+        "event": {
+          "id": "forbidden",
+          "from": "other",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": []
+        }
+      },
+      "response": "The token was rejected."
+    },
+    {
+      "path": "/machine/take",
+      "status": 401,
+      "request": {
+        "accountId": "machine",
+        "agentId": "researcher"
+      },
+      "response": "The token was rejected."
+    },
+    {
+      "path": "/machine/send",
+      "status": 400,
+      "request": {
+        "accountId": "machine",
+        "agentId": "researcher",
+        "event": {
+          "id": "invalid"
+        }
+      },
+      "response": "The message was rejected."
+    },
+    {
+      "path": "/queue",
+      "status": 200,
+      "request": {
+        "queue": "local-dlq",
+        "messages": [
+          {
+            "id": "failed",
+            "body": {
+              "accountId": "dead"
+            }
+          }
+        ]
+      },
+      "response": "ok"
+    },
+    {
+      "path": "/queue",
+      "status": 200,
+      "request": {
+        "queue": "local-dlq",
+        "messages": [
+          {
+            "id": "failed",
+            "body": {
+              "accountId": "dead"
+            }
+          }
+        ]
+      },
+      "response": "ok"
+    },
+    {
+      "account": "dead",
+      "path": "/local-events",
+      "value": [
+        {
+          "id": "dead-failed",
+          "from": "bus",
+          "to": "master",
+          "kind": "Escalation",
+          "skill": "bus.retry",
+          "text": "A message failed all retries.",
+          "payload": {
+            "messageId": "failed"
+          },
+          "writes": []
+        }
+      ]
+    },
+    {
+      "path": "/publish",
+      "status": 200,
+      "request": {
+        "accountId": "socket",
+        "event": {
+          "id": "pushed",
+          "from": "researcher",
+          "to": "researcher",
+          "kind": "Task",
+          "skill": "research",
+          "text": "Local task",
+          "payload": {},
+          "writes": []
+        }
+      },
+      "response": {
+        "seen": false,
+        "seq": 1
+      }
+    },
+    {
+      "account": "socket",
+      "path": "/alarm",
+      "value": {
+        "alarm": 1793877245956
+      }
+    },
+    {
+      "websocket": "pushed received",
+      "pendingAlarm": {
+        "alarm": 1793877245956
+      }
+    }
+  ]
+}
