@@ -1,4 +1,4 @@
-import { createElement, Fragment } from "react";
+import { createElement, Fragment, useSyncExternalStore } from "react";
 
 import { css } from "#/screens/css.ts";
 import { useRefresh, useWorkspacePage } from "#/workspace/context.ts";
@@ -6,6 +6,14 @@ import { decorate } from "#/workspace/event-view.ts";
 import { consumeQueuedEvent, sendNextEvent } from "#/workspace/live.ts";
 import { RoleTag, RouteFaces, Squadmate } from "#/workspace/Squadmate.tsx";
 import { kindStyle } from "#/workspace/styles.ts";
+
+import {
+	pendingTrafficId,
+	publishedTrafficServerSnapshot,
+	publishedTrafficSnapshot,
+	shownTrafficEvents,
+	subscribePublishedTraffic,
+} from "./published.ts";
 
 import {
 	filterStyle,
@@ -53,13 +61,22 @@ const writeChip =
 	"height: 22px; padding: 0 8px; border-radius: 999px; background: #924ff70f; color: #532d8d; font-family: 'JetBrains Mono', monospace; font-size: 11px; display: inline-flex; align-items: center";
 const contents = "display: contents";
 
-export function TrafficPage({ data }: { readonly data: TrafficData }) {
+export function TrafficPage({ data }: { readonly data: TrafficData & { readonly writeAt: number } }) {
 	const { selEvent, setSelEvent, busFilter, setBusFilter, live, setLive } = useWorkspacePage(data.accountId);
 	const refresh = useRefresh();
-	const selectedId = selectedEventId(data.events, selEvent);
+	const pending = useSyncExternalStore(
+		subscribePublishedTraffic,
+		publishedTrafficSnapshot,
+		publishedTrafficServerSnapshot,
+	);
+	const events = shownTrafficEvents(data, pending);
+	const selectedId = selectedEventId(
+		events,
+		selEvent.length > 0 ? selEvent : pendingTrafficId(data.accountId, pending),
+	);
 	const names = agentNames(data.agents);
-	const selected = data.events.find((event) => event.id === selectedId);
-	const rows = visibleEvents(data.events, busFilter);
+	const selected = events.find((event) => event.id === selectedId);
+	const rows = visibleEvents(events, busFilter);
 	const rules = messagingRules(data.masterName);
 	const filters = filterChips(data.agents);
 	const delta = missionDelta(selected?.kind, selected?.skill);
@@ -142,7 +159,7 @@ export function TrafficPage({ data }: { readonly data: TrafficData }) {
 								<HubNode
 									key={agent.id}
 									agent={agent}
-									events={data.events}
+									events={events}
 									selected={busFilter === agent.id}
 									onPick={() => setBusFilter(busFilter === agent.id ? "all" : agent.id)}
 								/>
