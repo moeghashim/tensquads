@@ -6,8 +6,8 @@ type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 
 // Maintenance takes 1952804467 exclusive. An account writer takes that same key shared,
 // then 1952804468 for its account. Two accounts do not wait on each other. A migration
-// waits for every live writer, and a live writer waits for a migration, before either
-// touches a row.
+// with a missing or different revision takes the exclusive key before changing the
+// schema. A current revision needs no advisory lock.
 const globalLock = "SELECT pg_advisory_xact_lock(1952804467, 1)";
 const globalSharedLock = "SELECT pg_advisory_xact_lock_shared(1952804467, 1)";
 
