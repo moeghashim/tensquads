@@ -1,108 +1,154 @@
 {
-  "packageImport": "@tensquads/squadmates",
-  "legacyExactComparisons": 720,
-  "reviewByteContract": "Removing only Sydney card yields byte-for-byte legacy charactersPage() output",
-  "roster": [
+  "results": [
     {
-      "id": "master",
-      "name": "Petra",
-      "place": "Petra, Jordan",
-      "roleTag": null
+      "name": "Review characters: ten named drawings, nine states, small sizes and reduced motion",
+      "result": "pass",
+      "detail": {
+        "cast": [
+          "Petra",
+          "Pisa",
+          "Kyoto",
+          "Rio",
+          "Zurich",
+          "Giza",
+          "Machu",
+          "Angkor",
+          "Delphi",
+          "Sydney"
+        ],
+        "states": 9,
+        "sizes": [
+          16,
+          24,
+          32,
+          48,
+          96
+        ],
+        "reducedMotion": "animation none",
+        "mobile": "no outer horizontal scroll"
+      }
     },
     {
-      "id": "orders",
-      "name": "Pisa",
-      "place": "Pisa, Italy",
-      "roleTag": "Orders"
+      "name": "Choose new and existing business squads: character names, grey role labels, drawings, selection and Petra copy",
+      "result": "pass",
+      "detail": [
+        {
+          "kind": "new",
+          "width": 1440,
+          "choices": [
+            "\n\n\n\n\n\n\nPisaOrders · Fulfilment and trackingReady for your first order",
+            "\n\n\n\n\n\n\nKyotoSupport · Customer inbox and refundsReplies in your voice, refunds under a limit you set",
+            "\n\n\n\n\n\n\nRioMarketing · Ads, social and emailDrafts your launch campaign and first posts",
+            "\n\n\n\n\n\n\nZurichFinance · Payouts, costs and profitWeekly profit summary, bills matched to orders",
+            "\n\n\n\n\n\n\nGizaInventory · Stock and suppliersAdd once you hold stock",
+            "\n\n\n\n\n\n\nMachuMarket researcher · Competitors and positioningFinds your competitors before you launch",
+            "\n\n\n\n\n\n\nAngkorWebsite builder · Landing pages and site updatesBuilds your first landing page from the market report"
+          ],
+          "focus": {
+            "width": "2px",
+            "color": "rgb(1, 105, 204)",
+            "offset": "2px"
+          }
+        },
+        {
+          "kind": "existing",
+          "width": 1440,
+          "choices": [
+            "\n\n\n\n\n\n\nPisaOrders · Fulfilment and trackingSyncs tracking and chases the maker",
+            "\n\n\n\n\n\n\nKyotoSupport · Customer inbox and refundsReplies in your voice, refunds under a limit you set",
+            "\n\n\n\n\n\n\nRioMarketing · Ads, social and emailWatches ad spend and return",
+            "\n\n\n\n\n\n\nZurichFinance · Payouts, costs and profitWeekly profit summary, bills matched to orders",
+            "\n\n\n\n\n\n\nGizaInventory · Stock and suppliersFlags low stock and drafts reorders",
+            "\n\n\n\n\n\n\nMachuMarket researcher · Competitors and positioningWatches how your competitors price and sell",
+            "\n\n\n\n\n\n\nAngkorWebsite builder · Landing pages and site updatesUpdates your site from the market report"
+          ],
+          "focus": {
+            "width": "2px",
+            "color": "rgb(1, 105, 204)",
+            "offset": "2px"
+          }
+        },
+        {
+          "kind": "new",
+          "width": 390,
+          "choices": [
+            "\n\n\n\n\n\n\nPisaOrders · Fulfilment and trackingReady for your first order",
+            "\n\n\n\n\n\n\nKyotoSupport · Customer inbox and refundsReplies in your voice, refunds under a limit you set",
+            "\n\n\n\n\n\n\nRioMarketing · Ads, social and emailDrafts your launch campaign and first posts",
+            "\n\n\n\n\n\n\nZurichFinance · Payouts, costs and profitWeekly profit summary, bills matched to orders",
+            "\n\n\n\n\n\n\nGizaInventory · Stock and suppliersAdd once you hold stock",
+            "\n\n\n\n\n\n\nMachuMarket researcher · Competitors and positioningFinds your competitors before you launch",
+            "\n\n\n\n\n\n\nAngkorWebsite builder · Landing pages and site updatesBuilds your first landing page from the market report"
+          ],
+          "focus": {
+            "width": "2px",
+            "color": "rgb(1, 105, 204)",
+            "offset": "2px"
+          }
+        },
+        {
+          "kind": "existing",
+          "width": 390,
+          "choices": [
+            "\n\n\n\n\n\n\nPisaOrders · Fulfilment and trackingSyncs tracking and chases the maker",
+            "\n\n\n\n\n\n\nKyotoSupport · Customer inbox and refundsReplies in your voice, refunds under a limit you set",
+            "\n\n\n\n\n\n\nRioMarketing · Ads, social and emailWatches ad spend and return",
+            "\n\n\n\n\n\n\nZurichFinance · Payouts, costs and profitWeekly profit summary, bills matched to orders",
+            "\n\n\n\n\n\n\nGizaInventory · Stock and suppliersFlags low stock and drafts reorders",
+            "\n\n\n\n\n\n\nMachuMarket researcher · Competitors and positioningWatches how your competitors price and sell",
+            "\n\n\n\n\n\n\nAngkorWebsite builder · Landing pages and site updatesUpdates your site from the market report"
+          ],
+          "focus": {
+            "width": "2px",
+            "color": "rgb(1, 105, 204)",
+            "offset": "2px"
+          }
+        }
+      ]
     },
     {
-      "id": "support",
-      "name": "Kyoto",
-      "place": "Kyoto, Japan",
-      "roleTag": "Support"
-    },
-    {
-      "id": "marketing",
-      "name": "Rio",
-      "place": "Rio de Janeiro, Brazil",
-      "roleTag": "Marketing"
-    },
-    {
-      "id": "finance",
-      "name": "Zurich",
-      "place": "Zurich, Switzerland",
-      "roleTag": "Finance"
-    },
-    {
-      "id": "inventory",
-      "name": "Giza",
-      "place": "Giza, Egypt",
-      "roleTag": "Inventory"
-    },
-    {
-      "id": "market",
-      "name": "Machu",
-      "place": "Machu Picchu, Peru",
-      "roleTag": "Market researcher"
-    },
-    {
-      "id": "website",
-      "name": "Angkor",
-      "place": "Angkor Wat, Cambodia",
-      "roleTag": "Website builder"
-    },
-    {
-      "id": "analytics",
-      "name": "Delphi",
-      "place": "Delphi, Greece",
-      "roleTag": "Analytics"
-    },
-    {
-      "id": "hr",
-      "name": "Sydney",
-      "place": "Sydney, Australia",
-      "roleTag": "People"
+      "name": "Deselect all squads: zero-selection guard blocks account form and keyboard can restore a squad",
+      "result": "pass",
+      "detail": {
+        "zero": "no account form",
+        "restored": "keyboard selection opens account form"
+      }
     }
   ],
-  "loopStates": [
-    "waiting",
-    "planning",
-    "running",
-    "checking",
-    "done",
-    "sentback",
-    "blocked",
-    "escalated",
-    "dropped"
+  "protectedRoutes": [
+    {
+      "requested": "/overview",
+      "actual": "/signin"
+    },
+    {
+      "requested": "/chat",
+      "actual": "/signin"
+    },
+    {
+      "requested": "/agents",
+      "actual": "/signin"
+    },
+    {
+      "requested": "/agents/support",
+      "actual": "/signin"
+    },
+    {
+      "requested": "/traffic",
+      "actual": "/signin"
+    },
+    {
+      "requested": "/rules",
+      "actual": "/signin"
+    },
+    {
+      "requested": "/admin/images",
+      "actual": "/signin"
+    }
   ],
-  "drawStates": [
-    "idle",
-    "waiting",
-    "planning",
-    "running",
-    "checking",
-    "done",
-    "sentback",
-    "blocked",
-    "escalated",
-    "dropped"
-  ],
-  "unknownIdsRejected": [
-    "legal",
-    "",
-    "__proto__",
-    "constructor",
-    "<script>alert(1)</script>"
-  ],
-  "unknownStatesRejected": [
-    "asleep",
-    "",
-    "__proto__"
-  ],
-  "httpStatus": 200,
-  "browser": "Playwright Chromium, isolated profile",
-  "browserErrors": [],
-  "renderedGridSVGs": 100,
-  "mobileWidth": 390,
-  "mobileHorizontalOverflow": false
+  "pageErrors": [],
+  "environment": {
+    "clerkPublishable": false,
+    "clerkSecret": false,
+    "testDatabase": false
+  }
 }
