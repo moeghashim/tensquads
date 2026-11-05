@@ -1,4 +1,4 @@
-import type { BusKind } from "@tensquads/domain";
+import { knownKind } from "@tensquads/domain";
 import designFile from "../../seed/src/design.json" with { type: "json" };
 
 import type { ScriptedBusEvent } from "./memory-bus.ts";
@@ -12,15 +12,6 @@ interface DesignStep {
 	readonly payload: Readonly<Record<string, unknown>>;
 	readonly writes?: readonly string[];
 	readonly set?: Readonly<Record<string, unknown>>;
-}
-
-const busKinds = ["Task", "Result", "Request", "Relay", "Escalation", "Approval", "Declined"] as const;
-
-function knownKind(kind: string): BusKind {
-	for (const candidate of busKinds) {
-		if (candidate === kind) return candidate;
-	}
-	throw new Error(`The script kind ${kind} is not a bus kind.`);
 }
 
 // The same design script the Neon traffic command steps through.

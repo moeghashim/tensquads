@@ -55,34 +55,40 @@ function expired(deadlineAt?: number): boolean {
 	return deadlineAt !== undefined && Date.now() >= deadlineAt;
 }
 
+function scriptStep(step: unknown): ScriptedBusEvent | undefined {
+	if (!isObject(step)) return undefined;
+	const from = step.from;
+	const to = step.to;
+	const kind = step.kind;
+	const skill = step.skill;
+	const text = step.text;
+	const payload = step.payload;
+	if (!isNonEmptyString(from) || !isNonEmptyString(to) || !isNonEmptyString(kind)) return undefined;
+	if (!isNonEmptyString(skill) || !isNonEmptyString(text) || !isObject(payload)) return undefined;
+	const writes = step.writes === undefined ? [] : step.writes;
+	if (!Array.isArray(writes) || writes.some((key) => typeof key !== "string")) return undefined;
+	if (step.set !== undefined && !isObject(step.set)) return undefined;
+	return {
+		from,
+		to,
+		kind: kind as ScriptedBusEvent["kind"],
+		skill,
+		text,
+		payload,
+		writes: writes as string[],
+		set: isObject(step.set) ? step.set : undefined,
+	};
+}
+
 function advanceBody(
 	body: unknown,
 ): { accountId: string; script: ScriptedBusEvent[]; deadlineAt?: number } | undefined {
 	if (!isObject(body) || !isNonEmptyString(body.accountId) || !Array.isArray(body.script)) return undefined;
 	const script: ScriptedBusEvent[] = [];
 	for (const step of body.script) {
-		if (!isObject(step)) return undefined;
-		const from = step.from;
-		const to = step.to;
-		const kind = step.kind;
-		const skill = step.skill;
-		const text = step.text;
-		const payload = step.payload;
-		if (!isNonEmptyString(from) || !isNonEmptyString(to) || !isNonEmptyString(kind)) return undefined;
-		if (!isNonEmptyString(skill) || !isNonEmptyString(text) || !isObject(payload)) return undefined;
-		const writes = step.writes === undefined ? [] : step.writes;
-		if (!Array.isArray(writes) || writes.some((key) => typeof key !== "string")) return undefined;
-		if (step.set !== undefined && !isObject(step.set)) return undefined;
-		script.push({
-			from,
-			to,
-			kind: kind as ScriptedBusEvent["kind"],
-			skill,
-			text,
-			payload,
-			writes: writes as string[],
-			set: isObject(step.set) ? step.set : undefined,
-		});
+		const parsed = scriptStep(step);
+		if (!parsed) return undefined;
+		script.push(parsed);
 	}
 	const deadlineAt =
 		typeof body.deadlineAt === "number" && Number.isFinite(body.deadlineAt) ? body.deadlineAt : undefined;
