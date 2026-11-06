@@ -5,7 +5,10 @@ import { registerHooks } from "node:module";
 import { test } from "node:test";
 import { isRedirect } from "@tanstack/react-router";
 
-const { authorizedParties, partiesWithLocalPort } = await import("./authorized-parties.ts");
+import { adaptersMode } from "../../adapters-mode.ts";
+import { authorizedOrigin } from "../../authorized-origin.ts";
+
+const { partiesWithLocalPort } = await import("./authorized-parties.ts");
 const { isSessionRefreshNeeded } = await import("./session-error.ts");
 
 const publishableKey = `pk_live_${Buffer.from("clerk.review.example$").toString("base64")}`;
@@ -69,11 +72,16 @@ function mint(claims) {
 	return `${data}.${sign("RSA-SHA256", Buffer.from(data), privateKey).toString("base64url")}`;
 }
 
-async function clerkState(claims) {
+const productionOrigin = "https://tensquads.moe-678.workers.dev";
+const realOrigin = "https://tensquads-real.moe-678.workers.dev";
+const productionParties = [productionOrigin];
+const realParties = [realOrigin];
+
+async function clerkState(claims, parties = productionParties) {
 	const request = new Request("http://localhost:3000/overview", {
 		headers: { cookie: `__client_uat=1; __session=${mint(claims)}`, "sec-fetch-dest": "empty" },
 	});
-	const result = await client.authenticateRequest(request, { authorizedParties: [...authorizedParties] });
+	const result = await client.authenticateRequest(request, { authorizedParties: [...parties] });
 	const auth = result.toAuth();
 	return {
 		status: result.status,
@@ -92,23 +100,50 @@ async function grantsNothing(auth) {
 	);
 }
 
-test("the authorized parties are the app origins", () => {
-	assert.deepEqual([...authorizedParties], ["https://tensquads.moe-678.workers.dev", "http://localhost:3000"]);
+const wrangler = readFileSync(new URL("../../wrangler.jsonc", import.meta.url), "utf8");
+
+test("the production list is the deployed origin", () => {
+	assert.equal(authorizedOrigin(adaptersMode(wrangler, undefined)), productionOrigin);
+	assert.equal(authorizedOrigin(adaptersMode(wrangler, "")), productionOrigin);
+	assert.equal(authorizedOrigin(adaptersMode(wrangler, "staging")), productionOrigin);
+	assert.equal(authorizedOrigin("test"), productionOrigin);
 	const start = readFileSync(new URL("../start.ts", import.meta.url), "utf8");
 	assert.equal(start.includes('from "#/server/authorized-parties.ts"'), true);
 	assert.equal(start.includes("clerkMiddleware({ authorizedParties: [...partiesForBuild()] })"), true);
 	assert.equal(start.includes("10squads.com"), false);
+	const source = readFileSync(new URL("./authorized-parties.ts", import.meta.url), "utf8");
+	assert.equal(source.includes("workers.dev"), false);
+	assert.equal(source.includes("tensquads-real"), false);
+	assert.equal(
+		source.includes(
+			"if (import.meta.env.DEV) return partiesWithLocalPort([__TENSQUADS_AUTHORIZED_ORIGIN__], process.env.TS_E2E_PORT);",
+		),
+		true,
+	);
 });
 
-test("a local test port stays out of the deployed list", () => {
-	assert.deepEqual([...authorizedParties], ["https://tensquads.moe-678.workers.dev", "http://localhost:3000"]);
+test("the real list is the real worker origin", () => {
+	assert.equal(adaptersMode(wrangler, "real"), "real");
+	assert.equal(authorizedOrigin("real"), realOrigin);
+	assert.equal(authorizedOrigin(adaptersMode(wrangler, "real")), realOrigin);
+	assert.equal(realOrigin.includes(productionOrigin), false);
+});
+
+test("a dev build accepts the deployed origin and one local port", () => {
+	const local = "http://localhost:3000";
+	assert.deepEqual([...partiesWithLocalPort(productionParties, undefined)], [productionOrigin, local]);
+	assert.deepEqual([...partiesWithLocalPort(productionParties, "")], [productionOrigin, local]);
+	assert.deepEqual([...partiesWithLocalPort(productionParties, "3000")], [productionOrigin, local]);
 	assert.deepEqual(
-		[...partiesWithLocalPort(authorizedParties, "41234")],
-		["https://tensquads.moe-678.workers.dev", "http://localhost:3000", "http://localhost:41234"],
+		[...partiesWithLocalPort(productionParties, "41234")],
+		[productionOrigin, "http://localhost:41234"],
 	);
-	for (const port of [undefined, "", "3000", "0", "65536", "nope"]) {
-		assert.deepEqual([...partiesWithLocalPort(authorizedParties, port)], [...authorizedParties]);
+	for (const port of ["0", "65536", "nope"]) {
+		assert.deepEqual([...partiesWithLocalPort(productionParties, port)], [productionOrigin, local]);
 	}
+	assert.deepEqual([...partiesWithLocalPort(realParties, undefined)], [realOrigin, local]);
+	assert.deepEqual([...partiesWithLocalPort(realParties, "41234")], [realOrigin, "http://localhost:41234"]);
+	assert.equal(partiesWithLocalPort(realParties, "41234").includes(productionOrigin), false);
 });
 
 test("a foreign azp grants nothing and an app origin still signs in", async () => {
@@ -126,17 +161,43 @@ test("a foreign azp grants nothing and an app origin still signs in", async () =
 			await grantsNothing(customer.auth);
 		}
 
-		for (const [origin, userId] of [
-			["http://localhost:3000", "user_local"],
-			["https://tensquads.moe-678.workers.dev", "user_worker"],
-		]) {
-			const allowed = await clerkState({ azp: origin, sub: userId });
-			assert.equal(allowed.status, "signed-in", `${origin} ${allowed.status} ${allowed.reason}`);
-			assert.equal(allowed.userId, userId);
-			sessionState.request = new Request("http://localhost:3000/overview");
-			sessionState.auth = async () => allowed.auth;
-			assert.equal(await requireClerkUser(), userId);
-		}
+		const blockedLocal = await clerkState({ azp: "http://localhost:3000", sub: "user_local" });
+		assert.equal(blockedLocal.status, "signed-out", `${blockedLocal.status} ${blockedLocal.reason}`);
+		assert.equal(blockedLocal.reason, "token-invalid-authorized-parties");
+		assert.equal(blockedLocal.userId, null);
+		await grantsNothing(blockedLocal.auth);
+
+		const worker = await clerkState({ azp: productionOrigin, sub: "user_worker" });
+		assert.equal(worker.status, "signed-in", `${worker.status} ${worker.reason}`);
+		assert.equal(worker.userId, "user_worker");
+		sessionState.request = new Request("http://localhost:3000/overview");
+		sessionState.auth = async () => worker.auth;
+		assert.equal(await requireClerkUser(), "user_worker");
+
+		const realOnProduction = await clerkState({ azp: realOrigin, sub: "user_real" });
+		assert.equal(realOnProduction.status, "signed-out", `${realOnProduction.status} ${realOnProduction.reason}`);
+		assert.equal(realOnProduction.reason, "token-invalid-authorized-parties");
+		const realWorker = await clerkState({ azp: realOrigin, sub: "user_real" }, realParties);
+		assert.equal(realWorker.status, "signed-in", `${realWorker.status} ${realWorker.reason}`);
+		assert.equal(realWorker.userId, "user_real");
+		const productionOnReal = await clerkState({ azp: productionOrigin, sub: "user_worker" }, realParties);
+		assert.equal(productionOnReal.status, "signed-out", `${productionOnReal.status} ${productionOnReal.reason}`);
+		assert.equal(productionOnReal.reason, "token-invalid-authorized-parties");
+
+		const devParties = partiesWithLocalPort(productionParties, undefined);
+		const local = await clerkState({ azp: "http://localhost:3000", sub: "user_local" }, devParties);
+		assert.equal(local.status, "signed-in", `${local.status} ${local.reason}`);
+		assert.equal(local.userId, "user_local");
+		sessionState.auth = async () => local.auth;
+		assert.equal(await requireClerkUser(), "user_local");
+
+		const customParties = partiesWithLocalPort(productionParties, "41234");
+		const custom = await clerkState({ azp: "http://localhost:41234", sub: "user_custom" }, customParties);
+		assert.equal(custom.status, "signed-in", `${custom.status} ${custom.reason}`);
+		assert.equal(custom.userId, "user_custom");
+		const wrongPort = await clerkState({ azp: "http://localhost:3000", sub: "user_local" }, customParties);
+		assert.equal(wrongPort.status, "signed-out", `${wrongPort.status} ${wrongPort.reason}`);
+		assert.equal(wrongPort.reason, "token-invalid-authorized-parties");
 	} finally {
 		globalThis.fetch = previousFetch;
 	}
