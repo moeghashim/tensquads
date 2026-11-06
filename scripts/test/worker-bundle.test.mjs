@@ -824,9 +824,11 @@ function assertDeployedParties(directory) {
 		.map((path) => readFileSync(path, "utf8"))
 		.join("\n");
 	assert.equal(text.includes("https://tensquads.moe-678.workers.dev"), true);
-	assert.equal(text.includes("http://localhost:3000"), true);
+	// A browser azp for the dev server is http://localhost plus a port.
+	// Library code still contains the host name and http://localhost with no port.
+	assert.equal(/https?:\/\/localhost:\d+/.test(text), false);
 	assert.equal(text.includes("TS_E2E_PORT"), false);
-	assert.equal(/http:\/\/localhost:(?!3000)\d+/.test(text), false);
+	assert.match(text, /authorizedParties = \["https:\/\/tensquads\.moe-678\.workers\.dev"\]/);
 }
 
 function assertWorkerdRejection(fixture, result) {
