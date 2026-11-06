@@ -1,4 +1,7 @@
+export type { BriefGrounding } from "./checks.ts";
 export { checkBrief, checkPage, checkPublished, checkResearch, wordCount } from "./checks.ts";
+export type { GrantQuery, StoredGrant } from "./grant.ts";
+export { GRANT_MS, grantAllows, syntheticGrant } from "./grant.ts";
 export type { MasterSnapshot } from "./loop.ts";
 export { createMaster } from "./loop.ts";
 export { PROOF_PREVIEW_URL, proofStory } from "./proof.ts";

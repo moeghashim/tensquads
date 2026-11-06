@@ -9,6 +9,8 @@ import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./messag
 import { recordMonitorSecret, resolveMonitor, resolveMonitorSecret } from "./monitors.ts";
 import { type MachineTokenDelivery, machineTokenDelivery, verifyMachineToken } from "./token.ts";
 
+const UNKNOWN_MONITOR_SECRET = "tensquads-unknown-monitor";
+
 export interface BusNamespace {
 	idFromName(name: string): unknown;
 	get(id: unknown): { fetch(input: Request | string | URL, init?: RequestInit): Promise<Response> };
@@ -197,14 +199,13 @@ async function verifiedChange(
 	const raw = await request.text();
 	const monitorId = unverifiedMonitorId(raw);
 	const stored = await resolveMonitorSecret(monitorId, env);
-	if (!stored) return rejected();
 	const signed = await verifyContextSignature(
-		stored.secret,
+		stored?.secret ?? UNKNOWN_MONITOR_SECRET,
 		headerValue(request, "x-context-signature"),
 		raw,
 		env.now?.() ?? Date.now(),
 	);
-	if (!signed) return rejected();
+	if (!stored || !signed) return rejected();
 	if (headerValue(request, "x-context-event") !== "change.detected") return rejected();
 	const event = eventFromRaw(raw);
 	if (!event || monitorIdOf(event) !== monitorId) return rejected();

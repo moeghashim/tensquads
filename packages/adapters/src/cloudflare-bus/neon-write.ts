@@ -4,7 +4,7 @@ import { and, asc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { chooseAdapters } from "../adapter-choice.ts";
 import { retryApprovalDeliveries } from "../neon/commands/approval-delivery.ts";
-import { askDetail, siteAgent } from "../neon/commands/master-ask.ts";
+import { askAgent, askDetail, watchAsk } from "../neon/commands/master-ask.ts";
 import type { AppDatabase } from "../neon/postgres.ts";
 import {
 	approvalDeliveries,
@@ -237,6 +237,7 @@ export function writePending(
 						.returning({ id: busEvents.id });
 					await writeState(txn, accountId, row.seq, row.event.set);
 					await projectAsk(txn, accountId, row.seq, row.event);
+					await insertWatch(txn, accountId, row.seq, row.event);
 					if (inserted.length === 0) continue;
 					await countSkillRun(txn, accountId, row.event);
 					await insertPreview(txn, accountId, row.seq, row.event);
@@ -304,11 +305,33 @@ async function projectAsk(
 		.values({
 			accountId,
 			id: event.id,
-			agent: siteAgent,
+			agent: askAgent(event.text),
 			title: event.text,
 			detail,
 			amount: "",
 			status: "Pending",
+			sortOrder: seq,
+		})
+		.onConflictDoNothing();
+}
+
+async function insertWatch(
+	db: Parameters<Parameters<ReturnType<typeof database>["db"]["transaction"]>[0]>[0],
+	accountId: string,
+	seq: number,
+	event: PublishedEvent,
+): Promise<void> {
+	if (event.kind !== "Approval" || event.from !== "master" || event.to !== "user" || event.text !== watchAsk) return;
+	await db.insert(threads).values({ accountId, id: DOCK_THREAD, sortOrder: 0 }).onConflictDoNothing();
+	await db
+		.insert(messages)
+		.values({
+			accountId,
+			threadId: DOCK_THREAD,
+			id: `watch-${event.id}`,
+			fromRole: "master",
+			agent: null,
+			body: event.text,
 			sortOrder: seq,
 		})
 		.onConflictDoNothing();

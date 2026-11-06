@@ -339,3 +339,9 @@ CREATE TABLE IF NOT EXISTS monitor_secrets (
   monitor_id text PRIMARY KEY,
   secret text NOT NULL
 );
+
+ALTER TABLE mandates ADD COLUMN IF NOT EXISTS task_id text;
+ALTER TABLE mandates ADD COLUMN IF NOT EXISTS skill text;
+ALTER TABLE mandates ADD COLUMN IF NOT EXISTS subject text;
+ALTER TABLE mandates ADD COLUMN IF NOT EXISTS slug text;
+ALTER TABLE mandates ADD COLUMN IF NOT EXISTS expires_at timestamptz;

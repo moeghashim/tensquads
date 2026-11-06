@@ -4,6 +4,7 @@ export {
 	catalog,
 	conversation,
 	type LiveStart,
+	machinesDidNotStart,
 	noAgentReply,
 	pausedReply,
 	platform,

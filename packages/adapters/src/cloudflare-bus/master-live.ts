@@ -2,15 +2,19 @@ import {
 	type BusinessRequest,
 	collectRendered,
 	createMaster,
+	type GrantQuery,
 	type MasterSnapshot,
 	type PageAudit,
 	type PageReader,
 	pageDocument,
 	type RenderedPage,
+	type StoredGrant,
+	syntheticGrant,
 } from "@tensquads/domain/master";
 import type { PublishedEvent } from "@tensquads/kernel";
 
 import { chooseAdapters } from "../adapter-choice.ts";
+import { readAccountOwner, readStoredGrant } from "../neon/commands/run-mandate.ts";
 import type { BusObjectEnv } from "./account-bus.ts";
 import { BUSINESS_KEY, parseStoredRequest } from "./account-request.ts";
 import type { MasterPhase } from "./master-commit.ts";
@@ -52,14 +56,36 @@ async function fetchDocument(url: string): Promise<{ status: number; body: strin
 	}
 }
 
-async function requestBrief(load: typeof fetch, key: string, model: string, gap: string): Promise<string> {
+function configured(value: string | undefined): string {
+	return value?.trim() ?? "";
+}
+
+function briefPrompt(gap: string, items: BusinessRequest["items"]): string {
+	const lines = items.map((item) => `${item.name}: ${item.price}`);
+	return [
+		"Write a brief under 150 words.",
+		`Name this gap: ${gap}`,
+		"Use only these items and prices.",
+		...lines,
+	].join("\n");
+}
+
+async function requestBrief(
+	load: typeof fetch,
+	key: string,
+	model: string,
+	effort: string,
+	gap: string,
+	items: BusinessRequest["items"],
+): Promise<string> {
 	try {
 		const response = await load(MODEL_URL, {
 			method: "POST",
 			headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
 			body: JSON.stringify({
 				model,
-				messages: [{ role: "user", content: `Write a brief under 150 words. Name this gap: ${gap}` }],
+				reasoning_effort: effort,
+				messages: [{ role: "user", content: briefPrompt(gap, items) }],
 			}),
 			signal: AbortSignal.timeout(MODEL_MS),
 		});
@@ -71,12 +97,14 @@ async function requestBrief(load: typeof fetch, key: string, model: string, gap:
 	}
 }
 
-function liveBrief(env: BusObjectEnv, report: BriefGap): Promise<string> {
-	const key = env.OPENAI_API_KEY;
-	const model = env.MASTER_MODEL;
+function liveBrief(env: BusObjectEnv, report: BriefGap, request: BusinessRequest): Promise<string> {
+	const key = configured(env.OPENAI_API_KEY);
+	const model = configured(env.MASTER_MODEL);
 	// Moe sets MASTER_MODEL to the cheaper GPT-6 tier. This code has no model default.
 	if (!key || !model) return Promise.reject(new Error(MODEL_GAP));
-	return requestBrief(env.fetchApi ?? fetch, key, model, report.gap).then((content) => {
+	const effort = configured(env.MASTER_REASONING_EFFORT);
+	if (!effort) return Promise.reject(new Error("The reasoning effort is not configured."));
+	return requestBrief(env.fetchApi ?? fetch, key, model, effort, report.gap, request.items).then((content) => {
 		if (!content) throw new Error(MODEL_GAP);
 		return content;
 	});
@@ -106,9 +134,14 @@ function auditOf(env: BusObjectEnv): (html: string) => PageAudit | Promise<PageA
 	return () => ({ keyboard: true, contrast: true, horizontalScroll: false });
 }
 
-function briefOf(env: BusObjectEnv): (report: BriefGap) => string | Promise<string> {
+function briefOf(env: BusObjectEnv, request: BusinessRequest): (report: BriefGap) => string | Promise<string> {
 	if (env.masterWriteBrief) return () => env.masterWriteBrief?.() ?? "";
-	return (report) => liveBrief(env, report);
+	return (report) => liveBrief(env, report, request);
+}
+
+async function loadGrant(env: BusObjectEnv, query: GrantQuery): Promise<StoredGrant | null> {
+	if (!env.DATABASE_URL) return syntheticGrant(query);
+	return readStoredGrant(env.DATABASE_URL, query);
 }
 
 async function launchBrowser(binding: unknown): Promise<RenderSession> {
@@ -173,11 +206,15 @@ export async function openMaster(
 ): Promise<OpenedMaster | null> {
 	if (chooseAdapters(env.ADAPTERS) !== "real") return null;
 	const request = (await storedRequest(storage)) ?? emptyRequest();
+	const ownerId = env.DATABASE_URL ? await readAccountOwner(env.DATABASE_URL, accountId) : "";
 	const master = createMaster(request, {
 		readPage: readPageOf(env),
 		audit: auditOf(env),
-		model: { writeBrief: briefOf(env) },
+		model: { writeBrief: briefOf(env, request) },
 		accountSlug: accountId,
+		accountId,
+		ownerId,
+		loadGrant: (query) => loadGrant(env, query),
 		browser: browserOf(env),
 		recordMonitor: (monitorId: string) => recordMonitor(monitorId, accountId, env),
 	});

@@ -285,9 +285,8 @@ test("the live sequence keeps the thirteen events in order", async () => {
 	const published = result("site.publish", { previewUrl: story.previewUrl, publishedUrl: story.publishedUrl });
 	transcript.push(published);
 	transcript.push(...(await master.accept(published)));
-	const kept = transcript.filter((event) => event.text !== "Publish the page." && event.skill !== "competition.watch");
 	assert.deepEqual(
-		kept.map((event) => `${event.kind}:${event.from}:${event.to}:${event.skill}`),
+		transcript.map((event) => `${event.kind}:${event.from}:${event.to}:${event.skill}`),
 		[
 			"Task:master:market:task.route",
 			"Result:market:master:web.search",
@@ -301,7 +300,9 @@ test("the live sequence keeps the thirteen events in order", async () => {
 			"Result:website:master:site.preview",
 			"Approval:master:user:approval.ask",
 			"Approval:master:website:approval.ask",
+			"Task:master:website:task.route",
 			"Result:website:master:site.publish",
+			"Approval:master:user:competition.watch",
 		],
 	);
 });

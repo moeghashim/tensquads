@@ -82,6 +82,57 @@ test("a live start still hands an ads question to the marketing agent", async ()
 	});
 });
 
+test("a real start calls provisionAgents once and a failure stops the run", async () => {
+	const request = {
+		businessName: "Proof Kitchen",
+		businessType: "restaurant" as const,
+		cuisine: "Levantine",
+		items: [{ name: "Chicken tawook", price: "14", section: "Mains" }],
+	};
+	let calls = 0;
+	let seenAccount = "";
+	let seenExp: Record<string, number> | undefined;
+	const event = await masterStartEvent(
+		{
+			ADAPTERS: "real",
+			provisionAgents: async (_env, accountId, _nowMs, currentExp) => {
+				calls += 1;
+				seenAccount = accountId;
+				seenExp = { ...currentExp };
+				return [{ agentId: "market", rotated: false, exp: currentExp.market ?? 0, profile: "", snapshot: "" }];
+			},
+		},
+		"acct-real",
+		request,
+		{ machineExp: { market: 9999 } },
+		10,
+	);
+	assert.equal(calls, 1);
+	assert.equal(seenAccount, "acct-real");
+	assert.deepEqual(seenExp, { market: 9999 });
+	assert.equal(event.kind, "Task");
+
+	await withCopy("provision-fail", async (db, accountId) => {
+		const kernel = new Kernel(createRepositories(db), {
+			liveStart: async () => {
+				throw new Error("The token is missing.");
+			},
+		});
+		const before = await db.select().from(schema.busEvents).where(eq(schema.busEvents.accountId, accountId));
+		const beforeTasks = before.filter((row) => row.kind === "Task").length;
+		const started = await kernel.beginSend(scope(accountId), restaurant);
+		assert.equal(started.kind, "answered");
+		if (started.kind !== "answered") return;
+		assert.equal(started.messages.at(-1)?.text, "The machines did not start.");
+		assert.equal(
+			started.messages.some((message) => message.text === restaurant),
+			true,
+		);
+		const events = await db.select().from(schema.busEvents).where(eq(schema.busEvents.accountId, accountId));
+		assert.equal(events.filter((row) => row.kind === "Task").length, beforeTasks);
+	});
+});
+
 test("the start event keeps the stored machine expiry map", async () => {
 	const request = {
 		businessName: "Proof Kitchen",

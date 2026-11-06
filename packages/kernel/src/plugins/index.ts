@@ -3,6 +3,7 @@ export { catalog } from "./catalog.ts";
 export {
 	conversation,
 	type LiveStart,
+	machinesDidNotStart,
 	noAgentReply,
 	pausedReply,
 	resultFor,

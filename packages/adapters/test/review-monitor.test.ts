@@ -126,6 +126,27 @@ test("a stored secret verifies", async (t) => {
 	}
 });
 
+test("an unknown monitor still checks the signature", async (t) => {
+	const database = await openPglite();
+	routePool(t, database);
+	let signs = 0;
+	const sign = crypto.subtle.sign.bind(crypto.subtle);
+	t.mock.method(crypto.subtle, "sign", async (...args: Parameters<typeof crypto.subtle.sign>) => {
+		signs += 1;
+		return sign(...args);
+	});
+	try {
+		await seedAccount(database, "acct-hmac");
+		const env: WorkerBindings = { MACHINE_TOKEN_KEY: KEY, DATABASE_URL: url, now: () => now };
+		const unknown = await postChange(env, "acct-hmac", "mon-missing", "secret-right");
+		assert.equal(unknown?.status, 400);
+		assert.equal(await unknown?.text(), "The message was rejected.");
+		assert.equal(signs >= 2, true);
+	} finally {
+		await database.close();
+	}
+});
+
 test("a wrong secret is rejected", async (t) => {
 	const database = await openPglite();
 	routePool(t, database);

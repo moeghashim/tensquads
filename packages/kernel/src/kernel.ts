@@ -207,9 +207,15 @@ export class Kernel {
 		return (this.context.get("platformEvents") as PlatformCommands).openAccount(scope);
 	}
 
-	async decide(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision> {
+	async decide(
+		scope: AccountScope,
+		id: string,
+		ok: boolean,
+		deadlineAt?: number,
+		actorId?: string,
+	): Promise<WrittenDecision> {
 		await this.ready;
-		return this.approvals().decide(scope, id, ok, deadlineAt);
+		return this.approvals().decide(scope, id, ok, deadlineAt, actorId);
 	}
 
 	async decideMission(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision> {

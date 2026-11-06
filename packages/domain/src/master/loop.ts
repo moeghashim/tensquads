@@ -1,8 +1,9 @@
-import { digestOf, type Mandate, type ResearchReport } from "@tensquads/agent-kit";
+import { approvalCovers, digestOf, type Mandate, type ResearchReport, type Skill } from "@tensquads/agent-kit";
 
 import type { BusEvent, BusKind } from "../bus/types.ts";
 import { researchFields } from "../conversation/business-request.ts";
 import { checkBrief, checkPage, checkPublished, checkResearch, readReport } from "./checks.ts";
+import { type GrantQuery, grantAllows, type StoredGrant } from "./grant.ts";
 import type { RenderedPage } from "./render-page.ts";
 import { type BusinessRequest, mandateFor, type PageAudit, type PageReader } from "./types.ts";
 
@@ -16,6 +17,10 @@ export interface MasterPorts {
 	readonly model: BriefModel;
 	readonly mandateAt?: string;
 	readonly accountSlug?: string;
+	readonly accountId?: string;
+	readonly ownerId?: string;
+	readonly now?: string;
+	readonly loadGrant?: (query: GrantQuery) => StoredGrant | null | Promise<StoredGrant | null>;
 	readonly browser?: (html: string) => Promise<RenderedPage>;
 	readonly recordMonitor?: (monitorId: string) => void | Promise<void>;
 }
@@ -31,6 +36,8 @@ export interface MasterSnapshot {
 	readonly researchFails: number;
 	readonly pageFails: number;
 	readonly watchFails?: number;
+	readonly runTaskId?: string;
+	readonly retryPayload?: Readonly<Record<string, unknown>>;
 	readonly seq: number;
 }
 
@@ -43,6 +50,8 @@ interface State {
 	researchFails: number;
 	pageFails: number;
 	watchFails: number;
+	runTaskId: string;
+	retryPayload: Record<string, unknown>;
 }
 
 interface Emitted {
@@ -54,6 +63,20 @@ interface Emitted {
 	readonly payload: Readonly<Record<string, unknown>>;
 	readonly writes?: readonly string[];
 	readonly set?: Readonly<Record<string, unknown>>;
+}
+
+function kitSkill(skill: string): string {
+	if (skill === "website.build") return "site.build";
+	if (skill === "website.publish") return "site.publish";
+	return skill;
+}
+
+function coverSkill(id: string): Skill {
+	return {
+		id,
+		gate: "Ask first",
+		run: () => Promise.resolve({ skill: id, text: "", payload: {}, evidence: [] }),
+	};
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -71,7 +94,14 @@ function watchQuery(request: BusinessRequest): string {
 }
 
 export function createMaster(request: BusinessRequest, ports: MasterPorts) {
-	const state: State = { phase: "research", researchFails: 0, pageFails: 0, watchFails: 0 };
+	const state: State = {
+		phase: "research",
+		researchFails: 0,
+		pageFails: 0,
+		watchFails: 0,
+		runTaskId: "",
+		retryPayload: {},
+	};
 	let seq = 0;
 
 	function nextId(): string {
@@ -117,7 +147,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			kind: "Task",
 			skill: "task.route",
 			text: evidence.join(" "),
-			payload: { evidence },
+			payload: { ...state.retryPayload, evidence },
 		});
 	}
 
@@ -148,9 +178,38 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		return [sendBack("market", evidence)];
 	}
 
+	function remember(payload: Record<string, unknown>): void {
+		state.retryPayload = payload;
+	}
+
+	async function granted(skill: string, subject: string, slug: string | null): Promise<boolean> {
+		if (!ports.loadGrant) return true;
+		const query: GrantQuery = {
+			accountId: ports.accountId ?? "",
+			taskId: state.runTaskId,
+			skill,
+			subject,
+			slug,
+			ownerId: ports.ownerId ?? "",
+			now: ports.now ?? new Date().toISOString(),
+		};
+		const row = await ports.loadGrant(query);
+		if (!row || !grantAllows(row, query)) return false;
+		const id = kitSkill(skill);
+		const mandate = mandateFor({
+			approvalId: "grant",
+			ruleId: "grant",
+			ruleWhen: skill,
+			ruleAction: id,
+			subject: row.subject,
+			at: ports.mandateAt,
+		});
+		return approvalCovers({ skill: id, mandate }, coverSkill(id), row.subject);
+	}
+
 	function start(): BusEvent {
 		const task = researchFields(request);
-		return emit({
+		const event = emit({
 			from: "master",
 			to: "market",
 			kind: "Task",
@@ -160,6 +219,9 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			writes: task.writes,
 			set: task.set,
 		});
+		state.runTaskId = event.id;
+		remember({ ...task.payload });
+		return event;
 	}
 
 	function websiteFields(brief: string, report: ResearchReport): Record<string, unknown> {
@@ -183,7 +245,11 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		const report = readReport(raw);
 		if (!report) return failResearch(["The report was rejected."]);
 		const brief = String(await ports.model.writeBrief(report));
-		const briefCheck = checkBrief(brief, report);
+		const briefCheck = checkBrief(brief, report, {
+			businessName: request.businessName,
+			...(request.cuisine ? { cuisine: request.cuisine } : {}),
+			items: request.items,
+		});
 		if (!briefCheck.pass) {
 			state.phase = "escalated";
 			return [escalation("The brief check failed.", briefCheck.evidence)];
@@ -198,7 +264,12 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 				kind: "Approval",
 				skill: "brief.write",
 				text: "Build the site with this brief?",
-				payload: { brief: { text: brief, gap: report.gap } },
+				payload: {
+					brief: { text: brief, gap: report.gap },
+					taskId: state.runTaskId,
+					skill: "website.build",
+					subject: await digestOf(brief),
+				},
 			}),
 		];
 	}
@@ -208,6 +279,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		if (state.phase !== "brief" || !state.report || !state.brief) return [];
 		const report = state.report;
 		const brief = state.brief;
+		if (!(await granted("website.build", await digestOf(brief), null))) return [];
 		const approvalId = nextId();
 		const mandate: Mandate = mandateFor({
 			approvalId,
@@ -225,16 +297,18 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			text: "The user said yes.",
 			payload: { approval: { skill: "site.build", mandate } },
 		});
+		const taskPayload = {
+			...websiteFields(brief, report),
+			approval: { skill: "site.build", mandate },
+		};
+		remember(taskPayload);
 		const task = emit({
 			from: "master",
 			to: "website",
 			kind: "Task",
 			skill: "task.route",
 			text: `Build the page. ${report.gap} ${report.gapEvidence.sourceUrl}`,
-			payload: {
-				...websiteFields(brief, report),
-				approval: { skill: "site.build", mandate },
-			},
+			payload: taskPayload,
 		});
 		state.phase = "building";
 		return [approval, task];
@@ -270,23 +344,31 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 				kind: "Approval",
 				skill: "approval.ask",
 				text: "Publish the site?",
-				payload: { previewUrl },
+				payload: {
+					previewUrl,
+					taskId: state.runTaskId,
+					skill: "website.publish",
+					subject: await digestOf(result.html),
+					slug: ports.accountSlug ?? "",
+				},
 			}),
 		];
 	}
 
 	async function approvePublish(): Promise<BusEvent[]> {
 		if (state.phase !== "publish" || !state.previewHtml || !state.report || !state.brief) return [];
+		const pageHtml = state.previewHtml;
+		const slug = ports.accountSlug ?? "";
+		if (!(await granted("website.publish", await digestOf(pageHtml), slug))) return [];
 		const approvalId = nextId();
 		const mandate = mandateFor({
 			approvalId,
 			ruleId: "poc-publish",
 			ruleWhen: "The page passed the check.",
 			ruleAction: "site.publish",
-			subject: await digestOf(state.previewHtml),
+			subject: await digestOf(pageHtml),
 			at: ports.mandateAt,
 		});
-		const pageHtml = state.previewHtml;
 		const previewUrl = state.previewUrl ?? "";
 		const approvalBody = { skill: "site.publish", mandate };
 		const approval = make(approvalId, {
@@ -301,20 +383,22 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 				previewUrl,
 			},
 		});
+		const taskPayload = {
+			...websiteFields(state.brief, state.report),
+			approval: approvalBody,
+			mandate,
+			html: pageHtml,
+			pageHtml,
+			previewUrl,
+		};
+		remember(taskPayload);
 		const task = emit({
 			from: "master",
 			to: "website",
 			kind: "Task",
 			skill: "task.route",
 			text: "Publish the page.",
-			payload: {
-				...websiteFields(state.brief, state.report),
-				approval: approvalBody,
-				mandate,
-				html: pageHtml,
-				pageHtml,
-				previewUrl,
-			},
+			payload: taskPayload,
 		});
 		state.phase = "publishing";
 		return [approval, task];
@@ -333,6 +417,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		const result = await checkPublished(state.previewHtml, publishedUrl, ports.readPage, ports.accountSlug ?? "");
 		if (!result.pass) return failPage(result.evidence);
 		state.phase = "watch";
+		const requestText = watchQuery(request);
 		return [
 			emit({
 				from: "master",
@@ -340,13 +425,20 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 				kind: "Approval",
 				skill: "competition.watch",
 				text: "Watch the competitors?",
-				payload: {},
+				payload: {
+					query: requestText,
+					taskId: state.runTaskId,
+					skill: "competition.watch",
+					subject: await digestOf(requestText),
+				},
 			}),
 		];
 	}
 
 	async function approveWatch(): Promise<BusEvent[]> {
 		if (state.phase !== "watch") return [];
+		const requestText = watchQuery(request);
+		if (!(await granted("competition.watch", await digestOf(requestText), null))) return [];
 		const approvalId = nextId();
 		const mandate = mandateFor({
 			approvalId,
@@ -372,6 +464,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			text: "The user said yes.",
 			payload: { approval: approvalBody },
 		});
+		remember(fields);
 		const task = emit({
 			from: "master",
 			to: "market",
@@ -426,6 +519,8 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			researchFails: state.researchFails,
 			pageFails: state.pageFails,
 			watchFails: state.watchFails,
+			runTaskId: state.runTaskId,
+			retryPayload: state.retryPayload,
 			seq,
 		};
 	}
@@ -439,6 +534,8 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		state.researchFails = saved.researchFails;
 		state.pageFails = saved.pageFails;
 		state.watchFails = saved.watchFails ?? 0;
+		state.runTaskId = saved.runTaskId ?? "";
+		state.retryPayload = { ...(saved.retryPayload ?? {}) };
 		seq = saved.seq;
 	}
 

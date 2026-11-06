@@ -32,7 +32,13 @@ export interface PolicyRepository {
 	listApprovals(scope: AccountScope): Promise<readonly Approval[]>;
 	listMissionProposals(scope: AccountScope): Promise<readonly MissionProposal[]>;
 	inbox(scope: AccountScope): Promise<Inbox>;
-	decide(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision>;
+	decide(
+		scope: AccountScope,
+		id: string,
+		ok: boolean,
+		deadlineAt?: number,
+		actorId?: string,
+	): Promise<WrittenDecision>;
 	decideMission(scope: AccountScope, id: string, ok: boolean, deadlineAt?: number): Promise<WrittenDecision>;
 	setRuleOn(
 		scope: AccountScope,

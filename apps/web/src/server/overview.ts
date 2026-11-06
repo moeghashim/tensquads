@@ -70,7 +70,7 @@ function overviewDecision(kind: "decide" | "decideMission") {
 	};
 }
 
-function runOverviewDecision(
+async function runOverviewDecision(
 	kind: "decide" | "decideMission",
 	kernel: Kernel,
 	scope: AccountScope,
@@ -78,5 +78,6 @@ function runOverviewDecision(
 	deadline: number,
 ) {
 	if (kind === "decideMission") return kernel.decideMission(scope, data.id, data.ok, deadline);
-	return kernel.decide(scope, data.id, data.ok, deadline);
+	const { requireClerkUser } = await import("./session.ts");
+	return kernel.decide(scope, data.id, data.ok, deadline, await requireClerkUser());
 }

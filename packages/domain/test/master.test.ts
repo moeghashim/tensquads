@@ -112,6 +112,18 @@ test("the research check rejects a short report and a missing citation", async (
 	assert.equal(offline.evidence.includes("A competitor URL did not return 200."), true);
 });
 
+test("the brief check rejects a price or item that is not on the menu", async () => {
+	const story = await proofStory();
+	const grounding = {
+		businessName: story.request.businessName,
+		cuisine: story.request.cuisine,
+		items: story.request.items,
+	};
+	const lobster = `${story.brief} Sell lobster for $999 and offer free delivery.`;
+	assert.equal(checkBrief(lobster, story.report, grounding).pass, false);
+	assert.equal(checkBrief(story.brief, story.report, grounding).pass, true);
+});
+
 test("the brief check rejects 150 words and a missing gap", async () => {
 	const story = await proofStory();
 	const gapWords = story.report.gap.split(/\s+/).length;

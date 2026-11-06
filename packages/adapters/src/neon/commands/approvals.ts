@@ -24,6 +24,7 @@ import { flushDeliveries, recordDelivery } from "./approval-delivery.ts";
 import { appendEvents } from "./bus.ts";
 import { createMandate } from "./mandates.ts";
 import { masterAsk } from "./master-ask.ts";
+import { insertRunMandate } from "./run-mandate.ts";
 
 type Tx = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
 
@@ -64,6 +65,7 @@ export async function decide(
 	deadlineAt?: number,
 	deliver: DeliverUserEvent = deliverUserToMaster,
 	scheduleRetry?: ScheduleDeliveryRetry,
+	actorId?: string,
 ): Promise<WrittenDecision> {
 	const accountId = accountOf(scope);
 	const decision = await commitDecision(db, accountId, deadlineAt, async (tx) => {
@@ -73,6 +75,12 @@ export async function decide(
 		}
 		const agent = await oneAgent(tx, accountId, approval.agent);
 		if (!agent) throw new Error("The approval names an agent.");
+		if (masterAsk(approval.title)) {
+			const ownerId = await ownerClerk(tx, accountId);
+			if (!ownerId || actorId !== ownerId) {
+				return { id, status: approval.status, count: await countInbox(tx, accountId) };
+			}
+		}
 		const at = new Date();
 		const name = greetingName(await ownerName(tx, accountId));
 		const next = decideApproval({ tasks: agent.tasks, last: agent.lastText }, toApproval(approval), ok);
@@ -112,7 +120,9 @@ export async function decide(
 				at,
 			);
 		}
-		if (ok && !masterAsk(approval.title)) await recordMandate(tx, scope, accountId, approval, name, at);
+		if (ok && masterAsk(approval.title)) {
+			await insertRunMandate(tx as unknown as AppDatabase, accountId, approval, actorId ?? "", at);
+		} else if (ok) await recordMandate(tx, scope, accountId, approval, name, at);
 		return { id, status: next.approval.status, count: await countInbox(tx, accountId) };
 	});
 	if (chooseAdapters(process.env.ADAPTERS) === "real") {
@@ -220,6 +230,11 @@ async function listRules(tx: Tx, accountId: string): Promise<readonly Rule[]> {
 		approval: row.approval,
 		on: row.isOn,
 	}));
+}
+
+async function ownerClerk(tx: Tx, accountId: string): Promise<string> {
+	const rows = await tx.select({ clerkUserId: accounts.clerkUserId }).from(accounts).where(eq(accounts.id, accountId));
+	return rows[0]?.clerkUserId ?? "";
 }
 
 async function ownerName(tx: Tx, accountId: string): Promise<string> {

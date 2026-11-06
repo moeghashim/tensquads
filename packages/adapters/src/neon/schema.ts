@@ -218,6 +218,11 @@ export const mandates = pgTable(
 		policyVersion: text("policy_version").notNull(),
 		saidYes: text("said_yes").notNull(),
 		saidAt: timestamp("said_at", { withTimezone: true }).notNull(),
+		taskId: text("task_id"),
+		skill: text("skill"),
+		subject: text("subject"),
+		slug: text("slug"),
+		expiresAt: timestamp("expires_at", { withTimezone: true }),
 	},
 	(table) => [
 		primaryKey({ columns: [table.accountId, table.approvalId] }),

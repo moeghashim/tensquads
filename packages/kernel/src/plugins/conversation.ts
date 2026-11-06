@@ -33,7 +33,16 @@ export function conversation(
 			const request = config.liveStart ? parseBusinessChat(value) : null;
 			if (request && config.liveStart) {
 				// Start the research before the conversation transaction writes any message.
-				await config.liveStart(checked, request);
+				try {
+					await config.liveStart(checked, request);
+				} catch {
+					return config.repositories().conversation.transaction(checked, async (commands) => {
+						if (await commands.pendingTask()) return { kind: "ignored" };
+						await commands.message("user", value);
+						await commands.message("master", machinesDidNotStart());
+						return { kind: "answered", messages: await commands.messages() };
+					});
+				}
 				return config.repositories().conversation.transaction(checked, async (commands) => {
 					if (await commands.pendingTask()) return { kind: "ignored" };
 					await commands.message("user", value);
@@ -126,6 +135,10 @@ export function skillFor(skills: readonly { readonly id: string; readonly on: bo
 
 export function storedResearchReply(): string {
 	return "I stored this business and started the research.";
+}
+
+export function machinesDidNotStart(): string {
+	return "The machines did not start.";
 }
 
 export function noAgentReply(): string {

@@ -155,19 +155,27 @@ test("a master ask is approved without a policy rule and reaches the master", as
 		const deliver: DeliverUserEvent = async (_accountId, event) => {
 			delivered.push(event);
 		};
-		await decide(db, scope(accountId), "m-01", true, undefined, deliver);
+		await decide(db, scope(accountId), "m-01", true, undefined, deliver, undefined, "clerk-ask");
 		assert.equal(await status(db, accountId, "m-01"), "Approved");
 		assert.equal(delivered.length, 1);
 		assert.equal(delivered[0]?.id, "user-m-01");
 		assert.equal(delivered[0]?.skill, "brief.write");
 		assert.equal(delivered[0]?.kind, "Approval");
 		const mandates = await db
-			.select({ id: schema.mandates.approvalId })
+			.select({
+				id: schema.mandates.approvalId,
+				skill: schema.mandates.skill,
+				saidYes: schema.mandates.saidYes,
+				taskId: schema.mandates.taskId,
+			})
 			.from(schema.mandates)
 			.where(eqAccount(accountId));
-		assert.equal(mandates.length, 0);
+		assert.equal(mandates.length, 1);
+		assert.equal(mandates[0]?.skill, "website.build");
+		assert.equal(mandates[0]?.saidYes, "clerk-ask");
+		assert.equal(mandates[0]?.taskId, "m-01");
 		assert.equal((await deliveries(db, accountId)).length, 0);
-		await decide(db, scope(accountId), "m-01", true, undefined, deliver);
+		await decide(db, scope(accountId), "m-01", true, undefined, deliver, undefined, "clerk-ask");
 		assert.equal(delivered.length, 1);
 	});
 });

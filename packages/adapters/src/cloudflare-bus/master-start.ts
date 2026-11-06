@@ -1,7 +1,18 @@
 import { type BusinessChat, researchStart } from "@tensquads/domain";
 import type { PublishedEvent } from "@tensquads/kernel";
 
-import { type ProvisionEnv, provisionAgents } from "../provision-agents.ts";
+import { type ProvisionEnv, type ProvisionedAgent, provisionAgents } from "../provision-agents.ts";
+
+type StartProvision = (
+	env: ProvisionEnv,
+	accountId: string,
+	nowMs?: number,
+	currentExp?: Readonly<Record<string, number>>,
+) => Promise<readonly ProvisionedAgent[]>;
+
+export interface MasterStartEnv extends ProvisionEnv {
+	readonly provisionAgents?: StartProvision;
+}
 
 export const MACHINE_EXP_KEY = "machineExp";
 
@@ -30,14 +41,15 @@ function machineExpFrom(rows: readonly { readonly agentId: string; readonly exp:
 
 // Always pass the stored map. An omitted map makes provisionAgents rotate every token.
 export async function masterStartEvent(
-	env: ProvisionEnv,
+	env: MasterStartEnv,
 	accountId: string,
 	request: BusinessChat,
 	store: Readonly<Record<string, unknown>>,
 	nowMs: number,
 ): Promise<PublishedEvent> {
 	const currentExp = readMachineExp(store);
-	const rows = await provisionAgents(env, accountId, nowMs, currentExp);
+	const provision = env.provisionAgents ?? provisionAgents;
+	const rows = await provision(env, accountId, nowMs, currentExp);
 	const started = researchStart(request, `business-${accountId}`);
 	return {
 		...started,
