@@ -30,6 +30,10 @@ function masterStubPlugin(): Plugin {
 
 const realMaster = fileURLToPath(new URL("../../packages/domain/src/master/index.ts", import.meta.url));
 
+// A real build keeps the createMaster name so the bundle check can see it.
+// Production does not set CLOUDFLARE_ENV, so its build options stay as they are.
+const realNames = process.env.CLOUDFLARE_ENV === "real" ? { esbuild: { keepNames: true } } : {};
+
 const config = defineConfig({
 	define: {
 		__TENSQUADS_AUTHORIZED_ORIGIN__: JSON.stringify(deployedOrigin),
@@ -38,6 +42,7 @@ const config = defineConfig({
 	// stub for tsc only. That map must not reach the bundle.
 	resolve: { alias: [{ find: "@tensquads/domain/master", replacement: realMaster }] },
 	plugins: [masterStubPlugin(), cloudflare({ viteEnvironment: { name: "ssr" } }), tanstackStart(), viteReact()],
+	...realNames,
 });
 
 export default config;

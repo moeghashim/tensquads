@@ -21,6 +21,9 @@
 		"preview:cloudflare": "npm run cf:preview -w @tensquads/web",
 		"build:cloudflare": "npm run cf:build -w @tensquads/web",
 		"deploy:cloudflare": "npm run cf:deploy -w @tensquads/web",
+		"deploy:cloudflare:real": "node scripts/deploy-cloudflare-real.mjs",
+		"real:secrets-check": "node scripts/real-secrets-check.mjs",
+		"real:bootstrap": "node --experimental-strip-types scripts/real-bootstrap.mjs",
 		"typegen:cloudflare": "npm run cf:typegen -w @tensquads/web",
 		"preflight:native-deps": "node scripts/preflight-native-deps.mjs",
 		"check": "npm run preflight:native-deps && biome check --error-on-warnings . && node scripts/check-file-length.mjs && node scripts/typecheck.mjs && node scripts/run-workspaces.mjs check",
@@ -45,6 +48,7 @@
 		"fallow": "3.37.0",
 		"husky": "^9.1.7",
 		"miniflare": "5.20261023.1-beta",
+		"pg-connection-string": "2.5.0",
 		"typescript": "7.0.2",
 		"yaml": "2.9.1"
 	},
