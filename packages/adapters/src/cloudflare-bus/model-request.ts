@@ -1,7 +1,7 @@
 const MODEL_URL = "https://api.openai.com/v1/chat/completions";
 const MODEL_MS = 15_000;
 
-export function modelChatBody(model: string, effort: string, gap: string) {
+function modelChatBody(model: string, effort: string, gap: string) {
 	return {
 		model,
 		...(effort ? { reasoning_effort: effort } : {}),

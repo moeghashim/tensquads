@@ -5,6 +5,7 @@ import {
 	type CreateSandboxRequest,
 	ResponseError,
 	type Sandbox,
+	type SandboxEnvironment,
 	waitUntilReady,
 } from "@boatdev/sdk";
 import type { AccountMachine, AccountScope, MachineTemplate, StartedMachine } from "@tensquads/kernel";
@@ -274,14 +275,7 @@ async function setMachineToken(ctx: BoatContext, scope: AccountScope, agentId: s
 	if (!admin || !ctx.secretBaseUrl) throw notConfigured("The secret registration is not configured.");
 	const profile = machineCredentialProfile(scope.accountId, agentId);
 	const baseUrl = ctx.secretBaseUrl;
-	const listed = await call(() => admin.listCredentialProfiles());
-	if (!listed.profiles.some((row) => row.name === profile)) {
-		await call(() =>
-			admin.createCredentialProfile({
-				createCredentialProfileRequest: { name: profile, copyFrom: ctx.profileName },
-			}),
-		);
-	}
+	await ensureCredentialProfile(admin, profile, ctx.profileName);
 	await call(() =>
 		admin.setCredentialProfileCustomApi({
 			profile,
@@ -293,6 +287,62 @@ async function setMachineToken(ctx: BoatContext, scope: AccountScope, agentId: s
 
 const ENVIRONMENT_NAME_LIMIT = 64;
 const flights = new Map<string, Promise<unknown>>();
+
+async function ensureCredentialProfile(admin: BoatApi, profile: string, copyFrom: string): Promise<void> {
+	const listed = await call(() => admin.listCredentialProfiles());
+	if (listed.profiles.some((row) => row.name === profile)) return;
+	await call(() =>
+		admin.createCredentialProfile({
+			createCredentialProfileRequest: { name: profile, copyFrom },
+		}),
+	);
+}
+
+function environmentByName(environments: readonly SandboxEnvironment[], name: string): SandboxEnvironment | undefined {
+	return environments.find((row) => row.name === name);
+}
+
+async function createNamedEnvironment(admin: BoatApi, profile: string): Promise<SandboxEnvironment | undefined> {
+	try {
+		const created = await admin.createEnvironment({ createSandboxEnvironmentRequest: { name: profile } });
+		return environmentByName(created.environments, profile);
+	} catch (error) {
+		if (!(error instanceof ResponseError)) return asFault(error, false);
+		const facts = await readErrorBody(error.response);
+		if (facts.status !== 409 || facts.code !== "already_exists") throw faultFromStatus(facts, false);
+		const again = await call(() => admin.environments());
+		return environmentByName(again.environments, profile);
+	}
+}
+
+async function ensureNamedEnvironment(admin: BoatApi, profile: string): Promise<SandboxEnvironment> {
+	const found = await call(() => admin.environments());
+	const environment = environmentByName(found.environments, profile) ?? (await createNamedEnvironment(admin, profile));
+	if (!environment?.id) throw notConfigured("The secret registration is not configured.");
+	return environment;
+}
+
+function environmentAttached(environment: SandboxEnvironment, profile: string): boolean {
+	return (
+		environment.credentialProfileId === profile &&
+		environment.safeForThirdParties === true &&
+		environment.proxyAiCredentials === true
+	);
+}
+
+async function attachEnvironment(admin: BoatApi, environment: SandboxEnvironment, profile: string): Promise<void> {
+	if (environmentAttached(environment, profile)) return;
+	await call(() =>
+		admin.updateEnvironment({
+			environmentId: environment.id,
+			updateSandboxEnvironmentRequest: {
+				credentialProfileId: profile,
+				safeForThirdParties: true,
+				proxyAiCredentials: true,
+			},
+		}),
+	);
+}
 
 function flightKey(scope: AccountScope, agentId: string): string {
 	return `${scope.accountId}:${agentId}`;
@@ -313,46 +363,8 @@ async function agentEnvironment(ctx: BoatContext, scope: AccountScope, agentId: 
 	if (profile.length > ENVIRONMENT_NAME_LIMIT) throw notConfigured("The machine profile name is not valid.");
 	const admin = ctx.admin;
 	if (!admin || !ctx.secretBaseUrl) throw notConfigured("The secret registration is not configured.");
-	const listed = await call(() => admin.listCredentialProfiles());
-	if (!listed.profiles.some((row) => row.name === profile)) {
-		await call(() =>
-			admin.createCredentialProfile({
-				createCredentialProfileRequest: { name: profile, copyFrom: ctx.profileName },
-			}),
-		);
-	}
-	const found = await call(() => admin.environments());
-	let environment = found.environments.find((row) => row.name === profile);
-	if (!environment) {
-		try {
-			const created = await admin.createEnvironment({ createSandboxEnvironmentRequest: { name: profile } });
-			environment = created.environments.find((row) => row.name === profile);
-		} catch (error) {
-			if (!(error instanceof ResponseError)) return asFault(error, false);
-			const facts = await readErrorBody(error.response);
-			if (facts.status !== 409 || facts.code !== "already_exists") throw faultFromStatus(facts, false);
-			const again = await call(() => admin.environments());
-			environment = again.environments.find((row) => row.name === profile);
-		}
-	}
-	const pinned = environment;
-	if (!pinned?.id) throw notConfigured("The secret registration is not configured.");
-	const attached =
-		pinned.credentialProfileId === profile &&
-		pinned.safeForThirdParties === true &&
-		pinned.proxyAiCredentials === true;
-	if (!attached) {
-		await call(() =>
-			admin.updateEnvironment({
-				environmentId: pinned.id,
-				updateSandboxEnvironmentRequest: {
-					credentialProfileId: profile,
-					safeForThirdParties: true,
-					proxyAiCredentials: true,
-				},
-			}),
-		);
-	}
+	await ensureCredentialProfile(admin, profile, ctx.profileName);
+	await attachEnvironment(admin, await ensureNamedEnvironment(admin, profile), profile);
 	return profile;
 }
 
