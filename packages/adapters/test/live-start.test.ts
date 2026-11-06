@@ -140,11 +140,15 @@ test("the start event keeps the stored machine expiry map", async () => {
 		cuisine: "Levantine",
 		items: [{ name: "Chicken tawook", price: "14", section: "Mains" }],
 	};
-	const event = await masterStartEvent({ ADAPTERS: "real" }, "proof", request, { machineExp: { market: 9999 } }, 10);
+	const event = await masterStartEvent({ ADAPTERS: "test" }, "proof", request, { machineExp: { market: 9999 } }, 10);
 	assert.equal(event.kind, "Task");
 	assert.equal(event.id, "business-proof");
 	assert.deepEqual(event.set?.business, request);
-	assert.deepEqual(event.set?.machineExp, { market: 9999 });
+	assert.deepEqual(event.set?.machineExp, { market: 9999, website: 0 });
 	const empty = await masterStartEvent({}, "proof", request, {}, 10);
-	assert.deepEqual(empty.set?.machineExp, {});
+	assert.deepEqual(empty.set?.machineExp, { market: 0, website: 0 });
+	await assert.rejects(
+		() => masterStartEvent({ ADAPTERS: "real" }, "proof", request, { machineExp: { market: 9999 } }, 10),
+		/The machine service is not configured\./,
+	);
 });

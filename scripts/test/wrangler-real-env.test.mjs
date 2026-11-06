@@ -27,6 +27,7 @@ const configBindings = new Set([
 	"BUS_QUEUE",
 	"CLERK_PLATFORM_ORG_ID",
 	"MASTER_MODEL",
+	"MASTER_REASONING_EFFORT",
 ]);
 
 function parseWrangler(text) {
@@ -135,6 +136,7 @@ test("env.real declares every binding the real Worker reads and shares no queue 
 	});
 	assert.equal(config.browser, undefined);
 	assert.equal(Object.hasOwn(config.vars, "MASTER_MODEL"), false);
+	assert.equal(Object.hasOwn(config.vars, "MASTER_REASONING_EFFORT"), false);
 	assert.deepEqual(config.durable_objects, {
 		bindings: [{ name: "ACCOUNT_BUS", class_name: "AccountBus" }],
 	});
@@ -155,7 +157,8 @@ test("env.real declares every binding the real Worker reads and shares no queue 
 		BOAT_SECRET_BASE_URL: declared.vars.BOAT_SECRET_BASE_URL,
 		BUS_DEAD_LETTER: "tensquads-real-bus-dlq",
 		CLERK_PLATFORM_ORG_ID: orgId,
-		MASTER_MODEL: "",
+		MASTER_MODEL: "gpt-6-luna",
+		MASTER_REASONING_EFFORT: "medium",
 	});
 	assert.deepEqual(real.durable_objects, {
 		bindings: [{ name: "ACCOUNT_BUS", class_name: "AccountBus" }],
