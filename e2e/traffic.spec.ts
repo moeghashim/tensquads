@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import AxeBuilder from "@axe-core/playwright";
-import type { Page } from "@playwright/test";
+import type { Page, Response } from "@playwright/test";
 import { openPostgres, schema } from "@tensquads/adapters";
 import { and, asc, eq } from "drizzle-orm";
 import { compareInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
@@ -357,9 +357,11 @@ test("a hung send clears and the next click adds the event", async ({ page, work
 	try {
 		await page.getByRole("button", { name: "Send next event" }).click();
 		await expect.poll(() => release !== undefined).toBe(true);
+		const refreshed = page.waitForResponse(isTrafficLoad, { timeout: 20_000 });
 		await page.clock.fastForward(30_100);
-		// The fake clock does not advance this wait. The aborted send refreshes before the guard clears.
-		await new Promise((resolve) => setTimeout(resolve, 1000));
+		// Real timers run again. The guard clears when this refresh lands, not after a fixed wait.
+		await page.clock.resume();
+		await refreshed;
 		await page.getByRole("button", { name: "Send next event" }).click();
 		await expect.poll(async () => (await generatedEvents(accountId)).length, { timeout: 20_000 }).toBe(1);
 	} finally {
@@ -426,6 +428,26 @@ async function trafficViolations(page: Page) {
 		.exclude(`[data-design-contrast='${squadmateRoleTagContrast}']`)
 		.analyze();
 	return [...full.violations, ...scroll.violations, ...contrast.violations];
+}
+
+// A server function URL carries its file and export as base64 JSON.
+function isTrafficLoad(response: Response): boolean {
+	if (response.request().method() !== "GET") return false;
+	try {
+		const segment = new URL(response.url()).pathname.split("/").at(-1) ?? "";
+		const decoded = JSON.parse(Buffer.from(segment, "base64").toString("utf8")) as {
+			file?: unknown;
+			export?: unknown;
+		};
+		return (
+			typeof decoded.file === "string" &&
+			decoded.file.includes("/server/traffic.ts") &&
+			typeof decoded.export === "string" &&
+			decoded.export.startsWith("loadTraffic")
+		);
+	} catch {
+		return false;
+	}
 }
 
 async function waitForSendHandler(page: Page) {
