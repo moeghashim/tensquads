@@ -41,7 +41,6 @@ test("a Result runs the master only when adapters are real", async () => {
 	const ports = {
 		masterReadPage: async (url: string) => story.pages[url] ?? { status: 404, body: "" },
 		masterAudit: () => story.audit,
-		masterWriteBrief: () => story.prose,
 	};
 	const event = reportEvent(story.report);
 	const quiet = objectBus(ports);

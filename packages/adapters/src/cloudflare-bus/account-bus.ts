@@ -72,7 +72,6 @@ export interface BusObjectEnv extends HeartbeatEnv {
 	readonly BUS_INSPECT?: string;
 	readonly masterReadPage?: (url: string) => Promise<{ status: number; body: string }>;
 	readonly masterAudit?: (html: string) => PageAuditInput | Promise<PageAuditInput>;
-	readonly masterWriteBrief?: (report?: { readonly gap: string }) => string | Promise<string>;
 	readonly masterBrowser?: (html: string) => Promise<RenderedCheck>;
 	readonly BROWSER?: unknown;
 	readonly OPENAI_API_KEY?: string;

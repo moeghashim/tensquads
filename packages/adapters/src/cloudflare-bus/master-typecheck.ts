@@ -63,7 +63,6 @@ export function syntheticGrant(query: GrantQuery): StoredGrant {
 export interface MasterPorts {
 	readonly readPage: PageReader;
 	readonly audit: (html: string) => PageAudit | Promise<PageAudit>;
-	readonly model: { writeBrief(report: { readonly gap: string }): string | Promise<string> };
 	readonly mandateAt?: string;
 	readonly accountSlug?: string;
 	readonly accountId?: string;
@@ -117,8 +116,11 @@ export function collectRendered(): RenderedPage {
 
 export interface ProofStory {
 	readonly request: BusinessRequest;
-	readonly report: { readonly gap: string };
-	readonly prose: string;
+	readonly report: {
+		readonly gap: string;
+		readonly sources: readonly string[];
+		readonly gapEvidence: { readonly sourceUrl: string; readonly quote: string };
+	};
 	readonly brief: string;
 	readonly pageHtml: string;
 	readonly choice: unknown;
@@ -127,6 +129,10 @@ export interface ProofStory {
 	readonly events: readonly unknown[];
 	readonly pages: Record<string, { status: number; body: string }>;
 	readonly audit: PageAudit;
+}
+
+export function renderItemSection(items: readonly { readonly name: string; readonly price: string }[]): string {
+	return items.map((item) => `${item.name}: ${item.price}`).join("\n");
 }
 
 export function proofStory(): Promise<ProofStory> {

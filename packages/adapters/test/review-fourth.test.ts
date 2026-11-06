@@ -52,7 +52,6 @@ async function setup(id: string, story: Story) {
 	const env: BusObjectEnv = {
 		ADAPTERS: "real",
 		masterReadPage: async (url: string) => story.pages[url] ?? { status: 404, body: "" },
-		masterWriteBrief: () => story.prose,
 		masterBrowser: async () => layout,
 	};
 	const target = new AccountBus({ storage, acceptWebSocket() {}, getWebSockets: () => [] }, env);
@@ -160,7 +159,6 @@ test("live fetch rejects a response whose bytes add a BOM", async () => {
 		const master = await openMaster(
 			{
 				ADAPTERS: "real",
-				masterWriteBrief: () => story.prose,
 				masterBrowser: async () => layout,
 			},
 			"fourth-bom",

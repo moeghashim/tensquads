@@ -10,11 +10,12 @@ import {
 } from "@tensquads/agent-kit";
 
 import { pageLinks } from "./hrefs.ts";
+import { NO_FINDING_TEXT } from "./no-finding.ts";
 import { NO_ITEMS_TEXT } from "./no-items.ts";
 import type { RenderedPage } from "./render-page.ts";
 import type { CheckOutcome, PageAudit, PageFetch, PageReader } from "./types.ts";
 
-export { NO_ITEMS_TEXT };
+export { NO_FINDING_TEXT, NO_ITEMS_TEXT };
 
 export interface PageCheckInput {
 	readonly previewUrl: string;
@@ -37,12 +38,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function outcome(evidence: string[]): CheckOutcome {
 	return { pass: evidence.length === 0, evidence };
-}
-
-export function wordCount(text: string): number {
-	const trimmed = text.trim();
-	if (trimmed.length === 0) return 0;
-	return trimmed.split(/\s+/).length;
 }
 
 function textList(value: unknown): string[] | null {
@@ -153,12 +148,6 @@ export async function checkResearch(report: unknown, readPage: PageReader): Prom
 	return outcome(evidence);
 }
 
-export interface BriefGrounding {
-	readonly businessName: string;
-	readonly cuisine?: string;
-	readonly items: readonly ListedItem[];
-}
-
 export function emptyMenu(businessName: string, items: readonly unknown[]): boolean {
 	return businessName.trim().length === 0 || items.length === 0;
 }
@@ -167,56 +156,29 @@ export function renderItemSection(items: readonly { readonly name: string; reado
 	return items.map((item) => `${item.name}: ${item.price}`).join("\n");
 }
 
-export function assembleBrief(
-	prose: string,
-	items: readonly { readonly name: string; readonly price: string }[],
-): string {
-	const section = renderItemSection(items);
-	const body = prose.trim();
-	if (section.length === 0) return body;
-	if (body.length === 0) return section;
-	return `${body}\n${section}`;
+export interface BriefParts {
+	readonly businessName: string;
+	readonly businessType: BusinessType;
+	readonly finding: string;
+	readonly sources: readonly string[];
+	readonly items: readonly { readonly name: string; readonly price: string }[];
 }
 
-const CURRENCY = ["dollar", "dollars", "usd", "euro", "euros", "pound", "pounds", "yen", "cent", "cents"] as const;
-const OFFER_WORDS = ["free", "off", "deal", "offer", "discount", "bogo"] as const;
-
-function hasWord(text: string, word: string): boolean {
-	return new RegExp(`\\b${word}\\b`, "i").test(text);
-}
-
-function namesPrice(text: string): boolean {
-	if (text.includes("$")) return true;
-	if (/\d+\.(?:00|99)\b/.test(text)) return true;
-	return CURRENCY.some((word) => hasWord(text, word));
-}
-
-function namesOffer(text: string): boolean {
-	const lower = text.toLowerCase();
-	if (lower.includes("%")) return true;
-	if (lower.includes("buy one")) return true;
-	return OFFER_WORDS.some((word) => hasWord(text, word));
-}
-
-function namesItem(text: string, items: BriefGrounding["items"]): boolean {
-	const lower = text.toLowerCase();
-	return items.some((item) => {
-		const name = item.name.trim().toLowerCase();
-		return name.length > 0 && lower.includes(name);
-	});
-}
-
-export function checkBrief(brief: string, report: ResearchReport, grounding?: BriefGrounding): CheckOutcome {
-	const evidence: string[] = [];
-	if (wordCount(brief) >= 150) evidence.push("The brief is 150 words or more.");
-	if (!brief.includes(report.gap)) evidence.push("The brief does not name the gap.");
-	if (grounding) {
-		if (emptyMenu(grounding.businessName, grounding.items)) evidence.push(NO_ITEMS_TEXT);
-		if (namesPrice(brief)) evidence.push("The brief names a price.");
-		if (namesOffer(brief)) evidence.push("The brief adds an offer.");
-		if (namesItem(brief, grounding.items)) evidence.push("The brief names an item.");
-	}
-	return outcome(evidence);
+// The brief is built by code only. No model text goes into it.
+export function briefText(parts: BriefParts): string {
+	return [
+		`Business: ${parts.businessName}`,
+		`Type: ${parts.businessType}`,
+		"",
+		"What the research found:",
+		parts.finding,
+		"",
+		"Sources:",
+		...parts.sources,
+		"",
+		"Menu:",
+		renderItemSection(parts.items),
+	].join("\n");
 }
 
 const failedLayout: PageAudit = { keyboard: false, contrast: false, horizontalScroll: true };

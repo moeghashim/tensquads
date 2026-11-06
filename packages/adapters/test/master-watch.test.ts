@@ -144,7 +144,6 @@ test("the owner can approve competitor watching", async (t) => {
 			{
 				readPage: async () => ({ status: 404, body: "" }),
 				audit: () => ({ keyboard: true, contrast: true, horizontalScroll: false }),
-				model: { writeBrief: () => "" },
 				accountId,
 				ownerId: "clerk-watch",
 				now: grant.saidAt,

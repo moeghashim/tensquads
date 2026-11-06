@@ -1,20 +1,21 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 
 import type { BusEvent } from "../src/bus/types.ts";
-import { checkBrief } from "../src/master/checks.ts";
+import { renderItemSection } from "../src/master/checks.ts";
 import { createMaster } from "../src/master/loop.ts";
 import { proofStory } from "../src/master/proof.ts";
 import type { BusinessRequest, PageReader } from "../src/master/types.ts";
 
-const PROSE = "Proof Kitchen serves Levantine food. Competitors list a salad price. The menu hides salad prices.";
 const NO_ITEMS = "The business has no items to show.";
+const NO_FINDING = "The research has no finding to show.";
 
 function reader(pages: Record<string, { status: number; body: string }>): PageReader {
 	return async (url) => pages[url] ?? { status: 404, body: "" };
 }
 
-function report(story: Awaited<ReturnType<typeof proofStory>>): BusEvent {
+function reportEvent(report: unknown): BusEvent {
 	return {
 		id: "ground-report",
 		time: "12:00",
@@ -23,13 +24,13 @@ function report(story: Awaited<ReturnType<typeof proofStory>>): BusEvent {
 		kind: "Result",
 		skill: "report.write",
 		text: "report.write",
-		payload: { report: story.report },
+		payload: { report },
 		writes: [],
 		trace: "tr_ground",
 	};
 }
 
-function briefText(event: BusEvent | undefined): string {
+function briefOf(event: BusEvent | undefined): string {
 	const brief = event?.payload.brief;
 	assert.equal(brief !== null && typeof brief === "object", true);
 	const text = (brief as { text?: unknown }).text;
@@ -37,32 +38,42 @@ function briefText(event: BusEvent | undefined): string {
 	return text as string;
 }
 
-test("the prose check refuses a price, an offer, and an owner item", async () => {
+// The brief must equal this template, byte for byte. Each line is built from the stored business and report.
+function expectedBrief(
+	request: BusinessRequest,
+	report: { gap: string; gapEvidence: { sourceUrl: string }; sources: readonly string[] },
+): string {
+	return [
+		`Business: ${request.businessName}`,
+		`Type: ${request.businessType}`,
+		"",
+		"What the research found:",
+		`${report.gap} ${report.gapEvidence.sourceUrl}`,
+		"",
+		"Sources:",
+		...report.sources,
+		"",
+		"Menu:",
+		renderItemSection(request.items),
+	].join("\n");
+}
+
+function sha256(text: string): string {
+	return createHash("sha256").update(text, "utf8").digest("hex");
+}
+
+test("the brief text is the code template, byte for byte, and the approval subject is its sha256", async () => {
 	const story = await proofStory();
-	const grounding = {
-		businessName: story.request.businessName,
-		cuisine: story.request.cuisine,
-		items: story.request.items,
-	};
-	const gap = story.report.gap;
-	const price = checkBrief(`${gap} A plate is 12.00.`, story.report, grounding);
-	assert.equal(price.pass, false);
-	assert.equal(price.evidence.includes("The brief names a price."), true);
-	const percent = checkBrief(`${gap} Ask for 20% off.`, story.report, grounding);
-	assert.equal(percent.pass, false);
-	assert.equal(percent.evidence.includes("The brief adds an offer."), true);
-	const bogo = checkBrief(`${gap} The board says BOGO.`, story.report, grounding);
-	assert.equal(bogo.pass, false);
-	assert.equal(bogo.evidence.includes("The brief adds an offer."), true);
-	const tawook = checkBrief(`${gap} Chicken tawook at 999.`, story.report, grounding);
-	assert.equal(tawook.pass, false);
-	assert.equal(tawook.evidence.includes("The brief names an item."), true);
-	const fattoush = checkBrief(`${gap} Chicken Fattoush.`, story.report, grounding);
-	assert.equal(fattoush.pass, false);
-	assert.equal(fattoush.evidence.includes("The brief names an item."), true);
-	const lobster = checkBrief(`${gap} Sell lobster for $999 and offer free delivery.`, story.report, grounding);
-	assert.equal(lobster.pass, false);
-	assert.equal(checkBrief(PROSE, story.report, grounding).pass, true);
+	const master = createMaster(story.request, {
+		readPage: reader(story.pages),
+		audit: () => story.audit,
+	});
+	const asked = await master.accept(reportEvent(story.report));
+	const approval = asked[0];
+	assert.equal(approval?.kind, "Approval");
+	const brief = briefOf(approval);
+	assert.equal(brief, expectedBrief(story.request, story.report));
+	assert.equal(approval?.payload.subject, sha256(brief));
 });
 
 test("an empty business or an empty item list never reaches an approval", async () => {
@@ -73,26 +84,35 @@ test("an empty business or an empty item list never reaches an approval", async 
 		{ ...story.request, items: [] },
 	];
 	for (const request of cases) {
-		let calls = 0;
 		const master = createMaster(request, {
 			readPage: reader(story.pages),
 			audit: () => story.audit,
-			model: {
-				writeBrief: () => {
-					calls += 1;
-					return PROSE;
-				},
-			},
 		});
-		const events = await master.accept(report(story));
+		const events = await master.accept(reportEvent(story.report));
 		assert.equal(
 			events.some((event) => event.kind === "Approval"),
 			false,
 		);
 		assert.equal(events[0]?.text, NO_ITEMS);
 		assert.equal(master.snapshot().phase, "escalated");
-		assert.equal(calls, 0);
 	}
+});
+
+test("an empty research finding stops with a chat message and never reaches an approval", async () => {
+	const story = await proofStory();
+	const master = createMaster(story.request, {
+		readPage: reader(story.pages),
+		audit: () => story.audit,
+	});
+	const events = await master.accept(reportEvent({ ...story.report, gap: "   " }));
+	assert.equal(
+		events.some((event) => event.kind === "Approval"),
+		false,
+	);
+	assert.equal(events.length, 1);
+	assert.equal(events[0]?.kind, "Escalation");
+	assert.equal(events[0]?.text, NO_FINDING);
+	assert.equal(master.snapshot().phase, "escalated");
 });
 
 test("the rendered section shows each stored item and its stored price", async () => {
@@ -100,10 +120,8 @@ test("the rendered section shows each stored item and its stored price", async (
 	const master = createMaster(story.request, {
 		readPage: reader(story.pages),
 		audit: () => story.audit,
-		model: { writeBrief: () => PROSE },
 	});
-	const asked = await master.accept(report(story));
-	const brief = briefText(asked[0]);
+	const brief = briefOf((await master.accept(reportEvent(story.report)))[0]);
 	for (const item of story.request.items) {
 		assert.equal(brief.includes(`${item.name}: ${item.price}`), true);
 	}
@@ -114,9 +132,8 @@ test("the rendered section shows each stored item and its stored price", async (
 	const second = createMaster(priced, {
 		readPage: reader(story.pages),
 		audit: () => story.audit,
-		model: { writeBrief: () => PROSE },
 	});
-	const shown = briefText((await second.accept(report(story)))[0]);
+	const shown = briefOf((await second.accept(reportEvent(story.report)))[0]);
 	assert.equal(shown.includes("Plate: 12.00"), true);
 	assert.equal(shown.includes("Plate: $12"), false);
 });

@@ -101,12 +101,11 @@ function published(id: string, publishedUrl: string): PublishedEvent {
 
 type Story = Awaited<ReturnType<typeof import("@tensquads/domain/master")["proofStory"]>>;
 
-function ports(story: Story, writeBrief: () => string | Promise<string>): BusObjectEnv {
+function ports(story: Story): BusObjectEnv {
 	return {
 		ADAPTERS: "real",
 		masterReadPage: async (url: string) => story.pages[url] ?? { status: 404, body: "" },
 		masterAudit: () => story.audit,
-		masterWriteBrief: writeBrief,
 		masterBrowser: async () => rendered,
 	};
 }
@@ -134,17 +133,11 @@ test("the real flag alone wires the master", { timeout: 20_000 }, async () => {
 	);
 });
 
-test("one successful result calls the model once and a foreign account adds nothing", async () => {
+test("one successful result adds one brief and a foreign account adds nothing", async () => {
 	if (!existsSync(kit)) return;
 	const { proofStory } = await import("@tensquads/domain/master");
 	const story = await proofStory();
-	let calls = 0;
-	const { storage, target } = objectBus(
-		ports(story, () => {
-			calls += 1;
-			return story.prose;
-		}),
-	);
+	const { storage, target } = objectBus(ports(story));
 	await seedBusiness(storage, story.request);
 	const event = reportEvent("review-report", story.report);
 	assert.equal((await post(target, "review-owner", event)).status, 200);
@@ -152,102 +145,14 @@ test("one successful result calls the model once and a foreign account adds noth
 	const foreign = await post(target, "foreign", reportEvent("review-foreign", story.report));
 	assert.equal(foreign.status, 200);
 	assert.equal(((await foreign.json()) as { seen: boolean }).seen, true);
-	assert.equal(calls, 1);
 	assert.equal((await storedEvents(storage)).length, 2);
-});
-
-test("one model failure then redelivery runs the model twice and produces one transition", async () => {
-	if (!existsSync(kit)) return;
-	const { proofStory } = await import("@tensquads/domain/master");
-	const story = await proofStory();
-	let calls = 0;
-	const { storage, target } = objectBus(
-		ports(story, () => {
-			calls += 1;
-			if (calls === 1) throw new Error("temporary");
-			return story.prose;
-		}),
-	);
-	await seedBusiness(storage, story.request);
-	const event = reportEvent("retry-report", story.report);
-	await assert.rejects(() => post(target, "retry-owner", event), /temporary/);
-	assert.equal(calls, 1);
-	assert.equal((await post(target, "retry-owner", event)).status, 200);
-	assert.equal(calls, 2);
-	const stored = await storedEvents(storage);
-	assert.equal(stored.length, 2);
-	assert.equal(stored.filter((event) => event.skill === "brief.write").length, 1);
-});
-
-test("an alarm retries an open master step once", async () => {
-	if (!existsSync(kit)) return;
-	const { proofStory } = await import("@tensquads/domain/master");
-	const story = await proofStory();
-	let calls = 0;
-	let now = 1_000;
-	const { storage, target } = objectBus({
-		...ports(story, () => {
-			calls += 1;
-			if (calls === 1) throw new Error("temporary");
-			return story.prose;
-		}),
-		now: () => now,
-	});
-	await seedBusiness(storage, story.request);
-	await assert.rejects(() => post(target, "alarm-owner", reportEvent("alarm-report", story.report)), /temporary/);
-	assert.equal(calls, 1);
-	now = 2_000;
-	await target.alarm();
-	assert.equal(calls, 2);
-	assert.equal((await storedEvents(storage)).length, 2);
-	await target.alarm();
-	assert.equal(calls, 2);
-});
-
-test("an alarm retry and a redelivery of the same report call the model once", async (t) => {
-	if (!existsSync(kit)) {
-		t.skip("The agent kit is not installed.");
-		return;
-	}
-	const { proofStory } = await import("@tensquads/domain/master");
-	const story = await proofStory();
-	let calls = 0;
-	let openGate = () => {};
-	const gate = new Promise<void>((done) => {
-		openGate = done;
-	});
-	let entered = () => {};
-	const firstCall = new Promise<void>((done) => {
-		entered = done;
-	});
-	const { storage, target } = objectBus(
-		ports(story, () => {
-			calls += 1;
-			entered();
-			return gate.then(() => story.prose);
-		}),
-	);
-	await seedBusiness(storage, story.request);
-	const event = reportEvent("serial-report", story.report);
-	await storage.put("account", "serial-owner");
-	await storage.put("bus-alarm", 1);
-	await storage.put(`master-open:${event.id}`, event);
-	const alarming = target.alarm();
-	await firstCall;
-	const posting = post(target, "serial-owner", event);
-	openGate();
-	await alarming;
-	assert.equal((await posting).status, 200);
-	assert.equal(calls, 1);
-	const stored = await storedEvents(storage);
-	assert.equal(stored.filter((item) => item.skill === "brief.write").length, 1);
 });
 
 test("a user approval of the brief and of publish reaches the website", async () => {
 	if (!existsSync(kit)) return;
 	const { proofStory } = await import("@tensquads/domain/master");
 	const story = await proofStory();
-	const { storage, target } = objectBus(ports(story, () => story.prose));
+	const { storage, target } = objectBus(ports(story));
 	await seedBusiness(storage, story.request);
 	assert.equal((await post(target, "proof", reportEvent("apr-report", story.report))).status, 200);
 	assert.equal((await post(target, "proof", approval("apr-yes-brief", "brief.write"))).status, 200);

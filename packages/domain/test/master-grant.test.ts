@@ -87,7 +87,6 @@ function masterFor(
 	return createMaster(story.request, {
 		readPage: reader(story.pages),
 		audit: () => story.audit,
-		model: { writeBrief: () => story.prose },
 		accountSlug: "proof",
 		accountId: ACCOUNT,
 		ownerId: OWNER,
@@ -228,7 +227,6 @@ test("a failed page check retries the full website task", async () => {
 	const master = createMaster(story.request, {
 		readPage: reader(story.pages),
 		audit: () => ({ ...story.audit, horizontalScroll: true }),
-		model: { writeBrief: () => story.prose },
 		accountSlug: "proof",
 		now: NOW,
 		loadGrant: (query: GrantQuery) => matching(query),
@@ -263,7 +261,6 @@ test("a failed research check retries the full research task", async () => {
 	const master = createMaster(story.request, {
 		readPage: reader(story.pages),
 		audit: () => story.audit,
-		model: { writeBrief: () => story.prose },
 		accountSlug: "proof",
 	});
 	master.start();
