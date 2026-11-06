@@ -1,5 +1,5 @@
 import { chooseAdapters } from "../adapter-choice.ts";
-import { clearDeadline, HEARTBEAT_ALARM, setDeadline } from "./alarm.ts";
+import { type AlarmStorage, clearDeadline, deadlineToken, HEARTBEAT_ALARM, setDeadline } from "./alarm.ts";
 
 export { HEARTBEAT_ALARM };
 
@@ -12,14 +12,7 @@ interface HeartbeatBeat {
 	readonly resumedAt?: number;
 }
 
-export interface HeartbeatStorage {
-	get<T>(key: string): Promise<T | undefined>;
-	put<T>(key: string, value: T): Promise<void>;
-	delete(key: string): Promise<boolean>;
-	getAlarm(): Promise<number | null>;
-	setAlarm(scheduledTime: number | Date): Promise<void>;
-	deleteAlarm(): Promise<void>;
-}
+export type HeartbeatStorage = AlarmStorage;
 
 export interface HeartbeatEnv {
 	readonly ADAPTERS?: string;
@@ -117,15 +110,15 @@ async function oneDue(
 	return resumeDue(resume, accountId, agentId, beat, map, now);
 }
 
-async function clearAlarm(storage: HeartbeatStorage, _now: number): Promise<void> {
-	await clearDeadline(storage, HEARTBEAT_ALARM);
-}
-
 export async function sweepHeartbeats(storage: HeartbeatStorage, env: HeartbeatEnv): Promise<void> {
+	const token = await deadlineToken(storage, HEARTBEAT_ALARM);
 	const now = env.now?.() ?? Date.now();
 	const map = (await storage.get<Record<string, HeartbeatBeat>>(HEARTBEATS)) ?? {};
 	const agentIds = Object.keys(map);
-	if (agentIds.length === 0) return;
+	if (agentIds.length === 0) {
+		await clearDeadline(storage, HEARTBEAT_ALARM, token);
+		return;
+	}
 	const resume = resumeFor(env);
 	const accountId = await storage.get<string>("account");
 	let nextDue: number | null = null;
@@ -135,7 +128,7 @@ export async function sweepHeartbeats(storage: HeartbeatStorage, env: HeartbeatE
 	}
 	await storage.put(HEARTBEATS, map);
 	if (nextDue === null) {
-		await clearAlarm(storage, now);
+		await clearDeadline(storage, HEARTBEAT_ALARM, token);
 		return;
 	}
 	await arm(storage, nextDue, now);

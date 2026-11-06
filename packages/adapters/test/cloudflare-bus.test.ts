@@ -319,6 +319,17 @@ test("two accounts do not share a sequence", { skip: skipped }, async () => {
 	);
 });
 
+test("a retry scheduled during the drain keeps the delivery alarm", { skip: skipped }, async () => {
+	const { mf, id } = await prepared();
+	const probe = await send(mf, `/probe-delivery?account=${encodeURIComponent(id)}`, { accountId: id });
+	assert.equal(probe.status, 200, await bodyText(probe));
+	const fired = await send(mf, `/alarm?account=${encodeURIComponent(id)}`, {});
+	assert.equal(fired.status, 200, await bodyText(fired));
+	const body = await readJson<{ alarm: number | null; delivery: number | null }>(mf, id, "/alarm");
+	assert.equal(typeof body.delivery, "number");
+	assert.equal(body.alarm, body.delivery);
+});
+
 test("one accept writes every key and events sort by sequence", { skip: skipped }, async () => {
 	const { mf, id } = await prepared();
 	await publish(

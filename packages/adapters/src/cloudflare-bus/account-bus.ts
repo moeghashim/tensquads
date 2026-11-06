@@ -2,33 +2,35 @@ import { planNextEvent, type TrafficCursor } from "@tensquads/domain";
 import type { PublishedEvent } from "@tensquads/kernel";
 import { chooseAdapters } from "../adapter-choice.ts";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
-import { DELIVERY_GRACE_MS, deliveryBackoffMs } from "../neon/commands/approval-delivery.ts";
 import { traceFor } from "../trace.ts";
-import { BUS_ALARM, clearDeadline, DELIVERY_ALARM, rearm, setDeadline } from "./alarm.ts";
-import { type HeartbeatEnv, recordBeat, sweepHeartbeats } from "./heartbeat.ts";
+import {
+	type AlarmKv,
+	BUS_ALARM,
+	backoffDeadline,
+	DELIVERY_ALARM,
+	deadlineToken,
+	HEARTBEAT_ALARM,
+	rearm,
+	runDue,
+	setDeadline,
+	syncBusDeadline,
+} from "./alarm.ts";
+import { armDeliveryAlarm, armDeliveryRetry, drainDeliveries as drainDeliveryAlarm } from "./delivery-alarm.ts";
+import { type HeartbeatEnv, RETRY_MS, recordBeat, sweepHeartbeats } from "./heartbeat.ts";
+import type { BusNamespace } from "./http.ts";
 import { writeMasterCommit } from "./master-commit.ts";
 import { finishMaster, MASTER_DONE, MASTER_OPEN, masterEvent, retryOpenMaster } from "./master-retry.ts";
 import { prepareMaster } from "./master-step.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
-import {
-	drainApprovalDeliveries,
-	type PendingBusRow,
-	readBusEvents,
-	readBusHistory,
-	readBusState,
-	writePending,
-} from "./neon-write.ts";
+import { type PendingBusRow, readBusEvents, readBusHistory, readBusState, writePending } from "./neon-write.ts";
+import { armProbe } from "./probe.ts";
 
 const ALARM_MS = 30_000;
 
-export interface SyncKv {
-	get<T>(key: string): T | undefined;
-	put<T>(key: string, value: T): void;
-	delete(key: string): boolean;
-}
+export interface SyncKv extends AlarmKv {}
 
 export interface BusStorage {
-	get<T>(key: string): Promise<T | undefined>;
+	get<T>(key: string, options?: { noCache?: boolean }): Promise<T | undefined>;
 	put<T>(key: string, value: T): Promise<void>;
 	delete(key: string): Promise<boolean>;
 	list<T>(options?: { prefix?: string }): Promise<Map<string, T>>;
@@ -77,6 +79,8 @@ export interface BusObjectEnv extends HeartbeatEnv {
 	readonly retryDeliveries?: (accountId: string, beforeMs?: number) => Promise<number>;
 	// A test can complete a bus flush without a live database.
 	readonly writeBusPending?: (accountId: string, rows: readonly PendingBusRow[]) => Promise<void>;
+	// The real worker binding. The inspect probe uses it to schedule during a drain.
+	readonly ACCOUNT_BUS?: BusNamespace;
 }
 
 interface AcceptResult {
@@ -269,71 +273,61 @@ export class AccountBus {
 
 	// The runtime calls alarm. No module in this repo calls it.
 	async alarm(): Promise<void> {
-		await this.flush();
-		await this.serialize(async () => {
-			await sweepHeartbeats(this.ctx.storage, this.env);
-			await retryOpenMaster(this.ctx.storage, this.env, (accountId, event) => this.runMaster(accountId, event));
-			await this.drainDeliveries();
-		});
-		await rearm(this.ctx.storage);
-	}
-
-	// A failed first send arms this route. The alarm then drains the rows.
-	private async armDeliveryRetry(request: Request): Promise<Response> {
-		const body: unknown = await request.json().catch(() => null);
-		if (!isObject(body) || !isNonEmptyString(body.accountId)) {
-			return new Response("The message was rejected.", { status: 400 });
-		}
-		const stored = await this.ctx.storage.get<string>("account");
-		if (stored && stored !== body.accountId) return new Response("The message was rejected.", { status: 400 });
-		await this.ctx.storage.put("account", body.accountId);
-		const armed = await this.ctx.storage.get<number>(DELIVERY_ALARM);
-		if (typeof armed !== "number") {
-			await this.ctx.storage.put("delivery-attempt", 0);
-			const now = this.env.now?.() ?? Date.now();
-			await setDeadline(this.ctx.storage, DELIVERY_ALARM, now + deliveryBackoffMs(0));
-		}
-		return Response.json({ ok: true });
-	}
-
-	private async drainDeliveries(onlyOld = false): Promise<void> {
-		if (chooseAdapters(this.env.ADAPTERS) !== "real") return;
-		const accountId = await this.ctx.storage.get<string>("account");
-		if (!accountId) return;
-		const remaining = await this.drainRemaining(accountId, onlyOld);
-		if (remaining === null || onlyOld) return;
-		if (remaining > 0) await this.armDeliveryAlarm();
-		else {
-			await clearDeadline(this.ctx.storage, DELIVERY_ALARM);
-			await this.ctx.storage.delete("delivery-attempt");
-		}
-	}
-
-	// A missing source means there is nothing to drain. A failed drain counts as one row left.
-	private async drainRemaining(accountId: string, onlyOld: boolean): Promise<number | null> {
 		const now = this.env.now?.() ?? Date.now();
-		const beforeMs = onlyOld ? now - DELIVERY_GRACE_MS : undefined;
+		const storage = this.ctx.storage;
+		const steps = [
+			() =>
+				runDue(
+					storage,
+					BUS_ALARM,
+					now,
+					() => this.onBusAlarm(now),
+					() => backoffDeadline(storage, BUS_ALARM, now, ALARM_MS),
+				),
+			() =>
+				runDue(
+					storage,
+					HEARTBEAT_ALARM,
+					now,
+					() => sweepHeartbeats(storage, this.env),
+					() => backoffDeadline(storage, HEARTBEAT_ALARM, now, RETRY_MS),
+				),
+			() =>
+				runDue(
+					storage,
+					DELIVERY_ALARM,
+					now,
+					() => this.drainDeliveries(),
+					() => armDeliveryAlarm(storage, this.env),
+				),
+		];
 		try {
-			if (this.env.retryDeliveries) return await this.env.retryDeliveries(accountId, beforeMs);
-			if (!this.env.DATABASE_URL) return null;
-			return await drainApprovalDeliveries(
-				this.env.DATABASE_URL,
-				accountId,
-				async (event) => {
-					await this.acceptStored(accountId, event);
-				},
-				beforeMs,
-			);
-		} catch {
-			return 1;
+			for (const step of steps) {
+				try {
+					await step();
+				} catch {
+					// This subsystem's own backoff failed. The others still run.
+				}
+			}
+		} finally {
+			await rearm(storage);
 		}
 	}
 
-	private async armDeliveryAlarm(): Promise<void> {
-		const attempt = (await this.ctx.storage.get<number>("delivery-attempt")) ?? 0;
-		await this.ctx.storage.put("delivery-attempt", attempt + 1);
-		const now = this.env.now?.() ?? Date.now();
-		await setDeadline(this.ctx.storage, DELIVERY_ALARM, now + deliveryBackoffMs(attempt));
+	private async onBusAlarm(now: number): Promise<void> {
+		const token = await deadlineToken(this.ctx.storage, BUS_ALARM);
+		await this.flush();
+		await retryOpenMaster(this.ctx.storage, this.env, (accountId, event) => this.runMaster(accountId, event));
+		await syncBusDeadline(this.ctx.storage, now, ALARM_MS, token);
+	}
+
+	private drainDeliveries(onlyOld = false): Promise<void> {
+		return drainDeliveryAlarm(
+			this.ctx.storage,
+			this.env,
+			(accountId, event) => this.acceptStored(accountId, event),
+			onlyOld,
+		);
 	}
 
 	private routes(): Map<string, (request: Request) => Promise<Response>> {
@@ -345,12 +339,19 @@ export class AccountBus {
 			["/socket", () => Promise.resolve(this.socket())],
 			["/take", (request: Request) => request.json().then((body: unknown) => this.take(body))],
 			["/heartbeat", (request: Request) => this.heartbeat(request)],
-			["/deliveries/retry", (request: Request) => this.armDeliveryRetry(request)],
+			["/deliveries/retry", (request: Request) => armDeliveryRetry(this.ctx.storage, this.env, request)],
 			["/monitor", (request: Request) => this.monitor(request)],
 		]);
 		if (this.env.BUS_INSPECT === "1") {
 			routes.set("/seq", async () => Response.json({ seq: (await this.ctx.storage.get<number>("seq")) ?? 0 }));
-			routes.set("/alarm", async () => Response.json({ alarm: await this.ctx.storage.getAlarm() }));
+			routes.set("/alarm", async (request) => {
+				if (request.method === "POST") await this.alarm();
+				return Response.json({
+					alarm: await this.ctx.storage.getAlarm(),
+					delivery: (await this.ctx.storage.get<number>(DELIVERY_ALARM)) ?? null,
+				});
+			});
+			routes.set("/probe-delivery", (request) => armProbe(this.ctx.storage, request));
 			routes.set("/local-store", async () => Response.json(await this.stateMap()));
 			routes.set("/local-events", async () => Response.json(await this.storedEvents()));
 		}
@@ -395,6 +396,7 @@ export class AccountBus {
 	}
 
 	private async runMaster(accountId: string, event: PublishedEvent): Promise<void> {
+		const token = await deadlineToken(this.ctx.storage, BUS_ALARM);
 		const step = await prepareMaster(this.env, accountId, event, this.ctx.storage);
 		if (!step) return;
 		const kv = this.ctx.storage.kv;
@@ -409,7 +411,8 @@ export class AccountBus {
 			throw error;
 		}
 		for (const next of step.produced) this.push(next);
-		await setDeadline(this.ctx.storage, BUS_ALARM, Date.now() + ALARM_MS);
+		const now = this.env.now?.() ?? Date.now();
+		await syncBusDeadline(this.ctx.storage, now, ALARM_MS, token);
 	}
 
 	private async monitor(request: Request): Promise<Response> {
@@ -484,28 +487,32 @@ export class AccountBus {
 	}
 
 	private async flushPending(): Promise<void> {
-		const pending = (await this.ctx.storage.get<PendingBusRow[]>("pending")) ?? [];
-		const accountId = await this.ctx.storage.get<string>("account");
+		const storage = this.ctx.storage;
+		const token = await deadlineToken(storage, BUS_ALARM);
+		const pending = (await storage.get<PendingBusRow[]>("pending")) ?? [];
+		const accountId = await storage.get<string>("account");
+		const now = this.env.now?.() ?? Date.now();
 		if (pending.length === 0 || !accountId || (!this.env.DATABASE_URL && !this.env.writeBusPending)) {
-			if (pending.length > 0) await setDeadline(this.ctx.storage, BUS_ALARM, Date.now() + ALARM_MS);
+			if (pending.length > 0) await setDeadline(storage, BUS_ALARM, now + ALARM_MS);
+			else await syncBusDeadline(storage, now, ALARM_MS, token);
 			return;
 		}
 		try {
 			if (this.env.writeBusPending) await this.env.writeBusPending(accountId, pending);
 			else await writePending(this.env.DATABASE_URL as string, accountId, pending);
 		} catch {
-			await setDeadline(this.ctx.storage, BUS_ALARM, Date.now() + ALARM_MS);
+			await setDeadline(storage, BUS_ALARM, now + ALARM_MS);
 			return;
 		}
 		const written = new Set(pending.map((row) => row.event.id));
-		await this.ctx.storage.transaction(async (txn) => {
-			const current = (await txn.get<PendingBusRow[]>("pending")) ?? [];
-			const remaining = current.filter((row) => !written.has(row.event.id));
-			await txn.put("pending", remaining);
-			if (remaining.length > 0) await txn.put(BUS_ALARM, Date.now() + ALARM_MS);
-			else await txn.delete(BUS_ALARM);
-			await rearm(txn);
+		storage.transactionSync(() => {
+			const current = storage.kv.get<PendingBusRow[]>("pending") ?? [];
+			storage.kv.put(
+				"pending",
+				current.filter((row) => !written.has(row.event.id)),
+			);
 		});
+		await syncBusDeadline(storage, now, ALARM_MS, token);
 	}
 
 	private async events(request: Request): Promise<Response> {

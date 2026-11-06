@@ -32,6 +32,15 @@ export default {
 				body: JSON.stringify(body),
 			});
 		}
+		if (url.pathname === "/alarm" || url.pathname === "/probe-delivery") {
+			const accountId = url.searchParams.get("account") ?? "";
+			const namespace = env.ACCOUNT_BUS;
+			if (!namespace) return new Response("The bus is not configured.", { status: 503 });
+			return namespace.get(namespace.idFromName(accountId)).fetch(`https://bus${url.pathname}`, {
+				method: request.method,
+				body: request.method === "GET" ? undefined : await request.text(),
+			});
+		}
 		if (url.pathname === "/read") {
 			const accountId = url.searchParams.get("account") ?? "";
 			const path = url.searchParams.get("path") ?? "/local-events";

@@ -194,6 +194,7 @@ test("an alarm retries an open master step once", async () => {
 	await seedBusiness(storage, story.request);
 	await assert.rejects(() => post(target, "alarm-owner", reportEvent("alarm-report", story.report)), /temporary/);
 	assert.equal(calls, 1);
+	await storage.put("bus-alarm", Date.now());
 	await target.alarm();
 	assert.equal(calls, 2);
 	assert.equal((await storedEvents(storage)).length, 2);

@@ -188,6 +188,7 @@ test("the alarm trigger retries a failed send exactly once, with no decide call"
 
 		const storage = new Storage();
 		await storage.put("account", accountId);
+		await storage.put(DELIVERY_ALARM, 0);
 		const bus = new AccountBus(
 			{ storage, acceptWebSocket() {}, getWebSockets: () => [] },
 			{
@@ -221,10 +222,12 @@ test("a drain that still has rows arms the alarm with a growing backoff", async 
 			},
 		},
 	);
+	await storage.put(DELIVERY_ALARM, 10_000);
 	await bus.alarm();
 	assert.equal(calls, 1);
 	assert.equal(storage.alarm, 11_000);
 	assert.equal(await storage.get("delivery-attempt"), 1);
+	await storage.put(DELIVERY_ALARM, 10_000);
 	await bus.alarm();
 	assert.equal(calls, 2);
 	assert.equal(storage.alarm, 12_000);
@@ -407,6 +410,7 @@ test("a delivery drain keeps the bus alarm while bus writes are pending", async 
 			},
 		},
 	]);
+	await storage.put(BUS_ALARM, 0);
 	const bus = new AccountBus(
 		{ storage, acceptWebSocket() {}, getWebSockets: () => [] },
 		{ ADAPTERS: "real", retryDeliveries: async () => 0 },
@@ -455,6 +459,7 @@ test("a 503 schedule leaves the row, and the sweep recovers it through the alarm
 			async () => [accountId],
 		);
 		assert.deepEqual(poked, [accountId]);
+		await storage.put(DELIVERY_ALARM, Date.now());
 		await bus.alarm();
 		assert.equal(calls, 2);
 		assert.deepEqual(received, ["user-ap1"]);

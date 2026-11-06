@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+
 import { neonConfig, Pool } from "@neondatabase/serverless";
 import type { PublishedEvent } from "@tensquads/kernel";
 import { asc, eq } from "drizzle-orm";
@@ -129,6 +131,40 @@ function database(connectionString: string) {
 	return { pool, db: drizzle(pool, { schema: { busEvents, stateEntries, approvals, approvalDeliveries } }) };
 }
 
+// One pool at a time. Overlapping pools against one direct host drop writes,
+// and a dropped write stays out of the read path. Each call still opens and
+// ends its own pool, so a retry connects again. A call that is already inside
+// the turn opens its own pool instead of waiting on itself.
+const holder = new AsyncLocalStorage<true>();
+let turn: Promise<void> = Promise.resolve();
+
+function oneAtATime<T>(run: () => Promise<T>): Promise<T> {
+	if (holder.getStore()) return run();
+	const result = turn.then(
+		() => holder.run(true, run),
+		() => holder.run(true, run),
+	);
+	turn = result.then(
+		() => undefined,
+		() => undefined,
+	);
+	return result;
+}
+
+function withDatabase<T>(
+	connectionString: string,
+	run: (db: ReturnType<typeof database>["db"]) => Promise<T>,
+): Promise<T> {
+	return oneAtATime(async () => {
+		const { pool, db } = database(connectionString);
+		try {
+			return await run(db);
+		} finally {
+			await pool.end();
+		}
+	});
+}
+
 // The alarm drains pending approval deliveries from Neon. The shared retry
 // keeps each row's event id, so a repeat send is dropped at the receiver.
 // The count left tells the alarm to run again.
@@ -138,77 +174,74 @@ export async function drainApprovalDeliveries(
 	deliver: (event: PublishedEvent) => Promise<void>,
 	beforeMs?: number,
 ): Promise<number> {
-	const { pool, db } = database(connectionString);
-	try {
-		return await retryApprovalDeliveries(
-			db as unknown as AppDatabase,
-			accountId,
-			(_id, event) => deliver(event as PublishedEvent),
-			beforeMs,
-		);
-	} catch (error) {
-		throw hidden(error, connectionString);
-	} finally {
-		await pool.end();
-	}
+	return withDatabase(connectionString, async (db) => {
+		try {
+			return await retryApprovalDeliveries(
+				db as unknown as AppDatabase,
+				accountId,
+				(_id, event) => deliver(event as PublishedEvent),
+				beforeMs,
+			);
+		} catch (error) {
+			throw hidden(error, connectionString);
+		}
+	});
 }
 
 // The cron sweep finds accounts whose pending rows are older than the grace time.
-export async function readStaleDeliveryAccounts(connectionString: string, beforeMs: number): Promise<string[]> {
-	const { pool, db } = database(connectionString);
-	try {
-		const rows = await db
-			.select({ accountId: approvalDeliveries.accountId, event: approvalDeliveries.event })
-			.from(approvalDeliveries);
-		const accounts = new Set<string>();
-		for (const row of rows) {
-			const parsed = Date.parse(row.event.time);
-			if ((Number.isFinite(parsed) ? parsed : 0) <= beforeMs) accounts.add(row.accountId);
+export function readStaleDeliveryAccounts(connectionString: string, beforeMs: number): Promise<string[]> {
+	return withDatabase(connectionString, async (db) => {
+		try {
+			const rows = await db
+				.select({ accountId: approvalDeliveries.accountId, event: approvalDeliveries.event })
+				.from(approvalDeliveries);
+			const accounts = new Set<string>();
+			for (const row of rows) {
+				const parsed = Date.parse(row.event.time);
+				if ((Number.isFinite(parsed) ? parsed : 0) <= beforeMs) accounts.add(row.accountId);
+			}
+			return [...accounts].sort();
+		} catch (error) {
+			throw hidden(error, connectionString);
 		}
-		return [...accounts].sort();
-	} catch (error) {
-		throw hidden(error, connectionString);
-	} finally {
-		await pool.end();
-	}
+	});
 }
 
-export async function writePending(
+export function writePending(
 	connectionString: string,
 	accountId: string,
 	rows: readonly PendingBusRow[],
 ): Promise<void> {
-	const { pool, db } = database(connectionString);
-	try {
-		await db.transaction(async (txn) => {
-			for (const row of rows) {
-				await txn
-					.insert(busEvents)
-					.values({
-						accountId,
-						id: row.event.id,
-						timeText: row.event.time ?? "",
-						occurredAt: null,
-						fromAgent: row.event.from,
-						toAgent: row.event.to,
-						kind: row.event.kind,
-						skill: row.event.skill,
-						body: row.event.text,
-						payload: { ...row.event.payload },
-						writes: [...row.event.writes],
-						trace: row.event.trace ?? traceFor(row.event.id),
-						seq: row.seq,
-					})
-					.onConflictDoNothing();
-				await writeState(txn, accountId, row.seq, row.event.set);
-				await projectAsk(txn, accountId, row.seq, row.event);
-			}
-		});
-	} catch (error) {
-		throw hidden(error, connectionString);
-	} finally {
-		await pool.end();
-	}
+	return withDatabase(connectionString, async (db) => {
+		try {
+			await db.transaction(async (txn) => {
+				for (const row of rows) {
+					await txn
+						.insert(busEvents)
+						.values({
+							accountId,
+							id: row.event.id,
+							timeText: row.event.time ?? "",
+							occurredAt: null,
+							fromAgent: row.event.from,
+							toAgent: row.event.to,
+							kind: row.event.kind,
+							skill: row.event.skill,
+							body: row.event.text,
+							payload: { ...row.event.payload },
+							writes: [...row.event.writes],
+							trace: row.event.trace ?? traceFor(row.event.id),
+							seq: row.seq,
+						})
+						.onConflictDoNothing();
+					await writeState(txn, accountId, row.seq, row.event.set);
+					await projectAsk(txn, accountId, row.seq, row.event);
+				}
+			});
+		} catch (error) {
+			throw hidden(error, connectionString);
+		}
+	});
 }
 
 async function projectAsk(
@@ -257,49 +290,44 @@ export async function readBusEvents(connectionString: string, accountId: string)
 	return (await readBusHistory(connectionString, accountId)).map((row) => row.event);
 }
 
-export async function readBusHistory(connectionString: string, accountId: string): Promise<PendingBusRow[]> {
-	const { pool, db } = database(connectionString);
-	try {
-		const rows = await db
-			.select()
-			.from(busEvents)
-			.where(eq(busEvents.accountId, accountId))
-			.orderBy(asc(busEvents.seq));
-		return rows.map((row) => ({
-			seq: row.seq,
-			event: {
-				id: row.id,
-				from: row.fromAgent,
-				to: row.toAgent,
-				kind: row.kind,
-				skill: row.skill,
-				text: row.body,
-				payload: row.payload,
-				writes: row.writes,
-				time: row.timeText,
-				trace: row.trace,
-			},
-		}));
-	} catch (error) {
-		throw hidden(error, connectionString);
-	} finally {
-		await pool.end();
-	}
+export function readBusHistory(connectionString: string, accountId: string): Promise<PendingBusRow[]> {
+	return withDatabase(connectionString, async (db) => {
+		try {
+			const rows = await db
+				.select()
+				.from(busEvents)
+				.where(eq(busEvents.accountId, accountId))
+				.orderBy(asc(busEvents.seq));
+			return rows.map((row) => ({
+				seq: row.seq,
+				event: {
+					id: row.id,
+					from: row.fromAgent,
+					to: row.toAgent,
+					kind: row.kind,
+					skill: row.skill,
+					text: row.body,
+					payload: row.payload,
+					writes: row.writes,
+					time: row.timeText,
+					trace: row.trace,
+				},
+			}));
+		} catch (error) {
+			throw hidden(error, connectionString);
+		}
+	});
 }
 
-export async function readBusState(
-	connectionString: string,
-	accountId: string,
-): Promise<{ key: string; value: string }[]> {
-	const { pool, db } = database(connectionString);
-	try {
-		return await db
-			.select({ key: stateEntries.key, value: stateEntries.value })
-			.from(stateEntries)
-			.where(eq(stateEntries.accountId, accountId));
-	} catch (error) {
-		throw hidden(error, connectionString);
-	} finally {
-		await pool.end();
-	}
+export function readBusState(connectionString: string, accountId: string): Promise<{ key: string; value: string }[]> {
+	return withDatabase(connectionString, async (db) => {
+		try {
+			return await db
+				.select({ key: stateEntries.key, value: stateEntries.value })
+				.from(stateEntries)
+				.where(eq(stateEntries.accountId, accountId));
+		} catch (error) {
+			throw hidden(error, connectionString);
+		}
+	});
 }
