@@ -9,7 +9,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-export function parseMachineExp(value: unknown): Record<string, number> {
+function parseMachineExp(value: unknown): Record<string, number> {
 	if (!isRecord(value)) return {};
 	const map: Record<string, number> = {};
 	for (const [key, exp] of Object.entries(value)) {
@@ -18,7 +18,7 @@ export function parseMachineExp(value: unknown): Record<string, number> {
 	return map;
 }
 
-export function readMachineExp(store: Readonly<Record<string, unknown>>): Record<string, number> {
+function readMachineExp(store: Readonly<Record<string, unknown>>): Record<string, number> {
 	return parseMachineExp(store[MACHINE_EXP_KEY]);
 }
 

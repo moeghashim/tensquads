@@ -10,37 +10,56 @@ const KIND = /^(restaurant|grocer):\s*(.+)$/i;
 const CUISINE = /^cuisine:\s*(.+)$/i;
 const ITEM = /^([^|]+)\|([^|]*)\|([^|]+)$/;
 
+function businessKind(line: string | undefined): { kind: "restaurant" | "grocer"; businessName: string } | null {
+	const head = line ? KIND.exec(line) : null;
+	const kind = head?.[1]?.toLowerCase();
+	const businessName = head?.[2]?.trim() ?? "";
+	if (kind !== "restaurant" && kind !== "grocer") return null;
+	if (businessName.length === 0) return null;
+	return { kind, businessName };
+}
+
+function cuisineOf(kind: "restaurant" | "grocer", line: string | undefined): string | null | undefined {
+	const match = line ? CUISINE.exec(line) : null;
+	if (!match) return undefined;
+	if (kind !== "restaurant") return null;
+	const cuisine = match[1]?.trim() ?? "";
+	return cuisine.length > 0 ? cuisine : null;
+}
+
+function itemOf(line: string): { name: string; price: string; section: string } | null {
+	const match = ITEM.exec(line);
+	const name = match?.[1]?.trim() ?? "";
+	const section = match?.[3]?.trim() ?? "";
+	if (!match || name.length === 0 || section.length === 0) return null;
+	return { name, price: match[2]?.trim() ?? "", section };
+}
+
+function itemsOf(lines: readonly string[]): BusinessChat["items"] | null {
+	const items = [];
+	for (const line of lines) {
+		const item = itemOf(line);
+		if (!item) return null;
+		items.push(item);
+	}
+	return items.length > 0 ? items : null;
+}
+
 // A real-run chat uses this shape. Test mode does not call it, so the design seed stays on the five routes.
 export function parseBusinessChat(text: string): BusinessChat | null {
 	const lines = text
 		.split(/\r?\n/)
 		.map((line) => line.trim())
 		.filter((line) => line.length > 0);
-	const head = lines[0] ? KIND.exec(lines[0]) : null;
-	const kind = head?.[1]?.toLowerCase();
-	const businessName = head?.[2]?.trim() ?? "";
-	if ((kind !== "restaurant" && kind !== "grocer") || businessName.length === 0) return null;
-	let index = 1;
-	let cuisine: string | undefined;
-	const cuisineLine = lines[1] ? CUISINE.exec(lines[1]) : null;
-	if (cuisineLine) {
-		if (kind !== "restaurant") return null;
-		cuisine = cuisineLine[1]?.trim();
-		if (!cuisine) return null;
-		index = 2;
-	}
-	const items = [];
-	for (const line of lines.slice(index)) {
-		const match = ITEM.exec(line);
-		const name = match?.[1]?.trim() ?? "";
-		const section = match?.[3]?.trim() ?? "";
-		if (!match || name.length === 0 || section.length === 0) return null;
-		items.push({ name, price: match[2]?.trim() ?? "", section });
-	}
-	if (items.length === 0) return null;
+	const head = businessKind(lines[0]);
+	if (!head) return null;
+	const cuisine = cuisineOf(head.kind, lines[1]);
+	if (cuisine === null) return null;
+	const items = itemsOf(lines.slice(cuisine ? 2 : 1));
+	if (!items) return null;
 	return {
-		businessName,
-		businessType: kind,
+		businessName: head.businessName,
+		businessType: head.kind,
 		items,
 		...(cuisine ? { cuisine } : {}),
 	};
