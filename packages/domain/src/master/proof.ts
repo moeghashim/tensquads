@@ -9,7 +9,7 @@ import {
 } from "@tensquads/agent-kit";
 
 import type { BusEvent, BusKind } from "../bus/types.ts";
-import { briefText } from "./checks.ts";
+import { assembleBrief } from "./checks.ts";
 import { type BusinessRequest, mandateFor, type PageAudit, type PageFetch } from "./types.ts";
 
 export const PROOF_PREVIEW_URL = "https://preview.example/proof";
@@ -39,14 +39,10 @@ const proofAudit: PageAudit = {
 	horizontalScroll: false,
 };
 
-function proofBrief(report: ResearchReport): string {
-	return briefText({
-		businessName: proofRequest.businessName,
-		businessType: proofRequest.businessType,
-		finding: `${report.gap} ${report.gapEvidence.sourceUrl}`,
-		sources: report.sources,
-		items: proofRequest.items,
-	});
+const PROOF_PROSE = "Proof Kitchen serves Levantine food. Competitors list a salad price. The menu hides salad prices.";
+
+function proofBrief(): string {
+	return assembleBrief(PROOF_PROSE, proofRequest.items);
 }
 
 function proofPage(report: ResearchReport, brief: string): string {
@@ -91,6 +87,7 @@ function proofPages(pageHtml: string): Record<string, PageFetch> {
 export interface ProofStory {
 	readonly request: BusinessRequest;
 	readonly report: ResearchReport;
+	readonly prose: string;
 	readonly brief: string;
 	readonly pageHtml: string;
 	readonly choice: PageChoice;
@@ -134,7 +131,7 @@ function approval(skill: string, mandate: Mandate, extra: Readonly<Record<string
 export async function proofStory(): Promise<ProofStory> {
 	const request = proofRequest;
 	const report = proofReport();
-	const brief = proofBrief(report);
+	const brief = proofBrief();
 	const pageHtml = proofPage(report, brief);
 	const items: readonly ListedItem[] = request.items;
 	const buildMandate = mandateFor({
@@ -275,6 +272,7 @@ export async function proofStory(): Promise<ProofStory> {
 	return {
 		request,
 		report,
+		prose: PROOF_PROSE,
 		brief,
 		pageHtml,
 		choice: proofChoice,

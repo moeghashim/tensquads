@@ -31,10 +31,11 @@ function result(skill: string, payload: Readonly<Record<string, unknown>>): BusE
 	};
 }
 
-function ports(story: Awaited<ReturnType<typeof proofStory>>, audit = story.audit) {
+function ports(story: Awaited<ReturnType<typeof proofStory>>, brief = story.prose, audit = story.audit) {
 	return {
 		readPage: reader(story.pages),
 		audit: () => audit,
+		model: { writeBrief: () => brief },
 		accountSlug: "proof",
 	};
 }
@@ -94,6 +95,19 @@ test("a failed research check goes back once, then escalates", async () => {
 	assert.equal(second[0]?.skill, "check.run");
 });
 
+test("a failed brief escalates and does not send the research back", async () => {
+	const story = await proofStory();
+	const long = `${"word ".repeat(150)}${story.report.gap}`;
+	const master = createMaster(story.request, ports(story, long));
+	master.start();
+	const events = await master.accept(result("report.write", { report: story.report }));
+	assert.equal(events.length, 1);
+	assert.equal(events[0]?.kind, "Escalation");
+	assert.equal(events[0]?.text, "The brief check failed.");
+	assert.equal(events[0]?.to, "user");
+	assert.equal((await master.approveBrief()).length, 0);
+});
+
 test("the publish approval hashes the checked preview bytes", async () => {
 	const story = await proofStory();
 	let reads = 0;
@@ -107,6 +121,7 @@ test("the publish approval hashes the checked preview bytes", async () => {
 			return story.pages[url] ?? { status: 404, body: "" };
 		},
 		audit: () => story.audit,
+		model: { writeBrief: () => story.prose },
 		accountSlug: "proof",
 	});
 	master.start();
@@ -153,7 +168,7 @@ test("the master records a monitor on the account that created it", async () => 
 
 test("a failed page check goes back to the website once, then escalates", async () => {
 	const story = await proofStory();
-	const master = createMaster(story.request, ports(story, { ...story.audit, horizontalScroll: true }));
+	const master = createMaster(story.request, ports(story, story.prose, { ...story.audit, horizontalScroll: true }));
 	master.start();
 	await master.accept(result("report.write", { report: story.report }));
 	await master.approveBrief();

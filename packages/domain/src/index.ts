@@ -43,7 +43,6 @@ export {
 export type { Message, MessageFrom, SendResult, SentTask, Thread } from "./conversation/types.ts";
 export type { Eval, Source, Trigger } from "./inbound.ts";
 export { chatSource, chatTrigger, evalChatTrigger } from "./inbound.ts";
-export { NO_FINDING_TEXT } from "./master/no-finding.ts";
 export { NO_ITEMS_TEXT } from "./master/no-items.ts";
 // The master entry imports the agent kit. Do not re-export it here. The Worker loads this file.
 export {

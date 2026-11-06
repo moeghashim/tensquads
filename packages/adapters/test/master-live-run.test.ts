@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import test from "node:test";
 import { Pool } from "@neondatabase/serverless";
 import { digestOf, parseResearchTask } from "@tensquads/agent-kit";
@@ -17,38 +16,6 @@ import { openPglite } from "./pglite.ts";
 const url = "postgres://fixture/live-run";
 const TASK_ID = "business-review-real";
 const NO_ITEMS = "The business has no items to show.";
-const NO_FINDING = "The research has no finding to show.";
-// A fake model reply. The brief must never show any of these phrases.
-const MODEL_TEXT =
-	"The menu hides salad prices. We serve lobster thermidor. Lobster costs 999. Lobster costs ١٢. Lobster costs twelve.";
-const MODEL_PHRASES = ["We serve lobster thermidor", "Lobster costs 999", "Lobster costs ١٢", "Lobster costs twelve"];
-
-type Story = Awaited<ReturnType<typeof import("@tensquads/domain/master").proofStory>>;
-
-// The brief must equal this template, byte for byte. The menu section is renderItemSection(items).
-function briefTemplate(story: Story, section: string): string {
-	return [
-		`Business: ${story.request.businessName}`,
-		`Type: ${story.request.businessType}`,
-		"",
-		"What the research found:",
-		`${story.report.gap} ${story.report.gapEvidence.sourceUrl}`,
-		"",
-		"Sources:",
-		...story.report.sources,
-		"",
-		"Menu:",
-		section,
-	].join("\n");
-}
-
-function modelReply(input: Parameters<typeof fetch>[0]): Promise<Response> {
-	if (String(input) !== "https://api.openai.com/v1/chat/completions") {
-		return Promise.reject(new Error("An unexpected request reached the fake model."));
-	}
-	const body = JSON.stringify({ choices: [{ message: { content: MODEL_TEXT } }] });
-	return Promise.resolve(new Response(body, { status: 200, headers: { "content-type": "application/json" } }));
-}
 
 function routePool(t: test.TestContext, database: Awaited<ReturnType<typeof openPglite>>) {
 	t.mock.method(Pool.prototype, "query", async (config: { text: string; rowMode?: string }, params: unknown[]) => {
@@ -158,6 +125,8 @@ test("a live owner yes emits the build task for the stored research task", async
 			DATABASE_URL: url,
 			masterReadPage: async (pageUrl: string) => story.pages[pageUrl] ?? { status: 404, body: "" },
 			masterAudit: () => story.audit,
+			masterWriteBrief: () =>
+				"Proof Kitchen serves Levantine food. Competitors list a salad price. The menu hides salad prices.",
 			masterBrowser: async () => ({
 				visibleText: "Proof Kitchen",
 				cssContent: [],
@@ -212,6 +181,7 @@ test("a live research retry keeps the stored research payload", async (t) => {
 			ADAPTERS: "real",
 			DATABASE_URL: url,
 			masterReadPage: async (pageUrl: string) => story.pages[pageUrl] ?? { status: 404, body: "" },
+			masterWriteBrief: () => "The menu hides salad prices.",
 		};
 		const target = new AccountBus({ storage: opened.storage, acceptWebSocket() {}, getWebSockets: () => [] }, env);
 		const full = story.report as typeof story.report & { readonly competitors: readonly unknown[] };
@@ -247,6 +217,8 @@ test("an empty item list stops in chat and does not ask for approval", async (t)
 			ADAPTERS: "real",
 			DATABASE_URL: url,
 			masterReadPage: async (pageUrl: string) => story.pages[pageUrl] ?? { status: 404, body: "" },
+			masterWriteBrief: () =>
+				"Proof Kitchen serves Levantine food. Competitors list a salad price. The menu hides salad prices.",
 		};
 		const target = new AccountBus({ storage: opened.storage, acceptWebSocket() {}, getWebSockets: () => [] }, env);
 		assert.equal((await post(target, accountId, reportEvent("empty-report", story.report))).status, 200);
@@ -319,119 +291,6 @@ test("the persisted publish mandate subject is the preview html digest", async (
 			.where(eq(schema.mandates.accountId, accountId));
 		assert.equal(rows[0]?.subject, subject);
 		assert.notEqual(rows[0]?.subject, await digestOf(detail));
-	} finally {
-		if (previous === undefined) delete process.env.ADAPTERS;
-		else process.env.ADAPTERS = previous;
-		await opened.database.close();
-	}
-});
-
-test("model text never reaches the brief the owner approves", async (t) => {
-	const { proofStory, renderItemSection } = await import("@tensquads/domain/master");
-	const story = await proofStory();
-	const accountId = "review-model-text";
-	const opened = await bus(t, accountId, "clerk-model", story.request, TASK_ID);
-	const previous = process.env.ADAPTERS;
-	process.env.ADAPTERS = "real";
-	try {
-		const env: BusObjectEnv = {
-			ADAPTERS: "real",
-			DATABASE_URL: url,
-			OPENAI_API_KEY: "test-key",
-			MASTER_MODEL: "unit-model",
-			MASTER_REASONING_EFFORT: "medium",
-			fetchApi: modelReply,
-			masterReadPage: async (pageUrl: string) => story.pages[pageUrl] ?? { status: 404, body: "" },
-			masterAudit: () => story.audit,
-		};
-		const target = new AccountBus({ storage: opened.storage, acceptWebSocket() {}, getWebSockets: () => [] }, env);
-		assert.equal((await post(target, accountId, reportEvent("model-report", story.report))).status, 200);
-		const approval = (await storedEvents(opened.storage)).find((event) => event.skill === "brief.write");
-		assert.ok(approval);
-		const brief = (approval.payload.brief as { text: string }).text;
-		for (const phrase of MODEL_PHRASES) assert.equal(brief.includes(phrase), false);
-		assert.equal(brief, briefTemplate(story, renderItemSection(story.request.items)));
-	} finally {
-		if (previous === undefined) delete process.env.ADAPTERS;
-		else process.env.ADAPTERS = previous;
-		await opened.database.close();
-	}
-});
-
-test("an empty research finding stops in chat and does not ask for approval", async (t) => {
-	const { proofStory } = await import("@tensquads/domain/master");
-	const story = await proofStory();
-	const accountId = "review-no-finding";
-	const opened = await bus(t, accountId, "clerk-finding", story.request, "business-review-finding");
-	const previous = process.env.ADAPTERS;
-	process.env.ADAPTERS = "real";
-	try {
-		const env: BusObjectEnv = {
-			ADAPTERS: "real",
-			DATABASE_URL: url,
-			masterReadPage: async (pageUrl: string) => story.pages[pageUrl] ?? { status: 404, body: "" },
-			masterAudit: () => story.audit,
-		};
-		const target = new AccountBus({ storage: opened.storage, acceptWebSocket() {}, getWebSockets: () => [] }, env);
-		const empty = { ...story.report, gap: "" };
-		assert.equal((await post(target, accountId, reportEvent("finding-report", empty))).status, 200);
-		const stored = await storedEvents(opened.storage);
-		assert.equal(
-			stored.some((event) => event.kind === "Approval"),
-			false,
-		);
-		assert.equal(
-			stored.some((event) => event.text === NO_FINDING),
-			true,
-		);
-		const chat = await opened.database.client.query<{ body: string }>(
-			"SELECT body FROM messages WHERE account_id = $1 AND body = $2",
-			[accountId, NO_FINDING],
-		);
-		assert.equal(chat.rows.length, 1);
-	} finally {
-		if (previous === undefined) delete process.env.ADAPTERS;
-		else process.env.ADAPTERS = previous;
-		await opened.database.close();
-	}
-});
-
-test("the stored brief mandate subject is the sha256 of the brief text", async (t) => {
-	const { proofStory } = await import("@tensquads/domain/master");
-	const story = await proofStory();
-	const accountId = "review-brief-subject";
-	const opened = await bus(t, accountId, "clerk-subject", story.request, TASK_ID);
-	const previous = process.env.ADAPTERS;
-	process.env.ADAPTERS = "real";
-	try {
-		const env: BusObjectEnv = {
-			ADAPTERS: "real",
-			DATABASE_URL: url,
-			masterReadPage: async (pageUrl: string) => story.pages[pageUrl] ?? { status: 404, body: "" },
-			masterAudit: () => story.audit,
-		};
-		const target = new AccountBus({ storage: opened.storage, acceptWebSocket() {}, getWebSockets: () => [] }, env);
-		assert.equal((await post(target, accountId, reportEvent("subject-report", story.report))).status, 200);
-		const approval = (await storedEvents(opened.storage)).find((event) => event.skill === "brief.write");
-		assert.ok(approval);
-		const brief = (approval.payload.brief as { text: string }).text;
-		const sha = createHash("sha256").update(brief, "utf8").digest("hex");
-		assert.equal(approval.payload.subject, sha);
-		await decide(
-			opened.database.db,
-			{ accountId, mode: "account" },
-			approval.id,
-			true,
-			undefined,
-			async () => {},
-			undefined,
-			"clerk-subject",
-		);
-		const rows = await opened.database.db
-			.select({ subject: schema.mandates.subject })
-			.from(schema.mandates)
-			.where(eq(schema.mandates.accountId, accountId));
-		assert.equal(rows[0]?.subject, sha);
 	} finally {
 		if (previous === undefined) delete process.env.ADAPTERS;
 		else process.env.ADAPTERS = previous;

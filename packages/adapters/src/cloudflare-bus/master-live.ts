@@ -23,6 +23,9 @@ import { MACHINE_EXP_KEY, masterStartEvent } from "./master-start.ts";
 import { recordMonitor } from "./monitors.ts";
 
 const PAGE_MS = 1_500;
+const MODEL_MS = 15_000;
+const MODEL_URL = "https://api.openai.com/v1/chat/completions";
+const MODEL_GAP = "The model is not configured.";
 const BROWSER_GAP = "The browser is not configured.";
 const VIEW_WIDTH = 390;
 const VIEW_HEIGHT = 800;
@@ -39,6 +42,10 @@ interface RenderSession {
 	close(): Promise<unknown>;
 }
 
+interface BriefGap {
+	readonly gap: string;
+}
+
 async function fetchDocument(url: string): Promise<{ status: number; body: string; bytes: Uint8Array }> {
 	try {
 		const response = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(PAGE_MS) });
@@ -47,6 +54,56 @@ async function fetchDocument(url: string): Promise<{ status: number; body: strin
 	} catch {
 		return { status: 404, body: "", bytes: new Uint8Array() };
 	}
+}
+
+function configured(value: string | undefined): string {
+	return value?.trim() ?? "";
+}
+
+function briefPrompt(gap: string): string {
+	return `Write the positioning and the research finding.
+Stay under 150 words.
+Name this gap: ${gap}
+Do not write a price, an offer, or an item name.`;
+}
+
+async function requestBrief(
+	load: typeof fetch,
+	key: string,
+	model: string,
+	effort: string,
+	gap: string,
+): Promise<string> {
+	try {
+		const response = await load(MODEL_URL, {
+			method: "POST",
+			headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+			body: JSON.stringify({
+				model,
+				reasoning_effort: effort,
+				messages: [{ role: "user", content: briefPrompt(gap) }],
+			}),
+			signal: AbortSignal.timeout(MODEL_MS),
+		});
+		if (!response.ok) return "";
+		const body = (await response.json()) as { choices?: readonly { message?: { content?: string } }[] };
+		return body.choices?.[0]?.message?.content?.trim() ?? "";
+	} catch {
+		return "";
+	}
+}
+
+function liveBrief(env: BusObjectEnv, report: BriefGap): Promise<string> {
+	const key = configured(env.OPENAI_API_KEY);
+	const model = configured(env.MASTER_MODEL);
+	// Moe sets MASTER_MODEL to the cheaper GPT-6 tier. This code has no model default.
+	if (!key || !model) return Promise.reject(new Error(MODEL_GAP));
+	const effort = configured(env.MASTER_REASONING_EFFORT);
+	if (!effort) return Promise.reject(new Error("The reasoning effort is not configured."));
+	return requestBrief(env.fetchApi ?? fetch, key, model, effort, report.gap).then((content) => {
+		if (!content) throw new Error(MODEL_GAP);
+		return content;
+	});
 }
 
 function emptyRequest(): BusinessRequest {
@@ -71,6 +128,11 @@ function readPageOf(env: BusObjectEnv): PageReader {
 function auditOf(env: BusObjectEnv): (html: string) => PageAudit | Promise<PageAudit> {
 	if (env.masterAudit) return env.masterAudit;
 	return () => ({ keyboard: true, contrast: true, horizontalScroll: false });
+}
+
+function briefOf(env: BusObjectEnv): (report: BriefGap) => string | Promise<string> {
+	if (env.masterWriteBrief) return () => env.masterWriteBrief?.() ?? "";
+	return (report) => liveBrief(env, report);
 }
 
 async function loadGrant(env: BusObjectEnv, query: GrantQuery): Promise<StoredGrant | null> {
@@ -188,6 +250,7 @@ export async function openMaster(
 	const master = createMaster(request, {
 		readPage: readPageOf(env),
 		audit: auditOf(env),
+		model: { writeBrief: briefOf(env) },
 		accountSlug: accountId,
 		accountId,
 		ownerId,

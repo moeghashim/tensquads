@@ -3,12 +3,12 @@ import { approvalCovers, digestOf, type Mandate, type ResearchReport, type Skill
 import type { BusEvent, BusKind } from "../bus/types.ts";
 import { researchFields } from "../conversation/business-request.ts";
 import {
-	briefText,
+	assembleBrief,
+	checkBrief,
 	checkPage,
 	checkPublished,
 	checkResearch,
 	emptyMenu,
-	NO_FINDING_TEXT,
 	NO_ITEMS_TEXT,
 	readReport,
 } from "./checks.ts";
@@ -16,9 +16,14 @@ import { type GrantQuery, grantAllows, type StoredGrant } from "./grant.ts";
 import type { RenderedPage } from "./render-page.ts";
 import { type BusinessRequest, mandateFor, type PageAudit, type PageReader } from "./types.ts";
 
+export interface BriefModel {
+	writeBrief(report: ResearchReport): Promise<string> | string;
+}
+
 export interface MasterPorts {
 	readonly readPage: PageReader;
 	readonly audit: (html: string) => PageAudit | Promise<PageAudit>;
+	readonly model: BriefModel;
 	readonly mandateAt?: string;
 	readonly accountSlug?: string;
 	readonly accountId?: string;
@@ -85,11 +90,6 @@ function coverSkill(id: string): Skill {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-// An empty gap is an empty finding. The run stops in chat before any approval.
-function findingEmpty(raw: unknown): boolean {
-	return isRecord(raw) && typeof raw.gap === "string" && raw.gap.trim().length === 0;
 }
 
 // The researcher hashes this same sentence. Keep the words in this order.
@@ -249,10 +249,6 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 
 	async function onResearch(event: BusEvent): Promise<BusEvent[]> {
 		const raw = isRecord(event.payload) ? event.payload.report : undefined;
-		if (findingEmpty(raw)) {
-			state.phase = "escalated";
-			return [escalation(NO_FINDING_TEXT, [NO_FINDING_TEXT])];
-		}
 		const result = await checkResearch(raw, ports.readPage);
 		if (!result.pass) return failResearch(result.evidence);
 		const report = readReport(raw);
@@ -261,13 +257,17 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			state.phase = "escalated";
 			return [escalation(NO_ITEMS_TEXT, [NO_ITEMS_TEXT])];
 		}
-		const brief = briefText({
+		const prose = String(await ports.model.writeBrief(report));
+		const briefCheck = checkBrief(prose, report, {
 			businessName: request.businessName,
-			businessType: request.businessType,
-			finding: `${report.gap} ${report.gapEvidence.sourceUrl}`,
-			sources: report.sources,
+			...(request.cuisine ? { cuisine: request.cuisine } : {}),
 			items: request.items,
 		});
+		if (!briefCheck.pass) {
+			state.phase = "escalated";
+			return [escalation("The brief check failed.", briefCheck.evidence)];
+		}
+		const brief = assembleBrief(prose, request.items);
 		state.report = report;
 		state.brief = brief;
 		state.phase = "brief";

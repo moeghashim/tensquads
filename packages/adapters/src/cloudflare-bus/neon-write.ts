@@ -1,5 +1,5 @@
 import { neonConfig, Pool } from "@neondatabase/serverless";
-import { NO_FINDING_TEXT, NO_ITEMS_TEXT } from "@tensquads/domain";
+import { NO_ITEMS_TEXT } from "@tensquads/domain";
 import type { PublishedEvent } from "@tensquads/kernel";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
@@ -239,7 +239,7 @@ export function writePending(
 					await writeState(txn, accountId, row.seq, row.event.set);
 					await projectAsk(txn, accountId, row.seq, row.event);
 					await insertWatch(txn, accountId, row.seq, row.event);
-					await insertStopText(txn, accountId, row.seq, row.event);
+					await insertNoItems(txn, accountId, row.seq, row.event);
 					if (inserted.length === 0) continue;
 					await countSkillRun(txn, accountId, row.event);
 					await insertPreview(txn, accountId, row.seq, row.event);
@@ -317,16 +317,13 @@ async function projectAsk(
 		.onConflictDoNothing();
 }
 
-// These stop messages go to the owner chat.
-const STOP_TEXTS: readonly string[] = [NO_ITEMS_TEXT, NO_FINDING_TEXT];
-
-async function insertStopText(
+async function insertNoItems(
 	db: Parameters<Parameters<ReturnType<typeof database>["db"]["transaction"]>[0]>[0],
 	accountId: string,
 	seq: number,
 	event: PublishedEvent,
 ): Promise<void> {
-	if (event.kind !== "Escalation" || event.from !== "master" || !STOP_TEXTS.includes(event.text)) return;
+	if (event.kind !== "Escalation" || event.from !== "master" || event.text !== NO_ITEMS_TEXT) return;
 	await db.insert(threads).values({ accountId, id: DOCK_THREAD, sortOrder: 0 }).onConflictDoNothing();
 	await db
 		.insert(messages)
