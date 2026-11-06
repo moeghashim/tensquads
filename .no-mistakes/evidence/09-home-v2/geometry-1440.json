@@ -1,0 +1,66 @@
+{
+  "built": [
+    {
+      "selector": "new",
+      "y": 76,
+      "height": 30
+    },
+    {
+      "selector": "",
+      "y": 116,
+      "height": 68
+    },
+    {
+      "selector": "cards",
+      "y": 254,
+      "height": 253
+    },
+    {
+      "selector": "dock",
+      "y": 531,
+      "height": 192
+    },
+    {
+      "selector": "agents",
+      "y": 817,
+      "height": 1299
+    },
+    {
+      "selector": "pricing",
+      "y": 3056,
+      "height": 767
+    }
+  ],
+  "design": [
+    {
+      "selector": "new",
+      "y": 76,
+      "height": 30
+    },
+    {
+      "selector": "",
+      "y": 116,
+      "height": 68
+    },
+    {
+      "selector": "cards",
+      "y": 254,
+      "height": 253
+    },
+    {
+      "selector": "dock",
+      "y": 531,
+      "height": 192
+    },
+    {
+      "selector": "agents",
+      "y": 817,
+      "height": 1299
+    },
+    {
+      "selector": "pricing",
+      "y": 3056,
+      "height": 767
+    }
+  ]
+}

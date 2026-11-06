@@ -1,0 +1,202 @@
+{
+  "signupLinks": 6,
+  "anchors": [
+    "agents",
+    "how",
+    "control",
+    "pricing"
+  ],
+  "pills": "inert",
+  "tabStops": [
+    {
+      "tag": "A",
+      "text": "tensquads",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Agents",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "How it works",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Control",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Pricing",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Sign in",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Start free",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "BUTTON",
+      "text": "New business",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "BUTTON",
+      "text": "Existing business",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "TEXTAREA",
+      "text": "",
+      "outline": "rgb(13, 13, 13) none 3px"
+    },
+    {
+      "tag": "BUTTON",
+      "text": "A Shopify store doing 300 orders a month",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "BUTTON",
+      "text": "A cafe with a wholesale side",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "BUTTON",
+      "text": "Two Amazon listings and a website",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "BUTTON",
+      "text": "Build my squad →",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "DIV",
+      "text": "PisaOrders\n\n\n\n\n\n\nPisa OrdersFulfilment and trackingAdded tracking to #",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "DIV",
+      "text": "KyotoSupport\n\n\n\n\n\n\nKyoto SupportCustomer inbox and refundsReplied to T",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "DIV",
+      "text": "RioMarketing\n\n\n\n\n\n\nRio MarketingAds, social and emailAsked to raise th",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "DIV",
+      "text": "ZurichFinance\n\n\n\n\n\n\nZurich FinancePayouts, costs and profitSent the we",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "DIV",
+      "text": "GizaInventory\n\n\n\n\n\n\nGiza InventoryStock and suppliersDrafted a reorder",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "DIV",
+      "text": "MachuMarket researcher\n\n\n\n\n\n\nMachu Market researcherCompetitors and po",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "DIV",
+      "text": "AngkorWebsite builder\n\n\n\n\n\n\nAngkor Website builderLanding pages and si",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Start free",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Start free",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Talk to us",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Start free",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "See a live demo",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "tensquads",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Agents",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "How it works",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Pricing",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Start free",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "About",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Blog",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Careers",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Contact",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Terms",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Privacy",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    },
+    {
+      "tag": "A",
+      "text": "Security",
+      "outline": "rgb(1, 105, 204) solid 2px"
+    }
+  ]
+}

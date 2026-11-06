@@ -1,0 +1,110 @@
+[
+  {
+    "scenario": "layout-1440",
+    "horizontalScroll": false,
+    "keyboardVisited": [
+      "A:tensquads",
+      "A:Agents",
+      "A:How it works",
+      "A:Control",
+      "A:Pricing",
+      "A:Sign in",
+      "A:Start free",
+      "BUTTON:New business",
+      "BUTTON:Existing business",
+      "TEXTAREA:draft",
+      "BUTTON:A Shopify store doing 300 orders a month",
+      "BUTTON:A cafe with a wholesale side",
+      "BUTTON:Two Amazon listings and a website",
+      "BUTTON:Build my squad →",
+      "DIV:PisaOrders Pisa OrdersFulfilment and trackingAdded tracking to #A-1007Marks items shipped,",
+      "DIV:KyotoSupport Kyoto SupportCustomer inbox and refundsReplied to T-2291 in 4 minAnswers in y",
+      "DIV:RioMarketing Rio MarketingAds, social and emailAsked to raise the prints ad setReports spe",
+      "DIV:ZurichFinance Zurich FinancePayouts, costs and profitSent the weekly profit summaryMatches",
+      "DIV:GizaInventory Giza InventoryStock and suppliersDrafted a reorder of 50 hoodiesWatches stoc",
+      "DIV:MachuMarket researcher Machu Market researcherCompetitors and positioningFound 4 competito",
+      "DIV:AngkorWebsite builder Angkor Website builderLanding pages and site updatesPreview readyBui",
+      "A:Talk to us",
+      "A:See a live demo",
+      "A:About",
+      "A:Blog",
+      "A:Careers",
+      "A:Contact",
+      "A:Terms",
+      "A:Privacy",
+      "A:Security",
+      "BODY:if(!matchMedia(\"(prefers-reduced-motion: reduce)\").matches){document.documentElement.class"
+    ]
+  },
+  {
+    "scenario": "layout-390",
+    "horizontalScroll": false,
+    "keyboardVisited": [
+      "A:tensquads",
+      "A:Sign in",
+      "A:Start free",
+      "BUTTON:New business",
+      "BUTTON:Existing business",
+      "TEXTAREA:draft",
+      "BUTTON:A Shopify store doing 300 orders a month",
+      "BUTTON:A cafe with a wholesale side",
+      "BUTTON:Two Amazon listings and a website",
+      "BUTTON:Build my squad →",
+      "DIV:PisaOrders Pisa OrdersFulfilment and trackingAdded tracking to #A-1007Marks items shipped,",
+      "DIV:KyotoSupport Kyoto SupportCustomer inbox and refundsReplied to T-2291 in 4 minAnswers in y",
+      "DIV:RioMarketing Rio MarketingAds, social and emailAsked to raise the prints ad setReports spe",
+      "DIV:ZurichFinance Zurich FinancePayouts, costs and profitSent the weekly profit summaryMatches",
+      "DIV:GizaInventory Giza InventoryStock and suppliersDrafted a reorder of 50 hoodiesWatches stoc",
+      "DIV:MachuMarket researcher Machu Market researcherCompetitors and positioningFound 4 competito",
+      "DIV:AngkorWebsite builder Angkor Website builderLanding pages and site updatesPreview readyBui",
+      "A:Talk to us",
+      "A:See a live demo",
+      "A:Agents",
+      "A:How it works",
+      "A:Pricing",
+      "A:About",
+      "A:Blog",
+      "A:Careers",
+      "A:Contact",
+      "A:Terms",
+      "A:Privacy",
+      "A:Security",
+      "BODY:if(!matchMedia(\"(prefers-reduced-motion: reduce)\").matches){document.documentElement.class"
+    ]
+  },
+  {
+    "scenario": "fallback diagnostic",
+    "before": [
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    "after": [
+      "1",
+      "1",
+      "1",
+      "1"
+    ],
+    "htmlClass": "intro intro-done"
+  },
+  {
+    "scenario": "six-second fallback with external scripts blocked",
+    "before": [
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    "after": [
+      "1",
+      "1",
+      "1",
+      "1"
+    ]
+  },
+  {
+    "scenario": "every Start free link opens signup; hero pills do nothing",
+    "startFreeLinks": 5
+  }
+]
