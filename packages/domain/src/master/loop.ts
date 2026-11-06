@@ -2,7 +2,16 @@ import { approvalCovers, digestOf, type Mandate, type ResearchReport, type Skill
 
 import type { BusEvent, BusKind } from "../bus/types.ts";
 import { researchFields } from "../conversation/business-request.ts";
-import { checkBrief, checkPage, checkPublished, checkResearch, readReport } from "./checks.ts";
+import {
+	assembleBrief,
+	checkBrief,
+	checkPage,
+	checkPublished,
+	checkResearch,
+	emptyMenu,
+	NO_ITEMS_TEXT,
+	readReport,
+} from "./checks.ts";
 import { type GrantQuery, grantAllows, type StoredGrant } from "./grant.ts";
 import type { RenderedPage } from "./render-page.ts";
 import { type BusinessRequest, mandateFor, type PageAudit, type PageReader } from "./types.ts";
@@ -244,23 +253,21 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		if (!result.pass) return failResearch(result.evidence);
 		const report = readReport(raw);
 		if (!report) return failResearch(["The report was rejected."]);
-		const brief = String(await ports.model.writeBrief(report));
-		const storedBusiness = request.businessName.trim().length > 0;
-		const briefCheck = checkBrief(
-			brief,
-			report,
-			storedBusiness
-				? {
-						businessName: request.businessName,
-						...(request.cuisine ? { cuisine: request.cuisine } : {}),
-						items: request.items,
-					}
-				: undefined,
-		);
+		if (emptyMenu(request.businessName, request.items)) {
+			state.phase = "escalated";
+			return [escalation(NO_ITEMS_TEXT, [NO_ITEMS_TEXT])];
+		}
+		const prose = String(await ports.model.writeBrief(report));
+		const briefCheck = checkBrief(prose, report, {
+			businessName: request.businessName,
+			...(request.cuisine ? { cuisine: request.cuisine } : {}),
+			items: request.items,
+		});
 		if (!briefCheck.pass) {
 			state.phase = "escalated";
 			return [escalation("The brief check failed.", briefCheck.evidence)];
 		}
+		const brief = assembleBrief(prose, request.items);
 		state.report = report;
 		state.brief = brief;
 		state.phase = "brief";

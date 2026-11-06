@@ -31,7 +31,7 @@ function result(skill: string, payload: Readonly<Record<string, unknown>>): BusE
 	};
 }
 
-function ports(story: Awaited<ReturnType<typeof proofStory>>, brief = story.brief, audit = story.audit) {
+function ports(story: Awaited<ReturnType<typeof proofStory>>, brief = story.prose, audit = story.audit) {
 	return {
 		readPage: reader(story.pages),
 		audit: () => audit,
@@ -121,7 +121,7 @@ test("the publish approval hashes the checked preview bytes", async () => {
 			return story.pages[url] ?? { status: 404, body: "" };
 		},
 		audit: () => story.audit,
-		model: { writeBrief: () => story.brief },
+		model: { writeBrief: () => story.prose },
 		accountSlug: "proof",
 	});
 	master.start();
@@ -168,7 +168,7 @@ test("the master records a monitor on the account that created it", async () => 
 
 test("a failed page check goes back to the website once, then escalates", async () => {
 	const story = await proofStory();
-	const master = createMaster(story.request, ports(story, story.brief, { ...story.audit, horizontalScroll: true }));
+	const master = createMaster(story.request, ports(story, story.prose, { ...story.audit, horizontalScroll: true }));
 	master.start();
 	await master.accept(result("report.write", { report: story.report }));
 	await master.approveBrief();
@@ -256,6 +256,14 @@ function userYes(skill: string): BusEvent {
 		trace: `tr_user_${skill}`,
 	};
 }
+
+test("a watch approval during research does not start the watch", async () => {
+	const story = await proofStory();
+	const master = createMaster(story.request, ports(story));
+	const sent = await master.accept(userYes("competition.watch"));
+	assert.equal(sent.length, 0);
+	assert.equal(master.snapshot().phase, "research");
+});
 
 test("the live sequence keeps the thirteen events in order", async () => {
 	const story = await proofStory();

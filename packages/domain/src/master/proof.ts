@@ -9,6 +9,7 @@ import {
 } from "@tensquads/agent-kit";
 
 import type { BusEvent, BusKind } from "../bus/types.ts";
+import { assembleBrief } from "./checks.ts";
 import { type BusinessRequest, mandateFor, type PageAudit, type PageFetch } from "./types.ts";
 
 export const PROOF_PREVIEW_URL = "https://preview.example/proof";
@@ -38,8 +39,10 @@ const proofAudit: PageAudit = {
 	horizontalScroll: false,
 };
 
+const PROOF_PROSE = "Proof Kitchen serves Levantine food. Competitors list a salad price. The menu hides salad prices.";
+
 function proofBrief(): string {
-	return "Proof Kitchen serves Levantine food. Competitors list a salad price. The menu hides salad prices. Show Fattoush with a visible price and keep Chicken tawook at $14.";
+	return assembleBrief(PROOF_PROSE, proofRequest.items);
 }
 
 function proofPage(report: ResearchReport, brief: string): string {
@@ -84,6 +87,7 @@ function proofPages(pageHtml: string): Record<string, PageFetch> {
 export interface ProofStory {
 	readonly request: BusinessRequest;
 	readonly report: ResearchReport;
+	readonly prose: string;
 	readonly brief: string;
 	readonly pageHtml: string;
 	readonly choice: PageChoice;
@@ -268,6 +272,7 @@ export async function proofStory(): Promise<ProofStory> {
 	return {
 		request,
 		report,
+		prose: PROOF_PROSE,
 		brief,
 		pageHtml,
 		choice: proofChoice,

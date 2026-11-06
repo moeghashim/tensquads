@@ -78,7 +78,7 @@ test("a failed output write stays open and the next delivery emits one approval"
 	const { storage, target } = objectBus(
 		ports(story, () => {
 			calls += 1;
-			return story.brief;
+			return story.prose;
 		}),
 	);
 	await storage.put("state:business", JSON.stringify(story.request));
@@ -110,7 +110,7 @@ test("a fresh process emits the build task from the stored phase", async () => {
 	if (!existsSync(kit)) return;
 	const { proofStory } = await import("@tensquads/domain/master");
 	const story = await proofStory();
-	const { storage, target } = objectBus(ports(story, () => story.brief));
+	const { storage, target } = objectBus(ports(story, () => story.prose));
 	await storage.put("state:business", JSON.stringify(story.request));
 	assert.equal((await post(target, "phase-owner", reportEvent("phase-report", story.report))).status, 200);
 	const directory = mkdtempSync(join(tmpdir(), "phase-owner-"));
@@ -131,11 +131,20 @@ test("a missing stored request does not invent a business", async () => {
 	if (!existsSync(kit)) return;
 	const { proofStory } = await import("@tensquads/domain/master");
 	const story = await proofStory();
-	const { storage, target } = objectBus(ports(story, () => story.brief));
+	const { storage, target } = objectBus(ports(story, () => story.prose));
 	assert.equal((await post(target, "stored-gap", reportEvent("stored-report", story.report))).status, 200);
-	await assert.rejects(
-		() =>
-			post(target, "stored-gap", {
+	const stored = await storedEvents(storage);
+	assert.equal(
+		stored.some((item) => item.kind === "Approval"),
+		false,
+	);
+	assert.equal(
+		stored.some((item) => item.text === "The business has no items to show."),
+		true,
+	);
+	assert.equal(
+		(
+			await post(target, "stored-gap", {
 				id: "stored-yes",
 				time: "12:02",
 				from: "user",
@@ -146,12 +155,12 @@ test("a missing stored request does not invent a business", async () => {
 				payload: {},
 				writes: [],
 				trace: "tr_stored_yes",
-			}),
-		/The business is not stored\./,
+			})
+		).status,
+		200,
 	);
-	const stored = await storedEvents(storage);
 	assert.equal(
-		stored.some((item) => item.text.startsWith("Build the page.")),
+		(await storedEvents(storage)).some((item) => item.text.startsWith("Build the page.")),
 		false,
 	);
 	assert.equal(JSON.stringify(stored).includes('"businessName":"Account"'), false);
@@ -169,7 +178,7 @@ test("the model id comes from MASTER_MODEL", async () => {
 		MASTER_REASONING_EFFORT: "medium",
 		fetchApi: async (_url, init) => {
 			seen = String(init?.body ?? "");
-			return new Response(JSON.stringify({ choices: [{ message: { content: story.brief } }] }));
+			return new Response(JSON.stringify({ choices: [{ message: { content: story.prose } }] }));
 		},
 	});
 	await storage.put("state:business", JSON.stringify(story.request));
@@ -177,8 +186,10 @@ test("the model id comes from MASTER_MODEL", async () => {
 	const body = JSON.parse(seen) as { model?: string; reasoning_effort?: string; messages?: { content?: string }[] };
 	assert.equal(body.model, "unit-model");
 	assert.equal(body.reasoning_effort, "medium");
-	assert.equal(body.messages?.[0]?.content?.includes("Chicken tawook: $14"), true);
-	assert.equal(body.messages?.[0]?.content?.includes("Use only these items and prices."), true);
+	assert.equal(body.messages?.[0]?.content?.includes("Write the positioning and the research finding."), true);
+	assert.equal(body.messages?.[0]?.content?.includes("Do not write a price, an offer, or an item name."), true);
+	assert.equal(body.messages?.[0]?.content?.includes("Chicken tawook"), false);
+	assert.equal(body.messages?.[0]?.content?.includes("Use only these items and prices."), false);
 	assert.equal(seen.includes("test-key"), false);
 });
 

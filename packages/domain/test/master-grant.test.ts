@@ -87,7 +87,7 @@ function masterFor(
 	return createMaster(story.request, {
 		readPage: reader(story.pages),
 		audit: () => story.audit,
-		model: { writeBrief: () => story.brief },
+		model: { writeBrief: () => story.prose },
 		accountSlug: "proof",
 		accountId: ACCOUNT,
 		ownerId: OWNER,
@@ -180,6 +180,13 @@ test("a publish mandate for another slug or a changed page does not advance", as
 	assert.equal(owned.master.snapshot().phase, "publishing");
 });
 
+test("a mandate for a different skill does not advance", async () => {
+	const held = await atBrief((query) => ({ ...matching(query), skill: "website.publish" }));
+	const refused = await held.master.accept(userYes("brief.write"));
+	assert.equal(refused.length, 0);
+	assert.equal(held.master.snapshot().phase, "brief");
+});
+
 test("an approval from an agent is ignored", async () => {
 	const { master } = await atBrief((query) => matching(query));
 	const refused = await master.accept(userYes("brief.write", "website"));
@@ -221,7 +228,7 @@ test("a failed page check retries the full website task", async () => {
 	const master = createMaster(story.request, {
 		readPage: reader(story.pages),
 		audit: () => ({ ...story.audit, horizontalScroll: true }),
-		model: { writeBrief: () => story.brief },
+		model: { writeBrief: () => story.prose },
 		accountSlug: "proof",
 		now: NOW,
 		loadGrant: (query: GrantQuery) => matching(query),
@@ -256,7 +263,7 @@ test("a failed research check retries the full research task", async () => {
 	const master = createMaster(story.request, {
 		readPage: reader(story.pages),
 		audit: () => story.audit,
-		model: { writeBrief: () => story.brief },
+		model: { writeBrief: () => story.prose },
 		accountSlug: "proof",
 	});
 	master.start();

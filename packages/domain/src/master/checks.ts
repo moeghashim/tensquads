@@ -10,8 +10,11 @@ import {
 } from "@tensquads/agent-kit";
 
 import { pageLinks } from "./hrefs.ts";
+import { NO_ITEMS_TEXT } from "./no-items.ts";
 import type { RenderedPage } from "./render-page.ts";
 import type { CheckOutcome, PageAudit, PageFetch, PageReader } from "./types.ts";
+
+export { NO_ITEMS_TEXT };
 
 export interface PageCheckInput {
 	readonly previewUrl: string;
@@ -156,51 +159,51 @@ export interface BriefGrounding {
 	readonly items: readonly ListedItem[];
 }
 
-const BRIEF_WORDS = new Set(
-	"a an the and or with at for to of in on keep show shows serve serves food list listed visible price prices competitor competitors menu this that from only your our is are was be by as it its their them they we you not no yes one new page site".split(
-		" ",
-	),
-);
-
-const CLAIMS = ["free delivery", "discount", "%", "deal", "offer"] as const;
-
-function groundingText(report: ResearchReport, grounding: BriefGrounding): string {
-	const parts = [
-		grounding.businessName,
-		grounding.cuisine ?? "",
-		...grounding.items.flatMap((item) => [item.name, item.price, item.section]),
-		report.gap,
-		report.gapEvidence.quote,
-		...report.competitors.flatMap((row) => [row.name, row.priceOrOffer]),
-	];
-	return parts.join(" ").toLowerCase();
+export function emptyMenu(businessName: string, items: readonly unknown[]): boolean {
+	return businessName.trim().length === 0 || items.length === 0;
 }
 
-function allowedPrices(items: readonly ListedItem[]): Set<string> {
-	const prices = new Set<string>();
-	for (const item of items) {
-		const raw = item.price.trim().replace(/\s/g, "");
-		if (raw.length === 0) continue;
-		prices.add(raw);
-		const digits = raw.replace(/[^0-9.]/g, "");
-		if (digits.length > 0) prices.add(`$${digits}`);
-	}
-	return prices;
+export function renderItemSection(items: readonly { readonly name: string; readonly price: string }[]): string {
+	return items.map((item) => `${item.name}: ${item.price}`).join("\n");
 }
 
-function briefPrices(text: string): string[] {
-	return [...text.matchAll(/\$\s?\d+(?:\.\d+)?/g)].map((match) => match[0].replace(/\s/g, ""));
+export function assembleBrief(
+	prose: string,
+	items: readonly { readonly name: string; readonly price: string }[],
+): string {
+	const section = renderItemSection(items);
+	const body = prose.trim();
+	if (section.length === 0) return body;
+	if (body.length === 0) return section;
+	return `${body}\n${section}`;
 }
 
-function addsClaim(brief: string, known: string): boolean {
-	const lower = brief.toLowerCase();
-	return CLAIMS.some((claim) => lower.includes(claim) && !known.includes(claim));
+const CURRENCY = ["dollar", "dollars", "usd", "euro", "euros", "pound", "pounds", "yen", "cent", "cents"] as const;
+const OFFER_WORDS = ["free", "off", "deal", "offer", "discount", "bogo"] as const;
+
+function hasWord(text: string, word: string): boolean {
+	return new RegExp(`\\b${word}\\b`, "i").test(text);
 }
 
-function addsItem(brief: string, known: string): boolean {
-	const words = new Set(known.match(/[a-z0-9]+/g) ?? []);
-	const found = brief.toLowerCase().match(/[a-z][a-z'-]*/g) ?? [];
-	return found.some((word) => word.length >= 3 && !BRIEF_WORDS.has(word) && !words.has(word));
+function namesPrice(text: string): boolean {
+	if (text.includes("$")) return true;
+	if (/\d+\.(?:00|99)\b/.test(text)) return true;
+	return CURRENCY.some((word) => hasWord(text, word));
+}
+
+function namesOffer(text: string): boolean {
+	const lower = text.toLowerCase();
+	if (lower.includes("%")) return true;
+	if (lower.includes("buy one")) return true;
+	return OFFER_WORDS.some((word) => hasWord(text, word));
+}
+
+function namesItem(text: string, items: BriefGrounding["items"]): boolean {
+	const lower = text.toLowerCase();
+	return items.some((item) => {
+		const name = item.name.trim().toLowerCase();
+		return name.length > 0 && lower.includes(name);
+	});
 }
 
 export function checkBrief(brief: string, report: ResearchReport, grounding?: BriefGrounding): CheckOutcome {
@@ -208,13 +211,10 @@ export function checkBrief(brief: string, report: ResearchReport, grounding?: Br
 	if (wordCount(brief) >= 150) evidence.push("The brief is 150 words or more.");
 	if (!brief.includes(report.gap)) evidence.push("The brief does not name the gap.");
 	if (grounding) {
-		const known = groundingText(report, grounding);
-		const prices = allowedPrices(grounding.items);
-		if (briefPrices(brief).some((price) => !prices.has(price))) {
-			evidence.push("The brief names a price that is not on the menu.");
-		}
-		if (addsClaim(brief, known)) evidence.push("The brief adds an offer.");
-		if (addsItem(brief, known)) evidence.push("The brief names an item that is not on the menu.");
+		if (emptyMenu(grounding.businessName, grounding.items)) evidence.push(NO_ITEMS_TEXT);
+		if (namesPrice(brief)) evidence.push("The brief names a price.");
+		if (namesOffer(brief)) evidence.push("The brief adds an offer.");
+		if (namesItem(brief, grounding.items)) evidence.push("The brief names an item.");
 	}
 	return outcome(evidence);
 }

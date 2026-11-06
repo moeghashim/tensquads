@@ -118,6 +118,7 @@ export function collectRendered(): RenderedPage {
 export interface ProofStory {
 	readonly request: BusinessRequest;
 	readonly report: { readonly gap: string };
+	readonly prose: string;
 	readonly brief: string;
 	readonly pageHtml: string;
 	readonly choice: unknown;

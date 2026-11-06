@@ -40,7 +40,8 @@ export async function insertRunMandate(
 	const payload = rows[0]?.payload ?? {};
 	const skill = textField(payload.skill) || mandateSkill(approval.title);
 	const subject = hexField(payload.subject) ?? sha256Hex(approval.detail);
-	const taskId = textField(payload.taskId) || approval.id;
+	const taskId = textField(payload.taskId);
+	if (taskId.length === 0) throw new Error("The task id is missing.");
 	const slug = skill === "website.publish" || approval.title === publishAsk ? exactText(payload.slug) : null;
 	await db.insert(mandates).values({
 		accountId,

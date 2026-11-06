@@ -68,6 +68,26 @@ test("the proof snapshot keeps the thirteen events and the blank overview", asyn
 			events.map((event) => event.id),
 			story.events.map((event) => event.id),
 		);
+		const traffic = await opened.client.query<{
+			from_agent: string;
+			to_agent: string;
+			skill: string;
+			seq: number | string;
+		}>("SELECT from_agent, to_agent, skill, seq FROM bus_events WHERE account_id = 'proof' ORDER BY id");
+		assert.deepEqual(
+			traffic.rows.map((row) => [row.from_agent, row.to_agent, row.skill]),
+			story.events.map((event) => [event.from, event.to, event.skill]),
+		);
+		const seqs = traffic.rows.map((row) => Number(row.seq));
+		for (let index = 1; index < seqs.length; index += 1) {
+			const previous = seqs[index - 1] ?? 0;
+			const current = seqs[index] ?? 0;
+			assert.equal(current > previous, true);
+		}
+		assert.deepEqual(
+			seqs,
+			story.events.map((_, index) => index),
+		);
 		assert.equal(events[8]?.text.includes(story.report.gap), true);
 		assert.equal(events[8]?.text.includes(story.report.gapEvidence.sourceUrl), true);
 		const publish = events[11]?.payload.approval as { mandate: { subject: string } };

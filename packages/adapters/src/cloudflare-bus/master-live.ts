@@ -60,10 +60,11 @@ function configured(value: string | undefined): string {
 	return value?.trim() ?? "";
 }
 
-function briefPrompt(gap: string, items: BusinessRequest["items"]): string {
-	let text = `Write a brief under 150 words.\nName this gap: ${gap}\nUse only these items and prices.`;
-	for (const item of items) text += `\n${item.name}: ${item.price}`;
-	return text;
+function briefPrompt(gap: string): string {
+	return `Write the positioning and the research finding.
+Stay under 150 words.
+Name this gap: ${gap}
+Do not write a price, an offer, or an item name.`;
 }
 
 async function requestBrief(
@@ -72,7 +73,6 @@ async function requestBrief(
 	model: string,
 	effort: string,
 	gap: string,
-	items: BusinessRequest["items"],
 ): Promise<string> {
 	try {
 		const response = await load(MODEL_URL, {
@@ -81,7 +81,7 @@ async function requestBrief(
 			body: JSON.stringify({
 				model,
 				reasoning_effort: effort,
-				messages: [{ role: "user", content: briefPrompt(gap, items) }],
+				messages: [{ role: "user", content: briefPrompt(gap) }],
 			}),
 			signal: AbortSignal.timeout(MODEL_MS),
 		});
@@ -93,14 +93,14 @@ async function requestBrief(
 	}
 }
 
-function liveBrief(env: BusObjectEnv, report: BriefGap, request: BusinessRequest): Promise<string> {
+function liveBrief(env: BusObjectEnv, report: BriefGap): Promise<string> {
 	const key = configured(env.OPENAI_API_KEY);
 	const model = configured(env.MASTER_MODEL);
 	// Moe sets MASTER_MODEL to the cheaper GPT-6 tier. This code has no model default.
 	if (!key || !model) return Promise.reject(new Error(MODEL_GAP));
 	const effort = configured(env.MASTER_REASONING_EFFORT);
 	if (!effort) return Promise.reject(new Error("The reasoning effort is not configured."));
-	return requestBrief(env.fetchApi ?? fetch, key, model, effort, report.gap, request.items).then((content) => {
+	return requestBrief(env.fetchApi ?? fetch, key, model, effort, report.gap).then((content) => {
 		if (!content) throw new Error(MODEL_GAP);
 		return content;
 	});
@@ -130,9 +130,9 @@ function auditOf(env: BusObjectEnv): (html: string) => PageAudit | Promise<PageA
 	return () => ({ keyboard: true, contrast: true, horizontalScroll: false });
 }
 
-function briefOf(env: BusObjectEnv, request: BusinessRequest): (report: BriefGap) => string | Promise<string> {
+function briefOf(env: BusObjectEnv): (report: BriefGap) => string | Promise<string> {
 	if (env.masterWriteBrief) return () => env.masterWriteBrief?.() ?? "";
-	return (report) => liveBrief(env, report, request);
+	return (report) => liveBrief(env, report);
 }
 
 async function loadGrant(env: BusObjectEnv, query: GrantQuery): Promise<StoredGrant | null> {
@@ -169,9 +169,53 @@ function browserOf(env: BusObjectEnv): (html: string) => Promise<RenderedPage> {
 	return (html) => renderBinding(env.BROWSER, html);
 }
 
+interface StoredBusEvent {
+	readonly id?: string;
+	readonly from?: string;
+	readonly to?: string;
+	readonly kind?: string;
+	readonly skill?: string;
+	readonly payload?: Readonly<Record<string, unknown>>;
+}
+
 interface RequestStore {
 	get<T>(key: string): Promise<T | undefined>;
 	put?(key: string, value: string): Promise<void>;
+	list?<T>(options: { prefix: string }): Promise<Map<string, T>>;
+}
+
+function researchTask(event: StoredBusEvent): { id: string; payload: Record<string, unknown> } | null {
+	if (event.kind !== "Task" || event.from !== "master" || event.to !== "market" || event.skill !== "task.route") {
+		return null;
+	}
+	if (typeof event.id !== "string" || event.id.trim().length === 0) return null;
+	return { id: event.id, payload: { ...(event.payload ?? {}) } };
+}
+
+async function storedResearch(storage: RequestStore): Promise<{ id: string; payload: Record<string, unknown> } | null> {
+	if (!storage.list) return null;
+	const rows = await storage.list<StoredBusEvent>({ prefix: "event:" });
+	const ordered = [...rows.entries()].sort((left, right) => left[0].localeCompare(right[0], "en", { numeric: true }));
+	for (const [, event] of ordered) {
+		const task = researchTask(event);
+		if (task) return task;
+	}
+	return null;
+}
+
+function adoptResearch(
+	master: { snapshot(): MasterSnapshot; restore(phase: MasterSnapshot): void },
+	task: { id: string; payload: Record<string, unknown> },
+): void {
+	const saved = master.snapshot();
+	const hasTask = (saved.runTaskId ?? "").trim().length > 0;
+	const hasPayload = Object.keys(saved.retryPayload ?? {}).length > 0;
+	if (hasTask && hasPayload) return;
+	master.restore({
+		...saved,
+		runTaskId: hasTask ? saved.runTaskId : task.id,
+		retryPayload: hasPayload ? (saved.retryPayload ?? {}) : task.payload,
+	});
 }
 
 const MACHINE_EXP_STATE = `state:${MACHINE_EXP_KEY}`;
@@ -206,7 +250,7 @@ export async function openMaster(
 	const master = createMaster(request, {
 		readPage: readPageOf(env),
 		audit: auditOf(env),
-		model: { writeBrief: briefOf(env, request) },
+		model: { writeBrief: briefOf(env) },
 		accountSlug: accountId,
 		accountId,
 		ownerId,
@@ -216,6 +260,8 @@ export async function openMaster(
 	});
 	const saved = await storage.get<MasterSnapshot>(MASTER_PHASE);
 	if (saved) master.restore(saved);
+	const research = await storedResearch(storage);
+	if (research) adoptResearch(master, research);
 	return {
 		accept: (event) => master.accept(event as never) as Promise<PublishedEvent[]>,
 		snapshot: () => master.snapshot(),

@@ -1,5 +1,15 @@
 export type { BriefGrounding } from "./checks.ts";
-export { checkBrief, checkPage, checkPublished, checkResearch, wordCount } from "./checks.ts";
+export {
+	assembleBrief,
+	checkBrief,
+	checkPage,
+	checkPublished,
+	checkResearch,
+	emptyMenu,
+	NO_ITEMS_TEXT,
+	renderItemSection,
+	wordCount,
+} from "./checks.ts";
 export type { GrantQuery, StoredGrant } from "./grant.ts";
 export { GRANT_MS, grantAllows, syntheticGrant } from "./grant.ts";
 export type { MasterSnapshot } from "./loop.ts";
