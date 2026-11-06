@@ -16,7 +16,7 @@
 		"cf:typegen": "wrangler types",
 		"deploy": "npm run cf:deploy",
 		"test": "node --experimental-strip-types --test src/screens/signup/machine.test.ts src/screens/overview/actions.test.ts src/screens/overview/actions-account.test.ts src/screens/overview/actions-refresh.test.ts src/screens/overview/load.test.ts src/screens/overview/view.test.ts src/server/overview-read.test.ts src/server/traffic-step.test.ts src/screens/traffic/published.test.ts src/server/authorized-parties.test.mjs src/workspace/agent-view.test.ts src/workspace/approval-count.test.ts src/workspace/frame-load.test.ts src/workspace/session-exit-target.test.ts src/workspace/account-match.test.ts src/screens/signin/activate-org.test.ts src/server/special-account.test.ts src/server/platform-scope.test.ts",
-		"dev": "node ../../scripts/write-dev-vars.mjs && vite dev --port 3000"
+		"dev": "node ../../scripts/write-dev-vars.mjs && vite dev --port ${TS_E2E_PORT:-3000} --strictPort"
 	},
 	"dependencies": {
 		"@clerk/tanstack-react-start": "1.7.9",

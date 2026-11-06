@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { createRepositories, openPostgres } from "@tensquads/adapters";
 
+import { appOrigin } from "../scripts/e2e-port.mjs";
 import {
 	activateForeignOrg,
 	addCompanySuperAdmin,
@@ -72,7 +73,7 @@ test("an account owner cannot reach admin or the admin server functions", async 
 			{
 				name: "ts_special_account",
 				value: "northwind",
-				url: "http://localhost:3000",
+				url: appOrigin(),
 				httpOnly: true,
 				secure: true,
 				sameSite: "Lax",
@@ -106,7 +107,7 @@ test("a super admin opens one account and All companies ends that session", asyn
 		await page.getByRole("button", { name: "All companies" }).click();
 		await expect(page).toHaveURL(/\/admin\/?$/);
 		await expect(page.getByRole("navigation", { name: "Platform admin" })).toBeVisible();
-		const cookies = await page.context().cookies("http://localhost:3000");
+		const cookies = await page.context().cookies(appOrigin());
 		expect(cookies.some((cookie) => cookie.name === "ts_special_account")).toBe(false);
 		await page.goto("/overview");
 		await expect(page).toHaveURL(/\/admin\/?$/);

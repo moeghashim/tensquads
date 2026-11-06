@@ -3,6 +3,7 @@ import { openPostgres, schema } from "@tensquads/adapters";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import { eq } from "drizzle-orm";
 
+import { appOrigin } from "../scripts/e2e-port.mjs";
 import { postedField } from "./fence-body.ts";
 import { secretsFor } from "./support.ts";
 import { expect, openWorkspace, test } from "./workspace.ts";
@@ -314,8 +315,8 @@ test("two reloads before a write retire a held request", async ({ page, workspac
 		headers: {
 			"content-type": "application/json",
 			"x-tsr-serverfn": "true",
-			origin: "http://localhost:3000",
-			referer: "http://localhost:3000/rules",
+			origin: appOrigin(),
+			referer: `${appOrigin()}/rules`,
 		},
 		data: old.body,
 	});
