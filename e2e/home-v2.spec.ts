@@ -249,6 +249,7 @@ for (const viewport of viewports) {
 			await document.fonts.ready;
 		});
 		await expectNoHorizontalScroll(page);
+		await expect(page.locator(".home-v2 .new > span")).toHaveCSS("height", "30px");
 		await expect(page).toHaveScreenshot(`home-v2-${viewport.name}.png`, { fullPage: true });
 	});
 }

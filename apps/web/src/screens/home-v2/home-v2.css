@@ -183,7 +183,7 @@ html:has(.home-v2) {
 	margin-top: 12px;
 }
 
-.home-v2 .new span {
+.home-v2 .new > span {
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
