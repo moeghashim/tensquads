@@ -57,7 +57,7 @@ function sourceFiles(directory, found = []) {
 
 function bindingNames(text) {
 	const names = new Set();
-	for (const match of text.matchAll(/\benv\.([A-Z][A-Z0-9_]*)\b/g)) names.add(match[1]);
+	for (const match of text.matchAll(/(?<!import\.meta\.|process\.)\benv\.([A-Z][A-Z0-9_]*)\b/g)) names.add(match[1]);
 	for (const match of text.matchAll(/\bworkerEnv\(\s*"([A-Z][A-Z0-9_]*)"\s*\)/g)) names.add(match[1]);
 	for (const match of text.matchAll(/\breadonly\s+([A-Z][A-Z0-9_]*)\??:/g)) names.add(match[1]);
 	return names;
