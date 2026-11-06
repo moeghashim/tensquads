@@ -16,6 +16,7 @@ import {
 	hostOf,
 	imageFromTemplate,
 	imageTag,
+	realRunImage,
 	sizeText,
 	sourceName,
 	startKey,
@@ -147,12 +148,13 @@ function createBody(
 	env: Record<string, string>,
 	labels: Record<string, string>,
 	from?: string,
+	environment = ENVIRONMENT,
 ): CreateSandboxRequest {
 	return {
 		type: "small",
-		noEnv: true,
+		noEnv: environment === ENVIRONMENT,
 		ttlSeconds: null,
-		environment: ENVIRONMENT,
+		environment,
 		env,
 		labels,
 		name,
@@ -167,7 +169,9 @@ async function createOnce(ctx: BoatContext, body: CreateSandboxRequest, idempote
 	} catch (error) {
 		if (!(error instanceof ResponseError)) return asFault(error, false);
 		const facts = await readErrorBody(error.response);
-		if (facts.status !== 400 || body.environment === undefined) throw faultFromStatus(facts, false);
+		if (facts.status !== 400 || body.environment === undefined || body.environment !== ENVIRONMENT) {
+			throw faultFromStatus(facts, false);
+		}
 		const { environment: _environment, ...withoutEnvironment } = body;
 		const created = await call(() =>
 			ctx.machine.create({ idempotencyKey, createSandboxRequest: withoutEnvironment }),
@@ -271,7 +275,11 @@ async function setMachineToken(ctx: BoatContext, scope: AccountScope, agentId: s
 	const baseUrl = ctx.secretBaseUrl;
 	const listed = await call(() => admin.listCredentialProfiles());
 	if (!listed.profiles.some((row) => row.name === profile)) {
-		await call(() => admin.createCredentialProfile({ createCredentialProfileRequest: { name: profile } }));
+		await call(() =>
+			admin.createCredentialProfile({
+				createCredentialProfileRequest: { name: profile, copyFrom: ctx.profileName },
+			}),
+		);
 	}
 	await call(() =>
 		admin.setCredentialProfileCustomApi({
@@ -280,6 +288,48 @@ async function setMachineToken(ctx: BoatContext, scope: AccountScope, agentId: s
 			setCustomApiRequest: { value, baseUrl },
 		}),
 	);
+}
+
+const ENVIRONMENT_NAME_LIMIT = 64;
+
+async function agentEnvironment(ctx: BoatContext, scope: AccountScope, agentId: string): Promise<string> {
+	const profile = machineCredentialProfile(scope.accountId, agentId);
+	if (profile.length > ENVIRONMENT_NAME_LIMIT) throw notConfigured("The machine profile name is not valid.");
+	const admin = ctx.admin;
+	if (!admin || !ctx.secretBaseUrl) throw notConfigured("The secret registration is not configured.");
+	const listed = await call(() => admin.listCredentialProfiles());
+	if (!listed.profiles.some((row) => row.name === profile)) {
+		await call(() =>
+			admin.createCredentialProfile({
+				createCredentialProfileRequest: { name: profile, copyFrom: ctx.profileName },
+			}),
+		);
+	}
+	const found = await call(() => admin.environments());
+	let environment = found.environments.find((row) => row.name === profile);
+	if (!environment) {
+		const created = await call(() => admin.createEnvironment({ createSandboxEnvironmentRequest: { name: profile } }));
+		environment = created.environments.find((row) => row.name === profile);
+	}
+	const pinned = environment;
+	if (!pinned?.id) throw notConfigured("The secret registration is not configured.");
+	const attached =
+		pinned.credentialProfileId === profile &&
+		pinned.safeForThirdParties === true &&
+		pinned.proxyAiCredentials === true;
+	if (!attached) {
+		await call(() =>
+			admin.updateEnvironment({
+				environmentId: pinned.id,
+				updateSandboxEnvironmentRequest: {
+					credentialProfileId: profile,
+					safeForThirdParties: true,
+					proxyAiCredentials: true,
+				},
+			}),
+		);
+	}
+	return profile;
 }
 
 export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
@@ -412,25 +462,31 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 			return { id: name };
 		},
 		async startFromTemplate(scope, templateId, agentId): Promise<StartedMachine> {
-			const image = imageFromTemplate(templateId);
-			const tag = imageTag(image.imageId, image.version);
+			const known = realRunImage(templateId);
+			const image = known ?? imageFromTemplate(templateId);
+			const tag = known ? known.imageTag : imageTag(image.imageId, image.version);
 			const existing = await findMachine(ctx, scope, agentId);
 			if (!existing) {
+				const environment = known ? await agentEnvironment(ctx, scope, agentId) : undefined;
 				const created = await createOnce(
 					ctx,
-					{
-						...createBody(
-							hostName(agentId),
-							machineEnv(scope.accountId, agentId, tag),
-							labelled({ account: scope.accountId, agent: agentId, image: tag }, ctx.runId),
-							templateId,
-						),
-					},
+					createBody(
+						hostName(agentId),
+						machineEnv(scope.accountId, agentId, tag),
+						labelled({ account: scope.accountId, agent: agentId, image: tag }, ctx.runId),
+						templateId,
+						environment,
+					),
 					startKey(scope.accountId, agentId, tag),
 				);
 				await waitReady(ctx, created.id);
 			} else if (off(existing.state)) {
-				await call(() => ctx.machine.resume({ sandboxId: existing.id }));
+				const environment = known ? await agentEnvironment(ctx, scope, agentId) : undefined;
+				await call(() =>
+					ctx.machine.resume(
+						environment ? { sandboxId: existing.id, resumeRequest: { environment } } : { sandboxId: existing.id },
+					),
+				);
 				await waitReady(ctx, existing.id);
 			} else if (!LIVE.has(existing.state)) {
 				await waitReady(ctx, existing.id);

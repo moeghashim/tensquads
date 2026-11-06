@@ -30,8 +30,8 @@
 	// The real environment is not production. Deploy stays `wrangler deploy` with no --env.
 	// Vars, durable objects, queues, and the browser binding are not inherited, so this
 	// environment declares its own. Its queues are tensquads-real-bus and tensquads-real-bus-dlq.
-	// MASTER_MODEL stays empty until Moe sets the cheaper GPT-6 tier.
-	// OPENAI_API_KEY is a Worker secret and stays out of this file.
+	// MASTER_MODEL is gpt-6-luna and MASTER_REASONING_EFFORT is medium.
+	// The code has no model default. OPENAI_API_KEY is a Worker secret and stays out of this file.
 	// Browser Rendering is bound only here.
 	"env": {
 		"real": {
@@ -39,7 +39,8 @@
 				"ADAPTERS": "real",
 				"BUS_DEAD_LETTER": "tensquads-real-bus-dlq",
 				"CLERK_PLATFORM_ORG_ID": "org_3Lazia1HC1hdgfY0mAttb1qTWYm",
-				"MASTER_MODEL": ""
+				"MASTER_MODEL": "gpt-6-luna",
+				"MASTER_REASONING_EFFORT": "medium"
 			},
 			"durable_objects": {
 				"bindings": [{ "name": "ACCOUNT_BUS", "class_name": "AccountBus" }]

@@ -51,13 +51,20 @@ async function fetchDocument(url: string): Promise<{ status: number; body: strin
 	}
 }
 
-async function requestBrief(load: typeof fetch, key: string, model: string, gap: string): Promise<string> {
+async function requestBrief(
+	load: typeof fetch,
+	key: string,
+	model: string,
+	effort: string,
+	gap: string,
+): Promise<string> {
 	try {
 		const response = await load(MODEL_URL, {
 			method: "POST",
 			headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
 			body: JSON.stringify({
 				model,
+				...(effort ? { reasoning_effort: effort } : {}),
 				messages: [{ role: "user", content: `Write a brief under 150 words. Name this gap: ${gap}` }],
 			}),
 			signal: AbortSignal.timeout(MODEL_MS),
@@ -73,9 +80,10 @@ async function requestBrief(load: typeof fetch, key: string, model: string, gap:
 function liveBrief(env: BusObjectEnv, report: BriefGap): Promise<string> {
 	const key = env.OPENAI_API_KEY;
 	const model = env.MASTER_MODEL;
-	// Moe sets MASTER_MODEL to the cheaper GPT-6 tier. This code has no model default.
+	const effort = env.MASTER_REASONING_EFFORT ?? "";
+	// The real Worker sets MASTER_MODEL and MASTER_REASONING_EFFORT. This code has no model default.
 	if (!key || !model) return Promise.reject(new Error(MODEL_GAP));
-	return requestBrief(env.fetchApi ?? fetch, key, model, report.gap).then((content) => {
+	return requestBrief(env.fetchApi ?? fetch, key, model, effort, report.gap).then((content) => {
 		if (!content) throw new Error(MODEL_GAP);
 		return content;
 	});

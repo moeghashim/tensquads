@@ -11,6 +11,7 @@ import {
 	AUTONOMY_OPTIONS,
 	agentDetailView,
 } from "#/screens/agent-detail/model.ts";
+import { workerEnv } from "./worker-env.ts";
 
 function validateAgentId(input: unknown): string {
 	if (typeof input !== "string" || input.length === 0) {
@@ -253,6 +254,24 @@ function detailSource(
 	};
 }
 
+async function liveDashboard(scope: AccountScope, agentId: string) {
+	const { chooseAdapters, readLiveMachine } = await import("@tensquads/adapters");
+	if (chooseAdapters(await workerEnv("ADAPTERS")) !== "real") return null;
+	if (agentId !== "market" && agentId !== "website") return null;
+	return readLiveMachine(
+		{
+			ADAPTERS: await workerEnv("ADAPTERS"),
+			BOAT_TOKEN: await workerEnv("BOAT_TOKEN"),
+			BOAT_ADMIN_TOKEN: await workerEnv("BOAT_ADMIN_TOKEN"),
+			BOAT_PROFILE: await workerEnv("BOAT_PROFILE"),
+			BOAT_BASE_PATH: await workerEnv("BOAT_BASE_PATH"),
+			BOAT_SECRET_BASE_URL: await workerEnv("BOAT_SECRET_BASE_URL"),
+		},
+		scope,
+		agentId,
+	);
+}
+
 async function loadView(db: AppDatabase, scope: AccountScope, agentId: string) {
 	const { createRepositories, createTestMachine } = await import("@tensquads/adapters");
 	const repos = createRepositories(db);
@@ -262,16 +281,17 @@ async function loadView(db: AppDatabase, scope: AccountScope, agentId: string) {
 		throw redirect({ to: "/agents" });
 	}
 	const machine = createTestMachine([machineRecord(agent)]);
+	const live = await liveDashboard(scope, agent.id);
 	const master = await repos.squads.master(scope);
 	const accounts = await repos.platform.listAccounts(scope);
 	const company = accounts.find((item) => item.id === scope.accountId);
 	const events = await repos.bus.listEvents(scope);
 	const shown = {
-		host: machine.host(agent.id),
+		host: live?.host ?? machine.host(agent.id),
 		region: machine.region(agent.id),
 		size: machine.size(agent.id),
-		cpu: machine.cpu(agent.id),
-		uptime: machine.uptime(agent.id),
+		cpu: live?.cpu ?? machine.cpu(agent.id),
+		uptime: live?.uptime ?? machine.uptime(agent.id),
 		storedCpu: agent.cpu,
 		storedUptime: agent.uptime,
 		egress: machine.egress(agent.id),

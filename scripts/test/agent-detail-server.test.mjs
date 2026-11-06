@@ -73,6 +73,11 @@ const exports = {
 	"@tensquads/kernel": { Kernel: TestKernel },
 	"@tensquads/adapters": {
 		createRepositories: repositories,
+		chooseAdapters: (flag) => (flag === "real" ? "real" : "test"),
+		readLiveMachine: async () => {
+			state.liveReads += 1;
+			return state.liveMachine;
+		},
 		createTestMachine: ([row]) =>
 			Object.fromEntries(
 				["host", "region", "size", "cpu", "uptime", "egress", "secrets"].map((key) => [key, () => row[key]]),
@@ -105,6 +110,8 @@ function setup(t, options = {}) {
 	state = {
 		now: 1000,
 		loads: 0,
+		liveReads: 0,
+		liveMachine: null,
 		deadlines: [],
 		fences: [],
 		accountDelay: 0,
@@ -201,4 +208,59 @@ test("an invalid fence does not call the kernel", async (t) => {
 	assert.equal(state.fences.length, 0);
 	assert.equal(state.loads, 0);
 	assert.equal(state.agent.on, true);
+});
+
+test("real mode reads host, cpu, and uptime for the real-run agents", async (t) => {
+	const previous = process.env.ADAPTERS;
+	t.after(() => {
+		if (previous === undefined) delete process.env.ADAPTERS;
+		else process.env.ADAPTERS = previous;
+	});
+	process.env.ADAPTERS = "real";
+	setup(t, {
+		liveMachine: { host: "vps-market-01", cpu: "20%", uptime: "3 days" },
+		agent: {
+			id: "market",
+			name: "Market",
+			role: "Research",
+			tint: "#def5ee",
+			on: true,
+			autonomy: "Ask first",
+			mission: "Initial mission",
+			contribution: 0,
+			targets: [],
+			kpis: [],
+			skills: [],
+			host: "machine",
+			region: "test",
+			size: "small",
+			cpu: "22%",
+			uptime: "18 days",
+			egress: ["kept.example"],
+			secrets: ["kept-secret"],
+		},
+	});
+	const view = await server.loadAgentDetail({ data: "market" });
+	assert.equal(view.host, "vps-market-01");
+	assert.equal(view.cpu, "20%");
+	assert.equal(view.uptime, "3 days");
+	assert.equal(view.region, "test");
+	assert.equal(view.size, "small");
+	assert.deepEqual(view.egress, ["kept.example"]);
+	assert.deepEqual(view.secrets, ["kept-secret"]);
+	assert.equal(state.liveReads, 1);
+
+	state.agent.id = "support";
+	state.liveReads = 0;
+	const design = await server.loadAgentDetail({ data: "support" });
+	assert.equal(design.host, "machine");
+	assert.equal(design.cpu, "22%");
+	assert.equal(state.liveReads, 0);
+
+	process.env.ADAPTERS = "test";
+	state.agent.id = "market";
+	const stored = await server.loadAgentDetail({ data: "market" });
+	assert.equal(stored.host, "machine");
+	assert.equal(stored.cpu, "22%");
+	assert.equal(state.liveReads, 0);
 });
