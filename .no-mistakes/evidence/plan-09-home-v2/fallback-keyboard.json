@@ -1,0 +1,11 @@
+{
+  "fallback": "all four cards fully visible by eight seconds with animation script blocked",
+  "keyboard": {
+    "tabs": 15,
+    "focus": {
+      "width": "2px",
+      "color": "rgb(1, 105, 204)",
+      "offset": "2px"
+    }
+  }
+}

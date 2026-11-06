@@ -1,0 +1,258 @@
+[
+  {
+    "name": "Review index identifies the selected design; homepage and dashboard bytes are served intact",
+    "result": "pass",
+    "detail": {
+      "htmlStatus": 200,
+      "imageStatus": 200,
+      "imageWidth": 2880
+    }
+  },
+  {
+    "name": "Cards are invisible on first frames, arrive in order, then Pisa approval reduces count to three",
+    "result": "pass",
+    "detail": {
+      "samples": [
+        {
+          "t": 30.600000023841858,
+          "opacity": [
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "t": 47,
+          "opacity": [
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "t": 136.69999992847443,
+          "opacity": [
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "t": 202.79999995231628,
+          "opacity": [
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "t": 272.39999997615814,
+          "opacity": [
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "t": 279,
+          "opacity": [
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "t": 373.5,
+          "opacity": [
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "t": 408.10000002384186,
+          "opacity": [
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "t": 424.60000002384186,
+          "opacity": [
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "t": 433.2999999523163,
+          "opacity": [
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "t": 555.7999999523163,
+          "opacity": [
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "t": 577.2999999523163,
+          "opacity": [
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "t": 686.5,
+          "opacity": [
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        }
+      ],
+      "arrivals": [
+        {
+          "t": 836.3999999761581,
+          "index": 0
+        },
+        {
+          "t": 1236.1000000238419,
+          "index": 1
+        },
+        {
+          "t": 1752.7999999523163,
+          "index": 2
+        },
+        {
+          "t": 2229.100000023842,
+          "index": 3
+        }
+      ],
+      "ends": [
+        {
+          "t": 2219.6999999284744,
+          "index": 0,
+          "duration": 1.4
+        },
+        {
+          "t": 2636.600000023842,
+          "index": 1,
+          "duration": 1.4
+        },
+        {
+          "t": 3107.2999999523163,
+          "index": 2,
+          "duration": 1.4
+        },
+        {
+          "t": 3652.7999999523163,
+          "index": 3,
+          "duration": 1.4
+        }
+      ]
+    }
+  },
+  {
+    "name": "New and Existing toggle replace examples and placeholder; example fills and focuses the prompt",
+    "result": "pass",
+    "detail": {
+      "value": "A cafe with a wholesale side",
+      "placeholder": "Paste your store URL or describe what you sell\u2026"
+    }
+  },
+  {
+    "name": "Squadmate details open on hover and keyboard focus; limits fill when scrolled into view",
+    "result": "pass",
+    "detail": {
+      "focus": {
+        "tabs": 15,
+        "focus": {
+          "width": "2px",
+          "color": "rgb(1, 105, 204)",
+          "offset": "2px"
+        }
+      },
+      "widths": [
+        0.5,
+        0.37999295112781956,
+        0.6199776785714286
+      ]
+    }
+  },
+  {
+    "name": "At 390px the completed preview has no horizontal scroll and keeps its prompt usable",
+    "result": "pass",
+    "detail": {
+      "scrollWidth": 390,
+      "visibleCards": 2
+    }
+  },
+  {
+    "name": "Reduced motion shows cards immediately and still completes the approval",
+    "result": "pass",
+    "detail": [
+      {
+        "opacity": "1",
+        "animation": "none"
+      },
+      {
+        "opacity": "1",
+        "animation": "none"
+      },
+      {
+        "opacity": "1",
+        "animation": "none"
+      },
+      {
+        "opacity": "1",
+        "animation": "none"
+      }
+    ]
+  },
+  {
+    "name": "With JavaScript disabled all desktop cards remain readable",
+    "result": "pass",
+    "detail": {
+      "opacity": [
+        "1",
+        "1",
+        "1",
+        "1"
+      ]
+    }
+  },
+  {
+    "name": "If the animation script is blocked the six-second fallback reveals the cards",
+    "result": "pass",
+    "detail": "all four cards fully visible by eight seconds with animation script blocked"
+  },
+  {
+    "name": "Root landing page remains unchanged and preview has no uncaught script errors",
+    "result": "pass",
+    "detail": {
+      "heading": "Hire a squad of AI agents to run your business",
+      "errors": []
+    }
+  }
+]

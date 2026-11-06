@@ -1,0 +1,66 @@
+[
+  {
+    "class": "c in approved settled",
+    "opacity": "1",
+    "filter": "blur(0px)",
+    "animation": "arrive",
+    "rect": {
+      "x": 112,
+      "y": 254,
+      "width": 289,
+      "height": 222,
+      "top": 254,
+      "right": 401,
+      "bottom": 476,
+      "left": 112
+    }
+  },
+  {
+    "class": "c in",
+    "opacity": "1",
+    "filter": "blur(0px)",
+    "animation": "arriveEven",
+    "rect": {
+      "x": 421,
+      "y": 264,
+      "width": 289,
+      "height": 243,
+      "top": 264,
+      "right": 710,
+      "bottom": 507,
+      "left": 421
+    }
+  },
+  {
+    "class": "c in",
+    "opacity": "1",
+    "filter": "blur(0px)",
+    "animation": "arrive",
+    "rect": {
+      "x": 730,
+      "y": 254,
+      "width": 289,
+      "height": 243,
+      "top": 254,
+      "right": 1019,
+      "bottom": 497,
+      "left": 730
+    }
+  },
+  {
+    "class": "c in",
+    "opacity": "1",
+    "filter": "blur(0px)",
+    "animation": "arriveEven",
+    "rect": {
+      "x": 1039,
+      "y": 264,
+      "width": 289,
+      "height": 243,
+      "top": 264,
+      "right": 1328,
+      "bottom": 507,
+      "left": 1039
+    }
+  }
+]
