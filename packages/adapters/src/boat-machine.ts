@@ -9,7 +9,7 @@ import {
 	waitUntilReady,
 } from "@boatdev/sdk";
 import type { AccountMachine, AccountScope, MachineTemplate, StartedMachine } from "@tensquads/kernel";
-
+import { deadlineFetch } from "./boat-deadline.ts";
 import { faultFromStatus, machineFault, missingMachine, notConfigured, readErrorBody } from "./boat-errors.ts";
 import {
 	cpuText,
@@ -409,7 +409,8 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 	if (options.profileName === "default" || options.profileName === "moe@10claws.com") {
 		throw notConfigured("The default profile is closed.");
 	}
-	const baseFetch = options.fetchApi ?? fetch;
+	const wait = options.wait ?? { intervalMs: 2_000, timeoutMs: 300_000 };
+	const baseFetch = deadlineFetch(options.fetchApi ?? fetch, wait.timeoutMs);
 	const ctx: BoatContext = {
 		options,
 		machine: client(options.token, options, baseFetch),
@@ -417,7 +418,7 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 		profileName: options.profileName,
 		secretBaseUrl: options.secretBaseUrl,
 		now: options.now ?? (() => new Date()),
-		wait: options.wait ?? { intervalMs: 2_000, timeoutMs: 300_000 },
+		wait,
 		runId: options.runId,
 	};
 
