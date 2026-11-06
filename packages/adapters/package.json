@@ -7,11 +7,12 @@
 		"./pending-window": "./src/pending-window.ts"
 	},
 	"scripts": {
-		"check": "tsc --noEmit",
+		"check": "tsc --noEmit && node ../../scripts/kit-optional.mjs check tsconfig.live.json",
 		"test": "node --experimental-strip-types test/run.ts"
 	},
 	"dependencies": {
 		"@boatdev/sdk": "1.13.0",
+		"@cloudflare/puppeteer": "1.1.0",
 		"@electric-sql/pglite": "0.5.14",
 		"@neondatabase/serverless": "1.2.0",
 		"@tensquads/domain": "*",

@@ -1,6 +1,8 @@
 import type { AccountMachine, AccountScope, MachineProvider, StartedMachine } from "@tensquads/kernel";
 import { MachineFault } from "@tensquads/kernel";
 
+import { MACHINE_TOKEN_ENV } from "./cloudflare-bus/token.ts";
+
 export interface MachineRecord {
 	readonly id: string;
 	readonly on: boolean;
@@ -154,6 +156,11 @@ export function createAccountTestMachine(): AccountMachine {
 		async registerSecret(scope, name) {
 			const list = names(scope.accountId);
 			if (!list.includes(name)) list.push(name);
+		},
+		async rotateToken(scope, _agentId, value) {
+			if (value.length === 0) throw new MachineFault("unavailable", "The machine token is empty.");
+			const list = names(scope.accountId);
+			if (!list.includes(MACHINE_TOKEN_ENV)) list.push(MACHINE_TOKEN_ENV);
 		},
 		async removeSecret(scope, name) {
 			const list = names(scope.accountId);

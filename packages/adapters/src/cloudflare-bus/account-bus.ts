@@ -1,21 +1,41 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+
 import { planNextEvent, type TrafficCursor } from "@tensquads/domain";
 import type { PublishedEvent } from "@tensquads/kernel";
-
+import { chooseAdapters } from "../adapter-choice.ts";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { traceFor } from "../trace.ts";
-import { isBusRecord, isNonEmptyString, isObject } from "./message.ts";
+import { advanceBody } from "./account-request.ts";
+import {
+	type AlarmKv,
+	BUS_ALARM,
+	backoffDeadline,
+	DELIVERY_ALARM,
+	deadlineToken,
+	HEARTBEAT_ALARM,
+	rearm,
+	runDue,
+	setDeadline,
+	syncBusDeadline,
+} from "./alarm.ts";
+import { armDeliveryAlarm, armDeliveryRetry, drainDeliveries as drainDeliveryAlarm } from "./delivery-alarm.ts";
+import { type HeartbeatEnv, RETRY_MS, recordBeat, sweepHeartbeats } from "./heartbeat.ts";
+import type { BusNamespace } from "./http.ts";
+import { writeMasterCommit } from "./master-commit.ts";
+import { finishMaster, MASTER_DONE, MASTER_OPEN, masterEvent, retryOpenMaster } from "./master-retry.ts";
+import { prepareMaster } from "./master-step.ts";
+import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
 import { type PendingBusRow, readBusEvents, readBusHistory, readBusState, writePending } from "./neon-write.ts";
+import { armProbe } from "./probe.ts";
 
 const ALARM_MS = 30_000;
 
-export interface SyncKv {
-	get<T>(key: string): T | undefined;
-	put<T>(key: string, value: T): void;
-}
+export interface SyncKv extends AlarmKv {}
 
 export interface BusStorage {
-	get<T>(key: string): Promise<T | undefined>;
+	get<T>(key: string, options?: { noCache?: boolean }): Promise<T | undefined>;
 	put<T>(key: string, value: T): Promise<void>;
+	delete(key: string): Promise<boolean>;
 	list<T>(options?: { prefix?: string }): Promise<Map<string, T>>;
 	transaction<T>(closure: (txn: BusStorage) => Promise<T>): Promise<T>;
 	transactionSync<T>(closure: () => T): T;
@@ -31,9 +51,39 @@ export interface BusState {
 	getWebSockets(): WebSocket[];
 }
 
-export interface BusObjectEnv {
+interface PageAuditInput {
+	readonly keyboard: boolean;
+	readonly contrast: boolean;
+	readonly horizontalScroll: boolean;
+}
+
+interface RenderedCheck {
+	readonly visibleText: string;
+	readonly cssContent: readonly string[];
+	readonly linkTexts: readonly string[];
+	readonly imageCount: number;
+	readonly horizontalScroll: boolean;
+	readonly keyboard: boolean;
+	readonly contrast: boolean;
+}
+
+export interface BusObjectEnv extends HeartbeatEnv {
 	readonly DATABASE_URL?: string;
 	readonly BUS_INSPECT?: string;
+	readonly masterReadPage?: (url: string) => Promise<{ status: number; body: string }>;
+	readonly masterAudit?: (html: string) => PageAuditInput | Promise<PageAuditInput>;
+	readonly masterWriteBrief?: (report?: { readonly gap: string }) => string | Promise<string>;
+	readonly masterBrowser?: (html: string) => Promise<RenderedCheck>;
+	readonly BROWSER?: unknown;
+	readonly OPENAI_API_KEY?: string;
+	readonly MASTER_MODEL?: string;
+	// A test can drain pending approval deliveries without a live database.
+	// It returns the number of rows left. The alarm runs it again later.
+	readonly retryDeliveries?: (accountId: string, beforeMs?: number) => Promise<number>;
+	// A test can complete a bus flush without a live database.
+	readonly writeBusPending?: (accountId: string, rows: readonly PendingBusRow[]) => Promise<void>;
+	// The real worker binding. The inspect probe uses it to schedule during a drain.
+	readonly ACCOUNT_BUS?: BusNamespace;
 }
 
 interface AcceptResult {
@@ -58,48 +108,8 @@ function readCursor(value: unknown): TrafficCursor {
 	return { seq, clock, scriptIndex };
 }
 
-function expired(deadlineAt?: number): boolean {
-	return deadlineAt !== undefined && Date.now() >= deadlineAt;
-}
-
-function scriptStep(step: unknown): ScriptedBusEvent | undefined {
-	if (!isObject(step)) return undefined;
-	const from = step.from;
-	const to = step.to;
-	const kind = step.kind;
-	const skill = step.skill;
-	const text = step.text;
-	const payload = step.payload;
-	if (!isNonEmptyString(from) || !isNonEmptyString(to) || !isNonEmptyString(kind)) return undefined;
-	if (!isNonEmptyString(skill) || !isNonEmptyString(text) || !isObject(payload)) return undefined;
-	const writes = step.writes === undefined ? [] : step.writes;
-	if (!Array.isArray(writes) || writes.some((key) => typeof key !== "string")) return undefined;
-	if (step.set !== undefined && !isObject(step.set)) return undefined;
-	return {
-		from,
-		to,
-		kind: kind as ScriptedBusEvent["kind"],
-		skill,
-		text,
-		payload,
-		writes: writes as string[],
-		set: isObject(step.set) ? step.set : undefined,
-	};
-}
-
-function advanceBody(
-	body: unknown,
-): { accountId: string; script: ScriptedBusEvent[]; deadlineAt?: number } | undefined {
-	if (!isObject(body) || !isNonEmptyString(body.accountId) || !Array.isArray(body.script)) return undefined;
-	const script: ScriptedBusEvent[] = [];
-	for (const step of body.script) {
-		const parsed = scriptStep(step);
-		if (!parsed) return undefined;
-		script.push(parsed);
-	}
-	const deadlineAt =
-		typeof body.deadlineAt === "number" && Number.isFinite(body.deadlineAt) ? body.deadlineAt : undefined;
-	return { accountId: body.accountId, script, deadlineAt };
+function expired(deadlineAt: number | undefined, now: number): boolean {
+	return deadlineAt !== undefined && now >= deadlineAt;
 }
 
 class DeadlinePassed extends Error {
@@ -112,9 +122,10 @@ async function planAdvance(
 	storage: BusStorage,
 	accountId: string,
 	script: readonly ScriptedBusEvent[],
-	deadlineAt?: number,
+	deadlineAt: number | undefined,
+	clock: () => number,
 ): Promise<AdvanceResult> {
-	if (expired(deadlineAt)) return { accepted: false, expired: true };
+	if (expired(deadlineAt, clock())) return { accepted: false, expired: true };
 	const storedAccount = await storage.get<string>("account");
 	if (storedAccount && storedAccount !== accountId) return { accepted: false };
 	let current = readCursor(await storage.get("traffic-cursor"));
@@ -124,10 +135,10 @@ async function planAdvance(
 	while (ids.has(`e${current.seq}`)) {
 		current = { seq: current.seq + 1, clock: current.clock + 1, scriptIndex: current.scriptIndex + 1 };
 	}
-	if (expired(deadlineAt)) return { accepted: false, expired: true };
+	if (expired(deadlineAt, clock())) return { accepted: false, expired: true };
 	const plan = planNextEvent(known, script, current, traceFor);
 	if (!plan) return { accepted: false };
-	const result = await commitDurable(storage, accountId, plan.event, deadlineAt, plan.cursor);
+	const result = await commitDurable(storage, accountId, plan.event, deadlineAt, plan.cursor, false, clock);
 	if (result.expired) return { accepted: false, expired: true };
 	if (result.seen || !result.event) return { accepted: false };
 	return { accepted: true, event: result.event };
@@ -161,8 +172,9 @@ function commitSynced(
 	event: PublishedEvent,
 	deadlineAt?: number,
 	cursor?: TrafficCursor,
+	clock: () => number = Date.now,
 ): AcceptResult {
-	if (expired(deadlineAt)) throw new DeadlinePassed();
+	if (expired(deadlineAt, clock())) throw new DeadlinePassed();
 	const storedAccount = kv.get<string>("account");
 	if (storedAccount && storedAccount !== accountId) return { seen: true, seq: kv.get<number>("seq") ?? 0 };
 	if (kv.get(`seen:${event.id}`)) return { seen: true, seq: kv.get<number>("seq") ?? 0 };
@@ -176,7 +188,7 @@ function commitSynced(
 	const pending = kv.get<PendingBusRow[]>("pending") ?? [];
 	kv.put("pending", [...pending, { seq, event }]);
 	if (cursor) kv.put("traffic-cursor", cursor);
-	if (expired(deadlineAt)) throw new DeadlinePassed();
+	if (expired(deadlineAt, clock())) throw new DeadlinePassed();
 	return { seen: false, seq, event };
 }
 
@@ -186,16 +198,24 @@ async function commitDurable(
 	event: PublishedEvent,
 	deadlineAt?: number,
 	cursor?: TrafficCursor,
+	markMaster = false,
+	clock: () => number = Date.now,
 ): Promise<AcceptResult> {
-	if (expired(deadlineAt)) return { seen: false, seq: 0, expired: true };
+	if (expired(deadlineAt, clock())) return { seen: false, seq: 0, expired: true };
 	let result: AcceptResult;
 	try {
-		result = storage.transactionSync(() => commitSynced(storage.kv, accountId, event, deadlineAt, cursor));
+		result = storage.transactionSync(() => {
+			const committed = commitSynced(storage.kv, accountId, event, deadlineAt, cursor, clock);
+			if (markMaster && !committed.seen && committed.event && !storage.kv.get(`${MASTER_DONE}${event.id}`)) {
+				storage.kv.put(`${MASTER_OPEN}${event.id}`, event);
+			}
+			return committed;
+		});
 	} catch (error) {
 		if (error instanceof DeadlinePassed) return { seen: false, seq: 0, expired: true };
 		throw error;
 	}
-	if (!result.seen && result.event) await storage.setAlarm(Date.now() + ALARM_MS);
+	if (!result.seen && result.event) await setDeadline(storage, BUS_ALARM, clock() + ALARM_MS);
 	return result;
 }
 
@@ -204,22 +224,107 @@ export class AccountBus {
 	private readonly env: BusObjectEnv;
 	private accepting: Promise<void> = Promise.resolve();
 	private flushing: Promise<void> = Promise.resolve();
+	private readonly inside = new AsyncLocalStorage<true>();
+	// Heartbeat arrival times, taken in fetch before the request waits in the queue.
+	private readonly arrivals = new Map<string, number>();
 
 	constructor(ctx: BusState, env: BusObjectEnv) {
 		this.ctx = ctx;
 		this.env = env;
 	}
 
+	private nowMs(): number {
+		return this.env.now?.() ?? Date.now();
+	}
+
+	// No await here. The parse starts now and notes the agent when it lands.
+	private noteHeartbeatArrival(request: Request): void {
+		const at = this.nowMs();
+		void request
+			.clone()
+			.json()
+			.then((body: unknown) => {
+				if (isObject(body) && isNonEmptyString(body.agentId)) {
+					const known = this.arrivals.get(body.agentId);
+					if (known === undefined || at > known) this.arrivals.set(body.agentId, at);
+				}
+			})
+			.catch(() => undefined);
+	}
+
 	// The runtime calls fetch. No module in this repo calls it.
 	async fetch(request: Request): Promise<Response> {
-		const handler = this.routes().get(new URL(request.url).pathname);
+		const pathname = new URL(request.url).pathname;
+		const handler = this.routes().get(pathname);
 		if (!handler) return new Response("missing", { status: 404 });
-		return handler(request);
+		if (pathname === "/heartbeat") this.noteHeartbeatArrival(request);
+		return this.serialize(() => handler(request));
 	}
 
 	// The runtime calls alarm. No module in this repo calls it.
-	async alarm(): Promise<void> {
+	alarm(): Promise<void> {
+		return this.serialize(() => this.alarmWork());
+	}
+
+	private async alarmWork(): Promise<void> {
+		const storage = this.ctx.storage;
+		const clock = () => this.nowMs();
+		const steps = [
+			() =>
+				runDue(
+					storage,
+					BUS_ALARM,
+					clock(),
+					() => this.onBusAlarm(),
+					() => backoffDeadline(storage, BUS_ALARM, clock, ALARM_MS),
+				),
+			() =>
+				runDue(
+					storage,
+					HEARTBEAT_ALARM,
+					clock(),
+					() => sweepHeartbeats(storage, this.env, this.arrivals),
+					() => backoffDeadline(storage, HEARTBEAT_ALARM, clock, RETRY_MS),
+				),
+			() =>
+				runDue(
+					storage,
+					DELIVERY_ALARM,
+					clock(),
+					() => this.drainDeliveries(),
+					() => armDeliveryAlarm(storage, this.env),
+				),
+		];
+		let failure: unknown;
+		try {
+			for (const step of steps) {
+				try {
+					await step();
+				} catch (error) {
+					// A failed recovery keeps its deadline. The error is reported after the rearm.
+					failure ??= error;
+				}
+			}
+		} finally {
+			await rearm(storage);
+		}
+		if (failure) throw failure;
+	}
+
+	private async onBusAlarm(): Promise<void> {
+		const token = await deadlineToken(this.ctx.storage, BUS_ALARM);
 		await this.flush();
+		await retryOpenMaster(this.ctx.storage, this.env, (accountId, event) => this.runMaster(accountId, event));
+		await syncBusDeadline(this.ctx.storage, this.nowMs(), ALARM_MS, token);
+	}
+
+	private drainDeliveries(onlyOld = false): Promise<void> {
+		return drainDeliveryAlarm(
+			this.ctx.storage,
+			this.env,
+			(accountId, event) => this.acceptStored(accountId, event),
+			onlyOld,
+		);
 	}
 
 	private routes(): Map<string, (request: Request) => Promise<Response>> {
@@ -230,10 +335,20 @@ export class AccountBus {
 			["/store", (request: Request) => this.store(request)],
 			["/socket", () => Promise.resolve(this.socket())],
 			["/take", (request: Request) => request.json().then((body: unknown) => this.take(body))],
+			["/heartbeat", (request: Request) => this.heartbeat(request)],
+			["/deliveries/retry", (request: Request) => armDeliveryRetry(this.ctx.storage, this.env, request)],
+			["/monitor", (request: Request) => this.monitor(request)],
 		]);
 		if (this.env.BUS_INSPECT === "1") {
 			routes.set("/seq", async () => Response.json({ seq: (await this.ctx.storage.get<number>("seq")) ?? 0 }));
-			routes.set("/alarm", async () => Response.json({ alarm: await this.ctx.storage.getAlarm() }));
+			routes.set("/alarm", async (request) => {
+				if (request.method === "POST") await this.alarm();
+				return Response.json({
+					alarm: await this.ctx.storage.getAlarm(),
+					delivery: (await this.ctx.storage.get<number>(DELIVERY_ALARM)) ?? null,
+				});
+			});
+			routes.set("/probe-delivery", (request) => armProbe(this.ctx.storage, request));
 			routes.set("/local-store", async () => Response.json(await this.stateMap()));
 			routes.set("/local-events", async () => Response.json(await this.storedEvents()));
 		}
@@ -243,12 +358,16 @@ export class AccountBus {
 	private async advance(body: unknown): Promise<Response> {
 		const record = advanceBody(body);
 		if (!record) return new Response("The message was rejected.", { status: 400 });
-		const result = await this.serialize<AdvanceResult>(async () => {
-			if (expired(record.deadlineAt)) return { accepted: false, expired: true };
+		let result: AdvanceResult;
+		if (expired(record.deadlineAt, this.nowMs())) result = { accepted: false, expired: true };
+		else {
 			await this.initialize(record.accountId);
-			if (expired(record.deadlineAt)) return { accepted: false, expired: true };
-			return planAdvance(this.ctx.storage, record.accountId, record.script, record.deadlineAt);
-		});
+			result = expired(record.deadlineAt, this.nowMs())
+				? { accepted: false, expired: true }
+				: await planAdvance(this.ctx.storage, record.accountId, record.script, record.deadlineAt, () =>
+						this.nowMs(),
+					);
+		}
 		if (result.expired) return Response.json({ accepted: false, expired: true });
 		if (result.event) this.push(result.event);
 		await this.flush();
@@ -256,26 +375,82 @@ export class AccountBus {
 		return Response.json({ accepted: true, event: result.event });
 	}
 
+	// The caller holds the serial lock. A repeat event id changes nothing.
+	private async acceptStored(accountId: string, event: PublishedEvent): Promise<AcceptResult> {
+		await this.initialize(accountId);
+		const mark = masterEvent(event) && chooseAdapters(this.env.ADAPTERS) === "real";
+		const stored = await commitDurable(this.ctx.storage, accountId, event, undefined, undefined, mark, () =>
+			this.nowMs(),
+		);
+		if (stored.event) this.push(stored.event);
+		const owner = await this.ctx.storage.get<string>("account");
+		if (owner === accountId) {
+			await finishMaster(this.ctx.storage, this.env, event, !stored.seen, (item) => this.runMaster(accountId, item));
+		}
+		return stored;
+	}
+
 	private async accept(body: unknown): Promise<Response> {
 		if (!isBusRecord(body)) return new Response("The message was rejected.", { status: 400 });
 		const record = body;
-		const result = await this.withAccount(record.accountId, () =>
-			commitDurable(this.ctx.storage, record.accountId, record.event),
-		);
-		if (result.event) this.push(result.event);
+		const result = await this.acceptStored(record.accountId, record.event);
 		await this.flush();
 		return Response.json({ seen: result.seen, seq: result.seq });
 	}
 
-	private withAccount<T>(accountId: string, operation: () => Promise<T>): Promise<T> {
-		return this.serialize(async () => {
-			await this.initialize(accountId);
-			return operation();
-		});
+	private async runMaster(accountId: string, event: PublishedEvent): Promise<void> {
+		const token = await deadlineToken(this.ctx.storage, BUS_ALARM);
+		const step = await prepareMaster(this.env, accountId, event, this.ctx.storage);
+		if (!step) return;
+		const kv = this.ctx.storage.kv;
+		try {
+			this.ctx.storage.transactionSync(() => {
+				writeMasterCommit(kv, event.id, step.phase, step.produced, (item) => {
+					commitSynced(kv, accountId, item);
+				});
+			});
+		} catch (error) {
+			step.restore();
+			throw error;
+		}
+		for (const next of step.produced) this.push(next);
+		const now = this.nowMs();
+		await syncBusDeadline(this.ctx.storage, now, ALARM_MS, token);
 	}
 
+	private async monitor(request: Request): Promise<Response> {
+		const map = (await this.ctx.storage.get<Record<string, string>>("monitors")) ?? {};
+		if (request.method === "GET") {
+			const id = new URL(request.url).searchParams.get("id") ?? "";
+			const accountId = map[id];
+			if (!accountId) return new Response("missing", { status: 404 });
+			return Response.json({ accountId });
+		}
+		if (request.method !== "POST") return new Response("The message was rejected.", { status: 400 });
+		const body: unknown = await request.json().catch(() => null);
+		if (!isObject(body) || !isNonEmptyString(body.monitorId) || !isNonEmptyString(body.accountId)) {
+			return new Response("The message was rejected.", { status: 400 });
+		}
+		const current = map[body.monitorId];
+		if (current && current !== body.accountId) {
+			return new Response("The monitor belongs to another account.", { status: 409 });
+		}
+		map[body.monitorId] = body.accountId;
+		await this.ctx.storage.put("monitors", map);
+		return Response.json({ ok: true });
+	}
+
+	private async withAccount<T>(accountId: string, operation: () => Promise<T>): Promise<T> {
+		await this.initialize(accountId);
+		return operation();
+	}
+
+	// One queue for the whole object. Every fetch handler and the alarm runs
+	// through it, so no two of them overlap across external I/O. A call made
+	// from inside the queue runs at once instead of waiting on itself.
 	private serialize<T>(operation: () => Promise<T>): Promise<T> {
-		const next = this.accepting.then(operation);
+		if (this.inside.getStore()) return operation();
+		const next = this.accepting.then(() => this.inside.run(true, operation));
 		this.accepting = next.then(
 			() => undefined,
 			() => undefined,
@@ -306,32 +481,42 @@ export class AccountBus {
 	}
 
 	private flush(): Promise<void> {
-		const next = this.flushing.then(() => this.flushPending());
+		const next = this.flushing.then(async () => {
+			await this.flushPending();
+			// A flush also drains old pending deliveries. This is the fallback
+			// when the first schedule call did not reach the account bus.
+			await this.drainDeliveries(true);
+		});
 		this.flushing = next.catch(() => undefined);
 		return next;
 	}
 
 	private async flushPending(): Promise<void> {
-		const pending = (await this.ctx.storage.get<PendingBusRow[]>("pending")) ?? [];
-		const accountId = await this.ctx.storage.get<string>("account");
-		if (pending.length === 0 || !accountId || !this.env.DATABASE_URL) {
-			if (pending.length > 0) await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
+		const storage = this.ctx.storage;
+		const token = await deadlineToken(storage, BUS_ALARM);
+		const pending = (await storage.get<PendingBusRow[]>("pending")) ?? [];
+		const accountId = await storage.get<string>("account");
+		if (pending.length === 0 || !accountId || (!this.env.DATABASE_URL && !this.env.writeBusPending)) {
+			if (pending.length > 0) await setDeadline(storage, BUS_ALARM, this.nowMs() + ALARM_MS);
+			else await syncBusDeadline(storage, this.nowMs(), ALARM_MS, token);
 			return;
 		}
 		try {
-			await writePending(this.env.DATABASE_URL, accountId, pending);
+			if (this.env.writeBusPending) await this.env.writeBusPending(accountId, pending);
+			else await writePending(this.env.DATABASE_URL as string, accountId, pending);
 		} catch {
-			await this.ctx.storage.setAlarm(Date.now() + ALARM_MS);
+			await setDeadline(storage, BUS_ALARM, this.nowMs() + ALARM_MS);
 			return;
 		}
 		const written = new Set(pending.map((row) => row.event.id));
-		await this.ctx.storage.transaction(async (txn) => {
-			const current = (await txn.get<PendingBusRow[]>("pending")) ?? [];
-			const remaining = current.filter((row) => !written.has(row.event.id));
-			await txn.put("pending", remaining);
-			if (remaining.length === 0) await txn.deleteAlarm();
-			else await txn.setAlarm(Date.now() + ALARM_MS);
+		storage.transactionSync(() => {
+			const current = storage.kv.get<PendingBusRow[]>("pending") ?? [];
+			storage.kv.put(
+				"pending",
+				current.filter((row) => !written.has(row.event.id)),
+			);
 		});
+		await syncBusDeadline(storage, this.nowMs(), ALARM_MS, token);
 	}
 
 	private async events(request: Request): Promise<Response> {
@@ -369,6 +554,17 @@ export class AccountBus {
 		const store: Record<string, unknown> = {};
 		for (const [key, value] of rows) store[key.slice("state:".length)] = JSON.parse(value) as unknown;
 		return store;
+	}
+
+	private async heartbeat(request: Request): Promise<Response> {
+		const read = await readAgentBody(request);
+		if (!read) return new Response("The message was rejected.", { status: 400 });
+		const stored = await this.ctx.storage.get<string>("account");
+		if (stored && stored !== read.accountId) return new Response("The message was rejected.", { status: 400 });
+		const at = this.nowMs();
+		await this.withAccount(read.accountId, () => recordBeat(this.ctx.storage, read.agentId, at));
+		this.arrivals.delete(read.agentId);
+		return Response.json({ ok: true });
 	}
 
 	private async take(body: unknown): Promise<Response> {

@@ -22,6 +22,11 @@ test("wrangler config pins the project account", () => {
 	const text = readFileSync(new URL("../../apps/web/wrangler.jsonc", import.meta.url), "utf8");
 	const config = JSON.parse(text.replace(/^\s*\/\/.*$/gm, ""));
 	assert.equal(config.account_id, projectAccount);
+	assert.equal(config.vars.ADAPTERS, "test");
+	assert.equal(config.browser, undefined);
+	assert.equal(config.env.real.vars.ADAPTERS, "real");
+	assert.equal(config.env.real.browser.binding, "BROWSER");
+	assert.equal(/"ADAPTERS"\s*:\s*"([^"]*)"/.exec(text)?.[1], "test");
 });
 
 test("cf:deploy uses the deploy script", () => {

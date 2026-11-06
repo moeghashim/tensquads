@@ -66,6 +66,7 @@ export interface AccountMachine {
 	resume(scope: AccountScope, agentId: string): Promise<void>;
 	remove(scope: AccountScope, agentId: string): Promise<void>;
 	registerSecret(scope: AccountScope, name: string, value?: string): Promise<void>;
+	rotateToken(scope: AccountScope, agentId: string, value: string): Promise<void>;
 	removeSecret(scope: AccountScope, name: string): Promise<void>;
 	makeTemplate(scope: AccountScope, imageId: string, version: string): Promise<MachineTemplate>;
 	startFromTemplate(scope: AccountScope, templateId: string, agentId: string): Promise<StartedMachine>;

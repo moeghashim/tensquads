@@ -1,6 +1,8 @@
 import { sql } from "drizzle-orm";
 import { boolean, check, foreignKey, integer, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 
+import type { UserMasterEvent } from "./commands/approval-bus.ts";
+
 // Column names that cannot be the design field: is_on (on), last_text (last), description (desc),
 // time_text (time), from_agent (from), to_agent (to), body (text), from_role (from), rule_when (when).
 // `when` is a SQL keyword. `from` is reserved. Catalog tables have no account_id.
@@ -181,6 +183,23 @@ export const approvals = pgTable(
 	(table) => [primaryKey({ columns: [table.accountId, table.id] })],
 );
 
+// One undelivered decision. The row commits with the Approval. Delivery deletes it.
+export const approvalDeliveries = pgTable(
+	"approval_deliveries",
+	{
+		accountId: text("account_id").notNull(),
+		approvalId: text("approval_id").notNull(),
+		event: jsonb("event").$type<UserMasterEvent>().notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.accountId, table.approvalId] }),
+		foreignKey({
+			columns: [table.accountId, table.approvalId],
+			foreignColumns: [approvals.accountId, approvals.id],
+		}).onDelete("cascade"),
+	],
+);
+
 // One Mandate per Approval. The row is a copy of the rule at the moment a person says yes.
 // Pending and Declined approvals have no row. The repository has no update.
 // The database trigger rejects UPDATE and a direct DELETE. Account removal cascades the row.
@@ -346,6 +365,7 @@ export const schema = {
 	stateEntries,
 	rules,
 	approvals,
+	approvalDeliveries,
 	mandates,
 	missionProposals,
 	dailyRevenue,

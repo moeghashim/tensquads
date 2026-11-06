@@ -1,6 +1,12 @@
 import start from "@tanstack/react-start/server-entry";
 import type { BusBatch, WorkerBindings } from "@tensquads/adapters";
-import { AccountBus, handleBusQueue, handleMachineRequest, pickWorkerAdapters } from "@tensquads/adapters";
+import {
+	AccountBus,
+	handleBusQueue,
+	handleMachineRequest,
+	pickWorkerAdapters,
+	sweepDeliveryRetries,
+} from "@tensquads/adapters";
 
 export { AccountBus };
 
@@ -22,5 +28,9 @@ export default {
 		const adapters = selected(env);
 		if (!adapters.bus) return Promise.resolve();
 		return handleBusQueue(batch, env);
+	},
+	// The cron is declared only on env.real. It arms the alarm for old pending deliveries.
+	async scheduled(_event: unknown, env: WorkerBindings): Promise<void> {
+		await sweepDeliveryRetries(env, Date.now());
 	},
 };

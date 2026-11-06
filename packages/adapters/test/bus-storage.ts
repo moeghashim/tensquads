@@ -13,11 +13,14 @@ export class Storage implements BusStorage {
 			[...this.rows].filter(([key]) => key.startsWith(options?.prefix ?? "")) as [string, T][],
 		delete: (key: string): boolean => this.rows.delete(key),
 	};
-	async get<T>(key: string): Promise<T | undefined> {
+	async get<T>(key: string, _options?: { noCache?: boolean }): Promise<T | undefined> {
 		return structuredClone(this.rows.get(key)) as T | undefined;
 	}
 	async put<T>(key: string, value: T): Promise<void> {
 		this.rows.set(key, structuredClone(value));
+	}
+	async delete(key: string): Promise<boolean> {
+		return this.rows.delete(key);
 	}
 	async list<T>({ prefix = "" } = {}): Promise<Map<string, T>> {
 		return new Map([...this.rows].filter(([key]) => key.startsWith(prefix))) as Map<string, T>;

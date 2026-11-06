@@ -133,6 +133,16 @@ function externalNode(): esbuild.Plugin {
 	};
 }
 
+function masterStub(): esbuild.Plugin {
+	const stub = fileURLToPath(new URL("../src/cloudflare-bus/master-stub.ts", import.meta.url));
+	return {
+		name: "master-stub",
+		setup(build) {
+			build.onResolve({ filter: /master-live\.ts$/ }, () => ({ path: stub }));
+		},
+	};
+}
+
 function bundleWorker(): Promise<string> {
 	bundling ??= (async () => {
 		const directory = mkdtempSync(join(tmpdir(), "tensquads-bus-"));
@@ -144,10 +154,11 @@ function bundleWorker(): Promise<string> {
 			platform: "neutral",
 			target: "es2024",
 			conditions: ["workerd", "worker", "browser"],
+			mainFields: ["module", "main"],
 			outfile: join(directory, "index.js"),
 			legalComments: "none",
 			logLevel: "silent",
-			plugins: [externalNode()],
+			plugins: [masterStub(), externalNode()],
 		});
 		return directory;
 	})();
@@ -306,6 +317,17 @@ test("two accounts do not share a sequence", { skip: skipped }, async () => {
 		(await neonRows(second)).map((row) => row.seq),
 		[1],
 	);
+});
+
+test("a retry scheduled during the drain keeps the delivery alarm", { skip: skipped }, async () => {
+	const { mf, id } = await prepared();
+	const probe = await send(mf, `/probe-delivery?account=${encodeURIComponent(id)}`, { accountId: id });
+	assert.equal(probe.status, 200, await bodyText(probe));
+	const fired = await send(mf, `/alarm?account=${encodeURIComponent(id)}`, {});
+	assert.equal(fired.status, 200, await bodyText(fired));
+	const body = await readJson<{ alarm: number | null; delivery: number | null }>(mf, id, "/alarm");
+	assert.equal(typeof body.delivery, "number");
+	assert.equal(body.alarm, body.delivery);
 });
 
 test("one accept writes every key and events sort by sequence", { skip: skipped }, async () => {
