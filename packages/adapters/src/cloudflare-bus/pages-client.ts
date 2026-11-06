@@ -116,49 +116,68 @@ async function ensureProject(
 	if (!ok(found.status)) throw new PagesFailure(502, "The Pages project was not created.");
 }
 
-async function uploadPage(call: Call, token: string, projectUrl: string, html: string): Promise<void> {
-	const bytes = new TextEncoder().encode(html);
-	const hash = pagesAssetHash(bytes, "html");
-	const failure = "The page was not uploaded.";
-	const issued = await call(token, `${projectUrl}/upload-token`, "GET", failure);
+const UPLOAD_FAILED = "The page was not uploaded.";
+
+async function uploadJwt(call: Call, token: string, projectUrl: string): Promise<string> {
+	const issued = await call(token, `${projectUrl}/upload-token`, "GET", UPLOAD_FAILED);
 	const jwt = isRecord(issued.result) && typeof issued.result.jwt === "string" ? issued.result.jwt : "";
-	if (!ok(issued.status) || jwt.length === 0) throw new PagesFailure(502, failure);
+	if (!ok(issued.status) || jwt.length === 0) throw new PagesFailure(502, UPLOAD_FAILED);
+	return jwt;
+}
+
+async function missingHashes(call: Call, jwt: string, hash: string): Promise<readonly unknown[]> {
 	const missing = await call(
 		jwt,
 		`${API}/pages/assets/check-missing`,
 		"POST",
-		failure,
+		UPLOAD_FAILED,
 		JSON.stringify({ hashes: [hash] }),
 	);
-	if (!ok(missing.status) || !Array.isArray(missing.result)) throw new PagesFailure(502, failure);
-	if (missing.result.includes(hash)) {
-		const uploaded = await call(
-			jwt,
-			`${API}/pages/assets/upload`,
-			"POST",
-			failure,
-			JSON.stringify([
-				{ key: hash, value: encodeBase64(bytes), metadata: { contentType: "text/html" }, base64: true },
-			]),
-		);
-		if (!ok(uploaded.status)) throw new PagesFailure(502, failure);
-	}
+	if (!ok(missing.status) || !Array.isArray(missing.result)) throw new PagesFailure(502, UPLOAD_FAILED);
+	return missing.result;
+}
+
+async function sendAsset(call: Call, jwt: string, hash: string, bytes: Uint8Array): Promise<void> {
+	const uploaded = await call(
+		jwt,
+		`${API}/pages/assets/upload`,
+		"POST",
+		UPLOAD_FAILED,
+		JSON.stringify([{ key: hash, value: encodeBase64(bytes), metadata: { contentType: "text/html" }, base64: true }]),
+	);
+	if (!ok(uploaded.status)) throw new PagesFailure(502, UPLOAD_FAILED);
+}
+
+async function upsertHash(call: Call, jwt: string, hash: string): Promise<void> {
 	const upserted = await call(
 		jwt,
 		`${API}/pages/assets/upsert-hashes`,
 		"POST",
-		failure,
+		UPLOAD_FAILED,
 		JSON.stringify({ hashes: [hash] }),
 	);
-	if (!ok(upserted.status)) throw new PagesFailure(502, failure);
+	if (!ok(upserted.status)) throw new PagesFailure(502, UPLOAD_FAILED);
+}
+
+async function deployIndex(call: Call, token: string, projectUrl: string, hash: string): Promise<void> {
 	const manifest = new FormData();
 	manifest.append(
 		"manifest",
 		new Blob([JSON.stringify({ "/index.html": hash })], { type: "application/json" }),
 		"manifest.json",
 	);
-	const deployment = await call(token, `${projectUrl}/deployments`, "POST", failure, manifest);
-	if (!ok(deployment.status)) throw new PagesFailure(502, failure);
+	const deployment = await call(token, `${projectUrl}/deployments`, "POST", UPLOAD_FAILED, manifest);
+	if (!ok(deployment.status)) throw new PagesFailure(502, UPLOAD_FAILED);
+}
+
+async function uploadPage(call: Call, token: string, projectUrl: string, html: string): Promise<void> {
+	const bytes = new TextEncoder().encode(html);
+	const hash = pagesAssetHash(bytes, "html");
+	const jwt = await uploadJwt(call, token, projectUrl);
+	const missing = await missingHashes(call, jwt, hash);
+	if (missing.includes(hash)) await sendAsset(call, jwt, hash, bytes);
+	await upsertHash(call, jwt, hash);
+	await deployIndex(call, token, projectUrl, hash);
 }
 
 async function attachDomain(call: Call, token: string, projectUrl: string, fqdn: string): Promise<string> {
@@ -180,9 +199,7 @@ async function attachDomain(call: Call, token: string, projectUrl: string, fqdn:
 		if (!ok(domain.status)) throw new PagesFailure(502, "The custom domain was not attached.");
 	}
 	const status = textField(domain.result, "status");
-	if (status === "error" || status === "blocked" || status === "deactivated") {
-		throw new PagesFailure(502, "The custom domain failed.");
-	}
+	if (failedDomain(status)) throw new PagesFailure(502, "The custom domain failed.");
 	const zone = textField(domain.result, "zone_tag");
 	if (zone.length === 0) throw new PagesFailure(502, "The 10squads.com zone was not on the domain.");
 	return zone;
@@ -219,6 +236,38 @@ async function ensureDns(call: Call, token: string, zone: string, fqdn: string, 
 	if (!ok(created.status)) throw new PagesFailure(502, "The DNS record was not created.");
 }
 
+function failedDomain(status: string): boolean {
+	return status === "error" || status === "blocked" || status === "deactivated";
+}
+
+async function domainStatus(call: Call, token: string, domainUrl: string): Promise<string> {
+	const current = await call(token, domainUrl, "GET", "The custom domain failed.");
+	if (!ok(current.status)) throw new PagesFailure(502, "The custom domain failed.");
+	const status = textField(current.result, "status");
+	if (failedDomain(status)) throw new PagesFailure(502, "The custom domain failed.");
+	return status;
+}
+
+function pastDeadline(now: () => number, deadline: number, message: string): "wait" {
+	if (now() >= deadline) throw new PagesFailure(502, message);
+	return "wait";
+}
+
+async function onePoll(
+	call: Call,
+	fetchImpl: typeof fetch,
+	token: string,
+	domainUrl: string,
+	fqdn: string,
+	now: () => number,
+	deadline: number,
+): Promise<"ready" | "wait"> {
+	const status = await domainStatus(call, token, domainUrl);
+	if (status !== "active") return pastDeadline(now, deadline, "The custom domain did not become active.");
+	if (await liveOk(fetchImpl, `https://${fqdn}/`)) return "ready";
+	return pastDeadline(now, deadline, "The published site did not return 200.");
+}
+
 async function waitForLive(
 	call: Call,
 	fetchImpl: typeof fetch,
@@ -233,18 +282,8 @@ async function waitForLive(
 	const deadline = now() + deadlineMs;
 	const domainUrl = `${projectUrl}/domains/${encodeURIComponent(fqdn)}`;
 	for (;;) {
-		const current = await call(token, domainUrl, "GET", "The custom domain failed.");
-		if (!ok(current.status)) throw new PagesFailure(502, "The custom domain failed.");
-		const status = textField(current.result, "status");
-		if (status === "error" || status === "blocked" || status === "deactivated") {
-			throw new PagesFailure(502, "The custom domain failed.");
-		}
-		if (status === "active") {
-			if (await liveOk(fetchImpl, `https://${fqdn}/`)) return;
-			if (now() >= deadline) throw new PagesFailure(502, "The published site did not return 200.");
-		} else if (now() >= deadline) {
-			throw new PagesFailure(502, "The custom domain did not become active.");
-		}
+		const step = await onePoll(call, fetchImpl, token, domainUrl, fqdn, now, deadline);
+		if (step === "ready") return;
 		await sleep(pollMs);
 	}
 }

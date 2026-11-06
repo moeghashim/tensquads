@@ -60,6 +60,46 @@ function guard(): () => void {
 	};
 }
 
+function take(seen: Seen, steps: readonly ((seen: Seen) => Response | undefined)[]): Response {
+	for (const step of steps) {
+		const response = step(seen);
+		if (response) return response;
+	}
+	throw new Error(`unexpected ${seen.method} ${seen.url}`);
+}
+
+function gotProject(seen: Seen): Response | undefined {
+	if (seen.method === "GET" && seen.url.endsWith("/pages/projects/ts-proof")) return json({ name: "ts-proof" });
+	return undefined;
+}
+
+function plainToken(seen: Seen): Response | undefined {
+	if (!seen.url.endsWith("/upload-token")) return undefined;
+	return json({ jwt: "upload-jwt" });
+}
+
+function emptyMissing(seen: Seen): Response | undefined {
+	if (!seen.url.endsWith("/check-missing")) return undefined;
+	return json([]);
+}
+
+function plainUpsert(seen: Seen): Response | undefined {
+	if (!seen.url.endsWith("/upsert-hashes")) return undefined;
+	return json([]);
+}
+
+function plainDeploy(seen: Seen): Response | undefined {
+	if (!seen.url.endsWith("/deployments")) return undefined;
+	return json({ id: "dep" });
+}
+
+function postedDomain(status: string, zone?: string): (seen: Seen) => Response | undefined {
+	return (seen) => {
+		if (seen.method !== "POST" || !seen.url.endsWith("/domains")) return undefined;
+		return json({ name: "proof.10squads.com", status, ...(zone === undefined ? {} : { zone_tag: zone }) });
+	};
+}
+
 function clientFor(
 	fetchImpl: typeof fetch,
 	options: { deadlineMs?: number; pollMs?: number; clock?: { at: number }; sleeps?: number[] } = {},
@@ -99,74 +139,101 @@ test("publish creates the project, uploads the page, and waits for the domain", 
 		const base64 = Buffer.from(HTML, "utf8").toString("base64");
 		let domainGets = 0;
 		const sleeps: number[] = [];
-		const { calls, fetchImpl } = recorder((seen) => {
-			const { method, url } = seen;
-			assert.equal(url.includes(TOKEN), false);
-			if (method === "GET" && url === `${API}/accounts/${PAGES_ACCOUNT_ID}/pages/projects/ts-proof`) {
+		function missingProject(seen: Seen): Response | undefined {
+			if (seen.method === "GET" && seen.url === `${API}/accounts/${PAGES_ACCOUNT_ID}/pages/projects/ts-proof`) {
 				return json(null, 404);
 			}
-			if (method === "POST" && url === `${API}/accounts/${PAGES_ACCOUNT_ID}/pages/projects`) {
-				assert.equal(seen.authorization, `Bearer ${TOKEN}`);
-				assert.deepEqual(JSON.parse(seen.body), { name: "ts-proof", production_branch: "main" });
-				return json({ name: "ts-proof" });
-			}
-			if (method === "GET" && url.endsWith("/upload-token")) {
-				assert.equal(seen.authorization, `Bearer ${TOKEN}`);
-				return json({ jwt: "upload-jwt" });
-			}
-			if (url === `${API}/pages/assets/check-missing`) {
-				assert.equal(seen.authorization, "Bearer upload-jwt");
-				assert.deepEqual(JSON.parse(seen.body), { hashes: [hash] });
-				return json([hash]);
-			}
-			if (url === `${API}/pages/assets/upload`) {
-				assert.equal(seen.authorization, "Bearer upload-jwt");
-				assert.deepEqual(JSON.parse(seen.body), [
-					{ key: hash, value: base64, metadata: { contentType: "text/html" }, base64: true },
-				]);
-				return json({ id: "asset" });
-			}
-			if (url === `${API}/pages/assets/upsert-hashes`) {
-				assert.equal(seen.authorization, "Bearer upload-jwt");
-				assert.deepEqual(JSON.parse(seen.body), { hashes: [hash] });
-				return json([]);
-			}
-			if (method === "POST" && url.endsWith("/deployments")) {
-				assert.equal(seen.authorization, `Bearer ${TOKEN}`);
-				assert.equal(seen.manifest, JSON.stringify({ "/index.html": hash }));
-				return json({ id: "dep" });
-			}
-			if (method === "POST" && url.endsWith("/domains")) {
-				assert.deepEqual(JSON.parse(seen.body), { name: "proof.10squads.com" });
-				return json({ name: "proof.10squads.com", status: "pending", zone_tag: ZONE });
-			}
-			if (url === `${API}/zones/${ZONE}/dns_records?type=CNAME&name=proof.10squads.com`) {
-				return json([]);
-			}
-			if (method === "POST" && url === `${API}/zones/${ZONE}/dns_records`) {
-				assert.equal(seen.authorization, `Bearer ${TOKEN}`);
-				assert.deepEqual(JSON.parse(seen.body), {
-					type: "CNAME",
-					name: "proof.10squads.com",
-					content: "ts-proof.pages.dev",
-					proxied: true,
-					ttl: 1,
-				});
-				return json({ id: "rec" });
-			}
-			if (method === "GET" && url.endsWith("/domains/proof.10squads.com")) {
-				domainGets += 1;
-				return json({
-					name: "proof.10squads.com",
-					status: domainGets === 1 ? "pending" : "active",
-					zone_tag: ZONE,
-				});
-			}
-			if (url === "https://proof.10squads.com/") {
-				assert.equal(seen.authorization, "");
-				return new Response(HTML, { status: 200 });
-			}
-			throw new Error(`unexpected ${method} ${url}`);
+			return undefined;
+		}
+		function createdProject(seen: Seen): Response | undefined {
+			if (seen.method !== "POST" || seen.url !== `${API}/accounts/${PAGES_ACCOUNT_ID}/pages/projects`)
+				return undefined;
+			assert.equal(seen.authorization, `Bearer ${TOKEN}`);
+			assert.deepEqual(JSON.parse(seen.body), { name: "ts-proof", production_branch: "main" });
+			return json({ name: "ts-proof" });
+		}
+		function uploadToken(seen: Seen): Response | undefined {
+			if (!seen.url.endsWith("/upload-token")) return undefined;
+			assert.equal(seen.authorization, `Bearer ${TOKEN}`);
+			return json({ jwt: "upload-jwt" });
+		}
+		function checkedMissing(seen: Seen): Response | undefined {
+			if (seen.url !== `${API}/pages/assets/check-missing`) return undefined;
+			assert.equal(seen.authorization, "Bearer upload-jwt");
+			assert.deepEqual(JSON.parse(seen.body), { hashes: [hash] });
+			return json([hash]);
+		}
+		function uploadedAsset(seen: Seen): Response | undefined {
+			if (seen.url !== `${API}/pages/assets/upload`) return undefined;
+			assert.equal(seen.authorization, "Bearer upload-jwt");
+			assert.deepEqual(JSON.parse(seen.body), [
+				{ key: hash, value: base64, metadata: { contentType: "text/html" }, base64: true },
+			]);
+			return json({ id: "asset" });
+		}
+		function upserted(seen: Seen): Response | undefined {
+			if (seen.url !== `${API}/pages/assets/upsert-hashes`) return undefined;
+			assert.equal(seen.authorization, "Bearer upload-jwt");
+			assert.deepEqual(JSON.parse(seen.body), { hashes: [hash] });
+			return json([]);
+		}
+		function deployed(seen: Seen): Response | undefined {
+			if (seen.method !== "POST" || !seen.url.endsWith("/deployments")) return undefined;
+			assert.equal(seen.authorization, `Bearer ${TOKEN}`);
+			assert.equal(seen.manifest, JSON.stringify({ "/index.html": hash }));
+			return json({ id: "dep" });
+		}
+		function postedDomain(seen: Seen): Response | undefined {
+			if (seen.method !== "POST" || !seen.url.endsWith("/domains")) return undefined;
+			assert.deepEqual(JSON.parse(seen.body), { name: "proof.10squads.com" });
+			return json({ name: "proof.10squads.com", status: "pending", zone_tag: ZONE });
+		}
+		function emptyDns(seen: Seen): Response | undefined {
+			if (seen.url !== `${API}/zones/${ZONE}/dns_records?type=CNAME&name=proof.10squads.com`) return undefined;
+			return json([]);
+		}
+		function postedDns(seen: Seen): Response | undefined {
+			if (seen.method !== "POST" || seen.url !== `${API}/zones/${ZONE}/dns_records`) return undefined;
+			assert.equal(seen.authorization, `Bearer ${TOKEN}`);
+			assert.deepEqual(JSON.parse(seen.body), {
+				type: "CNAME",
+				name: "proof.10squads.com",
+				content: "ts-proof.pages.dev",
+				proxied: true,
+				ttl: 1,
+			});
+			return json({ id: "rec" });
+		}
+		function polledDomain(seen: Seen): Response | undefined {
+			if (seen.method !== "GET" || !seen.url.endsWith("/domains/proof.10squads.com")) return undefined;
+			domainGets += 1;
+			return json({
+				name: "proof.10squads.com",
+				status: domainGets === 1 ? "pending" : "active",
+				zone_tag: ZONE,
+			});
+		}
+		function liveSite(seen: Seen): Response | undefined {
+			if (seen.url !== "https://proof.10squads.com/") return undefined;
+			assert.equal(seen.authorization, "");
+			return new Response(HTML, { status: 200 });
+		}
+		const { calls, fetchImpl } = recorder((seen) => {
+			assert.equal(seen.url.includes(TOKEN), false);
+			return take(seen, [
+				missingProject,
+				createdProject,
+				uploadToken,
+				checkedMissing,
+				uploadedAsset,
+				upserted,
+				deployed,
+				postedDomain,
+				emptyDns,
+				postedDns,
+				polledDomain,
+				liveSite,
+			]);
 		});
 		const live = await clientFor(fetchImpl, { sleeps, deadlineMs: DOMAIN_WAIT_MS, pollMs: DOMAIN_POLL_MS }).publish(
 			"proof",
@@ -204,28 +271,46 @@ test("publish creates the project, uploads the page, and waits for the domain", 
 test("an existing project and a matching DNS record are left in place", { timeout: 2_000 }, async () => {
 	const restore = guard();
 	try {
-		const { calls, fetchImpl } = recorder((seen) => {
-			const { method, url } = seen;
-			if (method === "GET" && url.endsWith("/pages/projects/ts-proof")) return json({ name: "ts-proof" });
-			if (method === "POST" && url.endsWith("/pages/projects")) throw new Error("created a project");
-			if (url.endsWith("/upload-token")) return json({ jwt: "upload-jwt" });
-			if (url.endsWith("/check-missing")) return json([]);
-			if (url.endsWith("/pages/assets/upload")) throw new Error("uploaded a hash that was present");
-			if (url.endsWith("/upsert-hashes")) return json([]);
-			if (url.endsWith("/deployments")) return json({ id: "dep" });
-			if (method === "POST" && url.endsWith("/domains")) {
-				return json({ name: "proof.10squads.com", status: "active", zone_tag: ZONE });
-			}
-			if (method === "GET" && url.includes("/dns_records")) {
-				return json([{ type: "CNAME", name: "proof.10squads.com", content: "TS-proof.pages.dev", proxied: true }]);
-			}
-			if (method === "POST" && url.endsWith("/dns_records")) throw new Error("overwrote DNS");
-			if (method === "GET" && url.includes("/domains/")) {
-				return json({ name: "proof.10squads.com", status: "active", zone_tag: ZONE });
-			}
-			if (url === "https://proof.10squads.com/") return new Response(HTML, { status: 200 });
-			throw new Error(`unexpected ${method} ${url}`);
-		});
+		function refuseCreate(seen: Seen): Response | undefined {
+			if (seen.method === "POST" && seen.url.endsWith("/pages/projects")) throw new Error("created a project");
+			return undefined;
+		}
+		function refusePresent(seen: Seen): Response | undefined {
+			if (seen.url.endsWith("/pages/assets/upload")) throw new Error("uploaded a hash that was present");
+			return undefined;
+		}
+		function matchingDns(seen: Seen): Response | undefined {
+			if (seen.method !== "GET" || !seen.url.includes("/dns_records")) return undefined;
+			return json([{ type: "CNAME", name: "proof.10squads.com", content: "TS-proof.pages.dev", proxied: true }]);
+		}
+		function refuseDns(seen: Seen): Response | undefined {
+			if (seen.method === "POST" && seen.url.endsWith("/dns_records")) throw new Error("overwrote DNS");
+			return undefined;
+		}
+		function activeDomain(seen: Seen): Response | undefined {
+			if (seen.method !== "GET" || !seen.url.includes("/domains/")) return undefined;
+			return json({ name: "proof.10squads.com", status: "active", zone_tag: ZONE });
+		}
+		function liveOk(seen: Seen): Response | undefined {
+			if (seen.url !== "https://proof.10squads.com/") return undefined;
+			return new Response(HTML, { status: 200 });
+		}
+		const { calls, fetchImpl } = recorder((seen) =>
+			take(seen, [
+				gotProject,
+				refuseCreate,
+				plainToken,
+				emptyMissing,
+				refusePresent,
+				plainUpsert,
+				plainDeploy,
+				postedDomain("active", ZONE),
+				matchingDns,
+				refuseDns,
+				activeDomain,
+				liveOk,
+			]),
+		);
 		const live = await clientFor(fetchImpl, { deadlineMs: 0 }).publish("proof", HTML);
 		assert.equal(live, "https://proof.10squads.com");
 		assert.equal(
@@ -246,16 +331,16 @@ test("a failed upload is not retried", { timeout: 2_000 }, async () => {
 	try {
 		let uploads = 0;
 		const hash = pagesAssetHash(new TextEncoder().encode(HTML), "html");
-		const { fetchImpl } = recorder((seen) => {
-			if (seen.url.endsWith("/pages/projects/ts-proof") && seen.method === "GET") return json({ name: "ts-proof" });
-			if (seen.url.endsWith("/upload-token")) return json({ jwt: "upload-jwt" });
-			if (seen.url.endsWith("/check-missing")) return json([hash]);
-			if (seen.url.endsWith("/pages/assets/upload")) {
-				uploads += 1;
-				return json(null, 500);
-			}
-			throw new Error(`unexpected ${seen.method} ${seen.url}`);
-		});
+		function countedFailure(seen: Seen): Response | undefined {
+			if (!seen.url.endsWith("/pages/assets/upload")) return undefined;
+			uploads += 1;
+			return json(null, 500);
+		}
+		function oneMissing(seen: Seen): Response | undefined {
+			if (!seen.url.endsWith("/check-missing")) return undefined;
+			return json([hash]);
+		}
+		const { fetchImpl } = recorder((seen) => take(seen, [gotProject, plainToken, oneMissing, countedFailure]));
 		await assert.rejects(
 			() => clientFor(fetchImpl, { deadlineMs: 0 }).publish("proof", HTML),
 			(error: unknown) => {
@@ -274,19 +359,26 @@ test("a failed upload is not retried", { timeout: 2_000 }, async () => {
 test("the domain wait fails at the deadline and a bad domain fails at once", { timeout: 2_000 }, async () => {
 	const restore = guard();
 	try {
-		const pending = recorder((seen) => {
-			if (seen.method === "GET" && seen.url.endsWith("/pages/projects/ts-proof")) return json({ name: "ts-proof" });
-			if (seen.url.endsWith("/upload-token")) return json({ jwt: "upload-jwt" });
-			if (seen.url.endsWith("/check-missing")) return json([]);
-			if (seen.url.endsWith("/upsert-hashes")) return json([]);
-			if (seen.url.endsWith("/deployments")) return json({ id: "dep" });
-			if (seen.method === "POST" && seen.url.endsWith("/domains")) {
-				return json({ name: "proof.10squads.com", status: "pending", zone_tag: ZONE });
-			}
-			if (seen.url.includes("/dns_records")) return seen.method === "GET" ? json([]) : json({ id: "rec" });
-			if (seen.url.includes("/domains/")) return json({ status: "pending", zone_tag: ZONE });
-			throw new Error(`unexpected ${seen.method} ${seen.url}`);
-		});
+		function dnsEither(seen: Seen): Response | undefined {
+			if (!seen.url.includes("/dns_records")) return undefined;
+			return seen.method === "GET" ? json([]) : json({ id: "rec" });
+		}
+		function stillPending(seen: Seen): Response | undefined {
+			if (!seen.url.includes("/domains/")) return undefined;
+			return json({ status: "pending", zone_tag: ZONE });
+		}
+		const pending = recorder((seen) =>
+			take(seen, [
+				gotProject,
+				plainToken,
+				emptyMissing,
+				plainUpsert,
+				plainDeploy,
+				postedDomain("pending", ZONE),
+				dnsEither,
+				stillPending,
+			]),
+		);
 		const sleeps: number[] = [];
 		await assert.rejects(
 			() => clientFor(pending.fetchImpl, { deadlineMs: 0, sleeps }).publish("proof", HTML),
@@ -295,17 +387,9 @@ test("the domain wait fails at the deadline and a bad domain fails at once", { t
 		);
 		assert.deepEqual(sleeps, []);
 
-		const broken = recorder((seen) => {
-			if (seen.method === "GET" && seen.url.endsWith("/pages/projects/ts-proof")) return json({ name: "ts-proof" });
-			if (seen.url.endsWith("/upload-token")) return json({ jwt: "upload-jwt" });
-			if (seen.url.endsWith("/check-missing")) return json([]);
-			if (seen.url.endsWith("/upsert-hashes")) return json([]);
-			if (seen.url.endsWith("/deployments")) return json({ id: "dep" });
-			if (seen.method === "POST" && seen.url.endsWith("/domains")) {
-				return json({ name: "proof.10squads.com", status: "error", zone_tag: ZONE });
-			}
-			throw new Error(`unexpected ${seen.method} ${seen.url}`);
-		});
+		const broken = recorder((seen) =>
+			take(seen, [gotProject, plainToken, emptyMissing, plainUpsert, plainDeploy, postedDomain("error", ZONE)]),
+		);
 		await assert.rejects(
 			() => clientFor(broken.fetchImpl, { deadlineMs: 0 }).publish("proof", HTML),
 			(error: unknown) => error instanceof PagesFailure && error.message === "The custom domain failed.",
@@ -318,17 +402,21 @@ test("the domain wait fails at the deadline and a bad domain fails at once", { t
 test("a missing zone tag fails before any zone list", { timeout: 2_000 }, async () => {
 	const restore = guard();
 	try {
-		const { calls, fetchImpl } = recorder((seen) => {
+		function refuseZones(seen: Seen): Response | undefined {
 			if (seen.url.includes("/zones")) throw new Error("listed zones");
-			if (seen.method === "GET" && seen.url.endsWith("/pages/projects/ts-proof")) return json({ name: "ts-proof" });
-			if (seen.url.endsWith("/upload-token")) return json({ jwt: "upload-jwt" });
-			if (seen.url.endsWith("/check-missing")) return json([]);
-			if (seen.url.endsWith("/upsert-hashes")) return json([]);
-			if (seen.url.endsWith("/deployments")) return json({ id: "dep" });
-			if (seen.method === "POST" && seen.url.endsWith("/domains"))
-				return json({ name: "proof.10squads.com", status: "pending" });
-			throw new Error(`unexpected ${seen.method} ${seen.url}`);
-		});
+			return undefined;
+		}
+		const { calls, fetchImpl } = recorder((seen) =>
+			take(seen, [
+				refuseZones,
+				gotProject,
+				plainToken,
+				emptyMissing,
+				plainUpsert,
+				plainDeploy,
+				postedDomain("pending"),
+			]),
+		);
 		await assert.rejects(
 			() => clientFor(fetchImpl, { deadlineMs: 0 }).publish("proof", HTML),
 			(error: unknown) =>
@@ -346,21 +434,26 @@ test("a missing zone tag fails before any zone list", { timeout: 2_000 }, async 
 test("a mismatched DNS record is not overwritten", { timeout: 2_000 }, async () => {
 	const restore = guard();
 	try {
-		const { fetchImpl } = recorder((seen) => {
+		function refuseDnsWrite(seen: Seen): Response | undefined {
 			if (seen.method === "POST" && seen.url.endsWith("/dns_records")) throw new Error("overwrote DNS");
-			if (seen.method === "GET" && seen.url.endsWith("/pages/projects/ts-proof")) return json({ name: "ts-proof" });
-			if (seen.url.endsWith("/upload-token")) return json({ jwt: "upload-jwt" });
-			if (seen.url.endsWith("/check-missing")) return json([]);
-			if (seen.url.endsWith("/upsert-hashes")) return json([]);
-			if (seen.url.endsWith("/deployments")) return json({ id: "dep" });
-			if (seen.method === "POST" && seen.url.endsWith("/domains")) {
-				return json({ name: "proof.10squads.com", status: "active", zone_tag: ZONE });
-			}
-			if (seen.method === "GET" && seen.url.includes("/dns_records")) {
-				return json([{ type: "CNAME", name: "proof.10squads.com", content: "elsewhere.example", proxied: true }]);
-			}
-			throw new Error(`unexpected ${seen.method} ${seen.url}`);
-		});
+			return undefined;
+		}
+		function elsewhere(seen: Seen): Response | undefined {
+			if (seen.method !== "GET" || !seen.url.includes("/dns_records")) return undefined;
+			return json([{ type: "CNAME", name: "proof.10squads.com", content: "elsewhere.example", proxied: true }]);
+		}
+		const { fetchImpl } = recorder((seen) =>
+			take(seen, [
+				refuseDnsWrite,
+				gotProject,
+				plainToken,
+				emptyMissing,
+				plainUpsert,
+				plainDeploy,
+				postedDomain("active", ZONE),
+				elsewhere,
+			]),
+		);
 		await assert.rejects(
 			() => clientFor(fetchImpl, { deadlineMs: 0 }).publish("proof", HTML),
 			(error: unknown) => error instanceof PagesFailure && error.message === "The DNS record does not match.",
@@ -373,22 +466,35 @@ test("a mismatched DNS record is not overwritten", { timeout: 2_000 }, async () 
 test("an attached domain is reused and a redirect is not followed", { timeout: 2_000 }, async () => {
 	const restore = guard();
 	try {
-		const attached = recorder((seen) => {
-			if (seen.method === "GET" && seen.url.endsWith("/pages/projects/ts-proof")) return json({ name: "ts-proof" });
-			if (seen.url.endsWith("/upload-token")) return json({ jwt: "upload-jwt" });
-			if (seen.url.endsWith("/check-missing")) return json([]);
-			if (seen.url.endsWith("/upsert-hashes")) return json([]);
-			if (seen.url.endsWith("/deployments")) return json({ id: "dep" });
-			if (seen.method === "POST" && seen.url.endsWith("/domains")) return json(null, 409);
-			if (seen.method === "GET" && seen.url.includes("/domains/")) {
-				return json({ name: "proof.10squads.com", status: "active", zone_tag: ZONE });
-			}
-			if (seen.method === "GET" && seen.url.includes("/dns_records")) {
-				return json([{ type: "CNAME", name: "Proof.10squads.com", content: "ts-proof.pages.dev", proxied: true }]);
-			}
-			if (seen.url === "https://proof.10squads.com/") return new Response("ok", { status: 200 });
-			throw new Error(`unexpected ${seen.method} ${seen.url}`);
-		});
+		function domainConflict(seen: Seen): Response | undefined {
+			if (seen.method !== "POST" || !seen.url.endsWith("/domains")) return undefined;
+			return json(null, 409);
+		}
+		function savedDomain(seen: Seen): Response | undefined {
+			if (seen.method !== "GET" || !seen.url.includes("/domains/")) return undefined;
+			return json({ name: "proof.10squads.com", status: "active", zone_tag: ZONE });
+		}
+		function savedDns(seen: Seen): Response | undefined {
+			if (seen.method !== "GET" || !seen.url.includes("/dns_records")) return undefined;
+			return json([{ type: "CNAME", name: "Proof.10squads.com", content: "ts-proof.pages.dev", proxied: true }]);
+		}
+		function siteOk(seen: Seen): Response | undefined {
+			if (seen.url !== "https://proof.10squads.com/") return undefined;
+			return new Response("ok", { status: 200 });
+		}
+		const attached = recorder((seen) =>
+			take(seen, [
+				gotProject,
+				plainToken,
+				emptyMissing,
+				plainUpsert,
+				plainDeploy,
+				domainConflict,
+				savedDomain,
+				savedDns,
+				siteOk,
+			]),
+		);
 		assert.equal(
 			await clientFor(attached.fetchImpl, { deadlineMs: 0 }).publish("proof", HTML),
 			"https://proof.10squads.com",
@@ -437,24 +543,31 @@ test("a missing token makes no request", { timeout: 2_000 }, async () => {
 test("an active domain whose site is not ready fails clearly", { timeout: 2_000 }, async () => {
 	const restore = guard();
 	try {
-		const { calls, fetchImpl } = recorder((seen) => {
-			if (seen.method === "GET" && seen.url.endsWith("/pages/projects/ts-proof")) return json({ name: "ts-proof" });
-			if (seen.url.endsWith("/upload-token")) return json({ jwt: "upload-jwt" });
-			if (seen.url.endsWith("/check-missing")) return json([]);
-			if (seen.url.endsWith("/upsert-hashes")) return json([]);
-			if (seen.url.endsWith("/deployments")) return json({ id: "dep" });
-			if (seen.method === "POST" && seen.url.endsWith("/domains")) {
-				return json({ name: "proof.10squads.com", status: "active", zone_tag: ZONE });
-			}
-			if (seen.method === "GET" && seen.url.includes("/dns_records")) {
-				return json([{ type: "CNAME", name: "proof.10squads.com", content: "ts-proof.pages.dev", proxied: true }]);
-			}
-			if (seen.method === "GET" && seen.url.includes("/domains/")) {
-				return json({ status: "active", zone_tag: ZONE });
-			}
-			if (seen.url === "https://proof.10squads.com/") return new Response("no", { status: 404 });
-			throw new Error(`unexpected ${seen.method} ${seen.url}`);
-		});
+		function readyDns(seen: Seen): Response | undefined {
+			if (seen.method !== "GET" || !seen.url.includes("/dns_records")) return undefined;
+			return json([{ type: "CNAME", name: "proof.10squads.com", content: "ts-proof.pages.dev", proxied: true }]);
+		}
+		function activeOnly(seen: Seen): Response | undefined {
+			if (seen.method !== "GET" || !seen.url.includes("/domains/")) return undefined;
+			return json({ status: "active", zone_tag: ZONE });
+		}
+		function siteDown(seen: Seen): Response | undefined {
+			if (seen.url !== "https://proof.10squads.com/") return undefined;
+			return new Response("no", { status: 404 });
+		}
+		const { calls, fetchImpl } = recorder((seen) =>
+			take(seen, [
+				gotProject,
+				plainToken,
+				emptyMissing,
+				plainUpsert,
+				plainDeploy,
+				postedDomain("active", ZONE),
+				readyDns,
+				activeOnly,
+				siteDown,
+			]),
+		);
 		await assert.rejects(
 			() => clientFor(fetchImpl, { deadlineMs: 0 }).publish("proof", HTML),
 			(error: unknown) =>

@@ -5,9 +5,11 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 
+import publishStubFn from "../../packages/adapters/src/cloudflare-bus/publish-stub.ts";
 import { adaptersMode, masterStubId, publishStubId } from "./adapters-mode.ts";
 
 function masterStubPlugin(): Plugin {
+	if (typeof publishStubFn !== "function") throw new Error("The publish stub is missing.");
 	const stub = fileURLToPath(new URL("../../packages/adapters/src/cloudflare-bus/master-stub.ts", import.meta.url));
 	const publishStub = fileURLToPath(
 		new URL("../../packages/adapters/src/cloudflare-bus/publish-stub.ts", import.meta.url),

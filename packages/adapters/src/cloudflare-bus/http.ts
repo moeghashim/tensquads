@@ -5,11 +5,12 @@ import { chooseAdapters } from "../adapter-choice.ts";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { takeTestTask, workerTestBus } from "../worker-adapters.ts";
 import { changeEvent, verifyContextSignature } from "./change.ts";
+import { rejectMachine } from "./machine-auth.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
 import { resolveMonitor } from "./monitors.ts";
 import type { PagesClient } from "./pages-client.ts";
 import { handlePublishRoutes } from "./publish-routes.ts";
-import { type MachineTokenDelivery, machineTokenDelivery, verifyMachineToken } from "./token.ts";
+import { type MachineTokenDelivery, machineTokenDelivery } from "./token.ts";
 
 export interface BusNamespace {
 	idFromName(name: string): unknown;
@@ -108,12 +109,7 @@ async function authorized(
 	accountId: string,
 	agentId: string,
 ): Promise<Response | null> {
-	if (!env.MACHINE_TOKEN_KEY) return new Response("The machine service is not configured.", { status: 503 });
-	const header = request.headers.get("authorization") ?? "";
-	const token = header.startsWith("Bearer ") ? header.slice("Bearer ".length) : "";
-	const ok = await verifyMachineToken(env.MACHINE_TOKEN_KEY, token, accountId, agentId);
-	if (!ok) return new Response("The token was rejected.", { status: 401 });
-	return null;
+	return rejectMachine(request, env, accountId, agentId);
 }
 
 function rejected(): Response {

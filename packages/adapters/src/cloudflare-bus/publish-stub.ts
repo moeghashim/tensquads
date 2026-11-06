@@ -1,3 +1,3 @@
-export function publishCovered(_mandate: unknown, _html: string): boolean {
+export default function publishStub(_mandate: unknown, _html: string): boolean {
 	return false;
 }
