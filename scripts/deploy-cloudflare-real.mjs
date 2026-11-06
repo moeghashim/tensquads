@@ -12,8 +12,9 @@ import {
 } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
+import { cliSpawn, readDotEnv, runAsCli } from "./cli-env.mjs";
 import { deployPlan } from "./deploy-cloudflare.mjs";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
@@ -140,69 +141,60 @@ function withoutKitKey(env) {
 	return copy;
 }
 
-export async function runRealDeploy(options) {
-	const dryRun = options.dryRun === true;
-	const parentEnv = options.parentEnv ?? {};
-	const plan = deployPlan(options.envText ?? "", parentEnv);
-	if (!plan.ok) return stop(plan.message);
-	const linked = (options.kitLinked ?? kitLinked)();
-	if (!linked) {
-		const prepared = (options.prepareKit ?? defaultPrepareKit)(parentEnv);
-		if (!prepared.ok) return stop(prepared.message);
-		const installEnv = withoutKitKey(parentEnv);
-		installEnv.GIT_SSH_COMMAND = prepared.sshCommand;
-		const installed = options.spawn("npm", ["ci", "--prefix", "tools/agent-kit"], {
-			cwd: root,
-			env: installEnv,
-			stdio: "inherit",
-		});
-		if (childStatus(installed) !== 0) return stop(kitInstallFailed);
-		const linkedNow = (options.linkKit ?? defaultLinkKit)();
-		if (!linkedNow.ok) return stop(linkedNow.message);
-	}
+function installKit(options, parentEnv) {
+	if ((options.kitLinked ?? kitLinked)()) return { ok: true };
+	const prepared = (options.prepareKit ?? defaultPrepareKit)(parentEnv);
+	if (!prepared.ok) return prepared;
+	const installEnv = withoutKitKey(parentEnv);
+	installEnv.GIT_SSH_COMMAND = prepared.sshCommand;
+	const installed = options.spawn("npm", ["ci", "--prefix", "tools/agent-kit"], {
+		cwd: root,
+		env: installEnv,
+		stdio: "inherit",
+	});
+	if (childStatus(installed) !== 0) return { ok: false, message: kitInstallFailed };
+	return (options.linkKit ?? defaultLinkKit)();
+}
+
+function buildWorker(options, parentEnv) {
 	const built = options.spawn("npm", ["run", "build", "-w", "@tensquads/web"], {
 		cwd: root,
 		env: realBuildEnv(parentEnv),
 		stdio: "inherit",
 	});
-	if (childStatus(built) !== 0) return stop(buildFailed);
+	if (childStatus(built) !== 0) return { ok: false, message: buildFailed };
 	const source = (options.readBundle ?? (() => readBundleSource(serverDirectory)))();
-	const verdict = realBundleVerdict(source);
-	if (!verdict.ok) return stop(verdict.message);
+	return realBundleVerdict(source);
+}
+
+function deployWorker(options, plan, dryRun) {
 	const deployed = options.spawn(plan.command, [plan.args[0], ...realDeployArgs(dryRun)], {
 		cwd: plan.cwd,
 		env: { ...withoutKitKey(plan.env), CLOUDFLARE_ENV: "real" },
 		stdio: plan.stdio,
 	});
-	if (childStatus(deployed) !== 0) return stop(deployFailed);
+	if (childStatus(deployed) !== 0) return { ok: false, message: deployFailed };
+	return { ok: true };
+}
+
+export async function runRealDeploy(options) {
+	const parentEnv = options.parentEnv ?? {};
+	const plan = deployPlan(options.envText ?? "", parentEnv);
+	if (!plan.ok) return stop(plan.message);
+	const installed = installKit(options, parentEnv);
+	if (!installed.ok) return stop(installed.message);
+	const built = buildWorker(options, parentEnv);
+	if (!built.ok) return stop(built.message);
+	const deployed = deployWorker(options, plan, options.dryRun === true);
+	if (!deployed.ok) return stop(deployed.message);
 	return 0;
 }
 
-function readEnvFile() {
-	try {
-		return readFileSync(resolve(root, ".env"), "utf8");
-	} catch {
-		return "";
-	}
-}
-
-function isDirectRun() {
-	const entry = process.argv[1];
-	if (!entry) return false;
-	try {
-		return realpathSync(entry) === realpathSync(fileURLToPath(import.meta.url));
-	} catch {
-		return pathToFileURL(entry).href === import.meta.url;
-	}
-}
-
-if (isDirectRun()) {
-	process.exit(
-		await runRealDeploy({
-			envText: readEnvFile(),
-			parentEnv: process.env,
-			dryRun: process.argv.includes("--dry-run"),
-			spawn: (command, args, options) => spawnSync(command, args, options),
-		}),
-	);
-}
+await runAsCli(import.meta.url, () =>
+	runRealDeploy({
+		envText: readDotEnv(root),
+		parentEnv: process.env,
+		dryRun: process.argv.includes("--dry-run"),
+		spawn: cliSpawn,
+	}),
+);

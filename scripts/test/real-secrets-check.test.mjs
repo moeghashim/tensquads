@@ -81,3 +81,41 @@ test("real secrets check prints missing names and never a secret value", async (
 	assert.deepEqual(ready.logs, []);
 	assert.equal(ready.logs.join("").includes("super-secret-value"), false);
 });
+
+test("real secrets check stops when the secret list fails and does not print it", async () => {
+	const result = await capture(() =>
+		runSecretsCheck({
+			envText: 'CLOUDFLARE_WORKERS_API_TOKEN="project-token"\n',
+			parentEnv: {},
+			required: ["OPENAI_API_KEY"],
+			spawn() {
+				return {
+					status: 1,
+					stdout: '[{"name":"OPENAI_API_KEY","value":"super-secret-value"}]',
+					stderr: "wrangler failed super-secret-value",
+				};
+			},
+		}),
+	);
+	assert.equal(result.code, 1);
+	assert.deepEqual(result.errors, ["The secret list failed."]);
+	assert.deepEqual(result.logs, []);
+	assert.equal(`${result.errors.join("\n")}\n${result.logs.join("\n")}`.includes("super-secret-value"), false);
+});
+
+test("real secrets check stops when the secret list is not a list and does not print it", async () => {
+	const result = await capture(() =>
+		runSecretsCheck({
+			envText: 'CLOUDFLARE_WORKERS_API_TOKEN="project-token"\n',
+			parentEnv: {},
+			required: ["OPENAI_API_KEY"],
+			spawn() {
+				return { status: 0, stdout: "not-a-list super-secret-value", stderr: "super-secret-value" };
+			},
+		}),
+	);
+	assert.equal(result.code, 1);
+	assert.deepEqual(result.errors, ["The secret list was not a list."]);
+	assert.deepEqual(result.logs, []);
+	assert.equal(`${result.errors.join("\n")}\n${result.logs.join("\n")}`.includes("super-secret-value"), false);
+});

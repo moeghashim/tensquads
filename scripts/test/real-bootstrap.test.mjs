@@ -22,6 +22,8 @@ const args = [
 	"--owner-email",
 	"owner@example.com",
 ];
+const clerkFlag = ["--owner-clerk-user-id", "user_Owner1"];
+const readyArgs = [...args, ...clerkFlag, "--database-url", branch];
 
 function capture(run) {
 	const errors = [];
@@ -48,6 +50,7 @@ test("real bootstrap requires an explicit database url and refuses the productio
 		"utf8",
 	);
 	assert.equal(source.includes("saveWorkspace"), false);
+	assert.equal(source.includes("writeAccount"), false);
 	assert.equal(source.includes('REAL_BUSINESS_KEY = "state:business"'), true);
 	const request = readFileSync(
 		fileURLToPath(new URL("../../packages/adapters/src/cloudflare-bus/account-request.ts", import.meta.url)),
@@ -56,8 +59,13 @@ test("real bootstrap requires an explicit database url and refuses the productio
 	assert.equal(request.includes('export const BUSINESS_KEY = "state:business"'), true);
 
 	assert.equal(parseRealBootstrapArgs(args).ok, false);
-	assert.equal(parseRealBootstrapArgs([...args, "--database-url", branch]).ok, true);
-	assert.equal(parseRealBootstrapArgs([...args, "--type", "cafe", "--database-url", branch]).ok, false);
+	assert.equal(parseRealBootstrapArgs([...args, "--database-url", branch]).ok, false);
+	assert.equal(
+		parseRealBootstrapArgs([...args, "--owner-clerk-user-id", "not_a_user", "--database-url", branch]).ok,
+		false,
+	);
+	assert.equal(parseRealBootstrapArgs(readyArgs).ok, true);
+	assert.equal(parseRealBootstrapArgs([...readyArgs, "--type", "cafe"]).ok, false);
 
 	const envText = `NEON_POSTGRES_CONNECTION_STRING="${production}"\n`;
 	assert.equal(productionConnection(envText, {}), production);
@@ -79,7 +87,7 @@ test("real bootstrap requires an explicit database url and refuses the productio
 	let opened = false;
 	const refused = await capture(() =>
 		runRealBootstrap({
-			argv: [...args, "--database-url", production],
+			argv: [...args, ...clerkFlag, "--database-url", production],
 			envText,
 			parentEnv: {},
 			async open() {
@@ -96,7 +104,7 @@ test("real bootstrap requires an explicit database url and refuses the productio
 
 	const envRefused = await capture(() =>
 		runRealBootstrap({
-			argv: [...args, "--database-url", branch],
+			argv: [...args, ...clerkFlag, "--database-url", branch],
 			envText,
 			parentEnv: { DATABASE_URL: production },
 			async open() {
@@ -111,7 +119,7 @@ test("real bootstrap requires an explicit database url and refuses the productio
 
 	const missing = await capture(() =>
 		runRealBootstrap({
-			argv: [...args, "--database-url", branch],
+			argv: [...args, ...clerkFlag, "--database-url", branch],
 			envText: "",
 			parentEnv: {},
 			async open() {
@@ -129,7 +137,7 @@ test("real bootstrap migrates the explicit database and does not open production
 	const seen = [];
 	const result = await capture(() =>
 		runRealBootstrap({
-			argv: [...args, "--database-url", branch, "--type", "grocer"],
+			argv: [...readyArgs, "--type", "grocer"],
 			envText: `NEON_POSTGRES_CONNECTION_STRING="${production}"\n`,
 			parentEnv: { DATABASE_URL: branch },
 			now: new Date("2026-11-06T00:00:00.000Z"),
@@ -148,12 +156,130 @@ test("real bootstrap migrates the explicit database and does not open production
 			async bootstrap(_db, input) {
 				seen.push(input.businessType);
 				seen.push(input.ownerEmail);
+				seen.push(input.ownerClerkUserId);
 			},
 		}),
 	);
 	assert.equal(result.code, 0);
-	assert.deepEqual(seen, [branch, "migrate", "grocer", "owner@example.com", "close"]);
+	assert.deepEqual(seen, [branch, "migrate", "grocer", "owner@example.com", "user_Owner1", "close"]);
 	assert.equal(seen.includes(production), false);
 	assert.equal(result.logs.join("\n").includes(branch), false);
 	assert.equal(result.errors.join("\n").includes("secret"), false);
+});
+
+test("real bootstrap reports an existing account", async () => {
+	const error = new Error("The account noon already exists.");
+	error.code = "account_exists";
+	const result = await capture(() =>
+		runRealBootstrap({
+			argv: readyArgs,
+			envText: `NEON_POSTGRES_CONNECTION_STRING="${production}"\n`,
+			parentEnv: {},
+			async open() {
+				return {
+					db: {},
+					async migrate() {},
+					async close() {},
+				};
+			},
+			async bootstrap() {
+				throw error;
+			},
+		}),
+	);
+	assert.equal(result.code, 1);
+	assert.deepEqual(result.errors, ["The account noon already exists."]);
+	assert.equal(result.errors.join("\n").includes(production), false);
+	assert.equal(result.errors.join("\n").includes("secret"), false);
+});
+
+test("real bootstrap refuses a disguised production database url", async () => {
+	const envText = `NEON_POSTGRES_CONNECTION_STRING="${production}"\n`;
+	const liveHost = "postgres://role:secret@ep-live.region.aws.neon.tech/neondb";
+	const disguised = [
+		"postgres://role:secret@ep-live.example/%6eeondb",
+		"postgres://role:secret@ep-other.example/neondb?host=ep-live.example",
+		"postgres://role:secret@ep-other.example/otherdb?host=ep-live.example",
+		"postgres://role:secret@ep-other.example/otherdb?hostaddr=10.0.0.1",
+		"postgres://role:secret@ep-other.example/otherdb?service=prod",
+		"postgres://role:secret@ep-%6cive.example/neondb",
+		"postgres://role:secret@ep-other.example/otherdb?%68ost=ep-live.example",
+		"postgres://role:secret@ep-live.example/%256eeondb",
+		"postgres://other:secret@ep-live.example/neondb",
+		"postgres://role:p%40ss@ep-live.example/neondb",
+		"postgres://role:secret@ep-live-pooler.example/neondb",
+		`${production}/`,
+		"postgresql://role:secret@ep-live.example:5432/neondb",
+		"postgres://role:secret@EP-LIVE.example/neondb",
+		`${production}?sslmode=require`,
+		"postgres://role:secret@ep-live-pooler.other.example/neondb",
+	];
+	for (const url of disguised) {
+		const decision = refuseProductionDatabase({ databaseUrl: url, productionUrl: production, databaseEnv: "" });
+		assert.equal(decision.ok, false, url);
+		assert.equal(decision.message.includes(url), false, url);
+		assert.equal(decision.message.includes("secret"), false, url);
+		let opened = false;
+		const refused = await capture(() =>
+			runRealBootstrap({
+				argv: [...args, ...clerkFlag, "--database-url", url],
+				envText,
+				parentEnv: {},
+				async open() {
+					opened = true;
+					throw new Error("opened");
+				},
+			}),
+		);
+		assert.equal(opened, false, url);
+		assert.equal(refused.code, 1, url);
+		assert.equal(refused.errors.join("\n").includes(url), false, url);
+		assert.equal(refused.errors.join("\n").includes("secret"), false, url);
+	}
+	const endpoint = refuseProductionDatabase({
+		databaseUrl: "postgres://role:secret@ep-live-pooler.other.example/neondb",
+		productionUrl: liveHost,
+		databaseEnv: "",
+	});
+	assert.equal(endpoint.ok, false);
+	assert.equal(endpoint.message, "Refusing to write. The database URL is the production database.");
+	const databaseEnv = refuseProductionDatabase({
+		databaseUrl: branch,
+		productionUrl: production,
+		databaseEnv: "postgres://role:secret@ep-live-pooler.example/neondb",
+	});
+	assert.equal(databaseEnv.ok, false);
+	assert.equal(databaseEnv.message, "Refusing to write. DATABASE_URL is the production database.");
+	const unsafeEnv = refuseProductionDatabase({
+		databaseUrl: branch,
+		productionUrl: production,
+		databaseEnv: "postgres://role:secret@ep-real.example/neondb?hostaddr=10.0.0.1",
+	});
+	assert.equal(unsafeEnv.ok, false);
+	assert.equal(unsafeEnv.message, "Refusing to write. DATABASE_URL is not a plain connection string.");
+	const unsafeProduction = refuseProductionDatabase({
+		databaseUrl: branch,
+		productionUrl: "postgres://role:secret@ep-live.example/%6eeondb",
+		databaseEnv: "",
+	});
+	assert.equal(unsafeProduction.ok, false);
+	assert.equal(
+		unsafeProduction.message,
+		"Refusing to write. The production database URL is not a plain connection string.",
+	);
+	const allowed = [
+		branch,
+		`${branch}?sslmode=require`,
+		"postgres://role:p%40ss@ep-real.example/neondb",
+		"postgres://role:secret@ep-live.example/otherdb",
+		"postgres://role:secret@ep-real.example/neondb?options=-csearch_path%3Dpublic",
+		"postgres://role:secret@ep-live.example/Neondb",
+	];
+	for (const url of allowed) {
+		assert.equal(
+			refuseProductionDatabase({ databaseUrl: url, productionUrl: production, databaseEnv: "" }).ok,
+			true,
+			url,
+		);
+	}
 });

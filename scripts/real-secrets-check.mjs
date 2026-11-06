@@ -1,8 +1,8 @@
-import { spawnSync } from "node:child_process";
-import { readFileSync, realpathSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
+import { cliSpawn, readDotEnv, runAsCli } from "./cli-env.mjs";
 import { deployPlan } from "./deploy-cloudflare.mjs";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
@@ -62,30 +62,10 @@ export async function runSecretsCheck(options) {
 	return 1;
 }
 
-function readEnvFile() {
-	try {
-		return readFileSync(resolve(root, ".env"), "utf8");
-	} catch {
-		return "";
-	}
-}
-
-function isDirectRun() {
-	const entry = process.argv[1];
-	if (!entry) return false;
-	try {
-		return realpathSync(entry) === realpathSync(fileURLToPath(import.meta.url));
-	} catch {
-		return pathToFileURL(entry).href === import.meta.url;
-	}
-}
-
-if (isDirectRun()) {
-	process.exit(
-		await runSecretsCheck({
-			envText: readEnvFile(),
-			parentEnv: process.env,
-			spawn: (command, args, options) => spawnSync(command, args, options),
-		}),
-	);
-}
+await runAsCli(import.meta.url, () =>
+	runSecretsCheck({
+		envText: readDotEnv(root),
+		parentEnv: process.env,
+		spawn: cliSpawn,
+	}),
+);

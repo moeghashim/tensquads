@@ -1,6 +1,7 @@
-import { type AccountSnapshot, type AppDatabase, schema, writeAccount } from "@tensquads/adapters";
-import type { Agent, PlanName, Skill } from "@tensquads/domain";
+import { type AccountSnapshot, type AppDatabase, createAccount, schema } from "@tensquads/adapters";
+import type { PlanName, Skill } from "@tensquads/domain";
 
+import { emptyAgent, emptyOverviewTiles } from "./blank-agent.ts";
 import { design } from "./design-file.ts";
 
 // Same key the real Worker reads in account-request.ts. This file does not import that module.
@@ -11,12 +12,13 @@ export interface RealAccountInput {
 	readonly businessName: string;
 	readonly businessType: "restaurant" | "grocer";
 	readonly ownerEmail: string;
+	readonly ownerClerkUserId: string;
 	readonly now: Date;
 }
 
+const clerkUserIdPattern = /^user_[A-Za-z0-9]+$/;
+
 const accountTint = "#e7efff";
-const delta = "\u00a0";
-const deltaColor = "#5d5d5d";
 
 function skill(id: string, desc: string, gate: Skill["gate"]): Skill {
 	return { id, desc, gate, runs: 0, on: true };
@@ -33,50 +35,6 @@ function startedOn(date: Date): string {
 	const month = months[date.getUTCMonth()];
 	if (!month) throw new Error("The start date is not valid.");
 	return `${date.getUTCDate()} ${month} ${date.getUTCFullYear()}`;
-}
-
-function blankTiles() {
-	return [
-		{ label: "Revenue", value: "—", delta, deltaColor },
-		{ label: "Orders", value: "—", delta, deltaColor },
-		{ label: "Average order", value: "$0", delta, deltaColor },
-		{ label: "Profit margin", value: "0%", delta, deltaColor },
-		{ label: "Hours saved", value: "0h", delta, deltaColor },
-	];
-}
-
-function agent(input: {
-	readonly id: string;
-	readonly role: string;
-	readonly tint: string;
-	readonly mission: string;
-	readonly skills: readonly Skill[];
-	readonly target: readonly [string, string, string];
-}): Agent {
-	return {
-		id: input.id,
-		name: input.role,
-		role: input.role,
-		tint: input.tint,
-		on: true,
-		autonomy: "Ask first",
-		mission: input.mission,
-		targets: [input.target],
-		contribution: 0,
-		tasks: 0,
-		success: "0%",
-		saved: "0h",
-		last: "",
-		host: "",
-		region: "",
-		size: "",
-		cpu: "",
-		uptime: "",
-		egress: [],
-		secrets: [],
-		kpis: [["Tasks", "0"]],
-		skills: input.skills,
-	};
 }
 
 function masterSkills(): readonly Skill[] {
@@ -110,6 +68,7 @@ function websiteSkills(): readonly Skill[] {
 
 function realSnapshot(input: RealAccountInput): AccountSnapshot {
 	return {
+		clerkUserId: input.ownerClerkUserId,
 		account: {
 			id: input.accountId,
 			name: input.businessName,
@@ -130,7 +89,7 @@ function realSnapshot(input: RealAccountInput): AccountSnapshot {
 			mission: `Run one ${input.businessType} loop.`,
 		},
 		agents: [
-			agent({
+			emptyAgent({
 				id: "master",
 				role: "Master",
 				tint: "#e8e8e8",
@@ -138,7 +97,7 @@ function realSnapshot(input: RealAccountInput): AccountSnapshot {
 				target: ["Checks", "0", "1"],
 				skills: masterSkills(),
 			}),
-			agent({
+			emptyAgent({
 				id: "market",
 				role: "Market researcher",
 				tint: "#fde2f3",
@@ -146,7 +105,7 @@ function realSnapshot(input: RealAccountInput): AccountSnapshot {
 				target: ["Competitors", "0", "3"],
 				skills: marketSkills(),
 			}),
-			agent({
+			emptyAgent({
 				id: "website",
 				role: "Website builder",
 				tint: "#e5e9f0",
@@ -167,7 +126,7 @@ function realSnapshot(input: RealAccountInput): AccountSnapshot {
 		approvals: [],
 		proposals: [],
 		revenue: [],
-		tiles: blankTiles(),
+		tiles: emptyOverviewTiles(),
 		messages: [],
 		masterName: "Master",
 	};
@@ -216,13 +175,18 @@ async function ensureCatalog(db: AppDatabase): Promise<void> {
 		.onConflictDoNothing();
 }
 
-export async function bootstrapRealAccount(db: AppDatabase, input: RealAccountInput): Promise<void> {
+function assertRealAccount(input: RealAccountInput): void {
 	if (input.accountId.trim().length === 0) throw new Error("The account id is missing.");
 	if (input.businessName.trim().length === 0) throw new Error("The business name is missing.");
 	if (input.businessType !== "restaurant" && input.businessType !== "grocer") {
 		throw new Error("The business type must be restaurant or grocer.");
 	}
 	if (!input.ownerEmail.includes("@")) throw new Error("The owner email is missing.");
+	if (!clerkUserIdPattern.test(input.ownerClerkUserId)) throw new Error("The owner Clerk user id is not valid.");
+}
+
+export async function bootstrapRealAccount(db: AppDatabase, input: RealAccountInput): Promise<void> {
+	assertRealAccount(input);
 	await ensureCatalog(db);
-	await writeAccount(db, realSnapshot(input));
+	await createAccount(db, realSnapshot(input));
 }

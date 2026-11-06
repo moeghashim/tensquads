@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createRepositories, schema, writeAccount } from "@tensquads/adapters";
+import { accountForClerkUser, createRepositories, schema, writeAccount } from "@tensquads/adapters";
 
 import { openPglite } from "../../adapters/test/pglite.ts";
 import { bootstrapRealAccount, REAL_BUSINESS_KEY } from "../src/real-bootstrap.ts";
@@ -9,6 +9,15 @@ const platform = { accountId: "platform", mode: "platform" } as const;
 const keptScope = { accountId: "kept", mode: "account" } as const;
 const realScope = { accountId: "noon", mode: "account" } as const;
 const now = new Date("2026-11-06T00:00:00.000Z");
+const ownerClerkUserId = "user_Owner1";
+const input = {
+	accountId: "noon",
+	businessName: "Noon Kitchen",
+	businessType: "restaurant" as const,
+	ownerEmail: "owner@example.com",
+	ownerClerkUserId,
+	now,
+};
 
 function keptAccount() {
 	return {
@@ -57,37 +66,17 @@ function keptAccount() {
 	};
 }
 
-test("the real bootstrap writes one account and leaves other tenants in place", async () => {
+test("the real bootstrap writes the account, squads, and agents", async () => {
 	const opened = await openPglite();
 	try {
-		await writeAccount(opened.db, keptAccount());
-		await opened.db.insert(schema.agentImages).values({
-			id: "kept-image",
-			name: "Kept image",
-			role: "Kept",
-			tint: "#e7efff",
-			tag: "kept-tag",
-			version: "0.0.1",
-			nextVersion: "0.0.1",
-			updated: "",
-			updatedFull: "",
-			deployed: 0,
-			onLatest: 0,
-			status: "Draft",
-			sortOrder: 9,
-		});
-		await opened.db.insert(schema.plans).values({ id: "Starter", name: "Starter", monthly: 49, sortOrder: 0 });
-		await bootstrapRealAccount(opened.db, {
-			accountId: "noon",
-			businessName: "Noon Kitchen",
-			businessType: "restaurant",
-			ownerEmail: "owner@example.com",
-			now,
-		});
+		await bootstrapRealAccount(opened.db, input);
 		const repos = createRepositories(opened.db);
 		const accounts = await repos.platform.listAccounts(platform);
-		assert.deepEqual(accounts.map((account) => account.id).sort(), ["kept", "noon"]);
-		const noon = accounts.find((account) => account.id === "noon");
+		assert.deepEqual(
+			accounts.map((account) => account.id),
+			["noon"],
+		);
+		const noon = accounts[0];
 		assert.equal(noon?.name, "Noon Kitchen");
 		assert.equal(noon?.owner, "owner@example.com");
 		assert.equal(noon?.email, "owner@example.com");
@@ -108,6 +97,17 @@ test("the real bootstrap writes one account and leaves other tenants in place", 
 			agents.map((agent) => agent.name),
 			["Petra", "Machu", "Angkor"],
 		);
+	} finally {
+		await opened.close();
+	}
+});
+
+test("the real bootstrap writes skills once and starts with an empty bus", async () => {
+	const opened = await openPglite();
+	try {
+		await bootstrapRealAccount(opened.db, input);
+		const repos = createRepositories(opened.db);
+		const agents = await repos.squads.listAgents(realScope);
 		assert.deepEqual(
 			agents.map((agent) => agent.skills.map((skill) => [skill.id, skill.runs, skill.gate])),
 			[
@@ -138,8 +138,37 @@ test("the real bootstrap writes one account and leaves other tenants in place", 
 			true,
 		);
 		assert.deepEqual(await repos.bus.listEvents(realScope), []);
-		assert.equal((await repos.bus.listEvents(keptScope)).length, 1);
+	} finally {
+		await opened.close();
+	}
+});
+
+test("the real bootstrap leaves other tenants and catalog rows in place", async () => {
+	const opened = await openPglite();
+	try {
+		await writeAccount(opened.db, keptAccount());
+		await opened.db.insert(schema.agentImages).values({
+			id: "kept-image",
+			name: "Kept image",
+			role: "Kept",
+			tint: "#e7efff",
+			tag: "kept-tag",
+			version: "0.0.1",
+			nextVersion: "0.0.1",
+			updated: "",
+			updatedFull: "",
+			deployed: 0,
+			onLatest: 0,
+			status: "Draft",
+			sortOrder: 9,
+		});
+		await opened.db.insert(schema.plans).values({ id: "Starter", name: "Starter", monthly: 49, sortOrder: 0 });
+		await bootstrapRealAccount(opened.db, input);
+		const repos = createRepositories(opened.db);
+		const accounts = await repos.platform.listAccounts(platform);
+		assert.deepEqual(accounts.map((account) => account.id).sort(), ["kept", "noon"]);
 		assert.equal((await repos.bus.listEvents(keptScope))[0]?.text, "Keep this event.");
+		assert.equal((await repos.platform.listAccounts(keptScope))[0]?.name, "Kept Cafe");
 		const store = await repos.bus.readStore(realScope);
 		assert.deepEqual(store[REAL_BUSINESS_KEY], {
 			businessName: "Noon Kitchen",
@@ -164,7 +193,72 @@ test("the real bootstrap writes one account and leaves other tenants in place", 
 				["Scale", 399],
 			],
 		);
-		assert.equal((await repos.platform.listAccounts(keptScope))[0]?.name, "Kept Cafe");
+	} finally {
+		await opened.close();
+	}
+});
+
+test("the owner clerk user id opens the bootstrapped account", async () => {
+	const opened = await openPglite();
+	try {
+		await bootstrapRealAccount(opened.db, input);
+		const found = await accountForClerkUser(opened.db, ownerClerkUserId);
+		assert.equal(found?.id, "noon");
+		assert.equal(found?.email, "owner@example.com");
+		await assert.rejects(
+			() => bootstrapRealAccount(opened.db, { ...input, ownerClerkUserId: "user_bad-id" }),
+			/The owner Clerk user id is not valid/,
+		);
+	} finally {
+		await opened.close();
+	}
+});
+
+test("a second real bootstrap refuses and keeps the account", async () => {
+	const opened = await openPglite();
+	try {
+		await bootstrapRealAccount(opened.db, input);
+		await opened.db.insert(schema.busEvents).values({
+			accountId: "noon",
+			id: "later",
+			timeText: "12:30",
+			fromAgent: "user",
+			toAgent: "master",
+			kind: "Task",
+			skill: "task.route",
+			body: "Keep this run.",
+			payload: {},
+			writes: [],
+			trace: "later-trace",
+			seq: 101,
+		});
+		await assert.rejects(() => bootstrapRealAccount(opened.db, input), /The account noon already exists/);
+		const repos = createRepositories(opened.db);
+		assert.equal((await repos.bus.listEvents(realScope))[0]?.text, "Keep this run.");
+		assert.equal((await repos.platform.listAccounts(realScope))[0]?.name, "Noon Kitchen");
+		assert.equal((await repos.squads.listAgents(realScope)).length, 3);
+	} finally {
+		await opened.close();
+	}
+});
+
+test("two concurrent real bootstraps leave one account", async () => {
+	const opened = await openPglite();
+	try {
+		const results = await Promise.allSettled([
+			bootstrapRealAccount(opened.db, input),
+			bootstrapRealAccount(opened.db, input),
+		]);
+		const rejected = results.filter((result) => result.status === "rejected");
+		assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
+		assert.equal(rejected.length, 1);
+		const reason = rejected[0]?.status === "rejected" ? rejected[0].reason : undefined;
+		assert.equal(reason instanceof Error ? reason.message : "", "The account noon already exists.");
+		const repos = createRepositories(opened.db);
+		assert.deepEqual(
+			(await repos.platform.listAccounts(platform)).map((account) => account.id),
+			["noon"],
+		);
 	} finally {
 		await opened.close();
 	}

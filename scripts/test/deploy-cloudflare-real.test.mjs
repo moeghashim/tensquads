@@ -181,3 +181,102 @@ test("real deploy refuses to build when the kit key is absent", async () => {
 	assert.deepEqual(result.errors, ["The kit deploy key is absent."]);
 	assert.deepEqual(spawned, []);
 });
+
+const projectToken = 'CLOUDFLARE_WORKERS_API_TOKEN="project-token"\n';
+
+test("real deploy stops when the kit install fails", async () => {
+	const commands = [];
+	const result = await capture(() =>
+		runRealDeploy({
+			envText: projectToken,
+			parentEnv: { PATH: "/usr/bin" },
+			kitLinked: () => false,
+			prepareKit() {
+				return { ok: true, sshCommand: "ssh -i /tmp/kit -o IdentitiesOnly=yes" };
+			},
+			linkKit() {
+				commands.push("link");
+				return { ok: true };
+			},
+			readBundle: () => "function createMaster() { return null; }",
+			spawn(_command, args) {
+				commands.push(args[0]);
+				if (args[0] === "ci") return { status: 1, stderr: "npm error secret-token" };
+				return { status: 0 };
+			},
+		}),
+	);
+	assert.equal(result.code, 1);
+	assert.deepEqual(result.errors, ["The agent kit install did not finish."]);
+	assert.equal(result.errors.join("\n").includes("secret-token"), false);
+	assert.deepEqual(commands, ["ci"]);
+});
+
+test("real deploy stops when the kit link fails", async () => {
+	const commands = [];
+	const result = await capture(() =>
+		runRealDeploy({
+			envText: projectToken,
+			parentEnv: { PATH: "/usr/bin" },
+			kitLinked: () => false,
+			prepareKit() {
+				return { ok: true, sshCommand: "ssh -i /tmp/kit -o IdentitiesOnly=yes" };
+			},
+			linkKit() {
+				return { ok: false, message: "The agent kit install did not finish." };
+			},
+			readBundle: () => "function createMaster() { return null; }",
+			spawn(_command, args) {
+				commands.push(args[0]);
+				return { status: 0, stderr: "secret-token" };
+			},
+		}),
+	);
+	assert.equal(result.code, 1);
+	assert.deepEqual(result.errors, ["The agent kit install did not finish."]);
+	assert.equal(result.errors.join("\n").includes("secret-token"), false);
+	assert.deepEqual(commands, ["ci"]);
+});
+
+test("real deploy stops when the Worker build fails", async () => {
+	const commands = [];
+	const result = await capture(() =>
+		runRealDeploy({
+			envText: projectToken,
+			parentEnv: { PATH: "/usr/bin" },
+			kitLinked: () => true,
+			readBundle: () => "function createMaster() { return null; }",
+			spawn(_command, args) {
+				commands.push(args[0]);
+				if (args[0] === "run") return { status: 1, stderr: "build secret-token" };
+				return { status: 0 };
+			},
+		}),
+	);
+	assert.equal(result.code, 1);
+	assert.deepEqual(result.errors, ["The real Worker build did not finish."]);
+	assert.equal(result.errors.join("\n").includes("secret-token"), false);
+	assert.deepEqual(commands, ["run"]);
+});
+
+test("real deploy stops when the Worker deploy fails", async () => {
+	const commands = [];
+	const result = await capture(() =>
+		runRealDeploy({
+			envText: projectToken,
+			parentEnv: { PATH: "/usr/bin" },
+			kitLinked: () => true,
+			readBundle: () => "function createMaster() { return null; }",
+			spawn(_command, args) {
+				const step = args.includes("--env") ? "deploy" : args[0];
+				commands.push(step);
+				if (step === "deploy") return { status: 1, stderr: "deploy secret-token" };
+				return { status: 0 };
+			},
+		}),
+	);
+	assert.equal(result.code, 1);
+	assert.deepEqual(result.errors, ["The real Worker deploy did not finish."]);
+	assert.equal(result.errors.join("\n").includes("secret-token"), false);
+	assert.deepEqual(commands, ["run", "deploy"]);
+});
