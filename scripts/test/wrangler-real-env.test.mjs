@@ -6,27 +6,15 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const wranglerPath = join(root, "apps/web/wrangler.jsonc");
+const secretsPath = join(root, "apps/web/real-secrets.json");
 const productionQueues = ["tensquads-bus", "tensquads-bus-dlq"];
 const realQueues = ["tensquads-real-bus", "tensquads-real-bus-dlq"];
 const orgId = "org_3Lazia1HC1hdgfY0mAttb1qTWYm";
+const declared = JSON.parse(readFileSync(secretsPath, "utf8"));
 
-// Worker secrets and dev-only connection strings. The real Worker reads them, and they stay out of wrangler.jsonc.
-const secrets = new Set([
-	"BOAT_ADMIN_TOKEN",
-	"BOAT_BASE_PATH",
-	"BOAT_PROFILE",
-	"BOAT_SECRET_BASE_URL",
-	"BOAT_TOKEN",
-	"CLERK_PUBLISHABLE_KEY",
-	"CLERK_SECRET_KEY",
-	"CONTEXT_WEBHOOK_SECRET",
-	"DATABASE_URL",
-	"MACHINE_TOKEN_KEY",
-	"NEON_POSTGRES_CONNECTION_STRING",
-	"OPENAI_API_KEY",
-	"TEST_DATABASE_URL",
-	"VITE_CLERK_PUBLISHABLE_KEY",
-]);
+// Secret names live in real-secrets.json. `local` names are read by the Worker and stay
+// out of wrangler.jsonc. The real secrets check does not require them on tensquads-real.
+const secrets = new Set([...declared.secrets, ...declared.local]);
 
 // Optional debug flag. The real path does not require it.
 const optional = new Set(["BUS_INSPECT"]);
@@ -106,9 +94,33 @@ test("env.real declares every binding the real Worker reads and shares no queue 
 	const config = parseWrangler(text);
 	const real = config.env.real;
 	const read = workerBindingNames();
+	const varNames = new Set(Object.keys(real.vars));
+
+	assert.deepEqual(Object.keys(declared.vars).sort(), ["BOAT_PROFILE", "BOAT_SECRET_BASE_URL"]);
+	assert.equal(declared.vars.BOAT_PROFILE, "tensquads-agents");
+	assert.equal(declared.vars.BOAT_SECRET_BASE_URL, "https://tensquads-real.moe-678.workers.dev");
+	for (const name of [
+		"BOAT_ADMIN_TOKEN",
+		"BOAT_TOKEN",
+		"CLERK_PUBLISHABLE_KEY",
+		"CLERK_SECRET_KEY",
+		"CLOUDFLARE_PAGES_API_TOKEN",
+		"CONTEXT_WEBHOOK_SECRET",
+		"DATABASE_URL",
+		"MACHINE_TOKEN_KEY",
+		"NEON_POSTGRES_CONNECTION_STRING",
+		"OPENAI_API_KEY",
+	]) {
+		assert.equal(declared.secrets.includes(name), true, name);
+		assert.equal(Object.hasOwn(declared.vars, name), false, name);
+	}
+	for (const name of declared.secrets) assert.equal(declared.local.includes(name), false, name);
+	for (const name of Object.keys(declared.vars)) assert.equal(secrets.has(name), false, name);
 
 	assert.deepEqual(
-		[...read].filter((name) => !configBindings.has(name) && !secrets.has(name) && !optional.has(name)),
+		[...read].filter(
+			(name) => !configBindings.has(name) && !secrets.has(name) && !optional.has(name) && !varNames.has(name),
+		),
 		[],
 	);
 	for (const name of configBindings) assert.equal(read.has(name), true, name);
@@ -142,6 +154,8 @@ test("env.real declares every binding the real Worker reads and shares no queue 
 
 	assert.deepEqual(real.vars, {
 		ADAPTERS: "real",
+		BOAT_PROFILE: declared.vars.BOAT_PROFILE,
+		BOAT_SECRET_BASE_URL: declared.vars.BOAT_SECRET_BASE_URL,
 		BUS_DEAD_LETTER: "tensquads-real-bus-dlq",
 		CLERK_PLATFORM_ORG_ID: orgId,
 		MASTER_MODEL: "gpt-6-luna",

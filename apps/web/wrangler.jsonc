@@ -27,16 +27,20 @@
 	"observability": {
 		"enabled": true
 	},
-	// The real environment is not production. Deploy stays `wrangler deploy` with no --env.
-	// Vars, durable objects, queues, and the browser binding are not inherited, so this
-	// environment declares its own. Its queues are tensquads-real-bus and tensquads-real-bus-dlq.
-	// MASTER_MODEL is gpt-6-luna and MASTER_REASONING_EFFORT is medium.
-	// The code has no model default. OPENAI_API_KEY is a Worker secret and stays out of this file.
+	// The real environment is not production. Production deploy stays `wrangler deploy` with no --env.
+	// The real deploy script passes `--env real`. Vars, durable objects, queues, and the browser
+	// binding are not inherited, so this environment declares its own. Its queues are
+	// tensquads-real-bus and tensquads-real-bus-dlq. The Worker name is tensquads-real.
+	// MASTER_MODEL is gpt-6-luna and MASTER_REASONING_EFFORT is medium. The code has no model default.
+	// BOAT_PROFILE and BOAT_SECRET_BASE_URL are not secrets. Secret names are listed in
+	// real-secrets.json. OPENAI_API_KEY and the other secrets stay out of this file.
 	// Browser Rendering is bound only here.
 	"env": {
 		"real": {
 			"vars": {
 				"ADAPTERS": "real",
+				"BOAT_PROFILE": "tensquads-agents",
+				"BOAT_SECRET_BASE_URL": "https://tensquads-real.moe-678.workers.dev",
 				"BUS_DEAD_LETTER": "tensquads-real-bus-dlq",
 				"CLERK_PLATFORM_ORG_ID": "org_3Lazia1HC1hdgfY0mAttb1qTWYm",
 				"MASTER_MODEL": "gpt-6-luna",

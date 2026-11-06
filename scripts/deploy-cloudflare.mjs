@@ -1,8 +1,7 @@
-import { spawnSync } from "node:child_process";
-import { readFileSync, realpathSync } from "node:fs";
 import { resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
+import { cliSpawn, namedConnection, readDotEnv, runAsCli } from "./cli-env.mjs";
 import { parseEnv } from "./write-dev-vars.mjs";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
@@ -73,10 +72,7 @@ function childStatus(result) {
 }
 
 function configuredDatabase(envText, parentEnv) {
-	const fromFile = parseEnv(envText).get("NEON_POSTGRES_CONNECTION_STRING");
-	const fromParent = parentEnv?.NEON_POSTGRES_CONNECTION_STRING;
-	const value = [fromParent, fromFile].find((item) => typeof item === "string" && item.trim().length > 0);
-	return typeof value === "string" ? value.trim() : undefined;
+	return namedConnection(envText, parentEnv, "NEON_POSTGRES_CONNECTION_STRING");
 }
 
 async function migrateDatabase(connection) {
@@ -118,32 +114,10 @@ export async function runDeploy(options) {
 	);
 }
 
-function readEnvFile() {
-	try {
-		return readFileSync(resolve(root, ".env"), "utf8");
-	} catch {
-		return "";
-	}
-}
-
-function isDirectRun() {
-	const entry = process.argv[1];
-	if (!entry) {
-		return false;
-	}
-	try {
-		return realpathSync(entry) === realpathSync(fileURLToPath(import.meta.url));
-	} catch {
-		return pathToFileURL(entry).href === import.meta.url;
-	}
-}
-
-if (isDirectRun()) {
-	process.exit(
-		await runDeploy({
-			envText: readEnvFile(),
-			parentEnv: process.env,
-			spawn: (command, args, options) => spawnSync(command, args, options),
-		}),
-	);
-}
+await runAsCli(import.meta.url, () =>
+	runDeploy({
+		envText: readDotEnv(root),
+		parentEnv: process.env,
+		spawn: cliSpawn,
+	}),
+);
