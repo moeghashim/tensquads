@@ -1,4 +1,4 @@
-import type { Page, Route } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 import { expect, openWorkspace, test } from "./workspace.ts";
 
@@ -47,13 +47,24 @@ test("a signed-out client with an unexpired session cookie opens sign-in", async
 	test.setTimeout(90_000);
 	await openWorkspace(page, workspaceUser);
 	await watchRefresh(page, true);
-	await sendSignedOutClient(page);
+	const reads = await sendSignedOutClient(page);
 	await page
 		.getByRole("navigation", { name: "Workspace" })
 		.getByRole("button", { name: "Squads", exact: true })
 		.click();
 	await expect(page).toHaveURL(/\/signin$/, settled);
 	await expect(page).toHaveTitle("Sign in", settled);
+	// The read must carry the jar. A header override does not reach the server.
+	await expect
+		.poll(() => reads.filter((read) => read.hasSession && read.uat.length > 0).length, settled)
+		.toBeGreaterThan(0);
+	const delivered = reads.filter((read) => read.hasSession);
+	expect(delivered.length).toBeGreaterThan(0);
+	for (const read of delivered) {
+		expect(read.uat.length).toBeGreaterThan(0);
+		expect(read.uat.every((value) => value === "0")).toBe(true);
+	}
+	console.log(`serverFn client uat: ${delivered.flatMap((read) => read.uat).join(" ")}`);
 });
 
 test("Tab during a token refresh still reloads once", async ({ page, workspaceUser }) => {
@@ -158,34 +169,105 @@ async function failWorkspaceFrame(page: Page, times: number) {
 	});
 }
 
-async function sendSignedOutClient(page: Page) {
+interface DeliveredCookie {
+	readonly uat: readonly string[];
+	readonly hasSession: boolean;
+}
+
+// Chromium sends the cookie jar. route.continue cannot replace the Cookie header.
+async function sendSignedOutClient(page: Page): Promise<DeliveredCookie[]> {
+	await holdSignedOutJar(page);
+	await writeSignedOutJar(page);
+	const reads: DeliveredCookie[] = [];
+	await page.route(/\/_serverFn\//, async (route) => {
+		await writeSignedOutJar(page);
+		const pendingHeaders = route.request().allHeaders();
+		await route.continue();
+		if (route.request().method() !== "GET") return;
+		const headers = await pendingHeaders;
+		reads.push(readDeliveredCookie(headers.cookie ?? ""));
+	});
+	return reads;
+}
+
+async function writeSignedOutJar(page: Page) {
+	const origin = new URL(page.url()).origin;
 	const current = await page.context().cookies();
 	const targets = current.filter(
 		(cookie) => cookie.name === "__client_uat" || cookie.name.startsWith("__client_uat_"),
 	);
 	if (targets.length === 0) {
-		await page.context().addCookies([{ name: "__client_uat", value: "0", url: new URL(page.url()).origin }]);
-	} else {
-		await page.context().addCookies(targets.map((cookie) => ({ ...cookie, value: "0" })));
+		await page.context().addCookies([{ name: "__client_uat", value: "0", url: origin }]);
+		return;
 	}
-	await page.route(/\/_serverFn\//, async (route) => {
-		await continueWithSignedOutClient(route);
+	await page.context().addCookies(targets.map((cookie) => ({ ...cookie, value: "0" })));
+}
+
+// The signed-in Clerk client writes a fresh timestamp into the jar. Keep that value at 0.
+async function holdSignedOutJar(page: Page) {
+	await page.evaluate(() => {
+		const prototype = Document.prototype;
+		const descriptor = Object.getOwnPropertyDescriptor(prototype, "cookie");
+		if (!descriptor?.get || !descriptor.set) throw new Error("The cookie setter is missing.");
+		const read = descriptor.get;
+		const write = descriptor.set;
+		Object.defineProperty(prototype, "cookie", {
+			configurable: true,
+			enumerable: descriptor.enumerable ?? true,
+			get() {
+				return read.call(this);
+			},
+			set(value: string) {
+				write.call(this, forceSignedOutUat(String(value)));
+			},
+		});
+		const store = (window as Window & { cookieStore?: { set: (...args: unknown[]) => Promise<unknown> } })
+			.cookieStore;
+		if (store && typeof store.set === "function") {
+			const set = store.set.bind(store);
+			store.set = (...args: unknown[]) => set(...forceStoreArgs(args));
+		}
+
+		function forceSignedOutUat(value: string): string {
+			const parts = value.split(";");
+			const first = parts[0] ?? "";
+			const split = first.indexOf("=");
+			if (split <= 0) return value;
+			const name = first.slice(0, split).trim();
+			if (name !== "__client_uat" && !name.startsWith("__client_uat_")) return value;
+			parts[0] = `${name}=0`;
+			return parts.join(";");
+		}
+
+		function forceStoreArgs(args: unknown[]): unknown[] {
+			const first = args[0];
+			if (typeof first === "string" && (first === "__client_uat" || first.startsWith("__client_uat_"))) {
+				return [first, "0"];
+			}
+			if (typeof first === "object" && first !== null && "name" in first) {
+				const name = String((first as { name: unknown }).name);
+				if (name === "__client_uat" || name.startsWith("__client_uat_")) {
+					return [{ ...first, name, value: "0" }];
+				}
+			}
+			return args;
+		}
 	});
 }
 
-async function continueWithSignedOutClient(route: Route) {
-	const headers = { ...route.request().headers() };
-	const parts = (headers.cookie ?? "").split(";").map((part) => {
+function readDeliveredCookie(cookie: string): DeliveredCookie {
+	const uat: string[] = [];
+	let hasSession = false;
+	for (const part of cookie.split(";")) {
 		const trimmed = part.trim();
 		const split = trimmed.indexOf("=");
-		if (split <= 0) return part;
+		if (split <= 0) continue;
 		const name = trimmed.slice(0, split);
-		if (name === "__client_uat" || name.startsWith("__client_uat_")) return `${name}=0`;
-		return part;
-	});
-	if (!parts.some((part) => part.trim().startsWith("__client_uat"))) parts.push("__client_uat=0");
-	headers.cookie = parts.filter((part) => part.trim().length > 0).join("; ");
-	await route.continue({ headers });
+		const value = trimmed.slice(split + 1);
+		if (name === "__client_uat" || name.startsWith("__client_uat_")) uat.push(value);
+		if ((name === "__session" || name.startsWith("__session_")) && value.length > 0) hasSession = true;
+	}
+	return { uat, hasSession };
 }
 
 async function watchRefresh(page: Page, rejectFreshToken = false) {
