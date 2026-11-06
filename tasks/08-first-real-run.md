@@ -68,4 +68,5 @@ The orchestrator does the cloud setup, the secrets, the Neon branch, the snapsho
 - Never put a key on a machine, in a prompt, in a log, or in git.
 - Never write to the live database. Never deploy. Never create cloud resources. The orchestrator does that.
 - Production stays `ADAPTERS=test`. The nine done numbers stay the same.
-- Sign every commit (DCO). Push with a plain `git push`. Never force-push. Never push to main.
+- Sign every commit (DCO). Never force-push. Never push to main.
+- Push with a plain `git push` to the package branch. This is an exception to the `git push no-mistakes` rule in `AGENTS.md`. The no-mistakes pipeline jammed on 5 November 2026 and held PRs #32 and #28, so the orchestrator moved builders to direct pushes. CI runs the same checks (`make verify`, Fallow, DCO) on every push, and no PR merges before CI is green. The orchestrator restores the no-mistakes push when the pipeline is fixed.
