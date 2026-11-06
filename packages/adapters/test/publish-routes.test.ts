@@ -6,6 +6,7 @@ import type { BusNamespace, WorkerBindings } from "../src/cloudflare-bus/http.ts
 import { handleMachineRequest } from "../src/cloudflare-bus/http.ts";
 import type { PagesClient } from "../src/cloudflare-bus/pages-client.ts";
 import { PagesFailure } from "../src/cloudflare-bus/pages-client.ts";
+import type { PublishDirectory, PublishMandate } from "../src/cloudflare-bus/publish-directory.ts";
 import { signMachineToken } from "../src/cloudflare-bus/token.ts";
 import { Storage } from "./bus-storage.ts";
 
@@ -16,6 +17,29 @@ type Env = WorkerBindings & {
 	pages?: PagesClient;
 	CLOUDFLARE_PAGES_API_TOKEN?: string;
 };
+
+function allowWebsite(): PublishDirectory {
+	return {
+		async isWebsiteAgent() {
+			return true;
+		},
+		async storedPublish() {
+			return null;
+		},
+	};
+}
+
+function proofGrant(mandate: PublishMandate): PublishDirectory {
+	return {
+		async isWebsiteAgent() {
+			return true;
+		},
+		async storedPublish(accountId, taskId, slug) {
+			if (accountId !== "proof" || taskId !== "Task_1" || slug !== "proof") return null;
+			return { slug: "proof", mandate };
+		},
+	};
+}
 
 function createEnv(extra: Partial<Env> = {}, databaseUrl?: string): { env: Env; stores: Map<string, Storage> } {
 	const stores = new Map<string, Storage>();
@@ -44,7 +68,13 @@ function createEnv(extra: Partial<Env> = {}, databaseUrl?: string): { env: Env; 
 	};
 	return {
 		stores,
-		env: { ADAPTERS: "real", MACHINE_TOKEN_KEY: KEY, ACCOUNT_BUS: namespace, ...extra },
+		env: {
+			ADAPTERS: "real",
+			MACHINE_TOKEN_KEY: KEY,
+			ACCOUNT_BUS: namespace,
+			publishDirectory: allowWebsite(),
+			...extra,
+		},
 	};
 }
 
@@ -166,7 +196,7 @@ test("a preview round trip keeps the non-ASCII bytes", async () => {
 		const bytes = new Uint8Array(await page.arrayBuffer());
 		assert.deepEqual(bytes, new TextEncoder().encode(html));
 		const storage = stores.get("proof");
-		assert.equal(await storage?.get("preview:page1"), html);
+		assert.deepEqual(await storage?.get("preview:page1"), new TextEncoder().encode(html));
 		assert.equal(await storage?.get("seq"), undefined);
 		assert.equal(await storage?.get("account"), undefined);
 	} finally {
@@ -371,6 +401,7 @@ test("publish requires the account slug and a mandate that covers the page", asy
 			if (record.skill === "site.publish") mandate = record.mandate;
 		}
 		assert.ok(mandate);
+		const grant = proofGrant(mandate as PublishMandate);
 		const calls: { slug: string; html: string }[] = [];
 		const pages: PagesClient = {
 			async publish(slug, html) {
@@ -378,7 +409,7 @@ test("publish requires the account slug and a mandate that covers the page", asy
 				return `https://${slug}.10squads.com`;
 			},
 		};
-		const { env } = createEnv({ pages });
+		const { env } = createEnv({ pages, publishDirectory: grant });
 		const published = await post(
 			env,
 			"/machine/publish",
@@ -398,7 +429,8 @@ test("publish requires the account slug and a mandate that covers the page", asy
 			"site",
 		);
 		assert.equal(mismatch.status, 400);
-		const incomplete = await post(
+		assert.equal(calls.length, 1);
+		const ignored = await post(
 			env,
 			"/machine/publish",
 			{
@@ -407,12 +439,13 @@ test("publish requires the account slug and a mandate that covers the page", asy
 				taskId: "Task_1",
 				slug: "proof",
 				html: story.pageHtml,
-				mandate: { subject: "abc" },
+				mandate: { subject: "nope" },
 			},
 			"proof",
 			"site",
 		);
-		assert.equal(incomplete.status, 400);
+		assert.equal(ignored.status, 200);
+		assert.deepEqual(await ignored.json(), { liveUrl: "https://proof.10squads.com" });
 		const otherSlug = await post(
 			env,
 			"/machine/publish",
@@ -421,9 +454,10 @@ test("publish requires the account slug and a mandate that covers the page", asy
 			"site",
 		);
 		assert.equal(otherSlug.status, 400);
-		assert.equal(calls.length, 1);
+		assert.equal(calls.length, 2);
 
 		const { env: broken } = createEnv({
+			publishDirectory: grant,
 			pages: {
 				async publish() {
 					throw new PagesFailure(502, "The page was not uploaded.");
@@ -440,6 +474,7 @@ test("publish requires the account slug and a mandate that covers the page", asy
 		assert.equal(upstream.status, 502);
 		assert.equal(await upstream.text(), "The page was not uploaded.");
 		const { env: leaked } = createEnv({
+			publishDirectory: grant,
 			pages: {
 				async publish() {
 					throw new Error("token pages-token leaked");
@@ -455,7 +490,7 @@ test("publish requires the account slug and a mandate that covers the page", asy
 		);
 		assert.equal(hidden.status, 502);
 		assert.equal(await hidden.text(), "The page was not uploaded.");
-		const { env: unconfigured } = createEnv();
+		const { env: unconfigured } = createEnv({ publishDirectory: grant });
 		const missing = await post(
 			unconfigured,
 			"/machine/publish",

@@ -12,11 +12,11 @@ export async function servePreview(storage: BusStorage, request: Request): Promi
 	if (owner && owner !== accountId) return new Response("The message was rejected.", { status: 400 });
 	const key = `preview:${taskId}`;
 	if (request.method === "GET") {
-		const html = await storage.get<string>(key);
-		if (typeof html !== "string") return new Response("missing", { status: 404 });
-		return new Response(html, { headers: { "content-type": "text/html; charset=utf-8" } });
+		const stored = await storage.get<Uint8Array>(key);
+		if (!(stored instanceof Uint8Array)) return new Response("missing", { status: 404 });
+		return new Response(stored.slice(), { headers: { "content-type": "text/html; charset=utf-8" } });
 	}
 	if (request.method !== "PUT") return new Response("The message was rejected.", { status: 400 });
-	await storage.put(key, await request.text());
+	await storage.put(key, new Uint8Array(await request.arrayBuffer()));
 	return Response.json({ ok: true });
 }

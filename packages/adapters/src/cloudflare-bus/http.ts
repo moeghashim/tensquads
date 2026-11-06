@@ -9,6 +9,7 @@ import { rejectMachine } from "./machine-auth.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
 import { resolveMonitor } from "./monitors.ts";
 import type { PagesClient } from "./pages-client.ts";
+import type { PublishDirectory } from "./publish-directory.ts";
 import { handlePublishRoutes } from "./publish-routes.ts";
 import { type MachineTokenDelivery, machineTokenDelivery } from "./token.ts";
 
@@ -34,6 +35,7 @@ export interface WorkerBindings {
 	readonly OPENAI_API_KEY?: string;
 	readonly CLOUDFLARE_PAGES_API_TOKEN?: string;
 	readonly pages?: PagesClient;
+	readonly publishDirectory?: PublishDirectory;
 	// A test can name the accounts with old pending deliveries without a live database.
 	readonly staleDeliveryAccounts?: (beforeMs: number) => Promise<string[]>;
 }

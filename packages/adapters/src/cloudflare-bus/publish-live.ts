@@ -1,7 +1,9 @@
 import { approvalCovers, digestOf, readApproval, type Skill } from "@tensquads/agent-kit";
 
+const PUBLISH_SKILL = "website.publish";
+
 const publishSkill: Skill = {
-	id: "site.publish",
+	id: PUBLISH_SKILL,
 	gate: "Ask first",
 	subjectOf(payload) {
 		const html = payload.pageHtml;
@@ -12,15 +14,16 @@ const publishSkill: Skill = {
 	},
 };
 
-export function publishCovered(mandate: unknown, html: string): boolean {
+// The stored Mandate must name this skill and the digest of the exact HTML text.
+export function publishCovered(stored: unknown, html: string): boolean {
 	const approval = readApproval({
 		id: "publish",
 		from: "website",
 		to: "master",
 		kind: "Task",
-		skill: "site.publish",
+		skill: PUBLISH_SKILL,
 		text: "Publish the site.",
-		payload: { pageHtml: html, approval: { skill: "site.publish", mandate } },
+		payload: { pageHtml: html, approval: { skill: PUBLISH_SKILL, mandate: stored } },
 		writes: [],
 	});
 	const subjectOf = publishSkill.subjectOf;

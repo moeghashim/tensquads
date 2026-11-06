@@ -50,6 +50,7 @@ export function createPagesClient(options: PagesClientOptions): PagesClient {
 	const sleep = options.sleep ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
 	const deadlineMs = options.deadlineMs ?? DOMAIN_WAIT_MS;
 	const pollMs = options.pollMs ?? DOMAIN_POLL_MS;
+	let signal: AbortSignal = new AbortController().signal;
 
 	async function call(
 		auth: string,
@@ -62,8 +63,9 @@ export function createPagesClient(options: PagesClientOptions): PagesClient {
 		if (typeof body === "string") headers.set("content-type", "application/json");
 		let response: Response;
 		try {
-			response = await fetchImpl(url, { method, headers, body, redirect: "manual" });
-		} catch {
+			response = await fetchImpl(url, { method, headers, body, redirect: "manual", signal });
+		} catch (error) {
+			if (aborted(error)) throw new PagesFailure(502, "The Cloudflare request timed out.");
 			throw new PagesFailure(502, failure);
 		}
 		if (response.status >= 300 && response.status < 400) {
@@ -81,6 +83,7 @@ export function createPagesClient(options: PagesClientOptions): PagesClient {
 	return {
 		async publish(slug, html) {
 			if (token.length === 0) throw new PagesFailure(503, "The machine service is not configured.");
+			signal = deadlineMs > 0 ? AbortSignal.timeout(deadlineMs) : new AbortController().signal;
 			const project = `ts-${slug}`;
 			const projectUrl = `${API}/accounts/${accountId}/pages/projects/${project}`;
 			const fqdn = `${slug}.10squads.com`;
@@ -88,7 +91,7 @@ export function createPagesClient(options: PagesClientOptions): PagesClient {
 			await uploadPage(call, token, projectUrl, html);
 			const zone = await attachDomain(call, token, projectUrl, fqdn);
 			await ensureDns(call, token, zone, fqdn, `ts-${slug}.pages.dev`);
-			await waitForLive(call, fetchImpl, token, projectUrl, fqdn, now, sleep, deadlineMs, pollMs);
+			await waitForLive(call, fetchImpl, token, projectUrl, fqdn, now, sleep, deadlineMs, pollMs, signal);
 			return `https://${fqdn}`;
 		},
 	};
@@ -261,10 +264,11 @@ async function onePoll(
 	fqdn: string,
 	now: () => number,
 	deadline: number,
+	signal: AbortSignal,
 ): Promise<"ready" | "wait"> {
 	const status = await domainStatus(call, token, domainUrl);
 	if (status !== "active") return pastDeadline(now, deadline, "The custom domain did not become active.");
-	if (await liveOk(fetchImpl, `https://${fqdn}/`)) return "ready";
+	if (await liveOk(fetchImpl, `https://${fqdn}/`, signal)) return "ready";
 	return pastDeadline(now, deadline, "The published site did not return 200.");
 }
 
@@ -278,24 +282,30 @@ async function waitForLive(
 	sleep: (ms: number) => Promise<void>,
 	deadlineMs: number,
 	pollMs: number,
+	signal: AbortSignal,
 ): Promise<void> {
 	const deadline = now() + deadlineMs;
 	const domainUrl = `${projectUrl}/domains/${encodeURIComponent(fqdn)}`;
 	for (;;) {
-		const step = await onePoll(call, fetchImpl, token, domainUrl, fqdn, now, deadline);
+		const step = await onePoll(call, fetchImpl, token, domainUrl, fqdn, now, deadline, signal);
 		if (step === "ready") return;
 		await sleep(pollMs);
 	}
 }
 
-async function liveOk(fetchImpl: typeof fetch, url: string): Promise<boolean> {
+async function liveOk(fetchImpl: typeof fetch, url: string, signal: AbortSignal): Promise<boolean> {
 	try {
-		const response = await fetchImpl(url, { method: "GET", redirect: "manual" });
+		const response = await fetchImpl(url, { method: "GET", redirect: "manual", signal });
 		await response.body?.cancel();
 		return response.status === 200;
-	} catch {
+	} catch (error) {
+		if (aborted(error)) throw new PagesFailure(502, "The Cloudflare request timed out.");
 		return false;
 	}
+}
+
+function aborted(error: unknown): boolean {
+	return error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError");
 }
 
 type Call = (auth: string, url: string, method: string, failure: string, body?: string | FormData) => Promise<Reply>;
