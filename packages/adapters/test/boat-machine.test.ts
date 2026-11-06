@@ -42,6 +42,8 @@ test("uptime text uses one day, many days, and just started", () => {
 	);
 	assert.equal(imageFromTemplate("tensquads-market-researcher-0.1.0").imageId, "market-researcher");
 	assert.equal(imageFromTemplate("tensquads-market-researcher-0.1.0").version, "0.1.0");
+	assert.deepEqual(imageFromTemplate("tensquads-market-0-1-0"), { imageId: "market", version: "0.1.0" });
+	assert.deepEqual(imageFromTemplate("tensquads-website-0-1-0"), { imageId: "website", version: "0.1.0" });
 	for (const id of ["market-researcher-0.1.0", "other-market-researcher-0.1.0", "tensquads-", "tensquads-image-"]) {
 		assert.throws(() => imageFromTemplate(id), { message: "The template id is not valid." });
 	}
@@ -99,7 +101,7 @@ test("start is idempotent and maps the dashboard fields", async () => {
 		assert.equal(row.labels.account, "acct-1");
 		assert.equal(row.labels.agent, "orders");
 		assert.equal(row.name, "vps-orders-01");
-		assert.equal(await adapter.host(scope, "orders"), "vps-orders-01");
+		assert.equal(await adapter.host(scope, "orders"), "203.0.113.10");
 		assert.equal(await adapter.region(scope, "orders"), "EU");
 		assert.equal(await adapter.size(scope, "orders"), "2 vCPU · 4 GB");
 		assert.equal(await adapter.cpu(scope, "orders"), "20%");
@@ -344,6 +346,7 @@ test("a refused stop and expired data use their own port errors", async () => {
 				);
 			},
 		);
+		await adapter.stop(scope, "orders");
 		fake.nextError = { status: 409, code: "snapshot_data_expired", secret: "super-secret-value" };
 		await assert.rejects(
 			() => adapter.resume(scope, "orders"),

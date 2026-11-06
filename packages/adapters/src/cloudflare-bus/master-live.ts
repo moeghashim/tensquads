@@ -15,11 +15,10 @@ import type { BusObjectEnv } from "./account-bus.ts";
 import { BUSINESS_KEY, parseStoredRequest } from "./account-request.ts";
 import type { MasterPhase } from "./master-commit.ts";
 import { MASTER_PHASE } from "./master-retry.ts";
+import { requestModelBrief } from "./model-request.ts";
 import { recordMonitor } from "./monitors.ts";
 
 const PAGE_MS = 1_500;
-const MODEL_MS = 15_000;
-const MODEL_URL = "https://api.openai.com/v1/chat/completions";
 const MODEL_GAP = "The model is not configured.";
 const BROWSER_GAP = "The browser is not configured.";
 const VIEW_WIDTH = 390;
@@ -51,31 +50,13 @@ async function fetchDocument(url: string): Promise<{ status: number; body: strin
 	}
 }
 
-async function requestBrief(load: typeof fetch, key: string, model: string, gap: string): Promise<string> {
-	try {
-		const response = await load(MODEL_URL, {
-			method: "POST",
-			headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
-			body: JSON.stringify({
-				model,
-				messages: [{ role: "user", content: `Write a brief under 150 words. Name this gap: ${gap}` }],
-			}),
-			signal: AbortSignal.timeout(MODEL_MS),
-		});
-		if (!response.ok) return "";
-		const body = (await response.json()) as { choices?: readonly { message?: { content?: string } }[] };
-		return body.choices?.[0]?.message?.content?.trim() ?? "";
-	} catch {
-		return "";
-	}
-}
-
 function liveBrief(env: BusObjectEnv, report: BriefGap): Promise<string> {
 	const key = env.OPENAI_API_KEY;
 	const model = env.MASTER_MODEL;
-	// Moe sets MASTER_MODEL to the cheaper GPT-6 tier. This code has no model default.
+	const effort = env.MASTER_REASONING_EFFORT ?? "";
+	// The real Worker sets MASTER_MODEL and MASTER_REASONING_EFFORT. This code has no model default.
 	if (!key || !model) return Promise.reject(new Error(MODEL_GAP));
-	return requestBrief(env.fetchApi ?? fetch, key, model, report.gap).then((content) => {
+	return requestModelBrief(env.fetchApi ?? fetch, key, model, effort, report.gap).then((content) => {
 		if (!content) throw new Error(MODEL_GAP);
 		return content;
 	});
