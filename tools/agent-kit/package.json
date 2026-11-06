@@ -1,0 +1,7 @@
+{
+	"private": true,
+	"description": "Pinned agent kit. CI installs it when the deploy key is present. The Worker bundle does not import it.",
+	"dependencies": {
+		"@tensquads/agent-kit": "github:moeghashim/tensquads-agent-kit#059d4fad15236b53932280bf73a9828dce25328c"
+	}
+}

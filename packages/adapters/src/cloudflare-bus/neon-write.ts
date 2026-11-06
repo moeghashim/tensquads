@@ -3,7 +3,10 @@ import type { PublishedEvent } from "@tensquads/kernel";
 import { asc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { chooseAdapters } from "../adapter-choice.ts";
-import { busEvents, stateEntries } from "../neon/schema.ts";
+import { retryApprovalDeliveries } from "../neon/commands/approval-delivery.ts";
+import { askDetail, siteAgent } from "../neon/commands/master-ask.ts";
+import type { AppDatabase } from "../neon/postgres.ts";
+import { approvalDeliveries, approvals, busEvents, stateEntries } from "../neon/schema.ts";
 import { traceFor } from "../trace.ts";
 
 const directWrite = "A bus write in real mode must go through the Durable Object.";
@@ -123,44 +126,124 @@ function hidden(error: unknown, connectionString: string): Error {
 function database(connectionString: string) {
 	sockets();
 	const pool = new Pool({ connectionString, max: 1, connectionTimeoutMillis: 2_000 });
-	return { pool, db: drizzle(pool, { schema: { busEvents, stateEntries } }) };
+	return { pool, db: drizzle(pool, { schema: { busEvents, stateEntries, approvals, approvalDeliveries } }) };
 }
 
-export async function writePending(
+// No module-wide queue. One isolate can hold several account objects, and a
+// call for one account must not wait on another. Order inside one account
+// comes from the object queue in AccountBus. Each call opens its own pool.
+async function withDatabase<T>(
+	connectionString: string,
+	run: (db: ReturnType<typeof database>["db"]) => Promise<T>,
+): Promise<T> {
+	const { pool, db } = database(connectionString);
+	try {
+		return await run(db);
+	} finally {
+		await pool.end();
+	}
+}
+
+// The alarm drains pending approval deliveries from Neon. The shared retry
+// keeps each row's event id, so a repeat send is dropped at the receiver.
+// The count left tells the alarm to run again.
+export async function drainApprovalDeliveries(
+	connectionString: string,
+	accountId: string,
+	deliver: (event: PublishedEvent) => Promise<void>,
+	beforeMs?: number,
+): Promise<number> {
+	return withDatabase(connectionString, async (db) => {
+		try {
+			return await retryApprovalDeliveries(
+				db as unknown as AppDatabase,
+				accountId,
+				(_id, event) => deliver(event as PublishedEvent),
+				beforeMs,
+			);
+		} catch (error) {
+			throw hidden(error, connectionString);
+		}
+	});
+}
+
+// The cron sweep finds accounts whose pending rows are older than the grace time.
+export function readStaleDeliveryAccounts(connectionString: string, beforeMs: number): Promise<string[]> {
+	return withDatabase(connectionString, async (db) => {
+		try {
+			const rows = await db
+				.select({ accountId: approvalDeliveries.accountId, event: approvalDeliveries.event })
+				.from(approvalDeliveries);
+			const accounts = new Set<string>();
+			for (const row of rows) {
+				const parsed = Date.parse(row.event.time);
+				if ((Number.isFinite(parsed) ? parsed : 0) <= beforeMs) accounts.add(row.accountId);
+			}
+			return [...accounts].sort();
+		} catch (error) {
+			throw hidden(error, connectionString);
+		}
+	});
+}
+
+export function writePending(
 	connectionString: string,
 	accountId: string,
 	rows: readonly PendingBusRow[],
 ): Promise<void> {
-	const { pool, db } = database(connectionString);
-	try {
-		await db.transaction(async (txn) => {
-			for (const row of rows) {
-				await txn
-					.insert(busEvents)
-					.values({
-						accountId,
-						id: row.event.id,
-						timeText: row.event.time ?? "",
-						occurredAt: null,
-						fromAgent: row.event.from,
-						toAgent: row.event.to,
-						kind: row.event.kind,
-						skill: row.event.skill,
-						body: row.event.text,
-						payload: { ...row.event.payload },
-						writes: [...row.event.writes],
-						trace: row.event.trace ?? traceFor(row.event.id),
-						seq: row.seq,
-					})
-					.onConflictDoNothing();
-				await writeState(txn, accountId, row.seq, row.event.set);
-			}
-		});
-	} catch (error) {
-		throw hidden(error, connectionString);
-	} finally {
-		await pool.end();
-	}
+	return withDatabase(connectionString, async (db) => {
+		try {
+			await db.transaction(async (txn) => {
+				for (const row of rows) {
+					await txn
+						.insert(busEvents)
+						.values({
+							accountId,
+							id: row.event.id,
+							timeText: row.event.time ?? "",
+							occurredAt: null,
+							fromAgent: row.event.from,
+							toAgent: row.event.to,
+							kind: row.event.kind,
+							skill: row.event.skill,
+							body: row.event.text,
+							payload: { ...row.event.payload },
+							writes: [...row.event.writes],
+							trace: row.event.trace ?? traceFor(row.event.id),
+							seq: row.seq,
+						})
+						.onConflictDoNothing();
+					await writeState(txn, accountId, row.seq, row.event.set);
+					await projectAsk(txn, accountId, row.seq, row.event);
+				}
+			});
+		} catch (error) {
+			throw hidden(error, connectionString);
+		}
+	});
+}
+
+async function projectAsk(
+	db: Parameters<Parameters<ReturnType<typeof database>["db"]["transaction"]>[0]>[0],
+	accountId: string,
+	seq: number,
+	event: PublishedEvent,
+): Promise<void> {
+	const detail = askDetail(event);
+	if (detail === null) return;
+	await db
+		.insert(approvals)
+		.values({
+			accountId,
+			id: event.id,
+			agent: siteAgent,
+			title: event.text,
+			detail,
+			amount: "",
+			status: "Pending",
+			sortOrder: seq,
+		})
+		.onConflictDoNothing();
 }
 
 async function writeState(
@@ -186,49 +269,44 @@ export async function readBusEvents(connectionString: string, accountId: string)
 	return (await readBusHistory(connectionString, accountId)).map((row) => row.event);
 }
 
-export async function readBusHistory(connectionString: string, accountId: string): Promise<PendingBusRow[]> {
-	const { pool, db } = database(connectionString);
-	try {
-		const rows = await db
-			.select()
-			.from(busEvents)
-			.where(eq(busEvents.accountId, accountId))
-			.orderBy(asc(busEvents.seq));
-		return rows.map((row) => ({
-			seq: row.seq,
-			event: {
-				id: row.id,
-				from: row.fromAgent,
-				to: row.toAgent,
-				kind: row.kind,
-				skill: row.skill,
-				text: row.body,
-				payload: row.payload,
-				writes: row.writes,
-				time: row.timeText,
-				trace: row.trace,
-			},
-		}));
-	} catch (error) {
-		throw hidden(error, connectionString);
-	} finally {
-		await pool.end();
-	}
+export function readBusHistory(connectionString: string, accountId: string): Promise<PendingBusRow[]> {
+	return withDatabase(connectionString, async (db) => {
+		try {
+			const rows = await db
+				.select()
+				.from(busEvents)
+				.where(eq(busEvents.accountId, accountId))
+				.orderBy(asc(busEvents.seq));
+			return rows.map((row) => ({
+				seq: row.seq,
+				event: {
+					id: row.id,
+					from: row.fromAgent,
+					to: row.toAgent,
+					kind: row.kind,
+					skill: row.skill,
+					text: row.body,
+					payload: row.payload,
+					writes: row.writes,
+					time: row.timeText,
+					trace: row.trace,
+				},
+			}));
+		} catch (error) {
+			throw hidden(error, connectionString);
+		}
+	});
 }
 
-export async function readBusState(
-	connectionString: string,
-	accountId: string,
-): Promise<{ key: string; value: string }[]> {
-	const { pool, db } = database(connectionString);
-	try {
-		return await db
-			.select({ key: stateEntries.key, value: stateEntries.value })
-			.from(stateEntries)
-			.where(eq(stateEntries.accountId, accountId));
-	} catch (error) {
-		throw hidden(error, connectionString);
-	} finally {
-		await pool.end();
-	}
+export function readBusState(connectionString: string, accountId: string): Promise<{ key: string; value: string }[]> {
+	return withDatabase(connectionString, async (db) => {
+		try {
+			return await db
+				.select({ key: stateEntries.key, value: stateEntries.value })
+				.from(stateEntries)
+				.where(eq(stateEntries.accountId, accountId));
+		} catch (error) {
+			throw hidden(error, connectionString);
+		}
+	});
 }

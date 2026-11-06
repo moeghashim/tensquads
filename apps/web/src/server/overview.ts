@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { BusNamespace } from "@tensquads/adapters";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
 import type { AccountScope } from "@tensquads/domain";
 import type { Kernel } from "@tensquads/kernel";
@@ -42,6 +43,16 @@ export const decideMissionOverview = createServerFn({ method: "POST" })
 	.validator(validateDecision)
 	.handler(overviewDecision("decideMission"));
 
+async function accountNamespace(): Promise<BusNamespace | undefined> {
+	try {
+		const workers = await import("cloudflare:workers");
+		const env = (workers.env ?? {}) as { ACCOUNT_BUS?: BusNamespace };
+		return env.ACCOUNT_BUS;
+	} catch {
+		return undefined;
+	}
+}
+
 function overviewDecision(kind: "decide" | "decideMission") {
 	return async ({ data }: { data: DecisionBody }) => {
 		const startedAt = Date.now();
@@ -50,7 +61,7 @@ function overviewDecision(kind: "decide" | "decideMission") {
 			async (scope, db) => {
 				const { createRepositories } = await import("@tensquads/adapters");
 				const { Kernel } = await import("@tensquads/kernel");
-				const kernel = new Kernel(createRepositories(db));
+				const kernel = new Kernel(createRepositories(db, await accountNamespace()));
 				const deadline = startedAt + PENDING_TASK_WINDOW_MS;
 				return runOverviewDecision(kind, kernel, scope, data, deadline);
 			},

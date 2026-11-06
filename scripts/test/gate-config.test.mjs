@@ -281,8 +281,11 @@ test("the machine trial is a manual job and the bus trial stays off", () => {
 	assert.equal(busCleanup.if, "always()");
 	assert.equal(busCleanup.run, "node --experimental-strip-types scripts/bus-trial.mjs");
 	assertTrialSchedule(machine.if, bus.if);
-	for (const step of bus.steps) {
-		if (!step.env) continue;
+	const kitKey = bus.steps.find((step) => step.name === "Load the kit deploy key");
+	assert.equal(kitKey.env.KIT_DEPLOY_KEY, "$" + "{{ secrets.KIT_DEPLOY_KEY }}");
+	assert.equal(kitKey.env.CLOUDFLARE_API_TOKEN, undefined);
+	for (const name of ["Prove one real queue delivery", "Remove the trial bus"]) {
+		const step = bus.steps.find((candidate) => candidate.name === name);
 		assert.equal(step.env.CLOUDFLARE_API_TOKEN, "$" + "{{ secrets.CLOUDFLARE_API_TOKEN }}");
 		assert.equal(step.env.CLOUDFLARE_ACCOUNT_ID, "$" + "{{ vars.CLOUDFLARE_ACCOUNT_ID }}");
 		assert.equal(step.env.CLOUDFLARE_WORKERS_API_TOKEN, undefined);

@@ -3,11 +3,12 @@
 	"private": true,
 	"type": "module",
 	"exports": {
-		".": "./src/index.ts"
+		".": "./src/index.ts",
+		"./proof": "./src/proof.ts"
 	},
 	"scripts": {
-		"check": "tsc --noEmit",
-		"test": "node --experimental-strip-types --test test/*.test.ts"
+		"check": "tsc --noEmit && node ../../scripts/kit-optional.mjs check tsconfig.proof.json",
+		"test": "node ../../scripts/kit-optional.mjs test --skip proof.test.ts"
 	},
 	"dependencies": {
 		"@tensquads/adapters": "*",

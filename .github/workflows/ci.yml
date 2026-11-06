@@ -60,6 +60,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      # This job has no deploy key. The kit is not installed. The Worker bundle does not import it.
       - run: npm ci
       - run: npm run build:cloudflare
 
@@ -81,8 +82,36 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      - name: Load the kit deploy key
+        env:
+          KIT_DEPLOY_KEY: ${{ secrets.KIT_DEPLOY_KEY }}
+        run: |
+          if [ -z "$KIT_DEPLOY_KEY" ]; then
+            echo "KIT_DEPLOY_KEY is empty. The kit install will be skipped."
+            exit 0
+          fi
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KIT_DEPLOY_KEY" > ~/.ssh/kit
+          chmod 600 ~/.ssh/kit
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git config --global core.sshCommand "ssh -i ~/.ssh/kit -o IdentitiesOnly=yes"
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Install the agent kit
+        run: |
+          mkdir -p node_modules/@tensquads
+          if [ ! -f "$HOME/.ssh/kit" ]; then
+            echo "The kit deploy key is absent. Fallow will resolve a local module stub."
+            mkdir -p node_modules/@tensquads/agent-kit
+            printf '%s\n' '{"name":"@tensquads/agent-kit","private":true,"type":"module"}' > node_modules/@tensquads/agent-kit/package.json
+            printf '%s\n' 'export function digestOf() { return ""; }' > node_modules/@tensquads/agent-kit/index.js
+            exit 0
+          fi
+          npm ci --prefix tools/agent-kit
+          ln -sfn "$PWD/tools/agent-kit/node_modules/@tensquads/agent-kit" node_modules/@tensquads/agent-kit
 
       - name: Audit changed code
         uses: fallow-rs/fallow@d052786ef2baf78fa5b196f06dbccd6f0d26798e # v3.38.1
@@ -116,8 +145,33 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      - name: Load the kit deploy key
+        env:
+          KIT_DEPLOY_KEY: ${{ secrets.KIT_DEPLOY_KEY }}
+        run: |
+          if [ -z "$KIT_DEPLOY_KEY" ]; then
+            echo "KIT_DEPLOY_KEY is empty. The kit install will be skipped."
+            exit 0
+          fi
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KIT_DEPLOY_KEY" > ~/.ssh/kit
+          chmod 600 ~/.ssh/kit
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git config --global core.sshCommand "ssh -i ~/.ssh/kit -o IdentitiesOnly=yes"
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Install the agent kit
+        run: |
+          if [ ! -f "$HOME/.ssh/kit" ]; then
+            echo "The kit deploy key is absent. The kit install was skipped."
+            exit 0
+          fi
+          npm ci --prefix tools/agent-kit
+          mkdir -p node_modules/@tensquads
+          ln -sfn "$PWD/tools/agent-kit/node_modules/@tensquads/agent-kit" node_modules/@tensquads/agent-kit
 
       # mise-action saves a cache only when install is true, and that path adds
       # --locked. This lock has no Java URL, so the tools install with
@@ -189,8 +243,33 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      - name: Load the kit deploy key
+        env:
+          KIT_DEPLOY_KEY: ${{ secrets.KIT_DEPLOY_KEY }}
+        run: |
+          if [ -z "$KIT_DEPLOY_KEY" ]; then
+            echo "KIT_DEPLOY_KEY is empty. The kit install will be skipped."
+            exit 0
+          fi
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KIT_DEPLOY_KEY" > ~/.ssh/kit
+          chmod 600 ~/.ssh/kit
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git config --global core.sshCommand "ssh -i ~/.ssh/kit -o IdentitiesOnly=yes"
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Install the agent kit
+        run: |
+          if [ ! -f "$HOME/.ssh/kit" ]; then
+            echo "The kit deploy key is absent. The kit install was skipped."
+            exit 0
+          fi
+          npm ci --prefix tools/agent-kit
+          mkdir -p node_modules/@tensquads
+          ln -sfn "$PWD/tools/agent-kit/node_modules/@tensquads/agent-kit" node_modules/@tensquads/agent-kit
 
       - name: Prove one real machine
         env:
@@ -221,8 +300,33 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      - name: Load the kit deploy key
+        env:
+          KIT_DEPLOY_KEY: ${{ secrets.KIT_DEPLOY_KEY }}
+        run: |
+          if [ -z "$KIT_DEPLOY_KEY" ]; then
+            echo "KIT_DEPLOY_KEY is empty. The kit install will be skipped."
+            exit 0
+          fi
+          umask 077
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KIT_DEPLOY_KEY" > ~/.ssh/kit
+          chmod 600 ~/.ssh/kit
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git config --global core.sshCommand "ssh -i ~/.ssh/kit -o IdentitiesOnly=yes"
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Install the agent kit
+        run: |
+          if [ ! -f "$HOME/.ssh/kit" ]; then
+            echo "The kit deploy key is absent. The kit install was skipped."
+            exit 0
+          fi
+          npm ci --prefix tools/agent-kit
+          mkdir -p node_modules/@tensquads
+          ln -sfn "$PWD/tools/agent-kit/node_modules/@tensquads/agent-kit" node_modules/@tensquads/agent-kit
 
       - name: Prove one real queue delivery
         env:

@@ -21,7 +21,7 @@ Where the plan and this file disagree on the skill list or on GPT-6 Astra, this 
 
 ## What this repository builds
 
-- The master skills: `brief.write`, `task.route`, `approval.ask`, and `check.run`. The model is a cheaper GPT-6 tier. All four gates are Auto.
+- The master skills: `brief.write`, `task.route`, `approval.ask`, and `check.run`. The model id is the Worker variable `MASTER_MODEL`. Moe sets it to the cheaper GPT-6 tier and sets the Worker secret `OPENAI_API_KEY`. The code has no model default. All four gates are Auto.
 - Every check below. An agent repository holds no check that decides a pass.
 - The Durable Object side of the heartbeat. Three missed heartbeats resume the machine (decision 17). The path is `POST /machine/heartbeat` (open question 6, answered).
 - The `change.detected` Worker route. A test webhook becomes one bus event to the master.
@@ -72,6 +72,7 @@ Brief:
 Page:
 
 - The preview URL returns 200.
+- The preview body equals `renderPage` of the stored request and the Result `choice`.
 - The page has the business name.
 - Every menu item or grocery item from the user's list has a name and a price.
 - A missing price reads `[PRICE]`.
@@ -79,7 +80,7 @@ Page:
 - The cuisine from step 1 appears on a restaurant page.
 - No link is broken.
 - Keyboard and contrast checks pass.
-- `npx impeccable detect` reports no P0 or P1 finding.
+- The kit CI runs the impeccable audit on the kit templates. The master does not repeat that audit and does not store a P0 or P1 count.
 - At 390 px there is no horizontal scroll.
 
 Published site:
@@ -144,3 +145,19 @@ Do not guess. Stop the step that needs the answer. The other steps may proceed.
    - Agent images: two images, version `0.1.0`, status Beta. The layout does not change.
 5. **How a machine gets the signed token.** Answered by Moe on 5 November 2026: the Worker signs the token with the Worker secret `MACHINE_TOKEN_KEY`, for one account and one agent. The boat.dev key proxy holds the token. The machine reads it from the proxy at call time. It is not an environment variable, and the image does not contain it. Adjusted by Moe on 5 November 2026: boat.dev delivers the token through a custom API. The machine sees only a placeholder environment variable (`TENSQUADS_MACHINE_TOKEN`) and its base URL (`TENSQUADS_MACHINE_TOKEN_BASE_URL`). It sends the placeholder to that base URL, and boat.dev substitutes the real token on the way out. The real token never reaches the machine.
 6. **The heartbeat route.** Answered by Moe on 5 November 2026: `POST /machine/heartbeat`, with the same signed token, once a minute. The body names the account and `TENSQUADS_AGENT_ID`. The main repository owns the route and the Durable Object records the time. After three missed minutes the master resumes the machine.
+
+## Moe's answers
+
+Orchestrator decisions on 5 November 2026, under Moe's delegation.
+
+1. The proof account stays in `proofOfConceptWorkspace()`. It stays out of `workspaceFromDesign()`. The nine done numbers stay as they are. This is accepted as built.
+2. The master imports `@tensquads/agent-kit` at commit `059d4fad15236b53932280bf73a9828dce25328c` (tag `v0.2.1`). It does not copy the kit types. The pin is in `tools/agent-kit/package.json`. That package is not a workspace and not a Worker dependency. Jobs that typecheck the master write `KIT_DEPLOY_KEY` to `~/.ssh/kit` with mode 600, run `ssh-keyscan github.com`, and set `core.sshCommand` before `npm ci`. They do not echo the key. An empty key skips the kit install. The Cloudflare build does not install the kit, and the Worker bundle does not import it. Dependabot has no secret, so its `npm ci` uses the root lockfile, which has no kit URL. The master and proof folders declare the kit in their own `package.json`. Those folders are not workspaces, so `npm ci` does not clone the kit. The Fallow job writes a local module stub when the key is absent, so the import resolves. Master typecheck and tests that import the kit skip when the package is absent. Node does not strip TypeScript inside `node_modules`, so the test runner registers the same kit type-strip hook the agent repositories use.
+3. Heartbeat recovery calls `resume` only. A template restart is a later task.
+4. The dashboard does not say "Restarting". `docs/PLAN.md` stays unchanged.
+5. The boat AI proxy stays off until the live run.
+6. Each agent machine has one boat credential profile, named `tensquads-<accountId>-<agentId>`. That profile holds `TENSQUADS_MACHINE_TOKEN`. A machine token lasts 30 days. `rotateMachineToken` signs a new token and sets that value when 7 days or less remain, or when the profile has no token. The test uses a fake boat API. It does not call boat.dev. `CONTEXT_DEV` and the OpenAI credential stay on the profile `tensquads-agents`.
+7. The page check parses the Result `choice` with the kit `parsePageChoice`. The preview bytes must equal the kit `renderPage(task, choice)`. The comparison uses the raw response bytes, not `Response.text()`. `PageResult.choice` is that choice. A link `href` is decoded before the fetch. The browser check stays for 390 px, the keyboard, and contrast. A leading cream-palette note still loads as the page document. The pin is kit `v0.2.1` at `059d4fad15236b53932280bf73a9828dce25328c`.
+8. Real mode loads the business request from the account key `state:business`. A user Approval or Declined goes to the master through the account Durable Object. The event skill is the skill the master asked about. The Worker passes the Durable Object handle in. Modules that Node and the seed compile do not import `cloudflare:workers`. The kit CI runs the impeccable template audit: 28 pages, 0 P0, 0 P1. This repository does not run that audit. The master does not store a P0 or P1 count.
+9. The master stores its phase and its output events in the same storage transaction that marks the input done. The pending-master marker is stored in the same transaction that accepts the input. A failed output write leaves the input open. Restart and redelivery emit the pending outputs.
+10. The model id is the Worker variable `MASTER_MODEL`. The code has no default. Moe sets `MASTER_MODEL` to the cheaper GPT-6 tier and sets the Worker secret `OPENAI_API_KEY`.
+11. The wrangler environment `real` declares its own vars, `ACCOUNT_BUS` Durable Object binding and migration, queues `tensquads-real-bus` and `tensquads-real-bus-dlq`, and the `BROWSER` binding. `MASTER_MODEL` is a var on that environment and stays empty until Moe sets the cheaper GPT-6 tier. Production deploy stays `wrangler deploy` with no `--env`. Production keeps `ADAPTERS=test`, the production queues, and has no browser binding.

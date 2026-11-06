@@ -26,5 +26,34 @@
 	},
 	"observability": {
 		"enabled": true
+	},
+	// The real environment is not production. Deploy stays `wrangler deploy` with no --env.
+	// Vars, durable objects, queues, and the browser binding are not inherited, so this
+	// environment declares its own. Its queues are tensquads-real-bus and tensquads-real-bus-dlq.
+	// MASTER_MODEL stays empty until Moe sets the cheaper GPT-6 tier.
+	// OPENAI_API_KEY is a Worker secret and stays out of this file.
+	// Browser Rendering is bound only here.
+	"env": {
+		"real": {
+			"vars": {
+				"ADAPTERS": "real",
+				"BUS_DEAD_LETTER": "tensquads-real-bus-dlq",
+				"CLERK_PLATFORM_ORG_ID": "org_3Lazia1HC1hdgfY0mAttb1qTWYm",
+				"MASTER_MODEL": ""
+			},
+			"durable_objects": {
+				"bindings": [{ "name": "ACCOUNT_BUS", "class_name": "AccountBus" }]
+			},
+			"migrations": [{ "tag": "v1-account-bus-real", "new_sqlite_classes": ["AccountBus"] }],
+			"queues": {
+				"producers": [{ "binding": "BUS_QUEUE", "queue": "tensquads-real-bus" }],
+				"consumers": [
+					{ "queue": "tensquads-real-bus", "max_retries": 3, "dead_letter_queue": "tensquads-real-bus-dlq" },
+					{ "queue": "tensquads-real-bus-dlq" }
+				]
+			},
+			"browser": { "binding": "BROWSER" },
+			"triggers": { "crons": ["* * * * *"] }
+		}
 	}
 }
