@@ -84,6 +84,8 @@ const BAD: readonly { readonly name: string; readonly words: (gap: string) => st
 	{ name: "a number word", words: (gap) => `${gap} Lobster costs twelve.` },
 	{ name: "a currency sign", words: (gap) => `${gap} Lobster costs $ more.` },
 	{ name: "an offer word", words: (gap) => `${gap} Enjoy free delivery.` },
+	{ name: "a plural currency word", words: (gap) => `${gap} Lobster costs pounds more.` },
+	{ name: "a number with a plural currency", words: (gap) => `${gap} Lobster costs five pounds.` },
 	{ name: "a percent", words: (gap) => `${gap} Ask for 20% off.` },
 	{ name: "BOGO", words: (gap) => `${gap} The board says BOGO.` },
 ];
@@ -161,7 +163,7 @@ test("a 150-word brief is refused", async (t) => {
 test("a valid brief is approved, and the approval text is the brief, Menu:, then the stored menu", async (t) => {
 	const { renderItemSection } = await import("@tensquads/domain/master");
 	const story = await (await import("@tensquads/domain/master")).proofStory();
-	const good = prose(story, "Proof Kitchen serves Levantine food.");
+	const good = prose(story, "Proof Kitchen is one of the few places serving Levantine food.");
 	const live = await session(t, story, "valid-brief", [good]);
 	assert.equal((await post(live.target, live.accountId, reportEvent("valid-report", story.report))).status, 200);
 	const body = live.fake.bodies[0];

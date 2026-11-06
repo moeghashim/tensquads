@@ -159,7 +159,6 @@ export function shownBrief(prose: string, items: readonly { readonly name: strin
 
 const NUMBER_WORDS = [
 	"zero",
-	"one",
 	"two",
 	"three",
 	"four",
@@ -189,14 +188,13 @@ const NUMBER_WORDS = [
 	"hundred",
 	"thousand",
 	"dozen",
-	"half",
 ] as const;
 const CURRENCY_SIGNS = ["$", "€", "£"] as const;
 const CURRENCY_WORDS = ["dollar", "dirham", "AED", "SAR", "riyal", "euro", "pound"] as const;
-const OFFER_WORDS = ["free", "off", "deal", "offer", "discount", "BOGO", "buy one"] as const;
+const OFFER_WORDS = ["free", "deal", "offer", "discount", "BOGO", "buy one"] as const;
 
-function hasWord(text: string, word: string): boolean {
-	return new RegExp(`\\b${word}\\b`, "i").test(text);
+function hasWord(text: string, word: string, plural = ""): boolean {
+	return new RegExp(`\\b${word}${plural}\\b`, "i").test(text);
 }
 
 function wordCount(text: string): number {
@@ -212,7 +210,10 @@ export function checkBrief(prose: string, report: ResearchReport): CheckOutcome 
 	if (!prose.includes(report.gap)) evidence.push("The brief does not name the gap.");
 	if (/\p{N}/u.test(prose)) evidence.push("The brief has a number.");
 	if (NUMBER_WORDS.some((word) => hasWord(prose, word))) evidence.push("The brief has a number word.");
-	if (CURRENCY_SIGNS.some((sign) => prose.includes(sign)) || CURRENCY_WORDS.some((word) => hasWord(prose, word))) {
+	if (
+		CURRENCY_SIGNS.some((sign) => prose.includes(sign)) ||
+		CURRENCY_WORDS.some((word) => hasWord(prose, word, "s?"))
+	) {
 		evidence.push("The brief names a currency.");
 	}
 	if (prose.includes("%") || OFFER_WORDS.some((word) => hasWord(prose, word))) {
