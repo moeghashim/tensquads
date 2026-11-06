@@ -819,6 +819,16 @@ function workerdFixtures(realPath) {
 	];
 }
 
+function assertDeployedParties(directory) {
+	const text = jsFiles(directory)
+		.map((path) => readFileSync(path, "utf8"))
+		.join("\n");
+	assert.equal(text.includes("https://tensquads.moe-678.workers.dev"), true);
+	assert.equal(text.includes("http://localhost:3000"), true);
+	assert.equal(text.includes("TS_E2E_PORT"), false);
+	assert.equal(/http:\/\/localhost:(?!3000)\d+/.test(text), false);
+}
+
 function assertWorkerdRejection(fixture, result) {
 	const error = result.error ?? "";
 	assert.equal(
@@ -835,6 +845,7 @@ function assertWorkerdRejection(fixture, result) {
 test("workerd boots the built worker and rejects import-time builtin routes", async () => {
 	const compat = readWorkerCompat();
 	buildProductionWorker();
+	assertDeployedParties(serverDirectory);
 	const built = JSON.parse(readFileSync(join(serverDirectory, "wrangler.json"), "utf8"));
 	assert.equal(built.compatibility_date, compat.compatibilityDate);
 	assert.deepEqual(built.compatibility_flags, compat.compatibilityFlags);
