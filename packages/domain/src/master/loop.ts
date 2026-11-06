@@ -1,6 +1,7 @@
 import { digestOf, type Mandate, type ResearchReport } from "@tensquads/agent-kit";
 
 import type { BusEvent, BusKind } from "../bus/types.ts";
+import { researchFields } from "../conversation/business-request.ts";
 import { checkBrief, checkPage, checkPublished, checkResearch, readReport } from "./checks.ts";
 import type { RenderedPage } from "./render-page.ts";
 import { type BusinessRequest, mandateFor, type PageAudit, type PageReader } from "./types.ts";
@@ -19,7 +20,7 @@ export interface MasterPorts {
 	readonly recordMonitor?: (monitorId: string) => void | Promise<void>;
 }
 
-type Phase = "research" | "brief" | "building" | "publish" | "publishing" | "done" | "escalated";
+type Phase = "research" | "brief" | "building" | "publish" | "publishing" | "watch" | "watching" | "done" | "escalated";
 
 export interface MasterSnapshot {
 	readonly phase: Phase;
@@ -29,6 +30,7 @@ export interface MasterSnapshot {
 	readonly previewUrl?: string;
 	readonly researchFails: number;
 	readonly pageFails: number;
+	readonly watchFails?: number;
 	readonly seq: number;
 }
 
@@ -40,14 +42,36 @@ interface State {
 	previewUrl?: string;
 	researchFails: number;
 	pageFails: number;
+	watchFails: number;
+}
+
+interface Emitted {
+	readonly from: string;
+	readonly to: string;
+	readonly kind: BusKind;
+	readonly skill: string;
+	readonly text: string;
+	readonly payload: Readonly<Record<string, unknown>>;
+	readonly writes?: readonly string[];
+	readonly set?: Readonly<Record<string, unknown>>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+// The researcher hashes this same sentence. Keep the words in this order.
+function watchQuery(request: BusinessRequest): string {
+	const query =
+		request.businessType === "restaurant"
+			? `${request.businessName} ${request.cuisine ? `${request.cuisine} ` : ""}restaurant competitors menu prices`
+			: `${request.businessName} grocery competitors prices delivery hours`;
+	const compact = query.replace(/ {2,}/g, " ").trim();
+	return compact.length <= 500 ? compact : compact.slice(0, 500);
+}
+
 export function createMaster(request: BusinessRequest, ports: MasterPorts) {
-	const state: State = { phase: "research", researchFails: 0, pageFails: 0 };
+	const state: State = { phase: "research", researchFails: 0, pageFails: 0, watchFails: 0 };
 	let seq = 0;
 
 	function nextId(): string {
@@ -55,17 +79,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		return `m-${String(seq).padStart(2, "0")}`;
 	}
 
-	function make(
-		id: string,
-		fields: {
-			readonly from: string;
-			readonly to: string;
-			readonly kind: BusKind;
-			readonly skill: string;
-			readonly text: string;
-			readonly payload: Readonly<Record<string, unknown>>;
-		},
-	): BusEvent {
+	function make(id: string, fields: Emitted): BusEvent {
 		return {
 			id,
 			time: `12:${String(seq).padStart(2, "0")}`,
@@ -75,12 +89,13 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			skill: fields.skill,
 			text: fields.text,
 			payload: fields.payload,
-			writes: [],
+			writes: fields.writes ?? [],
+			...(fields.set ? { set: fields.set } : {}),
 			trace: `tr_${id}`,
 		};
 	}
 
-	function emit(fields: Parameters<typeof make>[1]): BusEvent {
+	function emit(fields: Emitted): BusEvent {
 		return make(nextId(), fields);
 	}
 
@@ -124,21 +139,41 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		return [sendBack("website", evidence)];
 	}
 
+	function failWatch(evidence: readonly string[]): BusEvent[] {
+		if (state.watchFails >= 1) {
+			state.phase = "escalated";
+			return [escalation("The check failed twice.", evidence)];
+		}
+		state.watchFails += 1;
+		return [sendBack("market", evidence)];
+	}
+
 	function start(): BusEvent {
+		const task = researchFields(request);
 		return emit({
 			from: "master",
 			to: "market",
 			kind: "Task",
 			skill: "task.route",
-			text: "Research this business.",
-			payload: {
-				businessName: request.businessName,
-				businessType: request.businessType,
-				items: request.items,
-				...(request.cuisine ? { cuisine: request.cuisine } : {}),
-				...(request.sections ? { sections: request.sections } : {}),
-			},
+			text: task.text,
+			payload: task.payload,
+			writes: task.writes,
+			set: task.set,
 		});
+	}
+
+	function websiteFields(brief: string, report: ResearchReport): Record<string, unknown> {
+		return {
+			businessName: request.businessName,
+			slug: ports.accountSlug ?? "",
+			businessType: request.businessType,
+			brief: { text: brief, gap: report.gap },
+			report,
+			gapEvidence: report.gapEvidence,
+			items: request.items,
+			...(request.cuisine ? { cuisine: request.cuisine } : {}),
+			...(request.sections ? { sections: request.sections } : {}),
+		};
 	}
 
 	async function onResearch(event: BusEvent): Promise<BusEvent[]> {
@@ -197,14 +232,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			skill: "task.route",
 			text: `Build the page. ${report.gap} ${report.gapEvidence.sourceUrl}`,
 			payload: {
-				businessName: request.businessName,
-				businessType: request.businessType,
-				brief: { text: brief, gap: report.gap },
-				report,
-				gapEvidence: report.gapEvidence,
-				items: request.items,
-				...(request.cuisine ? { cuisine: request.cuisine } : {}),
-				...(request.sections ? { sections: request.sections } : {}),
+				...websiteFields(brief, report),
 				approval: { skill: "site.build", mandate },
 			},
 		});
@@ -225,6 +253,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			items: request.items,
 			brief: state.brief ?? "",
 			report: state.report,
+			slug: ports.accountSlug ?? "",
 			choice: isRecord(event.payload) ? event.payload.choice : undefined,
 			readPage: ports.readPage,
 			audit: ports.audit,
@@ -247,7 +276,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 	}
 
 	async function approvePublish(): Promise<BusEvent[]> {
-		if (state.phase !== "publish" || !state.previewHtml) return [];
+		if (state.phase !== "publish" || !state.previewHtml || !state.report || !state.brief) return [];
 		const approvalId = nextId();
 		const mandate = mandateFor({
 			approvalId,
@@ -259,6 +288,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		});
 		const pageHtml = state.previewHtml;
 		const previewUrl = state.previewUrl ?? "";
+		const approvalBody = { skill: "site.publish", mandate };
 		const approval = make(approvalId, {
 			from: "master",
 			to: "website",
@@ -266,7 +296,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			skill: "approval.ask",
 			text: "The user said yes.",
 			payload: {
-				approval: { skill: "site.publish", mandate },
+				approval: approvalBody,
 				pageHtml,
 				previewUrl,
 			},
@@ -278,7 +308,10 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			skill: "task.route",
 			text: "Publish the page.",
 			payload: {
-				approval: { skill: "site.publish", mandate },
+				...websiteFields(state.brief, state.report),
+				approval: approvalBody,
+				mandate,
+				html: pageHtml,
 				pageHtml,
 				previewUrl,
 			},
@@ -299,6 +332,64 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		if (publishedUrl.length === 0) return failPage(["The published URL did not return 200."]);
 		const result = await checkPublished(state.previewHtml, publishedUrl, ports.readPage, ports.accountSlug ?? "");
 		if (!result.pass) return failPage(result.evidence);
+		state.phase = "watch";
+		return [
+			emit({
+				from: "master",
+				to: "user",
+				kind: "Approval",
+				skill: "competition.watch",
+				text: "Watch the competitors?",
+				payload: {},
+			}),
+		];
+	}
+
+	async function approveWatch(): Promise<BusEvent[]> {
+		if (state.phase !== "watch") return [];
+		const approvalId = nextId();
+		const mandate = mandateFor({
+			approvalId,
+			ruleId: "poc-watch",
+			ruleWhen: "The user asked to watch competitors.",
+			ruleAction: "competition.watch",
+			subject: await digestOf(watchQuery(request)),
+			at: ports.mandateAt,
+		});
+		const approvalBody = { skill: "competition.watch", mandate };
+		const fields = {
+			businessName: request.businessName,
+			businessType: request.businessType,
+			items: request.items,
+			...(request.cuisine ? { cuisine: request.cuisine } : {}),
+			approval: approvalBody,
+		};
+		const approval = make(approvalId, {
+			from: "master",
+			to: "market",
+			kind: "Approval",
+			skill: "approval.ask",
+			text: "The user said yes.",
+			payload: { approval: approvalBody },
+		});
+		const task = emit({
+			from: "master",
+			to: "market",
+			kind: "Task",
+			skill: "task.route",
+			text: "Watch the competitors.",
+			payload: fields,
+		});
+		state.phase = "watching";
+		return [approval, task];
+	}
+
+	async function onWatch(event: BusEvent): Promise<BusEvent[]> {
+		if (state.phase !== "watching") return [];
+		const monitorId =
+			isRecord(event.payload) && typeof event.payload.monitorId === "string" ? event.payload.monitorId.trim() : "";
+		if (monitorId.length === 0) return failWatch(["The monitor was not recorded."]);
+		await createMonitor(monitorId);
 		state.phase = "done";
 		return [];
 	}
@@ -310,6 +401,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 	async function onUserYes(event: BusEvent): Promise<BusEvent[]> {
 		if (event.skill === "brief.write") return approveBrief();
 		if (event.skill === "approval.ask") return approvePublish();
+		if (event.skill === "competition.watch") return approveWatch();
 		return [];
 	}
 
@@ -320,6 +412,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		if (event.skill === "report.write" && state.phase === "research") return onResearch(event);
 		if (event.skill === "site.preview" && state.phase === "building") return onPreview(event);
 		if (event.skill === "site.publish" && state.phase === "publishing") return onPublish(event);
+		if (event.skill === "competition.watch" && state.phase === "watching") return onWatch(event);
 		return [];
 	}
 
@@ -332,6 +425,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			previewUrl: state.previewUrl,
 			researchFails: state.researchFails,
 			pageFails: state.pageFails,
+			watchFails: state.watchFails,
 			seq,
 		};
 	}
@@ -344,6 +438,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		state.previewUrl = saved.previewUrl;
 		state.researchFails = saved.researchFails;
 		state.pageFails = saved.pageFails;
+		state.watchFails = saved.watchFails ?? 0;
 		seq = saved.seq;
 	}
 

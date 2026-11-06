@@ -8,6 +8,7 @@ export {
 	handleMachineRequest,
 	sweepDeliveryRetries,
 } from "./cloudflare-bus/index.ts";
+export { masterStartEvent } from "./cloudflare-bus/master-start.ts";
 export { createAccountMemoryBus, createMemoryBus, type MemoryBus, type ScriptedBusEvent } from "./memory-bus.ts";
 export { appendEvents, type EventDraft } from "./neon/commands/bus.ts";
 export { nextEvent } from "./neon/commands/traffic.ts";
@@ -19,6 +20,7 @@ export { saveWorkspace, writeAccount } from "./neon/save.ts";
 export { schema } from "./neon/schema.ts";
 export { type AccountSnapshot, squadId, type WorkspaceSnapshot } from "./neon/snapshot.ts";
 export { createPlaceholderServices } from "./placeholder-services.ts";
+export { provisionAgents, readLiveMachine } from "./provision-agents.ts";
 export { createAccountTestMachine, createTestMachine, type MachineRecord } from "./test-machine.ts";
 export { traceFor } from "./trace.ts";
 export { trafficScript } from "./traffic-script.ts";

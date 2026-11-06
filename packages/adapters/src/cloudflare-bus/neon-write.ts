@@ -1,12 +1,21 @@
 import { neonConfig, Pool } from "@neondatabase/serverless";
 import type { PublishedEvent } from "@tensquads/kernel";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { chooseAdapters } from "../adapter-choice.ts";
 import { retryApprovalDeliveries } from "../neon/commands/approval-delivery.ts";
 import { askDetail, siteAgent } from "../neon/commands/master-ask.ts";
 import type { AppDatabase } from "../neon/postgres.ts";
-import { approvalDeliveries, approvals, busEvents, stateEntries } from "../neon/schema.ts";
+import {
+	approvalDeliveries,
+	approvals,
+	busEvents,
+	messages,
+	schema,
+	skills,
+	stateEntries,
+	threads,
+} from "../neon/schema.ts";
 import { traceFor } from "../trace.ts";
 
 const directWrite = "A bus write in real mode must go through the Durable Object.";
@@ -126,7 +135,7 @@ function hidden(error: unknown, connectionString: string): Error {
 function database(connectionString: string) {
 	sockets();
 	const pool = new Pool({ connectionString, max: 1, connectionTimeoutMillis: 2_000 });
-	return { pool, db: drizzle(pool, { schema: { busEvents, stateEntries, approvals, approvalDeliveries } }) };
+	return { pool, db: drizzle(pool, { schema }) };
 }
 
 // No module-wide queue. One isolate can hold several account objects, and a
@@ -195,7 +204,7 @@ export function writePending(
 		try {
 			await db.transaction(async (txn) => {
 				for (const row of rows) {
-					await txn
+					const inserted = await txn
 						.insert(busEvents)
 						.values({
 							accountId,
@@ -212,15 +221,62 @@ export function writePending(
 							trace: row.event.trace ?? traceFor(row.event.id),
 							seq: row.seq,
 						})
-						.onConflictDoNothing();
+						.onConflictDoNothing()
+						.returning({ id: busEvents.id });
 					await writeState(txn, accountId, row.seq, row.event.set);
 					await projectAsk(txn, accountId, row.seq, row.event);
+					if (inserted.length === 0) continue;
+					await countSkillRun(txn, accountId, row.event);
+					await insertPreview(txn, accountId, row.seq, row.event);
 				}
 			});
 		} catch (error) {
 			throw hidden(error, connectionString);
 		}
 	});
+}
+
+const DOCK_THREAD = "dock";
+
+function previewUrlOf(event: PublishedEvent): string {
+	if (event.kind !== "Result" || event.skill !== "site.preview") return "";
+	const url = event.payload.previewUrl;
+	return typeof url === "string" ? url.trim() : "";
+}
+
+async function countSkillRun(
+	db: Parameters<Parameters<ReturnType<typeof database>["db"]["transaction"]>[0]>[0],
+	accountId: string,
+	event: PublishedEvent,
+): Promise<void> {
+	if (event.kind !== "Result" || event.from === "master" || event.from === "user" || event.skill.length === 0) return;
+	await db
+		.update(skills)
+		.set({ runs: sql`${skills.runs} + 1` })
+		.where(and(eq(skills.accountId, accountId), eq(skills.agentId, event.from), eq(skills.id, event.skill)));
+}
+
+async function insertPreview(
+	db: Parameters<Parameters<ReturnType<typeof database>["db"]["transaction"]>[0]>[0],
+	accountId: string,
+	seq: number,
+	event: PublishedEvent,
+): Promise<void> {
+	const url = previewUrlOf(event);
+	if (url.length === 0) return;
+	await db.insert(threads).values({ accountId, id: DOCK_THREAD, sortOrder: 0 }).onConflictDoNothing();
+	await db
+		.insert(messages)
+		.values({
+			accountId,
+			threadId: DOCK_THREAD,
+			id: `preview-${event.id}`,
+			fromRole: "master",
+			agent: null,
+			body: `The site preview is ${url}`,
+			sortOrder: seq,
+		})
+		.onConflictDoNothing();
 }
 
 async function projectAsk(

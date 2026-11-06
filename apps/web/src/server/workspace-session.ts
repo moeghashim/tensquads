@@ -1,10 +1,12 @@
 import { redirect } from "@tanstack/react-router";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
+import type { LiveStart } from "@tensquads/kernel";
 
 import { databaseUrl } from "./database-url.ts";
 import { requireClerkSession } from "./session.ts";
 import { readSpecialAccount } from "./special-session.ts";
 import { isSuperAdmin } from "./super-admin.ts";
+import { workerEnv } from "./worker-env.ts";
 
 const unfinished = "The workspace write did not finish.";
 
@@ -72,10 +74,30 @@ export async function sendWorkspace(method: "beginSend" | "finishSend", data: st
 	const startedAt = Date.now();
 	return requireWorkspace(
 		async (scope, db) => {
-			const { createRepositories } = await import("@tensquads/adapters");
+			const { chooseAdapters, createRepositories } = await import("@tensquads/adapters");
 			const { Kernel } = await import("@tensquads/kernel");
-			return new Kernel(createRepositories(db))[method](scope, data);
+			const liveStart =
+				chooseAdapters(await workerEnv("ADAPTERS")) === "real" ? await businessLiveStart() : undefined;
+			return new Kernel(createRepositories(db), liveStart ? { liveStart } : {})[method](scope, data);
 		},
 		{ accountId, startedAt },
 	);
+}
+
+// Real mode publishes the research task. Test mode keeps the five design routes.
+async function businessLiveStart(): Promise<LiveStart> {
+	const { createCloudflareBus, masterStartEvent } = await import("@tensquads/adapters");
+	const workers = await import("cloudflare:workers");
+	const env = (workers.env ?? {}) as {
+		ACCOUNT_BUS?: Parameters<typeof createCloudflareBus>[0];
+		BUS_QUEUE?: Parameters<typeof createCloudflareBus>[2];
+	} & Parameters<typeof masterStartEvent>[0];
+	if (!env.ACCOUNT_BUS) throw new Error("The bus is not configured.");
+	const bus = createCloudflareBus(env.ACCOUNT_BUS, [], env.BUS_QUEUE);
+	return async (scope, request) => {
+		if (scope.mode !== "account") return;
+		const store = await bus.store(scope);
+		const event = await masterStartEvent(env, scope.accountId, request, store, Date.now());
+		await bus.publish(scope, event);
+	};
 }

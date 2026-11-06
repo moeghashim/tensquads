@@ -204,6 +204,7 @@ function websiteTask(story: Story, report = story.report, businessType = story.r
 		report,
 		gapEvidence: report.gapEvidence,
 		items: story.request.items,
+		slug: "proof",
 		...(businessType === "restaurant" && story.request.cuisine ? { cuisine: story.request.cuisine } : {}),
 	});
 }
@@ -216,6 +217,7 @@ function pageFields(story: Story) {
 		items: story.request.items,
 		brief: story.brief,
 		report: story.report,
+		slug: "proof",
 		choice: story.choice,
 	};
 }
@@ -279,6 +281,7 @@ test("the page check requires the kit bytes and resolves relative links", async 
 			report: story.report,
 			gapEvidence: story.report.gapEvidence,
 			items: saladsFirst,
+			slug: "proof",
 			cuisine: story.request.cuisine,
 		}),
 		story.choice,

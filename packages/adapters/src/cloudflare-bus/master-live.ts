@@ -15,6 +15,7 @@ import type { BusObjectEnv } from "./account-bus.ts";
 import { BUSINESS_KEY, parseStoredRequest } from "./account-request.ts";
 import type { MasterPhase } from "./master-commit.ts";
 import { MASTER_PHASE } from "./master-retry.ts";
+import { MACHINE_EXP_KEY, masterStartEvent } from "./master-start.ts";
 import { recordMonitor } from "./monitors.ts";
 
 const PAGE_MS = 1_500;
@@ -141,12 +142,27 @@ function browserOf(env: BusObjectEnv): (html: string) => Promise<RenderedPage> {
 
 interface RequestStore {
 	get<T>(key: string): Promise<T | undefined>;
+	put?(key: string, value: string): Promise<void>;
+}
+
+const MACHINE_EXP_STATE = `state:${MACHINE_EXP_KEY}`;
+
+async function storedMachineExp(storage: RequestStore): Promise<Record<string, unknown>> {
+	const raw = await storage.get<string>(MACHINE_EXP_STATE);
+	if (typeof raw !== "string") return {};
+	try {
+		return { [MACHINE_EXP_KEY]: JSON.parse(raw) as unknown };
+	} catch {
+		return {};
+	}
 }
 
 interface OpenedMaster {
 	accept(event: unknown): Promise<PublishedEvent[]>;
 	snapshot(): MasterPhase;
 	restore(phase: MasterPhase): void;
+	createMonitor(monitorId: string): Promise<void>;
+	start(): Promise<PublishedEvent>;
 }
 
 // fetchDocument is the page fetcher and the link checker. The key stays in the request header.
@@ -171,5 +187,14 @@ export async function openMaster(
 		accept: (event) => master.accept(event as never) as Promise<PublishedEvent[]>,
 		snapshot: () => master.snapshot(),
 		restore: (phase) => master.restore(phase as MasterSnapshot),
+		createMonitor: (monitorId: string) => master.createMonitor(monitorId),
+		async start() {
+			const request = (await storedRequest(storage)) ?? emptyRequest();
+			const stored = await storedMachineExp(storage);
+			const event = await masterStartEvent(env, accountId, request, stored, Date.now());
+			const map = event.set?.[MACHINE_EXP_KEY];
+			if (storage.put) await storage.put(MACHINE_EXP_STATE, JSON.stringify(map ?? {}));
+			return event;
+		},
 	};
 }

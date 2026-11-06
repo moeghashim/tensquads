@@ -29,6 +29,8 @@ export type {
 	ImageStatus,
 	Severity,
 } from "./catalog/types.ts";
+export type { BusinessChat } from "./conversation/business-request.ts";
+export { parseBusinessChat, researchFields, researchStart } from "./conversation/business-request.ts";
 export type { ConversationEvent, MessageSent } from "./conversation/events.ts";
 export {
 	type AppendedChatEvent,

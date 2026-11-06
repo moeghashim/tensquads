@@ -21,6 +21,7 @@ export interface PageCheckInput {
 	readonly items: readonly ListedItem[];
 	readonly brief: string;
 	readonly report: ResearchReport;
+	readonly slug: string;
 	readonly choice: unknown;
 	readonly readPage: PageReader;
 	readonly audit: (html: string) => PageAudit | Promise<PageAudit>;
@@ -216,6 +217,7 @@ function renderedBytes(input: PageCheckInput): string | null {
 			report: input.report,
 			gapEvidence: input.report.gapEvidence,
 			items: input.items,
+			slug: input.slug,
 			...(input.cuisine ? { cuisine: input.cuisine } : {}),
 		});
 		return renderPage(task, choice);

@@ -15,7 +15,7 @@ import type {
 } from "@tensquads/domain";
 import { Context } from "cordis";
 import { type BusCommands, bus } from "./plugins/bus.ts";
-import type { ConversationCommands } from "./plugins/conversation.ts";
+import type { ConversationCommands, LiveStart } from "./plugins/conversation.ts";
 import { conversation } from "./plugins/conversation.ts";
 import { plugins } from "./plugins/index.ts";
 import type { PlatformCommands } from "./plugins/platform.ts";
@@ -42,7 +42,7 @@ export class Kernel {
 	readonly decider: Decider;
 	private readonly ready: Promise<unknown>;
 
-	constructor(repositories: Repositories | null = null) {
+	constructor(repositories: Repositories | null = null, options: { readonly liveStart?: LiveStart } = {}) {
 		this.repositories = repositories;
 		this.context = new Context();
 		const fibers = [];
@@ -55,6 +55,7 @@ export class Kernel {
 							return this.repositories;
 						},
 						bus: () => this.context.get("workspaceBus") as BusCommands,
+						liveStart: options.liveStart,
 					}),
 				);
 			} else if (plugin === bus) {

@@ -38,6 +38,7 @@ async function checked(html: string) {
 		items: story.request.items,
 		brief: story.brief,
 		report: story.report,
+		slug: "proof",
 		choice: story.choice,
 		readPage: async (url) => pages[url] ?? { status: 404, body: "" },
 		audit: () => story.audit,

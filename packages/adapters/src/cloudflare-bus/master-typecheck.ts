@@ -77,10 +77,12 @@ export function createMaster(
 	accept: (event: unknown) => Promise<unknown[]>;
 	snapshot: () => MasterSnapshot;
 	restore: (saved: MasterSnapshot) => void;
+	createMonitor: (monitorId: string) => Promise<void>;
 } {
 	return {
 		accept: () => Promise.resolve([]),
 		snapshot: () => ({ phase: "research", researchFails: 0, pageFails: 0, seq: 0 }),
 		restore: () => undefined,
+		createMonitor: () => Promise.resolve(),
 	};
 }

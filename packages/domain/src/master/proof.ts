@@ -51,6 +51,7 @@ function proofPage(report: ResearchReport, brief: string): string {
 			report,
 			gapEvidence: report.gapEvidence,
 			items: proofRequest.items,
+			slug: "proof",
 			...(proofRequest.cuisine ? { cuisine: proofRequest.cuisine } : {}),
 		}),
 		proofChoice,
