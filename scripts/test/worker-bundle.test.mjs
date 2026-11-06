@@ -622,13 +622,27 @@ function readWorkerCompat() {
 	};
 }
 
+const productionOrigin = "https://tensquads.moe-678.workers.dev";
+const realOrigin = "https://tensquads-real.moe-678.workers.dev";
+
 function buildProductionWorker() {
 	if (productionBuilt) return;
+	const env = { ...process.env };
+	delete env.CLOUDFLARE_ENV;
 	execFileSync("npm", ["run", "build", "-w", "@tensquads/web"], {
 		cwd: repoRoot,
+		env,
 		stdio: ["ignore", "ignore", "pipe"],
 	});
 	productionBuilt = true;
+}
+
+function buildRealWorker(outDir) {
+	execFileSync("npx", ["vite", "build", "--outDir", outDir], {
+		cwd: join(repoRoot, "apps/web"),
+		env: { ...process.env, CLOUDFLARE_ENV: "real" },
+		stdio: ["ignore", "ignore", "pipe"],
+	});
 }
 
 function jsFiles(root) {
@@ -819,15 +833,28 @@ function workerdFixtures(realPath) {
 	];
 }
 
-function assertDeployedParties(directory) {
+function assertDeployedParties(directory, origin, other) {
 	const text = jsFiles(directory)
 		.map((path) => readFileSync(path, "utf8"))
 		.join("\n");
-	assert.equal(text.includes("https://tensquads.moe-678.workers.dev"), true);
-	assert.equal(text.includes("http://localhost:3000"), true);
+	assert.equal(text.includes(origin), true);
+	assert.equal(text.includes(other), false);
+	// A browser azp for the dev server is http://localhost plus a port.
+	// Library code still contains the host name and http://localhost with no port.
+	assert.equal(/https?:\/\/localhost:\d+/.test(text), false);
 	assert.equal(text.includes("TS_E2E_PORT"), false);
-	assert.equal(/http:\/\/localhost:(?!3000)\d+/.test(text), false);
+	assert.match(text, new RegExp(`\\["${origin.replaceAll(".", "\\.")}"\\]`));
 }
+
+test("a real build authorizes only the real worker origin", () => {
+	const outDir = mkdtempSync(join(tmpdir(), "tensquads-real-bundle-"));
+	try {
+		buildRealWorker(outDir);
+		assertDeployedParties(join(outDir, "server"), realOrigin, productionOrigin);
+	} finally {
+		rmSync(outDir, { recursive: true, force: true });
+	}
+});
 
 function assertWorkerdRejection(fixture, result) {
 	const error = result.error ?? "";
@@ -845,7 +872,7 @@ function assertWorkerdRejection(fixture, result) {
 test("workerd boots the built worker and rejects import-time builtin routes", async () => {
 	const compat = readWorkerCompat();
 	buildProductionWorker();
-	assertDeployedParties(serverDirectory);
+	assertDeployedParties(serverDirectory, productionOrigin, realOrigin);
 	const built = JSON.parse(readFileSync(join(serverDirectory, "wrangler.json"), "utf8"));
 	assert.equal(built.compatibility_date, compat.compatibilityDate);
 	assert.deepEqual(built.compatibility_flags, compat.compatibilityFlags);
