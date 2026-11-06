@@ -88,6 +88,12 @@ const BAD: readonly { readonly name: string; readonly words: (gap: string) => st
 	{ name: "a number with a plural currency", words: (gap) => `${gap} Lobster costs five pounds.` },
 	{ name: "a percent", words: (gap) => `${gap} Ask for 20% off.` },
 	{ name: "BOGO", words: (gap) => `${gap} The board says BOGO.` },
+	{ name: "a currency code", words: (gap) => `${gap} Meals cost one USD.` },
+	{ name: "a mixed-case currency code", words: (gap) => `${gap} Meals cost one uSd.` },
+	{ name: "a yen sign", words: (gap) => `${gap} Meals cost ¥ one.` },
+	{ name: "a plural number word", words: (gap) => `${gap} Dozens of dishes wait.` },
+	{ name: "a plural offer word", words: (gap) => `${gap} Ask about special offers.` },
+	{ name: "an offer phrase with extra spaces", words: (gap) => `${gap} Buy  one, get one.` },
 ];
 
 for (const [index, bad] of BAD.entries()) {

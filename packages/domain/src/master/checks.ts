@@ -189,12 +189,36 @@ const NUMBER_WORDS = [
 	"thousand",
 	"dozen",
 ] as const;
-const CURRENCY_SIGNS = ["$", "€", "£"] as const;
-const CURRENCY_WORDS = ["dollar", "dirham", "AED", "SAR", "riyal", "euro", "pound"] as const;
+// \p{Sc} covers every Unicode currency sign: $, €, £, ¥, ₹, ¢ and the rest.
+const CURRENCY_SIGN = /\p{Sc}/u;
+const CURRENCY_WORDS = [
+	"dollar",
+	"dirham",
+	"riyal",
+	"euro",
+	"pound",
+	"yen",
+	"cent",
+	"dinar",
+	"rupee",
+	"AED",
+	"SAR",
+	"QAR",
+	"KWD",
+	"BHD",
+	"OMR",
+	"USD",
+	"EUR",
+	"GBP",
+	"JPY",
+] as const;
 const OFFER_WORDS = ["free", "deal", "offer", "discount", "BOGO", "buy one"] as const;
 
-function hasWord(text: string, word: string, plural = ""): boolean {
-	return new RegExp(`\\b${word}${plural}\\b`, "i").test(text);
+// Case-insensitive, on word boundaries, with an optional plural "s".
+// A space inside a phrase matches any run of white space.
+function hasWord(text: string, word: string): boolean {
+	const pattern = word.split(" ").join("\\s+");
+	return new RegExp(`\\b${pattern}s?\\b`, "iu").test(text);
 }
 
 function wordCount(text: string): number {
@@ -210,10 +234,7 @@ export function checkBrief(prose: string, report: ResearchReport): CheckOutcome 
 	if (!prose.includes(report.gap)) evidence.push("The brief does not name the gap.");
 	if (/\p{N}/u.test(prose)) evidence.push("The brief has a number.");
 	if (NUMBER_WORDS.some((word) => hasWord(prose, word))) evidence.push("The brief has a number word.");
-	if (
-		CURRENCY_SIGNS.some((sign) => prose.includes(sign)) ||
-		CURRENCY_WORDS.some((word) => hasWord(prose, word, "s?"))
-	) {
+	if (CURRENCY_SIGN.test(prose) || CURRENCY_WORDS.some((word) => hasWord(prose, word))) {
 		evidence.push("The brief names a currency.");
 	}
 	if (prose.includes("%") || OFFER_WORDS.some((word) => hasWord(prose, word))) {
