@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { dirname, extname, join } from "node:path";
@@ -123,13 +124,27 @@ writeFileSync(join(out, "characters.html"), page("tensquads squadmates", charact
 
 // The homepage design is a full document. Copy it as-is when this ref has it.
 // An older ref still builds the rest of the review site.
+// Task 09: the approved "approval moment" design takes /review/home when the ref has it.
+// The card prints the file hash, so an approval always names the bytes on the page.
 let homeCard = "";
-try {
-	const home = git("show", `${ref}:docs/designs/home/home.html`);
+const homeDir = (() => {
+	for (const dir of ["docs/designs/home-v2", "docs/designs/home"]) {
+		try {
+			git("cat-file", "-e", `${ref}:${dir}/home.html`);
+			return dir;
+		} catch {}
+	}
+	return null;
+})();
+if (homeDir) {
+	const home = execFileSync("git", ["show", `${ref}:${homeDir}/home.html`], { cwd: root, maxBuffer: 1 << 26 });
 	writeFileSync(join(out, "home.html"), home);
-	homeCard = `<h2>Homepage</h2><a class="card" href="/review/home">Homepage<span>Screen 1, for approval. The squad at work, led by Petra.</span></a>`;
-} catch {
-	homeCard = "";
+	try {
+		// The design shows the live Overview. Read the image as bytes, not text.
+		writeFileSync(join(out, "home-dashboard.jpg"), execFileSync("git", ["show", `${ref}:${homeDir}/home-dashboard.jpg`], { cwd: root, maxBuffer: 1 << 26 }));
+	} catch {}
+	const hash = createHash("sha256").update(home).digest("hex");
+	homeCard = `<h2>Homepage</h2><a class="card" href="/review/home">Homepage<span>Screen 1 from ${homeDir}, at commit ${sha}. SHA-256 ${hash.slice(0, 12)}.</span></a>`;
 }
 writeFileSync(
 	join(out, "index.html"),
