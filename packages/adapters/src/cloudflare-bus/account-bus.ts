@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+
 import { planNextEvent, type TrafficCursor } from "@tensquads/domain";
 import type { PublishedEvent } from "@tensquads/kernel";
 import { chooseAdapters } from "../adapter-choice.ts";
@@ -159,7 +161,8 @@ async function planAdvance(
 	storage: BusStorage,
 	accountId: string,
 	script: readonly ScriptedBusEvent[],
-	deadlineAt?: number,
+	deadlineAt: number | undefined,
+	nowMs: number,
 ): Promise<AdvanceResult> {
 	if (expired(deadlineAt)) return { accepted: false, expired: true };
 	const storedAccount = await storage.get<string>("account");
@@ -174,7 +177,7 @@ async function planAdvance(
 	if (expired(deadlineAt)) return { accepted: false, expired: true };
 	const plan = planNextEvent(known, script, current, traceFor);
 	if (!plan) return { accepted: false };
-	const result = await commitDurable(storage, accountId, plan.event, deadlineAt, plan.cursor);
+	const result = await commitDurable(storage, accountId, plan.event, deadlineAt, plan.cursor, false, nowMs);
 	if (result.expired) return { accepted: false, expired: true };
 	if (result.seen || !result.event) return { accepted: false };
 	return { accepted: true, event: result.event };
@@ -234,6 +237,7 @@ async function commitDurable(
 	deadlineAt?: number,
 	cursor?: TrafficCursor,
 	markMaster = false,
+	nowMs: number = Date.now(),
 ): Promise<AcceptResult> {
 	if (expired(deadlineAt)) return { seen: false, seq: 0, expired: true };
 	let result: AcceptResult;
@@ -249,7 +253,7 @@ async function commitDurable(
 		if (error instanceof DeadlinePassed) return { seen: false, seq: 0, expired: true };
 		throw error;
 	}
-	if (!result.seen && result.event) await setDeadline(storage, BUS_ALARM, Date.now() + ALARM_MS);
+	if (!result.seen && result.event) await setDeadline(storage, BUS_ALARM, nowMs + ALARM_MS);
 	return result;
 }
 
@@ -258,67 +262,79 @@ export class AccountBus {
 	private readonly env: BusObjectEnv;
 	private accepting: Promise<void> = Promise.resolve();
 	private flushing: Promise<void> = Promise.resolve();
+	private readonly inside = new AsyncLocalStorage<true>();
 
 	constructor(ctx: BusState, env: BusObjectEnv) {
 		this.ctx = ctx;
 		this.env = env;
 	}
 
+	private nowMs(): number {
+		return this.env.now?.() ?? Date.now();
+	}
+
 	// The runtime calls fetch. No module in this repo calls it.
 	async fetch(request: Request): Promise<Response> {
 		const handler = this.routes().get(new URL(request.url).pathname);
 		if (!handler) return new Response("missing", { status: 404 });
-		return handler(request);
+		return this.serialize(() => handler(request));
 	}
 
 	// The runtime calls alarm. No module in this repo calls it.
-	async alarm(): Promise<void> {
-		const now = this.env.now?.() ?? Date.now();
+	alarm(): Promise<void> {
+		return this.serialize(() => this.alarmWork());
+	}
+
+	private async alarmWork(): Promise<void> {
 		const storage = this.ctx.storage;
+		const clock = () => this.nowMs();
 		const steps = [
 			() =>
 				runDue(
 					storage,
 					BUS_ALARM,
-					now,
-					() => this.onBusAlarm(now),
-					() => backoffDeadline(storage, BUS_ALARM, now, ALARM_MS),
+					clock(),
+					() => this.onBusAlarm(),
+					() => backoffDeadline(storage, BUS_ALARM, clock, ALARM_MS),
 				),
 			() =>
 				runDue(
 					storage,
 					HEARTBEAT_ALARM,
-					now,
+					clock(),
 					() => sweepHeartbeats(storage, this.env),
-					() => backoffDeadline(storage, HEARTBEAT_ALARM, now, RETRY_MS),
+					() => backoffDeadline(storage, HEARTBEAT_ALARM, clock, RETRY_MS),
 				),
 			() =>
 				runDue(
 					storage,
 					DELIVERY_ALARM,
-					now,
+					clock(),
 					() => this.drainDeliveries(),
 					() => armDeliveryAlarm(storage, this.env),
 				),
 		];
+		let failure: unknown;
 		try {
 			for (const step of steps) {
 				try {
 					await step();
-				} catch {
-					// This subsystem's own backoff failed. The others still run.
+				} catch (error) {
+					// A failed recovery keeps its deadline. The error is reported after the rearm.
+					failure ??= error;
 				}
 			}
 		} finally {
 			await rearm(storage);
 		}
+		if (failure) throw failure;
 	}
 
-	private async onBusAlarm(now: number): Promise<void> {
+	private async onBusAlarm(): Promise<void> {
 		const token = await deadlineToken(this.ctx.storage, BUS_ALARM);
 		await this.flush();
 		await retryOpenMaster(this.ctx.storage, this.env, (accountId, event) => this.runMaster(accountId, event));
-		await syncBusDeadline(this.ctx.storage, now, ALARM_MS, token);
+		await syncBusDeadline(this.ctx.storage, this.nowMs(), ALARM_MS, token);
 	}
 
 	private drainDeliveries(onlyOld = false): Promise<void> {
@@ -361,12 +377,14 @@ export class AccountBus {
 	private async advance(body: unknown): Promise<Response> {
 		const record = advanceBody(body);
 		if (!record) return new Response("The message was rejected.", { status: 400 });
-		const result = await this.serialize<AdvanceResult>(async () => {
-			if (expired(record.deadlineAt)) return { accepted: false, expired: true };
+		let result: AdvanceResult;
+		if (expired(record.deadlineAt)) result = { accepted: false, expired: true };
+		else {
 			await this.initialize(record.accountId);
-			if (expired(record.deadlineAt)) return { accepted: false, expired: true };
-			return planAdvance(this.ctx.storage, record.accountId, record.script, record.deadlineAt);
-		});
+			result = expired(record.deadlineAt)
+				? { accepted: false, expired: true }
+				: await planAdvance(this.ctx.storage, record.accountId, record.script, record.deadlineAt, this.nowMs());
+		}
 		if (result.expired) return Response.json({ accepted: false, expired: true });
 		if (result.event) this.push(result.event);
 		await this.flush();
@@ -378,7 +396,7 @@ export class AccountBus {
 	private async acceptStored(accountId: string, event: PublishedEvent): Promise<AcceptResult> {
 		await this.initialize(accountId);
 		const mark = masterEvent(event) && chooseAdapters(this.env.ADAPTERS) === "real";
-		const stored = await commitDurable(this.ctx.storage, accountId, event, undefined, undefined, mark);
+		const stored = await commitDurable(this.ctx.storage, accountId, event, undefined, undefined, mark, this.nowMs());
 		if (stored.event) this.push(stored.event);
 		const owner = await this.ctx.storage.get<string>("account");
 		if (owner === accountId) {
@@ -390,7 +408,7 @@ export class AccountBus {
 	private async accept(body: unknown): Promise<Response> {
 		if (!isBusRecord(body)) return new Response("The message was rejected.", { status: 400 });
 		const record = body;
-		const result = await this.serialize(() => this.acceptStored(record.accountId, record.event));
+		const result = await this.acceptStored(record.accountId, record.event);
 		await this.flush();
 		return Response.json({ seen: result.seen, seq: result.seq });
 	}
@@ -411,7 +429,7 @@ export class AccountBus {
 			throw error;
 		}
 		for (const next of step.produced) this.push(next);
-		const now = this.env.now?.() ?? Date.now();
+		const now = this.nowMs();
 		await syncBusDeadline(this.ctx.storage, now, ALARM_MS, token);
 	}
 
@@ -437,15 +455,17 @@ export class AccountBus {
 		return Response.json({ ok: true });
 	}
 
-	private withAccount<T>(accountId: string, operation: () => Promise<T>): Promise<T> {
-		return this.serialize(async () => {
-			await this.initialize(accountId);
-			return operation();
-		});
+	private async withAccount<T>(accountId: string, operation: () => Promise<T>): Promise<T> {
+		await this.initialize(accountId);
+		return operation();
 	}
 
+	// One queue for the whole object. Every fetch handler and the alarm runs
+	// through it, so no two of them overlap across external I/O. A call made
+	// from inside the queue runs at once instead of waiting on itself.
 	private serialize<T>(operation: () => Promise<T>): Promise<T> {
-		const next = this.accepting.then(operation);
+		if (this.inside.getStore()) return operation();
+		const next = this.accepting.then(() => this.inside.run(true, operation));
 		this.accepting = next.then(
 			() => undefined,
 			() => undefined,
@@ -491,17 +511,16 @@ export class AccountBus {
 		const token = await deadlineToken(storage, BUS_ALARM);
 		const pending = (await storage.get<PendingBusRow[]>("pending")) ?? [];
 		const accountId = await storage.get<string>("account");
-		const now = this.env.now?.() ?? Date.now();
 		if (pending.length === 0 || !accountId || (!this.env.DATABASE_URL && !this.env.writeBusPending)) {
-			if (pending.length > 0) await setDeadline(storage, BUS_ALARM, now + ALARM_MS);
-			else await syncBusDeadline(storage, now, ALARM_MS, token);
+			if (pending.length > 0) await setDeadline(storage, BUS_ALARM, this.nowMs() + ALARM_MS);
+			else await syncBusDeadline(storage, this.nowMs(), ALARM_MS, token);
 			return;
 		}
 		try {
 			if (this.env.writeBusPending) await this.env.writeBusPending(accountId, pending);
 			else await writePending(this.env.DATABASE_URL as string, accountId, pending);
 		} catch {
-			await setDeadline(storage, BUS_ALARM, now + ALARM_MS);
+			await setDeadline(storage, BUS_ALARM, this.nowMs() + ALARM_MS);
 			return;
 		}
 		const written = new Set(pending.map((row) => row.event.id));
@@ -512,7 +531,7 @@ export class AccountBus {
 				current.filter((row) => !written.has(row.event.id)),
 			);
 		});
-		await syncBusDeadline(storage, now, ALARM_MS, token);
+		await syncBusDeadline(storage, this.nowMs(), ALARM_MS, token);
 	}
 
 	private async events(request: Request): Promise<Response> {

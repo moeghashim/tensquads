@@ -126,7 +126,14 @@ export async function sweepHeartbeats(storage: HeartbeatStorage, env: HeartbeatE
 		const due = await oneDue(map, agentId, now, resume, accountId);
 		if (due !== null) nextDue = earlier(nextDue, due);
 	}
-	await storage.put(HEARTBEATS, map);
+	// A beat can land during the resume I/O. Read again and keep newer beats.
+	const latest = (await storage.get<Record<string, HeartbeatBeat>>(HEARTBEATS)) ?? {};
+	for (const agentId of agentIds) {
+		const ours = map[agentId];
+		const theirs = latest[agentId];
+		if (ours && (!theirs || theirs.at <= ours.at)) latest[agentId] = ours;
+	}
+	await storage.put(HEARTBEATS, latest);
 	if (nextDue === null) {
 		await clearDeadline(storage, HEARTBEAT_ALARM, token);
 		return;

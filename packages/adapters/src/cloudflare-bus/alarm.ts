@@ -74,8 +74,8 @@ export async function setDeadline(storage: AlarmStorage, key: string, due: numbe
 export async function clearDeadline(storage: AlarmStorage, key: string, token?: number): Promise<boolean> {
 	const cleared = storage.transactionSync(() => {
 		if (token !== undefined && (finite(storage.kv.get<number>(tokenKey(key))) ?? 0) !== token) return false;
+		// Only the deadline goes. The counter stays, so tokens never repeat.
 		storage.kv.delete(key);
-		storage.kv.delete(tokenKey(key));
 		return true;
 	});
 	if (cleared) await rearm(storage);
@@ -101,8 +101,14 @@ export async function runDue(
 	}
 }
 
-// A past deadline takes the backoff. A sooner future deadline stays.
-export async function backoffDeadline(storage: AlarmStorage, key: string, now: number, delay: number): Promise<void> {
+// A past deadline takes the backoff from the finish time. A sooner future deadline stays.
+export async function backoffDeadline(
+	storage: AlarmStorage,
+	key: string,
+	clock: () => number,
+	delay: number,
+): Promise<void> {
+	const now = clock();
 	const current = await storedDue(storage, key);
 	const proposed = now + delay;
 	const due = current !== null && current > now && current < proposed ? current : proposed;

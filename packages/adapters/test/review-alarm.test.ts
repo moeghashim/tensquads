@@ -3,8 +3,8 @@ import test from "node:test";
 import type { PublishedEvent } from "@tensquads/kernel";
 
 import { AccountBus } from "../src/cloudflare-bus/account-bus.ts";
-import { BUS_ALARM, DELIVERY_ALARM } from "../src/cloudflare-bus/alarm.ts";
-import { MASTER_OPEN } from "../src/cloudflare-bus/master-retry.ts";
+import { BUS_ALARM, clearDeadline, DELIVERY_ALARM, setDeadline } from "../src/cloudflare-bus/alarm.ts";
+import { finishMaster, MASTER_OPEN } from "../src/cloudflare-bus/master-retry.ts";
 import type { PendingBusRow } from "../src/cloudflare-bus/neon-write.ts";
 import { Storage } from "./bus-storage.ts";
 
@@ -89,17 +89,18 @@ test("an open master keeps the bus alarm when nothing is pending", async () => {
 test("a retry armed during the drain keeps the delivery deadline", async () => {
 	const storage = new Storage();
 	let now = 0;
+	let again: Promise<Response> | undefined;
 	const bus = busFor(storage, {
 		ADAPTERS: "real",
 		now: () => now,
 		retryDeliveries: async () => {
-			const again = await bus.fetch(
+			// The object queue runs this retry after the drain ends.
+			again = bus.fetch(
 				new Request("https://bus/deliveries/retry", {
 					method: "POST",
 					body: JSON.stringify({ accountId: "acct-race" }),
 				}),
 			);
-			assert.equal(again.status, 200);
 			return 0;
 		},
 	});
@@ -114,6 +115,7 @@ test("a retry armed during the drain keeps the delivery deadline", async () => {
 	assert.equal(due, 1_000);
 	now = 1_000;
 	await bus.alarm();
+	assert.equal((await again)?.status, 200);
 	const kept = await storage.get<number>(DELIVERY_ALARM);
 	assert.equal(typeof kept, "number");
 	assert.equal(kept, 2_000);
@@ -160,6 +162,140 @@ test("a master failure still drains a due delivery and rearms", async () => {
 	assert.equal(calls, 1);
 	assert.equal(typeof (await storage.get(BUS_ALARM)), "number");
 	assert.notEqual(await storage.getAlarm(), null);
+});
+
+function deferred() {
+	let resolve = () => {};
+	const promise = new Promise<void>((done) => {
+		resolve = done;
+	});
+	return { promise, resolve };
+}
+
+test("alarm work and a request never overlap", async () => {
+	const storage = new Storage();
+	await storage.put("account", "acct-serial");
+	await storage.put(BUS_ALARM, 1_000);
+	await storage.put(DELIVERY_ALARM, 1_000);
+	const entered = deferred();
+	const gate = deferred();
+	const bus = busFor(storage, {
+		ADAPTERS: "real",
+		now: () => 1_000,
+		retryDeliveries: async (_accountId, beforeMs) => {
+			if (beforeMs !== undefined) return 0;
+			entered.resolve();
+			await gate.promise;
+			return 0;
+		},
+	});
+	const alarming = bus.alarm();
+	await entered.promise;
+	let acceptedDone = false;
+	const accepted = bus
+		.fetch(
+			new Request("https://bus/accept", {
+				method: "POST",
+				body: JSON.stringify({ accountId: "acct-serial", event: event("serial-event") }),
+			}),
+		)
+		.then((response) => {
+			acceptedDone = true;
+			return response;
+		});
+	for (let tick = 0; tick < 5; tick += 1) await new Promise((done) => setImmediate(done));
+	assert.equal(acceptedDone, false);
+	gate.resolve();
+	await alarming;
+	assert.equal((await accepted).status, 200);
+	assert.equal(acceptedDone, true);
+});
+
+test("a heartbeat request waits for alarm work", async () => {
+	const storage = new Storage();
+	await storage.put("account", "acct-heartbeat-serial");
+	await storage.put(DELIVERY_ALARM, 1_000);
+	const entered = deferred();
+	const gate = deferred();
+	const bus = busFor(storage, {
+		ADAPTERS: "real",
+		now: () => 1_000,
+		retryDeliveries: async (_accountId, beforeMs) => {
+			if (beforeMs !== undefined) return 0;
+			entered.resolve();
+			await gate.promise;
+			return 0;
+		},
+	});
+	const alarming = bus.alarm();
+	await entered.promise;
+	let heartbeatDone = false;
+	const heartbeat = bus
+		.fetch(
+			new Request("https://bus/heartbeat", {
+				method: "POST",
+				body: JSON.stringify({ accountId: "acct-heartbeat-serial", agentId: "market" }),
+			}),
+		)
+		.then((response) => {
+			heartbeatDone = true;
+			return response;
+		});
+	for (let tick = 0; tick < 5; tick += 1) await new Promise((done) => setImmediate(done));
+	assert.equal(heartbeatDone, false);
+	gate.resolve();
+	await alarming;
+	assert.equal((await heartbeat).status, 200);
+});
+
+test("deadline tokens only move forward, so a stale clear keeps the new deadline", async () => {
+	const storage = new Storage();
+	const first = await setDeadline(storage, DELIVERY_ALARM, 100);
+	assert.equal(await clearDeadline(storage, DELIVERY_ALARM, first), true);
+	const second = await setDeadline(storage, DELIVERY_ALARM, 200);
+	assert.ok(second > first);
+	assert.equal(await clearDeadline(storage, DELIVERY_ALARM, first), false);
+	assert.equal(await storage.get(DELIVERY_ALARM), 200);
+});
+
+test("a failed flush sets its retry from the finish time, not the start time", async () => {
+	const storage = new Storage();
+	await storage.put("account", "acct-finish");
+	await storage.put("pending", [row("pending-one", 1)]);
+	await storage.put(BUS_ALARM, 1_000);
+	let now = 1_000;
+	const bus = busFor(storage, {
+		ADAPTERS: "real",
+		now: () => now,
+		writeBusPending: async () => {
+			now = 41_000;
+			throw new Error("The database write failed.");
+		},
+	});
+	const response = await bus.fetch(
+		new Request("https://bus/accept", {
+			method: "POST",
+			body: JSON.stringify({ accountId: "acct-finish", event: event("finish-event") }),
+		}),
+	);
+	assert.equal(response.status, 200);
+	assert.equal(await storage.get(BUS_ALARM), 71_000);
+	assert.equal(await storage.getAlarm(), 71_000);
+});
+
+test("a failed master retry uses the injected clock", async () => {
+	const storage = new Storage();
+	await storage.put("account", "acct-clock");
+	await storage.put(`${MASTER_OPEN}clock-event`, event("clock-event"));
+	const masterEvent: PublishedEvent = { ...event("clock-event"), to: "master", kind: "Result" };
+	await assert.rejects(
+		() =>
+			finishMaster(storage, { ADAPTERS: "real", now: () => 1_000 }, masterEvent, true, async () => {
+				throw new Error("temporary");
+			}),
+		/temporary/,
+	);
+	assert.equal(await storage.get(BUS_ALARM), 2_000);
 });
 
 test("a flush keeps an event stored while the database write is in flight", async () => {

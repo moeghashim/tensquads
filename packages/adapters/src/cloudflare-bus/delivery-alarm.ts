@@ -4,7 +4,7 @@ import { chooseAdapters } from "../adapter-choice.ts";
 import { DELIVERY_GRACE_MS, deliveryBackoffMs } from "../neon/commands/approval-delivery.ts";
 import { type AlarmStorage, clearDeadline, DELIVERY_ALARM, deadlineToken, setDeadline } from "./alarm.ts";
 import type { BusNamespace } from "./http.ts";
-import { isNonEmptyString, isObject } from "./message.ts";
+import { readAccountId } from "./message.ts";
 import { drainApprovalDeliveries } from "./neon-write.ts";
 import { deliverProbe } from "./probe.ts";
 
@@ -23,13 +23,13 @@ type AcceptStored = (accountId: string, event: PublishedEvent) => Promise<unknow
 // A future deadline is stored again so its token changes. A due deadline
 // moves forward, because a past alarm fires again and drops the schedule.
 export async function armDeliveryRetry(storage: AlarmStorage, env: DrainEnv, request: Request): Promise<Response> {
-	const body: unknown = await request.json().catch(() => null);
-	if (!isObject(body) || !isNonEmptyString(body.accountId)) {
+	const accountId = await readAccountId(request);
+	if (!accountId) {
 		return new Response("The message was rejected.", { status: 400 });
 	}
 	const stored = await storage.get<string>("account");
-	if (stored && stored !== body.accountId) return new Response("The message was rejected.", { status: 400 });
-	await storage.put("account", body.accountId);
+	if (stored && stored !== accountId) return new Response("The message was rejected.", { status: 400 });
+	await storage.put("account", accountId);
 	const now = env.now?.() ?? Date.now();
 	const armed = await storage.get<number>(DELIVERY_ALARM);
 	// A future deadline stays where it is. A due one moves forward, or a past

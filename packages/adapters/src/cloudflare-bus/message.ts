@@ -10,6 +10,12 @@ export function isNonEmptyString(value: unknown): value is string {
 	return typeof value === "string" && value.trim().length > 0;
 }
 
+export async function readAccountId(request: Request): Promise<string | null> {
+	const body: unknown = await request.json().catch(() => null);
+	if (!isObject(body) || !isNonEmptyString(body.accountId)) return null;
+	return body.accountId;
+}
+
 export async function readAgentBody(
 	request: Request,
 ): Promise<{ accountId: string; agentId: string; body: Record<string, unknown> } | null> {

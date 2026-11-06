@@ -15,10 +15,10 @@ export function masterEvent(event: { readonly kind: string; readonly to: string;
 	return event.kind === "Approval" && event.from === "user";
 }
 
-async function rememberRetry(storage: BusStorage): Promise<void> {
-	const retryAt = Date.now() + RETRY_MS;
+async function rememberRetry(storage: BusStorage, now: number): Promise<void> {
+	const retryAt = now + RETRY_MS;
 	const busDue = await storage.get<number>(BUS_ALARM);
-	const due = typeof busDue === "number" && busDue > Date.now() ? Math.min(busDue, retryAt) : retryAt;
+	const due = typeof busDue === "number" && busDue > now ? Math.min(busDue, retryAt) : retryAt;
 	await setDeadline(storage, BUS_ALARM, due);
 }
 
@@ -38,7 +38,7 @@ export async function finishMaster(
 	try {
 		await run(event);
 	} catch (error) {
-		await rememberRetry(storage);
+		await rememberRetry(storage, env.now?.() ?? Date.now());
 		throw error;
 	}
 }

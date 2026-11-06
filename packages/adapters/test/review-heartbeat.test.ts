@@ -34,6 +34,21 @@ test("market at 0 ms and website at 60,000 ms keep the earlier alarm", async () 
 	assert.equal(await storage.getAlarm(), 180_000);
 });
 
+test("a beat accepted during a resume stays in the map", async () => {
+	const storage = new Storage();
+	await storage.put("account", "a");
+	await storage.put("heartbeats", { market: { at: 0 } });
+	await sweepHeartbeats(storage, {
+		now: () => 200_000,
+		resumeAgent: async () => {
+			await recordBeat(storage, "website", 190_000);
+		},
+	});
+	const map = (await storage.get<Record<string, { at: number; resumedAt?: number }>>("heartbeats")) ?? {};
+	assert.equal(map.website?.at, 190_000);
+	assert.equal(map.market?.resumedAt, 200_000);
+});
+
 test("an empty heartbeat map clears its alarm", async () => {
 	const storage = new Storage();
 	await setDeadline(storage, HEARTBEAT_ALARM, 500);

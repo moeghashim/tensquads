@@ -101,7 +101,7 @@ function published(id: string, publishedUrl: string): PublishedEvent {
 
 type Story = Awaited<ReturnType<typeof import("@tensquads/domain/master")["proofStory"]>>;
 
-function ports(story: Story, writeBrief: () => string): BusObjectEnv {
+function ports(story: Story, writeBrief: () => string | Promise<string>): BusObjectEnv {
 	return {
 		ADAPTERS: "real",
 		masterReadPage: async (url: string) => story.pages[url] ?? { status: 404, body: "" },
@@ -184,22 +184,60 @@ test("an alarm retries an open master step once", async () => {
 	const { proofStory } = await import("@tensquads/domain/master");
 	const story = await proofStory();
 	let calls = 0;
-	const { storage, target } = objectBus(
-		ports(story, () => {
+	let now = 1_000;
+	const { storage, target } = objectBus({
+		...ports(story, () => {
 			calls += 1;
 			if (calls === 1) throw new Error("temporary");
 			return story.brief;
 		}),
-	);
+		now: () => now,
+	});
 	await seedBusiness(storage, story.request);
 	await assert.rejects(() => post(target, "alarm-owner", reportEvent("alarm-report", story.report)), /temporary/);
 	assert.equal(calls, 1);
-	await storage.put("bus-alarm", Date.now());
+	now = 2_000;
 	await target.alarm();
 	assert.equal(calls, 2);
 	assert.equal((await storedEvents(storage)).length, 2);
 	await target.alarm();
 	assert.equal(calls, 2);
+});
+
+test("an alarm retry and a redelivery of the same report call the model once", async () => {
+	if (!existsSync(kit)) return;
+	const { proofStory } = await import("@tensquads/domain/master");
+	const story = await proofStory();
+	let calls = 0;
+	let openGate = () => {};
+	const gate = new Promise<void>((done) => {
+		openGate = done;
+	});
+	let entered = () => {};
+	const firstCall = new Promise<void>((done) => {
+		entered = done;
+	});
+	const { storage, target } = objectBus(
+		ports(story, () => {
+			calls += 1;
+			entered();
+			return gate.then(() => story.brief);
+		}),
+	);
+	await seedBusiness(storage, story.request);
+	const event = reportEvent("serial-report", story.report);
+	await storage.put("account", "serial-owner");
+	await storage.put("bus-alarm", 1);
+	await storage.put(`master-open:${event.id}`, event);
+	const alarming = target.alarm();
+	await firstCall;
+	const posting = post(target, "serial-owner", event);
+	openGate();
+	await alarming;
+	assert.equal((await posting).status, 200);
+	assert.equal(calls, 1);
+	const stored = await storedEvents(storage);
+	assert.equal(stored.filter((item) => item.skill === "brief.write").length, 1);
 });
 
 test("a user approval of the brief and of publish reaches the website", async () => {
