@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import { Pool } from "@neondatabase/serverless";
-import { digestOf, parseResearchTask } from "@tensquads/agent-kit";
 import { createMaster, type StoredGrant } from "@tensquads/domain/master";
 import type { PublishedEvent } from "@tensquads/kernel";
 import { eq } from "drizzle-orm";
@@ -52,7 +52,7 @@ test("the owner can approve competitor watching", async (t) => {
 			kpis: [["Tasks", "0"]],
 			sortOrder: 8,
 		});
-		const subject = await digestOf(query);
+		const subject = createHash("sha256").update(query).digest("hex");
 		const event: PublishedEvent = {
 			id: "m-watch",
 			from: "master",
@@ -170,13 +170,14 @@ test("the owner can approve competitor watching", async (t) => {
 			text: "Yes",
 			payload: {},
 			writes: [],
+			trace: "tr_watch",
 		});
 		const task = sent.find((event) => event.kind === "Task");
 		assert.equal(task?.to, "market");
 		assert.equal(task?.text, "Watch the competitors.");
-		const parsed = parseResearchTask(task?.payload);
-		assert.equal(parsed.businessName, "Proof Kitchen");
-		assert.equal(parsed.cuisine, "Levantine");
+		assert.equal(task?.payload.businessName, "Proof Kitchen");
+		assert.equal(task?.payload.businessType, "restaurant");
+		assert.equal(task?.payload.cuisine, "Levantine");
 		const approval = task?.payload.approval;
 		assert.equal(
 			approval !== null && typeof approval === "object" && "skill" in approval ? approval.skill : "",

@@ -245,11 +245,18 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		const report = readReport(raw);
 		if (!report) return failResearch(["The report was rejected."]);
 		const brief = String(await ports.model.writeBrief(report));
-		const briefCheck = checkBrief(brief, report, {
-			businessName: request.businessName,
-			...(request.cuisine ? { cuisine: request.cuisine } : {}),
-			items: request.items,
-		});
+		const storedBusiness = request.businessName.trim().length > 0;
+		const briefCheck = checkBrief(
+			brief,
+			report,
+			storedBusiness
+				? {
+						businessName: request.businessName,
+						...(request.cuisine ? { cuisine: request.cuisine } : {}),
+						items: request.items,
+					}
+				: undefined,
+		);
 		if (!briefCheck.pass) {
 			state.phase = "escalated";
 			return [escalation("The brief check failed.", briefCheck.evidence)];

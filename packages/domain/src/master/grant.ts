@@ -1,9 +1,5 @@
 export const GRANT_MS = 24 * 60 * 60 * 1000;
 
-export const BUILD_SKILL = "website.build";
-export const PUBLISH_SKILL = "website.publish";
-export const WATCH_SKILL = "competition.watch";
-
 export interface GrantQuery {
 	readonly accountId: string;
 	readonly taskId: string;

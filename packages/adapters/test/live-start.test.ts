@@ -95,7 +95,7 @@ test("a real start calls provisionAgents once and a failure stops the run", asyn
 	const event = await masterStartEvent(
 		{
 			ADAPTERS: "real",
-			provisionAgents: async (_env, accountId, _nowMs, currentExp) => {
+			provisionAgents: async (_env, accountId, _nowMs, currentExp = {}) => {
 				calls += 1;
 				seenAccount = accountId;
 				seenExp = { ...currentExp };

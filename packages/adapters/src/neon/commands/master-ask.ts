@@ -3,8 +3,8 @@ export const publishAsk = "Publish the site?";
 export const watchAsk = "Watch the competitors?";
 
 // Overview and decide both require an agent row. The proof squad that builds the site is website.
-export const siteAgent = "website";
-export const watchAgent = "market";
+const siteAgent = "website";
+const watchAgent = "market";
 
 export function masterAsk(title: string): boolean {
 	return title === briefAsk || title === publishAsk || title === watchAsk;

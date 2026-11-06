@@ -61,13 +61,9 @@ function configured(value: string | undefined): string {
 }
 
 function briefPrompt(gap: string, items: BusinessRequest["items"]): string {
-	const lines = items.map((item) => `${item.name}: ${item.price}`);
-	return [
-		"Write a brief under 150 words.",
-		`Name this gap: ${gap}`,
-		"Use only these items and prices.",
-		...lines,
-	].join("\n");
+	let text = `Write a brief under 150 words.\nName this gap: ${gap}\nUse only these items and prices.`;
+	for (const item of items) text += `\n${item.name}: ${item.price}`;
+	return text;
 }
 
 async function requestBrief(

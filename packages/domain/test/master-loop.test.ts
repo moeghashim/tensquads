@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { digestOf, parseWebsiteTask, type ResearchReport } from "@tensquads/agent-kit";
+import { digestOf, parseResearchTask, parseWebsiteTask, type ResearchReport } from "@tensquads/agent-kit";
 
 import type { BusEvent } from "../src/bus/types.ts";
 import { createMaster } from "../src/master/loop.ts";
@@ -348,6 +348,10 @@ test("a watch result before the user says yes does not run the skill", async () 
 	assert.equal(sent[0]?.to, "market");
 	assert.equal(sent[1]?.kind, "Task");
 	assert.equal(sent[1]?.text, "Watch the competitors.");
+	const watched = parseResearchTask(sent[1]?.payload);
+	assert.equal(watched.businessName, story.request.businessName);
+	assert.equal(watched.cuisine, story.request.cuisine);
+	assert.equal(watched.items.length, story.request.items.length);
 	const approval = sent[0]?.payload.approval as { mandate: { subject: string } } | undefined;
 	const taskApproval = sent[1]?.payload.approval as { mandate: unknown } | undefined;
 	assert.ok(approval);

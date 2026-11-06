@@ -57,6 +57,9 @@ async function commitDecision<T>(
 	);
 }
 
+type ApprovalRow = NonNullable<Awaited<ReturnType<typeof oneApproval>>>;
+type AgentRow = NonNullable<Awaited<ReturnType<typeof oneAgent>>>;
+
 export async function decide(
 	db: AppDatabase,
 	scope: AccountScope,
@@ -68,73 +71,136 @@ export async function decide(
 	actorId?: string,
 ): Promise<WrittenDecision> {
 	const accountId = accountOf(scope);
-	const decision = await commitDecision(db, accountId, deadlineAt, async (tx) => {
-		const approval = await oneApproval(tx, accountId, id);
-		if (approval?.status !== "Pending") {
-			return { id, status: approval?.status ?? "Pending", count: await countInbox(tx, accountId) };
-		}
-		const agent = await oneAgent(tx, accountId, approval.agent);
-		if (!agent) throw new Error("The approval names an agent.");
-		if (masterAsk(approval.title)) {
-			const ownerId = await ownerClerk(tx, accountId);
-			if (!ownerId || actorId !== ownerId) {
-				return { id, status: approval.status, count: await countInbox(tx, accountId) };
-			}
-		}
-		const at = new Date();
-		const name = greetingName(await ownerName(tx, accountId));
-		const next = decideApproval({ tasks: agent.tasks, last: agent.lastText }, toApproval(approval), ok);
-		await tx
-			.update(approvals)
-			.set({ status: next.approval.status })
-			.where(and(eq(approvals.accountId, accountId), eq(approvals.id, id)));
-		if (ok) {
-			await tx
-				.update(agents)
-				.set({ tasks: next.agent.tasks, lastText: next.agent.last })
-				.where(and(eq(agents.accountId, accountId), eq(agents.id, agent.id)));
-		}
-		if (chooseAdapters(process.env.ADAPTERS) === "real") {
-			await recordDelivery(
-				tx,
-				accountId,
-				approval.id,
-				userMasterEvent({ id: approval.id, ok, title: approval.title, by: name, at }),
-			);
-		} else {
-			await appendEvents(
-				tx,
-				accountId,
-				[
-					{
-						from: "master",
-						to: approval.agent,
-						kind: ok ? "Approval" : "Declined",
-						skill: "-",
-						text: `${ok ? "Approved: " : "Declined: "}${approval.title}`,
-						payload: { approval_id: approval.id, approved: ok, by: name },
-						writes: [`approvals.${approval.id}`],
-						set: { [`approvals.${approval.id}`]: ok ? "approved" : "declined" },
-					},
-				],
-				at,
-			);
-		}
-		if (ok && masterAsk(approval.title)) {
-			await insertRunMandate(tx as unknown as AppDatabase, accountId, approval, actorId ?? "", at);
-		} else if (ok) await recordMandate(tx, scope, accountId, approval, name, at);
-		return { id, status: next.approval.status, count: await countInbox(tx, accountId) };
-	});
-	if (chooseAdapters(process.env.ADAPTERS) === "real") {
-		try {
-			await flushDeliveries(db, accountId, deliver);
-		} catch (error) {
-			// The decision stays committed. Arm the alarm, then report the failure.
-			if (scheduleRetry) await scheduleRetry(accountId).catch(() => undefined);
-			throw error;
-		}
-	}
+	const decision = await commitDecision(db, accountId, deadlineAt, (tx) =>
+		writeDecision(tx, scope, accountId, id, ok, actorId),
+	);
+	await deliverDecision(db, accountId, deliver, scheduleRetry);
 	return decision;
+}
+
+async function writeDecision(
+	tx: Tx,
+	scope: AccountScope,
+	accountId: string,
+	id: string,
+	ok: boolean,
+	actorId: string | undefined,
+): Promise<WrittenDecision> {
+	const approval = await oneApproval(tx, accountId, id);
+	if (approval?.status !== "Pending") {
+		return { id, status: approval?.status ?? "Pending", count: await countInbox(tx, accountId) };
+	}
+	const agent = await oneAgent(tx, accountId, approval.agent);
+	if (!agent) throw new Error("The approval names an agent.");
+	if (await ownerBlocked(tx, accountId, approval.title, actorId)) {
+		return { id, status: approval.status, count: await countInbox(tx, accountId) };
+	}
+	return saveDecision(tx, scope, accountId, approval, agent, ok, actorId);
+}
+
+async function ownerBlocked(tx: Tx, accountId: string, title: string, actorId: string | undefined): Promise<boolean> {
+	if (!masterAsk(title)) return false;
+	const ownerId = await ownerClerk(tx, accountId);
+	return ownerId.length === 0 || actorId !== ownerId;
+}
+
+async function saveDecision(
+	tx: Tx,
+	scope: AccountScope,
+	accountId: string,
+	approval: ApprovalRow,
+	agent: AgentRow,
+	ok: boolean,
+	actorId: string | undefined,
+): Promise<WrittenDecision> {
+	const at = new Date();
+	const name = greetingName(await ownerName(tx, accountId));
+	const next = decideApproval({ tasks: agent.tasks, last: agent.lastText }, toApproval(approval), ok);
+	await tx
+		.update(approvals)
+		.set({ status: next.approval.status })
+		.where(and(eq(approvals.accountId, accountId), eq(approvals.id, approval.id)));
+	if (ok) await markAgentDone(tx, accountId, agent.id, next.agent.tasks, next.agent.last);
+	await writeBus(tx, accountId, approval, ok, name, at);
+	await storeYes(tx, scope, accountId, approval, name, actorId, ok, at);
+	return { id: approval.id, status: next.approval.status, count: await countInbox(tx, accountId) };
+}
+
+async function markAgentDone(tx: Tx, accountId: string, agentId: string, tasks: number, last: string): Promise<void> {
+	await tx
+		.update(agents)
+		.set({ tasks, lastText: last })
+		.where(and(eq(agents.accountId, accountId), eq(agents.id, agentId)));
+}
+
+async function writeBus(
+	tx: Tx,
+	accountId: string,
+	approval: ApprovalRow,
+	ok: boolean,
+	name: string,
+	at: Date,
+): Promise<void> {
+	if (chooseAdapters(process.env.ADAPTERS) === "real") {
+		await recordDelivery(
+			tx,
+			accountId,
+			approval.id,
+			userMasterEvent({ id: approval.id, ok, title: approval.title, by: name, at }),
+		);
+		return;
+	}
+	await appendEvents(
+		tx,
+		accountId,
+		[
+			{
+				from: "master",
+				to: approval.agent,
+				kind: ok ? "Approval" : "Declined",
+				skill: "-",
+				text: `${ok ? "Approved: " : "Declined: "}${approval.title}`,
+				payload: { approval_id: approval.id, approved: ok, by: name },
+				writes: [`approvals.${approval.id}`],
+				set: { [`approvals.${approval.id}`]: ok ? "approved" : "declined" },
+			},
+		],
+		at,
+	);
+}
+
+async function storeYes(
+	tx: Tx,
+	scope: AccountScope,
+	accountId: string,
+	approval: ApprovalRow,
+	name: string,
+	actorId: string | undefined,
+	ok: boolean,
+	at: Date,
+): Promise<void> {
+	if (!ok) return;
+	if (masterAsk(approval.title)) {
+		await insertRunMandate(tx as unknown as AppDatabase, accountId, approval, actorId ?? "", at);
+		return;
+	}
+	await recordMandate(tx, scope, accountId, approval, name, at);
+}
+
+async function deliverDecision(
+	db: AppDatabase,
+	accountId: string,
+	deliver: DeliverUserEvent,
+	scheduleRetry: ScheduleDeliveryRetry | undefined,
+): Promise<void> {
+	if (chooseAdapters(process.env.ADAPTERS) !== "real") return;
+	try {
+		await flushDeliveries(db, accountId, deliver);
+	} catch (error) {
+		// The decision stays committed. Arm the alarm, then report the failure.
+		if (scheduleRetry) await scheduleRetry(accountId).catch(() => undefined);
+		throw error;
+	}
 }
 
 export async function decideMission(

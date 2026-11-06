@@ -1,14 +1,15 @@
 import { createHash } from "node:crypto";
 import type { GrantQuery, StoredGrant } from "@tensquads/domain/master";
-import { GRANT_MS } from "@tensquads/domain/master";
 import { and, desc, eq } from "drizzle-orm";
+
+const GRANT_MS = 24 * 60 * 60 * 1000;
 
 import { withNeon } from "../../cloudflare-bus/neon-write.ts";
 import type { AppDatabase } from "../postgres.ts";
 import { accounts, busEvents, mandates } from "../schema.ts";
 import { mandateSkill, publishAsk } from "./master-ask.ts";
 
-function digestOf(text: string): string {
+function sha256Hex(text: string): string {
 	return createHash("sha256").update(text, "utf8").digest("hex");
 }
 
@@ -38,7 +39,7 @@ export async function insertRunMandate(
 		.where(and(eq(busEvents.accountId, accountId), eq(busEvents.id, approval.id)));
 	const payload = rows[0]?.payload ?? {};
 	const skill = textField(payload.skill) || mandateSkill(approval.title);
-	const subject = hexField(payload.subject) ?? digestOf(approval.detail);
+	const subject = hexField(payload.subject) ?? sha256Hex(approval.detail);
 	const taskId = textField(payload.taskId) || approval.id;
 	const slug = skill === "website.publish" || approval.title === publishAsk ? exactText(payload.slug) : null;
 	await db.insert(mandates).values({
