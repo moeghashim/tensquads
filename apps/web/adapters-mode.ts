@@ -23,6 +23,11 @@ export function masterStubId(mode: string, imported: string, stub: string): stri
 	return stub;
 }
 
+export function publishStubId(mode: string, imported: string, stub: string): string | null {
+	if (mode === "real" || !imported.endsWith("publish-live.ts")) return null;
+	return stub;
+}
+
 function readAdapters(value: WranglerEnv | undefined): string | undefined {
 	const mode = value?.vars?.ADAPTERS;
 	return typeof mode === "string" && mode.length > 0 ? mode : undefined;

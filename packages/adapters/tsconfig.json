@@ -3,7 +3,8 @@
 	"compilerOptions": {
 		"noEmit": true,
 		"paths": {
-			"@tensquads/domain/master": ["./src/cloudflare-bus/master-typecheck.ts"]
+			"@tensquads/domain/master": ["./src/cloudflare-bus/master-typecheck.ts"],
+			"@tensquads/agent-kit": ["./src/cloudflare-bus/kit-typecheck.ts"]
 		}
 	},
 	"include": ["src/**/*", "test/**/*"]

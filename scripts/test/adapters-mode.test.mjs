@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { adaptersMode, masterStubId } from "../../apps/web/adapters-mode.ts";
+import { adaptersMode, masterStubId, publishStubId } from "../../apps/web/adapters-mode.ts";
 
 const wrangler = readFileSync(new URL("../../apps/web/wrangler.jsonc", import.meta.url), "utf8");
 
@@ -50,6 +50,13 @@ test("the real Vite build resolves the master to the real domain code, not the t
 		);
 		const live = await resolveWithVite("./master-live.ts", masterStep);
 		assert.equal(live, masterLive);
+		const publishRoutes = fileURLToPath(
+			new URL("../../packages/adapters/src/cloudflare-bus/publish-routes.ts", import.meta.url),
+		);
+		const publishLive = fileURLToPath(
+			new URL("../../packages/adapters/src/cloudflare-bus/publish-live.ts", import.meta.url),
+		);
+		assert.equal(await resolveWithVite("./publish-live.ts", publishRoutes), publishLive);
 		const domain = await resolveWithVite("@tensquads/domain/master", masterLive);
 		assert.ok(domain, "the real domain master did not resolve");
 		assert.equal(domain.includes("master-typecheck"), false, `real build resolved the typecheck stub: ${domain}`);
@@ -74,6 +81,13 @@ test("the production Vite build resolves the master to the stub", async () => {
 		const stub = fileURLToPath(new URL("../../packages/adapters/src/cloudflare-bus/master-stub.ts", import.meta.url));
 		const live = await resolveWithVite("./master-live.ts", masterStep);
 		assert.equal(live, stub);
+		const publishRoutes = fileURLToPath(
+			new URL("../../packages/adapters/src/cloudflare-bus/publish-routes.ts", import.meta.url),
+		);
+		const publishStub = fileURLToPath(
+			new URL("../../packages/adapters/src/cloudflare-bus/publish-stub.ts", import.meta.url),
+		);
+		assert.equal(await resolveWithVite("./publish-live.ts", publishRoutes), publishStub);
 	} finally {
 		if (before === undefined) delete process.env.CLOUDFLARE_ENV;
 		else process.env.CLOUDFLARE_ENV = before;
@@ -90,4 +104,10 @@ test("the stub resolution follows that mode", () => {
 	assert.equal(masterStubId(adaptersMode(wrangler, "real"), "/app/master-live.ts", stub), null);
 	assert.equal(masterStubId(adaptersMode(wrangler, undefined), "/app/other.ts", stub), null);
 	assert.equal(masterStubId(adaptersMode(wrangler, "real"), "/app/other.ts", stub), null);
+	const publishStub = fileURLToPath(
+		new URL("../../packages/adapters/src/cloudflare-bus/publish-stub.ts", import.meta.url),
+	);
+	assert.equal(publishStubId(adaptersMode(wrangler, undefined), "/app/publish-live.ts", publishStub), publishStub);
+	assert.equal(publishStubId(adaptersMode(wrangler, "real"), "/app/publish-live.ts", publishStub), null);
+	assert.equal(publishStubId(adaptersMode(wrangler, undefined), "/app/other.ts", publishStub), null);
 });

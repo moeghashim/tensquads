@@ -7,6 +7,8 @@ import { takeTestTask, workerTestBus } from "../worker-adapters.ts";
 import { changeEvent, verifyContextSignature } from "./change.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
 import { resolveMonitor } from "./monitors.ts";
+import type { PagesClient } from "./pages-client.ts";
+import { handlePublishRoutes } from "./publish-routes.ts";
 import { type MachineTokenDelivery, machineTokenDelivery, verifyMachineToken } from "./token.ts";
 
 export interface BusNamespace {
@@ -29,6 +31,8 @@ export interface WorkerBindings {
 	readonly now?: () => number;
 	readonly BROWSER?: unknown;
 	readonly OPENAI_API_KEY?: string;
+	readonly CLOUDFLARE_PAGES_API_TOKEN?: string;
+	readonly pages?: PagesClient;
 	// A test can name the accounts with old pending deliveries without a live database.
 	readonly staleDeliveryAccounts?: (beforeMs: number) => Promise<string[]>;
 }
@@ -249,6 +253,8 @@ async function takeMachine(env: WorkerBindings, accountId: string, agentId: stri
 }
 
 export async function handleMachineRequest(request: Request, env: WorkerBindings): Promise<Response | null> {
+	const published = await handlePublishRoutes(request, env);
+	if (published) return published;
 	const url = new URL(request.url);
 	if (url.pathname === "/machine/heartbeat") return handleHeartbeat(request, env);
 	if (url.pathname === "/change.detected") return handleChange(request, env);
