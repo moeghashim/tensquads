@@ -157,8 +157,12 @@ export function createAccountRoutes(secretCalls: SecretCall[]) {
 			if (path === "/environments" && request.method === "POST") {
 				const body = await io.readJson(request);
 				const name = typeof body.name === "string" ? body.name : "";
-				if (name.length === 0 || environments.has(name)) {
+				if (name.length === 0) {
 					io.fail(response, 400, "invalid");
+					return true;
+				}
+				if (environments.has(name)) {
+					io.fail(response, 409, "already_exists");
 					return true;
 				}
 				nextId += 1;

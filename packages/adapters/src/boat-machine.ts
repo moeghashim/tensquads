@@ -16,6 +16,7 @@ import {
 	hostOf,
 	imageFromTemplate,
 	imageTag,
+	realRunAgent,
 	realRunImage,
 	sizeText,
 	sourceName,
@@ -291,6 +292,21 @@ async function setMachineToken(ctx: BoatContext, scope: AccountScope, agentId: s
 }
 
 const ENVIRONMENT_NAME_LIMIT = 64;
+const flights = new Map<string, Promise<unknown>>();
+
+function flightKey(scope: AccountScope, agentId: string): string {
+	return `${scope.accountId}:${agentId}`;
+}
+
+function singleFlight<T>(key: string, run: () => Promise<T>): Promise<T> {
+	const current = flights.get(key) as Promise<T> | undefined;
+	if (current) return current;
+	const flight = run().finally(() => {
+		if (flights.get(key) === flight) flights.delete(key);
+	});
+	flights.set(key, flight);
+	return flight;
+}
 
 async function agentEnvironment(ctx: BoatContext, scope: AccountScope, agentId: string): Promise<string> {
 	const profile = machineCredentialProfile(scope.accountId, agentId);
@@ -308,8 +324,16 @@ async function agentEnvironment(ctx: BoatContext, scope: AccountScope, agentId: 
 	const found = await call(() => admin.environments());
 	let environment = found.environments.find((row) => row.name === profile);
 	if (!environment) {
-		const created = await call(() => admin.createEnvironment({ createSandboxEnvironmentRequest: { name: profile } }));
-		environment = created.environments.find((row) => row.name === profile);
+		try {
+			const created = await admin.createEnvironment({ createSandboxEnvironmentRequest: { name: profile } });
+			environment = created.environments.find((row) => row.name === profile);
+		} catch (error) {
+			if (!(error instanceof ResponseError)) return asFault(error, false);
+			const facts = await readErrorBody(error.response);
+			if (facts.status !== 409 || facts.code !== "already_exists") throw faultFromStatus(facts, false);
+			const again = await call(() => admin.environments());
+			environment = again.environments.find((row) => row.name === profile);
+		}
 	}
 	const pinned = environment;
 	if (!pinned?.id) throw notConfigured("The secret registration is not configured.");
@@ -349,7 +373,9 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 
 	return {
 		async host(scope, agentId) {
-			await requireMachine(ctx, scope, agentId);
+			const row = await requireMachine(ctx, scope, agentId);
+			if (typeof row.ip === "string" && row.ip.length > 0) return row.ip;
+			if (row.name.length > 0) return row.name;
 			return hostName(agentId);
 		},
 		async region(scope, agentId) {
@@ -386,42 +412,60 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 			return profileApis(ctx);
 		},
 		async start(scope, agentId, tag) {
-			const existing = await findMachine(ctx, scope, agentId);
-			if (existing) {
-				if (!off(existing.state) && !LIVE.has(existing.state)) {
-					await waitReady(ctx, existing.id);
+			await singleFlight(flightKey(scope, agentId), async () => {
+				const existing = await findMachine(ctx, scope, agentId);
+				if (existing) {
+					if (!off(existing.state) && !LIVE.has(existing.state)) {
+						await waitReady(ctx, existing.id);
+					}
+					return;
 				}
-				return;
-			}
-			const created = await createOnce(
-				ctx,
-				createBody(
-					hostName(agentId),
-					machineEnv(scope.accountId, agentId, tag),
-					labelled({ account: scope.accountId, agent: agentId, image: tag }, ctx.runId),
-				),
-				startKey(scope.accountId, agentId, tag),
-			);
-			await waitReady(ctx, created.id);
+				const created = await createOnce(
+					ctx,
+					createBody(
+						hostName(agentId),
+						machineEnv(scope.accountId, agentId, tag),
+						labelled({ account: scope.accountId, agent: agentId, image: tag }, ctx.runId),
+					),
+					startKey(scope.accountId, agentId, tag),
+				);
+				await waitReady(ctx, created.id);
+			});
 		},
 		async stop(scope, agentId) {
-			const row = await requireMachine(ctx, scope, agentId);
-			if (row.state === "archived") return;
-			await call(() => ctx.machine.stop({ sandboxId: row.id }), true);
-			await until(
-				ctx,
-				async () => (await call(() => ctx.machine.get({ sandboxId: row.id }))).sandbox.stop?.status ?? "",
-				(status) => status === "completed",
-			);
+			await singleFlight(flightKey(scope, agentId), async () => {
+				const row = await requireMachine(ctx, scope, agentId);
+				if (row.state === "archived") return;
+				await call(() => ctx.machine.stop({ sandboxId: row.id }), true);
+				await until(
+					ctx,
+					async () => (await call(() => ctx.machine.get({ sandboxId: row.id }))).sandbox.stop?.status ?? "",
+					(status) => status === "completed",
+				);
+			});
 		},
 		async resume(scope, agentId) {
-			const row = await requireMachine(ctx, scope, agentId);
-			await call(() => ctx.machine.resume({ sandboxId: row.id }));
-			await waitReady(ctx, row.id);
+			await singleFlight(flightKey(scope, agentId), async () => {
+				const row = await requireMachine(ctx, scope, agentId);
+				if (LIVE.has(row.state)) return;
+				if (!off(row.state)) {
+					await waitReady(ctx, row.id);
+					return;
+				}
+				const environment = realRunAgent(agentId) ? await agentEnvironment(ctx, scope, agentId) : undefined;
+				await call(() =>
+					ctx.machine.resume(
+						environment ? { sandboxId: row.id, resumeRequest: { environment } } : { sandboxId: row.id },
+					),
+				);
+				await waitReady(ctx, row.id);
+			});
 		},
 		async remove(scope, agentId) {
-			const row = await requireMachine(ctx, scope, agentId);
-			await removeById(ctx, row.id);
+			await singleFlight(flightKey(scope, agentId), async () => {
+				const row = await requireMachine(ctx, scope, agentId);
+				await removeById(ctx, row.id);
+			});
 		},
 		async registerSecret(_scope, name, value?) {
 			const admin = ctx.admin;
@@ -465,33 +509,36 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 			const known = realRunImage(templateId);
 			const image = known ?? imageFromTemplate(templateId);
 			const tag = known ? known.imageTag : imageTag(image.imageId, image.version);
-			const existing = await findMachine(ctx, scope, agentId);
-			if (!existing) {
-				const environment = known ? await agentEnvironment(ctx, scope, agentId) : undefined;
-				const created = await createOnce(
-					ctx,
-					createBody(
-						hostName(agentId),
-						machineEnv(scope.accountId, agentId, tag),
-						labelled({ account: scope.accountId, agent: agentId, image: tag }, ctx.runId),
-						templateId,
-						environment,
-					),
-					startKey(scope.accountId, agentId, tag),
-				);
-				await waitReady(ctx, created.id);
-			} else if (off(existing.state)) {
-				const environment = known ? await agentEnvironment(ctx, scope, agentId) : undefined;
-				await call(() =>
-					ctx.machine.resume(
-						environment ? { sandboxId: existing.id, resumeRequest: { environment } } : { sandboxId: existing.id },
-					),
-				);
-				await waitReady(ctx, existing.id);
-			} else if (!LIVE.has(existing.state)) {
-				await waitReady(ctx, existing.id);
-			}
-			return { templateId, agentId };
+			const environment = known ? await agentEnvironment(ctx, scope, agentId) : undefined;
+			return singleFlight(flightKey(scope, agentId), async () => {
+				const existing = await findMachine(ctx, scope, agentId);
+				if (!existing) {
+					const created = await createOnce(
+						ctx,
+						createBody(
+							hostName(agentId),
+							machineEnv(scope.accountId, agentId, tag),
+							labelled({ account: scope.accountId, agent: agentId, image: tag }, ctx.runId),
+							templateId,
+							environment,
+						),
+						startKey(scope.accountId, agentId, tag),
+					);
+					await waitReady(ctx, created.id);
+				} else if (off(existing.state)) {
+					await call(() =>
+						ctx.machine.resume(
+							environment
+								? { sandboxId: existing.id, resumeRequest: { environment } }
+								: { sandboxId: existing.id },
+						),
+					);
+					await waitReady(ctx, existing.id);
+				} else if (!LIVE.has(existing.state)) {
+					await waitReady(ctx, existing.id);
+				}
+				return { templateId, agentId };
+			});
 		},
 		async removeTemplate(_scope, templateId) {
 			await call(() => ctx.machine.deleteSavedSnapshot({ name: templateId }));

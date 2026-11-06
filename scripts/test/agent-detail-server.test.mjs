@@ -76,6 +76,7 @@ const exports = {
 		chooseAdapters: (flag) => (flag === "real" ? "real" : "test"),
 		readLiveMachine: async () => {
 			state.liveReads += 1;
+			if (state.boatStatus === 503) throw Object.assign(new Error("unavailable"), { status: 503 });
 			return state.liveMachine;
 		},
 		createTestMachine: ([row]) =>
@@ -112,6 +113,7 @@ function setup(t, options = {}) {
 		loads: 0,
 		liveReads: 0,
 		liveMachine: null,
+		boatStatus: 0,
 		deadlines: [],
 		fences: [],
 		accountDelay: 0,
@@ -257,10 +259,60 @@ test("real mode reads host, cpu, and uptime for the real-run agents", async (t) 
 	assert.equal(design.cpu, "22%");
 	assert.equal(state.liveReads, 0);
 
+	state.agent.id = "market";
+	state.agent.on = false;
+	state.liveReads = 0;
+	const paused = await server.loadAgentDetail({ data: "market" });
+	assert.equal(paused.cpu, "0%");
+	assert.equal(paused.uptime, "Paused");
+	assert.equal(paused.region, "test");
+	state.agent.on = true;
+
 	process.env.ADAPTERS = "test";
 	state.agent.id = "market";
 	const stored = await server.loadAgentDetail({ data: "market" });
 	assert.equal(stored.host, "machine");
 	assert.equal(stored.cpu, "22%");
 	assert.equal(state.liveReads, 0);
+});
+
+test("a boat 503 shows dashes for host, cpu, and uptime", async (t) => {
+	const previous = process.env.ADAPTERS;
+	t.after(() => {
+		if (previous === undefined) delete process.env.ADAPTERS;
+		else process.env.ADAPTERS = previous;
+	});
+	process.env.ADAPTERS = "real";
+	setup(t, {
+		boatStatus: 503,
+		agent: {
+			id: "market",
+			name: "Market",
+			role: "Research",
+			tint: "#def5ee",
+			on: true,
+			autonomy: "Ask first",
+			mission: "Initial mission",
+			contribution: 0,
+			targets: [],
+			kpis: [],
+			skills: [],
+			host: "machine",
+			region: "test",
+			size: "small",
+			cpu: "22%",
+			uptime: "18 days",
+			egress: ["kept.example"],
+			secrets: ["kept-secret"],
+		},
+	});
+	const view = await server.loadAgentDetail({ data: "market" });
+	assert.equal(view.host, "—");
+	assert.equal(view.cpu, "—");
+	assert.equal(view.uptime, "—");
+	assert.equal(view.region, "test");
+	assert.equal(view.size, "small");
+	assert.deepEqual(view.egress, ["kept.example"]);
+	assert.deepEqual(view.secrets, ["kept-secret"]);
+	assert.equal(state.liveReads, 1);
 });

@@ -8,14 +8,14 @@ export interface FakeMachineView {
 	readonly env: Readonly<Record<string, string>>;
 	readonly labels: Readonly<Record<string, string>>;
 	readonly disk: boolean;
-	readonly ip: string | null;
+	ip: string | null;
 	readonly environment: string | null;
 	readonly noEnv: boolean;
 	readonly processCount: number;
 	readonly deleted: boolean;
 	readonly file: string | null;
 	readonly from: string | null;
-	readonly name: string;
+	name: string;
 }
 
 interface StoredMachine {
@@ -65,6 +65,7 @@ export interface FakeBoat {
 	readonly adminToken: string;
 	creates: number;
 	processCalls: number;
+	resumeCalls: number;
 	refuseEnvironment: boolean;
 	failSave: boolean;
 	nextError: { readonly status: number; readonly code: string; readonly secret: string } | null;
@@ -114,6 +115,7 @@ function sandboxJson(row: StoredMachine, state: string): unknown {
 		labels: row.labels,
 		hydratedAt: row.hydratedAt,
 		createdAt: row.createdAt,
+		ip: row.ip,
 		environment: row.environment,
 		ttlSeconds: null,
 		stop: stopJson(row),
@@ -160,6 +162,7 @@ export async function startFakeBoat(): Promise<FakeBoat> {
 		adminToken: ADMIN_TOKEN,
 		creates: 0,
 		processCalls: 0,
+		resumeCalls: 0,
 		refuseEnvironment: false,
 		failSave: false,
 		nextError: null,
@@ -412,7 +415,9 @@ export async function startFakeBoat(): Promise<FakeBoat> {
 			row.stopStatus = "superseded";
 		}
 		const resumed = await readJson(request);
-		if (typeof resumed.environment === "string") row.environment = resumed.environment;
+		// A resume that names no environment uses the account default.
+		row.environment = typeof resumed.environment === "string" ? resumed.environment : "default";
+		state.resumeCalls += 1;
 		row.state = "starting";
 		send(response, 200, {
 			ok: true,

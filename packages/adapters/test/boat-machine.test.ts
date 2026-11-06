@@ -101,7 +101,7 @@ test("start is idempotent and maps the dashboard fields", async () => {
 		assert.equal(row.labels.account, "acct-1");
 		assert.equal(row.labels.agent, "orders");
 		assert.equal(row.name, "vps-orders-01");
-		assert.equal(await adapter.host(scope, "orders"), "vps-orders-01");
+		assert.equal(await adapter.host(scope, "orders"), "203.0.113.10");
 		assert.equal(await adapter.region(scope, "orders"), "EU");
 		assert.equal(await adapter.size(scope, "orders"), "2 vCPU · 4 GB");
 		assert.equal(await adapter.cpu(scope, "orders"), "20%");
@@ -346,6 +346,7 @@ test("a refused stop and expired data use their own port errors", async () => {
 				);
 			},
 		);
+		await adapter.stop(scope, "orders");
 		fake.nextError = { status: 409, code: "snapshot_data_expired", secret: "super-secret-value" };
 		await assert.rejects(
 			() => adapter.resume(scope, "orders"),

@@ -258,18 +258,22 @@ async function liveDashboard(scope: AccountScope, agentId: string) {
 	const { chooseAdapters, readLiveMachine } = await import("@tensquads/adapters");
 	if (chooseAdapters(await workerEnv("ADAPTERS")) !== "real") return null;
 	if (agentId !== "market" && agentId !== "website") return null;
-	return readLiveMachine(
-		{
-			ADAPTERS: await workerEnv("ADAPTERS"),
-			BOAT_TOKEN: await workerEnv("BOAT_TOKEN"),
-			BOAT_ADMIN_TOKEN: await workerEnv("BOAT_ADMIN_TOKEN"),
-			BOAT_PROFILE: await workerEnv("BOAT_PROFILE"),
-			BOAT_BASE_PATH: await workerEnv("BOAT_BASE_PATH"),
-			BOAT_SECRET_BASE_URL: await workerEnv("BOAT_SECRET_BASE_URL"),
-		},
-		scope,
-		agentId,
-	);
+	try {
+		return await readLiveMachine(
+			{
+				ADAPTERS: await workerEnv("ADAPTERS"),
+				BOAT_TOKEN: await workerEnv("BOAT_TOKEN"),
+				BOAT_ADMIN_TOKEN: await workerEnv("BOAT_ADMIN_TOKEN"),
+				BOAT_PROFILE: await workerEnv("BOAT_PROFILE"),
+				BOAT_BASE_PATH: await workerEnv("BOAT_BASE_PATH"),
+				BOAT_SECRET_BASE_URL: await workerEnv("BOAT_SECRET_BASE_URL"),
+			},
+			scope,
+			agentId,
+		);
+	} catch {
+		return { host: "—", cpu: "—", uptime: "—" };
+	}
 }
 
 async function loadView(db: AppDatabase, scope: AccountScope, agentId: string) {
@@ -281,7 +285,7 @@ async function loadView(db: AppDatabase, scope: AccountScope, agentId: string) {
 		throw redirect({ to: "/agents" });
 	}
 	const machine = createTestMachine([machineRecord(agent)]);
-	const live = await liveDashboard(scope, agent.id);
+	const live = agent.on ? await liveDashboard(scope, agent.id) : null;
 	const master = await repos.squads.master(scope);
 	const accounts = await repos.platform.listAccounts(scope);
 	const company = accounts.find((item) => item.id === scope.accountId);
@@ -290,8 +294,8 @@ async function loadView(db: AppDatabase, scope: AccountScope, agentId: string) {
 		host: live?.host ?? machine.host(agent.id),
 		region: machine.region(agent.id),
 		size: machine.size(agent.id),
-		cpu: live?.cpu ?? machine.cpu(agent.id),
-		uptime: live?.uptime ?? machine.uptime(agent.id),
+		cpu: agent.on ? (live?.cpu ?? machine.cpu(agent.id)) : "0%",
+		uptime: agent.on ? (live?.uptime ?? machine.uptime(agent.id)) : "Paused",
 		storedCpu: agent.cpu,
 		storedUptime: agent.uptime,
 		egress: machine.egress(agent.id),

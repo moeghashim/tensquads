@@ -77,6 +77,13 @@ test("provisionAgents starts each real agent once from its snapshot", async () =
 			],
 		);
 		assert.equal(JSON.stringify(first).includes("machine-token"), false);
+		assert.deepEqual(
+			first.map((row) => Object.keys(row).sort()),
+			[
+				["agentId", "exp", "profile", "rotated", "snapshot"],
+				["agentId", "exp", "profile", "rotated", "snapshot"],
+			],
+		);
 		for (const row of first) {
 			assert.equal(row.exp - Math.floor(now / 1000), MACHINE_TOKEN_TTL_SECONDS);
 		}
@@ -205,7 +212,13 @@ test("readLiveMachine uses the boat fields for the real-run agents", async () =>
 		assert.equal(await readLiveMachine({ ADAPTERS: "test", fetchApi }, scope, "market"), null);
 		await provisionAgents(realEnv(fake, fetchApi), scope.accountId, now);
 		const live = await readLiveMachine(realEnv(fake, fetchApi), scope, "market");
-		assert.deepEqual(live, { host: "vps-market-01", cpu: "20%", uptime: "3 days" });
+		assert.deepEqual(live, { host: "203.0.113.10", cpu: "20%", uptime: "3 days" });
+		const named = fake.machines().find((row) => row.labels.agent === "market");
+		if (named) {
+			named.ip = null;
+			named.name = "named-host";
+		}
+		assert.equal((await readLiveMachine(realEnv(fake, fetchApi), scope, "market"))?.host, "named-host");
 		assert.equal(await readLiveMachine(realEnv(fake, fetchApi), scope, "support"), null);
 		assert.equal(await readLiveMachine(realEnv(fake, fetchApi), scope, "missing"), null);
 		const absent = await readLiveMachine(realEnv(fake, fetchApi), { accountId: "other", mode: "account" }, "market");
@@ -236,6 +249,127 @@ test("a real provision without registration does not start a machine", async () 
 		);
 		assert.equal(fake.creates, 0);
 	} finally {
+		await fake.close();
+	}
+});
+
+function boat(fake: Awaited<ReturnType<typeof startFakeBoat>>, fetchApi: typeof fetch = fetch) {
+	return createBoatMachine({
+		token: fake.machineToken,
+		adminToken: fake.adminToken,
+		basePath: fake.basePath,
+		profileName: "tensquads-agents",
+		secretBaseUrl: "https://example.com/hooks",
+		fetchApi,
+		wait,
+	});
+}
+
+test("a resumed real agent keeps its environment", async () => {
+	const fake = await startFakeBoat();
+	try {
+		const adapter = boat(fake);
+		await adapter.startFromTemplate(scope, "tensquads-market-0-1-0", "market");
+		await adapter.stop(scope, "market");
+		await adapter.resume(scope, "market");
+		const row = fake.machines().find((item) => item.labels.agent === "market");
+		assert.equal(row?.state, "running");
+		assert.equal(row?.environment, marketProfile);
+	} finally {
+		await fake.close();
+	}
+});
+
+test("a running real agent is not resumed again", async () => {
+	const fake = await startFakeBoat();
+	try {
+		const adapter = boat(fake);
+		await adapter.startFromTemplate(scope, "tensquads-market-0-1-0", "market");
+		assert.equal(fake.resumeCalls, 0);
+		await adapter.startFromTemplate(scope, "tensquads-market-0-1-0", "market");
+		await adapter.resume(scope, "market");
+		assert.equal(fake.resumeCalls, 0);
+	} finally {
+		await fake.close();
+	}
+});
+
+test("overlapping resumes of one stopped agent send one resume", { timeout: 3_000 }, async () => {
+	const fake = await startFakeBoat();
+	const setup = boat(fake);
+	await setup.startFromTemplate(scope, "tensquads-market-0-1-0", "market");
+	await setup.stop(scope, "market");
+	let resumes = 0;
+	let openGate = () => {};
+	let markHeld = () => {};
+	const opened = new Promise<void>((resolve) => {
+		openGate = resolve;
+	});
+	const held = new Promise<void>((resolve) => {
+		markHeld = resolve;
+	});
+	const fetchApi: typeof fetch = (input, init) => {
+		const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+		assert.equal(new URL(href).hostname, "127.0.0.1");
+		const method = init?.method ?? "GET";
+		if (method === "POST" && new URL(href).pathname.endsWith("/resume")) {
+			resumes += 1;
+			if (resumes === 1) {
+				markHeld();
+				return opened.then(() => fetch(input, init));
+			}
+		}
+		return fetch(input, init);
+	};
+	const adapter = boat(fake, fetchApi);
+	const both = Promise.all([
+		adapter.startFromTemplate(scope, "tensquads-market-0-1-0", "market"),
+		adapter.startFromTemplate(scope, "tensquads-market-0-1-0", "market"),
+	]);
+	try {
+		await held;
+		for (let tick = 0; tick < 5; tick += 1) await new Promise((done) => setImmediate(done));
+		assert.equal(resumes, 1);
+		openGate();
+		await both;
+		assert.equal(resumes, 1);
+		assert.equal(fake.resumeCalls, 1);
+	} finally {
+		openGate();
+		await fake.close();
+	}
+});
+
+test("overlapping environment creates both succeed", { timeout: 3_000 }, async () => {
+	const fake = await startFakeBoat();
+	let posts = 0;
+	let releaseSecond = () => {};
+	const secondPosted = new Promise<void>((resolve) => {
+		releaseSecond = resolve;
+	});
+	const fetchApi: typeof fetch = (input, init) => {
+		const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+		assert.equal(new URL(href).hostname, "127.0.0.1");
+		const method = init?.method ?? "GET";
+		if (method === "POST" && new URL(href).pathname.endsWith("/environments")) {
+			posts += 1;
+			if (posts >= 2) releaseSecond();
+			if (posts === 1) return secondPosted.then(() => fetch(input, init));
+		}
+		return fetch(input, init);
+	};
+	try {
+		const adapter = boat(fake, fetchApi);
+		await Promise.all([
+			adapter.startFromTemplate(scope, "tensquads-market-0-1-0", "market"),
+			adapter.startFromTemplate(scope, "tensquads-market-0-1-0", "market"),
+		]);
+		assert.equal(posts, 2);
+		assert.equal(fake.creates, 1);
+		const row = fake.machines().find((item) => item.labels.agent === "market");
+		assert.equal(row?.environment, marketProfile);
+	} finally {
+		releaseSecond();
 		await fake.close();
 	}
 });
