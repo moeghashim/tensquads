@@ -29,6 +29,31 @@ async function bodyHtml(page: { locator: (selector: string) => { innerHTML: () =
 
 const approvedHome = inventoryHtml(readFileSync(new URL("../docs/designs/home/home.html", import.meta.url), "utf8"));
 
+async function renderedHomeV2Inventory(page: import("@playwright/test").Page) {
+	const canvas = await page.context().newPage();
+	try {
+		await canvas.setContent(readFileSync(new URL("../docs/designs/home-v2/home.html", import.meta.url), "utf8"));
+		await canvas.evaluate(() => {
+			for (const b of document.querySelectorAll(".tg button")) {
+				b.setAttribute("data-handler", "k.pick");
+				b.setAttribute("data-event", "onClick");
+			}
+			const ta = document.getElementById("draft");
+			if (ta) {
+				ta.setAttribute("data-handler", "onDraft");
+				ta.setAttribute("data-event", "onChange");
+			}
+			for (const b of document.querySelectorAll("#ex button")) {
+				b.setAttribute("data-handler", "ex.pick");
+				b.setAttribute("data-event", "onClick");
+			}
+		});
+		return builtInventory(await canvas.locator("body").innerHTML());
+	} finally {
+		await canvas.close();
+	}
+}
+
 async function expectInventory(
 	page: import("@playwright/test").Page,
 	name: "Home" | "Onboarding" | "SignIn",
@@ -70,6 +95,35 @@ test("the homepage inventory matches the design texts, handlers, loops, and link
 	await expect(page.getByText("Leen Dates").first()).toBeVisible();
 	await expect(page.getByText("Website builder").first()).toBeVisible();
 	await expect(page.getByText("Meet the squad", { exact: true })).toBeVisible();
+});
+
+test("the home-v2 inventory matches docs/designs/home-v2/home.html", async ({ page }) => {
+	await page.route(/^http:\/\/localhost:\d+\//, async (route) => {
+		try {
+			const incoming = route.request().headers();
+			const cookie = incoming.cookie ?? "";
+			const devCookie = cookie.includes("__clerk_db_jwt")
+				? cookie
+				: [cookie, "__clerk_db_jwt=dev", "__client_uat=0"].filter(Boolean).join("; ");
+			const response = await route.fetch({
+				headers: { ...incoming, host: "tensquads.moe-678.workers.dev", cookie: devCookie },
+			});
+			await route.fulfill({ response });
+		} catch {
+			// Request context disposed when the test finishes.
+		}
+	});
+	await page.goto("/");
+	const expected = await renderedHomeV2Inventory(page);
+	const diff = compareInventory(expected, builtInventory(await bodyHtml(page)));
+	expect(diff.extraTexts).toEqual([]);
+	expect(diff.missingTexts).toEqual([]);
+	expect(diff.extraLinks).toEqual([]);
+	expect(diff.missingLinks).toEqual([]);
+	expect(diff.extraHandlers).toEqual([]);
+	expect(diff.missingHandlers).toEqual([]);
+	expect(diff.extraLoops).toEqual([]);
+	expect(diff.missingLoops).toEqual([]);
 });
 
 function faultyHomeHtml(page: import("@playwright/test").Page, fault: string) {
