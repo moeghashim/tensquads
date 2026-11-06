@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { HomePage } from "#/screens/home/HomePage.tsx";
 import { HomeV2Page } from "#/screens/home-v2/HomeV2Page.tsx";
-import { getHomeV2 } from "#/server/home-host.ts";
+import { getHomeV2 } from "#/server/home-v2-host.ts";
 
 export const Route = createFileRoute("/")({
 	loader: () => getHomeV2(),
