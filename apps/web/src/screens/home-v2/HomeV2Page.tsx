@@ -62,18 +62,17 @@ function runApprovalMoment(root: HTMLDivElement): () => void {
 	};
 }
 
+function mountApprovalMoment(node: HTMLDivElement | null) {
+	if (!node) return;
+	return runApprovalMoment(node);
+}
+
 export function HomeV2Page() {
 	const [kind, setKind] = useState<BusinessKind>("existing");
 	const [draft, setDraft] = useState("");
 
 	return (
-		<div
-			className="home-v2"
-			ref={(node) => {
-				if (!node) return;
-				return runApprovalMoment(node);
-			}}
-		>
+		<div className="home-v2" ref={mountApprovalMoment}>
 			<script
 				// biome-ignore lint/security/noDangerouslySetInnerHtml: constant script to hide hero cards before first paint
 				dangerouslySetInnerHTML={{ __html: PRE_PAINT_SCRIPT }}

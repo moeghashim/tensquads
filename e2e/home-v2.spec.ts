@@ -97,6 +97,39 @@ test("the reduced-motion path shows the hero cards at once and still approves Pi
 	await expect(page.locator(".home-v2 .cnt")).toHaveClass(/\bdown\b/);
 });
 
+for (const reducedMotion of ["no-preference", "reduce"] as const) {
+	test(`prompt interactions preserve animation progress with ${reducedMotion} motion`, async ({ page }) => {
+		await page.emulateMedia({ reducedMotion });
+		await routeHost(page, HOME_V2_HOST);
+		await page.goto("/");
+		const box = page.getByRole("textbox", { name: "Describe your business" });
+		for (let index = 0; index < 20; index++) {
+			await box.fill(`Business ${index}`);
+			await page.getByRole("button", { name: index % 2 === 0 ? "New business" : "Existing business" }).click();
+			await page.waitForTimeout(300);
+		}
+		const firstCard = page.locator(".home-v2 .c").first();
+		expect(await firstCard.getAttribute("class")).toMatch(/\bapproved\b/);
+		await expect(page.locator(".home-v2 .ask .sr")).toHaveText("3");
+		if (reducedMotion === "no-preference") {
+			for (const card of await page.locator(".home-v2 .c").all()) {
+				await expect(card).toHaveClass(/\bin\b/);
+			}
+		}
+		await expect(firstCard).toHaveClass(/\bsettled\b/, { timeout: 6000 });
+		const panel = page.locator("#control .panel");
+		await panel.scrollIntoViewIfNeeded();
+		if (reducedMotion === "no-preference") {
+			await expect(panel).toHaveClass(/\bfill\b/);
+		}
+		await page.getByRole("button", { name: "A cafe with a wholesale side" }).click();
+		await expect(box).toHaveValue("A cafe with a wholesale side");
+		await expect(panel).not.toHaveClass(/\bpre\b/);
+		await page.waitForTimeout(reducedMotion === "reduce" ? 1300 : 4600);
+		await expect(firstCard).not.toHaveClass(/\bpress\b/);
+	});
+}
+
 test("with JavaScript off every hero card shows", async ({ browser }) => {
 	const context = await browser.newContext({ javaScriptEnabled: false });
 	const page = await context.newPage();

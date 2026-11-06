@@ -1,6 +1,29 @@
 import { controls, finalLineup, limits, nameOf, plans, squadAgents, steps } from "./data.ts";
 import { CheckV2, MateV2 } from "./MateV2.tsx";
 
+function observeLimitsPanel(panel: HTMLDivElement | null) {
+	if (!panel) return;
+	const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+	if (calm || !("IntersectionObserver" in window)) return;
+	panel.classList.add("pre");
+	const observer = new IntersectionObserver(
+		(entries, obs) => {
+			if (entries[0]?.isIntersecting) {
+				requestAnimationFrame(() => {
+					panel.classList.remove("pre");
+					panel.classList.add("fill");
+				});
+				obs.disconnect();
+			}
+		},
+		{ threshold: 0.4 },
+	);
+	observer.observe(panel);
+	return () => {
+		observer.disconnect();
+	};
+}
+
 export function HomeV2Rest() {
 	return (
 		<>
@@ -104,31 +127,7 @@ export function HomeV2Rest() {
 							))}
 						</div>
 					</div>
-					<div
-						className="panel"
-						ref={(panel) => {
-							if (!panel) return;
-							const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-							if (calm || !("IntersectionObserver" in window)) return;
-							panel.classList.add("pre");
-							const observer = new IntersectionObserver(
-								(entries, obs) => {
-									if (entries[0]?.isIntersecting) {
-										requestAnimationFrame(() => {
-											panel.classList.remove("pre");
-											panel.classList.add("fill");
-										});
-										obs.disconnect();
-									}
-								},
-								{ threshold: 0.4 },
-							);
-							observer.observe(panel);
-							return () => {
-								observer.disconnect();
-							};
-						}}
-					>
+					<div className="panel" ref={observeLimitsPanel}>
 						<div className="ph">
 							<MateV2 id="master" state="idle" size={32} />
 							<b>{nameOf("master")}</b>
