@@ -27,6 +27,32 @@ export function imageTag(imageId: string, version: string): string {
 	return `registry.agents.co/${imageId}:${version}`;
 }
 
+// Dashed snapshot names are not parsed. The real run uses this table only.
+export const REAL_RUN_IMAGES = [
+	{
+		agentId: "market",
+		snapshot: "tensquads-market-0-1-0",
+		imageTag: "registry.agents.co/market:0.1.0",
+		imageId: "market",
+		version: "0.1.0",
+	},
+	{
+		agentId: "website",
+		snapshot: "tensquads-website-0-1-0",
+		imageTag: "registry.agents.co/website:0.1.0",
+		imageId: "website",
+		version: "0.1.0",
+	},
+] as const;
+
+export function realRunImage(templateId: string) {
+	return REAL_RUN_IMAGES.find((row) => row.snapshot === templateId);
+}
+
+export function realRunAgent(agentId: string) {
+	return REAL_RUN_IMAGES.find((row) => row.agentId === agentId);
+}
+
 export function templateName(imageId: string, version: string): string {
 	return `tensquads-${imageId}-${version}`;
 }
@@ -36,6 +62,8 @@ export function sourceName(imageId: string, version: string): string {
 }
 
 export function imageFromTemplate(templateId: string): { readonly imageId: string; readonly version: string } {
+	const known = realRunImage(templateId);
+	if (known) return { imageId: known.imageId, version: known.version };
 	if (!templateId.startsWith("tensquads-")) throw new Error("The template id is not valid.");
 	const rest = templateId.slice("tensquads-".length);
 	const split = rest.lastIndexOf("-");
