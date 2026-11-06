@@ -351,6 +351,14 @@ export const featureRequests = pgTable("feature_requests", {
 	sortOrder: integer("sort_order").notNull(),
 });
 
+export const monitorSecrets = pgTable("monitor_secrets", {
+	accountId: text("account_id")
+		.notNull()
+		.references(() => accounts.id, { onDelete: "cascade" }),
+	monitorId: text("monitor_id").primaryKey(),
+	secret: text("secret").notNull(),
+});
+
 export const schema = {
 	accounts,
 	plans,
@@ -377,4 +385,5 @@ export const schema = {
 	featureRequests,
 	writeFences,
 	retiredTabs,
+	monitorSecrets,
 };

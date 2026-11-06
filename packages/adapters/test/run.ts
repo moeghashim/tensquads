@@ -15,6 +15,7 @@ const serial = [
 	"test/review-fourth.test.ts",
 	"test/master-inbox.test.ts",
 	"test/live-projection.test.ts",
+	"test/review-monitor.test.ts",
 	"test/approval-delivery.test.ts",
 ];
 const remaining = readdirSync("test")

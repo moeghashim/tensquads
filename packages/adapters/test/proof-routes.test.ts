@@ -4,7 +4,6 @@ import test from "node:test";
 import { AccountBus } from "../src/cloudflare-bus/account-bus.ts";
 import { alarmAfterFlush, HEARTBEATS, MISSED_MS, RETRY_MS } from "../src/cloudflare-bus/heartbeat.ts";
 import { credentialForMachine, handleMachineRequest } from "../src/cloudflare-bus/http.ts";
-import { recordMonitor } from "../src/cloudflare-bus/monitors.ts";
 import {
 	MACHINE_TOKEN_BASE_URL_ENV,
 	MACHINE_TOKEN_ENV,
@@ -220,9 +219,18 @@ test("a signed change.detected webhook becomes one bus event", async () => {
 		"x-context-id": "evt-proof-1",
 		"user-agent": "Context.dev-Webhooks/1.0",
 	};
-	const env = { CONTEXT_WEBHOOK_SECRET: SECRET, now: () => now };
+	const env = { MACHINE_TOKEN_KEY: KEY, now: () => now };
 	const account = "change-proof";
-	await recordMonitor("mon-proof", account);
+	const delivery = await credentialForMachine({ MACHINE_TOKEN_KEY: KEY }, account, "market", now);
+	const stored = await handleMachineRequest(
+		new Request("https://worker/machine/monitor", {
+			method: "POST",
+			headers: { authorization: delivery.authorization },
+			body: JSON.stringify({ accountId: account, agentId: "market", monitorId: "mon-proof", secret: SECRET }),
+		}),
+		env,
+	);
+	assert.equal(stored?.status, 200);
 	const post = (init: RequestInit, id = account) =>
 		handleMachineRequest(new Request(`https://worker/change.detected?account=${id}`, init), env);
 	const first = await post({ method: "POST", headers, body });
@@ -258,12 +266,20 @@ test("a signed change.detected webhook becomes one bus event", async () => {
 		"change-wrong",
 	);
 	assert.equal(wrong?.status, 400);
+	const unknownBody = JSON.stringify({
+		...JSON.parse(body),
+		data: { change: { ...JSON.parse(body).data.change, monitor_id: "mon-unregistered" } },
+	});
 	const missing = await handleMachineRequest(
-		new Request(`https://worker/change.detected?account=${account}`, { method: "POST", headers, body }),
+		new Request(`https://worker/change.detected?account=${account}`, {
+			method: "POST",
+			headers: { ...headers, "x-context-signature": await sign(SECRET, stamp, unknownBody) },
+			body: unknownBody,
+		}),
 		{ now: () => now },
 	);
-	assert.equal(missing?.status, 503);
-	assert.equal(await missing?.text(), "The machine service is not configured.");
+	assert.equal(missing?.status, 400);
+	assert.equal(await missing?.text(), "The message was rejected.");
 	assert.equal((await workerTestBus().events({ accountId: "change-stale", mode: "account" })).length, 0);
 	assert.equal((await workerTestBus().events({ accountId: "change-bad", mode: "account" })).length, 0);
 	assert.equal((await workerTestBus().events({ accountId: "change-wrong", mode: "account" })).length, 0);

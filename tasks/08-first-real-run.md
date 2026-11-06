@@ -39,7 +39,13 @@ Both routes use the same machine-token check as `/machine/send`.
 ### Webhook (A1 and B)
 
 - The context.dev monitor calls `https://tensquads-real.moe-678.workers.dev/change.detected`. The researcher reads that URL from its release configuration.
-- The Worker verifies the signature with `CONTEXT_WEBHOOK_SECRET`.
+- context.dev creates one signing secret for each monitor. The create response returns that secret as `webhook.secret`.
+- The account's researcher calls `POST /machine/monitor`. The body is `{ accountId, agentId, monitorId, secret }`. The call uses the same machine bearer token as `/machine/send`.
+- The Worker loads the account's agents from the database. Only the researcher agent may store a secret. The Worker stores `account_id`, `monitor_id`, and `secret`. `monitor_id` is unique.
+- A second call for the same monitor and the same account replaces the secret. The same monitor id from another account is rejected. The answer is `{ ok: true }` only.
+- `POST /change.detected` reads the monitor id from the raw body. It loads the stored secret for that id. It checks `x-context-signature` with the `t=` and `v1=` HMAC. It allows 300 seconds of clock skew.
+- It then checks that the stored account matches. It also checks `?account=` when that query is present. An unknown monitor, a bad signature, and an account mismatch all get the same rejection.
+- The Worker does not return the secret. It does not log the secret. It does not publish the secret.
 
 ### Machines (A2, B, C)
 

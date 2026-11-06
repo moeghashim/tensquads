@@ -104,7 +104,6 @@ test("env.real declares every binding the real Worker reads and shares no queue 
 		"CLERK_PUBLISHABLE_KEY",
 		"CLERK_SECRET_KEY",
 		"CLOUDFLARE_PAGES_API_TOKEN",
-		"CONTEXT_WEBHOOK_SECRET",
 		"DATABASE_URL",
 		"MACHINE_TOKEN_KEY",
 		"NEON_POSTGRES_CONNECTION_STRING",

@@ -153,7 +153,19 @@ async function withDatabase<T>(
 	}
 }
 
-// The alarm drains pending approval deliveries from Neon. The shared retry
+export async function withNeon<T>(
+	connectionString: string,
+	run: (db: ReturnType<typeof database>["db"]) => Promise<T>,
+): Promise<T> {
+	return withDatabase(connectionString, async (db) => {
+		try {
+			return await run(db);
+		} catch (error) {
+			throw hidden(error, connectionString);
+		}
+	});
+}
+
 // keeps each row's event id, so a repeat send is dropped at the receiver.
 // The count left tells the alarm to run again.
 export async function drainApprovalDeliveries(

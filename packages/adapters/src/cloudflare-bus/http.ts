@@ -6,7 +6,7 @@ import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { takeTestTask, workerTestBus } from "../worker-adapters.ts";
 import { changeEvent, verifyContextSignature } from "./change.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
-import { resolveMonitor } from "./monitors.ts";
+import { recordMonitorSecret, resolveMonitor, resolveMonitorSecret } from "./monitors.ts";
 import { type MachineTokenDelivery, machineTokenDelivery, verifyMachineToken } from "./token.ts";
 
 export interface BusNamespace {
@@ -25,7 +25,6 @@ export interface WorkerBindings {
 	readonly BUS_QUEUE?: QueueProducer;
 	readonly BUS_DEAD_LETTER?: string;
 	readonly DATABASE_URL?: string;
-	readonly CONTEXT_WEBHOOK_SECRET?: string;
 	readonly now?: () => number;
 	readonly BROWSER?: unknown;
 	readonly OPENAI_API_KEY?: string;
@@ -161,17 +160,33 @@ function eventFromRaw(raw: string): ReturnType<typeof changeEvent> {
 	}
 }
 
+function unverifiedMonitorId(raw: string): string {
+	try {
+		const parsed: unknown = JSON.parse(raw);
+		if (!isObject(parsed) || !isObject(parsed.data) || !isObject(parsed.data.change)) return "";
+		const id = parsed.data.change.monitor_id;
+		return isNonEmptyString(id) ? id : "";
+	} catch {
+		return "";
+	}
+}
+
 function monitorIdOf(event: PublishedEvent): string {
 	const value = event.payload.monitorId;
 	return typeof value === "string" ? value : "";
 }
 
-async function accountForChange(request: Request, env: WorkerBindings, event: PublishedEvent): Promise<string | null> {
-	const accountId = await resolveMonitor(monitorIdOf(event), env);
-	if (!accountId) return null;
+async function accountForChange(
+	request: Request,
+	env: WorkerBindings,
+	event: PublishedEvent,
+	secretAccountId: string,
+): Promise<string | null> {
+	const mapped = await resolveMonitor(monitorIdOf(event), env);
+	if (mapped !== null && mapped !== secretAccountId) return null;
 	const claimed = new URL(request.url).searchParams.get("account");
-	if (claimed && claimed !== accountId) return null;
-	return accountId;
+	if (claimed && claimed !== secretAccountId) return null;
+	return secretAccountId;
 }
 
 async function verifiedChange(
@@ -179,11 +194,12 @@ async function verifiedChange(
 	env: WorkerBindings,
 ): Promise<{ accountId: string; event: PublishedEvent } | Response> {
 	if (request.method !== "POST") return rejected();
-	const secret = env.CONTEXT_WEBHOOK_SECRET;
-	if (!secret) return notReady();
 	const raw = await request.text();
+	const monitorId = unverifiedMonitorId(raw);
+	const stored = await resolveMonitorSecret(monitorId, env);
+	if (!stored) return rejected();
 	const signed = await verifyContextSignature(
-		secret,
+		stored.secret,
 		headerValue(request, "x-context-signature"),
 		raw,
 		env.now?.() ?? Date.now(),
@@ -191,12 +207,24 @@ async function verifiedChange(
 	if (!signed) return rejected();
 	if (headerValue(request, "x-context-event") !== "change.detected") return rejected();
 	const event = eventFromRaw(raw);
-	if (!event) return rejected();
+	if (!event || monitorIdOf(event) !== monitorId) return rejected();
 	const contextId = headerValue(request, "x-context-id");
 	if (contextId.length > 0 && contextId !== event.id) return rejected();
-	const accountId = await accountForChange(request, env, event);
+	const accountId = await accountForChange(request, env, event, stored.accountId);
 	if (!accountId) return rejected();
 	return { accountId, event };
+}
+
+async function storeMonitor(
+	env: WorkerBindings,
+	accountId: string,
+	agentId: string,
+	body: Record<string, unknown>,
+): Promise<Response> {
+	if (!isNonEmptyString(body.monitorId) || !isNonEmptyString(body.secret)) return rejected();
+	const saved = await recordMonitorSecret(env, accountId, agentId, body.monitorId, body.secret);
+	if (!saved) return rejected();
+	return Response.json({ ok: true });
 }
 
 async function publishChange(env: WorkerBindings, accountId: string, event: PublishedEvent): Promise<Response> {
@@ -252,11 +280,15 @@ export async function handleMachineRequest(request: Request, env: WorkerBindings
 	const url = new URL(request.url);
 	if (url.pathname === "/machine/heartbeat") return handleHeartbeat(request, env);
 	if (url.pathname === "/change.detected") return handleChange(request, env);
-	if (url.pathname !== "/machine/send" && url.pathname !== "/machine/take") return null;
+	if (url.pathname !== "/machine/send" && url.pathname !== "/machine/take" && url.pathname !== "/machine/monitor") {
+		return null;
+	}
+	if (request.method !== "POST") return rejected();
 	const read = await readAgentBody(request);
 	if (!read) return rejected();
 	const denied = await authorized(request, env, read.accountId, read.agentId);
 	if (denied) return denied;
+	if (url.pathname === "/machine/monitor") return storeMonitor(env, read.accountId, read.agentId, read.body);
 	if (url.pathname === "/machine/send") return sendMachine(env, read.accountId, read.agentId, read.body);
 	return takeMachine(env, read.accountId, read.agentId);
 }
