@@ -24,21 +24,98 @@ already_held() {
 	return 1
 }
 
-# Move the stale directory aside first. Only the mover removes it, so two
-# reclaimers cannot remove a fresh lock that took its place.
-reclaim_stale() {
-	stale="$L.stale.$$"
-	rm -rf "$stale"
-	mv "$L" "$stale" 2>/dev/null || return 0
-	if [ -n "$1" ]; then
-		moved=$(cat "$stale/pid" 2>/dev/null)
-		if [ "$moved" != "$1" ]; then
-			# We moved a fresh lock, not the stale one. Put it back.
-			if [ ! -e "$L" ]; then mv "$stale" "$L" 2>/dev/null || rm -rf "$stale"; else rm -rf "$stale"; fi
+# Test-only rendezvous. Production leaves TS_E2E_LOCK_PAUSE_DIR unset.
+# A point pauses when $TS_E2E_LOCK_PAUSE_DIR/$point.on exists.
+# The test releases one pid by creating $point.$pid.go.
+lock_pause() {
+	point=$1
+	[ -n "$TS_E2E_LOCK_PAUSE_DIR" ] || return 0
+	[ -e "$TS_E2E_LOCK_PAUSE_DIR/$point.on" ] || return 0
+	echo $$ > "$TS_E2E_LOCK_PAUSE_DIR/$point.$$.ready"
+	while [ ! -f "$TS_E2E_LOCK_PAUSE_DIR/$point.$$.go" ]; do
+		sleep 0.05
+	done
+}
+
+lock_trace() {
+	[ -n "$TS_E2E_LOCK_PAUSE_DIR" ] || return 0
+	echo "$1 $$" >> "$TS_E2E_LOCK_PAUSE_DIR/trace"
+}
+
+# GNU stat, then BSD stat. Empty when the path is gone.
+dir_id() {
+	id=$(stat -c %i "$1" 2>/dev/null) || id=$(stat -f %i "$1" 2>/dev/null) || id=
+	printf '%s' "$id"
+}
+
+# Put a moved directory back when it names a holder. Never delete a live pid.
+restore_dir() {
+	moved=$1
+	if [ ! -e "$L" ]; then
+		mv "$moved" "$L" 2>/dev/null || return 0
+		return 0
+	fi
+	live=$(cat "$L/pid" 2>/dev/null || true)
+	if [ -n "$live" ] && kill -0 "$live" 2>/dev/null; then
+		moved_pid=$(cat "$moved/pid" 2>/dev/null || true)
+		if [ -n "$moved_pid" ] && kill -0 "$moved_pid" 2>/dev/null; then
 			return 0
 		fi
-	elif [ -f "$stale/pid" ]; then
-		if [ ! -e "$L" ]; then mv "$stale" "$L" 2>/dev/null || rm -rf "$stale"; else rm -rf "$stale"; fi
+		rm -rf "$moved"
+		return 0
+	fi
+	if [ -f "$moved/pid" ]; then
+		rm -rf "$L"
+		mv "$moved" "$L" 2>/dev/null || return 0
+		return 0
+	fi
+	rm -rf "$moved"
+}
+
+# A dead holder is claimed by moving the pid file. A fresh directory has no
+# pid file yet, so this leaves it in place. An aged directory is removed only
+# when the moved copy is still empty and older than 120 minutes.
+reclaim_stale() {
+	if [ -n "$1" ]; then
+		token="$L.reclaim.$$"
+		rm -f "$token"
+		mv "$L/pid" "$token" 2>/dev/null || return 0
+		moved=$(cat "$token" 2>/dev/null || true)
+		if [ "$moved" != "$1" ] || kill -0 "$moved" 2>/dev/null; then
+			lock_pause after-steal
+			if [ ! -f "$L/pid" ]; then
+				mv "$token" "$L/pid" 2>/dev/null || return 0
+			fi
+			if [ -f "$L/pid" ] || ! kill -0 "$moved" 2>/dev/null; then
+				rm -f "$token"
+			fi
+			return 0
+		fi
+		rm -f "$token"
+		if [ -f "$L/pid" ]; then
+			return 0
+		fi
+		rm -rf "$L"
+		return 0
+	fi
+
+	stale="$L.stale.$$"
+	rm -rf "$stale"
+	if [ -f "$L/pid" ]; then
+		return 0
+	fi
+	if [ -z "$(find "$L" -maxdepth 0 -mmin +120 2>/dev/null)" ]; then
+		return 0
+	fi
+	mv "$L" "$stale" 2>/dev/null || return 0
+	if [ -f "$stale/pid" ]; then
+		lock_pause after-steal
+		restore_dir "$stale"
+		return 0
+	fi
+	if [ -z "$(find "$stale" -maxdepth 0 -mmin +120 2>/dev/null)" ]; then
+		lock_pause after-steal
+		rm -rf "$stale"
 		return 0
 	fi
 	rm -rf "$stale"
@@ -57,15 +134,48 @@ if already_held; then
 	exit $?
 fi
 
-while ! mkdir "$L" 2>/dev/null; do
-	if [ -f "$L/pid" ]; then
-		holder=$(cat "$L/pid" 2>/dev/null)
-		if [ -n "$holder" ] && ! kill -0 "$holder" 2>/dev/null; then reclaim_stale "$holder"; fi
-	elif [ -n "$(find "$L" -maxdepth 0 -mmin +120 2>/dev/null)" ]; then
-		reclaim_stale ""
+# mkdir wins the directory. The command runs only when that same directory
+# still contains this pid. A failed write goes back to the wait loop.
+while true; do
+	owned=0
+	if [ -f "$L/pid" ] && [ "$(cat "$L/pid" 2>/dev/null)" = "$$" ]; then
+		owned=1
+	elif mkdir "$L" 2>/dev/null; then
+		ident=$(dir_id "$L")
+		lock_pause after-mkdir
+		if [ -n "$ident" ] && [ "$(dir_id "$L")" = "$ident" ] \
+			&& echo $$ > "$L/pid" 2>/dev/null \
+			&& [ "$(cat "$L/pid" 2>/dev/null)" = "$$" ] \
+			&& [ "$(dir_id "$L")" = "$ident" ]; then
+			owned=1
+		else
+			lock_trace lost-pid
+		fi
+	else
+		if [ -f "$L/pid" ]; then
+			holder=$(cat "$L/pid" 2>/dev/null)
+			if [ "$holder" = "$$" ]; then
+				owned=1
+			elif [ -n "$holder" ] && ! kill -0 "$holder" 2>/dev/null; then
+				lock_pause saw-dead
+				reclaim_stale "$holder"
+				lock_trace reclaim-done
+			fi
+		elif [ -n "$(find "$L" -maxdepth 0 -mmin +120 2>/dev/null)" ]; then
+			reclaim_stale ""
+			lock_trace reclaim-done
+		fi
+		if [ "$owned" -ne 1 ]; then
+			sleep 5
+		fi
 	fi
-	sleep 5
+	if [ "$owned" -eq 1 ] && [ "$(cat "$L/pid" 2>/dev/null)" = "$$" ]; then
+		trap cleanup EXIT INT TERM
+		if [ "$(cat "$L/pid" 2>/dev/null)" = "$$" ]; then
+			break
+		fi
+		trap - EXIT INT TERM
+		lock_trace lost-pid
+	fi
 done
-echo $$ > "$L/pid"
-trap cleanup EXIT INT TERM
 "$@"
