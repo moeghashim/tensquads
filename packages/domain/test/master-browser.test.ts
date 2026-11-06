@@ -36,7 +36,7 @@ async function checked(html: string) {
 		businessType: story.request.businessType,
 		cuisine: story.request.cuisine,
 		items: story.request.items,
-		brief: story.brief,
+		brief: story.prose,
 		report: story.report,
 		slug: "proof",
 		choice: story.choice,

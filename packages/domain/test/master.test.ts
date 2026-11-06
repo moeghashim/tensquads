@@ -185,7 +185,7 @@ function websiteTask(story: Story, report = story.report, businessType = story.r
 	return parseWebsiteTask({
 		businessName: story.request.businessName,
 		businessType,
-		brief: { text: story.brief, gap: report.gap },
+		brief: { text: story.prose, gap: report.gap },
 		report,
 		gapEvidence: report.gapEvidence,
 		items: story.request.items,
@@ -200,7 +200,7 @@ function pageFields(story: Story) {
 		businessType: story.request.businessType,
 		cuisine: story.request.cuisine,
 		items: story.request.items,
-		brief: story.brief,
+		brief: story.prose,
 		report: story.report,
 		slug: "proof",
 		choice: story.choice,
@@ -262,7 +262,7 @@ test("the page check requires the kit bytes and resolves relative links", async 
 		parseWebsiteTask({
 			businessName: story.request.businessName,
 			businessType: story.request.businessType,
-			brief: { text: story.brief, gap: story.report.gap },
+			brief: { text: story.prose, gap: story.report.gap },
 			report: story.report,
 			gapEvidence: story.report.gapEvidence,
 			items: saladsFirst,

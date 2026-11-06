@@ -1,5 +1,5 @@
 import { neonConfig, Pool } from "@neondatabase/serverless";
-import { NO_FINDING_TEXT, NO_ITEMS_TEXT } from "@tensquads/domain";
+import { BRIEF_FAILED_TEXT, NO_FINDING_TEXT, NO_ITEMS_TEXT, NO_NAME_TEXT } from "@tensquads/domain";
 import type { PublishedEvent } from "@tensquads/kernel";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
@@ -318,7 +318,7 @@ async function projectAsk(
 }
 
 // These stop messages go to the owner chat.
-const STOP_TEXTS: readonly string[] = [NO_ITEMS_TEXT, NO_FINDING_TEXT];
+const STOP_TEXTS: readonly string[] = [NO_ITEMS_TEXT, NO_FINDING_TEXT, NO_NAME_TEXT, BRIEF_FAILED_TEXT];
 
 async function insertStopText(
 	db: Parameters<Parameters<ReturnType<typeof database>["db"]["transaction"]>[0]>[0],

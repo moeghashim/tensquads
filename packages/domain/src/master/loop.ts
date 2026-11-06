@@ -3,22 +3,35 @@ import { approvalCovers, digestOf, type Mandate, type ResearchReport, type Skill
 import type { BusEvent, BusKind } from "../bus/types.ts";
 import { researchFields } from "../conversation/business-request.ts";
 import {
-	briefText,
+	checkBrief,
 	checkPage,
 	checkPublished,
 	checkResearch,
-	emptyMenu,
 	NO_FINDING_TEXT,
 	NO_ITEMS_TEXT,
 	readReport,
+	shownBrief,
 } from "./checks.ts";
 import { type GrantQuery, grantAllows, type StoredGrant } from "./grant.ts";
+import { BRIEF_FAILED_TEXT, NO_NAME_TEXT } from "./messages.ts";
 import type { RenderedPage } from "./render-page.ts";
 import { type BusinessRequest, mandateFor, type PageAudit, type PageReader } from "./types.ts";
+
+export interface BriefInput {
+	readonly businessName: string;
+	readonly businessType: BusinessRequest["businessType"];
+	readonly report: ResearchReport;
+	readonly reason?: string;
+}
+
+export interface BriefModel {
+	writeBrief(input: BriefInput): Promise<string> | string;
+}
 
 export interface MasterPorts {
 	readonly readPage: PageReader;
 	readonly audit: (html: string) => PageAudit | Promise<PageAudit>;
+	readonly model: BriefModel;
 	readonly mandateAt?: string;
 	readonly accountSlug?: string;
 	readonly accountId?: string;
@@ -35,6 +48,7 @@ export interface MasterSnapshot {
 	readonly phase: Phase;
 	readonly report?: ResearchReport;
 	readonly brief?: string;
+	readonly shown?: string;
 	readonly previewHtml?: string;
 	readonly previewUrl?: string;
 	readonly researchFails: number;
@@ -49,6 +63,7 @@ interface State {
 	phase: Phase;
 	report?: ResearchReport;
 	brief?: string;
+	shown?: string;
 	previewHtml?: string;
 	previewUrl?: string;
 	researchFails: number;
@@ -247,6 +262,19 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		};
 	}
 
+	async function writeCheckedBrief(
+		report: ResearchReport,
+	): Promise<{ readonly prose: string } | { readonly evidence: readonly string[] }> {
+		const input = { businessName: request.businessName, businessType: request.businessType, report };
+		const first = String(await ports.model.writeBrief(input));
+		const firstCheck = checkBrief(first, report);
+		if (firstCheck.pass) return { prose: first };
+		const second = String(await ports.model.writeBrief({ ...input, reason: firstCheck.evidence.join(" ") }));
+		const secondCheck = checkBrief(second, report);
+		if (secondCheck.pass) return { prose: second };
+		return { evidence: secondCheck.evidence };
+	}
+
 	async function onResearch(event: BusEvent): Promise<BusEvent[]> {
 		const raw = isRecord(event.payload) ? event.payload.report : undefined;
 		if (findingEmpty(raw)) {
@@ -257,19 +285,23 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		if (!result.pass) return failResearch(result.evidence);
 		const report = readReport(raw);
 		if (!report) return failResearch(["The report was rejected."]);
-		if (emptyMenu(request.businessName, request.items)) {
+		if (request.businessName.trim().length === 0) {
+			state.phase = "escalated";
+			return [escalation(NO_NAME_TEXT, [NO_NAME_TEXT])];
+		}
+		if (request.items.length === 0) {
 			state.phase = "escalated";
 			return [escalation(NO_ITEMS_TEXT, [NO_ITEMS_TEXT])];
 		}
-		const brief = briefText({
-			businessName: request.businessName,
-			businessType: request.businessType,
-			finding: `${report.gap} ${report.gapEvidence.sourceUrl}`,
-			sources: report.sources,
-			items: request.items,
-		});
+		const written = await writeCheckedBrief(report);
+		if (!("prose" in written)) {
+			state.phase = "escalated";
+			return [escalation(BRIEF_FAILED_TEXT, written.evidence)];
+		}
+		const shown = shownBrief(written.prose, request.items);
 		state.report = report;
-		state.brief = brief;
+		state.brief = written.prose;
+		state.shown = shown;
 		state.phase = "brief";
 		return [
 			emit({
@@ -279,10 +311,10 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 				skill: "brief.write",
 				text: "Build the site with this brief?",
 				payload: {
-					brief: { text: brief, gap: report.gap },
+					brief: { text: shown, gap: report.gap },
 					taskId: state.runTaskId,
 					skill: "website.build",
-					subject: await digestOf(brief),
+					subject: await digestOf(shown),
 				},
 			}),
 		];
@@ -290,17 +322,18 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 
 	async function approveBrief(): Promise<BusEvent[]> {
 		if (request.businessName.trim().length === 0) throw new Error("The business is not stored.");
-		if (state.phase !== "brief" || !state.report || !state.brief) return [];
+		if (state.phase !== "brief" || !state.report || !state.brief || !state.shown) return [];
 		const report = state.report;
-		const brief = state.brief;
-		if (!(await granted("website.build", await digestOf(brief), null))) return [];
+		const prose = state.brief;
+		const shown = state.shown;
+		if (!(await granted("website.build", await digestOf(shown), null))) return [];
 		const approvalId = nextId();
 		const mandate: Mandate = mandateFor({
 			approvalId,
 			ruleId: "poc-brief",
 			ruleWhen: "The brief is ready.",
 			ruleAction: "site.build",
-			subject: await digestOf(brief),
+			subject: await digestOf(shown),
 			at: ports.mandateAt,
 		});
 		const approval = make(approvalId, {
@@ -312,7 +345,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			payload: { approval: { skill: "site.build", mandate } },
 		});
 		const taskPayload = {
-			...websiteFields(brief, report),
+			...websiteFields(prose, report),
 			approval: { skill: "site.build", mandate },
 		};
 		remember(taskPayload);
@@ -528,6 +561,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 			phase: state.phase,
 			report: state.report,
 			brief: state.brief,
+			shown: state.shown,
 			previewHtml: state.previewHtml,
 			previewUrl: state.previewUrl,
 			researchFails: state.researchFails,
@@ -543,6 +577,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		state.phase = saved.phase;
 		state.report = saved.report;
 		state.brief = saved.brief;
+		state.shown = saved.shown;
 		state.previewHtml = saved.previewHtml;
 		state.previewUrl = saved.previewUrl;
 		state.researchFails = saved.researchFails;

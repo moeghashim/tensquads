@@ -148,37 +148,77 @@ export async function checkResearch(report: unknown, readPage: PageReader): Prom
 	return outcome(evidence);
 }
 
-export function emptyMenu(businessName: string, items: readonly unknown[]): boolean {
-	return businessName.trim().length === 0 || items.length === 0;
-}
-
 export function renderItemSection(items: readonly { readonly name: string; readonly price: string }[]): string {
 	return items.map((item) => `${item.name}: ${item.price}`).join("\n");
 }
 
-export interface BriefParts {
-	readonly businessName: string;
-	readonly businessType: BusinessType;
-	readonly finding: string;
-	readonly sources: readonly string[];
-	readonly items: readonly { readonly name: string; readonly price: string }[];
+// The owner sees the brief, a blank line, then the stored menu.
+export function shownBrief(prose: string, items: readonly { readonly name: string; readonly price: string }[]): string {
+	return `${prose}\n\nMenu:\n${renderItemSection(items)}`;
 }
 
-// The brief is built by code only. No model text goes into it.
-export function briefText(parts: BriefParts): string {
-	return [
-		`Business: ${parts.businessName}`,
-		`Type: ${parts.businessType}`,
-		"",
-		"What the research found:",
-		parts.finding,
-		"",
-		"Sources:",
-		...parts.sources,
-		"",
-		"Menu:",
-		renderItemSection(parts.items),
-	].join("\n");
+const NUMBER_WORDS = [
+	"zero",
+	"one",
+	"two",
+	"three",
+	"four",
+	"five",
+	"six",
+	"seven",
+	"eight",
+	"nine",
+	"ten",
+	"eleven",
+	"twelve",
+	"thirteen",
+	"fourteen",
+	"fifteen",
+	"sixteen",
+	"seventeen",
+	"eighteen",
+	"nineteen",
+	"twenty",
+	"thirty",
+	"forty",
+	"fifty",
+	"sixty",
+	"seventy",
+	"eighty",
+	"ninety",
+	"hundred",
+	"thousand",
+	"dozen",
+	"half",
+] as const;
+const CURRENCY_SIGNS = ["$", "€", "£"] as const;
+const CURRENCY_WORDS = ["dollar", "dirham", "AED", "SAR", "riyal", "euro", "pound"] as const;
+const OFFER_WORDS = ["free", "off", "deal", "offer", "discount", "BOGO", "buy one"] as const;
+
+function hasWord(text: string, word: string): boolean {
+	return new RegExp(`\\b${word}\\b`, "i").test(text);
+}
+
+function wordCount(text: string): number {
+	const trimmed = text.trim();
+	if (trimmed.length === 0) return 0;
+	return trimmed.split(/\s+/).length;
+}
+
+// The model writes prose only. This check refuses any number, price, or offer.
+export function checkBrief(prose: string, report: ResearchReport): CheckOutcome {
+	const evidence: string[] = [];
+	if (wordCount(prose) >= 150) evidence.push("The brief is 150 words or more.");
+	if (!prose.includes(report.gap)) evidence.push("The brief does not name the gap.");
+	if (/\p{N}/u.test(prose)) evidence.push("The brief has a number.");
+	if (NUMBER_WORDS.some((word) => hasWord(prose, word))) evidence.push("The brief has a number word.");
+	if (CURRENCY_SIGNS.some((sign) => prose.includes(sign)) || CURRENCY_WORDS.some((word) => hasWord(prose, word))) {
+		evidence.push("The brief names a currency.");
+	}
+	if (prose.includes("%") || OFFER_WORDS.some((word) => hasWord(prose, word))) {
+		evidence.push("The brief names an offer.");
+	}
+	return outcome(evidence);
 }
 
 const failedLayout: PageAudit = { keyboard: false, contrast: false, horizontalScroll: true };

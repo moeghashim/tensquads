@@ -60,11 +60,12 @@ function reportEvent(id: string, report: unknown): PublishedEvent {
 
 type Story = Awaited<ReturnType<typeof import("@tensquads/domain/master")["proofStory"]>>;
 
-function ports(story: Story): BusObjectEnv {
+function ports(story: Story, writeBrief?: () => string): BusObjectEnv {
 	return {
 		ADAPTERS: "real",
 		masterReadPage: async (url: string) => story.pages[url] ?? { status: 404, body: "" },
 		masterAudit: () => story.audit,
+		...(writeBrief ? { masterWriteBrief: writeBrief } : {}),
 		masterBrowser: async () => rendered,
 	};
 }
@@ -73,7 +74,13 @@ test("a failed output write stays open and the next delivery emits one approval"
 	if (!existsSync(kit)) return;
 	const { proofStory } = await import("@tensquads/domain/master");
 	const story = await proofStory();
-	const { storage, target } = objectBus(ports(story));
+	let calls = 0;
+	const { storage, target } = objectBus(
+		ports(story, () => {
+			calls += 1;
+			return story.prose;
+		}),
+	);
 	await storage.put("state:business", JSON.stringify(story.request));
 	const native = storage.kv.put;
 	let fail = true;
@@ -95,6 +102,7 @@ test("a failed output write stays open and the next delivery emits one approval"
 	await target.alarm();
 	const stored = await storedEvents(storage);
 	assert.equal(stored.filter((item) => item.skill === "brief.write").length, 1);
+	assert.equal(calls, 2);
 	assert.equal(await storage.get("master-done:commit-report"), true);
 });
 
@@ -102,7 +110,7 @@ test("a fresh process emits the build task from the stored phase", async () => {
 	if (!existsSync(kit)) return;
 	const { proofStory } = await import("@tensquads/domain/master");
 	const story = await proofStory();
-	const { storage, target } = objectBus(ports(story));
+	const { storage, target } = objectBus(ports(story, () => story.prose));
 	await storage.put("state:business", JSON.stringify(story.request));
 	assert.equal((await post(target, "phase-owner", reportEvent("phase-report", story.report))).status, 200);
 	const directory = mkdtempSync(join(tmpdir(), "phase-owner-"));
@@ -123,7 +131,7 @@ test("a missing stored request does not invent a business", async () => {
 	if (!existsSync(kit)) return;
 	const { proofStory } = await import("@tensquads/domain/master");
 	const story = await proofStory();
-	const { storage, target } = objectBus(ports(story));
+	const { storage, target } = objectBus(ports(story, () => story.prose));
 	assert.equal((await post(target, "stored-gap", reportEvent("stored-report", story.report))).status, 200);
 	const stored = await storedEvents(storage);
 	assert.equal(
@@ -131,7 +139,7 @@ test("a missing stored request does not invent a business", async () => {
 		false,
 	);
 	assert.equal(
-		stored.some((item) => item.text === "The business has no items to show."),
+		stored.some((item) => item.text === "The business has no name to show."),
 		true,
 	);
 	assert.equal(
@@ -156,4 +164,97 @@ test("a missing stored request does not invent a business", async () => {
 		false,
 	);
 	assert.equal(JSON.stringify(stored).includes('"businessName":"Account"'), false);
+});
+
+test("the model id comes from MASTER_MODEL", async () => {
+	if (!existsSync(kit)) return;
+	const { proofStory } = await import("@tensquads/domain/master");
+	const story = await proofStory();
+	let seen = "";
+	const { target, storage } = objectBus({
+		...ports(story),
+		OPENAI_API_KEY: "test-key",
+		MASTER_MODEL: "unit-model",
+		MASTER_REASONING_EFFORT: "medium",
+		fetchApi: async (_url, init) => {
+			seen = String(init?.body ?? "");
+			return new Response(JSON.stringify({ choices: [{ message: { content: story.prose } }] }));
+		},
+	});
+	await storage.put("state:business", JSON.stringify(story.request));
+	assert.equal((await post(target, "model-owner", reportEvent("model-report", story.report))).status, 200);
+	const body = JSON.parse(seen) as { model?: string; reasoning_effort?: string; messages?: { content?: string }[] };
+	assert.equal(body.model, "unit-model");
+	assert.equal(body.reasoning_effort, "medium");
+	assert.equal(body.messages?.[0]?.content?.includes("Write the research brief for this business."), true);
+	assert.equal(
+		body.messages?.[0]?.content?.includes(
+			"Do not mention any price, number, currency, offer, discount, or menu item.",
+		),
+		true,
+	);
+	assert.equal(body.messages?.[0]?.content?.includes("Chicken tawook"), false);
+	assert.equal(body.messages?.[0]?.content?.includes("Use only these items and prices."), false);
+	assert.equal(seen.includes("test-key"), false);
+});
+
+test("a missing MASTER_MODEL does not call the model", async () => {
+	if (!existsSync(kit)) return;
+	const { proofStory } = await import("@tensquads/domain/master");
+	const story = await proofStory();
+	let called = false;
+	const { target, storage } = objectBus({
+		...ports(story),
+		OPENAI_API_KEY: "test-key",
+		fetchApi: async () => {
+			called = true;
+			return new Response("no");
+		},
+	});
+	await storage.put("state:business", JSON.stringify(story.request));
+	await assert.rejects(
+		() => post(target, "model-gap", reportEvent("model-gap", story.report)),
+		/The model is not configured\./,
+	);
+	assert.equal(called, false);
+});
+
+test("an empty model or effort does not call the model", async () => {
+	if (!existsSync(kit)) return;
+	const { proofStory } = await import("@tensquads/domain/master");
+	const story = await proofStory();
+	const cases = [
+		{ MASTER_MODEL: "", MASTER_REASONING_EFFORT: "medium", message: /The model is not configured\./ },
+		{ MASTER_MODEL: "   ", MASTER_REASONING_EFFORT: "medium", message: /The model is not configured\./ },
+		{ MASTER_MODEL: "unit-model", MASTER_REASONING_EFFORT: "", message: /The reasoning effort is not configured\./ },
+		{
+			MASTER_MODEL: "unit-model",
+			MASTER_REASONING_EFFORT: "  ",
+			message: /The reasoning effort is not configured\./,
+		},
+	];
+	for (const item of cases) {
+		let called = false;
+		const { target, storage } = objectBus({
+			...ports(story),
+			OPENAI_API_KEY: "test-key",
+			MASTER_MODEL: item.MASTER_MODEL,
+			MASTER_REASONING_EFFORT: item.MASTER_REASONING_EFFORT,
+			fetchApi: async () => {
+				called = true;
+				return new Response("no");
+			},
+		});
+		await storage.put("state:business", JSON.stringify(story.request));
+		await assert.rejects(
+			() =>
+				post(
+					target,
+					`model-${item.MASTER_MODEL.length}-${item.MASTER_REASONING_EFFORT.length}`,
+					reportEvent("gap", story.report),
+				),
+			item.message,
+		);
+		assert.equal(called, false);
+	}
 });

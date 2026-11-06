@@ -60,9 +60,21 @@ export function syntheticGrant(query: GrantQuery): StoredGrant {
 	};
 }
 
+export interface BriefInput {
+	readonly businessName: string;
+	readonly businessType: string;
+	readonly report: { readonly gap: string; readonly sources: readonly string[] };
+	readonly reason?: string;
+}
+
+export function briefPrompt(_input: BriefInput): string {
+	return "";
+}
+
 export interface MasterPorts {
 	readonly readPage: PageReader;
 	readonly audit: (html: string) => PageAudit | Promise<PageAudit>;
+	readonly model: { writeBrief(input: BriefInput): string | Promise<string> };
 	readonly mandateAt?: string;
 	readonly accountSlug?: string;
 	readonly accountId?: string;
@@ -116,6 +128,7 @@ export function collectRendered(): RenderedPage {
 
 export interface ProofStory {
 	readonly request: BusinessRequest;
+	readonly prose: string;
 	readonly report: {
 		readonly gap: string;
 		readonly sources: readonly string[];
