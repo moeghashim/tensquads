@@ -26,6 +26,7 @@ import { finishMaster, MASTER_DONE, MASTER_OPEN, masterEvent, retryOpenMaster } 
 import { prepareMaster } from "./master-step.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
 import { type PendingBusRow, readBusEvents, readBusHistory, readBusState, writePending } from "./neon-write.ts";
+import { servePreview } from "./preview-store.ts";
 import { armProbe } from "./probe.ts";
 
 const ALARM_MS = 30_000;
@@ -339,6 +340,7 @@ export class AccountBus {
 			["/heartbeat", (request: Request) => this.heartbeat(request)],
 			["/deliveries/retry", (request: Request) => armDeliveryRetry(this.ctx.storage, this.env, request)],
 			["/monitor", (request: Request) => this.monitor(request)],
+			["/preview", (request: Request) => servePreview(this.ctx.storage, request)],
 		]);
 		if (this.env.BUS_INSPECT === "1") {
 			routes.set("/seq", async () => Response.json({ seq: (await this.ctx.storage.get<number>("seq")) ?? 0 }));

@@ -334,4 +334,10 @@ CREATE TABLE IF NOT EXISTS approval_deliveries (
   PRIMARY KEY (account_id, approval_id),
   FOREIGN KEY (account_id, approval_id) REFERENCES approvals (account_id, id) ON DELETE CASCADE
 );
+
+ALTER TABLE mandates ADD COLUMN IF NOT EXISTS task_id text;
+ALTER TABLE mandates ADD COLUMN IF NOT EXISTS skill text;
+ALTER TABLE mandates ADD COLUMN IF NOT EXISTS subject text;
+ALTER TABLE mandates ADD COLUMN IF NOT EXISTS slug text;
+ALTER TABLE mandates ADD COLUMN IF NOT EXISTS expires_at timestamptz;
 `;
