@@ -5,7 +5,8 @@ import { isNonEmptyString, isObject } from "./message.ts";
 import { createPagesClient, type PagesClient, PagesFailure } from "./pages-client.ts";
 import { connectPublishDirectory, type PublishDirectory } from "./publish-directory.ts";
 
-const SLUG = /^[a-z0-9][a-z0-9-]{0,62}$/;
+// A DNS label: 1 to 63 characters, letters and digits at both ends.
+const SLUG = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const PREVIEW_CSP =
 	"sandbox allow-scripts allow-popups; default-src 'self' 'unsafe-inline' data: https:; frame-ancestors 'none'";
 
@@ -159,10 +160,15 @@ async function showPreview(request: Request, env: WorkerBindings, url: URL): Pro
 	if (request.method !== "GET") return previewHead(null, 404);
 	const ids = previewPath(url.pathname);
 	if (!ids) return previewHead("The message was rejected.", 400);
-	const stored = await busPreview(env, ids.accountId, ids.taskId, { method: "GET" });
-	if (stored.status === 404) return previewHead(null, 404);
-	if (!stored.ok) return previewHead("The machine service is not configured.", 503);
-	return previewHead(await stored.arrayBuffer(), 200, true);
+	try {
+		const stored = await busPreview(env, ids.accountId, ids.taskId, { method: "GET" });
+		if (stored.status === 404) return previewHead(null, 404);
+		if (!stored.ok) return previewHead("The machine service is not configured.", 503);
+		return previewHead(await stored.arrayBuffer(), 200, true);
+	} catch {
+		// A storage or body-read failure still gets the sandbox headers.
+		return previewHead("The machine service is not configured.", 503);
+	}
 }
 
 async function publish(request: Request, env: WorkerBindings): Promise<Response> {

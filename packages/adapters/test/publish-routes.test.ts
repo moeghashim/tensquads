@@ -290,7 +290,7 @@ test("preview paths and slugs are strict", async () => {
 		);
 		assert.equal(tooLong.status, 400);
 		assert.equal(await tooLong.text(), "The message was rejected.");
-		for (const taskId of ["Bad", "..", "-no", "a/b", ""]) {
+		for (const taskId of ["Bad", "..", "-no", "no-", "a/b", ""]) {
 			const rejected = await post(
 				env,
 				"/machine/preview",
@@ -313,6 +313,8 @@ test("preview paths and slugs are strict", async () => {
 			"/preview/proof/page1/more",
 			"/preview/Proof/page1",
 			"/preview/-no/page",
+			"/preview/no-/page",
+			"/preview/proof/page-",
 		]) {
 			const rejected = await read(env, `${ORIGIN}${path}`);
 			assert.equal(rejected.status, 400, path);
@@ -500,6 +502,27 @@ test("publish requires the account slug and a mandate that covers the page", asy
 		);
 		assert.equal(missing.status, 503);
 		assert.equal(await missing.text(), "The machine service is not configured.");
+	} finally {
+		restore();
+	}
+});
+
+test("a preview storage failure still answers with the sandbox headers", async () => {
+	const restore = guard();
+	try {
+		const failing: BusNamespace = {
+			idFromName: (name) => name,
+			get: () => ({ fetch: () => Promise.reject(new Error("storage failed")) }),
+		};
+		const { env } = createEnv({ ACCOUNT_BUS: failing });
+		const response = await read(env, `${ORIGIN}/preview/proof/page`);
+		assert.equal(response.status, 503);
+		const policy = response.headers.get("content-security-policy") ?? "";
+		assert.match(policy, /sandbox/);
+		assert.doesNotMatch(policy, /allow-same-origin/);
+		assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+		assert.equal(response.headers.get("referrer-policy"), "no-referrer");
+		assert.equal(response.headers.get("cache-control"), "no-store");
 	} finally {
 		restore();
 	}
