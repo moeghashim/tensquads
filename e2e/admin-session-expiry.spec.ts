@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
-
 import { specialAccountCookie, specialAccountValue } from "../apps/web/src/server/special-account.ts";
+import { appOrigin } from "../scripts/e2e-port.mjs";
 import {
 	addCompanySuperAdmin,
 	type ClerkTestUser,
@@ -274,7 +274,7 @@ async function setSpecialCookie(page: Page, value: string): Promise<void> {
 		{
 			name: specialAccountCookie,
 			value,
-			url: "http://localhost:3000",
+			url: appOrigin(),
 			httpOnly: true,
 			secure: true,
 			sameSite: "Lax",

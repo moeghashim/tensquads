@@ -6,6 +6,7 @@ import { policyVersion } from "@tensquads/domain";
 import { and, asc, eq } from "drizzle-orm";
 import { replaceDemoAccount } from "../packages/seed/src/demo-account.ts";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
+import { appOrigin } from "../scripts/e2e-port.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
 import { createTestUser, deleteTestUser } from "./admin-clerk.ts";
@@ -302,7 +303,7 @@ test("navigation frame reads update the count after another tab decides", async 
 	await expect(inboxCount(page)).toHaveText("4");
 	await expect(dockBadge(page)).toHaveText("4");
 	const otherContext = await browser.newContext({
-		baseURL: "http://localhost:3000",
+		baseURL: appOrigin(),
 		storageState: await page.context().storageState(),
 	});
 	try {
@@ -1208,7 +1209,7 @@ function decisionDone(page: Page, id: string): Promise<unknown> {
 		const request = response.request();
 		return (
 			request.method() === "POST" &&
-			request.url().startsWith("http://localhost:3000") &&
+			request.url().startsWith(appOrigin()) &&
 			(request.postData() ?? "").includes(id) &&
 			response.ok()
 		);
@@ -1222,7 +1223,7 @@ async function gatePosts(page: Page, failFirst: boolean) {
 	let open = false;
 	await page.route("**/*", async (route) => {
 		const request = route.request();
-		if (request.method() !== "POST" || !request.url().startsWith("http://localhost:3000")) {
+		if (request.method() !== "POST" || !request.url().startsWith(appOrigin())) {
 			await route.continue();
 			return;
 		}

@@ -5,7 +5,7 @@ import { registerHooks } from "node:module";
 import { test } from "node:test";
 import { isRedirect } from "@tanstack/react-router";
 
-const { authorizedParties } = await import("./authorized-parties.ts");
+const { authorizedParties, partiesWithLocalPort } = await import("./authorized-parties.ts");
 const { isSessionRefreshNeeded } = await import("./session-error.ts");
 
 const publishableKey = `pk_live_${Buffer.from("clerk.review.example$").toString("base64")}`;
@@ -96,8 +96,19 @@ test("the authorized parties are the app origins", () => {
 	assert.deepEqual([...authorizedParties], ["https://tensquads.moe-678.workers.dev", "http://localhost:3000"]);
 	const start = readFileSync(new URL("../start.ts", import.meta.url), "utf8");
 	assert.equal(start.includes('from "#/server/authorized-parties.ts"'), true);
-	assert.equal(start.includes("clerkMiddleware({ authorizedParties })"), true);
+	assert.equal(start.includes("clerkMiddleware({ authorizedParties: [...partiesForBuild()] })"), true);
 	assert.equal(start.includes("10squads.com"), false);
+});
+
+test("a local test port stays out of the deployed list", () => {
+	assert.deepEqual([...authorizedParties], ["https://tensquads.moe-678.workers.dev", "http://localhost:3000"]);
+	assert.deepEqual(
+		[...partiesWithLocalPort(authorizedParties, "41234")],
+		["https://tensquads.moe-678.workers.dev", "http://localhost:3000", "http://localhost:41234"],
+	);
+	for (const port of [undefined, "", "3000", "0", "65536", "nope"]) {
+		assert.deepEqual([...partiesWithLocalPort(authorizedParties, port)], [...authorizedParties]);
+	}
 });
 
 test("a foreign azp grants nothing and an app origin still signs in", async () => {
