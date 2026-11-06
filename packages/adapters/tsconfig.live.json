@@ -3,5 +3,5 @@
 	"compilerOptions": {
 		"noEmit": true
 	},
-	"include": ["src/cloudflare-bus/master-live.ts"]
+	"include": ["src/cloudflare-bus/master-live.ts", "src/cloudflare-bus/publish-live.ts"]
 }

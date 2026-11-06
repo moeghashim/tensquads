@@ -5,9 +5,13 @@ import { chooseAdapters } from "../adapter-choice.ts";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { takeTestTask, workerTestBus } from "../worker-adapters.ts";
 import { changeEvent, verifyContextSignature } from "./change.ts";
+import { rejectMachine } from "./machine-auth.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
 import { recordMonitorSecret, resolveMonitor, resolveMonitorSecret } from "./monitors.ts";
-import { type MachineTokenDelivery, machineTokenDelivery, verifyMachineToken } from "./token.ts";
+import type { PagesClient } from "./pages-client.ts";
+import type { PublishDirectory } from "./publish-directory.ts";
+import { handlePublishRoutes } from "./publish-routes.ts";
+import { type MachineTokenDelivery, machineTokenDelivery } from "./token.ts";
 
 const UNKNOWN_MONITOR_SECRET = "tensquads-unknown-monitor";
 
@@ -30,6 +34,9 @@ export interface WorkerBindings {
 	readonly now?: () => number;
 	readonly BROWSER?: unknown;
 	readonly OPENAI_API_KEY?: string;
+	readonly CLOUDFLARE_PAGES_API_TOKEN?: string;
+	readonly pages?: PagesClient;
+	readonly publishDirectory?: PublishDirectory;
 	// A test can name the accounts with old pending deliveries without a live database.
 	readonly staleDeliveryAccounts?: (beforeMs: number) => Promise<string[]>;
 }
@@ -105,12 +112,7 @@ async function authorized(
 	accountId: string,
 	agentId: string,
 ): Promise<Response | null> {
-	if (!env.MACHINE_TOKEN_KEY) return new Response("The machine service is not configured.", { status: 503 });
-	const header = request.headers.get("authorization") ?? "";
-	const token = header.startsWith("Bearer ") ? header.slice("Bearer ".length) : "";
-	const ok = await verifyMachineToken(env.MACHINE_TOKEN_KEY, token, accountId, agentId);
-	if (!ok) return new Response("The token was rejected.", { status: 401 });
-	return null;
+	return rejectMachine(request, env, accountId, agentId);
 }
 
 function rejected(): Response {
@@ -278,6 +280,8 @@ async function takeMachine(env: WorkerBindings, accountId: string, agentId: stri
 }
 
 export async function handleMachineRequest(request: Request, env: WorkerBindings): Promise<Response | null> {
+	const published = await handlePublishRoutes(request, env);
+	if (published) return published;
 	const url = new URL(request.url);
 	if (url.pathname === "/machine/heartbeat") return handleHeartbeat(request, env);
 	if (url.pathname === "/change.detected") return handleChange(request, env);
