@@ -36,7 +36,7 @@ The product name is tensquads. The token list in `docs/BRIEF.md` is the system f
 
 ## Evidence on Hand
 
-The homepage reference for screen 1 is `docs/designs/home/`. The build is in `apps/web/src/screens/home/`. Character drawings are in `packages/squadmates`. The names in the logo row are the design's words. Do not add a testimonial, a customer quote, a benchmark, or a price.
+The homepage references and their host scope follow [decision 34](docs/PLAN.md#decisions). The current build is in `apps/web/src/screens/home/`. Character drawings are in `packages/squadmates`. The names in the logo row are the design's words. Do not add a testimonial, a customer quote, a benchmark, or a price.
 
 ## Product Principles
 

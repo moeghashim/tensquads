@@ -31,6 +31,8 @@ On 3 November 2026 Moe approved the Part 1 design at head `b816c4f` (`b816c4f76e
 
 Part 2 still waits until task 06 (`packages/squadmates`) is merged.
 
+Correction, 6 November 2026: this record names the wrong design. Two sessions deployed to https://10squads.com/review/home on 3 November. From 18:35 to 19:59 UTC the page showed the "approval moment" design from a second session, not head `b816c4f`. Moe wrote "Approved" at 19:06 UTC, while that page showed the other design. Part 2 built `b816c4f`, which is now the homepage at 10squads.com. Moe keeps it there for now. The design he chose is approved again, with its file hash, in `tasks/09-home-v2.md`.
+
 ## Part 2: the build
 
 6. Build the approved design in `apps/web/src/screens/home/`. Every control does what it does today.
