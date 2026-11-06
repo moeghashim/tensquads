@@ -80,6 +80,19 @@ export function createAccountRoutes(secretCalls: SecretCall[]) {
 		};
 	}
 
+	function checkUniqueName(response: ServerResponse, io: Io, raw: unknown, existing: { has(key: string): boolean }) {
+		const name = typeof raw === "string" ? raw : "";
+		if (name.length === 0) {
+			io.fail(response, 400, "invalid");
+			return null;
+		}
+		if (existing.has(name)) {
+			io.fail(response, 409, "already_exists");
+			return null;
+		}
+		return name;
+	}
+
 	return {
 		environments: (): readonly FakeEnvironment[] => [...environments.values()],
 		async route(
@@ -100,11 +113,8 @@ export function createAccountRoutes(secretCalls: SecretCall[]) {
 			}
 			if (path === "/credential-profiles" && request.method === "POST") {
 				const body = await io.readJson(request);
-				const name = typeof body.name === "string" ? body.name : "";
-				if (name.length === 0) {
-					io.fail(response, 400, "invalid");
-					return true;
-				}
+				const name = checkUniqueName(response, io, body.name, profileApis);
+				if (!name) return true;
 				apisFor(name);
 				secretCalls.push({
 					kind,
@@ -156,15 +166,8 @@ export function createAccountRoutes(secretCalls: SecretCall[]) {
 			}
 			if (path === "/environments" && request.method === "POST") {
 				const body = await io.readJson(request);
-				const name = typeof body.name === "string" ? body.name : "";
-				if (name.length === 0) {
-					io.fail(response, 400, "invalid");
-					return true;
-				}
-				if (environments.has(name)) {
-					io.fail(response, 409, "already_exists");
-					return true;
-				}
+				const name = checkUniqueName(response, io, body.name, environments);
+				if (!name) return true;
 				nextId += 1;
 				environments.set(name, {
 					id: `env-${nextId}`,

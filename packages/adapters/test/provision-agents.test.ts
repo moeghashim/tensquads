@@ -19,12 +19,22 @@ const now = Date.parse("2026-11-05T12:00:00.000Z");
 const marketProfile = machineCredentialProfile(scope.accountId, "market");
 const websiteProfile = machineCredentialProfile(scope.accountId, "website");
 
+function localUrl(input: Parameters<typeof fetch>[0]): URL {
+	const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+	const url = new URL(href);
+	assert.equal(url.hostname, "127.0.0.1");
+	return url;
+}
+
 function localFetch(fallback: typeof fetch): typeof fetch {
 	return (input, init) => {
-		const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-		assert.equal(new URL(href).hostname, "127.0.0.1");
+		localUrl(input);
 		return fallback(input, init);
 	};
+}
+
+function isPost(init: RequestInit | undefined, url: URL, suffix: string): boolean {
+	return init?.method === "POST" && url.pathname.endsWith(suffix);
 }
 
 function realEnv(fake: Awaited<ReturnType<typeof startFakeBoat>>, fetchApi: typeof fetch) {
@@ -340,36 +350,236 @@ test("overlapping resumes of one stopped agent send one resume", { timeout: 3_00
 	}
 });
 
-test("overlapping environment creates both succeed", { timeout: 3_000 }, async () => {
+test("overlapping starts create the credential profile once and handle profile conflict", {
+	timeout: 3_000,
+}, async () => {
 	const fake = await startFakeBoat();
-	let posts = 0;
-	let releaseSecond = () => {};
-	const secondPosted = new Promise<void>((resolve) => {
-		releaseSecond = resolve;
+	try {
+		const adapter = boat(fake);
+		await Promise.all([
+			adapter.startFromTemplate(scope, "tensquads-market-0-1-0", "market"),
+			adapter.startFromTemplate(scope, "tensquads-market-0-1-0", "market"),
+		]);
+		assert.equal(fake.secretCalls.filter((call) => call.name === "profile").length, 1);
+		assert.equal(fake.creates, 1);
+		const row = fake.machines().find((item) => item.labels.agent === "market");
+		assert.equal(row?.environment, marketProfile);
+	} finally {
+		await fake.close();
+	}
+});
+
+test("a profile or environment 409 already_exists re-reads and continues", { timeout: 3_000 }, async () => {
+	const fake = await startFakeBoat();
+	let profilePosts = 0;
+	let envPosts = 0;
+	const fetchApi: typeof fetch = async (input, init) => {
+		const url = localUrl(input);
+		if (isPost(init, url, "/credential-profiles") && ++profilePosts === 1) {
+			await fetch(input, init);
+			return fetch(input, init);
+		}
+		if (isPost(init, url, "/environments") && ++envPosts === 1) {
+			await fetch(input, init);
+			return fetch(input, init);
+		}
+		return fetch(input, init);
+	};
+	try {
+		await boat(fake, fetchApi).startFromTemplate(scope, "tensquads-market-0-1-0", "market");
+		assert.equal(profilePosts, 1);
+		assert.equal(envPosts, 1);
+		assert.equal(fake.creates, 1);
+		assert.equal(fake.machines().find((item) => item.labels.agent === "market")?.environment, marketProfile);
+	} finally {
+		await fake.close();
+	}
+});
+
+test("an environment create with HTTP 500 or 409 quota_exceeded rejects without creating a machine", async () => {
+	for (const failure of [
+		{ status: 500, code: "internal_error" },
+		{ status: 409, code: "quota_exceeded" },
+	]) {
+		const fake = await startFakeBoat();
+		let envGets = 0;
+		const fetchApi: typeof fetch = (input, init) => {
+			const url = localUrl(input);
+			if ((init?.method ?? "GET") === "GET" && url.pathname.endsWith("/environments")) envGets += 1;
+			if (isPost(init, url, "/environments")) {
+				return Promise.resolve(
+					new Response(JSON.stringify({ code: failure.code, error: { code: failure.code } }), {
+						status: failure.status,
+						headers: { "content-type": "application/json" },
+					}),
+				);
+			}
+			return fetch(input, init);
+		};
+		try {
+			await assert.rejects(
+				() => boat(fake, fetchApi).startFromTemplate(scope, "tensquads-market-0-1-0", "market"),
+				(error: unknown) =>
+					error instanceof MachineFault &&
+					error.code === "unavailable" &&
+					error.message === "The machine service is unavailable.",
+			);
+			assert.equal(envGets, 1);
+			assert.equal(fake.creates, 0);
+		} finally {
+			await fake.close();
+		}
+	}
+});
+
+test("opposite operations on one agent run in order and do not coalesce", { timeout: 3_000 }, async () => {
+	const fake = await startFakeBoat();
+	await boat(fake).startFromTemplate(scope, "tensquads-market-0-1-0", "market");
+	let stops = 0;
+	let resumes = 0;
+	let openStop = () => {};
+	let markStopHeld = () => {};
+	const stopOpened = new Promise<void>((resolve) => {
+		openStop = resolve;
+	});
+	const stopHeld = new Promise<void>((resolve) => {
+		markStopHeld = resolve;
+	});
+	let openResume = () => {};
+	let markResumeHeld = () => {};
+	const resumeOpened = new Promise<void>((resolve) => {
+		openResume = resolve;
+	});
+	const resumeHeld = new Promise<void>((resolve) => {
+		markResumeHeld = resolve;
 	});
 	const fetchApi: typeof fetch = (input, init) => {
-		const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-		assert.equal(new URL(href).hostname, "127.0.0.1");
-		const method = init?.method ?? "GET";
-		if (method === "POST" && new URL(href).pathname.endsWith("/environments")) {
-			posts += 1;
-			if (posts >= 2) releaseSecond();
-			if (posts === 1) return secondPosted.then(() => fetch(input, init));
+		const url = localUrl(input);
+		if (isPost(init, url, "/stop") && ++stops === 1) {
+			markStopHeld();
+			return stopOpened.then(() => fetch(input, init));
+		}
+		if (isPost(init, url, "/resume") && ++resumes === 2) {
+			markResumeHeld();
+			return resumeOpened.then(() => fetch(input, init));
 		}
 		return fetch(input, init);
 	};
 	try {
 		const adapter = boat(fake, fetchApi);
-		await Promise.all([
-			adapter.startFromTemplate(scope, "tensquads-market-0-1-0", "market"),
-			adapter.startFromTemplate(scope, "tensquads-market-0-1-0", "market"),
-		]);
-		assert.equal(posts, 2);
-		assert.equal(fake.creates, 1);
-		const row = fake.machines().find((item) => item.labels.agent === "market");
-		assert.equal(row?.environment, marketProfile);
+		const firstStop = adapter.stop(scope, "market");
+		await stopHeld;
+		const firstResume = adapter.resume(scope, "market");
+		for (let tick = 0; tick < 5; tick += 1) await new Promise((done) => setImmediate(done));
+		assert.equal(resumes, 0);
+		openStop();
+		await Promise.all([firstStop, firstResume]);
+		assert.equal(stops, 1);
+		assert.equal(resumes, 1);
+		assert.equal(fake.machines().find((item) => item.labels.agent === "market")?.state, "running");
+
+		await adapter.stop(scope, "market");
+		assert.equal(stops, 2);
+		const secondResume = adapter.resume(scope, "market");
+		await resumeHeld;
+		const thirdStop = adapter.stop(scope, "market");
+		for (let tick = 0; tick < 5; tick += 1) await new Promise((done) => setImmediate(done));
+		assert.equal(stops, 2);
+		openResume();
+		await Promise.all([secondResume, thirdStop]);
+		assert.equal(resumes, 2);
+		assert.equal(stops, 3);
+		assert.equal(fake.machines().find((item) => item.labels.agent === "market")?.state, "archived");
 	} finally {
-		releaseSecond();
+		openStop();
+		openResume();
+		await fake.close();
+	}
+});
+
+test("colon-separated account and agent pairs do not share a flight", { timeout: 3_000 }, async () => {
+	const fake = await startFakeBoat();
+	let openCreate = () => {};
+	let markHeld = () => {};
+	const createOpened = new Promise<void>((resolve) => {
+		openCreate = resolve;
+	});
+	const createHeld = new Promise<void>((resolve) => {
+		markHeld = resolve;
+	});
+	let posts = 0;
+	const fetchApi: typeof fetch = (input, init) => {
+		const url = localUrl(input);
+		if (isPost(init, url, "/sandboxes") && ++posts === 1) {
+			markHeld();
+			return createOpened.then(() => fetch(input, init));
+		}
+		return fetch(input, init);
+	};
+	try {
+		const adapter = boat(fake, fetchApi);
+		const tag = "registry.agents.co/orders:0.1.0";
+		const first = adapter.start({ accountId: "a:b", mode: "account" }, "c", tag);
+		await createHeld;
+		const second = adapter.start({ accountId: "a", mode: "account" }, "b:c", tag);
+		openCreate();
+		await Promise.all([first, second]);
+		assert.equal(fake.creates, 2);
+		assert.equal(
+			fake.machines().some((row) => row.labels.account === "a:b" && row.labels.agent === "c"),
+			true,
+		);
+		assert.equal(
+			fake.machines().some((row) => row.labels.account === "a" && row.labels.agent === "b:c"),
+			true,
+		);
+	} finally {
+		openCreate();
+		await fake.close();
+	}
+});
+
+test("a stalled request aborts at the deadline and releases its flight", { timeout: 1_000 }, async () => {
+	const fake = await startFakeBoat();
+	let requests = 0;
+	let signalSeen = false;
+	const fetchApi: typeof fetch = (input, init) => {
+		localUrl(input);
+		if (++requests === 1) {
+			const signal = init?.signal;
+			signalSeen = Boolean(signal);
+			return new Promise<Response>((_resolve, reject) => {
+				if (!signal) return;
+				if (signal.aborted) {
+					reject(signal.reason ?? new Error("aborted"));
+					return;
+				}
+				signal.addEventListener("abort", () => reject(signal.reason ?? new Error("aborted")));
+			});
+		}
+		return fetch(input, init);
+	};
+	try {
+		const adapter = createBoatMachine({
+			token: fake.machineToken,
+			adminToken: fake.adminToken,
+			basePath: fake.basePath,
+			profileName: "tensquads-agents",
+			secretBaseUrl: "https://example.com/hooks",
+			fetchApi,
+			wait: { intervalMs: 0, timeoutMs: 20 },
+		});
+		const startedAt = Date.now();
+		await assert.rejects(
+			() => adapter.start(scope, "orders", "registry.agents.co/orders:0.1.0"),
+			(error: unknown) => error instanceof MachineFault && error.code === "unavailable",
+		);
+		assert.equal(signalSeen, true);
+		assert.equal(Date.now() - startedAt < 200, true);
+		await adapter.start(scope, "orders", "registry.agents.co/orders:0.1.0");
+		assert.equal(requests > 1, true);
+		assert.equal(fake.creates, 1);
+	} finally {
 		await fake.close();
 	}
 });

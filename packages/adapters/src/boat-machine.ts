@@ -30,12 +30,12 @@ import { MACHINE_TOKEN_ENV, machineCredentialProfile, machineTokenSubject } from
 
 const LIVE = new Set(["ready", "idle", "running"]);
 const OFF = new Set(["archived", "archiving"]);
+const REGION = "EU";
+const ENVIRONMENT = "tensquads-agents";
 
 function off(state: string): boolean {
 	return OFF.has(state);
 }
-const REGION = "EU";
-const ENVIRONMENT = "tensquads-agents";
 
 function machineEnv(accountId: string, agentId: string, tag: string): Record<string, string> {
 	return { ACCOUNT_ID: accountId, TENSQUADS_AGENT_ID: agentId, IMAGE_TAG: tag };
@@ -59,6 +59,7 @@ export interface BoatMachineOptions {
 }
 
 interface BoatContext {
+	readonly options: BoatMachineOptions;
 	readonly machine: BoatApi;
 	readonly admin: BoatApi | null;
 	readonly profileName: string;
@@ -68,20 +69,22 @@ interface BoatContext {
 	readonly runId: string | undefined;
 }
 
-function client(token: string, options: BoatMachineOptions): BoatApi {
-	return new BoatApi(
-		new Configuration({
-			basePath: options.basePath,
-			accessToken: token,
-			fetchApi: options.fetchApi ?? fetch,
-		}),
-	);
+function client(token: string, options: BoatMachineOptions, fetchApi: typeof fetch): BoatApi {
+	return new BoatApi(new Configuration({ basePath: options.basePath, accessToken: token, fetchApi }));
+}
+
+function scopedContext(ctx: BoatContext, signal: AbortSignal): BoatContext {
+	const base = ctx.options.fetchApi ?? fetch;
+	const fetchApi: typeof fetch = (input, init) => base(input, { ...init, signal });
+	return {
+		...ctx,
+		machine: client(ctx.options.token, ctx.options, fetchApi),
+		admin: ctx.options.adminToken ? client(ctx.options.adminToken, ctx.options, fetchApi) : null,
+	};
 }
 
 function delay(ms: number): Promise<void> {
-	return new Promise((resolve) => {
-		setTimeout(resolve, ms);
-	});
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function asFault(error: unknown, duringStop: boolean): Promise<never> {
@@ -152,16 +155,7 @@ function createBody(
 	from?: string,
 	environment = ENVIRONMENT,
 ): CreateSandboxRequest {
-	return {
-		type: "small",
-		noEnv: environment === ENVIRONMENT,
-		ttlSeconds: null,
-		environment,
-		env,
-		labels,
-		name,
-		from,
-	};
+	return { type: "small", noEnv: environment === ENVIRONMENT, ttlSeconds: null, environment, env, labels, name, from };
 }
 
 async function createOnce(ctx: BoatContext, body: CreateSandboxRequest, idempotencyKey: string): Promise<Sandbox> {
@@ -286,16 +280,34 @@ async function setMachineToken(ctx: BoatContext, scope: AccountScope, agentId: s
 }
 
 const ENVIRONMENT_NAME_LIMIT = 64;
-const flights = new Map<string, Promise<unknown>>();
+interface FlightEntry {
+	readonly kind: string;
+	readonly promise: Promise<unknown>;
+}
+const flights = new Map<string, FlightEntry>();
+
+async function createOrReread<T>(create: () => Promise<T>, reread: () => Promise<T>): Promise<T> {
+	try {
+		return await create();
+	} catch (error) {
+		if (!(error instanceof ResponseError)) return asFault(error, false);
+		const facts = await readErrorBody(error.response);
+		if (facts.status !== 409 || facts.code !== "already_exists") throw faultFromStatus(facts, false);
+		return reread();
+	}
+}
 
 async function ensureCredentialProfile(admin: BoatApi, profile: string, copyFrom: string): Promise<void> {
 	const listed = await call(() => admin.listCredentialProfiles());
 	if (listed.profiles.some((row) => row.name === profile)) return;
-	await call(() =>
-		admin.createCredentialProfile({
-			createCredentialProfileRequest: { name: profile, copyFrom },
-		}),
+	const ok = await createOrReread(
+		async () => {
+			await admin.createCredentialProfile({ createCredentialProfileRequest: { name: profile, copyFrom } });
+			return true;
+		},
+		async () => (await call(() => admin.listCredentialProfiles())).profiles.some((row) => row.name === profile),
 	);
+	if (!ok) throw notConfigured("The secret registration is not configured.");
 }
 
 function environmentByName(environments: readonly SandboxEnvironment[], name: string): SandboxEnvironment | undefined {
@@ -303,16 +315,13 @@ function environmentByName(environments: readonly SandboxEnvironment[], name: st
 }
 
 async function createNamedEnvironment(admin: BoatApi, profile: string): Promise<SandboxEnvironment | undefined> {
-	try {
-		const created = await admin.createEnvironment({ createSandboxEnvironmentRequest: { name: profile } });
-		return environmentByName(created.environments, profile);
-	} catch (error) {
-		if (!(error instanceof ResponseError)) return asFault(error, false);
-		const facts = await readErrorBody(error.response);
-		if (facts.status !== 409 || facts.code !== "already_exists") throw faultFromStatus(facts, false);
-		const again = await call(() => admin.environments());
-		return environmentByName(again.environments, profile);
-	}
+	return createOrReread(
+		async () => {
+			const created = await admin.createEnvironment({ createSandboxEnvironmentRequest: { name: profile } });
+			return environmentByName(created.environments, profile);
+		},
+		async () => environmentByName((await call(() => admin.environments())).environments, profile),
+	);
 }
 
 async function ensureNamedEnvironment(admin: BoatApi, profile: string): Promise<SandboxEnvironment> {
@@ -345,17 +354,44 @@ async function attachEnvironment(admin: BoatApi, environment: SandboxEnvironment
 }
 
 function flightKey(scope: AccountScope, agentId: string): string {
-	return `${scope.accountId}:${agentId}`;
+	return JSON.stringify([scope.accountId, agentId]);
 }
 
-function singleFlight<T>(key: string, run: () => Promise<T>): Promise<T> {
-	const current = flights.get(key) as Promise<T> | undefined;
-	if (current) return current;
-	const flight = run().finally(() => {
-		if (flights.get(key) === flight) flights.delete(key);
+function withDeadline<T>(ctx: BoatContext, run: (scoped: BoatContext) => Promise<T>): Promise<T> {
+	const controller = new AbortController();
+	const scoped = scopedContext(ctx, controller.signal);
+	return new Promise<T>((resolve, reject) => {
+		const timer = setTimeout(() => {
+			controller.abort(machineFault("unavailable"));
+			reject(machineFault("unavailable"));
+		}, ctx.wait.timeoutMs);
+		run(scoped).then(
+			(value) => {
+				clearTimeout(timer);
+				resolve(value);
+			},
+			(error: unknown) => {
+				clearTimeout(timer);
+				reject(error);
+			},
+		);
 	});
-	flights.set(key, flight);
-	return flight;
+}
+
+function singleFlight<T>(
+	ctx: BoatContext,
+	key: string,
+	kind: string,
+	run: (scoped: BoatContext) => Promise<T>,
+): Promise<T> {
+	const current = flights.get(key);
+	if (current?.kind === kind) return current.promise as Promise<T>;
+	const previous = current?.promise.catch(() => undefined);
+	const promise = (previous ? previous.then(() => withDeadline(ctx, run)) : withDeadline(ctx, run)).finally(() => {
+		if (flights.get(key)?.promise === promise) flights.delete(key);
+	});
+	flights.set(key, { kind, promise });
+	return promise;
 }
 
 async function agentEnvironment(ctx: BoatContext, scope: AccountScope, agentId: string): Promise<string> {
@@ -373,9 +409,11 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 	if (options.profileName === "default" || options.profileName === "moe@10claws.com") {
 		throw notConfigured("The default profile is closed.");
 	}
+	const baseFetch = options.fetchApi ?? fetch;
 	const ctx: BoatContext = {
-		machine: client(options.token, options),
-		admin: options.adminToken ? client(options.adminToken, options) : null,
+		options,
+		machine: client(options.token, options, baseFetch),
+		admin: options.adminToken ? client(options.adminToken, options, baseFetch) : null,
 		profileName: options.profileName,
 		secretBaseUrl: options.secretBaseUrl,
 		now: options.now ?? (() => new Date()),
@@ -424,59 +462,59 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 			return profileApis(ctx);
 		},
 		async start(scope, agentId, tag) {
-			await singleFlight(flightKey(scope, agentId), async () => {
-				const existing = await findMachine(ctx, scope, agentId);
+			await singleFlight(ctx, flightKey(scope, agentId), `start:${tag}`, async (scoped) => {
+				const existing = await findMachine(scoped, scope, agentId);
 				if (existing) {
 					if (!off(existing.state) && !LIVE.has(existing.state)) {
-						await waitReady(ctx, existing.id);
+						await waitReady(scoped, existing.id);
 					}
 					return;
 				}
 				const created = await createOnce(
-					ctx,
+					scoped,
 					createBody(
 						hostName(agentId),
 						machineEnv(scope.accountId, agentId, tag),
-						labelled({ account: scope.accountId, agent: agentId, image: tag }, ctx.runId),
+						labelled({ account: scope.accountId, agent: agentId, image: tag }, scoped.runId),
 					),
 					startKey(scope.accountId, agentId, tag),
 				);
-				await waitReady(ctx, created.id);
+				await waitReady(scoped, created.id);
 			});
 		},
 		async stop(scope, agentId) {
-			await singleFlight(flightKey(scope, agentId), async () => {
-				const row = await requireMachine(ctx, scope, agentId);
+			await singleFlight(ctx, flightKey(scope, agentId), "stop", async (scoped) => {
+				const row = await requireMachine(scoped, scope, agentId);
 				if (row.state === "archived") return;
-				await call(() => ctx.machine.stop({ sandboxId: row.id }), true);
+				await call(() => scoped.machine.stop({ sandboxId: row.id }), true);
 				await until(
-					ctx,
-					async () => (await call(() => ctx.machine.get({ sandboxId: row.id }))).sandbox.stop?.status ?? "",
+					scoped,
+					async () => (await call(() => scoped.machine.get({ sandboxId: row.id }))).sandbox.stop?.status ?? "",
 					(status) => status === "completed",
 				);
 			});
 		},
 		async resume(scope, agentId) {
-			await singleFlight(flightKey(scope, agentId), async () => {
-				const row = await requireMachine(ctx, scope, agentId);
+			await singleFlight(ctx, flightKey(scope, agentId), "resume", async (scoped) => {
+				const row = await requireMachine(scoped, scope, agentId);
 				if (LIVE.has(row.state)) return;
 				if (!off(row.state)) {
-					await waitReady(ctx, row.id);
+					await waitReady(scoped, row.id);
 					return;
 				}
-				const environment = realRunAgent(agentId) ? await agentEnvironment(ctx, scope, agentId) : undefined;
+				const environment = realRunAgent(agentId) ? await agentEnvironment(scoped, scope, agentId) : undefined;
 				await call(() =>
-					ctx.machine.resume(
+					scoped.machine.resume(
 						environment ? { sandboxId: row.id, resumeRequest: { environment } } : { sandboxId: row.id },
 					),
 				);
-				await waitReady(ctx, row.id);
+				await waitReady(scoped, row.id);
 			});
 		},
 		async remove(scope, agentId) {
-			await singleFlight(flightKey(scope, agentId), async () => {
-				const row = await requireMachine(ctx, scope, agentId);
-				await removeById(ctx, row.id);
+			await singleFlight(ctx, flightKey(scope, agentId), "remove", async (scoped) => {
+				const row = await requireMachine(scoped, scope, agentId);
+				await removeById(scoped, row.id);
 			});
 		},
 		async registerSecret(_scope, name, value?) {
@@ -521,33 +559,33 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 			const known = realRunImage(templateId);
 			const image = known ?? imageFromTemplate(templateId);
 			const tag = known ? known.imageTag : imageTag(image.imageId, image.version);
-			const environment = known ? await agentEnvironment(ctx, scope, agentId) : undefined;
-			return singleFlight(flightKey(scope, agentId), async () => {
-				const existing = await findMachine(ctx, scope, agentId);
+			return singleFlight(ctx, flightKey(scope, agentId), `template:${templateId}`, async (scoped) => {
+				const environment = known ? await agentEnvironment(scoped, scope, agentId) : undefined;
+				const existing = await findMachine(scoped, scope, agentId);
 				if (!existing) {
 					const created = await createOnce(
-						ctx,
+						scoped,
 						createBody(
 							hostName(agentId),
 							machineEnv(scope.accountId, agentId, tag),
-							labelled({ account: scope.accountId, agent: agentId, image: tag }, ctx.runId),
+							labelled({ account: scope.accountId, agent: agentId, image: tag }, scoped.runId),
 							templateId,
 							environment,
 						),
 						startKey(scope.accountId, agentId, tag),
 					);
-					await waitReady(ctx, created.id);
+					await waitReady(scoped, created.id);
 				} else if (off(existing.state)) {
 					await call(() =>
-						ctx.machine.resume(
+						scoped.machine.resume(
 							environment
 								? { sandboxId: existing.id, resumeRequest: { environment } }
 								: { sandboxId: existing.id },
 						),
 					);
-					await waitReady(ctx, existing.id);
+					await waitReady(scoped, existing.id);
 				} else if (!LIVE.has(existing.state)) {
-					await waitReady(ctx, existing.id);
+					await waitReady(scoped, existing.id);
 				}
 				return { templateId, agentId };
 			});
