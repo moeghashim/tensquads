@@ -204,8 +204,11 @@ test("an alarm retries an open master step once", async () => {
 	assert.equal(calls, 2);
 });
 
-test("an alarm retry and a redelivery of the same report call the model once", async () => {
-	if (!existsSync(kit)) return;
+test("an alarm retry and a redelivery of the same report call the model once", async (t) => {
+	if (!existsSync(kit)) {
+		t.skip("The agent kit is not installed.");
+		return;
+	}
 	const { proofStory } = await import("@tensquads/domain/master");
 	const story = await proofStory();
 	let calls = 0;

@@ -34,6 +34,22 @@ test("market at 0 ms and website at 60,000 ms keep the earlier alarm", async () 
 	assert.equal(await storage.getAlarm(), 180_000);
 });
 
+test("a failed resume retries from its finish time", async () => {
+	const storage = new Storage();
+	await storage.put("account", "a");
+	await storage.put("heartbeats", { market: { at: 0 } });
+	let now = 180_000;
+	await sweepHeartbeats(storage, {
+		now: () => now,
+		resumeAgent: async () => {
+			now = 300_000;
+			throw new Error("resume failed");
+		},
+	});
+	assert.equal(await storage.get(HEARTBEAT_ALARM), 360_000);
+	assert.equal(await storage.getAlarm(), 360_000);
+});
+
 test("a beat accepted during a resume stays in the map", async () => {
 	const storage = new Storage();
 	await storage.put("account", "a");

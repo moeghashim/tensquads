@@ -3,7 +3,7 @@ import test from "node:test";
 import type { PublishedEvent } from "@tensquads/kernel";
 
 import { AccountBus } from "../src/cloudflare-bus/account-bus.ts";
-import { BUS_ALARM, clearDeadline, DELIVERY_ALARM, setDeadline } from "../src/cloudflare-bus/alarm.ts";
+import { BUS_ALARM, clearDeadline, DELIVERY_ALARM, HEARTBEAT_ALARM, setDeadline } from "../src/cloudflare-bus/alarm.ts";
 import { finishMaster, MASTER_OPEN } from "../src/cloudflare-bus/master-retry.ts";
 import type { PendingBusRow } from "../src/cloudflare-bus/neon-write.ts";
 import { Storage } from "./bus-storage.ts";
@@ -211,6 +211,43 @@ test("alarm work and a request never overlap", async () => {
 	assert.equal(acceptedDone, true);
 });
 
+test("a timely heartbeat that waits in the queue does not trigger a resume", async () => {
+	const storage = new Storage();
+	await storage.put("account", "acct-arrival");
+	await storage.put("heartbeats", { market: { at: 0 } });
+	await storage.put("pending", [row("arrival-one", 1)]);
+	await storage.put(BUS_ALARM, 175_000);
+	await storage.put(HEARTBEAT_ALARM, 175_000);
+	const entered = deferred();
+	const gate = deferred();
+	let now = 175_000;
+	let resumes = 0;
+	const bus = busFor(storage, {
+		ADAPTERS: "real",
+		now: () => now,
+		resumeAgent: async () => {
+			resumes += 1;
+		},
+		writeBusPending: async () => {
+			entered.resolve();
+			await gate.promise;
+		},
+	});
+	const alarming = bus.alarm();
+	await entered.promise;
+	const heartbeat = bus.fetch(
+		new Request("https://bus/heartbeat", {
+			method: "POST",
+			body: JSON.stringify({ accountId: "acct-arrival", agentId: "market" }),
+		}),
+	);
+	now = 185_000;
+	gate.resolve();
+	await alarming;
+	assert.equal((await heartbeat).status, 200);
+	assert.equal(resumes, 0);
+});
+
 test("a heartbeat request waits for alarm work", async () => {
 	const storage = new Storage();
 	await storage.put("account", "acct-heartbeat-serial");
@@ -246,6 +283,35 @@ test("a heartbeat request waits for alarm work", async () => {
 	gate.resolve();
 	await alarming;
 	assert.equal((await heartbeat).status, 200);
+});
+
+test("an advance uses the injected clock for its deadline", async () => {
+	const storage = new Storage();
+	const bus = busFor(storage, {
+		ADAPTERS: "test",
+		now: () => 1_000,
+	});
+	const response = await bus.fetch(
+		new Request("https://bus/advance", {
+			method: "POST",
+			body: JSON.stringify({
+				accountId: "acct-advance-clock",
+				deadlineAt: 5_000,
+				script: [
+					{
+						from: "master",
+						to: "researcher",
+						kind: "Task",
+						skill: "research",
+						text: "Look.",
+						payload: {},
+						writes: [],
+					},
+				],
+			}),
+		}),
+	);
+	assert.equal(((await response.json()) as { accepted: boolean }).accepted, true);
 });
 
 test("deadline tokens only move forward, so a stale clear keeps the new deadline", async () => {

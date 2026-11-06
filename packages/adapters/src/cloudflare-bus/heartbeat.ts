@@ -84,13 +84,15 @@ async function resumeDue(
 	beat: HeartbeatBeat,
 	map: Record<string, HeartbeatBeat>,
 	now: number,
+	clock: () => number,
 ): Promise<number | null> {
 	try {
 		await resume(accountId, agentId);
 		map[agentId] = { at: beat.at, resumedAt: now };
 		return null;
 	} catch {
-		return now + RETRY_MS;
+		// The retry counts from when the resume finished, not from the sweep start.
+		return clock() + RETRY_MS;
 	}
 }
 
@@ -100,6 +102,7 @@ async function oneDue(
 	now: number,
 	resume: Resume | undefined,
 	accountId: string | undefined,
+	clock: () => number,
 ): Promise<number | null> {
 	const beat = map[agentId];
 	if (!beat) return null;
@@ -107,13 +110,49 @@ async function oneDue(
 	if (due === null) return null;
 	if (now < due) return due;
 	if (!resume || !accountId) return null;
-	return resumeDue(resume, accountId, agentId, beat, map, now);
+	return resumeDue(resume, accountId, agentId, beat, map, now, clock);
 }
 
-export async function sweepHeartbeats(storage: HeartbeatStorage, env: HeartbeatEnv): Promise<void> {
+// A beat that arrived while this alarm waited in the queue counts from its
+// arrival time, not from the older stored beat.
+function effectiveBeats(
+	stored: Record<string, HeartbeatBeat>,
+	arrivals?: ReadonlyMap<string, number>,
+): Record<string, HeartbeatBeat> {
+	const map: Record<string, HeartbeatBeat> = { ...stored };
+	if (!arrivals) return map;
+	for (const [agentId, at] of arrivals) {
+		const beat = map[agentId];
+		if (!beat || at > beat.at) map[agentId] = { at };
+	}
+	return map;
+}
+
+// A beat can land during the resume I/O. Keep the newer beat for each agent.
+function mergeBeats(
+	latest: Record<string, HeartbeatBeat>,
+	ours: Record<string, HeartbeatBeat>,
+	agentIds: readonly string[],
+): Record<string, HeartbeatBeat> {
+	const merged: Record<string, HeartbeatBeat> = { ...latest };
+	for (const agentId of agentIds) {
+		const ourBeat = ours[agentId];
+		const theirBeat = merged[agentId];
+		if (ourBeat && (!theirBeat || theirBeat.at <= ourBeat.at)) merged[agentId] = ourBeat;
+	}
+	return merged;
+}
+
+export async function sweepHeartbeats(
+	storage: HeartbeatStorage,
+	env: HeartbeatEnv,
+	arrivals?: ReadonlyMap<string, number>,
+): Promise<void> {
 	const token = await deadlineToken(storage, HEARTBEAT_ALARM);
-	const now = env.now?.() ?? Date.now();
-	const map = (await storage.get<Record<string, HeartbeatBeat>>(HEARTBEATS)) ?? {};
+	const clock = () => env.now?.() ?? Date.now();
+	const now = clock();
+	const stored = (await storage.get<Record<string, HeartbeatBeat>>(HEARTBEATS)) ?? {};
+	const map = effectiveBeats(stored, arrivals);
 	const agentIds = Object.keys(map);
 	if (agentIds.length === 0) {
 		await clearDeadline(storage, HEARTBEAT_ALARM, token);
@@ -123,17 +162,11 @@ export async function sweepHeartbeats(storage: HeartbeatStorage, env: HeartbeatE
 	const accountId = await storage.get<string>("account");
 	let nextDue: number | null = null;
 	for (const agentId of agentIds) {
-		const due = await oneDue(map, agentId, now, resume, accountId);
+		const due = await oneDue(map, agentId, now, resume, accountId, clock);
 		if (due !== null) nextDue = earlier(nextDue, due);
 	}
-	// A beat can land during the resume I/O. Read again and keep newer beats.
 	const latest = (await storage.get<Record<string, HeartbeatBeat>>(HEARTBEATS)) ?? {};
-	for (const agentId of agentIds) {
-		const ours = map[agentId];
-		const theirs = latest[agentId];
-		if (ours && (!theirs || theirs.at <= ours.at)) latest[agentId] = ours;
-	}
-	await storage.put(HEARTBEATS, latest);
+	await storage.put(HEARTBEATS, mergeBeats(latest, map, agentIds));
 	if (nextDue === null) {
 		await clearDeadline(storage, HEARTBEAT_ALARM, token);
 		return;

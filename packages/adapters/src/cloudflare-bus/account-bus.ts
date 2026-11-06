@@ -5,6 +5,7 @@ import type { PublishedEvent } from "@tensquads/kernel";
 import { chooseAdapters } from "../adapter-choice.ts";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { traceFor } from "../trace.ts";
+import { advanceBody } from "./account-request.ts";
 import {
 	type AlarmKv,
 	BUS_ALARM,
@@ -107,48 +108,8 @@ function readCursor(value: unknown): TrafficCursor {
 	return { seq, clock, scriptIndex };
 }
 
-function expired(deadlineAt?: number): boolean {
-	return deadlineAt !== undefined && Date.now() >= deadlineAt;
-}
-
-function scriptStep(step: unknown): ScriptedBusEvent | undefined {
-	if (!isObject(step)) return undefined;
-	const from = step.from;
-	const to = step.to;
-	const kind = step.kind;
-	const skill = step.skill;
-	const text = step.text;
-	const payload = step.payload;
-	if (!isNonEmptyString(from) || !isNonEmptyString(to) || !isNonEmptyString(kind)) return undefined;
-	if (!isNonEmptyString(skill) || !isNonEmptyString(text) || !isObject(payload)) return undefined;
-	const writes = step.writes === undefined ? [] : step.writes;
-	if (!Array.isArray(writes) || writes.some((key) => typeof key !== "string")) return undefined;
-	if (step.set !== undefined && !isObject(step.set)) return undefined;
-	return {
-		from,
-		to,
-		kind: kind as ScriptedBusEvent["kind"],
-		skill,
-		text,
-		payload,
-		writes: writes as string[],
-		set: isObject(step.set) ? step.set : undefined,
-	};
-}
-
-function advanceBody(
-	body: unknown,
-): { accountId: string; script: ScriptedBusEvent[]; deadlineAt?: number } | undefined {
-	if (!isObject(body) || !isNonEmptyString(body.accountId) || !Array.isArray(body.script)) return undefined;
-	const script: ScriptedBusEvent[] = [];
-	for (const step of body.script) {
-		const parsed = scriptStep(step);
-		if (!parsed) return undefined;
-		script.push(parsed);
-	}
-	const deadlineAt =
-		typeof body.deadlineAt === "number" && Number.isFinite(body.deadlineAt) ? body.deadlineAt : undefined;
-	return { accountId: body.accountId, script, deadlineAt };
+function expired(deadlineAt: number | undefined, now: number): boolean {
+	return deadlineAt !== undefined && now >= deadlineAt;
 }
 
 class DeadlinePassed extends Error {
@@ -162,9 +123,9 @@ async function planAdvance(
 	accountId: string,
 	script: readonly ScriptedBusEvent[],
 	deadlineAt: number | undefined,
-	nowMs: number,
+	clock: () => number,
 ): Promise<AdvanceResult> {
-	if (expired(deadlineAt)) return { accepted: false, expired: true };
+	if (expired(deadlineAt, clock())) return { accepted: false, expired: true };
 	const storedAccount = await storage.get<string>("account");
 	if (storedAccount && storedAccount !== accountId) return { accepted: false };
 	let current = readCursor(await storage.get("traffic-cursor"));
@@ -174,10 +135,10 @@ async function planAdvance(
 	while (ids.has(`e${current.seq}`)) {
 		current = { seq: current.seq + 1, clock: current.clock + 1, scriptIndex: current.scriptIndex + 1 };
 	}
-	if (expired(deadlineAt)) return { accepted: false, expired: true };
+	if (expired(deadlineAt, clock())) return { accepted: false, expired: true };
 	const plan = planNextEvent(known, script, current, traceFor);
 	if (!plan) return { accepted: false };
-	const result = await commitDurable(storage, accountId, plan.event, deadlineAt, plan.cursor, false, nowMs);
+	const result = await commitDurable(storage, accountId, plan.event, deadlineAt, plan.cursor, false, clock);
 	if (result.expired) return { accepted: false, expired: true };
 	if (result.seen || !result.event) return { accepted: false };
 	return { accepted: true, event: result.event };
@@ -211,8 +172,9 @@ function commitSynced(
 	event: PublishedEvent,
 	deadlineAt?: number,
 	cursor?: TrafficCursor,
+	clock: () => number = Date.now,
 ): AcceptResult {
-	if (expired(deadlineAt)) throw new DeadlinePassed();
+	if (expired(deadlineAt, clock())) throw new DeadlinePassed();
 	const storedAccount = kv.get<string>("account");
 	if (storedAccount && storedAccount !== accountId) return { seen: true, seq: kv.get<number>("seq") ?? 0 };
 	if (kv.get(`seen:${event.id}`)) return { seen: true, seq: kv.get<number>("seq") ?? 0 };
@@ -226,7 +188,7 @@ function commitSynced(
 	const pending = kv.get<PendingBusRow[]>("pending") ?? [];
 	kv.put("pending", [...pending, { seq, event }]);
 	if (cursor) kv.put("traffic-cursor", cursor);
-	if (expired(deadlineAt)) throw new DeadlinePassed();
+	if (expired(deadlineAt, clock())) throw new DeadlinePassed();
 	return { seen: false, seq, event };
 }
 
@@ -237,13 +199,13 @@ async function commitDurable(
 	deadlineAt?: number,
 	cursor?: TrafficCursor,
 	markMaster = false,
-	nowMs: number = Date.now(),
+	clock: () => number = Date.now,
 ): Promise<AcceptResult> {
-	if (expired(deadlineAt)) return { seen: false, seq: 0, expired: true };
+	if (expired(deadlineAt, clock())) return { seen: false, seq: 0, expired: true };
 	let result: AcceptResult;
 	try {
 		result = storage.transactionSync(() => {
-			const committed = commitSynced(storage.kv, accountId, event, deadlineAt, cursor);
+			const committed = commitSynced(storage.kv, accountId, event, deadlineAt, cursor, clock);
 			if (markMaster && !committed.seen && committed.event && !storage.kv.get(`${MASTER_DONE}${event.id}`)) {
 				storage.kv.put(`${MASTER_OPEN}${event.id}`, event);
 			}
@@ -253,7 +215,7 @@ async function commitDurable(
 		if (error instanceof DeadlinePassed) return { seen: false, seq: 0, expired: true };
 		throw error;
 	}
-	if (!result.seen && result.event) await setDeadline(storage, BUS_ALARM, nowMs + ALARM_MS);
+	if (!result.seen && result.event) await setDeadline(storage, BUS_ALARM, clock() + ALARM_MS);
 	return result;
 }
 
@@ -263,6 +225,8 @@ export class AccountBus {
 	private accepting: Promise<void> = Promise.resolve();
 	private flushing: Promise<void> = Promise.resolve();
 	private readonly inside = new AsyncLocalStorage<true>();
+	// Heartbeat arrival times, taken in fetch before the request waits in the queue.
+	private readonly arrivals = new Map<string, number>();
 
 	constructor(ctx: BusState, env: BusObjectEnv) {
 		this.ctx = ctx;
@@ -273,10 +237,27 @@ export class AccountBus {
 		return this.env.now?.() ?? Date.now();
 	}
 
+	// No await here. The parse starts now and notes the agent when it lands.
+	private noteHeartbeatArrival(request: Request): void {
+		const at = this.nowMs();
+		void request
+			.clone()
+			.json()
+			.then((body: unknown) => {
+				if (isObject(body) && isNonEmptyString(body.agentId)) {
+					const known = this.arrivals.get(body.agentId);
+					if (known === undefined || at > known) this.arrivals.set(body.agentId, at);
+				}
+			})
+			.catch(() => undefined);
+	}
+
 	// The runtime calls fetch. No module in this repo calls it.
 	async fetch(request: Request): Promise<Response> {
-		const handler = this.routes().get(new URL(request.url).pathname);
+		const pathname = new URL(request.url).pathname;
+		const handler = this.routes().get(pathname);
 		if (!handler) return new Response("missing", { status: 404 });
+		if (pathname === "/heartbeat") this.noteHeartbeatArrival(request);
 		return this.serialize(() => handler(request));
 	}
 
@@ -302,7 +283,7 @@ export class AccountBus {
 					storage,
 					HEARTBEAT_ALARM,
 					clock(),
-					() => sweepHeartbeats(storage, this.env),
+					() => sweepHeartbeats(storage, this.env, this.arrivals),
 					() => backoffDeadline(storage, HEARTBEAT_ALARM, clock, RETRY_MS),
 				),
 			() =>
@@ -378,12 +359,14 @@ export class AccountBus {
 		const record = advanceBody(body);
 		if (!record) return new Response("The message was rejected.", { status: 400 });
 		let result: AdvanceResult;
-		if (expired(record.deadlineAt)) result = { accepted: false, expired: true };
+		if (expired(record.deadlineAt, this.nowMs())) result = { accepted: false, expired: true };
 		else {
 			await this.initialize(record.accountId);
-			result = expired(record.deadlineAt)
+			result = expired(record.deadlineAt, this.nowMs())
 				? { accepted: false, expired: true }
-				: await planAdvance(this.ctx.storage, record.accountId, record.script, record.deadlineAt, this.nowMs());
+				: await planAdvance(this.ctx.storage, record.accountId, record.script, record.deadlineAt, () =>
+						this.nowMs(),
+					);
 		}
 		if (result.expired) return Response.json({ accepted: false, expired: true });
 		if (result.event) this.push(result.event);
@@ -396,7 +379,9 @@ export class AccountBus {
 	private async acceptStored(accountId: string, event: PublishedEvent): Promise<AcceptResult> {
 		await this.initialize(accountId);
 		const mark = masterEvent(event) && chooseAdapters(this.env.ADAPTERS) === "real";
-		const stored = await commitDurable(this.ctx.storage, accountId, event, undefined, undefined, mark, this.nowMs());
+		const stored = await commitDurable(this.ctx.storage, accountId, event, undefined, undefined, mark, () =>
+			this.nowMs(),
+		);
 		if (stored.event) this.push(stored.event);
 		const owner = await this.ctx.storage.get<string>("account");
 		if (owner === accountId) {
@@ -576,8 +561,9 @@ export class AccountBus {
 		if (!read) return new Response("The message was rejected.", { status: 400 });
 		const stored = await this.ctx.storage.get<string>("account");
 		if (stored && stored !== read.accountId) return new Response("The message was rejected.", { status: 400 });
-		const at = this.env.now?.() ?? Date.now();
+		const at = this.nowMs();
 		await this.withAccount(read.accountId, () => recordBeat(this.ctx.storage, read.agentId, at));
+		this.arrivals.delete(read.agentId);
 		return Response.json({ ok: true });
 	}
 
