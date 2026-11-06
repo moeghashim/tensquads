@@ -1,7 +1,10 @@
 // Clerk accepts a session token only when its azp is one of these origins.
-// The deployed Worker accepts only its own origin. Customer domains stay out.
+// Vite sets __TENSQUADS_AUTHORIZED_ORIGIN__ from the Cloudflare environment.
+// A production build gets the production Worker. A real build gets the real Worker.
 // A dev build also accepts http://localhost on TS_E2E_PORT, or on port 3000.
-export const authorizedParties = ["https://tensquads.moe-678.workers.dev"] as const;
+// Customer domains stay out.
+
+declare const __TENSQUADS_AUTHORIZED_ORIGIN__: string;
 
 const localPortPattern = /^[1-9]\d{0,4}$/;
 
@@ -20,6 +23,6 @@ export function partiesWithLocalPort(parties: readonly string[], port: string | 
 }
 
 export function partiesForBuild(): readonly string[] {
-	if (import.meta.env.DEV) return partiesWithLocalPort(authorizedParties, process.env.TS_E2E_PORT);
-	return authorizedParties;
+	if (import.meta.env.DEV) return partiesWithLocalPort([__TENSQUADS_AUTHORIZED_ORIGIN__], process.env.TS_E2E_PORT);
+	return [__TENSQUADS_AUTHORIZED_ORIGIN__];
 }
