@@ -2,6 +2,7 @@ import type { WorkspaceSnapshot } from "@tensquads/adapters";
 import type { Agent, AgentImage, Plan, PlanName, Skill, SkillGate } from "@tensquads/domain";
 import { PROOF_PREVIEW_URL, proofStory } from "@tensquads/domain/master";
 
+import { emptyAgent, emptyOverviewTiles } from "./blank-agent.ts";
 import { design } from "./design-file.ts";
 
 // This snapshot stays out of workspaceFromDesign. Adding it there changes the nine done numbers.
@@ -29,18 +30,6 @@ function image(id: string, name: string, tint: string, tag: string): AgentImage 
 	};
 }
 
-function proofTiles() {
-	const delta = "\u00a0";
-	const deltaColor = "#5d5d5d";
-	return [
-		{ label: "Revenue", value: "—", delta, deltaColor },
-		{ label: "Orders", value: "—", delta, deltaColor },
-		{ label: "Average order", value: "$0", delta, deltaColor },
-		{ label: "Profit margin", value: "0%", delta, deltaColor },
-		{ label: "Hours saved", value: "0h", delta, deltaColor },
-	];
-}
-
 function agent(input: {
 	readonly id: string;
 	readonly role: string;
@@ -51,30 +40,13 @@ function agent(input: {
 	readonly skills: readonly Skill[];
 	readonly target: readonly [string, string, string];
 }): Agent {
-	return {
-		id: input.id,
-		name: input.role,
-		role: input.role,
-		tint: input.tint,
-		on: true,
-		autonomy: "Ask first",
-		mission: input.mission,
-		targets: [input.target],
-		contribution: 0,
-		tasks: 0,
-		success: "0%",
-		saved: "0h",
-		last: input.last,
-		host: input.host,
+	return emptyAgent({
+		...input,
 		region: "Frankfurt",
 		size: "2 vCPU · 4 GB",
 		cpu: "0%",
 		uptime: "Just started",
-		egress: [],
-		secrets: [],
-		kpis: [["Tasks", "0"]],
-		skills: input.skills,
-	};
+	});
 }
 
 export async function proofOfConceptWorkspace(): Promise<WorkspaceSnapshot> {
@@ -151,7 +123,7 @@ export async function proofOfConceptWorkspace(): Promise<WorkspaceSnapshot> {
 				approvals: [],
 				proposals: [],
 				revenue: [],
-				tiles: proofTiles(),
+				tiles: emptyOverviewTiles(),
 				messages: [
 					{
 						id: "poc-chat-1",

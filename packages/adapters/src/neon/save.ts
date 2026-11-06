@@ -354,6 +354,27 @@ async function insertMetrics(
 	}
 }
 
+type AccountWriter = Parameters<Parameters<AppDatabase["transaction"]>[0]>[0];
+
+function accountExists(accountId: string): Error & { readonly code: "account_exists" } {
+	const error = new Error(`The account ${accountId} already exists.`) as Error & { code: "account_exists" };
+	error.name = "AccountExistsError";
+	error.code = "account_exists";
+	return error;
+}
+
+export async function createAccount(db: AppDatabase, entry: AccountSnapshot): Promise<void> {
+	const id = entry.account.id;
+	await workspaceTransaction(db, (tx) => insertNewAccount(tx, entry), { accountId: id });
+}
+
+async function insertNewAccount(tx: AccountWriter, entry: AccountSnapshot): Promise<void> {
+	const id = entry.account.id;
+	const existing = await tx.select({ id: accounts.id }).from(accounts).where(eq(accounts.id, id));
+	if (existing[0]) throw accountExists(id);
+	await insertAccount(tx, entry, 0);
+}
+
 export async function writeAccount(db: AppDatabase, entry: AccountSnapshot): Promise<void> {
 	const id = entry.account.id;
 	// A reset is one account's writer. The shared global key lets other accounts proceed.
