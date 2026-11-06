@@ -1,14 +1,17 @@
 #!/bin/sh
-# Same protocol as /tmp/ts-e2e-lock.sh. TS_E2E_LOCK_DIR overrides the path in tests.
-# A holder that has exited is broken with kill -0.
-# A lock with no pid file breaks after 120 minutes.
-# An empty or non-numeric pid file is the same as no pid file.
-# The age of that file decides the 120 minute break.
-# When that script already holds the directory, its pid is an ancestor of this
-# process, so the command runs and the lock stays.
-# The bypass needs a lock script in the ancestor's command line. A pid alone
-# can be stale, reused, or an unrelated ancestor.
+# The same directory protocol as /tmp/ts-e2e-lock.sh.
+# TS_E2E_LOCK_DIR sets the lock path in tests.
+# The owner is the one process that creates $L/pid with noclobber.
+# Ownership also requires the pid read-back and the same directory inode.
+# Only that owner removes the directory, and only in cleanup.
+# A dead pid is claimed by a rename of the pid file to a private token.
+# An empty or non-numeric pid file older than 120 minutes uses the same claim.
+# An aged directory with no pid file is claimed by the noclobber create.
+# The directory is not moved.
+# An ancestor that runs /tmp/ts-e2e-lock.sh or this script keeps the lock.
+# The wait between attempts is 5 seconds.
 L=${TS_E2E_LOCK_DIR:-/tmp/ts-e2e.lock}
+ident=
 
 # True when the string is a positive integer.
 is_pid() {
@@ -16,6 +19,15 @@ is_pid() {
 	'' | *[!0-9]*) return 1 ;;
 	*) [ "$1" -gt 0 ] 2>/dev/null ;;
 	esac
+}
+
+pid_is_live() {
+	is_pid "$1" || return 1
+	kill -0 "$1" 2>/dev/null
+}
+
+file_is_old() {
+	[ -n "$(find "$1" -maxdepth 0 -mmin +120 2>/dev/null)" ]
 }
 
 already_held() {
@@ -60,87 +72,110 @@ dir_id() {
 	printf '%s' "$id"
 }
 
-# Put a moved directory back only when the lock path is still empty.
-# Never delete a directory whose pid names a live process.
-restore_dir() {
-	moved=$1
-	if [ ! -e "$L" ]; then
-		mv "$moved" "$L" 2>/dev/null || return 0
-		return 0
-	fi
-	moved_pid=$(cat "$moved/pid" 2>/dev/null || true)
-	if is_pid "$moved_pid" && kill -0 "$moved_pid" 2>/dev/null; then
-		return 0
-	fi
-	rm -rf "$moved"
+# Noclobber create. A second process cannot replace an existing pid file.
+create_pid() {
+	lock_pause before-pid-create
+	(set -C; echo $$ > "$L/pid") 2>/dev/null
 }
 
-# True when the directory has no numeric pid and the aged mark is past 120 minutes.
-# A numeric pid is a holder, live or dead. An empty or other pid is not a holder.
-# The mark is the pid file when that file exists. Otherwise it is the directory.
-is_aged_without_pid() {
-	dir=$1
-	if [ -f "$dir/pid" ]; then
-		pid_val=$(cat "$dir/pid" 2>/dev/null || true)
-		if is_pid "$pid_val"; then
+# The create succeeded. The pid read-back and the inode must still match.
+confirm_owner() {
+	lock_pause after-pid-create
+	if [ "$(cat "$L/pid" 2>/dev/null)" != "$$" ]; then
+		return 1
+	fi
+	lock_pause after-read-back
+	if [ "$(dir_id "$L")" != "$ident" ]; then
+		return 1
+	fi
+	lock_pause after-dir-check
+	return 0
+}
+
+# A failed create does not remove the directory. The caller waits.
+take_lock() {
+	if create_pid && confirm_owner; then
+		return 0
+	fi
+	lock_trace lost-pid
+	return 1
+}
+
+# The pid file was moved aside. Put its bytes back only when the path is empty.
+# The write uses noclobber, so it cannot replace a pid another process created.
+restore_pid() {
+	token=$1
+	if [ ! -f "$L/pid" ]; then
+		lock_pause before-put-back
+		(set -C; cat "$token" > "$L/pid") 2>/dev/null || true
+	fi
+	rm -f "$token"
+}
+
+# One process wins the rename of the pid file. The winner then creates $L/pid.
+claim_holder() {
+	expected=$1
+	token="$L.claim.$$"
+	ident=$(dir_id "$L")
+	[ -n "$ident" ] || return 1
+	mv "$L/pid" "$token" 2>/dev/null || return 1
+	lock_pause after-claim-mv
+	moved=$(cat "$token" 2>/dev/null || true)
+	dead=0
+	if [ "$moved" = "$expected" ]; then
+		if pid_is_live "$moved"; then
+			dead=0
+		else
+			dead=1
+		fi
+	fi
+	lock_pause after-claim-read
+	if [ "$dead" -ne 1 ]; then
+		restore_pid "$token"
+		return 1
+	fi
+	rm -f "$token"
+	take_lock
+}
+
+reclaim() {
+	if [ -f "$L/pid" ]; then
+		holder=$(cat "$L/pid" 2>/dev/null || true)
+		if is_pid "$holder"; then
+			if pid_is_live "$holder"; then
+				return 1
+			fi
+			lock_pause after-dead-check
+			claim_holder "$holder"
+			return $?
+		fi
+		if ! file_is_old "$L/pid"; then
 			return 1
 		fi
-		[ -n "$(find "$dir/pid" -maxdepth 0 -mmin +120 2>/dev/null)" ]
+		lock_pause after-nonnumeric-check
+		claim_holder "$holder"
 		return $?
 	fi
-	[ -n "$(find "$dir" -maxdepth 0 -mmin +120 2>/dev/null)" ]
-}
-
-# A dead holder is claimed by moving the pid file. A fresh directory has no
-# pid file yet, so this leaves it in place. An aged directory is removed only
-# when the moved copy still has no numeric pid and is older than 120 minutes.
-reclaim_stale() {
-	if [ -n "$1" ]; then
-		token="$L.reclaim.$$"
-		rm -f "$token"
-		mv "$L/pid" "$token" 2>/dev/null || return 0
-		moved=$(cat "$token" 2>/dev/null || true)
-		if [ "$moved" != "$1" ] || kill -0 "$moved" 2>/dev/null; then
-			lock_pause after-steal
-			if [ ! -f "$L/pid" ]; then
-				mv "$token" "$L/pid" 2>/dev/null || return 0
-			fi
-			if [ -f "$L/pid" ] || ! kill -0 "$moved" 2>/dev/null; then
-				rm -f "$token"
-			fi
-			return 0
-		fi
-		rm -f "$token"
-		if [ -f "$L/pid" ]; then
-			return 0
-		fi
-		rm -rf "$L"
-		return 0
+	if [ ! -d "$L" ]; then
+		return 1
 	fi
-
-	stale="$L.stale.$$"
-	rm -rf "$stale"
-	aged_id=$(dir_id "$L")
-	if [ -z "$aged_id" ] || ! is_aged_without_pid "$L"; then
-		return 0
+	if ! file_is_old "$L"; then
+		return 1
 	fi
-	lock_pause before-aged-mv
-	if [ "$(dir_id "$L")" != "$aged_id" ] || ! is_aged_without_pid "$L"; then
-		return 0
+	ident=$(dir_id "$L")
+	if [ -z "$ident" ]; then
+		return 1
 	fi
-	mv "$L" "$stale" 2>/dev/null || return 0
-	# Second check, on the renamed copy. A pause here lets a test change that copy.
-	lock_pause before-aged-judge
-	if [ "$(dir_id "$stale")" != "$aged_id" ] || ! is_aged_without_pid "$stale"; then
-		restore_dir "$stale"
-		return 0
+	lock_pause after-aged-check
+	if [ "$(dir_id "$L")" != "$ident" ] || [ -f "$L/pid" ] || ! file_is_old "$L"; then
+		return 1
 	fi
-	rm -rf "$stale"
+	lock_pause after-final-check
+	take_lock
 }
 
 cleanup() {
-	# Remove the lock only when it is still ours. Another holder may have
-	# replaced the pid file while our command ran.
+	# Only the owner removes the directory.
 	if [ "$(cat "$L/pid" 2>/dev/null)" = "$$" ]; then
 		rm -rf "$L"
 	fi
@@ -151,44 +186,25 @@ if already_held; then
 	exit $?
 fi
 
-# mkdir wins the directory. The command runs only when that same directory
-# still contains this pid. A failed write goes back to the wait loop.
-ident=
 while true; do
 	owned=0
-	if [ -n "$ident" ] && [ "$(dir_id "$L")" = "$ident" ] && [ "$(cat "$L/pid" 2>/dev/null)" = "$$" ]; then
-		owned=1
-	elif mkdir "$L" 2>/dev/null; then
+	if mkdir "$L" 2>/dev/null; then
 		ident=$(dir_id "$L")
 		lock_pause after-mkdir
-		if [ -n "$ident" ] && [ "$(dir_id "$L")" = "$ident" ] \
-			&& echo $$ > "$L/pid" 2>/dev/null \
-			&& lock_pause after-pid-write \
-			&& [ "$(cat "$L/pid" 2>/dev/null)" = "$$" ] \
-			&& lock_pause after-read-back \
-			&& [ "$(dir_id "$L")" = "$ident" ] \
-			&& lock_pause after-dir-check; then
-			owned=1
+		if [ -n "$ident" ] && [ "$(dir_id "$L")" = "$ident" ]; then
+			if take_lock; then
+				owned=1
+			fi
 		else
+			# The directory changed before the pid create. Leave it in place.
 			lock_trace lost-pid
 		fi
+	elif [ -n "$ident" ] && [ "$(dir_id "$L")" = "$ident" ] && [ "$(cat "$L/pid" 2>/dev/null)" = "$$" ]; then
+		owned=1
+	elif reclaim; then
+		owned=1
 	else
-		holder=$(cat "$L/pid" 2>/dev/null || true)
-		if [ -n "$ident" ] && [ "$(dir_id "$L")" = "$ident" ] && [ "$holder" = "$$" ]; then
-			owned=1
-		elif is_pid "$holder"; then
-			if ! kill -0 "$holder" 2>/dev/null; then
-				lock_pause saw-dead
-				reclaim_stale "$holder"
-				lock_trace reclaim-done
-			fi
-		elif is_aged_without_pid "$L"; then
-			reclaim_stale ""
-			lock_trace reclaim-done
-		fi
-		if [ "$owned" -ne 1 ]; then
-			sleep 5
-		fi
+		sleep 5
 	fi
 	if [ "$owned" -eq 1 ]; then
 		trap cleanup EXIT INT TERM
