@@ -109,6 +109,34 @@ test("the research check rejects a short report and a missing citation", async (
 	assert.equal(offline.evidence.includes("A competitor URL did not return 200."), true);
 });
 
+test("the research check does not count a dish description as a price", async () => {
+	const story = await proofStory();
+	const dishes = [
+		"generous platters made to share.",
+		"FATTOUSH BIBEIRUT fresh vegetables tossed with lemon juice and olive oil",
+		"Chicken tawook with garlic sauce",
+	];
+	const pages = { ...story.pages };
+	const competitors = story.report.competitors.map((competitor, index) => {
+		const dish = dishes[index] ?? "";
+		pages[competitor.url] = { status: 200, body: dish };
+		return { ...competitor, priceOrOffer: dish };
+	});
+	const result = await checkResearch({ ...story.report, competitors }, reader(pages));
+	assert.equal(result.pass, false);
+	assert.equal(result.evidence.includes("The report needs three competitors."), true);
+	assert.equal(result.evidence.includes("A competitor has no price or offer."), true);
+	const offers = ["Free delivery", "Weekend deal", "10% off"];
+	const withOffers = story.report.competitors.map((competitor, index) => {
+		const offer = offers[index] ?? "";
+		pages[competitor.url] = { status: 200, body: offer };
+		return { ...competitor, priceOrOffer: offer };
+	});
+	const counted = await checkResearch({ ...story.report, competitors: withOffers }, reader(pages));
+	assert.equal(counted.evidence.includes("The report needs three competitors."), false);
+	assert.equal(counted.evidence.includes("A competitor has no price or offer."), false);
+});
+
 test("the page check rejects bytes that are not the kit render, a broken link, and sideways scroll", async () => {
 	const story = await proofStory();
 	const invented = story.pageHtml.replace("Fattoush", "Dragon taco");
