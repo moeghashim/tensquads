@@ -17,5 +17,5 @@ export const Route = createFileRoute("/_workspace/chat")({
 
 function ChatRoute() {
 	const data = Route.useLoaderData();
-	return <ChatPage threadId={data.threadId} events={data.events} />;
+	return <ChatPage threadId={data.threadId} events={data.events} liveBus={data.liveBus} />;
 }
