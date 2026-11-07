@@ -13,6 +13,7 @@ import { pageLinks } from "./hrefs.ts";
 import { NO_FINDING_TEXT } from "./no-finding.ts";
 import { NO_ITEMS_TEXT } from "./no-items.ts";
 import { pageHas } from "./page-text.ts";
+import { hasPriceOrOffer } from "./price-token.ts";
 import type { RenderedPage } from "./render-page.ts";
 import type { CheckOutcome, PageAudit, PageFetch, PageReader } from "./types.ts";
 
@@ -109,7 +110,7 @@ async function noteCompetitor(
 	seenPages: Set<string>,
 	readPage: PageReader,
 ): Promise<void> {
-	if (competitor.priceOrOffer.trim().length === 0) evidence.push("A competitor has no price or offer.");
+	if (!hasPriceOrOffer(competitor.priceOrOffer)) evidence.push("A competitor has no price or offer.");
 	if (!sources.includes(competitor.sourceUrl)) evidence.push("The report was rejected.");
 	const page = pageKey(competitor.url);
 	if (seenPages.has(page)) evidence.push("The report repeats a competitor.");
@@ -136,7 +137,8 @@ export async function checkResearch(report: unknown, readPage: PageReader): Prom
 	const parsed = readReport(report);
 	if (!parsed) return outcome(["The report was rejected."]);
 	const evidence: string[] = [];
-	if (parsed.competitors.length < 3) evidence.push("The report needs three competitors.");
+	const priced = parsed.competitors.filter((competitor: Competitor) => hasPriceOrOffer(competitor.priceOrOffer));
+	if (priced.length < 3) evidence.push("The report needs three competitors.");
 	if (!parsed.sources.includes(parsed.gapEvidence.sourceUrl)) evidence.push("The report was rejected.");
 	const seenPages = new Set<string>();
 	for (const competitor of parsed.competitors) {
