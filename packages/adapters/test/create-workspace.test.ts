@@ -105,3 +105,23 @@ test("a later account sorts after the highest sort order", async () => {
 		await close();
 	}
 });
+
+// Sign-up in real mode creates the account before any Durable Object exists.
+test("a new workspace can be created in real mode", async () => {
+	const { db, close } = await openPglite();
+	const before = process.env.ADAPTERS;
+	process.env.ADAPTERS = "real";
+	try {
+		const repositories = createRepositories(db);
+		const made = await repositories.platform.createWorkspace(
+			{ accountId: "account-real", mode: "account" },
+			draft("user_real"),
+		);
+		assert.equal(made.created, true);
+		assert.equal(made.accountId, "account-real");
+	} finally {
+		if (before === undefined) delete process.env.ADAPTERS;
+		else process.env.ADAPTERS = before;
+		await close();
+	}
+});
