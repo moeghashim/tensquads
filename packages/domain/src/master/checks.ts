@@ -60,6 +60,19 @@ function readEvidence(value: unknown): GapEvidence | null {
 	return { sourceUrl: value.sourceUrl, quote: value.quote };
 }
 
+// A market Result with no report: task.route or an empty payload. Progress Results keep their skill name.
+export function isResearchFailure(event: {
+	readonly from: string;
+	readonly skill: string;
+	readonly payload: Readonly<Record<string, unknown>>;
+}): boolean {
+	return (
+		event.from === "market" &&
+		event.skill !== "report.write" &&
+		(event.skill === "task.route" || Object.keys(event.payload).length === 0)
+	);
+}
+
 export function readReport(value: unknown): ResearchReport | null {
 	if (!isRecord(value) || typeof value.gap !== "string" || value.gap.trim().length === 0) return null;
 	const gapEvidence = readEvidence(value.gapEvidence);

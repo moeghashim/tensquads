@@ -384,3 +384,62 @@ test("an empty monitor id is sent back once and then escalated", async () => {
 	assert.equal(second[0]?.kind, "Escalation");
 	assert.equal(master.snapshot().phase, "escalated");
 });
+
+function researchFailure(text: string): BusEvent {
+	return { ...result("task.route", {}), from: "market", text };
+}
+
+test("a failed research result goes back once with the same payload", async () => {
+	const story = await proofStory();
+	const master = createMaster(story.request, ports(story));
+	const started = master.start();
+	const first = await master.accept(researchFailure("fetch failed"));
+	assert.equal(first.length, 1);
+	assert.equal(first[0]?.kind, "Task");
+	assert.equal(first[0]?.from, "master");
+	assert.equal(first[0]?.to, "market");
+	assert.equal(first[0]?.skill, "task.route");
+	assert.deepEqual(first[0]?.payload, { ...started.payload, evidence: ["fetch failed"] });
+	assert.equal(master.snapshot().researchFails, 1);
+	assert.equal(master.snapshot().phase, "research");
+});
+
+test("a second failed research result escalates with the researcher text", async () => {
+	const story = await proofStory();
+	const master = createMaster(story.request, ports(story));
+	master.start();
+	await master.accept(researchFailure("fetch failed"));
+	const second = await master.accept(researchFailure("fetch failed"));
+	assert.equal(second.length, 1);
+	assert.equal(second[0]?.kind, "Escalation");
+	assert.equal(second[0]?.text, "The check failed twice.");
+	assert.equal(second[0]?.to, "user");
+	assert.equal(second[0]?.skill, "check.run");
+	assert.deepEqual(second[0]?.payload, { evidence: ["fetch failed"] });
+	assert.equal(master.snapshot().phase, "escalated");
+});
+
+test("a valid report after one failed research result continues normally", async () => {
+	const story = await proofStory();
+	const master = createMaster(story.request, ports(story));
+	master.start();
+	await master.accept(researchFailure("fetch failed"));
+	const asked = await master.accept(result("report.write", { report: story.report }));
+	assert.equal(asked.length, 1);
+	assert.equal(asked[0]?.skill, "brief.write");
+	assert.equal(asked[0]?.text, "Build the site with this brief?");
+	assert.equal(master.snapshot().phase, "brief");
+});
+
+test("a restored master still counts an earlier failed research result", async () => {
+	const story = await proofStory();
+	const master = createMaster(story.request, ports(story));
+	master.start();
+	await master.accept(researchFailure("fetch failed"));
+	const saved = master.snapshot();
+	const resumed = createMaster(story.request, ports(story));
+	resumed.restore(saved);
+	const second = await resumed.accept(researchFailure("fetch failed"));
+	assert.equal(second[0]?.kind, "Escalation");
+	assert.equal(second[0]?.text, "The check failed twice.");
+});
