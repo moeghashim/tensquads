@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { PublishedEvent } from "@tensquads/kernel";
 import { AccountBus } from "../src/cloudflare-bus/account-bus.ts";
-import { createCloudflareBus } from "../src/cloudflare-bus/http.ts";
+import { createCloudflareBus, type QueueMessage } from "../src/cloudflare-bus/http.ts";
 import type { ScriptedBusEvent } from "../src/memory-bus.ts";
 import { Storage } from "./bus-storage.ts";
 
@@ -45,8 +45,8 @@ test("two concurrent advances on one account never both succeed for one event", 
 		}),
 	};
 	const queue = {
-		async send(body: { event: PublishedEvent }) {
-			sent.push(body.event.id);
+		async send(body: QueueMessage) {
+			if ("event" in body) sent.push(body.event.id);
 		},
 	};
 	const concurrent = { accountId: "bus-concurrent", mode: "account" } as const;

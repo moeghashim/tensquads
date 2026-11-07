@@ -84,20 +84,19 @@ export async function sendWorkspace(method: "beginSend" | "finishSend", data: st
 	);
 }
 
-// Real mode publishes the research task. Test mode keeps the five design routes.
+// Real mode queues the research start. The queue consumer provisions the machines and publishes the task.
+// The send never waits on provisioning, which can take minutes.
 async function businessLiveStart(): Promise<LiveStart> {
-	const { createCloudflareBus, masterStartEvent } = await import("@tensquads/adapters");
+	const { queueMasterStart } = await import("@tensquads/adapters");
 	const workers = await import("cloudflare:workers");
 	const env = (workers.env ?? {}) as {
-		ACCOUNT_BUS?: Parameters<typeof createCloudflareBus>[0];
-		BUS_QUEUE?: Parameters<typeof createCloudflareBus>[2];
-	} & Parameters<typeof masterStartEvent>[0];
-	if (!env.ACCOUNT_BUS) throw new Error("The bus is not configured.");
-	const bus = createCloudflareBus(env.ACCOUNT_BUS, [], env.BUS_QUEUE);
+		ACCOUNT_BUS?: unknown;
+		BUS_QUEUE?: Parameters<typeof queueMasterStart>[0];
+	};
+	if (!env.ACCOUNT_BUS || !env.BUS_QUEUE) throw new Error("The bus is not configured.");
+	const queue = env.BUS_QUEUE;
 	return async (scope, request) => {
 		if (scope.mode !== "account") return;
-		const store = await bus.store(scope);
-		const event = await masterStartEvent(env, scope.accountId, request, store, Date.now());
-		await bus.publish(scope, event);
+		await queueMasterStart(queue, scope.accountId, request);
 	};
 }
