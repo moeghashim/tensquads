@@ -8,6 +8,7 @@ import { defineConfig, type Plugin } from "vite";
 import publishStubFn from "../../packages/adapters/src/cloudflare-bus/publish-stub.ts";
 import { adaptersMode, masterStubId, publishStubId } from "./adapters-mode.ts";
 import { authorizedOrigin } from "./authorized-origin.ts";
+import { HOME_V2_HOST } from "./src/server/home-v2-host.ts";
 
 const wranglerSource = readFileSync(fileURLToPath(new URL("./wrangler.jsonc", import.meta.url)), "utf8");
 const deployedOrigin = authorizedOrigin(adaptersMode(wranglerSource, process.env.CLOUDFLARE_ENV));
@@ -37,6 +38,9 @@ const realNames = process.env.CLOUDFLARE_ENV === "real" ? { esbuild: { keepNames
 const config = defineConfig({
 	define: {
 		__TENSQUADS_AUTHORIZED_ORIGIN__: JSON.stringify(deployedOrigin),
+	},
+	server: {
+		allowedHosts: [HOME_V2_HOST, "10squads.com", "www.10squads.com"],
 	},
 	// No tsconfigPaths here. The adapters tsconfig maps the master to a typecheck
 	// stub for tsc only. That map must not reach the bundle.
