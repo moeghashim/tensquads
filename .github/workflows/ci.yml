@@ -219,6 +219,16 @@ jobs:
           CLERK_PLATFORM_ORG_ID: ${{ vars.CLERK_PLATFORM_ORG_ID }}
         run: make verify
 
+      # Traces and screenshots from failed browser tests. Kept seven days.
+      - name: Keep browser test evidence
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: browser-test-results-${{ matrix.os }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Drop the private test database
         if: always()
         env:
