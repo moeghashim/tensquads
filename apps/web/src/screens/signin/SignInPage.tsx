@@ -62,7 +62,8 @@ function SignInClerk() {
 						return messageFor(step);
 					}
 					const finalized = await signIn.finalize();
-					if (finalized.error) return messageFor({ kind: "network" });
+					// A finalize error is not a known cause. It keeps the existing text, as before.
+					if (finalized.error) return messageFor({ kind: "wrong" });
 					const orgId = await platformOrgId().catch(() => "");
 					await activateCompanyOrganization(clerk, orgId).catch(() => undefined);
 					return openWorkspace();
