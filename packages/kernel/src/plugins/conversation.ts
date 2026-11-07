@@ -1,5 +1,12 @@
-import type { AccountScope, ConversationTransaction, SendResult } from "@tensquads/domain";
-import { chatSource, chatTaskLink, chatTrigger, evalChatTrigger, requireScope } from "@tensquads/domain";
+import type { AccountScope, BusinessChat, ConversationTransaction, SendResult } from "@tensquads/domain";
+import {
+	chatSource,
+	chatTaskLink,
+	chatTrigger,
+	evalChatTrigger,
+	parseBusinessChat,
+	requireScope,
+} from "@tensquads/domain";
 import type { Repositories } from "../ports.ts";
 import type { BusCommands } from "./bus.ts";
 
@@ -8,9 +15,11 @@ export interface ConversationCommands {
 	finishSend(scope: AccountScope, taskId: string): Promise<SendResult>;
 }
 
+export type LiveStart = (scope: AccountScope, request: BusinessChat) => Promise<void>;
+
 export function conversation(
 	context: { provide(name: string, service: ConversationCommands): unknown },
-	config: { repositories: () => Repositories; bus: () => BusCommands },
+	config: { repositories: () => Repositories; bus: () => BusCommands; liveStart?: LiveStart },
 ): void {
 	context.provide("workspaceConversation", {
 		async beginSend(scope, text) {
@@ -21,6 +30,26 @@ export function conversation(
 			// Decision 19: the Decider has no adapter in version 1, so a chat Trigger has no judgement step.
 			const evaluation = evalChatTrigger(trigger, checked.accountId);
 			if (trigger.source.name !== chatSource.name || !evaluation.gate) return { kind: "ignored" };
+			const request = config.liveStart ? parseBusinessChat(value) : null;
+			if (request && config.liveStart) {
+				// Start the research before the conversation transaction writes any message.
+				try {
+					await config.liveStart(checked, request);
+				} catch {
+					return config.repositories().conversation.transaction(checked, async (commands) => {
+						if (await commands.pendingTask()) return { kind: "ignored" };
+						await commands.message("user", value);
+						await commands.message("master", machinesDidNotStart());
+						return { kind: "answered", messages: await commands.messages() };
+					});
+				}
+				return config.repositories().conversation.transaction(checked, async (commands) => {
+					if (await commands.pendingTask()) return { kind: "ignored" };
+					await commands.message("user", value);
+					await commands.message("master", storedResearchReply());
+					return { kind: "answered", messages: await commands.messages() };
+				});
+			}
 			return config.repositories().conversation.transaction(checked, async (commands) => {
 				if (await commands.pendingTask()) return { kind: "ignored" };
 				return send(commands, value, route(value), config.bus());
@@ -102,6 +131,14 @@ export function route(text: string): string | null {
 export function skillFor(skills: readonly { readonly id: string; readonly on: boolean }[]): string {
 	const selected = skills.find((skill) => skill.on) ?? skills[0];
 	return selected?.id ?? "-";
+}
+
+export function storedResearchReply(): string {
+	return "I stored this business and started the research.";
+}
+
+export function machinesDidNotStart(): string {
+	return "The machines did not start.";
 }
 
 export function noAgentReply(): string {

@@ -3,6 +3,8 @@ export {
 	bus,
 	catalog,
 	conversation,
+	type LiveStart,
+	machinesDidNotStart,
 	noAgentReply,
 	pausedReply,
 	platform,
@@ -12,6 +14,7 @@ export {
 	route,
 	skillFor,
 	squads,
+	storedResearchReply,
 	taskPayload,
 	workingReply,
 } from "./plugins/index.ts";

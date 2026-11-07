@@ -2,7 +2,7 @@ import type { PublishedEvent } from "@tensquads/kernel";
 
 import { chooseAdapters } from "../../adapter-choice.ts";
 import { type BusNamespace, createCloudflareBus } from "../../cloudflare-bus/http.ts";
-import { briefAsk, publishAsk } from "./master-ask.ts";
+import { briefAsk, publishAsk, watchAsk } from "./master-ask.ts";
 
 export interface UserMasterEvent {
 	readonly id: string;
@@ -24,6 +24,7 @@ const missingBus = "The bus is not configured.";
 function skillForAsk(title: string): string {
 	if (title === briefAsk) return "brief.write";
 	if (title === publishAsk) return "approval.ask";
+	if (title === watchAsk) return "competition.watch";
 	return "-";
 }
 

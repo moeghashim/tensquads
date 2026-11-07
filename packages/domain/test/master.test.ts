@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { digestOf, parseWebsiteTask, renderPage } from "@tensquads/agent-kit";
 
-import { checkBrief, checkPage, checkPublished, checkResearch, wordCount } from "../src/master/checks.ts";
+import { checkPage, checkPublished, checkResearch } from "../src/master/checks.ts";
 import { pageLinks } from "../src/master/hrefs.ts";
 import { proofStory } from "../src/master/proof.ts";
 import { pageDocument } from "../src/master/render-page.ts";
@@ -68,7 +68,6 @@ test("the thirteen events stay in order and cite the gap", async () => {
 	assert.equal(story.events[8]?.text.includes(story.report.gapEvidence.sourceUrl), true);
 	assert.equal(story.events[10]?.text, "Publish the site?");
 	assert.equal(story.events[11]?.text, "The user said yes.");
-	assert.equal(wordCount(story.brief) < 150, true);
 	assert.equal(story.brief.includes(story.report.gap), true);
 	const build = mandateOf(story.events[7]?.payload ?? {});
 	const task = mandateOf(story.events[8]?.payload ?? {});
@@ -81,7 +80,6 @@ test("the thirteen events stay in order and cite the gap", async () => {
 	assert.equal(publish.subject, await digestOf(story.pageHtml));
 	assert.equal(new Date(build.at).toISOString(), build.at);
 	const research = await checkResearch(story.report, reader(story.pages));
-	const brief = checkBrief(story.brief, story.report);
 	const page = await checkPage({
 		...pageFields(story),
 		previewUrl: story.previewUrl,
@@ -90,7 +88,6 @@ test("the thirteen events stay in order and cite the gap", async () => {
 	});
 	const published = await checkPublished(story.pageHtml, story.publishedUrl, reader(story.pages), "proof");
 	assert.equal(research.pass, true);
-	assert.equal(brief.pass, true);
 	assert.equal(page.pass, true);
 	assert.equal(published.pass, true);
 });
@@ -110,18 +107,6 @@ test("the research check rejects a short report and a missing citation", async (
 	const offline = await checkResearch(story.report, async () => ({ status: 404, body: "" }));
 	assert.equal(offline.pass, false);
 	assert.equal(offline.evidence.includes("A competitor URL did not return 200."), true);
-});
-
-test("the brief check rejects 150 words and a missing gap", async () => {
-	const story = await proofStory();
-	const gapWords = story.report.gap.split(/\s+/).length;
-	const long = `${Array.from({ length: 150 - gapWords }, () => "word").join(" ")} ${story.report.gap}`;
-	assert.equal(wordCount(long), 150);
-	assert.equal(checkBrief(long, story.report).pass, false);
-	const named = long.split(" ").slice(1).join(" ");
-	assert.equal(wordCount(named), 149);
-	assert.equal(checkBrief(named, story.report).pass, true);
-	assert.equal(checkBrief("A short brief with no finding.", story.report).pass, false);
 });
 
 test("the page check rejects bytes that are not the kit render, a broken link, and sideways scroll", async () => {
@@ -200,10 +185,11 @@ function websiteTask(story: Story, report = story.report, businessType = story.r
 	return parseWebsiteTask({
 		businessName: story.request.businessName,
 		businessType,
-		brief: { text: story.brief, gap: report.gap },
+		brief: { text: story.prose, gap: report.gap },
 		report,
 		gapEvidence: report.gapEvidence,
 		items: story.request.items,
+		slug: "proof",
 		...(businessType === "restaurant" && story.request.cuisine ? { cuisine: story.request.cuisine } : {}),
 	});
 }
@@ -214,8 +200,9 @@ function pageFields(story: Story) {
 		businessType: story.request.businessType,
 		cuisine: story.request.cuisine,
 		items: story.request.items,
-		brief: story.brief,
+		brief: story.prose,
 		report: story.report,
+		slug: "proof",
 		choice: story.choice,
 	};
 }
@@ -275,10 +262,11 @@ test("the page check requires the kit bytes and resolves relative links", async 
 		parseWebsiteTask({
 			businessName: story.request.businessName,
 			businessType: story.request.businessType,
-			brief: { text: story.brief, gap: story.report.gap },
+			brief: { text: story.prose, gap: story.report.gap },
 			report: story.report,
 			gapEvidence: story.report.gapEvidence,
 			items: saladsFirst,
+			slug: "proof",
 			cuisine: story.request.cuisine,
 		}),
 		story.choice,

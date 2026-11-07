@@ -34,3 +34,14 @@ export function readApproval(_task: unknown): TaskApproval | null {
 export function approvalCovers(_approval: TaskApproval, _skill: Skill, _subject: string): boolean {
 	return false;
 }
+
+export interface ResearchTask {
+	readonly businessName: string;
+	readonly businessType: "restaurant" | "grocer";
+	readonly items: readonly { readonly name: string; readonly price: string | null }[];
+	readonly [key: string]: unknown;
+}
+
+export function parseResearchTask(_value: unknown): ResearchTask {
+	throw new Error("The kit is not installed.");
+}

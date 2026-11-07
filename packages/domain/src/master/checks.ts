@@ -10,8 +10,12 @@ import {
 } from "@tensquads/agent-kit";
 
 import { pageLinks } from "./hrefs.ts";
+import { NO_FINDING_TEXT } from "./no-finding.ts";
+import { NO_ITEMS_TEXT } from "./no-items.ts";
 import type { RenderedPage } from "./render-page.ts";
 import type { CheckOutcome, PageAudit, PageFetch, PageReader } from "./types.ts";
+
+export { NO_FINDING_TEXT, NO_ITEMS_TEXT };
 
 export interface PageCheckInput {
 	readonly previewUrl: string;
@@ -21,6 +25,7 @@ export interface PageCheckInput {
 	readonly items: readonly ListedItem[];
 	readonly brief: string;
 	readonly report: ResearchReport;
+	readonly slug: string;
 	readonly choice: unknown;
 	readonly readPage: PageReader;
 	readonly audit: (html: string) => PageAudit | Promise<PageAudit>;
@@ -33,12 +38,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function outcome(evidence: string[]): CheckOutcome {
 	return { pass: evidence.length === 0, evidence };
-}
-
-export function wordCount(text: string): number {
-	const trimmed = text.trim();
-	if (trimmed.length === 0) return 0;
-	return trimmed.split(/\s+/).length;
 }
 
 function textList(value: unknown): string[] | null {
@@ -149,10 +148,98 @@ export async function checkResearch(report: unknown, readPage: PageReader): Prom
 	return outcome(evidence);
 }
 
-export function checkBrief(brief: string, report: ResearchReport): CheckOutcome {
+export function renderItemSection(items: readonly { readonly name: string; readonly price: string }[]): string {
+	return items.map((item) => `${item.name}: ${item.price}`).join("\n");
+}
+
+// The owner sees the brief, a blank line, then the stored menu.
+export function shownBrief(prose: string, items: readonly { readonly name: string; readonly price: string }[]): string {
+	return `${prose}\n\nMenu:\n${renderItemSection(items)}`;
+}
+
+const NUMBER_WORDS = [
+	"zero",
+	"two",
+	"three",
+	"four",
+	"five",
+	"six",
+	"seven",
+	"eight",
+	"nine",
+	"ten",
+	"eleven",
+	"twelve",
+	"thirteen",
+	"fourteen",
+	"fifteen",
+	"sixteen",
+	"seventeen",
+	"eighteen",
+	"nineteen",
+	"twenty",
+	"thirty",
+	"forty",
+	"fifty",
+	"sixty",
+	"seventy",
+	"eighty",
+	"ninety",
+	"hundred",
+	"thousand",
+	"dozen",
+] as const;
+// \p{Sc} covers every Unicode currency sign: $, €, £, ¥, ₹, ¢ and the rest.
+const CURRENCY_SIGN = /\p{Sc}/u;
+const CURRENCY_WORDS = [
+	"dollar",
+	"dirham",
+	"riyal",
+	"euro",
+	"pound",
+	"yen",
+	"cent",
+	"dinar",
+	"rupee",
+	"AED",
+	"SAR",
+	"QAR",
+	"KWD",
+	"BHD",
+	"OMR",
+	"USD",
+	"EUR",
+	"GBP",
+	"JPY",
+] as const;
+const OFFER_WORDS = ["free", "deal", "offer", "discount", "BOGO", "buy one"] as const;
+
+// Case-insensitive, on word boundaries, with an optional plural "s".
+// A space inside a phrase matches any run of white space.
+function hasWord(text: string, word: string): boolean {
+	const pattern = word.split(" ").join("\\s+");
+	return new RegExp(`\\b${pattern}s?\\b`, "iu").test(text);
+}
+
+function wordCount(text: string): number {
+	const trimmed = text.trim();
+	if (trimmed.length === 0) return 0;
+	return trimmed.split(/\s+/).length;
+}
+
+// The model writes prose only. This check refuses any number, price, or offer.
+export function checkBrief(prose: string, report: ResearchReport): CheckOutcome {
 	const evidence: string[] = [];
-	if (wordCount(brief) >= 150) evidence.push("The brief is 150 words or more.");
-	if (!brief.includes(report.gap)) evidence.push("The brief does not name the gap.");
+	if (wordCount(prose) >= 150) evidence.push("The brief is 150 words or more.");
+	if (!prose.includes(report.gap)) evidence.push("The brief does not name the gap.");
+	if (/\p{N}/u.test(prose)) evidence.push("The brief has a number.");
+	if (NUMBER_WORDS.some((word) => hasWord(prose, word))) evidence.push("The brief has a number word.");
+	if (CURRENCY_SIGN.test(prose) || CURRENCY_WORDS.some((word) => hasWord(prose, word))) {
+		evidence.push("The brief names a currency.");
+	}
+	if (prose.includes("%") || OFFER_WORDS.some((word) => hasWord(prose, word))) {
+		evidence.push("The brief names an offer.");
+	}
 	return outcome(evidence);
 }
 
@@ -216,6 +303,7 @@ function renderedBytes(input: PageCheckInput): string | null {
 			report: input.report,
 			gapEvidence: input.report.gapEvidence,
 			items: input.items,
+			slug: input.slug,
 			...(input.cuisine ? { cuisine: input.cuisine } : {}),
 		});
 		return renderPage(task, choice);

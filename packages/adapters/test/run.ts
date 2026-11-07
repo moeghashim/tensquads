@@ -14,7 +14,11 @@ const serial = [
 	"test/create-lock.test.ts",
 	"test/review-fourth.test.ts",
 	"test/master-inbox.test.ts",
+	"test/live-projection.test.ts",
+	"test/review-monitor.test.ts",
 	"test/approval-delivery.test.ts",
+	"test/master-watch.test.ts",
+	"test/master-live-run.test.ts",
 ];
 const remaining = readdirSync("test")
 	.filter((name) => name.endsWith(".test.ts"))

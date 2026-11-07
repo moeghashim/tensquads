@@ -29,6 +29,8 @@ export type {
 	ImageStatus,
 	Severity,
 } from "./catalog/types.ts";
+export type { BusinessChat } from "./conversation/business-request.ts";
+export { parseBusinessChat, researchFields, researchStart } from "./conversation/business-request.ts";
 export type { ConversationEvent, MessageSent } from "./conversation/events.ts";
 export {
 	type AppendedChatEvent,
@@ -41,6 +43,9 @@ export {
 export type { Message, MessageFrom, SendResult, SentTask, Thread } from "./conversation/types.ts";
 export type { Eval, Source, Trigger } from "./inbound.ts";
 export { chatSource, chatTrigger, evalChatTrigger } from "./inbound.ts";
+export { BRIEF_FAILED_TEXT, NO_NAME_TEXT } from "./master/messages.ts";
+export { NO_FINDING_TEXT } from "./master/no-finding.ts";
+export { NO_ITEMS_TEXT } from "./master/no-items.ts";
 // The master entry imports the agent kit. Do not re-export it here. The Worker loads this file.
 export {
 	type AccountAdminView,

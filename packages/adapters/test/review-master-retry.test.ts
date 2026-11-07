@@ -142,7 +142,7 @@ test("one successful result calls the model once and a foreign account adds noth
 	const { storage, target } = objectBus(
 		ports(story, () => {
 			calls += 1;
-			return story.brief;
+			return story.prose;
 		}),
 	);
 	await seedBusiness(storage, story.request);
@@ -165,7 +165,7 @@ test("one model failure then redelivery runs the model twice and produces one tr
 		ports(story, () => {
 			calls += 1;
 			if (calls === 1) throw new Error("temporary");
-			return story.brief;
+			return story.prose;
 		}),
 	);
 	await seedBusiness(storage, story.request);
@@ -189,7 +189,7 @@ test("an alarm retries an open master step once", async () => {
 		...ports(story, () => {
 			calls += 1;
 			if (calls === 1) throw new Error("temporary");
-			return story.brief;
+			return story.prose;
 		}),
 		now: () => now,
 	});
@@ -224,7 +224,7 @@ test("an alarm retry and a redelivery of the same report call the model once", a
 		ports(story, () => {
 			calls += 1;
 			entered();
-			return gate.then(() => story.brief);
+			return gate.then(() => story.prose);
 		}),
 	);
 	await seedBusiness(storage, story.request);
@@ -247,7 +247,7 @@ test("a user approval of the brief and of publish reaches the website", async ()
 	if (!existsSync(kit)) return;
 	const { proofStory } = await import("@tensquads/domain/master");
 	const story = await proofStory();
-	const { storage, target } = objectBus(ports(story, () => story.brief));
+	const { storage, target } = objectBus(ports(story, () => story.prose));
 	await seedBusiness(storage, story.request);
 	assert.equal((await post(target, "proof", reportEvent("apr-report", story.report))).status, 200);
 	assert.equal((await post(target, "proof", approval("apr-yes-brief", "brief.write"))).status, 200);

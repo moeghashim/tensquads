@@ -8,6 +8,7 @@ export {
 	handleMachineRequest,
 	sweepDeliveryRetries,
 } from "./cloudflare-bus/index.ts";
+export { masterStartEvent } from "./cloudflare-bus/master-start.ts";
 export { createAccountMemoryBus, createMemoryBus, type MemoryBus, type ScriptedBusEvent } from "./memory-bus.ts";
 export { appendEvents, type EventDraft } from "./neon/commands/bus.ts";
 export { nextEvent } from "./neon/commands/traffic.ts";

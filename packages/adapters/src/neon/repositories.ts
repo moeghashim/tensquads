@@ -122,8 +122,17 @@ export function createRepositories(db: AppDatabase, namespace?: BusNamespace): R
 			listApprovals: (scope) => listApprovals(db, scope),
 			listMissionProposals: (scope) => listProposals(db, scope),
 			inbox: (scope) => readInbox(db, scope),
-			decide: (scope, id, ok, deadlineAt) =>
-				decide(db, scope, id, ok, deadlineAt, deliver, (accountId) => scheduleDeliveryRetry(accountId, namespace)),
+			decide: (scope, id, ok, deadlineAt, actorId) =>
+				decide(
+					db,
+					scope,
+					id,
+					ok,
+					deadlineAt,
+					deliver,
+					(accountId) => scheduleDeliveryRetry(accountId, namespace),
+					actorId,
+				),
 			decideMission: (scope, id, ok, deadlineAt) => decideMission(db, scope, id, ok, deadlineAt),
 			setRuleOn: (scope, id, on, fence, deadlineAt) => setRuleOn(db, scope, id, on, fence, deadlineAt),
 			addRule: (scope, draft, deadlineAt) => addRule(db, scope, draft, deadlineAt),

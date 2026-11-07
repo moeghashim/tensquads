@@ -141,6 +141,20 @@ test("a master ask is approved without a policy rule and reaches the master", as
 			kpis: [["Tasks", "0"]],
 			sortOrder: 9,
 		});
+		await db.insert(schema.busEvents).values({
+			accountId,
+			id: "m-01",
+			timeText: "12:01",
+			fromAgent: "master",
+			toAgent: "user",
+			kind: "Approval",
+			skill: "brief.write",
+			body: "Build the site with this brief?",
+			payload: { taskId: "business-review-real", skill: "website.build" },
+			writes: [],
+			trace: "tr_m-01",
+			seq: 1,
+		});
 		await db.insert(schema.approvals).values({
 			accountId,
 			id: "m-01",
@@ -155,20 +169,66 @@ test("a master ask is approved without a policy rule and reaches the master", as
 		const deliver: DeliverUserEvent = async (_accountId, event) => {
 			delivered.push(event);
 		};
-		await decide(db, scope(accountId), "m-01", true, undefined, deliver);
+		await decide(db, scope(accountId), "m-01", true, undefined, deliver, undefined, "clerk-ask");
 		assert.equal(await status(db, accountId, "m-01"), "Approved");
 		assert.equal(delivered.length, 1);
 		assert.equal(delivered[0]?.id, "user-m-01");
 		assert.equal(delivered[0]?.skill, "brief.write");
 		assert.equal(delivered[0]?.kind, "Approval");
 		const mandates = await db
-			.select({ id: schema.mandates.approvalId })
+			.select({
+				id: schema.mandates.approvalId,
+				skill: schema.mandates.skill,
+				saidYes: schema.mandates.saidYes,
+				taskId: schema.mandates.taskId,
+			})
 			.from(schema.mandates)
 			.where(eqAccount(accountId));
-		assert.equal(mandates.length, 0);
+		assert.equal(mandates.length, 1);
+		assert.equal(mandates[0]?.skill, "website.build");
+		assert.equal(mandates[0]?.saidYes, "clerk-ask");
+		assert.equal(mandates[0]?.taskId, "business-review-real");
 		assert.equal((await deliveries(db, accountId)).length, 0);
-		await decide(db, scope(accountId), "m-01", true, undefined, deliver);
+		await decide(db, scope(accountId), "m-01", true, undefined, deliver, undefined, "clerk-ask");
 		assert.equal(delivered.length, 1);
+	});
+});
+
+test("a master ask without a task id does not store a mandate", async () => {
+	await withDemo("ask-gap", async (db, accountId) => {
+		await db.insert(schema.agents).values({
+			accountId,
+			id: "website",
+			name: "Website builder",
+			role: "Website builder",
+			tint: "#e5e9f0",
+			isOn: true,
+			autonomy: "Ask first",
+			mission: "Build one page from the brief.",
+			contribution: 0,
+			tasks: 0,
+			success: "0%",
+			saved: "0h",
+			lastText: "",
+			targets: [["Pages", "0", "1"]],
+			kpis: [["Tasks", "0"]],
+			sortOrder: 9,
+		});
+		await db.insert(schema.approvals).values({
+			accountId,
+			id: "m-gap",
+			agent: "website",
+			title: "Build the site with this brief?",
+			detail: "Serve lunch.",
+			amount: "",
+			status: "Pending",
+			sortOrder: 8,
+		});
+		await assert.rejects(
+			() => decide(db, scope(accountId), "m-gap", true, undefined, async () => {}, undefined, "clerk-ask-gap"),
+			/The task id is missing\./,
+		);
+		assert.equal((await db.select().from(schema.mandates).where(eq(schema.mandates.accountId, accountId))).length, 0);
 	});
 });
 

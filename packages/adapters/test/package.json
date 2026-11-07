@@ -1,0 +1,8 @@
+{
+	"private": true,
+	"type": "module",
+	"description": "Declares the agent kit for the live master tests. This folder is not a workspace, so npm ci does not clone it.",
+	"dependencies": {
+		"@tensquads/agent-kit": "github:moeghashim/tensquads-agent-kit#bc3732e613a5ebe8087cc3abb09b1eb4419610e0"
+	}
+}

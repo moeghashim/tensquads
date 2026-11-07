@@ -216,7 +216,7 @@ test("checkPage passes on the raw bytes of a preview from this route", async () 
 					cuisine?: string;
 					items: readonly { name: string; price: string; section: string }[];
 				};
-				brief: string;
+				prose: string;
 				report: unknown;
 				choice: unknown;
 				audit: { keyboard: boolean; contrast: boolean; horizontalScroll: boolean };
@@ -231,6 +231,7 @@ test("checkPage passes on the raw bytes of a preview from this route", async () 
 				brief: string;
 				report: unknown;
 				choice: unknown;
+				slug: string;
 				readPage: (url: string) => Promise<{ status: number; body: string; bytes?: Uint8Array }>;
 				audit: (html: string) => { keyboard: boolean; contrast: boolean; horizontalScroll: boolean };
 			}): Promise<{ pass: boolean; evidence: readonly string[] }>;
@@ -251,9 +252,11 @@ test("checkPage passes on the raw bytes of a preview from this route", async () 
 			businessType: story.request.businessType,
 			cuisine: story.request.cuisine,
 			items: story.request.items,
-			brief: story.brief,
+			// The page shows the brief prose. The approval text adds the menu, but the page never does.
+			brief: story.prose,
 			report: story.report,
 			choice: story.choice,
+			slug: "proof",
 			audit: () => story.audit,
 			readPage: async (url) => {
 				if (url !== previewUrl) return story.pages[url] ?? { status: 404, body: "" };
