@@ -11,6 +11,7 @@ import {
 	AUTONOMY_OPTIONS,
 	agentDetailView,
 } from "#/screens/agent-detail/model.ts";
+import { machineEnv } from "./machine-env.ts";
 import { workerEnv } from "./worker-env.ts";
 
 function validateAgentId(input: unknown): string {
@@ -254,17 +255,6 @@ function detailSource(
 	};
 }
 
-async function machineEnv() {
-	return {
-		ADAPTERS: await workerEnv("ADAPTERS"),
-		BOAT_TOKEN: await workerEnv("BOAT_TOKEN"),
-		BOAT_ADMIN_TOKEN: await workerEnv("BOAT_ADMIN_TOKEN"),
-		BOAT_PROFILE: await workerEnv("BOAT_PROFILE"),
-		BOAT_BASE_PATH: await workerEnv("BOAT_BASE_PATH"),
-		BOAT_SECRET_BASE_URL: await workerEnv("BOAT_SECRET_BASE_URL"),
-	};
-}
-
 async function liveDashboard(scope: AccountScope, agentId: string) {
 	const { chooseAdapters, readLiveMachine } = await import("@tensquads/adapters");
 	if (chooseAdapters(await workerEnv("ADAPTERS")) !== "real") return null;
@@ -320,7 +310,7 @@ export const setAgentRunning = createServerFn({ method: "POST" })
 	.validator(validateRunning)
 	.handler(async ({ data }) => {
 		return writeFenced(data.agentId, data.accountId, (kernel, scope, deadlineAt) =>
-			switchMachineThen(data.agentId, scope, data.on, () =>
+			switchMachineThen(data.agentId, scope, () =>
 				kernel.setAgentOn(
 					scope,
 					data.agentId,
@@ -332,17 +322,16 @@ export const setAgentRunning = createServerFn({ method: "POST" })
 		);
 	});
 
-// In real mode the agent's boat.dev machine stops or resumes first. The stored switch
-// follows only if the machine moved. Test mode has no machine, so it only writes.
+// In real mode the stored switch commits first, then the agent's boat.dev machine moves
+// to the stored value. Test mode has no machine, so it only writes.
 async function switchMachineThen(
 	agentId: string,
 	scope: AccountScope,
-	on: boolean,
 	persist: () => Promise<Fenced<StoredAgentOn>>,
 ): Promise<Fenced<StoredAgentOn>> {
 	const { switchAgentMachine, switchingMachine } = await import("@tensquads/adapters");
 	const machine = switchingMachine(await machineEnv(), agentId);
-	return switchAgentMachine(machine, scope, agentId, on, persist);
+	return switchAgentMachine(machine, scope, agentId, persist);
 }
 
 export const setSkillEnabled = createServerFn({ method: "POST" })

@@ -44,29 +44,19 @@ async function moveMachine(machine: AccountMachine, scope: AccountScope, agentId
 	await machine.stop(scope, agentId);
 }
 
-// The machine moves first. The database write runs only after the machine moved,
-// so a machine failure leaves the stored switch unchanged and the owner sees the error.
-// If the write does not commit, the machine moves back to the stored state.
-// A failed move back is ignored here, so the original error is the one that reaches the owner.
+// The stored switch commits first. The machine moves second, to the stored value.
+// The heartbeat reads the stored switch, so it cannot resume a machine that is being switched off.
+// A failed write means no machine action. A failed machine action after a committed write
+// leaves the stored switch as it is. The error reaches the owner, so the owner sees the switch did not fully apply.
 export async function switchAgentMachine(
 	machine: AccountMachine | undefined,
 	scope: AccountScope,
 	agentId: string,
-	on: boolean,
 	persist: () => Promise<Fenced<StoredAgentOn>>,
 ): Promise<Fenced<StoredAgentOn>> {
-	if (!machine) return persist();
-	await moveMachine(machine, scope, agentId, on);
-	let written: Fenced<StoredAgentOn>;
-	try {
-		written = await persist();
-	} catch (error) {
-		await moveMachine(machine, scope, agentId, !on).catch(() => undefined);
-		throw error;
-	}
-	if (written.status === "superseded") {
-		// Another write won. The machine follows the stored value, not this request.
-		await moveMachine(machine, scope, agentId, written.row.on).catch(() => undefined);
-	}
+	const written = await persist();
+	if (!machine) return written;
+	// The stored value is the truth. On a superseded write it can differ from the request.
+	await moveMachine(machine, scope, agentId, written.row.on);
 	return written;
 }
