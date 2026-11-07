@@ -158,6 +158,8 @@ async function readJson(request: IncomingMessage): Promise<Record<string, unknow
 export async function startFakeBoat(): Promise<FakeBoat> {
 	const machines = new Map<string, StoredMachine>();
 	const byKey = new Map<string, string>();
+	// Like boat: a reused Idempotency-Key with a different body is refused with 409.
+	const keyBodies = new Map<string, string>();
 	const templates = new Map<string, StoredTemplate>();
 	const operations = new Map<string, { gets: number; targetId: string }>();
 	const secretCalls: SecretCall[] = [];
@@ -325,6 +327,11 @@ export async function startFakeBoat(): Promise<FakeBoat> {
 		}
 		const key = request.headers["idempotency-key"];
 		const idempotency = Array.isArray(key) ? key[0] : key;
+		const sent = JSON.stringify(body);
+		if (idempotency && keyBodies.has(idempotency) && keyBodies.get(idempotency) !== sent) {
+			fail(response, 409, "idempotency_key_reused");
+			return;
+		}
 		if (idempotency && byKey.has(idempotency)) {
 			const existing = machines.get(byKey.get(idempotency) ?? "");
 			if (existing) {
@@ -366,7 +373,10 @@ export async function startFakeBoat(): Promise<FakeBoat> {
 			stopStatus: null,
 		};
 		machines.set(id, row);
-		if (idempotency) byKey.set(idempotency, id);
+		if (idempotency) {
+			byKey.set(idempotency, id);
+			keyBodies.set(idempotency, sent);
+		}
 		send(response, 202, {
 			ok: true,
 			type: "sandbox.created",

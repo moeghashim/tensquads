@@ -18,6 +18,7 @@ import {
 	hostOf,
 	imageFromTemplate,
 	imageTag,
+	keyFor,
 	realRunAgent,
 	realRunImage,
 	resumeInput,
@@ -58,7 +59,6 @@ export interface BoatMachineOptions {
 	readonly wait?: BoatWait;
 	readonly secretBaseUrl?: string;
 	readonly runId?: string;
-	// Model settings for the real-run agents. A blank value throws before any boat request.
 	readonly agentModels?: AgentModelEnv;
 }
 
@@ -162,7 +162,8 @@ function createBody(
 	return { type: "small", noEnv: environment === ENVIRONMENT, ttlSeconds: null, environment, env, labels, name, from };
 }
 
-async function createOnce(ctx: BoatContext, body: CreateSandboxRequest, idempotencyKey: string): Promise<Sandbox> {
+async function createOnce(ctx: BoatContext, body: CreateSandboxRequest, baseKey: string): Promise<Sandbox> {
+	const idempotencyKey = await keyFor(baseKey, body);
 	try {
 		const created = await ctx.machine.create({ idempotencyKey, createSandboxRequest: body });
 		return created.sandbox;
@@ -173,8 +174,9 @@ async function createOnce(ctx: BoatContext, body: CreateSandboxRequest, idempote
 			throw faultFromStatus(facts, false);
 		}
 		const { environment: _environment, ...withoutEnvironment } = body;
+		const fallbackKey = await keyFor(baseKey, withoutEnvironment);
 		const created = await call(() =>
-			ctx.machine.create({ idempotencyKey, createSandboxRequest: withoutEnvironment }),
+			ctx.machine.create({ idempotencyKey: fallbackKey, createSandboxRequest: withoutEnvironment }),
 		);
 		return created.sandbox;
 	}
@@ -501,7 +503,6 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 		},
 		async resume(scope, agentId) {
 			const agent = realRunAgent(agentId);
-			// Checked before any boat request. A blank setting fails here.
 			const models = agent ? agentModelEnv(agentId, ctx.options.agentModels) : {};
 			const env = agent && { ...machineEnv(scope.accountId, agentId, agent.imageTag), ...models };
 			await singleFlight(ctx, flightKey(scope, agentId), "resume", async (scoped) => {
@@ -564,7 +565,6 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 			const known = realRunImage(templateId);
 			const image = known ?? imageFromTemplate(templateId);
 			const tag = known ? known.imageTag : imageTag(image.imageId, image.version);
-			// Checked before any boat request. A blank setting fails here.
 			const models = known ? agentModelEnv(agentId, ctx.options.agentModels) : {};
 			const env = { ...machineEnv(scope.accountId, agentId, tag), ...models };
 			return singleFlight(ctx, flightKey(scope, agentId), `template:${templateId}`, async (scoped) => {

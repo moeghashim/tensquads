@@ -97,3 +97,13 @@ export function startKey(accountId: string, agentId: string, image: string): str
 export function templateKey(accountId: string, imageId: string, version: string): string {
 	return `tensquads-template-${accountId}-${imageId}-${version}`;
 }
+
+// Boat refuses a reused Idempotency-Key with a different body. A retry of the same body keeps
+// its key, so a lost reply still creates one machine. A changed body, such as new model
+// settings after the old machine was removed, gets a new key.
+export async function keyFor(baseKey: string, body: unknown): Promise<string> {
+	const bytes = new TextEncoder().encode(JSON.stringify(body));
+	const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+	const hex = Array.from(digest.slice(0, 8), (byte) => byte.toString(16).padStart(2, "0")).join("");
+	return `${baseKey}-${hex}`;
+}
