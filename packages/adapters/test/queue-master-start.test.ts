@@ -11,6 +11,7 @@ const request: BusinessChat = {
 	businessName: "Proof Kitchen",
 	businessType: "restaurant",
 	cuisine: "Levantine",
+	location: "Dearborn Heights, MI",
 	items: [{ name: "Chicken tawook", price: "14", section: "Mains" }],
 };
 
@@ -71,6 +72,8 @@ test("the queue consumer provisions once with the stored expiry map and publishe
 	assert.equal(accepted[0]?.kind, "Task");
 	assert.equal(accepted[0]?.id, "business-acct-queued");
 	assert.deepEqual(accepted[0]?.set?.machineExp, { market: 10001 });
+	// The City line must reach the research task. The queue copy of the request keeps it.
+	assert.equal(accepted[0]?.payload.location, "Dearborn Heights, MI");
 });
 
 test("a start message with an invalid request is rejected and not acked", async () => {

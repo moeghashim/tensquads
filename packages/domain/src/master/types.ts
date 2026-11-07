@@ -5,6 +5,7 @@ export interface BusinessRequest {
 	readonly businessType: BusinessType;
 	readonly items: readonly ListedItem[];
 	readonly cuisine?: string;
+	readonly location?: string;
 	readonly sections?: readonly string[];
 }
 

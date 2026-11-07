@@ -78,11 +78,13 @@ export function parseStoredRequest(value: unknown): BusinessRequest | null {
 	const sections = readSections(value.sections);
 	if (sections === null) return null;
 	const cuisine = typeof value.cuisine === "string" && value.cuisine.length > 0 ? value.cuisine : undefined;
+	const location = typeof value.location === "string" && value.location.trim().length > 0 ? value.location : undefined;
 	return {
 		businessName: value.businessName,
 		businessType: value.businessType,
 		items,
 		...(cuisine ? { cuisine } : {}),
+		...(location ? { location } : {}),
 		...(sections ? { sections } : {}),
 	};
 }
