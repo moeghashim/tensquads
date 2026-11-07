@@ -8,6 +8,7 @@ import { css } from "../css.ts";
 import { Arrow, Mark } from "../marks.tsx";
 import { fieldsComplete } from "../signup/machine.ts";
 import { activateCompanyOrganization } from "./activate-org.ts";
+import { classifySignIn, messageFor, sameAccount } from "./outcome.ts";
 
 const inputStyle = css(
 	"height: 40px; box-sizing: border-box; padding: 0 12px; border: 0; border-radius: 10px; background: rgba(13,13,13,.06); font-family: inherit; font-size: 14px; color: #0d0d0d",
@@ -17,11 +18,10 @@ const emailLinkStyle = css(
 );
 
 const emptyError = "Enter your email and password to sign in.";
-const wrongError = "That email or password is wrong.";
 
 export function SignInPage({ publishableKey }: { publishableKey: string }) {
 	if (publishableKey.length === 0) {
-		return <SignInScreen onAttempt={async () => "stay"} />;
+		return <SignInScreen onAttempt={async () => ""} />;
 	}
 	return <SignInClerk />;
 }
@@ -30,41 +30,60 @@ function SignInClerk() {
 	const { signIn } = useSignIn();
 	const clerk = useClerk();
 	const navigate = useNavigate();
+	async function submitPassword(email: string, password: string) {
+		const result = await signIn.password({ emailAddress: email, password });
+		return classifySignIn({
+			error: result.error,
+			status: signIn.status,
+			sessionId: signIn.createdSessionId,
+		});
+	}
+	async function openWorkspace() {
+		await navigate({ to: "/overview" });
+		return "";
+	}
 	return (
 		<SignInScreen
 			onAttempt={async (email, password) => {
 				try {
-					const result = await signIn.password({ emailAddress: email, password });
-					if (!completedSignIn(result.error, signIn.status, signIn.createdSessionId)) {
-						return "wrong";
+					let step = await submitPassword(email, password);
+					if (step.kind === "session_exists") {
+						// The browser already holds this person's session: continue with it.
+						if (sameAccount(clerk.user?.primaryEmailAddress?.emailAddress, email)) {
+							return openWorkspace();
+						}
+						// Another person's session: end it, then sign in with the typed credentials.
+						await clerk.signOut();
+						step = await submitPassword(email, password);
+						// A second session after sign-out is not expected. Report it as a failed attempt.
+						if (step.kind === "session_exists") return messageFor({ kind: "network" });
+					}
+					if (step.kind !== "complete") {
+						return messageFor(step);
 					}
 					const finalized = await signIn.finalize();
-					if (finalized.error) return "wrong";
+					// A finalize error is not a known cause. It keeps the existing text, as before.
+					if (finalized.error) return messageFor({ kind: "wrong" });
 					const orgId = await platformOrgId().catch(() => "");
 					await activateCompanyOrganization(clerk, orgId).catch(() => undefined);
-					await navigate({ to: "/overview" });
-					return "ok";
+					return openWorkspace();
 				} catch {
-					return "wrong";
+					return messageFor({ kind: "network" });
 				}
 			}}
 		/>
 	);
 }
 
-function SignInScreen({
-	onAttempt,
-}: {
-	onAttempt: (email: string, password: string) => Promise<"ok" | "wrong" | "stay">;
-}) {
+function SignInScreen({ onAttempt }: { onAttempt: (email: string, password: string) => Promise<string> }) {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [tried, setTried] = useState(false);
-	const [rejected, setRejected] = useState(false);
+	const [notice, setNotice] = useState("");
 	const [pending, setPending] = useState(false);
 	const pendingRef = useRef(false);
 	const complete = fieldsComplete(email, password);
-	const message = signInMessage(tried, complete, rejected);
+	const message = signInMessage(tried, complete, notice);
 	return (
 		<div
 			style={css(
@@ -130,7 +149,7 @@ function SignInScreen({
 							data-handler="onEmail"
 							onChange={(event) => {
 								setEmail(event.target.value);
-								setRejected(false);
+								setNotice("");
 							}}
 							style={inputStyle}
 						/>
@@ -154,7 +173,7 @@ function SignInScreen({
 							data-handler="onPassword"
 							onChange={(event) => {
 								setPassword(event.target.value);
-								setRejected(false);
+								setNotice("");
 							}}
 							style={inputStyle}
 						/>
@@ -181,14 +200,14 @@ function SignInScreen({
 							}
 							setTried(true);
 							if (!complete) {
-								setRejected(false);
+								setNotice("");
 								return;
 							}
 							pendingRef.current = true;
 							setPending(true);
 							void onAttempt(email.trim(), password)
-								.then((outcome) => {
-									setRejected(outcome === "wrong");
+								.then((text) => {
+									setNotice(text);
 								})
 								.finally(() => {
 									pendingRef.current = false;
@@ -240,11 +259,8 @@ function SignInScreen({
 	);
 }
 
-function completedSignIn(error: unknown, status: string | null, sessionId: string | null) {
-	return !error && status === "complete" && !!sessionId;
-}
-function signInMessage(tried: boolean, complete: boolean, rejected: boolean) {
+function signInMessage(tried: boolean, complete: boolean, notice: string) {
 	if (!tried) return "";
 	if (!complete) return emptyError;
-	return rejected ? wrongError : "";
+	return notice;
 }
