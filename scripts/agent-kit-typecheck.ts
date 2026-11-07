@@ -39,6 +39,7 @@ export interface ResearchTask {
 	readonly businessName: string;
 	readonly businessType: "restaurant" | "grocer";
 	readonly items: readonly { readonly name: string; readonly price: string | null }[];
+	readonly location?: string;
 	readonly [key: string]: unknown;
 }
 
