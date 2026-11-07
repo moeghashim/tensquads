@@ -72,11 +72,8 @@ test("hero cards have opacity 0 on the first frame with motion allowed", async (
 	const firstFrame = await page.evaluate(
 		() => (window as unknown as { __firstFrameOpacities?: string[] }).__firstFrameOpacities ?? [],
 	);
+	// The first frame proves the cards start hidden. A read after load races the entrance animation.
 	expect(firstFrame).toEqual(["0", "0", "0", "0"]);
-	const immediate = await page
-		.locator(".home-v2 .c")
-		.evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).opacity));
-	expect(immediate).toEqual(["0", "0", "0", "0"]);
 	await expect(page.locator(".home-v2 .c").first()).toHaveClass(/\bapproved\b/, { timeout: 8000 });
 	await expect(page.locator(".home-v2 .ask .sr")).toHaveText("3");
 });
