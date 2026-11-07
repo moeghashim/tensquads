@@ -1,5 +1,5 @@
 import { mkdirSync, readFileSync } from "node:fs";
-import type { Page } from "@playwright/test";
+import type { Page, Route } from "@playwright/test";
 import { openPostgres, schema } from "@tensquads/adapters";
 import { and, desc, eq } from "drizzle-orm";
 import { compareInventory, designInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
@@ -102,11 +102,29 @@ test("a message shows the bubble, the working line, then the agent reply", async
 	await openChat(page, workspaceUser);
 	expect(await tasksDone(accountId)).toBe(331);
 	const thread = page.locator("[data-loop='chat']");
-	await page.locator("#chat-input").fill("How did ads do this week?");
-	await page.getByRole("button", { name: "Send" }).click();
-	await expect(thread.getByText("How did ads do this week?", { exact: true })).toBeVisible({ timeout: replyTimeout });
-	await expect(thread.getByText("Passing this to the Rio agent. I will report back here.")).toBeVisible();
-	await expect(page.getByText("Rio agent is working on it…")).toBeVisible();
+	// The working line is a transient state. A fast reply can end it before the line is checked,
+	// so the second write (the reply path) is held until the three intermediate states are seen.
+	let posts = 0;
+	let held: Route | undefined;
+	await page.route("**/_serverFn/**", async (route) => {
+		if (route.request().method() === "POST" && ++posts === 2) {
+			held = route;
+			return;
+		}
+		await route.continue();
+	});
+	try {
+		await page.locator("#chat-input").fill("How did ads do this week?");
+		await page.getByRole("button", { name: "Send" }).click();
+		await expect(thread.getByText("How did ads do this week?", { exact: true })).toBeVisible({
+			timeout: replyTimeout,
+		});
+		await expect(thread.getByText("Passing this to the Rio agent. I will report back here.")).toBeVisible();
+		await expect(page.getByText("Rio agent is working on it…")).toBeVisible();
+	} finally {
+		await held?.continue().catch(() => undefined);
+		await page.unroute("**/_serverFn/**");
+	}
 	await expect(thread.getByText(marketingResult, { exact: true })).toBeVisible({ timeout: replyTimeout });
 	await expect(thread.getByText("Rio squad, via Petra")).toBeVisible();
 	const rows = await agentRows(accountId);

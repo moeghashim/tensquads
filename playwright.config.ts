@@ -25,6 +25,9 @@ export default defineConfig({
 		baseURL: origin,
 		deviceScaleFactor: 1,
 		viewport: { width: 1440, height: 900 },
+		// Evidence for a failed test only. A passing test keeps no trace or screenshot.
+		trace: "retain-on-failure",
+		screenshot: "only-on-failure",
 		launchOptions: {
 			args: ["--font-render-hinting=none", "--disable-font-subpixel-positioning", "--force-color-profile=srgb"],
 		},
