@@ -3,6 +3,6 @@
 	"type": "module",
 	"description": "Declares the agent kit for the proof seed. This folder is not a workspace, so npm ci does not clone it.",
 	"dependencies": {
-		"@tensquads/agent-kit": "github:moeghashim/tensquads-agent-kit#bc3732e613a5ebe8087cc3abb09b1eb4419610e0"
+		"@tensquads/agent-kit": "github:moeghashim/tensquads-agent-kit#35ee455d9554e0f8c77be97acacc106cae3f1c77"
 	}
 }

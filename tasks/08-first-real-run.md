@@ -58,7 +58,7 @@ Both routes use the same machine-token check as `/machine/send`.
 | Package | Repository | Gaps from the audit | Depends on |
 | --- | --- | --- | --- |
 | K: kit contract | `tensquads-agent-kit` | 7, 10, 11 (kit side) | none |
-| A1: master loop and projections | `tensquads` | 1, 7, 8, 10, 11, 13, 14 | K contract (build to the contract above; pin v0.3.0 when it exists) |
+| A1: master loop and projections | `tensquads` | 1, 7, 8, 10, 11, 13, 14 | K contract (build to the contract above; pin v0.4.0 when it exists) |
 | A2: machine lifecycle | `tensquads` | 12, 16, 17, 18 | none |
 | A3: real deploy path and bootstrap | `tensquads` | 21, 22, and the missing `env.real` names | none |
 | A4: preview and publish routes | `tensquads` | 5, 6, 9 (code side) | none |

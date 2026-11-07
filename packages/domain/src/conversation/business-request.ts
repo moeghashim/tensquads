@@ -3,11 +3,13 @@ export interface BusinessChat {
 	readonly businessType: "restaurant" | "grocer";
 	readonly items: readonly { readonly name: string; readonly price: string; readonly section: string }[];
 	readonly cuisine?: string;
+	readonly location?: string;
 	readonly sections?: readonly string[];
 }
 
 const KIND = /^(restaurant|grocer):\s*(.+)$/i;
 const CUISINE = /^cuisine:\s*(.+)$/i;
+const CITY = /^city:\s*(.*)$/i;
 const ITEM = /^([^|]+)\|([^|]*)\|([^|]+)$/;
 
 function businessKind(line: string | undefined): { kind: "restaurant" | "grocer"; businessName: string } | null {
@@ -25,6 +27,14 @@ function cuisineOf(kind: "restaurant" | "grocer", line: string | undefined): str
 	if (kind !== "restaurant") return null;
 	const cuisine = match[1]?.trim() ?? "";
 	return cuisine.length > 0 ? cuisine : null;
+}
+
+// An optional City line gives the place the researcher searches near. A blank City line is refused.
+function cityOf(line: string | undefined): string | null | undefined {
+	const match = line ? CITY.exec(line) : null;
+	if (!match) return undefined;
+	const city = match[1]?.trim() ?? "";
+	return city.length > 0 ? city : null;
 }
 
 function itemOf(line: string): { name: string; price: string; section: string } | null {
@@ -56,13 +66,17 @@ export function parseBusinessChat(text: string): BusinessChat | null {
 	if (!head) return null;
 	const cuisine = cuisineOf(head.kind, lines[1]);
 	if (cuisine === null) return null;
-	const items = itemsOf(lines.slice(cuisine ? 2 : 1));
+	const cityIndex = cuisine ? 2 : 1;
+	const location = cityOf(lines[cityIndex]);
+	if (location === null) return null;
+	const items = itemsOf(lines.slice(location ? cityIndex + 1 : cityIndex));
 	if (!items) return null;
 	return {
 		businessName: head.businessName,
 		businessType: head.kind,
 		items,
 		...(cuisine ? { cuisine } : {}),
+		...(location ? { location } : {}),
 	};
 }
 
@@ -79,6 +93,7 @@ export function researchFields(request: BusinessChat): {
 			businessType: request.businessType,
 			items: request.items,
 			...(request.cuisine ? { cuisine: request.cuisine } : {}),
+			...(request.location ? { location: request.location } : {}),
 			...(request.sections ? { sections: request.sections } : {}),
 		},
 		writes: ["business"],
