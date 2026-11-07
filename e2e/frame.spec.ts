@@ -1,5 +1,5 @@
 import { mkdirSync, readFileSync } from "node:fs";
-import type { Page } from "@playwright/test";
+import type { Page, Route } from "@playwright/test";
 import { compareInventory, inventoryHtml } from "../scripts/design-inventory.mjs";
 import { renderDesignMarkup } from "../scripts/render-design.mjs";
 import { accessibilityViolations } from "./accessibility-helper.ts";
@@ -153,11 +153,26 @@ test("an empty message or a second send does nothing", async ({ page, workspaceU
 	await page.locator("#dock-input").press("Enter");
 	await expect(page.locator("[data-loop='dockChat'] > div")).toHaveCount(5);
 	expect(await generatedEvents(accountId)).toEqual([]);
+	// The first send is held until the disabled state and the ignored second send are checked.
+	// A fast reply could otherwise end the pending state before the assertion runs.
+	let firstSend: Route | undefined;
+	let posts = 0;
+	await page.route("**/_serverFn/**", async (route) => {
+		if (route.request().method() === "POST" && ++posts === 1) {
+			firstSend = route;
+			return;
+		}
+		await route.continue();
+	});
 	await page.locator("#dock-input").fill("How did ads do this week?");
 	await page.getByRole("button", { name: "Send" }).click();
+	await expect.poll(() => firstSend !== undefined).toBe(true);
 	await expect(page.getByRole("button", { name: "Send" })).toBeDisabled();
 	await page.locator("#dock-input").fill("Hello there");
 	await page.locator("#dock-input").press("Enter");
+	await expect.poll(() => posts).toBe(1);
+	await firstSend?.continue();
+	await page.unroute("**/_serverFn/**");
 	await expect(page.locator("[data-loop='dockChat']").getByText(marketingResult)).toBeVisible({
 		timeout: dockReplyTimeout,
 	});
