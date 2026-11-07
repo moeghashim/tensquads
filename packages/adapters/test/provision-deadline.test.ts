@@ -8,6 +8,12 @@ import { startFakeBoat } from "./boat-fake.ts";
 
 const scope = { accountId: "acct-1", mode: "account" } as const;
 const wait = { intervalMs: 0, timeoutMs: 5_000 };
+const agentModels = {
+	RESEARCH_MODEL: "gpt-6-luna",
+	RESEARCH_REASONING_EFFORT: "medium",
+	WEBSITE_MODEL: "gpt-6-luna",
+	WEBSITE_REASONING_EFFORT: "medium",
+};
 
 function localUrl(input: Parameters<typeof fetch>[0]): URL {
 	const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
@@ -22,6 +28,7 @@ function boat(fake: Awaited<ReturnType<typeof startFakeBoat>>, fetchApi: typeof 
 		adminToken: fake.adminToken,
 		basePath: fake.basePath,
 		profileName: "tensquads-agents",
+		agentModels,
 		secretBaseUrl: "https://example.com/hooks",
 		fetchApi,
 		wait,
@@ -59,6 +66,7 @@ test("a stalled request aborts at the deadline and releases its flight", { timeo
 			adminToken: fake.adminToken,
 			basePath: fake.basePath,
 			profileName: "tensquads-agents",
+			agentModels,
 			secretBaseUrl: "https://example.com/hooks",
 			fetchApi,
 			wait: { intervalMs: 0, timeoutMs: 20 },
@@ -104,6 +112,7 @@ test("host and rotateToken outside a flight stop at the deadline", { timeout: 2_
 			adminToken: fake.adminToken,
 			basePath: fake.basePath,
 			profileName: "tensquads-agents",
+			agentModels,
 			secretBaseUrl: "https://example.com/hooks",
 			fetchApi: stalledFetch(),
 			wait: { intervalMs: 0, timeoutMs: 20 },

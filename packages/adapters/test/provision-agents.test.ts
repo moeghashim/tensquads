@@ -15,6 +15,12 @@ import { startFakeBoat } from "./boat-fake.ts";
 
 const scope = { accountId: "acct-1", mode: "account" } as const;
 const wait = { intervalMs: 0, timeoutMs: 5_000 };
+const agentModels = {
+	RESEARCH_MODEL: "gpt-6-luna",
+	RESEARCH_REASONING_EFFORT: "medium",
+	WEBSITE_MODEL: "gpt-6-luna",
+	WEBSITE_REASONING_EFFORT: "medium",
+};
 const now = Date.parse("2026-11-05T12:00:00.000Z");
 const marketProfile = machineCredentialProfile(scope.accountId, "market");
 const websiteProfile = machineCredentialProfile(scope.accountId, "website");
@@ -46,6 +52,7 @@ function realEnv(fake: Awaited<ReturnType<typeof startFakeBoat>>, fetchApi: type
 		BOAT_BASE_PATH: fake.basePath,
 		BOAT_SECRET_BASE_URL: "https://example.com/hooks",
 		MACHINE_TOKEN_KEY: "machine-token-fixture",
+		...agentModels,
 		fetchApi,
 		wait,
 	};
@@ -193,6 +200,7 @@ test("a known snapshot attaches the agent profile and a running machine stays", 
 			adminToken: fake.adminToken,
 			basePath: fake.basePath,
 			profileName: "tensquads-agents",
+			agentModels,
 			secretBaseUrl: "https://example.com/hooks",
 			fetchApi: localFetch(fetch),
 			wait,
@@ -269,6 +277,7 @@ function boat(fake: Awaited<ReturnType<typeof startFakeBoat>>, fetchApi: typeof 
 		adminToken: fake.adminToken,
 		basePath: fake.basePath,
 		profileName: "tensquads-agents",
+		agentModels,
 		secretBaseUrl: "https://example.com/hooks",
 		fetchApi,
 		wait,

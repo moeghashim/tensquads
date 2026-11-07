@@ -103,6 +103,15 @@ function fail(response: ServerResponse, status: number, code: string): void {
 	});
 }
 
+function isStringMap(value: unknown): value is Record<string, string> {
+	if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+	return Object.values(value).every((item) => typeof item === "string");
+}
+
+function keepEnv(row: StoredMachine, value: unknown): void {
+	if (isStringMap(value)) row.env = value;
+}
+
 function sandboxJson(row: StoredMachine, state: string): unknown {
 	return {
 		id: row.id,
@@ -417,6 +426,8 @@ export async function startFakeBoat(): Promise<FakeBoat> {
 		const resumed = await readJson(request);
 		// A resume that names no environment uses the account default.
 		row.environment = typeof resumed.environment === "string" ? resumed.environment : "default";
+		// A resume that names env replaces the sandbox env. A resume without env keeps it.
+		keepEnv(row, resumed.env);
 		state.resumeCalls += 1;
 		row.state = "starting";
 		send(response, 200, {

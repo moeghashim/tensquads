@@ -79,6 +79,10 @@ export interface BusObjectEnv extends HeartbeatEnv {
 	readonly OPENAI_API_KEY?: string;
 	readonly MASTER_MODEL?: string;
 	readonly MASTER_REASONING_EFFORT?: string;
+	readonly RESEARCH_MODEL?: string;
+	readonly RESEARCH_REASONING_EFFORT?: string;
+	readonly WEBSITE_MODEL?: string;
+	readonly WEBSITE_REASONING_EFFORT?: string;
 	// A test can drain pending approval deliveries without a live database.
 	// It returns the number of rows left. The alarm runs it again later.
 	readonly retryDeliveries?: (accountId: string, beforeMs?: number) => Promise<number>;

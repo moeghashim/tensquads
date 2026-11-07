@@ -1,4 +1,5 @@
 import { chooseAdapters } from "../adapter-choice.ts";
+import { type AgentModelEnv, agentModelsOf } from "../agent-models.ts";
 import { type AlarmStorage, clearDeadline, deadlineToken, HEARTBEAT_ALARM, setDeadline } from "./alarm.ts";
 
 export { HEARTBEAT_ALARM };
@@ -14,7 +15,7 @@ interface HeartbeatBeat {
 
 export type HeartbeatStorage = AlarmStorage;
 
-export interface HeartbeatEnv {
+export interface HeartbeatEnv extends AgentModelEnv {
 	readonly ADAPTERS?: string;
 	readonly now?: () => number;
 	readonly resumeAgent?: (accountId: string, agentId: string) => Promise<void>;
@@ -67,6 +68,7 @@ async function resumeLive(env: HeartbeatEnv, accountId: string, agentId: string)
 		profileName: env.BOAT_PROFILE ?? "",
 		basePath: env.BOAT_BASE_PATH,
 		secretBaseUrl: env.BOAT_SECRET_BASE_URL,
+		agentModels: agentModelsOf(env),
 		fetchApi: env.fetchApi,
 	});
 	await machine.resume({ accountId, mode: "account" }, agentId);
