@@ -4,7 +4,9 @@ import type { BriefInput } from "./loop.ts";
 export function briefPrompt(input: BriefInput): string {
 	const lines = [
 		"Write the research brief for this business. Stay under 150 words.",
-		`Name this gap: ${input.report.gap}`,
+		// The check looks for the gap sentence as written, so the model must copy it, not reword it.
+		"Start the brief with this sentence. Copy it exactly, character for character:",
+		input.report.gap,
 		`Business: ${input.businessName}`,
 		`Type: ${input.businessType}`,
 		"Source URLs:",
