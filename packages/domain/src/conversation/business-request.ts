@@ -46,9 +46,10 @@ function itemsOf(lines: readonly string[]): BusinessChat["items"] | null {
 }
 
 // A real-run chat uses this shape. Test mode does not call it, so the design seed stays on the five routes.
+// The chat box is one line, so a semicolon also ends a line.
 export function parseBusinessChat(text: string): BusinessChat | null {
 	const lines = text
-		.split(/\r?\n/)
+		.split(/\r?\n|;/)
 		.map((line) => line.trim())
 		.filter((line) => line.length > 0);
 	const head = businessKind(lines[0]);

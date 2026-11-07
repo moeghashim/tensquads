@@ -43,3 +43,13 @@ test("a grocer chat has no cuisine, and a grocer cuisine line is rejected", () =
 	assert.equal(parseBusinessChat("restaurant: Proof Kitchen"), null);
 	assert.equal(parseBusinessChat("How did ads do this week?"), null);
 });
+
+test("a one-line chat with semicolons parses the same as a multi-line chat", () => {
+	const oneLine = "restaurant: Proof Kitchen; cuisine: Levantine; Chicken tawook | 14 | Mains; Fattoush |  | Salads";
+	assert.deepEqual(parseBusinessChat(oneLine), parseBusinessChat(restaurant));
+	assert.deepEqual(parseBusinessChat("grocer: Noon Market; Milk | 3 | Dairy;"), {
+		businessName: "Noon Market",
+		businessType: "grocer",
+		items: [{ name: "Milk", price: "3", section: "Dairy" }],
+	});
+});
