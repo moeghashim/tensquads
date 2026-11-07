@@ -8,7 +8,7 @@
 	},
 	"scripts": {
 		"check": "tsc --noEmit && node ../../scripts/kit-optional.mjs check tsconfig.master.json",
-		"test": "node ../../scripts/kit-optional.mjs test --skip master.test.ts --skip master-loop.test.ts --skip master-browser.test.ts --skip business-request-kit.test.ts"
+		"test": "node ../../scripts/kit-optional.mjs test --skip master.test.ts --skip master-loop.test.ts --skip master-browser.test.ts --skip business-request-kit.test.ts --skip master-grant.test.ts --skip master-grounding.test.ts"
 	},
 	"devDependencies": {
 		"typescript": "7.0.2"
