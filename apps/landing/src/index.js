@@ -52,7 +52,7 @@ const HEADERS = {
 	"x-content-type-options": "nosniff",
 };
 
-const REVIEW_PATHS = { "/review": "/review/index.html", "/review/": "/review/index.html", "/review/plan": "/review/plan.html", "/review/characters": "/review/characters.html", "/review/home": "/review/home.html", "/review/design": "/review/design/index.html", "/review/design/": "/review/design/index.html" };
+const REVIEW_PATHS = { "/review": "/review/index.html", "/review/": "/review/index.html", "/review/plan": "/review/plan.html", "/review/characters": "/review/characters.html", "/review/home": "/review/home.html", "/review/agent-flow": "/review/agent-flow.html", "/review/design": "/review/design/index.html", "/review/design/": "/review/design/index.html" };
 
 // The team review pages. Search engines skip them. The design files need script,
 // so these pages do not use the strict policy of the holding page.
