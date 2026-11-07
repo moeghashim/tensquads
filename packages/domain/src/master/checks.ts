@@ -12,6 +12,7 @@ import {
 import { pageLinks } from "./hrefs.ts";
 import { NO_FINDING_TEXT } from "./no-finding.ts";
 import { NO_ITEMS_TEXT } from "./no-items.ts";
+import { pageHas } from "./page-text.ts";
 import type { RenderedPage } from "./render-page.ts";
 import type { CheckOutcome, PageAudit, PageFetch, PageReader } from "./types.ts";
 
@@ -128,7 +129,7 @@ async function noteCompetitorPages(evidence: string[], competitor: Competitor, r
 		evidence.push("A competitor URL did not return 200.");
 		return;
 	}
-	if (!source.body.includes(competitor.priceOrOffer)) evidence.push("A price or offer is not on the page.");
+	if (!pageHas(source.body, competitor.priceOrOffer)) evidence.push("A price or offer is not on the page.");
 }
 
 export async function checkResearch(report: unknown, readPage: PageReader): Promise<CheckOutcome> {
@@ -142,7 +143,7 @@ export async function checkResearch(report: unknown, readPage: PageReader): Prom
 		await noteCompetitor(evidence, competitor, parsed.sources, seenPages, readPage);
 	}
 	const source = await readSafe(readPage, parsed.gapEvidence.sourceUrl);
-	if (source.status !== 200 || !source.body.includes(parsed.gapEvidence.quote)) {
+	if (source.status !== 200 || !pageHas(source.body, parsed.gapEvidence.quote)) {
 		evidence.push("The gap quote is not on the source page.");
 	}
 	return outcome(evidence);

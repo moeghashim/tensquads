@@ -363,6 +363,64 @@ test("the research check requires both competitor URLs to return 200", async () 
 	assert.equal(result.evidence.includes("A competitor URL did not return 200."), true);
 });
 
+function researchWith(
+	story: Story,
+	options: { readonly gapBody?: string; readonly quote?: string; readonly alphaBody?: string },
+) {
+	const gap = story.report.gapEvidence.sourceUrl;
+	const alpha = story.report.competitors[0]?.url ?? "";
+	const pages = {
+		...story.pages,
+		[gap]: { status: 200, body: options.gapBody ?? story.pages[gap]?.body ?? "" },
+		[alpha]: { status: 200, body: options.alphaBody ?? story.pages[alpha]?.body ?? "" },
+	};
+	const quote = options.quote ?? story.report.gapEvidence.quote;
+	return checkResearch({ ...story.report, gapEvidence: { sourceUrl: gap, quote } }, reader(pages));
+}
+
+test("the research quote matches the page text, not the raw HTML", async () => {
+	const story = await proofStory();
+	const tags = await researchWith(story, {
+		gapBody: "Gamma bowl $9. <p>Fresh <b>salad</b> daily</p>",
+		quote: "Fresh salad daily",
+	});
+	assert.equal(tags.pass, true);
+	const entities = await researchWith(story, {
+		gapBody: "Gamma bowl $9. Tom &amp; Jerry&#39;s",
+		quote: "Tom & Jerry's",
+	});
+	assert.equal(entities.pass, true);
+	const split = await researchWith(story, { alphaBody: "Alpha plate <span>$</span>12" });
+	assert.equal(split.pass, true);
+});
+
+test("the research quote does not count text inside a script", async () => {
+	const story = await proofStory();
+	const hidden = await researchWith(story, {
+		gapBody: "Gamma bowl $9. <script>const menu = 'The menu hides salad prices.';</script>",
+	});
+	assert.equal(hidden.pass, false);
+	assert.equal(hidden.evidence.includes("The gap quote is not on the source page."), true);
+});
+
+test("the research quote and price still fail when they are not on the page", async () => {
+	const story = await proofStory();
+	const missing = await researchWith(story, { gapBody: "Gamma bowl $9. The menu shows every price." });
+	assert.equal(missing.pass, false);
+	assert.equal(missing.evidence.includes("The gap quote is not on the source page."), true);
+	const nearMiss = await researchWith(story, { gapBody: "Gamma bowl $9. The menu hides salad prise." });
+	assert.equal(nearMiss.pass, false);
+	assert.equal(nearMiss.evidence.includes("The gap quote is not on the source page."), true);
+	const tagNearMiss = await researchWith(story, {
+		gapBody: "Gamma bowl $9. <p>Fresh <b>salad</b> dairy</p>",
+		quote: "Fresh salad daily",
+	});
+	assert.equal(tagNearMiss.pass, false);
+	const price = await researchWith(story, { alphaBody: "Alpha plate <span>$</span>13" });
+	assert.equal(price.pass, false);
+	assert.equal(price.evidence.includes("A price or offer is not on the page."), true);
+});
+
 test("the published URL must be this account site", async () => {
 	const story = await proofStory();
 	const read = async () => ({ status: 200, body: story.pageHtml });
