@@ -28,7 +28,14 @@ const configBindings = new Set([
 	"CLERK_PLATFORM_ORG_ID",
 	"MASTER_MODEL",
 	"MASTER_REASONING_EFFORT",
+	"RESEARCH_MODEL",
+	"RESEARCH_REASONING_EFFORT",
+	"WEBSITE_MODEL",
+	"WEBSITE_REASONING_EFFORT",
 ]);
+
+// Each real-run agent reads its own model pair. Production has none of these.
+const agentModelVars = ["RESEARCH_MODEL", "RESEARCH_REASONING_EFFORT", "WEBSITE_MODEL", "WEBSITE_REASONING_EFFORT"];
 
 function parseWrangler(text) {
 	return JSON.parse(text.replace(/^\s*\/\/.*$/gm, ""));
@@ -137,6 +144,7 @@ test("env.real declares every binding the real Worker reads and shares no queue 
 	assert.equal(config.browser, undefined);
 	assert.equal(Object.hasOwn(config.vars, "MASTER_MODEL"), false);
 	assert.equal(Object.hasOwn(config.vars, "MASTER_REASONING_EFFORT"), false);
+	for (const name of agentModelVars) assert.equal(Object.hasOwn(config.vars, name), false, name);
 	assert.deepEqual(config.durable_objects, {
 		bindings: [{ name: "ACCOUNT_BUS", class_name: "AccountBus" }],
 	});
@@ -159,6 +167,10 @@ test("env.real declares every binding the real Worker reads and shares no queue 
 		CLERK_PLATFORM_ORG_ID: orgId,
 		MASTER_MODEL: "gpt-6-luna",
 		MASTER_REASONING_EFFORT: "medium",
+		RESEARCH_MODEL: "gpt-6-luna",
+		RESEARCH_REASONING_EFFORT: "medium",
+		WEBSITE_MODEL: "gpt-6-luna",
+		WEBSITE_REASONING_EFFORT: "medium",
 	});
 	assert.deepEqual(real.durable_objects, {
 		bindings: [{ name: "ACCOUNT_BUS", class_name: "AccountBus" }],

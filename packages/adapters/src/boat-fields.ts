@@ -73,6 +73,19 @@ export function imageFromTemplate(templateId: string): { readonly imageId: strin
 	return { imageId: rest.slice(0, split), version: rest.slice(split + 1) };
 }
 
+// A resume that names env replaces the sandbox env. Omit both fields to keep them.
+export function resumeInput(
+	sandboxId: string,
+	environment: string | undefined,
+	env: Record<string, string> | undefined,
+) {
+	if (!environment && !env) return { sandboxId };
+	return {
+		sandboxId,
+		resumeRequest: { ...(environment ? { environment } : {}), ...(env ? { env } : {}) },
+	};
+}
+
 export function hostOf(baseUrl: string): string {
 	return new URL(baseUrl).host;
 }
