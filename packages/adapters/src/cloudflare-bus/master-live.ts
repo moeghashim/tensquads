@@ -111,8 +111,30 @@ async function storedRequest(storage: RequestStore): Promise<BusinessRequest | n
 	}
 }
 
-function readPageOf(env: BusObjectEnv): PageReader {
-	return env.masterReadPage ?? fetchDocument;
+// A worker cannot fetch its own workers.dev address. The preview of this account is read from storage instead.
+export function ownPreviewTask(url: string, accountId: string, baseUrl: string | undefined): string | null {
+	try {
+		const parsed = new URL(url);
+		if (baseUrl && parsed.host !== new URL(baseUrl).host) return null;
+		const parts = parsed.pathname.split("/");
+		if (parts.length !== 4 || parts[1] !== "preview" || parts[2] !== accountId) return null;
+		return parts[3] || null;
+	} catch {
+		return null;
+	}
+}
+
+function readPageOf(env: BusObjectEnv, accountId: string, storage: RequestStore): PageReader {
+	if (env.masterReadPage) return env.masterReadPage;
+	const baseUrl = (env as { BOAT_SECRET_BASE_URL?: string }).BOAT_SECRET_BASE_URL;
+	return async (url) => {
+		const taskId = ownPreviewTask(url, accountId, baseUrl);
+		if (!taskId) return fetchDocument(url);
+		const stored = await storage.get<Uint8Array>(`preview:${taskId}`);
+		if (!(stored instanceof Uint8Array)) return { status: 404, body: "", bytes: new Uint8Array() };
+		const bytes = stored.slice();
+		return { status: 200, body: new TextDecoder("utf-8", { ignoreBOM: true }).decode(bytes), bytes };
+	};
 }
 
 // The kit CI runs the impeccable audit on the kit templates. This worker does not invent a P0 or P1 count.
@@ -240,7 +262,7 @@ export async function openMaster(
 	const request = (await storedRequest(storage)) ?? emptyRequest();
 	const ownerId = env.DATABASE_URL ? await readAccountOwner(env.DATABASE_URL, accountId) : "";
 	const master = createMaster(request, {
-		readPage: readPageOf(env),
+		readPage: readPageOf(env, accountId, storage),
 		audit: auditOf(env),
 		model: { writeBrief: briefOf(env) },
 		accountSlug: accountId,
