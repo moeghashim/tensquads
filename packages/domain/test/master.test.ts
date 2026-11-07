@@ -155,7 +155,9 @@ test("the page check rejects bytes that are not the kit render, a broken link, a
 		sources: [...story.report.sources, dead],
 		gapEvidence: { sourceUrl: dead, quote: story.report.gap },
 	};
+	// The kit page (v0.5.0) prints no source link, so a dead source never reaches the page.
 	const brokenHtml = renderPage(websiteTask(story, brokenReport), story.choice);
+	assert.equal(brokenHtml.includes(dead), false);
 	const brokenPages = { ...story.pages, [story.previewUrl]: { status: 200, body: brokenHtml } };
 	const badLink = await checkPage({
 		...pageFields(story),
@@ -164,7 +166,7 @@ test("the page check rejects bytes that are not the kit render, a broken link, a
 		readPage: reader(brokenPages),
 		audit: () => story.audit,
 	});
-	assert.equal(badLink.evidence.includes("A link is broken."), true);
+	assert.equal(badLink.evidence.includes("A link is broken."), false);
 	assert.equal(badLink.evidence.includes("The preview does not match the rendered page."), false);
 	const flagged = await checkPage({
 		...pageFields(story),
@@ -335,7 +337,7 @@ test("the page check compares raw response bytes", async () => {
 	assert.equal(published.evidence.includes("The published page does not match the preview."), true);
 });
 
-test("the page check decodes an href entity before it fetches the link", async () => {
+test("the page check does not fetch the source link, which the kit no longer prints", async () => {
 	const story = await proofStory();
 	const source = "https://example.com/alpha?a=1&b=2";
 	const report = {
@@ -344,6 +346,7 @@ test("the page check decodes an href entity before it fetches the link", async (
 		gapEvidence: { ...story.report.gapEvidence, sourceUrl: source },
 	};
 	const html = renderPage(websiteTask(story, report), story.choice);
+	assert.equal(html.includes("example.com/alpha"), false);
 	const seen: string[] = [];
 	const checked = await checkPage({
 		...pageFields(story),
@@ -359,7 +362,7 @@ test("the page check decodes an href entity before it fetches the link", async (
 		audit: () => story.audit,
 	});
 	assert.equal(checked.pass, true);
-	assert.equal(seen.includes(source), true);
+	assert.equal(seen.includes(source), false);
 	assert.equal(seen.includes("https://example.com/alpha?a=1&amp;b=2"), false);
 });
 
