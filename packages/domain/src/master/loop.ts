@@ -7,13 +7,14 @@ import {
 	checkPage,
 	checkPublished,
 	checkResearch,
+	isResearchFailure,
 	NO_FINDING_TEXT,
 	NO_ITEMS_TEXT,
 	readReport,
 	shownBrief,
 } from "./checks.ts";
 import { type GrantQuery, grantAllows, type StoredGrant } from "./grant.ts";
-import { BRIEF_FAILED_TEXT, NO_NAME_TEXT } from "./messages.ts";
+import { BRIEF_FAILED_TEXT, NO_NAME_TEXT, NO_REPORT_TEXT } from "./messages.ts";
 import type { RenderedPage } from "./render-page.ts";
 import { type BusinessRequest, mandateFor, type PageAudit, type PageReader } from "./types.ts";
 
@@ -550,6 +551,8 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		if (userSaidYes(event)) return onUserYes(event);
 		if (event.kind !== "Result" || event.to !== "master") return [];
 		if (event.skill === "report.write" && state.phase === "research") return onResearch(event);
+		if (state.phase === "research" && isResearchFailure(event))
+			return failResearch([event.text.trim() || NO_REPORT_TEXT]);
 		if (event.skill === "site.preview" && state.phase === "building") return onPreview(event);
 		if (event.skill === "site.publish" && state.phase === "publishing") return onPublish(event);
 		if (event.skill === "competition.watch" && state.phase === "watching") return onWatch(event);
