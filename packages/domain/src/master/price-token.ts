@@ -1,7 +1,18 @@
 // A competitor's priceOrOffer must hold a real price or offer token.
 // A dish description on the page is not a price, even when the text is on the page.
 
-const CURRENCY_CODES = "AED|SAR|QAR|KWD|BHD|OMR|USD|EUR|GBP|JPY";
+// Every ISO 4217 code the runtime knows. The short list is the fallback for an old runtime.
+const FALLBACK_CODES = ["AED", "SAR", "QAR", "KWD", "BHD", "OMR", "USD", "EUR", "GBP", "JPY", "CAD", "AUD"];
+function currencyCodes(): readonly string[] {
+	const intl = Intl as { supportedValuesOf?: (key: string) => string[] };
+	try {
+		const codes = intl.supportedValuesOf?.("currency") ?? [];
+		return codes.length > 0 ? codes : FALLBACK_CODES;
+	} catch {
+		return FALLBACK_CODES;
+	}
+}
+const CURRENCY_CODES = currencyCodes().join("|");
 // \p{Sc} covers every Unicode currency sign: $, €, £, ¥, ₹, ¢ and the rest.
 const CURRENCY_SIGN_NEXT_TO_NUMBER = /\p{Sc}\s*\d|\d\s*\p{Sc}/u;
 const CURRENCY_CODE_NEXT_TO_NUMBER = new RegExp(

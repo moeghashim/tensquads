@@ -43,3 +43,10 @@ test("dish descriptions are not prices or offers", () => {
 		assert.equal(hasPriceOrOffer(text), false, text);
 	}
 });
+
+test("an integer price with any ISO currency code counts", () => {
+	assert.equal(hasPriceOrOffer("CAD 15"), true);
+	assert.equal(hasPriceOrOffer("15 AUD"), true);
+	assert.equal(hasPriceOrOffer("MXN 120"), true);
+	assert.equal(hasPriceOrOffer("Table for 4"), false);
+});
