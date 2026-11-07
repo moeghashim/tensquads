@@ -1,5 +1,5 @@
 import { chooseAdapters } from "../adapter-choice.ts";
-import { type AgentModelEnv, agentModelsOf } from "../agent-models.ts";
+import type { AgentModelEnv } from "../agent-models.ts";
 import { type AlarmStorage, clearDeadline, deadlineToken, HEARTBEAT_ALARM, setDeadline } from "./alarm.ts";
 
 export { HEARTBEAT_ALARM };
@@ -19,6 +19,9 @@ export interface HeartbeatEnv extends AgentModelEnv {
 	readonly ADAPTERS?: string;
 	readonly now?: () => number;
 	readonly resumeAgent?: (accountId: string, agentId: string) => Promise<void>;
+	// Says whether the agent is switched on. A machine of an agent that is off is never resumed.
+	readonly agentOn?: (accountId: string, agentId: string) => Promise<boolean>;
+	readonly DATABASE_URL?: string;
 	readonly BOAT_TOKEN?: string;
 	readonly BOAT_ADMIN_TOKEN?: string;
 	readonly BOAT_PROFILE?: string;
@@ -28,6 +31,7 @@ export interface HeartbeatEnv extends AgentModelEnv {
 }
 
 type Resume = (accountId: string, agentId: string) => Promise<void>;
+type AgentOn = (accountId: string, agentId: string) => Promise<boolean>;
 
 function earlier(current: number | null, due: number): number {
 	return current === null ? due : Math.min(current, due);
@@ -61,17 +65,19 @@ function resumeFor(env: HeartbeatEnv): Resume | undefined {
 }
 
 async function resumeLive(env: HeartbeatEnv, accountId: string, agentId: string): Promise<void> {
-	const { createBoatMachine } = await import("../boat-machine.ts");
-	const machine = createBoatMachine({
-		token: env.BOAT_TOKEN ?? "",
-		adminToken: env.BOAT_ADMIN_TOKEN,
-		profileName: env.BOAT_PROFILE ?? "",
-		basePath: env.BOAT_BASE_PATH,
-		secretBaseUrl: env.BOAT_SECRET_BASE_URL,
-		agentModels: agentModelsOf(env),
-		fetchApi: env.fetchApi,
-	});
-	await machine.resume({ accountId, mode: "account" }, agentId);
+	const { liveMachine } = await import("../agent-machine.ts");
+	await liveMachine(env).resume({ accountId, mode: "account" }, agentId);
+}
+
+// Real mode reads the stored switch. Test mode reads nothing, so it resumes as before.
+function agentOnFor(env: HeartbeatEnv): AgentOn | undefined {
+	if (env.agentOn) return env.agentOn;
+	if (chooseAdapters(env.ADAPTERS) !== "real") return undefined;
+	return async (accountId, agentId) => {
+		if (!env.DATABASE_URL) throw new Error("The database is not configured.");
+		const { storedAgentOn } = await import("../agent-on.ts");
+		return storedAgentOn(env.DATABASE_URL, accountId, agentId);
+	};
 }
 
 function dueOf(beat: HeartbeatBeat): number | null {
@@ -81,6 +87,7 @@ function dueOf(beat: HeartbeatBeat): number | null {
 
 async function resumeDue(
 	resume: Resume,
+	agentOn: AgentOn | undefined,
 	accountId: string,
 	agentId: string,
 	beat: HeartbeatBeat,
@@ -89,6 +96,11 @@ async function resumeDue(
 	clock: () => number,
 ): Promise<number | null> {
 	try {
+		if (agentOn && !(await agentOn(accountId, agentId))) {
+			// The agent is off, so its machine stays stopped. Its next beat arms the alarm again.
+			map[agentId] = { at: beat.at, resumedAt: now };
+			return null;
+		}
 		await resume(accountId, agentId);
 		map[agentId] = { at: beat.at, resumedAt: now };
 		return null;
@@ -98,21 +110,27 @@ async function resumeDue(
 	}
 }
 
+interface Sweep {
+	readonly resume: Resume | undefined;
+	readonly accountId: string | undefined;
+	readonly agentOn: AgentOn | undefined;
+	readonly clock: () => number;
+}
+
 async function oneDue(
 	map: Record<string, HeartbeatBeat>,
 	agentId: string,
 	now: number,
-	resume: Resume | undefined,
-	accountId: string | undefined,
-	clock: () => number,
+	sweep: Sweep,
 ): Promise<number | null> {
 	const beat = map[agentId];
 	if (!beat) return null;
 	const due = dueOf(beat);
 	if (due === null) return null;
 	if (now < due) return due;
+	const { resume, accountId, agentOn, clock } = sweep;
 	if (!resume || !accountId) return null;
-	return resumeDue(resume, accountId, agentId, beat, map, now, clock);
+	return resumeDue(resume, agentOn, accountId, agentId, beat, map, now, clock);
 }
 
 // A beat that arrived while this alarm waited in the queue counts from its
@@ -160,11 +178,15 @@ export async function sweepHeartbeats(
 		await clearDeadline(storage, HEARTBEAT_ALARM, token);
 		return;
 	}
-	const resume = resumeFor(env);
-	const accountId = await storage.get<string>("account");
+	const sweep: Sweep = {
+		resume: resumeFor(env),
+		accountId: await storage.get<string>("account"),
+		agentOn: agentOnFor(env),
+		clock,
+	};
 	let nextDue: number | null = null;
 	for (const agentId of agentIds) {
-		const due = await oneDue(map, agentId, now, resume, accountId, clock);
+		const due = await oneDue(map, agentId, now, sweep);
 		if (due !== null) nextDue = earlier(nextDue, due);
 	}
 	const latest = (await storage.get<Record<string, HeartbeatBeat>>(HEARTBEATS)) ?? {};

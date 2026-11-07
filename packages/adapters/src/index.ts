@@ -1,5 +1,6 @@
 export { chooseAdapters } from "./adapter-choice.ts";
 export { pickWorkerAdapters } from "./adapters-flag.ts";
+export { type MachineEnv, switchAgentMachine, switchingMachine } from "./agent-machine.ts";
 export type { BusBatch, BusNamespace, QueueProducer, WorkerBindings } from "./cloudflare-bus/index.ts";
 export {
 	AccountBus,

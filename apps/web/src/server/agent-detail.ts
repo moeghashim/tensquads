@@ -2,7 +2,7 @@ import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import type { AppDatabase } from "@tensquads/adapters";
 import { PENDING_TASK_WINDOW_MS } from "@tensquads/adapters/pending-window";
-import type { AccountScope, Agent, Autonomy, BusEvent } from "@tensquads/domain";
+import type { AccountScope, Agent, Autonomy, BusEvent, Fenced, StoredAgentOn } from "@tensquads/domain";
 import { Kernel } from "@tensquads/kernel";
 
 import {
@@ -254,23 +254,23 @@ function detailSource(
 	};
 }
 
+async function machineEnv() {
+	return {
+		ADAPTERS: await workerEnv("ADAPTERS"),
+		BOAT_TOKEN: await workerEnv("BOAT_TOKEN"),
+		BOAT_ADMIN_TOKEN: await workerEnv("BOAT_ADMIN_TOKEN"),
+		BOAT_PROFILE: await workerEnv("BOAT_PROFILE"),
+		BOAT_BASE_PATH: await workerEnv("BOAT_BASE_PATH"),
+		BOAT_SECRET_BASE_URL: await workerEnv("BOAT_SECRET_BASE_URL"),
+	};
+}
+
 async function liveDashboard(scope: AccountScope, agentId: string) {
 	const { chooseAdapters, readLiveMachine } = await import("@tensquads/adapters");
 	if (chooseAdapters(await workerEnv("ADAPTERS")) !== "real") return null;
 	if (agentId !== "market" && agentId !== "website") return null;
 	try {
-		return await readLiveMachine(
-			{
-				ADAPTERS: await workerEnv("ADAPTERS"),
-				BOAT_TOKEN: await workerEnv("BOAT_TOKEN"),
-				BOAT_ADMIN_TOKEN: await workerEnv("BOAT_ADMIN_TOKEN"),
-				BOAT_PROFILE: await workerEnv("BOAT_PROFILE"),
-				BOAT_BASE_PATH: await workerEnv("BOAT_BASE_PATH"),
-				BOAT_SECRET_BASE_URL: await workerEnv("BOAT_SECRET_BASE_URL"),
-			},
-			scope,
-			agentId,
-		);
+		return await readLiveMachine(await machineEnv(), scope, agentId);
 	} catch {
 		return { host: "—", cpu: "—", uptime: "—" };
 	}
@@ -320,15 +320,30 @@ export const setAgentRunning = createServerFn({ method: "POST" })
 	.validator(validateRunning)
 	.handler(async ({ data }) => {
 		return writeFenced(data.agentId, data.accountId, (kernel, scope, deadlineAt) =>
-			kernel.setAgentOn(
-				scope,
-				data.agentId,
-				data.on,
-				{ tab: data.tab, seq: data.seq, retires: data.retires },
-				deadlineAt,
+			switchMachineThen(data.agentId, scope, data.on, () =>
+				kernel.setAgentOn(
+					scope,
+					data.agentId,
+					data.on,
+					{ tab: data.tab, seq: data.seq, retires: data.retires },
+					deadlineAt,
+				),
 			),
 		);
 	});
+
+// In real mode the agent's boat.dev machine stops or resumes first. The stored switch
+// follows only if the machine moved. Test mode has no machine, so it only writes.
+async function switchMachineThen(
+	agentId: string,
+	scope: AccountScope,
+	on: boolean,
+	persist: () => Promise<Fenced<StoredAgentOn>>,
+): Promise<Fenced<StoredAgentOn>> {
+	const { switchAgentMachine, switchingMachine } = await import("@tensquads/adapters");
+	const machine = switchingMachine(await machineEnv(), agentId);
+	return switchAgentMachine(machine, scope, agentId, on, persist);
+}
 
 export const setSkillEnabled = createServerFn({ method: "POST" })
 	.validator(validateSkill)
