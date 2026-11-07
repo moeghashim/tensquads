@@ -1,0 +1,5 @@
+PASS: Open /review, click Agent flow, and see the flow page at /review/agent-flow.
+PASS: Direct shared URL and reload return HTTP 200 HTML, noindex/nofollow and no-cache. Rendered chart shows the approved retry labels and caption, plus all three role cards.
+PASS: Back to review returns to /review/ with the Agent flow card available.
+PASS: At 390px the document has no horizontal overflow. The diagram scrolls horizontally by mouse wheel so its right-side decisions can be reached.
+No browser JavaScript errors.
