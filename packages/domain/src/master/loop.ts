@@ -14,7 +14,7 @@ import {
 	shownBrief,
 } from "./checks.ts";
 import { type GrantQuery, grantAllows, type StoredGrant } from "./grant.ts";
-import { BRIEF_FAILED_TEXT, NO_NAME_TEXT, NO_REPORT_TEXT } from "./messages.ts";
+import { BRIEF_FAILED_TEXT, NO_NAME_TEXT } from "./messages.ts";
 import type { RenderedPage } from "./render-page.ts";
 import { type BusinessRequest, mandateFor, type PageAudit, type PageReader } from "./types.ts";
 
@@ -548,7 +548,7 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 
 	async function onResearchPhase(event: BusEvent): Promise<BusEvent[]> {
 		if (event.skill === "report.write") return onResearch(event);
-		if (isResearchFailure(event)) return failResearch([event.text.trim() || NO_REPORT_TEXT]);
+		if (isResearchFailure(event)) return failResearch([event.text.trim()].filter(Boolean));
 		return [];
 	}
 
