@@ -1,4 +1,5 @@
 import { messageParts } from "#/screens/chat/message-parts.ts";
+import { useChatPoll } from "#/screens/chat/use-chat-poll.ts";
 import { css } from "#/screens/css.ts";
 import type { ChatHandOff } from "#/server/chat.ts";
 import { type StartedTask, useWorkspace } from "#/workspace/context.ts";
@@ -14,9 +15,18 @@ const suggestions = [
 	"Is anything low on stock?",
 ];
 
-export function ChatPage({ threadId, events }: { readonly threadId: string; readonly events: readonly ChatHandOff[] }) {
-	const { frame, draft, setDraft, thinking, thinkingAgent, messages, submit, startedTask } = useWorkspace();
+export function ChatPage({
+	threadId,
+	events,
+	liveBus,
+}: {
+	readonly threadId: string;
+	readonly events: readonly ChatHandOff[];
+	readonly liveBus: boolean;
+}) {
+	const { frame, draft, setDraft, thinking, thinkingAgent, messages, submit, startedTask, refresh } = useWorkspace();
 	const inspect = useInspect();
+	useChatPoll(liveBus, refresh);
 	const names = agentNames(frame.agents);
 	const handoffs = placeTask(events, startedTask);
 	return (

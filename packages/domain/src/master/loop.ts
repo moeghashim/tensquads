@@ -7,6 +7,7 @@ import {
 	checkPage,
 	checkPublished,
 	checkResearch,
+	isResearchFailure,
 	NO_FINDING_TEXT,
 	NO_ITEMS_TEXT,
 	readReport,
@@ -545,11 +546,17 @@ export function createMaster(request: BusinessRequest, ports: MasterPorts) {
 		return [];
 	}
 
+	async function onResearchPhase(event: BusEvent): Promise<BusEvent[]> {
+		if (event.skill === "report.write") return onResearch(event);
+		if (isResearchFailure(event)) return failResearch([event.text.trim()].filter(Boolean));
+		return [];
+	}
+
 	async function accept(event: BusEvent): Promise<BusEvent[]> {
 		if (state.phase === "escalated" || state.phase === "done") return [];
 		if (userSaidYes(event)) return onUserYes(event);
 		if (event.kind !== "Result" || event.to !== "master") return [];
-		if (event.skill === "report.write" && state.phase === "research") return onResearch(event);
+		if (state.phase === "research") return onResearchPhase(event);
 		if (event.skill === "site.preview" && state.phase === "building") return onPreview(event);
 		if (event.skill === "site.publish" && state.phase === "publishing") return onPublish(event);
 		if (event.skill === "competition.watch" && state.phase === "watching") return onWatch(event);
