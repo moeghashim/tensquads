@@ -9,6 +9,7 @@ import {
 	waitUntilReady,
 } from "@boatdev/sdk";
 import type { AccountMachine, AccountScope, MachineTemplate, StartedMachine } from "@tensquads/kernel";
+import { type AgentModelEnv, agentModelEnv } from "./agent-models.ts";
 import { deadlineFetch } from "./boat-deadline.ts";
 import { faultFromStatus, machineFault, missingMachine, notConfigured, readErrorBody } from "./boat-errors.ts";
 import {
@@ -19,6 +20,7 @@ import {
 	imageTag,
 	realRunAgent,
 	realRunImage,
+	resumeInput,
 	sizeText,
 	sourceName,
 	startKey,
@@ -56,6 +58,8 @@ export interface BoatMachineOptions {
 	readonly wait?: BoatWait;
 	readonly secretBaseUrl?: string;
 	readonly runId?: string;
+	// Model settings for the real-run agents. A blank value throws before any boat request.
+	readonly agentModels?: AgentModelEnv;
 }
 
 interface BoatContext {
@@ -496,6 +500,10 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 			});
 		},
 		async resume(scope, agentId) {
+			const agent = realRunAgent(agentId);
+			// Checked before any boat request. A blank setting fails here.
+			const models = agent ? agentModelEnv(agentId, ctx.options.agentModels) : {};
+			const env = agent && { ...machineEnv(scope.accountId, agentId, agent.imageTag), ...models };
 			await singleFlight(ctx, flightKey(scope, agentId), "resume", async (scoped) => {
 				const row = await requireMachine(scoped, scope, agentId);
 				if (LIVE.has(row.state)) return;
@@ -503,12 +511,8 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 					await waitReady(scoped, row.id);
 					return;
 				}
-				const environment = realRunAgent(agentId) ? await agentEnvironment(scoped, scope, agentId) : undefined;
-				await call(() =>
-					scoped.machine.resume(
-						environment ? { sandboxId: row.id, resumeRequest: { environment } } : { sandboxId: row.id },
-					),
-				);
+				const environment = agent ? await agentEnvironment(scoped, scope, agentId) : undefined;
+				await call(() => scoped.machine.resume(resumeInput(row.id, environment, env)));
 				await waitReady(scoped, row.id);
 			});
 		},
@@ -560,6 +564,9 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 			const known = realRunImage(templateId);
 			const image = known ?? imageFromTemplate(templateId);
 			const tag = known ? known.imageTag : imageTag(image.imageId, image.version);
+			// Checked before any boat request. A blank setting fails here.
+			const models = known ? agentModelEnv(agentId, ctx.options.agentModels) : {};
+			const env = { ...machineEnv(scope.accountId, agentId, tag), ...models };
 			return singleFlight(ctx, flightKey(scope, agentId), `template:${templateId}`, async (scoped) => {
 				const environment = known ? await agentEnvironment(scoped, scope, agentId) : undefined;
 				const existing = await findMachine(scoped, scope, agentId);
@@ -568,7 +575,7 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 						scoped,
 						createBody(
 							hostName(agentId),
-							machineEnv(scope.accountId, agentId, tag),
+							env,
 							labelled({ account: scope.accountId, agent: agentId, image: tag }, scoped.runId),
 							templateId,
 							environment,
@@ -577,13 +584,7 @@ export function createBoatMachine(options: BoatMachineOptions): AccountMachine {
 					);
 					await waitReady(scoped, created.id);
 				} else if (off(existing.state)) {
-					await call(() =>
-						scoped.machine.resume(
-							environment
-								? { sandboxId: existing.id, resumeRequest: { environment } }
-								: { sandboxId: existing.id },
-						),
-					);
+					await call(() => scoped.machine.resume(resumeInput(existing.id, environment, known ? env : undefined)));
 					await waitReady(scoped, existing.id);
 				} else if (!LIVE.has(existing.state)) {
 					await waitReady(scoped, existing.id);

@@ -1,12 +1,13 @@
 import { type AccountScope, MachineFault } from "@tensquads/kernel";
 
 import { chooseAdapters } from "./adapter-choice.ts";
+import { type AgentModelEnv, agentModelEnv, agentModelsOf } from "./agent-models.ts";
 import { notConfigured } from "./boat-errors.ts";
 import { REAL_RUN_IMAGES, realRunAgent } from "./boat-fields.ts";
 import { type BoatMachineOptions, type BoatWait, createBoatMachine } from "./boat-machine.ts";
 import { machineCredentialProfile, rotateMachineToken } from "./cloudflare-bus/token.ts";
 
-export interface ProvisionEnv {
+export interface ProvisionEnv extends AgentModelEnv {
 	readonly ADAPTERS?: string;
 	readonly BOAT_TOKEN?: string;
 	readonly BOAT_ADMIN_TOKEN?: string;
@@ -51,6 +52,7 @@ function boatOptions(env: ProvisionEnv, registration: boolean): BoatMachineOptio
 		profileName: env.BOAT_PROFILE,
 		basePath: env.BOAT_BASE_PATH,
 		secretBaseUrl: env.BOAT_SECRET_BASE_URL,
+		agentModels: agentModelsOf(env),
 		fetchApi: env.fetchApi ?? fetch,
 		wait: env.wait,
 	};
@@ -64,6 +66,8 @@ export async function provisionAgents(
 ): Promise<readonly ProvisionedAgent[]> {
 	if (chooseAdapters(env.ADAPTERS) !== "real") return planned(accountId, currentExp);
 	if (!env.MACHINE_TOKEN_KEY) throw notConfigured();
+	// Every real-run agent needs its model pair. Check all of them before any boat request.
+	for (const row of REAL_RUN_IMAGES) agentModelEnv(row.agentId, agentModelsOf(env));
 	const machine = createBoatMachine(boatOptions(env, true));
 	const scope: AccountScope = { accountId, mode: "account" };
 	const secret = env.MACHINE_TOKEN_KEY;
