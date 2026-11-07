@@ -126,9 +126,10 @@ jobs:
     name: Required checks
     strategy:
       fail-fast: false
+      # macOS only. The screenshot baselines are macOS captures, and every other
+      # test runs here too. A second Ubuntu copy added only a second flaky run.
       matrix:
         os:
-          - ubuntu-latest
           - macos-latest
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
