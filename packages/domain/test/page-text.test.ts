@@ -56,3 +56,14 @@ test("pageHas finds a quote or price whatever the white space between words", ()
 	assert.equal(pageHas("<span>$</span>12", "$13"), false);
 	assert.equal(pageHas("<script>$12</script>", "$12"), false);
 });
+
+test("a custom element whose name starts like a skipped one keeps its text", () => {
+	assert.equal(pageText("<script-loader>Fresh salad daily</script-loader>"), "Fresh salad daily");
+	assert.equal(pageText("<styled-box>Tom</styled-box> <template-card>Jerry</template-card>"), "Tom Jerry");
+	assert.equal(pageText("<script >hidden()</script>shown"), "shown");
+});
+
+test("a quote that is empty without its white space is never found", () => {
+	assert.equal(pageHas("<p>Fresh salad daily</p>", "   "), false);
+	assert.equal(pageHas("<p>Fresh salad daily</p>", ""), false);
+});

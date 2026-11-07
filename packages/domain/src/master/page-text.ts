@@ -21,7 +21,7 @@ const NAMED_ENTITIES: ReadonlyMap<string, string> = new Map([
 // An unclosed one runs to the end of the page, as an HTML parser reads it.
 // Every other tag is a space. Alternatives match left to right, so a comment that opens first hides any script in it.
 const SKIPPED_OR_TAG =
-	/<!--[\s\S]*?(?:-->|$)|<(script|style|noscript|template)\b[^>]*>[\s\S]*?(?:<\/\1\s*>|$)|<\/?[A-Za-z][^>]*>|<![^>]*>/gi;
+	/<!--[\s\S]*?(?:-->|$)|<(script|style|noscript|template)(?=[\s/>])[^>]*>[\s\S]*?(?:<\/\1\s*>|$)|<\/?[A-Za-z][^>]*>|<![^>]*>/gi;
 
 // One pass only, so "&amp;lt;" becomes "&lt;" and not "<".
 const ENTITY = /&(#[xX][0-9a-fA-F]+|#[0-9]+|[A-Za-z]+);/g;
@@ -46,6 +46,9 @@ const WHITE_SPACE = /\s+/g;
 
 // True when the text appears on the page. White space is ignored on both sides.
 // Tags become spaces, so "<span>$</span>12" reads "$ 12" and still matches "$12".
+// Text that is empty without its white space never counts as found.
 export function pageHas(html: string, text: string): boolean {
-	return pageText(html).replace(WHITE_SPACE, "").includes(text.replace(WHITE_SPACE, ""));
+	const wanted = text.replace(WHITE_SPACE, "");
+	if (wanted.length === 0) return false;
+	return pageText(html).replace(WHITE_SPACE, "").includes(wanted);
 }
