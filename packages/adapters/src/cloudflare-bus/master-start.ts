@@ -2,6 +2,7 @@ import { type BusinessChat, researchStart } from "@tensquads/domain";
 import type { PublishedEvent } from "@tensquads/kernel";
 
 import { type ProvisionEnv, type ProvisionedAgent, provisionAgents } from "../provision-agents.ts";
+import type { QueueProducer } from "./http.ts";
 
 type StartProvision = (
 	env: ProvisionEnv,
@@ -37,6 +38,12 @@ function machineExpFrom(rows: readonly { readonly agentId: string; readonly exp:
 	const map: Record<string, number> = {};
 	for (const row of rows) map[row.agentId] = row.exp;
 	return map;
+}
+
+// The send path only queues the start. The queue consumer provisions and publishes the Task.
+// The send never waits on provisioning, which can take minutes.
+export async function queueMasterStart(queue: QueueProducer, accountId: string, request: BusinessChat): Promise<void> {
+	await queue.send({ accountId, start: request });
 }
 
 // Always pass the stored map. An omitted map makes provisionAgents rotate every token.

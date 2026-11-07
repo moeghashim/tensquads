@@ -5,6 +5,7 @@ import { Kernel, noAgentReply, storedResearchReply } from "@tensquads/kernel";
 import { eq } from "drizzle-orm";
 
 import { replaceDemoAccount } from "../../seed/src/demo-account.ts";
+import { queueMasterStart } from "../src/cloudflare-bus/master-start.ts";
 import { openPglite } from "./pglite.ts";
 
 const restaurant = `restaurant: Proof Kitchen
@@ -79,6 +80,33 @@ test("a live start still hands an ads question to the marketing agent", async ()
 		const started = await kernel.beginSend(scope(accountId), ads);
 		assert.equal(calls, 0);
 		assert.equal(started.kind, "working");
+	});
+});
+
+test("a real send stores the message and queues the start without provisioning", async () => {
+	await withCopy("queued", async (db, accountId) => {
+		const sent: unknown[] = [];
+		const kernel = new Kernel(createRepositories(db), {
+			liveStart: (scope, request) =>
+				queueMasterStart(
+					{
+						async send(message) {
+							sent.push(message);
+						},
+					},
+					scope.accountId,
+					request,
+				),
+		});
+		const started = await kernel.beginSend(scope(accountId), restaurant);
+		assert.equal(sent.length, 1);
+		assert.equal(started.kind, "answered");
+		if (started.kind !== "answered") return;
+		assert.equal(started.messages.at(-1)?.text, storedResearchReply());
+		assert.equal(
+			started.messages.some((message) => message.text === restaurant),
+			true,
+		);
 	});
 });
 

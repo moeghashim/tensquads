@@ -1,11 +1,14 @@
+import type { BusinessChat } from "@tensquads/domain";
 import type { AccountEventBus, AccountScope, PublishedEvent } from "@tensquads/kernel";
 import { MachineFault } from "@tensquads/kernel";
 
 import { chooseAdapters } from "../adapter-choice.ts";
 import type { ScriptedBusEvent } from "../memory-bus.ts";
 import { takeTestTask, workerTestBus } from "../worker-adapters.ts";
+import { parseStoredRequest } from "./account-request.ts";
 import { changeEvent, verifyContextSignature } from "./change.ts";
 import { rejectMachine } from "./machine-auth.ts";
+import { type MasterStartEnv, masterStartEvent } from "./master-start.ts";
 import { isBusRecord, isNonEmptyString, isObject, readAgentBody } from "./message.ts";
 import { recordMonitorSecret, resolveMonitor, resolveMonitorSecret } from "./monitors.ts";
 import type { PagesClient } from "./pages-client.ts";
@@ -20,11 +23,16 @@ export interface BusNamespace {
 	get(id: unknown): { fetch(input: Request | string | URL, init?: RequestInit): Promise<Response> };
 }
 
+// A start message carries the business request. The consumer provisions and publishes the Task.
+export type QueueMessage =
+	| { readonly accountId: string; readonly event: PublishedEvent }
+	| { readonly accountId: string; readonly start: BusinessChat };
+
 export interface QueueProducer {
-	send(message: { accountId: string; event: PublishedEvent }): Promise<void>;
+	send(message: QueueMessage): Promise<void>;
 }
 
-export interface WorkerBindings {
+export interface WorkerBindings extends MasterStartEnv {
 	readonly ADAPTERS?: string;
 	readonly MACHINE_TOKEN_KEY?: string;
 	readonly ACCOUNT_BUS?: BusNamespace;
@@ -93,11 +101,27 @@ function deadLetter(env: WorkerBindings, queue: string): boolean {
 	return typeof env.BUS_DEAD_LETTER === "string" && env.BUS_DEAD_LETTER.length > 0 && queue === env.BUS_DEAD_LETTER;
 }
 
+async function busStore(env: WorkerBindings, accountId: string): Promise<Record<string, unknown>> {
+	const response = await stubFetch(env, accountId, "/store", { headers: { "x-account-id": accountId } });
+	if (!response.ok) throw notConfigured("The bus is not configured.");
+	return (await response.json()) as Record<string, unknown>;
+}
+
+// Runs in the queue consumer, not in the send request. The stored expiry map always goes to provisionAgents.
+async function startMaster(env: WorkerBindings, accountId: string, value: unknown): Promise<void> {
+	const request = parseStoredRequest(value);
+	if (!request) throw new Error("The message was rejected.");
+	const store = chooseAdapters(env.ADAPTERS) === "real" ? await busStore(env, accountId) : {};
+	const event = await masterStartEvent(env, accountId, request, store, env.now?.() ?? Date.now());
+	await deliver(env, accountId, event);
+}
+
 export async function handleBusQueue(batch: BusBatch, env: WorkerBindings): Promise<void> {
 	for (const message of batch.messages) {
 		const body = message.body;
 		if (!isObject(body) || !isNonEmptyString(body.accountId)) throw new Error("The message was rejected.");
 		if (deadLetter(env, batch.queue)) await deliver(env, body.accountId, escalation(message.id));
+		else if ("start" in body) await startMaster(env, body.accountId, body.start);
 		else {
 			if (!isBusRecord(body)) throw new Error("The message was rejected.");
 			await deliver(env, body.accountId, body.event);
