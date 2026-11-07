@@ -74,6 +74,8 @@ const exports = {
 	"@tensquads/adapters": {
 		createRepositories: repositories,
 		chooseAdapters: (flag) => (flag === "real" ? "real" : "test"),
+		switchingMachine: () => undefined,
+		switchAgentMachine: (_machine, _scope, _agentId, persist) => persist(),
 		readLiveMachine: async () => {
 			state.liveReads += 1;
 			if (state.boatStatus === 503) throw Object.assign(new Error("unavailable"), { status: 503 });

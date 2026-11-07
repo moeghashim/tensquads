@@ -33,6 +33,8 @@ const mocks = {
 		export const useRef = (current) => ({ current });`,
 	"@tensquads/adapters": `const state = globalThis.workspaceAccountTest;
 		export const chooseAdapters = (flag) => flag === "real" ? "real" : "test";
+		export const switchingMachine = () => undefined;
+		export const switchAgentMachine = (_machine, _scope, _agentId, persist) => persist();
 		export const createCloudflareBus = () => ({});
 		export const trafficScript = () => [];
 		export const openPostgres = () => ({ db: {}, close: async () => { state.closed++; } });
