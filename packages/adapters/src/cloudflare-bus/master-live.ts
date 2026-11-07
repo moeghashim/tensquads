@@ -124,13 +124,26 @@ export function ownPreviewTask(url: string, accountId: string, baseUrl: string |
 	}
 }
 
+// The master runs inside the bus step, where the sync key-value API is the safe read.
+async function storedPreview(storage: RequestStore, key: string): Promise<unknown> {
+	const kv = (storage as { kv?: { get(key: string): unknown } }).kv;
+	try {
+		const value = kv?.get(key);
+		if (value !== undefined) return value;
+		return await storage.get<Uint8Array>(key);
+	} catch (error) {
+		console.error("The preview read failed.", error instanceof Error ? error.message : String(error));
+		return undefined;
+	}
+}
+
 function readPageOf(env: BusObjectEnv, accountId: string, storage: RequestStore): PageReader {
 	if (env.masterReadPage) return env.masterReadPage;
 	const baseUrl = (env as { BOAT_SECRET_BASE_URL?: string }).BOAT_SECRET_BASE_URL;
 	return async (url) => {
 		const taskId = ownPreviewTask(url, accountId, baseUrl);
 		if (!taskId) return fetchDocument(url);
-		const stored = await storage.get<Uint8Array>(`preview:${taskId}`);
+		const stored = await storedPreview(storage, `preview:${taskId}`);
 		if (!(stored instanceof Uint8Array)) return { status: 404, body: "", bytes: new Uint8Array() };
 		const bytes = stored.slice();
 		return { status: 200, body: new TextDecoder("utf-8", { ignoreBOM: true }).decode(bytes), bytes };
