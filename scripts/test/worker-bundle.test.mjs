@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	statSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import test from "node:test";
@@ -603,6 +612,14 @@ test("caught filesystem calls retain their read evidence", async () => {
 });
 
 const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+// The real build imports the private agent kit. A checkout without the kit skips that test.
+// The check matches scripts/kit-optional.mjs. CI always links the kit, real or stub,
+// so CI sets CI=true and never skips: a missing kit fails there.
+const kitInstalled = existsSync(join(repoRoot, "node_modules/@tensquads/agent-kit/package.json"));
+const kitSkip =
+	kitInstalled || process.env.CI === "true"
+		? false
+		: "The agent kit is not installed. The real build test was skipped.";
 const serverDirectory = join(repoRoot, "apps/web/dist/server");
 
 let productionBuilt = false;
@@ -846,7 +863,7 @@ function assertDeployedParties(directory, origin, other) {
 	assert.match(text, new RegExp(`\\["${origin.replaceAll(".", "\\.")}"\\]`));
 }
 
-test("a real build authorizes only the real worker origin", () => {
+test("a real build authorizes only the real worker origin", { skip: kitSkip }, () => {
 	const outDir = mkdtempSync(join(tmpdir(), "tensquads-real-bundle-"));
 	try {
 		buildRealWorker(outDir);
