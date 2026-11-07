@@ -11,6 +11,10 @@ export interface ChatHandOff {
 
 export const loadChat = createServerFn({ method: "GET" }).handler(async () => {
 	const { requireWorkspace } = await import("./workspace-session.ts");
+	const { chooseAdapters } = await import("@tensquads/adapters");
+	const { workerEnv } = await import("./worker-env.ts");
+	// Only real mode polls. Test mode answers in the send response.
+	const liveBus = chooseAdapters(await workerEnv("ADAPTERS")) === "real";
 	return requireWorkspace(async (scope, db) => {
 		const { createRepositories } = await import("@tensquads/adapters");
 		const repositories = createRepositories(db);
@@ -26,6 +30,6 @@ export const loadChat = createServerFn({ method: "GET" }).handler(async () => {
 			kind: event.kind,
 			text: event.text,
 		}));
-		return { accountId: scope.accountId, threadId: thread?.id ?? "dock", events: handoffs };
+		return { accountId: scope.accountId, threadId: thread?.id ?? "dock", events: handoffs, liveBus };
 	});
 });
