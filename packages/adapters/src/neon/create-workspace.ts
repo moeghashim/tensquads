@@ -1,7 +1,7 @@
 import { type AccountScope, requireScope, type WorkspaceCreated, type WorkspaceDraft } from "@tensquads/domain";
 import { eq, max, sql } from "drizzle-orm";
 
-import { insertStateRows } from "../cloudflare-bus/neon-write.ts";
+import { seedNewAccountStateRows } from "../cloudflare-bus/neon-write.ts";
 import { takeWriterLock } from "./lock.ts";
 import type { AppDatabase } from "./postgres.ts";
 import { accounts, agents, machines, masters, squads, subscriptions } from "./schema.ts";
@@ -133,7 +133,7 @@ async function insertWorkspace(db: AppDatabase, accountId: string, draft: Worksp
 				sortOrder: index,
 			})),
 		);
-		await insertStateRows(
+		await seedNewAccountStateRows(
 			tx,
 			defaultLimits.map(([key, value], index) => ({
 				accountId,

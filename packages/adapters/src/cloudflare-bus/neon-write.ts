@@ -74,6 +74,12 @@ export async function insertStateRows(tx: unknown, rows: readonly Record<string,
 	await writer(tx).insert(stateEntries).values(rows);
 }
 
+// A new account has no Durable Object yet, so its first state rows are seeded here.
+// Call it only inside the transaction that creates the account.
+export async function seedNewAccountStateRows(tx: unknown, rows: readonly Record<string, unknown>[]): Promise<void> {
+	await writer(tx).insert(stateEntries).values(rows);
+}
+
 export async function deleteAllBusEvents(tx: unknown): Promise<void> {
 	refuseDirectBusWrite();
 	await writer(tx).delete(busEvents);
